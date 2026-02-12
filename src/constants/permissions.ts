@@ -7,6 +7,15 @@ export const HelpdeskPermissions = {
     Read: 'Helpdesk.Settings.Read',
     Manage: 'Helpdesk.Settings.Manage',
   },
+  TicketRead: 'Helpdesk.Ticket.Read',
+  TicketWrite: 'Helpdesk.Ticket.Write',
+  TicketDelete: 'Helpdesk.Ticket.Delete',
+  TicketAssign: 'Helpdesk.Ticket.Assign',
 } as const;
 
-export type HelpdeskPermission = typeof HelpdeskPermissions.Settings[keyof typeof HelpdeskPermissions.Settings];
+export type HelpdeskPermission =
+  | typeof HelpdeskPermissions.Settings[keyof typeof HelpdeskPermissions.Settings]
+  | typeof HelpdeskPermissions.TicketRead
+  | typeof HelpdeskPermissions.TicketWrite
+  | typeof HelpdeskPermissions.TicketDelete
+  | typeof HelpdeskPermissions.TicketAssign;
