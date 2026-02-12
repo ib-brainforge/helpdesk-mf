@@ -1,0 +1,19 @@
+{
+  "extends": "@modern-js/tsconfig/base",
+  "compilerOptions": {
+    "declaration": false,
+    "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"],
+      "@api/*": ["./api/lambda/*"],
+      "@components/*": ["./src/components/*"],
+      "*": ["./@mf-types/*"]
+    }
+  },
+  "include": ["src", "shared", "config", "api", "modern.config.ts"],
+  "exclude": ["**/node_modules"]
+}
