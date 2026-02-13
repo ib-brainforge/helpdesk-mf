@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
-import { Tabs, Tab, Card, Select, SelectItem } from '@heroui/react';
-import { Icon } from '@brainforgeau/components/base';
+import { Tabs, Tab } from '@heroui/react';
+import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { BaseTable } from '@brainforgeau/components';
+import { BaseTable, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import {
   useReactTable,
   getCoreRowModel,
@@ -52,46 +52,46 @@ function ReportsPage() {
   const techColumns: ColumnDef<TechPerformanceDto, any>[] = useMemo(
     () => [
       {
-        accessorKey: 'technicianName',
+        accessorKey: 'technicianId',
         header: 'Technician',
-        cell: (info) => info.getValue() as string,
+        cell: (info) => (info.getValue() as string)?.slice(0, 8) ?? '-',
       },
       {
-        accessorKey: 'assignedCount',
+        accessorKey: 'ticketsAssigned',
         header: 'Assigned',
         cell: (info) => info.getValue() as number,
       },
       {
-        accessorKey: 'resolvedCount',
+        accessorKey: 'ticketsResolved',
         header: 'Resolved',
         cell: (info) => info.getValue() as number,
       },
       {
-        accessorKey: 'averageResolutionTimeHours',
+        accessorKey: 'avgResolutionMinutes',
         header: 'Avg Resolution',
-        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
+        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
       {
-        accessorKey: 'averageFirstResponseTimeHours',
+        accessorKey: 'avgFirstResponseMinutes',
         header: 'First Response',
-        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
+        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
       {
-        accessorKey: 'p50ResolutionTimeHours',
+        accessorKey: 'p50ResolutionMinutes',
         header: 'P50',
-        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
+        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
       {
-        accessorKey: 'p90ResolutionTimeHours',
+        accessorKey: 'p90ResolutionMinutes',
         header: 'P90',
-        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
+        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
     ],
     [],
   );
 
   const techTable = useReactTable({
-    data: techPerformance?.technicians || [],
+    data: techPerformance || [],
     columns: techColumns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -132,43 +132,55 @@ function ReportsPage() {
           </div>
         </div>
 
-        <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as string)}>
+        <Tabs
+          selectedKey={selectedTab}
+          onSelectionChange={(key) => setSelectedTab(key as string)}
+          aria-label="Report tabs"
+          classNames={{
+            tabList:
+              'gap-0.5 w-full relative rounded-none p-0 shadow-[inset_0_-1px_0_0_var(--color-white),inset_0_-3px_0_0_var(--color-light)]',
+            cursor: 'w-full bg-blue',
+            tab: 'max-w-fit h-11.5 px-1 md:px-5 font-medium text-sm relative z-10 span:text-blue !opacity-100 *:min-h-1 hover:*:!text-blue',
+            tabContent: 'group-data-[selected=true]:text-blue',
+            panel: 'p-0 pt-7.5',
+          }}
+          color="primary"
+          variant="underlined"
+        >
           {/* Dynamics Tab */}
           <Tab key="dynamics" title="Dynamics">
             <div className="mt-4 space-y-6">
               <div className="flex gap-4">
-                <Select
+                <BaseSelect
                   label="Granularity"
-                  selectedKeys={[granularity]}
+                  selectedKeys={new Set([granularity])}
                   onSelectionChange={(keys) => {
                     const key = Array.from(keys)[0] as ReportGranularity;
                     setGranularity(key);
                   }}
                   className="w-48"
                 >
-                  <SelectItem key={ReportGranularity.Daily}>
+                  <BaseSelectItem key={ReportGranularity.Daily}>
                     Daily
-                  </SelectItem>
-                  <SelectItem key={ReportGranularity.Weekly}>
+                  </BaseSelectItem>
+                  <BaseSelectItem key={ReportGranularity.Weekly}>
                     Weekly
-                  </SelectItem>
-                  <SelectItem key={ReportGranularity.Monthly}>
+                  </BaseSelectItem>
+                  <BaseSelectItem key={ReportGranularity.Monthly}>
                     Monthly
-                  </SelectItem>
-                </Select>
+                  </BaseSelectItem>
+                </BaseSelect>
               </div>
 
-              <Card className="p-4">
-                <h3 className="mb-4 text-lg font-semibold">Ticket Trends</h3>
+              <Box title="Ticket Trends">
                 {dynamicsData?.dataPoints && <TrendLineChart data={dynamicsData.dataPoints} />}
-              </Card>
+              </Box>
 
-              <Card className="p-4">
-                <h3 className="mb-4 text-lg font-semibold">Average Resolution Time</h3>
+              <Box title="Average Resolution Time">
                 {dynamicsData?.dataPoints && (
                   <ResolutionTimeChart data={dynamicsData.dataPoints} />
                 )}
-              </Card>
+              </Box>
             </div>
           </Tab>
 
