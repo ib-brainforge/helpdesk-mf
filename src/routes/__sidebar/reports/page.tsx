@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
-import { Tabs, Tab, Card, DateRangePicker, Select, SelectItem } from '@heroui/react';
+import { Tabs, Tab, Card, Select, SelectItem } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseTable } from '@brainforgeau/components';
@@ -21,17 +21,25 @@ import {
   CategoryBarChart,
   ResolutionTimeChart,
 } from '@/components/reports/components/charts';
-import { ReportGranularity, type TechPerformanceDto } from '@/types';
+import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
+import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
+import { exportToCSV, exportToExcel, formatReportData } from '@/components/reports/utils/exportReport';
+import { ReportGranularity, type TechPerformanceDto, type CustomReportResultDto } from '@/types';
 
 function ReportsPage() {
   const [selectedTab, setSelectedTab] = useState('summary');
   const [granularity, setGranularity] = useState<ReportGranularity>(ReportGranularity.Daily);
 
-  // REVIEW: Using local state for date range - will integrate with DateRangePicker
-  const [startDate] = useState(
+  // REVIEW: Using local state for date range - integrated with DateRangeSelector
+  const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   );
-  const [endDate] = useState(new Date().toISOString());
+  const [endDate, setEndDate] = useState(new Date().toISOString());
+
+  const handleDateRangeChange = (start: string, end: string) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
 
   const { data: summaryData, isLoading: loadingSummary } = useTicketSummaryReport(
     startDate,
@@ -95,6 +103,36 @@ function ReportsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Export handlers
+  const handleExportSummary = (format: 'csv' | 'excel') => {
+    if (!summaryData) return;
+
+    const exportData = [
+      { metric: 'Total Created', value: summaryData.totalCreated },
+      { metric: 'Total Closed', value: summaryData.totalClosed },
+      { metric: 'Total Open', value: summaryData.totalOpen },
+      { metric: 'Avg Resolution Time (hours)', value: summaryData.averageResolutionTimeHours },
+    ];
+
+    const filename = `summary-report-${new Date().toISOString().split('T')[0]}`;
+    if (format === 'csv') {
+      exportToCSV(exportData, filename);
+    } else {
+      exportToExcel(exportData, filename);
+    }
+  };
+
+  const handleExportCustom = (data: CustomReportResultDto, format: 'csv' | 'excel') => {
+    const formattedData = formatReportData(data.rows);
+    const filename = `custom-report-${new Date().toISOString().split('T')[0]}`;
+
+    if (format === 'csv') {
+      exportToCSV(formattedData, filename);
+    } else {
+      exportToExcel(formattedData, filename);
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -104,12 +142,27 @@ function ReportsPage() {
       <div className="mb-5">
         <div className="mb-5 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Reports Dashboard</h1>
-          <BaseButton
-            variant="light"
-            icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
-          >
-            Export
-          </BaseButton>
+          <div className="flex gap-3">
+            <DateRangeSelector
+              startDate={startDate}
+              endDate={endDate}
+              onChange={handleDateRangeChange}
+            />
+            <BaseButton
+              variant="light"
+              onClick={() => handleExportSummary('csv')}
+              icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
+            >
+              Export CSV
+            </BaseButton>
+            <BaseButton
+              variant="light"
+              onClick={() => handleExportSummary('excel')}
+              icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
+            >
+              Export Excel
+            </BaseButton>
+          </div>
         </div>
 
         <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as string)}>
@@ -204,14 +257,7 @@ function ReportsPage() {
           {/* Custom Tab */}
           <Tab key="custom" title="Custom">
             <div className="mt-4">
-              <Card className="p-6">
-                <h3 className="mb-4 text-lg font-semibold">Custom Report Builder</h3>
-                <p className="text-gray-600">
-                  Custom report builder will be implemented here with column selector, filter
-                  builder, and export functionality.
-                </p>
-                {/* TODO: Implement custom report builder UI */}
-              </Card>
+              <CustomReportBuilder onExport={handleExportCustom} />
             </div>
           </Tab>
 

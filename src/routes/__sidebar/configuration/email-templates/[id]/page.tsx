@@ -127,7 +127,6 @@ function EditEmailTemplatePage() {
 
   const handleVariableSelect = (placeholder: string) => {
     // REVIEW: Could enhance this to insert at cursor position in the future
-    console.log('Variable selected:', placeholder);
   };
 
   const formatFormErrors = (errors: any[]): string | undefined => {

@@ -132,3 +132,36 @@ export const usePublishKnowledgeBaseArticle = () => {
     },
   });
 };
+
+export const useRateKnowledgeBaseArticle = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ articleId, isHelpful }: { articleId: string; isHelpful: boolean }) => {
+      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+      const response = await client.v1KbArticlesIdRatePost(articleId, { isHelpful });
+      return response.data;
+    },
+    onSuccess: (_, { articleId }) => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article', articleId] });
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', articleId] });
+      addToast({ title: 'Thank you for your feedback!', severity: 'success' });
+    },
+    onError: () => {
+      addToast({ title: 'Failed to submit rating', severity: 'danger' });
+    },
+  });
+};
+
+export const useSimilarArticles = (text: string, limit = 5) => {
+  return useQuery({
+    queryKey: ['knowledge-base', 'similar', text, limit],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+      const response = await client.v1KbArticlesSuggestionsGet(text, limit);
+      return response.data;
+    },
+    enabled: text.length >= 3,
+    staleTime: 60_000, // Cache for 1 minute
+  });
+};

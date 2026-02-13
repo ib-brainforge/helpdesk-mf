@@ -5,7 +5,6 @@ import { useNavigate } from '@modern-js/runtime/router';
 import {
   BaseButton,
   BaseInput,
-  BaseTextarea,
   BaseSelect,
   BaseSelectItem,
   Icon,
@@ -24,6 +23,7 @@ import {
   type CreateKnowledgeBaseArticleDto,
   type UpdateKnowledgeBaseArticleDto,
 } from '@/types';
+import { TipTapEditor } from './TipTapEditor';
 
 const articleFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -216,17 +216,21 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
           <h2 className="text-lg font-semibold mb-4">Article Content</h2>
           <form.Field name="body">
             {(field) => (
-              <BaseTextarea
-                label="Body"
-                isRequired
-                placeholder="Write your article content here..."
-                value={field.state.value}
-                onValueChange={(value) => field.handleChange(value)}
-                minRows={15}
-                errorMessage={formatFormErrors(field.state.meta.errors)}
-                isInvalid={field.state.meta.errors.length > 0}
-                description="REVIEW: Rich text editor (TipTap) can be added if @tiptap packages are available"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Body <span className="text-danger">*</span>
+                </label>
+                <TipTapEditor
+                  content={field.state.value}
+                  onChange={(html) => field.handleChange(html)}
+                  placeholder="Write your article content here..."
+                />
+                {field.state.meta.errors.length > 0 && (
+                  <p className="text-xs text-danger mt-1">
+                    {formatFormErrors(field.state.meta.errors)}
+                  </p>
+                )}
+              </div>
             )}
           </form.Field>
         </div>

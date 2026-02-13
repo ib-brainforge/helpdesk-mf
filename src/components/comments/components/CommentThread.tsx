@@ -1,5 +1,7 @@
 import { CommentType, type CommentDto } from '@/types/comment';
 import { Chip } from '@heroui/react';
+import DOMPurify from 'dompurify';
+import { fromApiCommentType } from '@/utils/typeMappers';
 
 interface CommentThreadProps {
   comments: CommentDto[];
@@ -61,36 +63,37 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
 
   return (
     <div className="space-y-4">
-      {comments.map((comment) => (
-        <div
-          key={comment.id}
-          className={`p-4 rounded-lg border ${getCommentBackgroundClass(comment.commentType as any)}`}
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm">
-                {comment.createdByUserName || comment.authorId || 'Unknown User'}
-              </span>
-              <Chip
-                color={getCommentTypeColor(comment.commentType as any)}
-                variant="flat"
-                size="sm"
-              >
-                {getCommentTypeName(comment.commentType as any)}
-              </Chip>
-            </div>
-            <span className="text-xs text-default-400">
-              {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}
-            </span>
-          </div>
+      {comments.map((comment) => {
+        const commentType = fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
+        return (
           <div
-            className={`text-sm ${getCommentTextClass(comment.commentType as any)}`}
-            // REVIEW: Using dangerouslySetInnerHTML for HTML content
-            // TODO: Replace with proper HTML sanitization library if needed
-            dangerouslySetInnerHTML={{ __html: comment.body ?? '' }}
-          />
-        </div>
-      ))}
+            key={comment.id}
+            className={`p-4 rounded-lg border ${getCommentBackgroundClass(commentType)}`}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">
+                  {comment.createdByUserName || comment.authorId || 'Unknown User'}
+                </span>
+                <Chip
+                  color={getCommentTypeColor(commentType)}
+                  variant="flat"
+                  size="sm"
+                >
+                  {getCommentTypeName(commentType)}
+                </Chip>
+              </div>
+              <span className="text-xs text-default-400">
+                {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}
+              </span>
+            </div>
+            <div
+              className={`text-sm ${getCommentTextClass(commentType)}`}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.body ?? '') }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };

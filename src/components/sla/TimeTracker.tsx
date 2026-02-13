@@ -1,8 +1,8 @@
 import type { FC } from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { Card, Input } from '@heroui/react';
+import { Card } from '@heroui/react';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Icon } from '@brainforgeau/components/base';
+import { Icon, BaseInput } from '@brainforgeau/components';
 import type { TimeEntryDto, TicketTimeTrackingDto } from '@/types';
 
 interface TimeTrackerProps {
@@ -117,14 +117,14 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
       {/* Manual Entry Form */}
       {showManualEntry ? (
         <div className="mb-4 space-y-2 rounded border p-4">
-          <Input
+          <BaseInput
             type="number"
             label="Minutes"
             value={manualMinutes}
             onChange={(e) => setManualMinutes(e.target.value)}
             placeholder="Enter minutes"
           />
-          <Input
+          <BaseInput
             label="Notes"
             value={manualNotes}
             onChange={(e) => setManualNotes(e.target.value)}

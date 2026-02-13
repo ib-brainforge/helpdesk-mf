@@ -9,11 +9,15 @@ import { TicketFilters } from './TicketFilters';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useBulkUpdateTickets, useUpdateTicket } from '../hooks/useTickets';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
+import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 
 export const TicketGrid: FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { items, totalCount, pagination, setPagination, filters, setFilters, isLoading, refetch } =
     useTicketsData();
+
+  // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
+  useRealtimeTickets();
 
   const updateTicketMutation = useUpdateTicket();
   const bulkUpdateMutation = useBulkUpdateTickets();
@@ -46,7 +50,6 @@ export const TicketGrid: FC = () => {
 
   const paginationTemplate = useCallback(() => {
     const totalPages = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
-    if (totalPages <= 1) return null;
     return (
       <TablePagination
         totalPages={totalPages}
@@ -62,19 +65,16 @@ export const TicketGrid: FC = () => {
   const handleBulkAssign = useCallback(() => {
     const ids = selectedRows.map(row => row.original.id);
     // TODO: Open bulk assign modal
-    console.log('Bulk assign tickets:', ids);
   }, [selectedRows]);
 
   const handleBulkChangeStatus = useCallback(() => {
     const ids = selectedRows.map(row => row.original.id);
     // TODO: Open bulk status change modal
-    console.log('Bulk change status:', ids);
   }, [selectedRows]);
 
   const handleBulkDelete = useCallback(() => {
     const ids = selectedRows.map(row => row.original.id);
     // TODO: Open confirmation modal
-    console.log('Bulk delete tickets:', ids);
   }, [selectedRows]);
 
   const handleSearch = useCallback((term: string) => {
@@ -83,69 +83,71 @@ export const TicketGrid: FC = () => {
   }, [filters, setFilters]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Tickets</h1>
-        <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
-          <BaseButton
-            as={NavLink}
-            href="/tickets/new"
-            color="primary"
-            icon={<Icon name="plus" className="h-4 w-4" />}
-          >
-            New Ticket
-          </BaseButton>
-        </PermissionGuard>
-      </div>
-
-      {/* Filters */}
-      <TicketFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        onSearch={handleSearch}
-        searchTerm={searchTerm}
-      />
-
-      {/* Bulk Actions */}
-      {hasSelectedRows && (
-        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-          <span className="text-sm font-medium">
-            {selectedRows.length} ticket{selectedRows.length !== 1 ? 's' : ''} selected
-          </span>
-          <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketAssign]} fallback={null}>
-            <BaseButton
-              variant="bordered"
-              size="sm"
-              onPress={handleBulkAssign}
-              icon={<Icon name="user-plus" className="h-4 w-4" />}
-            >
-              Assign
-            </BaseButton>
-          </PermissionGuard>
+    <>
+      <div className="mb-5">
+        {/* Header */}
+        <div className="mb-5 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Tickets</h1>
           <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
             <BaseButton
-              variant="bordered"
-              size="sm"
-              onPress={handleBulkChangeStatus}
-              icon={<Icon name="arrow-path" className="h-4 w-4" />}
+              as={NavLink}
+              href="/tickets/new"
+              color="primary"
+              icon={<Icon name="plus" className="h-4 w-4" />}
             >
-              Change Status
-            </BaseButton>
-          </PermissionGuard>
-          <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketDelete]} fallback={null}>
-            <BaseButton
-              variant="bordered"
-              size="sm"
-              color="danger"
-              onPress={handleBulkDelete}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            >
-              Delete
+              New Ticket
             </BaseButton>
           </PermissionGuard>
         </div>
-      )}
+
+        {/* Filters */}
+        <TicketFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          onSearch={handleSearch}
+          searchTerm={searchTerm}
+        />
+
+        {/* Bulk Actions */}
+        {hasSelectedRows && (
+          <div className="mt-5 flex items-center gap-4 rounded-lg bg-gray-50 p-4">
+            <span className="text-sm font-medium">
+              {selectedRows.length} ticket{selectedRows.length !== 1 ? 's' : ''} selected
+            </span>
+            <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketAssign]} fallback={null}>
+              <BaseButton
+                variant="bordered"
+                size="sm"
+                onPress={handleBulkAssign}
+                icon={<Icon name="user-plus" className="h-4 w-4" />}
+              >
+                Assign
+              </BaseButton>
+            </PermissionGuard>
+            <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+              <BaseButton
+                variant="bordered"
+                size="sm"
+                onPress={handleBulkChangeStatus}
+                icon={<Icon name="arrow-path" className="h-4 w-4" />}
+              >
+                Change Status
+              </BaseButton>
+            </PermissionGuard>
+            <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketDelete]} fallback={null}>
+              <BaseButton
+                variant="bordered"
+                size="sm"
+                color="danger"
+                onPress={handleBulkDelete}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              >
+                Delete
+              </BaseButton>
+            </PermissionGuard>
+          </div>
+        )}
+      </div>
 
       {/* Table */}
       <BaseTable
@@ -155,6 +157,6 @@ export const TicketGrid: FC = () => {
         showInfo={false}
         paginationTemplate={paginationTemplate}
       />
-    </div>
+    </>
   );
 };

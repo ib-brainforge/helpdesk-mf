@@ -17,40 +17,42 @@ function EmailSettingsPage() {
   const [editingMailServer, setEditingMailServer] = useState<MailServerConfigDto | null>(null);
   const { items, totalCount, pagination, setPagination, isLoading, refetch } = useMailServersData();
 
-  // TODO: Replace with actual API call when @brainforgeau/helpdesk-backend-client is available
+  // TODO: Delete endpoint not yet implemented in backend
   const deleteMutation = useMutation({
     mutationFn: async (mailServerId: string) => {
-      // const client = await createHelpdeskApiClient(MailServerConfigApi);
-      // await client.deleteMailServer(mailServerId);
-      console.log('Delete mail server:', mailServerId);
+      throw new Error('Delete functionality not yet available - backend endpoint pending');
     },
     onSuccess: () => {
       addToast({ title: 'Mail server deleted successfully', severity: 'success' });
       refetch();
     },
-    onError: () => {
-      // Error handled by global axios interceptor
+    onError: (error: any) => {
+      addToast({
+        title: 'Delete failed',
+        description: error?.message || 'Failed to delete mail server',
+        severity: 'danger',
+      });
     },
   });
 
-  // TODO: Replace with actual API call when @brainforgeau/helpdesk-backend-client is available
+  // TODO: Test connection endpoint not yet implemented in backend
   const testConnectionMutation = useMutation({
     mutationFn: async (mailServerId: string) => {
-      // const client = await createHelpdeskApiClient(MailServerConfigApi);
-      // const result = await client.testMailConnection({ mailServerConfigId: mailServerId });
-      // return result;
-      console.log('Test connection for:', mailServerId);
-      return { success: true, message: 'Connection successful' };
+      throw new Error('Test connection not yet available - backend endpoint pending');
     },
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       addToast({
         title: result.success ? 'Connection successful' : 'Connection failed',
         severity: result.success ? 'success' : 'danger',
         description: result.message,
       });
     },
-    onError: () => {
-      // Error handled by global axios interceptor
+    onError: (error: any) => {
+      addToast({
+        title: 'Test connection failed',
+        description: error?.message || 'Failed to test connection',
+        severity: 'danger',
+      });
     },
   });
 

@@ -14,6 +14,7 @@ import { useSla } from '@/components/sla/hooks/useSla';
 import { useTimeTracking, useStartTimer, useStopTimer, usePauseTimer, useAddTimeEntry, useDeleteTimeEntry } from '@/components/sla/hooks/useTimeTracking';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
+import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 
 const getStatusConfig = (status: TicketStatus) => {
   switch (status) {
@@ -51,6 +52,9 @@ export const TicketDetail: FC = () => {
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   const updateTicketMutation = useUpdateTicket();
 
+  // REVIEW: Real-time updates via SignalR - auto-refreshes comments when added/updated
+  useRealtimeComments(id ?? '');
+
   // Attachments
   const { attachments, isLoading: attachmentsLoading } = useAttachments(id);
   const { uploadFiles, uploadProgress, isUploading } = useUploadAttachment();
@@ -83,12 +87,10 @@ export const TicketDetail: FC = () => {
 
   const handleMerge = useCallback(() => {
     // TODO: Implement merge functionality in Phase 2
-    console.log('Merge ticket:', id);
   }, [id]);
 
   const handleLink = useCallback(() => {
     // TODO: Implement link functionality in Phase 2
-    console.log('Link ticket:', id);
   }, [id]);
 
   const handleFilesSelected = useCallback(

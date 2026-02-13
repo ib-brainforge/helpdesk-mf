@@ -79,3 +79,98 @@ export const useUpdateAsset = () => {
     },
   });
 };
+
+export const useDeleteAsset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const client = await createHelpdeskApiClient(AssetsApi);
+      const { data } = await client.v1AssetsIdDelete(id);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+    },
+  });
+};
+
+export const useCloneAsset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const client = await createHelpdeskApiClient(AssetsApi);
+      const { data } = await client.v1AssetsIdClonePost(id);
+      // REVIEW: Type mapping from generated types to local types
+      return (data as unknown) as AssetDto;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+    },
+  });
+};
+
+export const useAssignAsset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, userId }: { id: string; userId: string }) => {
+      const client = await createHelpdeskApiClient(AssetsApi);
+      const { data } = await client.v1AssetsIdAssignPost(id, userId);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['asset', variables.id] });
+    },
+  });
+};
+
+export const useUnassignAsset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, userId }: { id: string; userId: string }) => {
+      const client = await createHelpdeskApiClient(AssetsApi);
+      const { data } = await client.v1AssetsIdUnassignPost(id, userId);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['asset', variables.id] });
+    },
+  });
+};
+
+export const useLinkAssetToTicket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ticketId }: { id: string; ticketId: string }) => {
+      const client = await createHelpdeskApiClient(AssetsApi);
+      const { data } = await client.v1AssetsIdLinkTicketPost(id, ticketId);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['asset', variables.id] });
+    },
+  });
+};
+
+export const useUnlinkAssetFromTicket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ticketId }: { id: string; ticketId: string }) => {
+      const client = await createHelpdeskApiClient(AssetsApi);
+      const { data } = await client.v1AssetsIdUnlinkTicketPost(id, ticketId);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['asset', variables.id] });
+    },
+  });
+};

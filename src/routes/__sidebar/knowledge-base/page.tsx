@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
-import { Input, Select, SelectItem, Card } from '@heroui/react';
-import { Icon } from '@brainforgeau/components/base';
+import { Card } from '@heroui/react';
+import { Icon, BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { useKnowledgeBaseArticles, useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KnowledgeBaseStatus } from '@/types';
@@ -65,16 +65,21 @@ function KnowledgeBasePage() {
 
         {/* Search and Filters */}
         <div className="mb-6 flex flex-wrap gap-4">
-          <Input
+          <BaseInput
             placeholder="Search articles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchTerm) {
+                window.location.href = `/knowledge-base/search?q=${encodeURIComponent(searchTerm)}`;
+              }
+            }}
             startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
             className="flex-1"
           />
-          <Select
+          <BaseSelect
             placeholder="All Categories"
-            selectedKeys={selectedCategory ? [selectedCategory] : []}
+            selectedKeys={selectedCategory ? new Set([selectedCategory]) : new Set()}
             onSelectionChange={(keys) => {
               const key = Array.from(keys)[0] as string;
               setSelectedCategory(key || '');
@@ -82,31 +87,63 @@ function KnowledgeBasePage() {
             className="w-64"
           >
             {categories?.map((cat) => (
-              <SelectItem key={cat.id}>
+              <BaseSelectItem key={cat.id}>
                 {cat.name}
-              </SelectItem>
+              </BaseSelectItem>
             )) || []}
-          </Select>
-          <Select
+          </BaseSelect>
+          <BaseSelect
             placeholder="All Statuses"
-            selectedKeys={statusFilter !== '' ? [statusFilter.toString()] : []}
+            selectedKeys={statusFilter !== '' ? new Set([statusFilter.toString()]) : new Set()}
             onSelectionChange={(keys) => {
               const key = Array.from(keys)[0] as string;
               setStatusFilter(key ? parseInt(key, 10) : '');
             }}
             className="w-48"
           >
-            <SelectItem key={KnowledgeBaseStatus.Published.toString()}>
+            <BaseSelectItem key={KnowledgeBaseStatus.Published.toString()}>
               Published
-            </SelectItem>
-            <SelectItem key={KnowledgeBaseStatus.Draft.toString()}>
+            </BaseSelectItem>
+            <BaseSelectItem key={KnowledgeBaseStatus.Draft.toString()}>
               Draft
-            </SelectItem>
-            <SelectItem key={KnowledgeBaseStatus.Archived.toString()}>
+            </BaseSelectItem>
+            <BaseSelectItem key={KnowledgeBaseStatus.Archived.toString()}>
               Archived
-            </SelectItem>
-          </Select>
+            </BaseSelectItem>
+          </BaseSelect>
         </div>
+
+        {/* Categories Grid (when no filters applied) */}
+        {!searchTerm && !selectedCategory && !statusFilter && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Browse by Category</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {categories?.map((cat) => (
+                <Card
+                  key={cat.id}
+                  as="a"
+                  href={`/knowledge-base/category/${(cat as any).slug || cat.id}`}
+                  className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                >
+                  <div className="flex items-start gap-3">
+                    <Icon name="folder" className="h-6 w-6 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold line-clamp-1">{cat.name}</h3>
+                      {cat.description && (
+                        <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+                          {cat.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">
+                        {cat.articleCount} article{cat.articleCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Articles Grid */}
         {loadingArticles ? (

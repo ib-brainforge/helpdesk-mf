@@ -18,6 +18,7 @@ import {
   type AutomationActionDto,
   type CreateAutomationRuleDto,
 } from '@/types/automation';
+import { toApiAutomationTriggerType, toApiConditionMatchType } from '@/utils/typeMappers';
 
 // Import the same labels from the edit page
 const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
@@ -95,7 +96,17 @@ function NewAutomationRulePage() {
   const createMutation = useMutation({
     mutationFn: async (data: CreateAutomationRuleDto) => {
       const client = await createHelpdeskApiClient(AutomationRulesApi);
-      await client.v1AutomationRulesPost(data as any);
+      await client.v1AutomationRulesPost({
+        name: data.name,
+        description: data.description,
+        triggerType: toApiAutomationTriggerType(data.triggerType),
+        matchType: toApiConditionMatchType(data.conditionMatchType),
+        isEnabled: data.isEnabled,
+        isNested: false,
+        conditions: data.conditions,
+        actions: data.actions,
+        elseActions: [],
+      });
     },
     onSuccess: () => {
       addToast({ title: 'Automation rule created successfully', severity: 'success' });

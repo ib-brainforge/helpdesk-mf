@@ -14,8 +14,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const config = useAtomValue(configAtom);
   const identityBaseUrl = __IDENTITY_BASE_URL__ || '';
 
-  console.log('AuthProvider render, __HELPDESK_STANDALONE__:', __HELPDESK_STANDALONE__);
-
   return (
     <FlexibleAuthProvider
       mode={__HELPDESK_STANDALONE__ === true ? 'shell' : 'microfrontend'}

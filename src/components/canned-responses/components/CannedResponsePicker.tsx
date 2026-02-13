@@ -6,6 +6,7 @@ import { Chip } from '@heroui/react';
 import { useCannedResponses } from '../hooks';
 import type { CannedResponseDto } from '@/types/canned-response';
 import { CannedResponseScope } from '@/types/canned-response';
+import DOMPurify from 'dompurify';
 
 interface CannedResponsePickerProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
           startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-default-400" />}
         />
 
-        <div className="flex gap-4" style={{ height: '400px' }}>
+        <div className="flex gap-4 h-[400px]">
           {/* List of responses */}
           <div className="flex-1 overflow-y-auto border rounded-lg p-2">
             {isLoading ? (
@@ -157,8 +158,7 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
                   <h4 className="text-xs font-semibold text-default-500 mb-2">PREVIEW</h4>
                   <div
                     className="text-sm prose prose-sm max-w-none dark:prose-invert"
-                    // REVIEW: Using dangerouslySetInnerHTML for HTML preview
-                    dangerouslySetInnerHTML={{ __html: selectedResponse.body ?? '' }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedResponse.body ?? '') }}
                   />
                 </div>
                 <div className="mt-4 pt-4 border-t">

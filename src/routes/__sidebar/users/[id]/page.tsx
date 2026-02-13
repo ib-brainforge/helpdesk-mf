@@ -11,6 +11,7 @@ import {
   BaseSelectItem,
   BaseTextarea,
 } from '@brainforgeau/components';
+import { UserTicketsPanel } from '@components/users';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -200,6 +201,10 @@ function PageContent({ user, id }: { user: HelpdeskUserDto; id: string }) {
                 </div>
               </div>
             )}
+
+            <div className="border-t pt-6">
+              <UserTicketsPanel userId={id} />
+            </div>
           </div>
         </div>
       </form>

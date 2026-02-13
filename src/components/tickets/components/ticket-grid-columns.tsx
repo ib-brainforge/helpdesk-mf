@@ -184,7 +184,6 @@ export const createTicketColumns = (
               key="assign"
               onPress={() => {
                 // TODO: Open assign modal
-                console.log('Assign ticket', row.original.id);
               }}
             >
               Assign
@@ -193,7 +192,6 @@ export const createTicketColumns = (
               key="status"
               onPress={() => {
                 // TODO: Open status change modal
-                console.log('Change status', row.original.id);
               }}
             >
               Change Status
@@ -202,7 +200,6 @@ export const createTicketColumns = (
               key="priority"
               onPress={() => {
                 // TODO: Open priority change modal
-                console.log('Change priority', row.original.id);
               }}
             >
               Change Priority

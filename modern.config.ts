@@ -44,6 +44,7 @@ const config = {
     baseUrl: process.env.API_BASE_URL || '',
     notificationUrl: process.env.NOTIFICATION_API_URL || '',
   },
+  signalrHubUrl: process.env.SIGNALR_HUB_URL || '',
   // Docker image version passed at build time for observability
   version: process.env.APP_VERSION || 'unknown',
   // @brainforgeau package versions for observability tracking

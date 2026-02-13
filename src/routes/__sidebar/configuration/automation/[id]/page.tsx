@@ -19,6 +19,7 @@ import {
   type AutomationConditionDto,
   type AutomationActionDto,
 } from '@/types/automation';
+import { toApiAutomationTriggerType, toApiConditionMatchType } from '@/utils/typeMappers';
 
 const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
   [ConditionType.StatusIs]: 'Status is',
@@ -109,7 +110,7 @@ function EditAutomationRulePage() {
       setName(rule.name);
       setDescription(rule.description ?? '');
       setTriggerType(rule.triggerType);
-      setConditionMatchType(rule.conditionMatchType);
+      setConditionMatchType(rule.matchType);
       setConditions(rule.conditions);
       setActions(rule.actions);
       setIsEnabled(rule.isEnabled);
@@ -122,12 +123,12 @@ function EditAutomationRulePage() {
       await client.v1AutomationRulesIdPut(id!, {
         name,
         description,
-        triggerType,
-        conditionMatchType,
-        conditions: conditions.map(c => ({ type: c.type, parameters: c.parameters })),
-        actions: actions.map(a => ({ type: a.type, sortOrder: a.sortOrder, parameters: a.parameters })),
-        isEnabled,
-      } as any);
+        triggerType: toApiAutomationTriggerType(triggerType),
+        matchType: toApiConditionMatchType(conditionMatchType),
+        conditions,
+        actions,
+        elseActions: [],
+      });
     },
     onSuccess: () => {
       addToast({ title: 'Automation rule updated successfully', severity: 'success' });
