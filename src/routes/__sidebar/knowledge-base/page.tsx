@@ -179,11 +179,11 @@ function KnowledgeBasePage() {
                 </div>
                 <p className="mb-3 text-sm text-gray-600 line-clamp-3">{article.excerpt}</p>
                 <div className="mb-3 flex flex-wrap gap-1">
-                  {article.tags.slice(0, 3).map((tag) => (
+                  {article.tags?.slice(0, 3).map((tag) => (
                     <TagChip key={tag} name={tag} size="sm" />
                   ))}
-                  {article.tags.length > 3 && (
-                    <span className="text-xs text-gray-500">+{article.tags.length - 3} more</span>
+                  {(article.tags?.length ?? 0) > 3 && (
+                    <span className="text-xs text-gray-500">+{article.tags!.length - 3} more</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-500">

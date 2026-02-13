@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
 import { Tabs, Tab, Card, Select, SelectItem } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -27,6 +28,7 @@ import { exportToCSV, exportToExcel, formatReportData } from '@/components/repor
 import { ReportGranularity, type TechPerformanceDto, type CustomReportResultDto } from '@/types';
 
 function ReportsPage() {
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('summary');
   const [granularity, setGranularity] = useState<ReportGranularity>(ReportGranularity.Daily);
 
@@ -76,22 +78,22 @@ function ReportsPage() {
       {
         accessorKey: 'averageResolutionTimeHours',
         header: 'Avg Resolution',
-        cell: (info) => `${(info.getValue() as number).toFixed(1)}h`,
+        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
       },
       {
         accessorKey: 'averageFirstResponseTimeHours',
         header: 'First Response',
-        cell: (info) => `${(info.getValue() as number).toFixed(1)}h`,
+        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
       },
       {
         accessorKey: 'p50ResolutionTimeHours',
         header: 'P50',
-        cell: (info) => `${(info.getValue() as number).toFixed(1)}h`,
+        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
       },
       {
         accessorKey: 'p90ResolutionTimeHours',
         header: 'P90',
-        cell: (info) => `${(info.getValue() as number).toFixed(1)}h`,
+        cell: (info) => `${((info.getValue() as number) ?? 0).toFixed(1)}h`,
       },
     ],
     [],
@@ -143,6 +145,13 @@ function ReportsPage() {
         <div className="mb-5 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Reports Dashboard</h1>
           <div className="flex gap-3">
+            <BaseButton
+              variant="light"
+              onClick={() => navigate('/reports/satisfaction')}
+              icon={<Icon name="star" className="h-4 w-4" />}
+            >
+              CSAT Report
+            </BaseButton>
             <DateRangeSelector
               startDate={startDate}
               endDate={endDate}
@@ -188,7 +197,7 @@ function ReportsPage() {
                 <Card className="p-4">
                   <p className="text-sm text-gray-600">Avg Resolution Time</p>
                   <p className="text-3xl font-bold">
-                    {summaryData?.averageResolutionTimeHours.toFixed(1) || 0}h
+                    {(summaryData?.averageResolutionTimeHours ?? 0).toFixed(1)}h
                   </p>
                 </Card>
               </div>

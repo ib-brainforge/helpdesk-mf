@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import * as signalR from '@microsoft/signalr';
-import { getAccessToken } from '@brainforgeau/security';
-import { configAtom, type HelpdeskConfig } from '@/state/config';
-import { useAtomValue } from 'jotai';
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  HubConnectionState,
+  LogLevel,
+} from '@microsoft/signalr';
+import { getAccessToken, getContextToken } from '@brainforgeau/security';
+import { configAtom, hubConnectedAtom, type HelpdeskConfig } from '@/state/config';
+import { useAtomValue, useSetAtom } from 'jotai';
 
 export type SignalRConnectionState = 'connected' | 'disconnected' | 'reconnecting' | 'error';
+
+// Auto-reconnect delays (milliseconds)
+const RECONNECT_DELAYS = [0, 2000, 5000, 10000, 30000];
 
 export interface UseSignalROptions {
   hubPath: string;
@@ -17,7 +25,7 @@ export interface UseSignalROptions {
 }
 
 export interface UseSignalRReturn {
-  connection: signalR.HubConnection | null;
+  connection: HubConnection | null;
   connectionState: SignalRConnectionState;
   isConnected: boolean;
   connect: () => Promise<void>;
@@ -26,101 +34,121 @@ export interface UseSignalRReturn {
 
 /**
  * Hook to manage SignalR connection to a hub.
- * Handles authentication, auto-reconnect, and lifecycle management.
- *
- * @example
- * const { connection, isConnected } = useSignalR({
- *   hubPath: '/hubs/helpdesk',
- *   autoConnect: true,
- * });
+ * Passes JWT tokens via query string (same pattern as tracking-mf)
+ * because WebSocket connections cannot use Authorization headers
+ * after the initial handshake.
  */
 export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
   const { hubPath, autoConnect = true, onConnected, onDisconnected, onReconnecting, onReconnected, onError } = options;
 
   const config = useAtomValue(configAtom) as HelpdeskConfig;
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const setHubConnected = useSetAtom(hubConnectedAtom);
+  const connectionRef = useRef<HubConnection | null>(null);
   const [connectionState, setConnectionState] = useState<SignalRConnectionState>('disconnected');
 
   useEffect(() => {
-    const hubUrl = config?.signalrHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
+    let cancelled = false;
+    const hubBaseUrl = config?.signalrHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
 
-    if (!hubUrl) {
+    if (!hubBaseUrl) {
       console.warn('[useSignalR] SignalR hub URL not configured, connection will not be established');
       return;
     }
 
-    // Build SignalR connection with authentication
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: async () => {
-          const token = await getAccessToken();
-          return token || '';
-        },
-      })
-      .withAutomaticReconnect({
-        nextRetryDelayInMilliseconds: (retryContext) => {
-          // REVIEW: Exponential backoff: 0s, 2s, 10s, 30s, then max 60s
-          if (retryContext.previousRetryCount === 0) return 0;
-          if (retryContext.previousRetryCount === 1) return 2000;
-          if (retryContext.previousRetryCount === 2) return 10000;
-          if (retryContext.previousRetryCount === 3) return 30000;
-          return 60000;
-        },
-      })
-      .configureLogging(signalR.LogLevel.Information)
-      .build();
+    // Build hub URL with tokens in query string and start connection
+    // WebSocket connections cannot use Authorization headers after the initial handshake,
+    // so we must pass tokens via query string for the backend to extract them
+    const startConnection = async () => {
+      const accessToken = await getAccessToken();
+      const contextToken = getContextToken();
 
-    connectionRef.current = connection;
-
-    // Connection lifecycle handlers
-    connection.onclose((error) => {
-      setConnectionState('disconnected');
-      onDisconnected?.();
-      if (error) {
-        console.error('[useSignalR] Connection closed with error:', error);
-        onError?.(error);
+      const params = new URLSearchParams();
+      if (accessToken) {
+        params.set('access_token', accessToken);
       }
-    });
-
-    connection.onreconnecting((error) => {
-      setConnectionState('reconnecting');
-      onReconnecting?.();
-      if (error) {
-        console.warn('[useSignalR] Reconnecting due to error:', error);
+      if (contextToken) {
+        params.set('context_token', contextToken);
       }
-    });
 
-    connection.onreconnected(() => {
-      setConnectionState('connected');
-      onReconnected?.();
-      console.info('[useSignalR] Reconnected successfully');
-    });
+      const hubUrl = params.toString() ? `${hubBaseUrl}?${params.toString()}` : hubBaseUrl;
 
-    // Auto-connect if requested
-    if (autoConnect) {
-      connection
-        .start()
-        .then(() => {
+      if (cancelled) return;
+
+      const connection = new HubConnectionBuilder()
+        .withUrl(hubUrl)
+        .withAutomaticReconnect({
+          nextRetryDelayInMilliseconds: (retryContext) => {
+            if (retryContext.previousRetryCount >= RECONNECT_DELAYS.length) {
+              return null;
+            }
+            return RECONNECT_DELAYS[retryContext.previousRetryCount] ?? null;
+          },
+        })
+        .configureLogging(LogLevel.Information)
+        .build();
+
+      connectionRef.current = connection;
+
+      // Connection lifecycle handlers
+      connection.onclose((error) => {
+        setConnectionState('disconnected');
+        setHubConnected(false);
+        onDisconnected?.();
+        if (error) {
+          console.error('[useSignalR] Connection closed with error:', error);
+          onError?.(error);
+        }
+      });
+
+      connection.onreconnecting((error) => {
+        setConnectionState('reconnecting');
+        setHubConnected(false);
+        onReconnecting?.();
+        if (error) {
+          console.warn('[useSignalR] Reconnecting due to error:', error);
+        }
+      });
+
+      connection.onreconnected(() => {
+        setConnectionState('connected');
+        setHubConnected(true);
+        onReconnected?.();
+        console.info('[useSignalR] Reconnected successfully');
+      });
+
+      try {
+        await connection.start();
+        if (!cancelled) {
           setConnectionState('connected');
+          setHubConnected(true);
           onConnected?.();
           console.info('[useSignalR] Connected to hub:', hubPath);
-        })
-        .catch((err) => {
+        }
+      } catch (err: any) {
+        if (!cancelled) {
           setConnectionState('error');
           console.error('[useSignalR] Failed to connect:', err);
           onError?.(err);
-        });
+        }
+      }
+    };
+
+    if (autoConnect) {
+      startConnection();
     }
 
     // Cleanup on unmount
     return () => {
-      if (connection.state !== signalR.HubConnectionState.Disconnected) {
+      cancelled = true;
+      setHubConnected(false);
+      const connection = connectionRef.current;
+      if (connection && connection.state !== HubConnectionState.Disconnected) {
         connection.stop().catch((err) => {
           console.error('[useSignalR] Error disconnecting:', err);
         });
       }
     };
-  }, [hubPath, config?.signalrHubUrl, config?.api?.baseUrl, autoConnect, onConnected, onDisconnected, onReconnecting, onReconnected, onError]);
+  }, [hubPath, config?.signalrHubUrl, config?.api?.baseUrl, autoConnect]);
 
   const connect = async () => {
     const connection = connectionRef.current;
@@ -128,7 +156,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
       throw new Error('Connection not initialized');
     }
 
-    if (connection.state === signalR.HubConnectionState.Disconnected) {
+    if (connection.state === HubConnectionState.Disconnected) {
       try {
         await connection.start();
         setConnectionState('connected');
@@ -145,7 +173,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
     const connection = connectionRef.current;
     if (!connection) return;
 
-    if (connection.state !== signalR.HubConnectionState.Disconnected) {
+    if (connection.state !== HubConnectionState.Disconnected) {
       try {
         await connection.stop();
         setConnectionState('disconnected');
