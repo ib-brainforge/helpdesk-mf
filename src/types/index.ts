@@ -6,7 +6,6 @@ export * from './canned-response';
 export * from './ticket';
 export * from './email';
 export * from './knowledge-base';
-export * from './asset';
 export * from './report';
 export * from './file-upload';
 export * from './tag';

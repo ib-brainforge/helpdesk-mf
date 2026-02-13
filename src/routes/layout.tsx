@@ -48,12 +48,6 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     testId: 'nav-knowledge-base',
   },
   {
-    label: 'Assets',
-    href: '/assets',
-    icon: 'box',
-    testId: 'nav-assets',
-  },
-  {
     label: 'Reports',
     href: '/reports',
     icon: 'chart-bar',

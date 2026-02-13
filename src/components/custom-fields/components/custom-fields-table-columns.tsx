@@ -32,7 +32,6 @@ const getFieldTypeDisplayName = (type: CustomFieldType): string => {
 const getUsageTypeDisplayName = (type: CustomFieldUsageType): string => {
   const typeMap: Record<CustomFieldUsageType, string> = {
     [CustomFieldUsageType.Ticket]: 'Ticket',
-    [CustomFieldUsageType.Asset]: 'Asset',
   };
   return typeMap[type] || 'Unknown';
 };
