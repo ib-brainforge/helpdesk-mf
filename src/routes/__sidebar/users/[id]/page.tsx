@@ -19,6 +19,7 @@ import { addToast, Switch } from '@heroui/react';
 import { UsersApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { HelpdeskUserRole, type HelpdeskUserDto, type UpdateHelpdeskUserCommand } from '@/types/user';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 
 const userFormSchema = z.object({
   role: z.nativeEnum(HelpdeskUserRole),
@@ -39,6 +40,7 @@ const ROLE_OPTIONS = [
 
 function PageContent({ user, id }: { user: HelpdeskUserDto; id: string }) {
   const queryClient = useQueryClient();
+  const { categories } = useCategoriesData();
 
   const form = useForm({
     defaultValues: {
@@ -195,10 +197,26 @@ function PageContent({ user, id }: { user: HelpdeskUserDto; id: string }) {
                 <p className="text-sm text-default-500 mb-3">
                   Select categories this technician can access. Leave empty for all categories.
                 </p>
-                {/* TODO: Add category multi-select component when categories API is ready */}
-                <div className="text-sm text-default-400">
-                  Category permissions selector (to be implemented)
-                </div>
+                <form.Field name="categoryPermissionIds">
+                  {(field) => (
+                    <BaseSelect
+                      label="Allowed Categories"
+                      placeholder="Select categories (or leave empty for all)"
+                      selectionMode="multiple"
+                      selectedKeys={new Set(field.state.value ?? [])}
+                      onSelectionChange={(keys) => {
+                        field.handleChange(Array.from(keys) as string[]);
+                      }}
+                      description="Categories this technician can handle tickets for"
+                    >
+                      {categories.map((category) => (
+                        <BaseSelectItem key={category.id}>
+                          {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                        </BaseSelectItem>
+                      ))}
+                    </BaseSelect>
+                  )}
+                </form.Field>
               </div>
             )}
 

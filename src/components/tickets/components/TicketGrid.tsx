@@ -7,9 +7,13 @@ import { useTicketsTable } from '../hooks/useTicketsTable';
 import { createTicketColumns } from './ticket-grid-columns';
 import { TicketFilters } from './TicketFilters';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { useBulkUpdateTickets, useUpdateTicket } from '../hooks/useTickets';
+import { useBulkUpdateTickets, useUpdateTicket, useBulkDeleteTickets } from '../hooks/useTickets';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
+import { BulkAssignModal } from './BulkAssignModal';
+import { BulkStatusModal } from './BulkStatusModal';
+import { BulkDeleteModal } from './BulkDeleteModal';
+import { addToast } from '@heroui/react';
 
 export const TicketGrid: FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +25,11 @@ export const TicketGrid: FC = () => {
 
   const updateTicketMutation = useUpdateTicket();
   const bulkUpdateMutation = useBulkUpdateTickets();
+  const bulkDeleteMutation = useBulkDeleteTickets();
+
+  const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
+  const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
 
   const handleAssign = useCallback((ticketId: string, assigneeId: string) => {
     updateTicketMutation.mutate({ id: ticketId, updates: { assigneeId } });
@@ -63,19 +72,64 @@ export const TicketGrid: FC = () => {
   const hasSelectedRows = selectedRows.length > 0;
 
   const handleBulkAssign = useCallback(() => {
-    const ids = selectedRows.map(row => row.original.id);
-    // TODO: Open bulk assign modal
-  }, [selectedRows]);
+    setIsBulkAssignModalOpen(true);
+  }, []);
 
   const handleBulkChangeStatus = useCallback(() => {
-    const ids = selectedRows.map(row => row.original.id);
-    // TODO: Open bulk status change modal
-  }, [selectedRows]);
+    setIsBulkStatusModalOpen(true);
+  }, []);
 
   const handleBulkDelete = useCallback(() => {
-    const ids = selectedRows.map(row => row.original.id);
-    // TODO: Open confirmation modal
-  }, [selectedRows]);
+    setIsBulkDeleteModalOpen(true);
+  }, []);
+
+  const handleBulkAssignConfirm = useCallback((assigneeId: string | undefined) => {
+    const ids = selectedRows.map(row => row.original.id).filter((id): id is string => !!id);
+    bulkUpdateMutation.mutate(
+      { ids, updates: { assigneeId } },
+      {
+        onSuccess: () => {
+          addToast({
+            title: 'Tickets assigned',
+            description: `Successfully assigned ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
+            severity: 'success',
+          });
+          table.resetRowSelection();
+        },
+      }
+    );
+  }, [selectedRows, bulkUpdateMutation, table]);
+
+  const handleBulkStatusConfirm = useCallback((status: TicketStatus) => {
+    const ids = selectedRows.map(row => row.original.id).filter((id): id is string => !!id);
+    bulkUpdateMutation.mutate(
+      { ids, updates: { status } },
+      {
+        onSuccess: () => {
+          addToast({
+            title: 'Status updated',
+            description: `Successfully updated ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
+            severity: 'success',
+          });
+          table.resetRowSelection();
+        },
+      }
+    );
+  }, [selectedRows, bulkUpdateMutation, table]);
+
+  const handleBulkDeleteConfirm = useCallback(() => {
+    const ids = selectedRows.map(row => row.original.id).filter((id): id is string => !!id);
+    bulkDeleteMutation.mutate(ids, {
+      onSuccess: () => {
+        addToast({
+          title: 'Tickets deleted',
+          description: `Successfully deleted ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
+          severity: 'success',
+        });
+        table.resetRowSelection();
+      },
+    });
+  }, [selectedRows, bulkDeleteMutation, table]);
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
@@ -156,6 +210,26 @@ export const TicketGrid: FC = () => {
         isLoading={isLoading}
         showInfo={false}
         paginationTemplate={paginationTemplate}
+      />
+
+      {/* Bulk Action Modals */}
+      <BulkAssignModal
+        isOpen={isBulkAssignModalOpen}
+        onClose={() => setIsBulkAssignModalOpen(false)}
+        onConfirm={handleBulkAssignConfirm}
+        ticketCount={selectedRows.length}
+      />
+      <BulkStatusModal
+        isOpen={isBulkStatusModalOpen}
+        onClose={() => setIsBulkStatusModalOpen(false)}
+        onConfirm={handleBulkStatusConfirm}
+        ticketCount={selectedRows.length}
+      />
+      <BulkDeleteModal
+        isOpen={isBulkDeleteModalOpen}
+        onClose={() => setIsBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        ticketCount={selectedRows.length}
       />
     </>
   );

@@ -175,7 +175,7 @@ export const useBulkUpdateTickets = () => {
         }
 
         // Assignment change
-        if (updates.assigneeId) {
+        if (updates.assigneeId !== undefined) {
           await client.v1TicketsIdAssignPatch(id, { assigneeId: updates.assigneeId });
         }
       });
@@ -184,6 +184,61 @@ export const useBulkUpdateTickets = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useBulkDeleteTickets = () => {
+  const queryClient = useQueryClient();
+
+  // REVIEW: Using simple loop for bulk delete - backend doesn't have dedicated bulk endpoint
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const promises = ids.map(async (id) => {
+        await client.v1TicketsIdDelete(id);
+      });
+      await Promise.all(promises);
+      return ids;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useMergeTickets = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ primaryTicketId, ticketIdToMerge }: { primaryTicketId: string; ticketIdToMerge: string }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      // REVIEW: Backend expects mergedTicketId field based on MergeTicketsCommand
+      await client.v1TicketsIdMergePost(primaryTicketId, { mergedTicketId: ticketIdToMerge } as any);
+      return { primaryTicketId, ticketIdToMerge };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket', data.primaryTicketId] });
+      queryClient.invalidateQueries({ queryKey: ['ticket', data.ticketIdToMerge] });
+    },
+  });
+};
+
+export const useLinkTickets = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ sourceTicketId, targetTicketId, linkType }: { sourceTicketId: string; targetTicketId: string; linkType: string }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      // REVIEW: Using linkType as any to bypass enum type check - backend should accept string linkType
+      await client.v1TicketsIdLinksPost(sourceTicketId, { targetTicketId, linkType: linkType as any });
+      return { sourceTicketId, targetTicketId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket', data.sourceTicketId] });
+      queryClient.invalidateQueries({ queryKey: ['ticket', data.targetTicketId] });
     },
   });
 };

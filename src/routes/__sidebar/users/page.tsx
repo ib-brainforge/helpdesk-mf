@@ -17,8 +17,8 @@ import { UsersApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 
 function UsersPage() {
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } = useUsersData();
-  const { searchTerm } = useUsersFilters();
+  const { searchTerm, role, includeDisabled } = useUsersFilters();
+  const { items, totalCount, pagination, setPagination, isLoading, refetch } = useUsersData({ role, includeDisabled });
 
   const toggleDisabledMutation = useMutation({
     mutationFn: async ({ userId, isDisabled }: { userId: string; isDisabled: boolean }) => {
