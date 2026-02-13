@@ -11,15 +11,11 @@ import {
   type ColumnDef,
 } from '@tanstack/react-table';
 import {
-  useTicketSummaryReport,
   useDynamicsReport,
   useTechPerformanceReport,
 } from '@/components/reports/hooks/useReports';
 import {
-  StatusPieChart,
-  PriorityBarChart,
   TrendLineChart,
-  CategoryBarChart,
   ResolutionTimeChart,
 } from '@/components/reports/components/charts';
 import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
@@ -29,10 +25,9 @@ import { ReportGranularity, type TechPerformanceDto, type CustomReportResultDto 
 
 function ReportsPage() {
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState('summary');
+  const [selectedTab, setSelectedTab] = useState('dynamics');
   const [granularity, setGranularity] = useState<ReportGranularity>(ReportGranularity.Daily);
 
-  // REVIEW: Using local state for date range - integrated with DateRangeSelector
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   );
@@ -43,10 +38,6 @@ function ReportsPage() {
     setEndDate(end);
   };
 
-  const { data: summaryData, isLoading: loadingSummary } = useTicketSummaryReport(
-    startDate,
-    endDate,
-  );
   const { data: dynamicsData, isLoading: loadingDynamics } = useDynamicsReport(
     startDate,
     endDate,
@@ -105,25 +96,6 @@ function ReportsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // Export handlers
-  const handleExportSummary = (format: 'csv' | 'excel') => {
-    if (!summaryData) return;
-
-    const exportData = [
-      { metric: 'Total Created', value: summaryData.totalCreated },
-      { metric: 'Total Closed', value: summaryData.totalClosed },
-      { metric: 'Total Open', value: summaryData.totalOpen },
-      { metric: 'Avg Resolution Time (hours)', value: summaryData.averageResolutionTimeHours },
-    ];
-
-    const filename = `summary-report-${new Date().toISOString().split('T')[0]}`;
-    if (format === 'csv') {
-      exportToCSV(exportData, filename);
-    } else {
-      exportToExcel(exportData, filename);
-    }
-  };
-
   const handleExportCustom = (data: CustomReportResultDto, format: 'csv' | 'excel') => {
     const formattedData = formatReportData(data.rows);
     const filename = `custom-report-${new Date().toISOString().split('T')[0]}`;
@@ -138,12 +110,12 @@ function ReportsPage() {
   return (
     <>
       <Helmet>
-        <title>Reports Dashboard</title>
+        <title>Reports</title>
       </Helmet>
 
       <div className="mb-5">
         <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Reports Dashboard</h1>
+          <h1 className="text-2xl font-semibold">Reports</h1>
           <div className="flex gap-3">
             <BaseButton
               variant="light"
@@ -157,98 +129,35 @@ function ReportsPage() {
               endDate={endDate}
               onChange={handleDateRangeChange}
             />
-            <BaseButton
-              variant="light"
-              onClick={() => handleExportSummary('csv')}
-              icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
-            >
-              Export CSV
-            </BaseButton>
-            <BaseButton
-              variant="light"
-              onClick={() => handleExportSummary('excel')}
-              icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
-            >
-              Export Excel
-            </BaseButton>
           </div>
         </div>
 
         <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as string)}>
-          {/* Summary Tab */}
-          <Tab key="summary" title="Summary">
-            <div className="mt-4 space-y-6">
-              {/* Overview Cards */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <Card className="p-4">
-                  <p className="text-sm text-gray-600">Total Created</p>
-                  <p className="text-3xl font-bold">{summaryData?.totalCreated || 0}</p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-gray-600">Total Closed</p>
-                  <p className="text-3xl font-bold text-success">
-                    {summaryData?.totalClosed || 0}
-                  </p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-gray-600">Total Open</p>
-                  <p className="text-3xl font-bold text-warning">{summaryData?.totalOpen || 0}</p>
-                </Card>
-                <Card className="p-4">
-                  <p className="text-sm text-gray-600">Avg Resolution Time</p>
-                  <p className="text-3xl font-bold">
-                    {(summaryData?.averageResolutionTimeHours ?? 0).toFixed(1)}h
-                  </p>
-                </Card>
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <Card className="p-4">
-                  <h3 className="mb-4 text-lg font-semibold">By Status</h3>
-                  {summaryData?.byStatus && <StatusPieChart data={summaryData.byStatus} />}
-                </Card>
-
-                <Card className="p-4">
-                  <h3 className="mb-4 text-lg font-semibold">By Priority</h3>
-                  {summaryData?.byPriority && <PriorityBarChart data={summaryData.byPriority} />}
-                </Card>
-
-                <Card className="p-4 lg:col-span-2">
-                  <h3 className="mb-4 text-lg font-semibold">Top Categories</h3>
-                  {summaryData?.byCategory && <CategoryBarChart data={summaryData.byCategory} />}
-                </Card>
-              </div>
-            </div>
-          </Tab>
-
           {/* Dynamics Tab */}
           <Tab key="dynamics" title="Dynamics">
             <div className="mt-4 space-y-6">
-              {/* Filters */}
               <div className="flex gap-4">
                 <Select
                   label="Granularity"
-                  selectedKeys={[granularity.toString()]}
+                  selectedKeys={[granularity]}
                   onSelectionChange={(keys) => {
-                    const key = Array.from(keys)[0] as string;
-                    setGranularity(parseInt(key, 10));
+                    const key = Array.from(keys)[0] as ReportGranularity;
+                    setGranularity(key);
                   }}
                   className="w-48"
                 >
-                  <SelectItem key={ReportGranularity.Daily.toString()}>
+                  <SelectItem key={ReportGranularity.Daily}>
                     Daily
                   </SelectItem>
-                  <SelectItem key={ReportGranularity.Weekly.toString()}>
+                  <SelectItem key={ReportGranularity.Weekly}>
                     Weekly
                   </SelectItem>
-                  <SelectItem key={ReportGranularity.Monthly.toString()}>
+                  <SelectItem key={ReportGranularity.Monthly}>
                     Monthly
                   </SelectItem>
                 </Select>
               </div>
 
-              {/* Charts */}
               <Card className="p-4">
                 <h3 className="mb-4 text-lg font-semibold">Ticket Trends</h3>
                 {dynamicsData?.dataPoints && <TrendLineChart data={dynamicsData.dataPoints} />}
@@ -263,13 +172,6 @@ function ReportsPage() {
             </div>
           </Tab>
 
-          {/* Custom Tab */}
-          <Tab key="custom" title="Custom">
-            <div className="mt-4">
-              <CustomReportBuilder onExport={handleExportCustom} />
-            </div>
-          </Tab>
-
           {/* Tech Performance Tab */}
           <Tab key="tech-performance" title="Tech Performance">
             <div className="mt-4">
@@ -279,6 +181,13 @@ function ReportsPage() {
                 loading={{ title: 'Loading technician performance...' }}
                 fullHeight
               />
+            </div>
+          </Tab>
+
+          {/* Custom Tab */}
+          <Tab key="custom" title="Custom">
+            <div className="mt-4">
+              <CustomReportBuilder onExport={handleExportCustom} />
             </div>
           </Tab>
         </Tabs>

@@ -16,6 +16,8 @@ interface CategoryBarChartProps {
 }
 
 export const CategoryBarChart: FC<CategoryBarChartProps> = ({ data }) => {
+  if (!Array.isArray(data) || data.length === 0) return null;
+
   // Sort by count descending and take top 10
   const sortedData = [...data]
     .sort((a, b) => b.count - a.count)

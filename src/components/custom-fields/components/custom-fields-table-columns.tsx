@@ -2,7 +2,7 @@ import { BaseButton, Icon } from '@brainforgeau/components';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
 import type { CustomFieldsRow } from '../types';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
 
 const columnHelper = createColumnHelper<CustomFieldsRow>();
@@ -48,9 +48,9 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
     cell: ({ getValue }) => {
       const type = getValue();
       return (
-        <Chip color="primary" variant="flat" size="sm">
+        <StatusBadge color="primary">
           {getFieldTypeDisplayName(type)}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 140,
@@ -60,13 +60,10 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
     cell: ({ getValue }) => {
       const type = getValue();
       return (
-        <Chip
-          color={type === CustomFieldUsageType.Ticket ? 'secondary' : 'default'}
-          variant="flat"
-          size="sm"
-        >
+        <StatusBadge
+          color={type === CustomFieldUsageType.Ticket ? 'secondary' : 'default'}        >
           {getUsageTypeDisplayName(type)}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 100,
@@ -76,13 +73,10 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
     cell: ({ getValue }) => {
       const isRequired = getValue();
       return (
-        <Chip
-          color={isRequired ? 'warning' : 'default'}
-          variant="flat"
-          size="sm"
-        >
+        <StatusBadge
+          color={isRequired ? 'warning' : 'default'}        >
           {isRequired ? 'Yes' : 'No'}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 100,
@@ -92,13 +86,10 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
     cell: ({ getValue }) => {
       const isActive = getValue();
       return (
-        <Chip
-          color={isActive ? 'success' : 'default'}
-          variant="flat"
-          size="sm"
-        >
+        <StatusBadge
+          color={isActive ? 'success' : 'default'}        >
           {isActive ? 'Active' : 'Inactive'}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 100,

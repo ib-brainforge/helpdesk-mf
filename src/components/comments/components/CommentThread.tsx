@@ -1,5 +1,5 @@
 import { CommentType, type CommentDto } from '@/types/comment';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import DOMPurify from 'dompurify';
 import { fromApiCommentType } from '@/utils/typeMappers';
 
@@ -75,13 +75,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
                 <span className="font-semibold text-sm">
                   {comment.createdByUserName || comment.authorId || 'Unknown User'}
                 </span>
-                <Chip
+                <StatusBadge
                   color={getCommentTypeColor(commentType)}
-                  variant="flat"
-                  size="sm"
                 >
                   {getCommentTypeName(commentType)}
-                </Chip>
+                </StatusBadge>
               </div>
               <span className="text-xs text-default-400">
                 {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}

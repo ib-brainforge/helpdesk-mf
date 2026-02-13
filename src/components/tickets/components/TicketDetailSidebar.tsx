@@ -1,7 +1,7 @@
 import { type FC, useCallback, useState } from 'react';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { TicketStatus, TicketPriority, type TicketDto } from '@/types/ticket';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket, useCreateTag } from '@/components/tags/hooks/useTags';
@@ -115,7 +115,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-          fallback={<Chip color={statusConfig.color} variant="flat">{statusConfig.label}</Chip>}
+          fallback={<StatusBadge color={statusConfig.color}>{statusConfig.label}</StatusBadge>}
         >
           <BaseSelect
             selectedKeys={new Set([ticket.status?.toString() ?? ''])}
@@ -137,7 +137,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-          fallback={<Chip color={priorityConfig.color} variant="flat">{priorityConfig.label}</Chip>}
+          fallback={<StatusBadge color={priorityConfig.color}>{priorityConfig.label}</StatusBadge>}
         >
           <BaseSelect
             selectedKeys={new Set([ticket.priority?.toString() ?? ''])}
@@ -240,9 +240,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
                   <div className="flex flex-wrap gap-2">
                     {ticket.tags.map((tag) => (
-                      <Chip key={tag} size="sm" variant="flat">
+                      <StatusBadge key={tag}>
                         {tag}
-                      </Chip>
+                      </StatusBadge>
                     ))}
                   </div>
                 </div>

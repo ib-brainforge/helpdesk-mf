@@ -1,5 +1,6 @@
 import type { FC } from 'react';
-import { Card, Chip } from '@heroui/react';
+import { Card } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { Icon } from '@brainforgeau/components/base';
 import { SlaStatus, type SlaIndicatorDto } from '@/types';
 
@@ -57,24 +58,20 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
     return (
       <div className="flex gap-2">
         {slaData.responseStatus !== undefined && (
-          <Chip
-            size="sm"
+          <StatusBadge
             color={getStatusColor(slaData.responseStatus)}
-            variant="flat"
-            startContent={<Icon name={getStatusIcon(slaData.responseStatus)} className="h-3 w-3" />}
           >
+            <Icon name={getStatusIcon(slaData.responseStatus)} className="h-3 w-3" />
             Response: {formatTimeRemaining(slaData.responseTimeRemaining)}
-          </Chip>
+          </StatusBadge>
         )}
         {slaData.resolutionStatus !== undefined && (
-          <Chip
-            size="sm"
+          <StatusBadge
             color={getStatusColor(slaData.resolutionStatus)}
-            variant="flat"
-            startContent={<Icon name={getStatusIcon(slaData.resolutionStatus)} className="h-3 w-3" />}
           >
+            <Icon name={getStatusIcon(slaData.resolutionStatus)} className="h-3 w-3" />
             Resolution: {formatTimeRemaining(slaData.resolutionTimeRemaining)}
-          </Chip>
+          </StatusBadge>
         )}
       </div>
     );

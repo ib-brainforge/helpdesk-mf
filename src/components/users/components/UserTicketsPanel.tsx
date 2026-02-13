@@ -3,7 +3,8 @@ import { TicketsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { TicketListDto } from '@/types/ticket';
 import { NavLink } from '@modern-js/runtime/router';
-import { Chip, Tabs, Tab } from '@heroui/react';
+import { Tabs, Tab } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { useState } from 'react';
 import { PageSpinner } from '@brainforgeau/components';
 
@@ -136,20 +137,16 @@ export const UserTicketsPanel: React.FC<UserTicketsPanelProps> = ({ userId }) =>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Chip
+                    <StatusBadge
                       color={getPriorityColor(ticket.priority)}
-                      variant="flat"
-                      size="sm"
                     >
                       {ticket.priority || 'Normal'}
-                    </Chip>
-                    <Chip
+                    </StatusBadge>
+                    <StatusBadge
                       color={getStatusColor(ticket.status)}
-                      variant="flat"
-                      size="sm"
                     >
                       {ticket.status || 'New'}
-                    </Chip>
+                    </StatusBadge>
                   </div>
                 </div>
               </NavLink>

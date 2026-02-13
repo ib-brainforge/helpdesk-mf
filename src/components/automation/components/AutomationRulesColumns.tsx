@@ -1,8 +1,10 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Chip, Switch } from '@heroui/react';
+import { Switch } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import type { AutomationRuleRow } from '../types';
 import { AutomationTriggerType } from '@/types/automation';
+import { ChevronUpIcon, ChevronDownIcon, DocumentDuplicateIcon } from '@heroicons/react/24/solid';
 
 const columnHelper = createColumnHelper<AutomationRuleRow>();
 
@@ -47,25 +49,21 @@ export const createAutomationRulesColumns = ({
         <span className="text-sm font-medium">{info.getValue()}</span>
         <div className="flex flex-col">
           <BaseButton
-            variant="light"
-            size="sm"
-            isIconOnly
+            variant="link"
+            size="none"
+            className="text-foreground hover:text-blue"
+            aria-label="Move up"
             onPress={() => onMoveUp(info.row.original.id)}
-            className="h-4 w-4 min-w-0 p-0"
-            title="Move Up"
-          >
-            <Icon name="chevron-up" className="h-3 w-3" />
-          </BaseButton>
+            icon={<ChevronUpIcon className="h-3.5 w-3.5" />}
+          />
           <BaseButton
-            variant="light"
-            size="sm"
-            isIconOnly
+            variant="link"
+            size="none"
+            className="text-foreground hover:text-blue"
+            aria-label="Move down"
             onPress={() => onMoveDown(info.row.original.id)}
-            className="h-4 w-4 min-w-0 p-0"
-            title="Move Down"
-          >
-            <Icon name="chevron-down" className="h-3 w-3" />
-          </BaseButton>
+            icon={<ChevronDownIcon className="h-3.5 w-3.5" />}
+          />
         </div>
       </div>
     ),
@@ -88,26 +86,26 @@ export const createAutomationRulesColumns = ({
     cell: (info) => {
       const type = info.getValue() as AutomationTriggerType;
       return (
-        <Chip size="sm" variant="flat" color="primary">
+        <StatusBadge color="primary">
           {TRIGGER_TYPE_LABELS[type]}
-        </Chip>
+        </StatusBadge>
       );
     },
   }),
   columnHelper.accessor('conditionCount', {
     header: 'Conditions',
     cell: (info) => (
-      <Chip size="sm" variant="flat" color="default">
+      <StatusBadge>
         {info.getValue()}
-      </Chip>
+      </StatusBadge>
     ),
   }),
   columnHelper.accessor('actionCount', {
     header: 'Actions',
     cell: (info) => (
-      <Chip size="sm" variant="flat" color="default">
+      <StatusBadge>
         {info.getValue()}
-      </Chip>
+      </StatusBadge>
     ),
   }),
   columnHelper.accessor('executionCount', {
@@ -130,37 +128,33 @@ export const createAutomationRulesColumns = ({
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
+    header: '',
     cell: (info) => (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-end gap-1">
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-foreground hover:text-blue"
+          aria-label="Edit rule"
           onPress={() => onEdit(info.row.original.id)}
-          title="Edit"
-        >
-          <Icon name="pencil" className="h-4 w-4" />
-        </BaseButton>
+          icon={<Icon name="pencil" className="h-4 w-4" />}
+        />
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-foreground hover:text-blue"
+          aria-label="Duplicate rule"
           onPress={() => onDuplicate(info.row.original.id)}
-          title="Duplicate"
-        >
-          <Icon name="document-duplicate" className="h-4 w-4" />
-        </BaseButton>
+          icon={<DocumentDuplicateIcon className="h-4 w-4" />}
+        />
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-danger hover:text-danger-600"
+          aria-label="Delete rule"
           onPress={() => onDelete(info.row.original.id)}
-          title="Delete"
-          color="danger"
-        >
-          <Icon name="trash" className="h-4 w-4" />
-        </BaseButton>
+          icon={<Icon name="trash" className="h-4 w-4" />}
+        />
       </div>
     ),
   }),

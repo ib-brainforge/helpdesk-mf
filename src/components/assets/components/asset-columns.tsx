@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { AssetListDto, AssetStatus, AssetType } from '@/types';
 
 interface CreateAssetColumnsProps {
@@ -96,9 +96,9 @@ export const createAssetColumns = ({
     cell: (info) => {
       const status = info.getValue() as AssetStatus;
       return (
-        <Chip size="sm" color={getStatusColor(status)} variant="flat">
+        <StatusBadge color={getStatusColor(status)}>
           {getStatusLabel(status)}
-        </Chip>
+        </StatusBadge>
       );
     },
   },

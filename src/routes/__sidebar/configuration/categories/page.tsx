@@ -115,38 +115,15 @@ function CategoriesPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-default-500">Loading...</div>
-          </div>
-        ) : categories.length === 0 && sections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Icon name="folder" className="h-12 w-12 text-default-300 mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No categories yet
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Get started by creating your first category or section.
-            </p>
-            <div className="flex gap-2">
-              <BaseButton variant="bordered" onPress={handleCreateSection}>
-                Create Section
-              </BaseButton>
-              <BaseButton onPress={handleCreateCategory}>
-                Create Category
-              </BaseButton>
-            </div>
-          </div>
-        ) : (
-          <CategoryList
-            categories={categories}
-            sections={sections}
-            onEditCategory={handleEditCategory}
-            onDeleteCategory={(id) => deleteCategoryMutation.mutate(id)}
-            onEditSection={handleEditSection}
-            onDeleteSection={(id) => deleteSectionMutation.mutate(id)}
-          />
-        )}
+        <CategoryList
+          categories={categories}
+          sections={sections}
+          isLoading={isLoading}
+          onEditCategory={handleEditCategory}
+          onDeleteCategory={(id) => deleteCategoryMutation.mutate(id)}
+          onEditSection={handleEditSection}
+          onDeleteSection={(id) => deleteSectionMutation.mutate(id)}
+        />
       </div>
 
       <CategoryEditorModal

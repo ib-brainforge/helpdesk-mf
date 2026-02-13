@@ -1,6 +1,7 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { ApprovalMode, type ApprovalWorkflowListDto } from '@/types/approval';
 
 // REVIEW: Following existing pattern from AutomationRulesColumns
@@ -43,9 +44,9 @@ export const createApprovalWorkflowsColumns = ({
     accessorKey: 'approvalMode',
     header: 'Mode',
     cell: ({ row }) => (
-      <Chip size="sm" variant="flat" color="primary">
+      <StatusBadge color="primary">
         {APPROVAL_MODE_LABELS[row.original.approvalMode]}
-      </Chip>
+      </StatusBadge>
     ),
   },
   {
@@ -59,13 +60,9 @@ export const createApprovalWorkflowsColumns = ({
     accessorKey: 'isActive',
     header: 'Status',
     cell: ({ row }) => (
-      <Chip
-        size="sm"
-        variant="flat"
-        color={row.original.isActive ? 'success' : 'default'}
-      >
+      <StatusBadge color={row.original.isActive ? 'success' : 'default'}>
         {row.original.isActive ? 'Active' : 'Inactive'}
-      </Chip>
+      </StatusBadge>
     ),
   },
   {
