@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Card, CardBody, Chip } from '@heroui/react';
+import { Card, CardBody } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { usePendingApprovals } from '@/components/approvals';
 
 // REVIEW: Dashboard showing pending approvals for current user
@@ -73,9 +74,9 @@ function PendingApprovalsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-lg">{approval.ticketSubject}</h3>
-                      <Chip size="sm" color="warning" variant="flat">
+                      <StatusBadge color="warning">
                         Pending
-                      </Chip>
+                      </StatusBadge>
                     </div>
 
                     <div className="space-y-1 text-sm text-gray-600 mb-4">

@@ -1,6 +1,7 @@
 import { type FC, useState, useCallback } from 'react';
 import { BaseButton, Icon, BaseTextarea } from '@brainforgeau/components';
-import { Card, CardBody, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { Card, CardBody, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { PermissionGuard } from '@brainforgeau/security';
 import {
   useTicketApproval,
@@ -195,9 +196,9 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
         <CardBody className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Approval Status</h3>
-            <Chip color={getStateChipColor(approval.overallState)} variant="flat">
+            <StatusBadge color={getStateChipColor(approval.overallState)}>
               {ApprovalState[approval.overallState]}
-            </Chip>
+            </StatusBadge>
           </div>
 
           <div className="space-y-2 text-sm">
@@ -255,9 +256,9 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Chip size="sm" color={getDecisionChipColor(decisionItem.decision)} variant="flat">
+                      <StatusBadge color={getDecisionChipColor(decisionItem.decision)}>
                         {getDecisionLabel(decisionItem.decision)}
-                      </Chip>
+                      </StatusBadge>
                       {canDecide && (
                         <PermissionGuard
                           requiredPermissions={[HelpdeskPermissions.ApprovalsDecide]}

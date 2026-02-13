@@ -1,6 +1,6 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import type { MailServerRow } from '../types';
 import { MailProtocol } from '@/types/email';
 
@@ -26,9 +26,9 @@ export const createMailServersColumns = ({
     cell: (info) => {
       const protocol = info.getValue();
       return (
-        <Chip size="sm" variant="flat" color="default">
+        <StatusBadge>
           {protocol === MailProtocol.Imap ? 'IMAP' : 'POP3'}
-        </Chip>
+        </StatusBadge>
       );
     },
   }),
@@ -51,17 +51,17 @@ export const createMailServersColumns = ({
   columnHelper.accessor('useSsl', {
     header: 'SSL',
     cell: (info) => (
-      <Chip size="sm" variant="flat" color={info.getValue() ? 'success' : 'default'}>
+      <StatusBadge color={info.getValue() ? 'success' : 'default'}>
         {info.getValue() ? 'Enabled' : 'Disabled'}
-      </Chip>
+      </StatusBadge>
     ),
   }),
   columnHelper.accessor('isActive', {
     header: 'Status',
     cell: (info) => (
-      <Chip size="sm" variant="flat" color={info.getValue() ? 'success' : 'default'}>
+      <StatusBadge color={info.getValue() ? 'success' : 'default'}>
         {info.getValue() ? 'Active' : 'Inactive'}
-      </Chip>
+      </StatusBadge>
     ),
   }),
   columnHelper.accessor('healthStatus', {
@@ -70,9 +70,9 @@ export const createMailServersColumns = ({
       const status = info.getValue();
       const color = status === 'Healthy' ? 'success' : status === 'Unhealthy' ? 'danger' : 'warning';
       return status ? (
-        <Chip size="sm" variant="flat" color={color}>
+        <StatusBadge color={color}>
           {status}
-        </Chip>
+        </StatusBadge>
       ) : (
         <span className="text-sm text-gray-400">Unknown</span>
       );

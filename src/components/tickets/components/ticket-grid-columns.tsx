@@ -5,7 +5,8 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { NavLink } from '@modern-js/runtime/router';
 import type { TicketRow } from '../types';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
-import { Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 
 const columnHelper = createColumnHelper<TicketRow>();
@@ -113,9 +114,9 @@ export const createTicketColumns = (
       const status = getValue();
       const config = getStatusConfig(status);
       return (
-        <Chip color={config.color} variant="flat" size="sm">
+        <StatusBadge color={config.color}>
           {config.label}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 120,
@@ -126,9 +127,9 @@ export const createTicketColumns = (
       const priority = getValue();
       const config = getPriorityConfig(priority);
       return (
-        <Chip color={config.color} variant="flat" size="sm">
+        <StatusBadge color={config.color}>
           {config.label}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 120,

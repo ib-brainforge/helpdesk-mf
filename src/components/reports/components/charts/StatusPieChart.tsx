@@ -13,6 +13,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export const StatusPieChart: FC<StatusPieChartProps> = ({ data }) => {
+  if (!Array.isArray(data) || data.length === 0) return null;
+
   const chartData = data.map(item => ({
     name: item.statusName,
     value: item.count,

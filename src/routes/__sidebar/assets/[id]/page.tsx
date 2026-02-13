@@ -5,7 +5,8 @@ import { PageSpinner } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
-import { Chip, Card, CardBody, CardHeader, Divider } from '@heroui/react';
+import { Card, CardBody, CardHeader, Divider } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { useAsset } from '@/components/assets/hooks/useAssets';
 import { AssetStatus, AssetType } from '@/types';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -103,9 +104,9 @@ function AssetDetailPageContent({ id }: { id: string }) {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-semibold">{asset.name}</h1>
-                <Chip size="sm" color={getStatusColor(asset.status)} variant="flat">
+                <StatusBadge color={getStatusColor(asset.status)}>
                   {getStatusLabel(asset.status)}
-                </Chip>
+                </StatusBadge>
               </div>
               <p className="text-sm text-default-400">
                 {getTypeLabel(asset.assetType)} • Created {new Date(asset.createdAt).toLocaleDateString()}
@@ -145,9 +146,9 @@ function AssetDetailPageContent({ id }: { id: string }) {
                     </div>
                     <div>
                       <p className="text-sm text-default-400">Status</p>
-                      <Chip size="sm" color={getStatusColor(asset.status)} variant="flat">
+                      <StatusBadge color={getStatusColor(asset.status)}>
                         {getStatusLabel(asset.status)}
-                      </Chip>
+                      </StatusBadge>
                     </div>
                   </div>
                 </CardBody>

@@ -3,7 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
 import { NavLink } from '@modern-js/runtime/router';
 import type { UsersRow } from '../types';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { HelpdeskUserRole } from '@/types/user';
 
 const columnHelper = createColumnHelper<UsersRow>();
@@ -62,13 +62,10 @@ export const createUsersColumns = (options: CreateColumnsOptions): ColumnDef<Use
     cell: ({ getValue }) => {
       const role = getValue();
       return (
-        <Chip
-          color={getRoleColor(role)}
-          variant="flat"
-          size="sm"
-        >
+        <StatusBadge
+          color={getRoleColor(role)}        >
           {getRoleDisplayName(role)}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 120,
@@ -94,13 +91,10 @@ export const createUsersColumns = (options: CreateColumnsOptions): ColumnDef<Use
     cell: ({ getValue }) => {
       const isDisabled = getValue();
       return (
-        <Chip
-          color={isDisabled ? 'default' : 'success'}
-          variant="flat"
-          size="sm"
-        >
+        <StatusBadge
+          color={isDisabled ? 'default' : 'success'}        >
           {isDisabled ? 'Disabled' : 'Active'}
-        </Chip>
+        </StatusBadge>
       );
     },
     size: 100,

@@ -2,7 +2,8 @@ import { type FC, useCallback, useState } from 'react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
-import { Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { useTicketDetail, useUpdateTicket } from '../hooks/useTickets';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
@@ -194,12 +195,12 @@ export const TicketDetail: FC = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-2xl font-semibold">{ticket.subject}</h1>
-                  <Chip color={statusConfig.color} variant="flat" size="sm">
+                  <StatusBadge color={statusConfig.color}>
                     {statusConfig.label}
-                  </Chip>
-                  <Chip color={priorityConfig.color} variant="flat" size="sm">
+                  </StatusBadge>
+                  <StatusBadge color={priorityConfig.color}>
                     {priorityConfig.label}
-                  </Chip>
+                  </StatusBadge>
                 </div>
                 <p className="text-sm text-gray-500">Ticket #{ticket.id?.substring(0, 8)}</p>
               </div>

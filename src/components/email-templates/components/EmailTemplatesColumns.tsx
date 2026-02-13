@@ -1,6 +1,6 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import type { EmailTemplateRow } from '../types';
 import { NotificationType } from '@/types/email-template';
 
@@ -38,9 +38,9 @@ export const createEmailTemplatesColumns = ({
     cell: (info) => {
       const type = info.getValue() as NotificationType;
       return (
-        <Chip size="sm" variant="flat" color="primary">
+        <StatusBadge color="primary">
           {NOTIFICATION_TYPE_LABELS[type]}
-        </Chip>
+        </StatusBadge>
       );
     },
   }),
@@ -55,9 +55,9 @@ export const createEmailTemplatesColumns = ({
   columnHelper.accessor('isActive', {
     header: 'Status',
     cell: (info) => (
-      <Chip size="sm" variant="flat" color={info.getValue() ? 'success' : 'default'}>
+      <StatusBadge color={info.getValue() ? 'success' : 'default'}>
         {info.getValue() ? 'Active' : 'Inactive'}
-      </Chip>
+      </StatusBadge>
     ),
   }),
   columnHelper.display({

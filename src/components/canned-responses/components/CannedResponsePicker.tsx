@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { BaseInput, BaseModal } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
-import { Chip } from '@heroui/react';
+import { StatusBadge } from '@/components/shared';
 import { useCannedResponses } from '../hooks';
 import type { CannedResponseDto } from '@/types/canned-response';
 import { CannedResponseScope } from '@/types/canned-response';
@@ -111,13 +111,11 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
                   >
                     <div className="flex items-start justify-between mb-1">
                       <span className="font-medium text-sm">{response.title}</span>
-                      <Chip
+                      <StatusBadge
                         color={getScopeColor(response.scope as any)}
-                        variant="flat"
-                        size="sm"
                       >
                         {getScopeName(response.scope as any)}
-                      </Chip>
+                      </StatusBadge>
                     </div>
                     {response.categoryName && (
                       <div className="text-xs text-default-500">
@@ -140,13 +138,11 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
                 <div className="mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold">{selectedResponse.title}</h3>
-                    <Chip
+                    <StatusBadge
                       color={getScopeColor(selectedResponse.scope as any)}
-                      variant="flat"
-                      size="sm"
                     >
                       {getScopeName(selectedResponse.scope as any)}
-                    </Chip>
+                    </StatusBadge>
                   </div>
                   {selectedResponse.categoryName && (
                     <div className="text-xs text-default-500 mb-2">

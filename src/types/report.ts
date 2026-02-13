@@ -4,9 +4,9 @@
 import type { TicketPriority, TicketStatus } from './ticket';
 
 export enum ReportGranularity {
-  Daily = 0,
-  Weekly = 1,
-  Monthly = 2,
+  Daily = 'Daily',
+  Weekly = 'Weekly',
+  Monthly = 'Monthly',
 }
 
 export interface TicketSummaryReportDto {

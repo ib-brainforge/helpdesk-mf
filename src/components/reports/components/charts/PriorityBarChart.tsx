@@ -24,6 +24,8 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
+  if (!Array.isArray(data) || data.length === 0) return null;
+
   const chartData = data.map(item => ({
     name: item.priorityName,
     count: item.count,
