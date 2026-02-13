@@ -53,12 +53,6 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     icon: 'chart-bar',
     testId: 'nav-reports',
   },
-  {
-    label: 'Users',
-    href: '/users',
-    icon: 'user-group',
-    testId: 'nav-users',
-  },
 ];
 
 const navItemsBottom: GuardedItem<NavItem>[] = [
