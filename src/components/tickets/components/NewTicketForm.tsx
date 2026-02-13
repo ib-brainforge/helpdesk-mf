@@ -19,6 +19,9 @@ import { AttachmentList } from '@/components/file-upload/AttachmentList';
 import { useTags } from '@/components/tags/hooks/useTags';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
 import type { AttachmentDto } from '@/types';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { useUsersData } from '@/components/users/hooks/useUsersData';
+import { addToast } from '@heroui/react';
 
 const createTicketSchema = z.object({
   subject: z.string().min(1, 'Subject is required').max(200, 'Subject is too long'),
@@ -42,6 +45,10 @@ export const NewTicketForm: FC = () => {
   // Attachments - REVIEW: Store files locally until ticket is created
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const { uploadFiles, uploadProgress } = useUploadAttachment();
+
+  // Load categories and users
+  const { categories } = useCategoriesData();
+  const { items: users } = useUsersData();
 
   const form = useForm({
     defaultValues: {
@@ -79,7 +86,11 @@ export const NewTicketForm: FC = () => {
         }
       } catch (error) {
         console.error('Failed to create ticket:', error);
-        // TODO: Show error notification
+        addToast({
+          title: 'Failed to create ticket',
+          description: error instanceof Error ? error.message : 'An error occurred while creating the ticket',
+          severity: 'danger',
+        });
       }
     },
   });
@@ -140,7 +151,7 @@ export const NewTicketForm: FC = () => {
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               minRows={6}
-              description="Rich text editor with TipTap will be added in Phase 2"
+              description="Use the textarea to describe the issue in detail"
             />
           )}
         </form.Field>
@@ -180,10 +191,11 @@ export const NewTicketForm: FC = () => {
                   field.handleChange(value);
                 }}
               >
-                {/* TODO: Load categories from API */}
-                <BaseSelectItem key="cat-1">Authentication</BaseSelectItem>
-                <BaseSelectItem key="cat-2">Access</BaseSelectItem>
-                <BaseSelectItem key="cat-3">Feature Request</BaseSelectItem>
+                {categories.map((category) => (
+                  <BaseSelectItem key={category.id}>
+                    {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                  </BaseSelectItem>
+                ))}
               </BaseSelect>
             )}
           </form.Field>
@@ -201,9 +213,11 @@ export const NewTicketForm: FC = () => {
                 field.handleChange(value);
               }}
             >
-              {/* TODO: Load users from API */}
-              <BaseSelectItem key="user-1">John Doe</BaseSelectItem>
-              <BaseSelectItem key="user-2">Jane Smith</BaseSelectItem>
+              {users.map((user) => (
+                <BaseSelectItem key={user.id}>
+                  {user.name}
+                </BaseSelectItem>
+              ))}
             </BaseSelect>
           )}
         </form.Field>
