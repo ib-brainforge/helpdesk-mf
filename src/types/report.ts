@@ -51,15 +51,19 @@ export interface TechnicianBreakdownDto {
 
 export interface DynamicsReportDto {
   granularity: ReportGranularity;
+  fromDate?: string;
+  toDate?: string;
   dataPoints: DynamicsDataPointDto[];
 }
 
 export interface DynamicsDataPointDto {
-  date: string;
-  created: number;
-  closed: number;
-  open: number;
-  averageResolutionTimeHours: number;
+  periodStart: string;
+  periodEnd: string;
+  createdCount: number;
+  closedCount: number;
+  reopenedCount: number;
+  netOpen: number;
+  avgResolutionMinutes: number | null;
 }
 
 export interface CustomReportRequestDto {
@@ -78,19 +82,17 @@ export interface CustomReportResultDto {
   totalCount: number;
 }
 
-export interface TechPerformanceReportDto {
-  technicians: TechPerformanceDto[];
-}
-
 export interface TechPerformanceDto {
   technicianId: string;
-  technicianName: string;
-  assignedCount: number;
-  resolvedCount: number;
-  averageResolutionTimeHours: number;
-  averageFirstResponseTimeHours: number;
-  p50ResolutionTimeHours: number;
-  p90ResolutionTimeHours: number;
+  ticketsAssigned: number;
+  ticketsResolved: number;
+  avgResolutionMinutes: number | null;
+  avgFirstResponseMinutes: number | null;
+  p50ResolutionMinutes: number | null;
+  p90ResolutionMinutes: number | null;
+  p95ResolutionMinutes: number | null;
+  fromDate: string;
+  toDate: string;
 }
 
 export interface ReportFilters {
