@@ -1,5 +1,6 @@
 import { useState, useMemo, type FC } from 'react';
-import { Card, Checkbox, CheckboxGroup } from '@heroui/react';
+import { Checkbox, CheckboxGroup } from '@heroui/react';
+import { Box } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { BaseTable } from '@brainforgeau/components';
@@ -118,9 +119,7 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
   return (
     <div className="space-y-6">
       {/* Filter Section */}
-      <Card className="p-6">
-        <h3 className="mb-4 text-lg font-semibold">Report Configuration</h3>
-
+      <Box title="Report Configuration">
         <div className="space-y-6">
           {/* Column Selection */}
           <div>
@@ -201,24 +200,18 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
             )}
           </div>
         </div>
-      </Card>
+      </Box>
 
       {/* Results Section */}
       {reportData && (
-        <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              Results ({reportData.totalCount} tickets)
-            </h3>
-          </div>
-
+        <Box title={`Results (${reportData.totalCount} tickets)`}>
           <BaseTable
             table={table}
             isLoading={isGenerating}
             loading={{ title: 'Generating report...' }}
             fullHeight
           />
-        </Card>
+        </Box>
       )}
     </div>
   );

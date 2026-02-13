@@ -4,7 +4,7 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   TicketSummaryReportDto,
   DynamicsReportDto,
-  TechPerformanceReportDto,
+  TechPerformanceDto,
   ReportGranularity,
   CustomReportRequestDto,
   CustomReportResultDto,
@@ -39,16 +39,12 @@ export const useDynamicsReport = (
 };
 
 export const useTechPerformanceReport = (startDate?: string, endDate?: string) => {
-  return useQuery({
+  return useQuery<TechPerformanceDto[]>({
     queryKey: ['reports', 'tech-performance', startDate, endDate],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(ReportsApi);
       const { data } = await client.v1ReportsTechPerformanceGet(startDate, endDate);
-      // REVIEW: Type mapping from generated types to local types
-      // Generated type returns array of TechPerformanceDto, wrapping in object for consistency
-      return {
-        technicians: data as unknown as TechPerformanceReportDto['technicians'],
-      };
+      return data as TechPerformanceDto[];
     },
   });
 };

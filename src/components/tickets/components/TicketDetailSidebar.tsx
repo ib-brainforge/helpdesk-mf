@@ -6,6 +6,8 @@ import { TicketStatus, TicketPriority, type TicketDto } from '@/types/ticket';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket, useCreateTag } from '@/components/tags/hooks/useTags';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { useUsersData } from '@/components/users/hooks/useUsersData';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -72,6 +74,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   const [selectedTagNames, setSelectedTagNames] = useState<string[]>(
     ticketTags?.map(t => t.name) ?? []
   );
+
+  // Load categories and users
+  const { categories } = useCategoriesData();
+  const { items: users } = useUsersData();
 
   const handleTagsChange = useCallback(
     async (newTagNames: string[]) => {
@@ -172,9 +178,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            {/* TODO: Load users from API */}
-            <BaseSelectItem key="user-1">John Doe</BaseSelectItem>
-            <BaseSelectItem key="user-2">Jane Smith</BaseSelectItem>
+            {users.map((user) => (
+              <BaseSelectItem key={user.id}>
+                {user.name}
+              </BaseSelectItem>
+            ))}
           </BaseSelect>
         </PermissionGuard>
       </div>
@@ -195,10 +203,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            {/* TODO: Load categories from API */}
-            <BaseSelectItem key="cat-1">Authentication</BaseSelectItem>
-            <BaseSelectItem key="cat-2">Access</BaseSelectItem>
-            <BaseSelectItem key="cat-3">Feature Request</BaseSelectItem>
+            {categories.map((category) => (
+              <BaseSelectItem key={category.id}>
+                {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+              </BaseSelectItem>
+            ))}
           </BaseSelect>
         </PermissionGuard>
       </div>

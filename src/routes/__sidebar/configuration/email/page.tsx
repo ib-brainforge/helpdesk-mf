@@ -17,42 +17,33 @@ function EmailSettingsPage() {
   const [editingMailServer, setEditingMailServer] = useState<MailServerConfigDto | null>(null);
   const { items, totalCount, pagination, setPagination, isLoading, refetch } = useMailServersData();
 
-  // TODO: Delete endpoint not yet implemented in backend
+  // REVIEW: Delete endpoint not implemented yet in backend - would be v1/mail-servers/{id} DELETE
   const deleteMutation = useMutation({
     mutationFn: async (mailServerId: string) => {
+      addToast({
+        title: 'Feature not available',
+        description: 'Delete functionality not yet implemented - backend endpoint pending',
+        severity: 'warning',
+      });
       throw new Error('Delete functionality not yet available - backend endpoint pending');
     },
-    onSuccess: () => {
-      addToast({ title: 'Mail server deleted successfully', severity: 'success' });
-      refetch();
-    },
-    onError: (error: any) => {
-      addToast({
-        title: 'Delete failed',
-        description: error?.message || 'Failed to delete mail server',
-        severity: 'danger',
-      });
+    onError: () => {
+      // Error already shown in mutationFn
     },
   });
 
-  // TODO: Test connection endpoint not yet implemented in backend
+  // REVIEW: Test connection endpoint not implemented yet in backend - would be v1/mail-servers/{id}/test POST
   const testConnectionMutation = useMutation({
     mutationFn: async (mailServerId: string) => {
+      addToast({
+        title: 'Feature not available',
+        description: 'Test connection not yet implemented - backend endpoint pending',
+        severity: 'warning',
+      });
       throw new Error('Test connection not yet available - backend endpoint pending');
     },
-    onSuccess: (result: any) => {
-      addToast({
-        title: result.success ? 'Connection successful' : 'Connection failed',
-        severity: result.success ? 'success' : 'danger',
-        description: result.message,
-      });
-    },
-    onError: (error: any) => {
-      addToast({
-        title: 'Test connection failed',
-        description: error?.message || 'Failed to test connection',
-        severity: 'danger',
-      });
+    onError: () => {
+      // Error already shown in mutationFn
     },
   });
 

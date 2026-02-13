@@ -32,7 +32,6 @@ export enum CustomFieldType {
 
 export enum CustomFieldUsageType {
   Ticket = 0,
-  Asset = 1,
 }
 
 export interface CreateCustomFieldCommand {

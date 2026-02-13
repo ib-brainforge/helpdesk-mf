@@ -21,6 +21,10 @@ import { TicketApprovalPanel } from '@/components/approvals';
 import { CommentThread } from '@/components/comments/components/CommentThread';
 import { ReplyEditor } from '@/components/comments/components/ReplyEditor';
 import { useComments } from '@/components/comments/hooks/useComments';
+import { MergeTicketModal } from './MergeTicketModal';
+import { LinkTicketModal } from './LinkTicketModal';
+import { useMergeTickets, useLinkTickets } from '../hooks/useTickets';
+import { addToast } from '@heroui/react';
 
 const getStatusConfig = (status: TicketStatus) => {
   switch (status) {
@@ -79,8 +83,12 @@ export const TicketDetail: FC = () => {
   const pauseTimerMutation = usePauseTimer();
   const addTimeEntryMutation = useAddTimeEntry();
   const deleteTimeEntryMutation = useDeleteTimeEntry();
+  const mergeTicketsMutation = useMergeTickets();
+  const linkTicketsMutation = useLinkTickets();
 
   const [showAttachments, setShowAttachments] = useState(false);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
 
   const handleUpdate = useCallback(
     (updates: any) => {
@@ -95,12 +103,45 @@ export const TicketDetail: FC = () => {
   }, [navigate]);
 
   const handleMerge = useCallback(() => {
-    // TODO: Implement merge functionality in Phase 2
-  }, [id]);
+    setIsMergeModalOpen(true);
+  }, []);
 
   const handleLink = useCallback(() => {
-    // TODO: Implement link functionality in Phase 2
-  }, [id]);
+    setIsLinkModalOpen(true);
+  }, []);
+
+  const handleMergeConfirm = useCallback((targetTicketId: string) => {
+    if (!id) return;
+    mergeTicketsMutation.mutate(
+      { primaryTicketId: targetTicketId, ticketIdToMerge: id },
+      {
+        onSuccess: () => {
+          addToast({
+            title: 'Tickets merged',
+            description: `Ticket merged into ${targetTicketId.substring(0, 8)}`,
+            severity: 'success',
+          });
+          navigate(`/tickets/${targetTicketId}`);
+        },
+      }
+    );
+  }, [id, mergeTicketsMutation, navigate]);
+
+  const handleLinkConfirm = useCallback((targetTicketId: string, linkType: string) => {
+    if (!id) return;
+    linkTicketsMutation.mutate(
+      { sourceTicketId: id, targetTicketId, linkType },
+      {
+        onSuccess: () => {
+          addToast({
+            title: 'Tickets linked',
+            description: `Linked to ticket ${targetTicketId.substring(0, 8)}`,
+            severity: 'success',
+          });
+        },
+      }
+    );
+  }, [id, linkTicketsMutation]);
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
@@ -355,6 +396,20 @@ export const TicketDetail: FC = () => {
           <CSATWidget ticketId={id ?? ''} ticketStatus={ticket.status as any} />
         </div>
       </div>
+
+      {/* Modals */}
+      <MergeTicketModal
+        isOpen={isMergeModalOpen}
+        onClose={() => setIsMergeModalOpen(false)}
+        onConfirm={handleMergeConfirm}
+        currentTicketId={id ?? ''}
+      />
+      <LinkTicketModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        onConfirm={handleLinkConfirm}
+        currentTicketId={id ?? ''}
+      />
     </div>
   );
 };

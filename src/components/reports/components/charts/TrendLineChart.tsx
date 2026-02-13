@@ -19,10 +19,10 @@ export const TrendLineChart: FC<TrendLineChartProps> = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    date: new Date(item.date).toLocaleDateString(),
-    created: item.created,
-    closed: item.closed,
-    open: item.open,
+    date: new Date(item.periodStart).toLocaleDateString(),
+    created: item.createdCount,
+    closed: item.closedCount,
+    open: item.netOpen,
   }));
 
   return (
