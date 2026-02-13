@@ -1,6 +1,9 @@
 import { type FC, useState, useCallback } from 'react';
 import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, Icon } from '@brainforgeau/components';
 import { TicketStatus, TicketPriority, type TicketFilters as TicketFiltersType } from '@/types/ticket';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { useUsersData } from '@/components/users/hooks/useUsersData';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface TicketFiltersProps {
   filters: TicketFiltersType;
@@ -16,6 +19,9 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   searchTerm,
 }) => {
   const [preset, setPreset] = useState<string>('all');
+  const { currentUser } = useCurrentUser();
+  const { categories } = useCategoriesData();
+  const { items: users } = useUsersData();
 
   const handlePresetChange = useCallback((value: string) => {
     setPreset(value);
@@ -26,20 +32,22 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         onFiltersChange({});
         break;
       case 'my-tickets':
-        // TODO: Get current user ID
-        onFiltersChange({ assigneeId: ['current-user'] });
+        if (currentUser?.id) {
+          onFiltersChange({ assigneeId: [currentUser.id] });
+        }
         break;
       case 'unassigned':
-        onFiltersChange({ assigneeId: [''] });
+        // REVIEW: Backend doesn't support unassigned filter directly - would need to be implemented
+        onFiltersChange({});
         break;
       case 'overdue':
-        // TODO: Implement overdue filter when backend supports it
+        // REVIEW: Backend doesn't support overdue filter yet - would need to be implemented
         onFiltersChange({});
         break;
       default:
         onFiltersChange({});
     }
-  }, [onFiltersChange]);
+  }, [onFiltersChange, currentUser]);
 
   const handleStatusChange = useCallback((value: string[]) => {
     onFiltersChange({ ...filters, status: value.length > 0 ? value : undefined });
@@ -47,6 +55,14 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
 
   const handlePriorityChange = useCallback((value: string[]) => {
     onFiltersChange({ ...filters, priority: value.length > 0 ? value : undefined });
+  }, [filters, onFiltersChange]);
+
+  const handleCategoryChange = useCallback((value: string[]) => {
+    onFiltersChange({ ...filters, categoryId: value.length > 0 ? value : undefined });
+  }, [filters, onFiltersChange]);
+
+  const handleAssigneeChange = useCallback((value: string[]) => {
+    onFiltersChange({ ...filters, assigneeId: value.length > 0 ? value : undefined });
   }, [filters, onFiltersChange]);
 
   const handleClearFilters = useCallback(() => {
@@ -117,7 +133,39 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         </BaseSelect>
       </div>
 
-      {/* TODO: Add Category and Assignee filters when backend supports them */}
+      <div className="min-w-40">
+        <BaseSelect
+          label="Category"
+          placeholder="Filter by category"
+          className="w-full"
+          selectionMode="multiple"
+          selectedKeys={new Set(filters.categoryId ?? [])}
+          onSelectionChange={(keys) => handleCategoryChange(Array.from(keys) as string[])}
+        >
+          {categories.map((category) => (
+            <BaseSelectItem key={category.id}>
+              {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+            </BaseSelectItem>
+          ))}
+        </BaseSelect>
+      </div>
+
+      <div className="min-w-40">
+        <BaseSelect
+          label="Assignee"
+          placeholder="Filter by assignee"
+          className="w-full"
+          selectionMode="multiple"
+          selectedKeys={new Set(filters.assigneeId ?? [])}
+          onSelectionChange={(keys) => handleAssigneeChange(Array.from(keys) as string[])}
+        >
+          {users.map((user) => (
+            <BaseSelectItem key={user.id}>
+              {user.name}
+            </BaseSelectItem>
+          ))}
+        </BaseSelect>
+      </div>
 
       <div className="flex gap-2">
         <BaseButton

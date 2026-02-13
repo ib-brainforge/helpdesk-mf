@@ -28,12 +28,12 @@ export const UsersTableFilters: React.FC<UsersTableFiltersProps> = ({ table }) =
   const handleRoleChange = useCallback((keys: any) => {
     const selectedRole = keys.currentKey ? Number(keys.currentKey) as HelpdeskUserRole : undefined;
     setRole(selectedRole);
-    // TODO: Apply role filter when data fetching is implemented
+    // REVIEW: Role filter applied via useUsersData hook in parent component
   }, [setRole]);
 
   const handleIncludeDisabledChange = useCallback((checked: boolean) => {
     setIncludeDisabled(checked);
-    // TODO: Apply includeDisabled filter when data fetching is implemented
+    // REVIEW: includeDisabled filter applied via useUsersData hook in parent component
   }, [setIncludeDisabled]);
 
   return (

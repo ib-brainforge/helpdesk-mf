@@ -3,21 +3,26 @@ import { useState, useCallback } from 'react';
 import type { PaginationState } from '@tanstack/react-table';
 import { UsersApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { HelpdeskUserDto } from '@/types/user';
+import type { HelpdeskUserDto, HelpdeskUserRole } from '@/types/user';
 
-export const useUsersData = () => {
+interface UsersFilters {
+  role?: HelpdeskUserRole;
+  includeDisabled?: boolean;
+}
+
+export const useUsersData = (filters?: UsersFilters) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
   });
 
   const { data: pagedData, isLoading, refetch } = useQuery({
-    queryKey: ['helpdesk-users', pagination.pageIndex + 1, pagination.pageSize],
+    queryKey: ['helpdesk-users', pagination.pageIndex + 1, pagination.pageSize, filters?.role, filters?.includeDisabled],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(UsersApi);
       const { data } = await client.v1UsersGet(
-        undefined, // role filter
-        false, // includeDisabled
+        filters?.role as any, // REVIEW: Type mapping between HelpdeskUserRole and backend enum
+        filters?.includeDisabled ?? false, // includeDisabled
         pagination.pageIndex + 1,
         pagination.pageSize
       );
