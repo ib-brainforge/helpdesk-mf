@@ -124,27 +124,23 @@ export function toApiConditionMatchType(
 
 /**
  * Convert local CustomFieldUsageType enum to generated client type.
- * Local enum uses numeric values (0, 1), API uses string literals ('Ticket', 'Asset').
+ * Local enum uses numeric value (0), API uses string literal ('Ticket').
  */
 export function toApiCustomFieldUsageType(
   usageType: CustomFieldUsageType
 ): HelpdeskDomainCategoriesEnumsCustomFieldUsageType {
-  return usageType === CustomFieldUsageType.Ticket
-    ? HelpdeskDomainCategoriesEnumsCustomFieldUsageType.Ticket
-    : HelpdeskDomainCategoriesEnumsCustomFieldUsageType.Asset;
+  return HelpdeskDomainCategoriesEnumsCustomFieldUsageType.Ticket;
 }
 
 /**
  * Convert generated client CustomFieldUsageType to local enum.
- * API uses string literals ('Ticket', 'Asset'), local enum uses numeric values (0, 1).
+ * API uses string literal ('Ticket'), local enum uses numeric value (0).
  */
 export function fromApiCustomFieldUsageType(
   usageType: HelpdeskDomainCategoriesEnumsCustomFieldUsageType | undefined
 ): CustomFieldUsageType | undefined {
   if (!usageType) return undefined;
-  return usageType === HelpdeskDomainCategoriesEnumsCustomFieldUsageType.Ticket
-    ? CustomFieldUsageType.Ticket
-    : CustomFieldUsageType.Asset;
+  return CustomFieldUsageType.Ticket;
 }
 
 // ============================================================================
