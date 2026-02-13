@@ -18,6 +18,9 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { TicketApprovalPanel } from '@/components/approvals';
+import { CommentThread } from '@/components/comments/components/CommentThread';
+import { ReplyEditor } from '@/components/comments/components/ReplyEditor';
+import { useComments } from '@/components/comments/hooks/useComments';
 
 const getStatusConfig = (status: TicketStatus) => {
   switch (status) {
@@ -57,6 +60,9 @@ export const TicketDetail: FC = () => {
 
   // REVIEW: Real-time updates via SignalR - auto-refreshes comments when added/updated
   useRealtimeComments(id ?? '');
+
+  // Comments
+  const { comments, isLoading: commentsLoading } = useComments(id ?? '');
 
   // Attachments
   const { attachments, isLoading: attachmentsLoading } = useAttachments(id);
@@ -273,12 +279,12 @@ export const TicketDetail: FC = () => {
             )}
           </div>
 
-          {/* Comment Thread - Placeholder for Phase 2 */}
+          {/* Comment Thread */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Comments</h2>
-            <div className="text-center py-8 text-gray-500">
-              <Icon name="chat-bubble-left-right" className="h-12 w-12 mx-auto mb-2" />
-              <p>Comment thread will be implemented in Phase 2</p>
+            <div className="space-y-4">
+              <CommentThread comments={comments} isLoading={commentsLoading} />
+              <ReplyEditor ticketId={id ?? ''} categoryId={ticket.categoryId ?? undefined} />
             </div>
           </div>
 
