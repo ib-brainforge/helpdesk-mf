@@ -9,12 +9,14 @@ import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
 import { AttachmentList } from '@/components/file-upload/AttachmentList';
 import { SlaIndicator } from '@/components/sla/SlaIndicator';
 import { TimeTracker } from '@/components/sla/TimeTracker';
+import { CSATWidget } from './CSATWidget';
 import { useAttachments, useUploadAttachment, useDeleteAttachment } from '@/components/attachments/hooks/useAttachments';
 import { useSla } from '@/components/sla/hooks/useSla';
 import { useTimeTracking, useStartTimer, useStopTimer, usePauseTimer, useAddTimeEntry, useDeleteTimeEntry } from '@/components/sla/hooks/useTimeTracking';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
+import { TicketApprovalPanel } from '@/components/approvals';
 
 const getStatusConfig = (status: TicketStatus) => {
   switch (status) {
@@ -338,6 +340,12 @@ export const TicketDetail: FC = () => {
             onAddManualEntry={handleAddManualEntry}
             onDeleteEntry={handleDeleteTimeEntry}
           />
+
+          {/* Approval Panel */}
+          <TicketApprovalPanel ticketId={id ?? ''} />
+
+          {/* CSAT Widget */}
+          <CSATWidget ticketId={id ?? ''} ticketStatus={ticket.status as any} />
         </div>
       </div>
     </div>

@@ -23,3 +23,6 @@ const buildConfigFromGlobals = (): HelpdeskConfig => {
 
 // Atom to hold the config state - initialized from global variable
 export const configAtom = atom<HelpdeskConfig>(buildConfigFromGlobals());
+
+// Global SignalR hub connection status (synced by useSignalR hook)
+export const hubConnectedAtom = atom<boolean>(false);

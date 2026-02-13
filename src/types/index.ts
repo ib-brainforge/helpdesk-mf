@@ -11,3 +11,5 @@ export * from './report';
 export * from './file-upload';
 export * from './tag';
 export * from './sla';
+export * from './satisfaction';
+export * from './approval';

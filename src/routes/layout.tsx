@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 
 import './index.css';
 
@@ -6,10 +6,13 @@ import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 import { Providers } from '@/providers';
 import { useAuth, usePermissions, type GuardedItem } from '@brainforgeau/security';
 import { TopNavbar } from '@brainforgeau/navbar/Navbar';
-import { ErrorBoundary, SideNav, SideNavDesktopMode, PageSpinner } from '@brainforgeau/components';
+import { ErrorBoundary, SideNav, SideNavDesktopMode, PageSpinner, useNavbarAction } from '@brainforgeau/components';
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useAtomValue } from 'jotai';
+import { hubConnectedAtom } from '@/state/config';
+import { SignalIcon } from '@heroicons/react/24/solid';
 
 declare const __IDENTITY_BASE_URL__: string | undefined;
 
@@ -114,6 +117,19 @@ const Logo = () => (
   <span className="font-semibold text-primary">Helpdesk</span>
 );
 
+const HelpdeskAction = () => {
+  const hubConnected = useAtomValue(hubConnectedAtom);
+  return (
+    <div className="flex items-center gap-1.5">
+      {hubConnected && (
+        <span className="flex items-center gap-1 text-green-500" title="Live connection active">
+          <SignalIcon className="h-3.5 w-3.5" />
+        </span>
+      )}
+    </div>
+  );
+};
+
 export default function Layout() {
   // Desktop sidebar: extended (full) or collapsed (icons only)
   const [desktopMode, setDesktopMode] = useState<SideNavDesktopMode>('extended');
@@ -136,6 +152,12 @@ export default function Layout() {
   const { isAuthenticated } = useAuth();
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
+  const { setAction } = useNavbarAction();
+
+  useEffect(() => {
+    setAction(<HelpdeskAction />);
+    return () => setAction(null);
+  }, [setAction]);
 
   // Filter navigation items based on user permissions
   // Include permissions in deps to ensure re-render when context token changes
