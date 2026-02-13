@@ -3,16 +3,20 @@ import { Helmet } from '@modern-js/runtime/head';
 import { Card, Divider } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { useKnowledgeBaseArticle } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { useKnowledgeBaseArticle, useRateKnowledgeBaseArticle } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
+import DOMPurify from 'dompurify';
+import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
 
 function KnowledgeBaseArticlePage() {
   const { slug } = useParams();
   const { data: article, isLoading } = useKnowledgeBaseArticle(slug || '');
+  const rateArticle = useRateKnowledgeBaseArticle();
 
-  const handleRating = (rating: number) => {
-    // TODO: Implement rating submission
-    console.log('Rate article:', rating);
+  const handleRating = (isHelpful: boolean) => {
+    if (article?.id) {
+      rateArticle.mutate({ articleId: article.id, isHelpful });
+    }
   };
 
   if (isLoading) {
@@ -100,7 +104,7 @@ function KnowledgeBaseArticlePage() {
               {/* Article Body - HTML rendered */}
               <div
                 className="prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: article.body }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
               />
 
               <Divider className="my-6" />
@@ -108,24 +112,25 @@ function KnowledgeBaseArticlePage() {
               {/* Rating Section */}
               <div className="rounded bg-gray-50 p-6 text-center">
                 <h3 className="mb-4 text-lg font-semibold">Was this article helpful?</h3>
-                <div className="flex justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <BaseButton
-                      key={rating}
-                      variant="light"
-                      onPress={() => handleRating(rating)}
-                      icon={
-                        <Icon
-                          name="star"
-                          className={`h-6 w-6 ${
-                            article.averageRating && rating <= article.averageRating
-                              ? 'text-warning fill-current'
-                              : 'text-gray-400'
-                          }`}
-                        />
-                      }
-                    />
-                  ))}
+                <div className="flex justify-center gap-4">
+                  <BaseButton
+                    color="success"
+                    variant="bordered"
+                    onPress={() => handleRating(true)}
+                    isLoading={rateArticle.isPending}
+                    icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
+                  >
+                    Yes ({article.ratingCount || 0})
+                  </BaseButton>
+                  <BaseButton
+                    color="danger"
+                    variant="bordered"
+                    onPress={() => handleRating(false)}
+                    isLoading={rateArticle.isPending}
+                    icon={<Icon name="hand-thumb-down" className="h-5 w-5" />}
+                  >
+                    No
+                  </BaseButton>
                 </div>
               </div>
             </Card>
@@ -164,13 +169,10 @@ function KnowledgeBaseArticlePage() {
 
             {/* Related Articles */}
             {article.relatedArticleIds && article.relatedArticleIds.length > 0 && (
-              <Card className="p-4">
-                <h3 className="mb-3 text-lg font-semibold">Related Articles</h3>
-                <div className="space-y-2">
-                  {/* TODO: Fetch and display related articles */}
-                  <p className="text-sm text-gray-500">Related articles will be displayed here</p>
-                </div>
-              </Card>
+              <RelatedArticles
+                articleIds={article.relatedArticleIds}
+                currentArticleId={article.id}
+              />
             )}
           </div>
         </div>

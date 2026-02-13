@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { ReportsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -6,6 +6,8 @@ import type {
   DynamicsReportDto,
   TechPerformanceReportDto,
   ReportGranularity,
+  CustomReportRequestDto,
+  CustomReportResultDto,
 } from '@/types';
 
 export const useTicketSummaryReport = (startDate?: string, endDate?: string) => {
@@ -47,6 +49,32 @@ export const useTechPerformanceReport = (startDate?: string, endDate?: string) =
       return {
         technicians: data as unknown as TechPerformanceReportDto['technicians'],
       };
+    },
+  });
+};
+
+export const useCustomReport = () => {
+  return useMutation({
+    mutationFn: async (request: CustomReportRequestDto) => {
+      const client = await createHelpdeskApiClient(ReportsApi);
+      const { data } = await client.v1ReportsCustomPost(request as any);
+      // REVIEW: Type mapping from generated types to local types
+      return data as unknown as CustomReportResultDto;
+    },
+  });
+};
+
+export const useExportReport = () => {
+  return useMutation({
+    mutationFn: async (params: {
+      reportType: 'summary' | 'dynamics' | 'custom';
+      format: 'csv' | 'excel';
+      data: unknown;
+    }) => {
+      const client = await createHelpdeskApiClient(ReportsApi);
+      // REVIEW: Export endpoint format TBD - using generic approach
+      const { data } = await client.v1ReportsExportPost(params as any);
+      return data;
     },
   });
 };

@@ -56,28 +56,27 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   }, [onFiltersChange, onSearch]);
 
   return (
-    <div className="space-y-4">
-      {/* Search and Presets */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[300px]">
-          <BaseInput
-            type="text"
-            placeholder="Search tickets..."
-            value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-            startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-gray-400" />}
-          />
-        </div>
+    <div className="flex w-full flex-wrap items-end gap-2.5">
+      <div className="min-w-60 flex-1">
+        <BaseInput
+          type="text"
+          placeholder="Search tickets..."
+          value={searchTerm}
+          onChange={(e) => onSearch(e.target.value)}
+          startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-gray-400" />}
+        />
+      </div>
 
+      <div className="min-w-40">
         <BaseSelect
           label="View Preset"
           placeholder="Select preset"
+          className="w-full"
           selectedKeys={new Set([preset])}
           onSelectionChange={(keys) => {
             const value = Array.from(keys)[0] as string;
             handlePresetChange(value);
           }}
-          className="min-w-[200px]"
         >
           <BaseSelectItem key="all">All Tickets</BaseSelectItem>
           <BaseSelectItem key="my-tickets">My Tickets</BaseSelectItem>
@@ -86,28 +85,29 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         </BaseSelect>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="min-w-40">
         <BaseSelect
           label="Status"
           placeholder="Filter by status"
+          className="w-full"
           selectionMode="multiple"
           selectedKeys={new Set(filters.status?.map(s => s.toString()) ?? [])}
           onSelectionChange={(keys) => handleStatusChange(Array.from(keys) as string[])}
-          className="min-w-[200px]"
         >
           <BaseSelectItem key={TicketStatus.New}>New</BaseSelectItem>
           <BaseSelectItem key={TicketStatus.InProgress}>In Progress</BaseSelectItem>
           <BaseSelectItem key={TicketStatus.Closed}>Closed</BaseSelectItem>
         </BaseSelect>
+      </div>
 
+      <div className="min-w-40">
         <BaseSelect
           label="Priority"
           placeholder="Filter by priority"
+          className="w-full"
           selectionMode="multiple"
           selectedKeys={new Set(filters.priority?.map(p => p.toString()) ?? [])}
           onSelectionChange={(keys) => handlePriorityChange(Array.from(keys) as string[])}
-          className="min-w-[200px]"
         >
           <BaseSelectItem key={TicketPriority.Critical}>Critical</BaseSelectItem>
           <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
@@ -115,9 +115,11 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
           <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
         </BaseSelect>
+      </div>
 
-        {/* TODO: Add Category and Assignee filters when backend supports them */}
+      {/* TODO: Add Category and Assignee filters when backend supports them */}
 
+      <div className="flex gap-2">
         <BaseButton
           variant="bordered"
           onPress={handleClearFilters}

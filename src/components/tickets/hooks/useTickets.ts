@@ -13,6 +13,7 @@ import type {
   TicketStatus,
   TicketPriority,
 } from '@/types/ticket';
+import { toApiTicketStatus, toApiTicketPriority } from '@/utils/typeMappers';
 
 export const useTicketsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -26,8 +27,8 @@ export const useTicketsData = () => {
     queryFn: async () => {
       const client = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1TicketsGet(
-        filters.status?.[0] as any, // API takes single status, not array
-        filters.priority?.[0] as any, // API takes single priority, not array
+        filters.status?.[0] ? toApiTicketStatus(filters.status[0]) : undefined,
+        filters.priority?.[0] ? toApiTicketPriority(filters.priority[0]) : undefined,
         filters.categoryId?.[0],
         filters.assigneeId?.[0],
         undefined, // requesterId
@@ -84,7 +85,7 @@ export const useCreateTicket = () => {
       const response = await client.v1TicketsPost({
         subject: ticket.subject,
         description: ticket.description,
-        priority: ticket.priority as any,
+        priority: toApiTicketPriority(ticket.priority),
         categoryId: ticket.categoryId,
         assigneeId: ticket.assigneeId,
         tags: ticket.tags,
@@ -115,12 +116,12 @@ export const useUpdateTicket = () => {
 
       // Status change
       if (updates.status) {
-        await client.v1TicketsIdStatusPatch(id, { newStatus: updates.status as any });
+        await client.v1TicketsIdStatusPatch(id, { newStatus: toApiTicketStatus(updates.status) });
       }
 
       // Priority change
       if (updates.priority) {
-        await client.v1TicketsIdPriorityPatch(id, { newPriority: updates.priority as any });
+        await client.v1TicketsIdPriorityPatch(id, { newPriority: toApiTicketPriority(updates.priority) });
       }
 
       // Category change
@@ -160,12 +161,12 @@ export const useBulkUpdateTickets = () => {
 
         // Status change
         if (updates.status) {
-          await client.v1TicketsIdStatusPatch(id, { newStatus: updates.status as any });
+          await client.v1TicketsIdStatusPatch(id, { newStatus: toApiTicketStatus(updates.status) });
         }
 
         // Priority change
         if (updates.priority) {
-          await client.v1TicketsIdPriorityPatch(id, { newPriority: updates.priority as any });
+          await client.v1TicketsIdPriorityPatch(id, { newPriority: toApiTicketPriority(updates.priority) });
         }
 
         // Category change

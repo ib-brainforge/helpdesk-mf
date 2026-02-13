@@ -15,6 +15,7 @@ export interface CustomFieldOptionDto {
   id: string;
   value: string;
   sortOrder: number;
+  isDisabled?: boolean;
 }
 
 export enum CustomFieldType {

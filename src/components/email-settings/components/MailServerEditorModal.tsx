@@ -14,7 +14,9 @@ import {
   BaseSelectItem,
 } from '@brainforgeau/components';
 import { Alert, addToast, Switch } from '@heroui/react';
-import type { MailServerConfigDto, CreateMailServerConfigDto } from '@/types/email';
+import { MailServerApi, HelpdeskEmailDomainEnumsMailProtocol } from '@brainforgeau/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { MailServerConfigDto } from '@/types/email';
 import { MailProtocol } from '@/types/email';
 
 const mailServerSchema = z.object({
@@ -86,13 +88,35 @@ export const MailServerEditorModal = ({
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call when @brainforgeau/helpdesk-backend-client is available
-      // const client = await createHelpdeskApiClient(MailServerConfigApi);
-      // if (isEdit) {
-      //   await client.updateMailServer(mailServer.id, data);
-      // } else {
-      //   await client.createMailServer(data);
-      // }
+      const client = await createHelpdeskApiClient(MailServerApi);
+
+      if (isEdit) {
+        // TODO: Update endpoint not yet implemented in backend
+        // await client.v1MailServersIdPut(mailServer.id, {...});
+        throw new Error('Update functionality not yet available - backend endpoint pending');
+      } else {
+        // Map frontend enum to backend enum
+        const backendProtocol = data.protocol === MailProtocol.Imap
+          ? HelpdeskEmailDomainEnumsMailProtocol.IMAP
+          : HelpdeskEmailDomainEnumsMailProtocol.POP3;
+
+        // Map form data to backend command structure
+        await client.v1MailServersPost({
+          name: data.name,
+          inboundProtocol: backendProtocol,
+          inboundHost: data.inboundHost,
+          inboundPort: data.inboundPort,
+          inboundUsername: data.username,
+          inboundPassword: data.password,
+          inboundUseSsl: data.useSsl,
+          inboundFolder: data.folder,
+          outboundHost: data.outboundHost,
+          outboundPort: data.outboundPort,
+          outboundUsername: data.username,
+          outboundPassword: data.password,
+          outboundUseSsl: data.useSsl,
+        });
+      }
 
       addToast({
         title: isEdit ? 'Mail server updated successfully' : 'Mail server created successfully',
@@ -104,7 +128,6 @@ export const MailServerEditorModal = ({
       form.reset();
       onClose();
     } catch (error: any) {
-      console.error('Error saving mail server:', error);
       const errorMessage =
         error?.response?.data?.detail || error?.message || 'Failed to save mail server';
       setErrors([errorMessage]);

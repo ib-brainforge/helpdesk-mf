@@ -112,9 +112,10 @@ export interface AutomationRuleDto {
   name: string;
   description?: string;
   triggerType: AutomationTriggerType;
-  conditionMatchType: ConditionMatchType;
+  matchType: ConditionMatchType;
   conditions: AutomationConditionDto[];
   actions: AutomationActionDto[];
+  elseActions?: AutomationActionDto[];
   isEnabled: boolean;
   sortOrder: number;
   lastExecutedAt?: string;
@@ -127,7 +128,7 @@ export interface CreateAutomationRuleDto {
   name: string;
   description?: string;
   triggerType: AutomationTriggerType;
-  conditionMatchType: ConditionMatchType;
+  conditionMatchType: ConditionMatchType; // Keep original for compatibility with form state
   conditions: Omit<AutomationConditionDto, 'id'>[];
   actions: Omit<AutomationActionDto, 'id'>[];
   isEnabled: boolean;

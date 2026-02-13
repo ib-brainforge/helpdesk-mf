@@ -1,41 +1,80 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
 import { BaseTable } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
-import { Select, SelectItem } from '@heroui/react';
+import { Select, SelectItem, addToast, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@heroui/react';
 import {
   useReactTable,
   getCoreRowModel,
   getPaginationRowModel,
 } from '@tanstack/react-table';
-import { useAssets } from '@/components/assets/hooks/useAssets';
+import { useAssets, useCloneAsset, useDeleteAsset } from '@/components/assets/hooks/useAssets';
 import { createAssetColumns } from '@/components/assets/components/asset-columns';
 import { AssetStatus, AssetType } from '@/types';
 
 function AssetsPage() {
+  const navigate = useNavigate();
   const [typeFilter, setTypeFilter] = useState<AssetType | ''>('');
   const [statusFilter, setStatusFilter] = useState<AssetStatus | ''>('');
+  const [assetToDelete, setAssetToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data: assets, isLoading } = useAssets();
+  const cloneAssetMutation = useCloneAsset();
+  const deleteAssetMutation = useDeleteAsset();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleEdit = (id: string) => {
-    window.location.href = `/assets/${id}/edit`;
+    navigate(`/assets/${id}/edit`);
   };
 
-  const handleClone = (id: string) => {
-    // TODO: Implement clone
-    console.log('Clone asset:', id);
-  };
+  const handleClone = useCallback(async (id: string) => {
+    try {
+      const clonedAsset = await cloneAssetMutation.mutateAsync(id);
+      addToast({
+        title: 'Asset cloned successfully',
+        severity: 'success'
+      });
+      // REVIEW: Navigate to edit the cloned asset
+      if (clonedAsset?.id) {
+        navigate(`/assets/${clonedAsset.id}/edit`);
+      }
+    } catch (error) {
+      // REVIEW: Error handled by global axios interceptor
+      console.error('Failed to clone asset:', error);
+    }
+  }, [cloneAssetMutation, navigate]);
 
-  const handleDelete = (id: string) => {
-    // TODO: Implement delete with confirmation
-    console.log('Delete asset:', id);
-  };
+  const handleDeleteClick = useCallback((id: string) => {
+    // Find the asset to get its name
+    const asset = assets?.items?.find(a => a.id === id);
+    if (asset) {
+      setAssetToDelete({ id, name: asset.name });
+      onOpen();
+    }
+  }, [assets, onOpen]);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!assetToDelete) return;
+
+    try {
+      await deleteAssetMutation.mutateAsync(assetToDelete.id);
+      addToast({
+        title: 'Asset deleted successfully',
+        severity: 'success'
+      });
+      onClose();
+      setAssetToDelete(null);
+    } catch (error) {
+      // REVIEW: Error handled by global axios interceptor
+      console.error('Failed to delete asset:', error);
+    }
+  }, [assetToDelete, deleteAssetMutation, onClose]);
 
   const columns = useMemo(
-    () => createAssetColumns({ onEdit: handleEdit, onClone: handleClone, onDelete: handleDelete }),
-    [],
+    () => createAssetColumns({ onEdit: handleEdit, onClone: handleClone, onDelete: handleDeleteClick }),
+    [handleEdit, handleClone, handleDeleteClick],
   );
 
   const table = useReactTable({
@@ -124,6 +163,31 @@ function AssetsPage() {
           fullHeight
         />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader>Confirm Delete</ModalHeader>
+          <ModalBody>
+            <p>
+              Are you sure you want to delete the asset{' '}
+              <strong>{assetToDelete?.name}</strong>? This action cannot be undone.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <BaseButton variant="bordered" onPress={onClose}>
+              Cancel
+            </BaseButton>
+            <BaseButton
+              color="danger"
+              onPress={handleDeleteConfirm}
+              isLoading={deleteAssetMutation.isPending}
+            >
+              Delete
+            </BaseButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

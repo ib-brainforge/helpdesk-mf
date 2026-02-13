@@ -50,7 +50,8 @@ function AutomationRulesPage() {
   const reorderMutation = useMutation({
     mutationFn: async (ruleIds: string[]) => {
       const client = await createHelpdeskApiClient(AutomationRulesApi);
-      await client.v1AutomationRulesReorderPost({ ruleIds } as any);
+      const ruleOrders = ruleIds.map((ruleId, index) => ({ ruleId, sortOrder: index }));
+      await client.v1AutomationRulesReorderPost({ ruleOrders });
     },
     onSuccess: () => {
       addToast({ title: 'Rule order updated successfully', severity: 'success' });
@@ -67,16 +68,23 @@ function AutomationRulesPage() {
       const client = await createHelpdeskApiClient(AutomationRulesApi);
       // Fetch the rule details
       const { data: rule } = await client.v1AutomationRulesIdGet(ruleId);
+
+      if (!rule) {
+        throw new Error('Rule not found');
+      }
+
       // Create a new rule with the same details but updated name
       await client.v1AutomationRulesPost({
-        name: `${(rule as any).name} (Copy)`,
-        description: (rule as any).description,
-        triggerType: (rule as any).triggerType,
-        conditionMatchType: (rule as any).conditionMatchType,
-        conditions: (rule as any).conditions,
-        actions: (rule as any).actions,
+        name: `${rule.name} (Copy)`,
+        description: rule.description,
+        triggerType: rule.triggerType,
+        matchType: rule.matchType,
+        conditions: rule.conditions || [],
+        actions: rule.actions || [],
+        elseActions: rule.elseActions || [],
         isEnabled: false, // Duplicate as disabled for safety
-      } as any);
+        isNested: false,
+      });
     },
     onSuccess: () => {
       addToast({ title: 'Automation rule duplicated successfully', severity: 'success' });
