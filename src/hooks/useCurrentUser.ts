@@ -1,18 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
-import { UsersApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { HelpdeskUserDto } from '@/types/user';
+import { useAtomValue } from 'jotai';
+import { authUserAtom } from '@/state/auth-atoms';
 
 export const useCurrentUser = () => {
-  const { data, isLoading, error } = useQuery<HelpdeskUserDto>({
-    queryKey: ['current-helpdesk-user'],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(UsersApi);
-      const response = await client.v1UsersMeGet();
-      // REVIEW: Type conversion between generated client types and frontend types
-      return response.data as unknown as HelpdeskUserDto;
-    },
-  });
+  const user = useAtomValue(authUserAtom);
 
-  return { currentUser: data, isLoading, error };
+  const currentUser = user?.profile
+    ? {
+        id: user.profile.sub,
+        name: (user.profile.name ?? user.profile.preferred_username ?? user.profile.email ?? 'Unknown') as string,
+        email: user.profile.email,
+      }
+    : undefined;
+
+  return { currentUser, isLoading: false, error: null };
 };
