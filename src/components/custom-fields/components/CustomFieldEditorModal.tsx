@@ -49,7 +49,6 @@ const FIELD_TYPE_OPTIONS = [
 
 const USAGE_TYPE_OPTIONS = [
   { id: CustomFieldUsageType.Ticket, name: 'Ticket' },
-  { id: CustomFieldUsageType.Asset, name: 'Asset' },
 ];
 
 const ACCESS_LEVEL_OPTIONS = [

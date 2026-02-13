@@ -13,6 +13,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useAtomValue } from 'jotai';
 import { hubConnectedAtom } from '@/state/config';
 import { SignalIcon } from '@heroicons/react/24/solid';
+import { Logo } from '@/components/Logo';
 
 declare const __IDENTITY_BASE_URL__: string | undefined;
 
@@ -48,22 +49,10 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     testId: 'nav-knowledge-base',
   },
   {
-    label: 'Assets',
-    href: '/assets',
-    icon: 'box',
-    testId: 'nav-assets',
-  },
-  {
     label: 'Reports',
     href: '/reports',
     icon: 'chart-bar',
     testId: 'nav-reports',
-  },
-  {
-    label: 'Users',
-    href: '/users',
-    icon: 'user-group',
-    testId: 'nav-users',
   },
 ];
 
@@ -111,11 +100,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
     ],
   },
 ];
-
-// Simple logo component for Helpdesk module
-const Logo = () => (
-  <span className="font-semibold text-primary">Helpdesk</span>
-);
 
 const HelpdeskAction = () => {
   const hubConnected = useAtomValue(hubConnectedAtom);
@@ -178,7 +162,7 @@ export default function Layout() {
             data-testid={TEST_IDS.navbar.top}
             config={{ identityBaseUrl: __IDENTITY_BASE_URL__ || '', app: 'helpdesk' }}
             onExtend={handleNavExtend}
-            logoComponent={<Logo />}
+            logoComponent={<Logo hideOnMobile />}
           />
         )}
       </Suspense>

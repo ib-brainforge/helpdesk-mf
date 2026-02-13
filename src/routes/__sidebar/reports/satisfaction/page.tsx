@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
-import { Card, Select, SelectItem } from '@heroui/react';
-import { PageSpinner } from '@brainforgeau/components/base';
+import { Box, PageSpinner } from '@brainforgeau/components/base';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Icon } from '@brainforgeau/components';
+import { Icon, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { CSATRatingDistributionChart } from '@/components/satisfaction/CSATRatingDistributionChart';
@@ -59,87 +58,73 @@ function CSATReportPage() {
         <div className="space-y-6">
           {/* Overview Cards */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <Card className="p-4">
+            <Box title="Average Rating">
               <div className="flex items-center gap-3">
                 <Icon name="star" className="h-8 w-8 text-yellow-400 fill-current" />
-                <div>
-                  <p className="text-sm text-gray-600">Average Rating</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-3xl font-bold">
-                      {reportData?.averageRating?.toFixed(1) || '0.0'}
-                    </p>
-                    <StarRating value={Math.round(reportData?.averageRating || 0)} readonly size="sm" />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-3xl font-bold">
+                    {reportData?.averageRating?.toFixed(1) || '0.0'}
+                  </p>
+                  <StarRating value={Math.round(reportData?.averageRating || 0)} readonly size="sm" />
                 </div>
               </div>
-            </Card>
+            </Box>
 
-            <Card className="p-4">
+            <Box title="Total Ratings">
               <div className="flex items-center gap-3">
                 <Icon name="chat-bubble-left-right" className="h-8 w-8 text-blue-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Total Ratings</p>
-                  <p className="text-3xl font-bold">{reportData?.totalRatings || 0}</p>
-                </div>
+                <p className="text-3xl font-bold">{reportData?.totalRatings || 0}</p>
               </div>
-            </Card>
+            </Box>
 
-            <Card className="p-4">
+            <Box title="Satisfaction Rate">
               <div className="flex items-center gap-3">
                 <Icon name="face-smile" className={`h-8 w-8 ${satisfactionColor}`} />
                 <div>
-                  <p className="text-sm text-gray-600">Satisfaction Rate</p>
                   <p className={`text-3xl font-bold ${satisfactionColor}`}>
                     {reportData?.satisfactionPercentage?.toFixed(1) || '0.0'}%
                   </p>
                   <p className="text-xs text-gray-500">Ratings 4-5 stars</p>
                 </div>
               </div>
-            </Card>
+            </Box>
 
-            <Card className="p-4">
+            <Box title="Most Common Rating">
               <div className="flex items-center gap-3">
                 <Icon name="chart-bar" className="h-8 w-8 text-purple-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Most Common Rating</p>
-                  <p className="text-3xl font-bold">
-                    {reportData?.ratingDistribution &&
-                      (() => {
-                        const dist = reportData.ratingDistribution;
-                        const max = Math.max(
-                          dist.rating1Count,
-                          dist.rating2Count,
-                          dist.rating3Count,
-                          dist.rating4Count,
-                          dist.rating5Count,
-                        );
-                        if (max === dist.rating5Count) return '5';
-                        if (max === dist.rating4Count) return '4';
-                        if (max === dist.rating3Count) return '3';
-                        if (max === dist.rating2Count) return '2';
-                        return '1';
-                      })()}
-                    ⭐
-                  </p>
-                </div>
+                <p className="text-3xl font-bold">
+                  {reportData?.ratingDistribution &&
+                    (() => {
+                      const dist = reportData.ratingDistribution;
+                      const max = Math.max(
+                        dist.rating1Count,
+                        dist.rating2Count,
+                        dist.rating3Count,
+                        dist.rating4Count,
+                        dist.rating5Count,
+                      );
+                      if (max === dist.rating5Count) return '5';
+                      if (max === dist.rating4Count) return '4';
+                      if (max === dist.rating3Count) return '3';
+                      if (max === dist.rating2Count) return '2';
+                      return '1';
+                    })()}
+                  ⭐
+                </p>
               </div>
-            </Card>
+            </Box>
           </div>
 
           {/* Rating Distribution Chart */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Rating Distribution</h3>
+          <Box title="Rating Distribution">
             {reportData?.ratingDistribution && (
               <CSATRatingDistributionChart distribution={reportData.ratingDistribution} />
             )}
-          </Card>
+          </Box>
 
           {/* Grouped Data */}
           {groupBy && reportData?.groupedData && reportData.groupedData.length > 0 && (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">
-                Breakdown by {groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
-              </h3>
+            <Box title={`Breakdown by ${groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}`}>
               <div className="space-y-3">
                 {reportData.groupedData.map((item) => (
                   <div
@@ -157,28 +142,27 @@ function CSATReportPage() {
                   </div>
                 ))}
               </div>
-            </Card>
+            </Box>
           )}
 
           {/* Filters */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Group By</h3>
-            <Select
+          <Box title="Group By">
+            <BaseSelect
               label="Group by"
               placeholder="Select grouping"
-              selectedKeys={groupBy ? [groupBy] : []}
+              selectedKeys={groupBy ? new Set([groupBy]) : new Set<string>()}
               onSelectionChange={(keys) => {
                 const key = Array.from(keys)[0] as CSATGroupBy | undefined;
                 setGroupBy(key);
               }}
               className="max-w-xs"
             >
-              <SelectItem key={CSATGroupBy.Technician}>Technician</SelectItem>
-              <SelectItem key={CSATGroupBy.Category}>Category</SelectItem>
-              <SelectItem key={CSATGroupBy.Priority}>Priority</SelectItem>
-              <SelectItem key={CSATGroupBy.Month}>Month</SelectItem>
-            </Select>
-          </Card>
+              <BaseSelectItem key={CSATGroupBy.Technician}>Technician</BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Category}>Category</BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Priority}>Priority</BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Month}>Month</BaseSelectItem>
+            </BaseSelect>
+          </Box>
         </div>
       </div>
     </>

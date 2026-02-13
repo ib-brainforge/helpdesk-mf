@@ -19,8 +19,8 @@ export const ResolutionTimeChart: FC<ResolutionTimeChartProps> = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    date: new Date(item.date).toLocaleDateString(),
-    avgResolutionTime: item.averageResolutionTimeHours,
+    date: new Date(item.periodStart).toLocaleDateString(),
+    avgResolutionTime: (item.avgResolutionMinutes ?? 0) / 60,
   }));
 
   return (

@@ -91,8 +91,12 @@ export const MailServerEditorModal = ({
       const client = await createHelpdeskApiClient(MailServerApi);
 
       if (isEdit) {
-        // TODO: Update endpoint not yet implemented in backend
-        // await client.v1MailServersIdPut(mailServer.id, {...});
+        // REVIEW: Update endpoint not implemented yet in backend - would be v1/mail-servers/{id} PUT
+        addToast({
+          title: 'Feature not available',
+          description: 'Update functionality not yet implemented - backend endpoint pending',
+          severity: 'warning',
+        });
         throw new Error('Update functionality not yet available - backend endpoint pending');
       } else {
         // Map frontend enum to backend enum

@@ -184,26 +184,64 @@ export const createTicketColumns = (
             <DropdownItem
               key="assign"
               onPress={() => {
-                // TODO: Open assign modal
+                // REVIEW: Using inline prompt for quick assign - proper modal would be better UX
+                const assigneeId = prompt('Enter user ID to assign (or leave empty to unassign):');
+                if (assigneeId !== null && options.onAssign && row.original.id) {
+                  options.onAssign(row.original.id, assigneeId);
+                }
               }}
             >
               Assign
             </DropdownItem>
             <DropdownItem
-              key="status"
+              key="status-new"
               onPress={() => {
-                // TODO: Open status change modal
+                if (options.onChangeStatus && row.original.id) {
+                  options.onChangeStatus(row.original.id, TicketStatus.New);
+                }
               }}
             >
-              Change Status
+              Mark as New
             </DropdownItem>
             <DropdownItem
-              key="priority"
+              key="status-inprogress"
               onPress={() => {
-                // TODO: Open priority change modal
+                if (options.onChangeStatus && row.original.id) {
+                  options.onChangeStatus(row.original.id, TicketStatus.InProgress);
+                }
               }}
             >
-              Change Priority
+              Mark as In Progress
+            </DropdownItem>
+            <DropdownItem
+              key="status-closed"
+              onPress={() => {
+                if (options.onChangeStatus && row.original.id) {
+                  options.onChangeStatus(row.original.id, TicketStatus.Closed);
+                }
+              }}
+            >
+              Close Ticket
+            </DropdownItem>
+            <DropdownItem
+              key="priority-critical"
+              onPress={() => {
+                if (options.onChangePriority && row.original.id) {
+                  options.onChangePriority(row.original.id, TicketPriority.Critical);
+                }
+              }}
+            >
+              Set Priority: Critical
+            </DropdownItem>
+            <DropdownItem
+              key="priority-high"
+              onPress={() => {
+                if (options.onChangePriority && row.original.id) {
+                  options.onChangePriority(row.original.id, TicketPriority.High);
+                }
+              }}
+            >
+              Set Priority: High
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
