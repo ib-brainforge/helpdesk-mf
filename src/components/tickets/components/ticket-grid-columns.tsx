@@ -6,8 +6,9 @@ import { NavLink } from '@modern-js/runtime/router';
 import type { TicketRow } from '../types';
 import { TicketStatus, TicketPriority } from '@/types/ticket';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { StatusBadge } from '@/components/shared';
+import { StatusBadge, UserCell } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import type { UserInfo } from '@/hooks/useUserEnrichment';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
@@ -139,15 +140,39 @@ export const createTicketColumns = (
     cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
     size: 150,
   }),
-  columnHelper.accessor('assigneeName', {
+  columnHelper.display({
+    id: 'assignee',
     header: 'Assignee',
-    cell: ({ getValue }) => <span>{getValue() ?? 'Unassigned'}</span>,
-    size: 150,
+    cell: ({ row }) => {
+      const { assigneeUserInfo, assigneeName } = row.original;
+      if (!row.original.assigneeId) {
+        return <span className="text-sm text-muted-foreground">Unassigned</span>;
+      }
+      return (
+        <UserCell
+          userInfo={assigneeUserInfo}
+          fallbackName={assigneeName ?? 'Assigned'}
+        />
+      );
+    },
+    size: 200,
   }),
-  columnHelper.accessor('requesterName', {
+  columnHelper.display({
+    id: 'requester',
     header: 'Requester',
-    cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
-    size: 150,
+    cell: ({ row }) => {
+      const { requesterUserInfo, requesterName } = row.original;
+      if (!row.original.requesterId) {
+        return <span className="text-sm text-muted-foreground">—</span>;
+      }
+      return (
+        <UserCell
+          userInfo={requesterUserInfo}
+          fallbackName={requesterName ?? 'Unknown'}
+        />
+      );
+    },
+    size: 200,
   }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
