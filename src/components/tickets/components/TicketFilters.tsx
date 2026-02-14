@@ -1,9 +1,19 @@
-import { type FC, useState, useCallback } from 'react';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, Icon } from '@brainforgeau/components';
+import { type FC, useState, useCallback, useMemo, useEffect } from 'react';
+import {
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseAutocomplete,
+  BaseAutocompleteItem,
+  BaseAvatar,
+  Icon,
+} from '@brainforgeau/components';
 import { TicketStatus, TicketPriority, type TicketFilters as TicketFiltersType } from '@/types/ticket';
-import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
-import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAtom } from 'jotai';
+import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
+import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
 
 interface TicketFiltersProps {
   filters: TicketFiltersType;
@@ -20,8 +30,29 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
 }) => {
   const [preset, setPreset] = useState<string>('all');
   const { currentUser } = useCurrentUser();
-  const { categories } = useCategoriesData();
-  const { items: users } = useUsersData();
+
+  // Users search mutation for assignee autocomplete
+  const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
+
+  // Categories search mutation for category autocomplete
+  const [{ mutate: searchCategories, data: categoriesData, isPending: isSearchingCategories }] = useAtom(categoriesMutationAtom);
+
+  // Load initial data when component mounts
+  useEffect(() => {
+    searchUsers({ query: '' });
+    searchCategories({ query: '' });
+  }, [searchUsers, searchCategories]);
+
+  // Map data to options
+  const usersOptions = useMemo(
+    () => (usersData ?? []).map(mapUserToOption),
+    [usersData]
+  );
+
+  const categoriesOptions = useMemo(
+    () => (categoriesData ?? []).map(mapCategoryToOption),
+    [categoriesData]
+  );
 
   const handlePresetChange = useCallback((value: string) => {
     setPreset(value);
@@ -134,37 +165,119 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       </div>
 
       <div className="min-w-40">
-        <BaseSelect
+        <BaseAutocomplete
           label="Category"
           placeholder="Filter by category"
           className="w-full"
-          selectionMode="multiple"
-          selectedKeys={new Set(filters.categoryId ?? [])}
-          onSelectionChange={(keys) => handleCategoryChange(Array.from(keys) as string[])}
+          isClearable
+          selectedKey={filters.categoryId?.[0] ?? null}
+          onSelectionChange={(key) => {
+            const newKey = key as string | null;
+            handleCategoryChange(newKey ? [newKey] : []);
+          }}
+          onClear={() => handleCategoryChange([])}
+          onValueChange={(value: string) => {
+            searchCategories({ query: value });
+          }}
+          onOpenChange={(open) => {
+            if (open && !isSearchingCategories) {
+              searchCategories({ query: '' });
+            }
+          }}
+          isLoading={isSearchingCategories}
+          renderSelectedItem={(selectedKey) => {
+            const category = categoriesOptions.find((c) => c.id === selectedKey);
+            if (!category) return null;
+            return (
+              <span className="truncate text-xs font-medium">
+                {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+              </span>
+            );
+          }}
         >
-          {categories.map((category) => (
-            <BaseSelectItem key={category.id}>
-              {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
-            </BaseSelectItem>
+          {categoriesOptions.map((category) => (
+            <BaseAutocompleteItem
+              key={category.id}
+              textValue={category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+            >
+              <div className="flex flex-col">
+                <span className="text-xs text-[#59636E] dark:text-white">
+                  {category.name}
+                </span>
+                {category.sectionName && (
+                  <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                    {category.sectionName}
+                  </span>
+                )}
+              </div>
+            </BaseAutocompleteItem>
           ))}
-        </BaseSelect>
+        </BaseAutocomplete>
       </div>
 
       <div className="min-w-40">
-        <BaseSelect
+        <BaseAutocomplete
           label="Assignee"
           placeholder="Filter by assignee"
           className="w-full"
-          selectionMode="multiple"
-          selectedKeys={new Set(filters.assigneeId ?? [])}
-          onSelectionChange={(keys) => handleAssigneeChange(Array.from(keys) as string[])}
+          isClearable
+          selectedKey={filters.assigneeId?.[0] ?? null}
+          onSelectionChange={(key) => {
+            const newKey = key as string | null;
+            handleAssigneeChange(newKey ? [newKey] : []);
+          }}
+          onClear={() => handleAssigneeChange([])}
+          onValueChange={(value: string) => {
+            searchUsers({ query: value });
+          }}
+          onOpenChange={(open) => {
+            if (open && !isSearchingUsers) {
+              searchUsers({ query: '' });
+            }
+          }}
+          isLoading={isSearchingUsers}
+          renderSelectedItem={(selectedKey) => {
+            const user = usersOptions.find((u) => u.id === selectedKey);
+            if (!user) return null;
+            return (
+              <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+                <BaseAvatar
+                  src={user.avatarUrl}
+                  name={user.name}
+                  size="xs"
+                />
+                <span className="truncate text-xs font-medium">
+                  {user.name}
+                </span>
+              </div>
+            );
+          }}
         >
-          {users.map((user) => (
-            <BaseSelectItem key={user.id}>
-              {user.name}
-            </BaseSelectItem>
+          {usersOptions.map((user) => (
+            <BaseAutocompleteItem
+              key={user.id}
+              textValue={user.name}
+            >
+              <div className="flex items-center gap-2.5">
+                <BaseAvatar
+                  src={user.avatarUrl}
+                  name={user.name}
+                  size="xs"
+                />
+                <div className="flex-1">
+                  <span className="text-xs text-[#59636E] dark:text-white">
+                    {user.name}
+                  </span>
+                  {user.email && (
+                    <span className="dark:text-light block text-[10px] text-[#8C8F97]">
+                      {user.email}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </BaseAutocompleteItem>
           ))}
-        </BaseSelect>
+        </BaseAutocomplete>
       </div>
 
       <div className="flex gap-2">

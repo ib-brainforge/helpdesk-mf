@@ -1,13 +1,20 @@
-import { type FC, useCallback, useState } from 'react';
-import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { type FC, useCallback, useState, useMemo, useEffect } from 'react';
+import {
+  BaseSelect,
+  BaseSelectItem,
+  BaseAutocomplete,
+  BaseAutocompleteItem,
+  BaseAvatar,
+} from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
 import { StatusBadge } from '@/components/shared';
 import { TicketStatus, TicketPriority, type TicketDto } from '@/types/ticket';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket, useCreateTag } from '@/components/tags/hooks/useTags';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
-import { useUsersData } from '@/components/users/hooks/useUsersData';
+import { useAtom } from 'jotai';
+import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
+import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -75,9 +82,28 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     ticketTags?.map(t => t.name) ?? []
   );
 
-  // Load categories and users
-  const { categories } = useCategoriesData();
-  const { items: users } = useUsersData();
+  // Users search mutation for assignee autocomplete
+  const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
+
+  // Categories search mutation for category autocomplete
+  const [{ mutate: searchCategories, data: categoriesData, isPending: isSearchingCategories }] = useAtom(categoriesMutationAtom);
+
+  // Load initial data when component mounts
+  useEffect(() => {
+    searchUsers({ query: '' });
+    searchCategories({ query: '' });
+  }, [searchUsers, searchCategories]);
+
+  // Map data to options
+  const usersOptions = useMemo(
+    () => (usersData ?? []).map(mapUserToOption),
+    [usersData]
+  );
+
+  const categoriesOptions = useMemo(
+    () => (categoriesData ?? []).map(mapCategoryToOption),
+    [categoriesData]
+  );
 
   const handleTagsChange = useCallback(
     async (newTagNames: string[]) => {
@@ -169,21 +195,67 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
           fallback={<p className="text-sm">{ticket.assigneeName ?? 'Unassigned'}</p>}
         >
-          <BaseSelect
-            placeholder="Unassigned"
-            selectedKeys={ticket.assigneeId ? new Set([ticket.assigneeId]) : new Set()}
-            onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string | undefined;
-              onUpdate?.({ assigneeId: value });
+          <BaseAutocomplete
+            placeholder="Search assignee..."
+            isClearable
+            selectedKey={ticket.assigneeId ?? null}
+            onSelectionChange={(key) => {
+              const newKey = key as string | null;
+              onUpdate?.({ assigneeId: newKey ?? undefined });
             }}
+            onClear={() => onUpdate?.({ assigneeId: undefined })}
+            onValueChange={(value: string) => {
+              searchUsers({ query: value });
+            }}
+            onOpenChange={(open) => {
+              if (open && !isSearchingUsers) {
+                searchUsers({ query: '' });
+              }
+            }}
+            isLoading={isSearchingUsers}
             isDisabled={isUpdating}
+            renderSelectedItem={(selectedKey) => {
+              const user = usersOptions.find((u) => u.id === selectedKey);
+              if (!user) return null;
+              return (
+                <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+                  <BaseAvatar
+                    src={user.avatarUrl}
+                    name={user.name}
+                    size="xs"
+                  />
+                  <span className="truncate text-xs font-medium">
+                    {user.name}
+                  </span>
+                </div>
+              );
+            }}
           >
-            {users.map((user) => (
-              <BaseSelectItem key={user.id}>
-                {user.name}
-              </BaseSelectItem>
+            {usersOptions.map((user) => (
+              <BaseAutocompleteItem
+                key={user.id}
+                textValue={user.name}
+              >
+                <div className="flex items-center gap-2.5">
+                  <BaseAvatar
+                    src={user.avatarUrl}
+                    name={user.name}
+                    size="xs"
+                  />
+                  <div className="flex-1">
+                    <span className="text-xs text-[#59636E] dark:text-white">
+                      {user.name}
+                    </span>
+                    {user.email && (
+                      <span className="dark:text-light block text-[10px] text-[#8C8F97]">
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </BaseAutocompleteItem>
             ))}
-          </BaseSelect>
+          </BaseAutocomplete>
         </PermissionGuard>
       </div>
 
@@ -194,21 +266,53 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
           fallback={<p className="text-sm">{ticket.categoryName ?? '—'}</p>}
         >
-          <BaseSelect
-            placeholder="Select category"
-            selectedKeys={ticket.categoryId ? new Set([ticket.categoryId]) : new Set()}
-            onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string | undefined;
-              onUpdate?.({ categoryId: value });
+          <BaseAutocomplete
+            placeholder="Search category..."
+            isClearable
+            selectedKey={ticket.categoryId ?? null}
+            onSelectionChange={(key) => {
+              const newKey = key as string | null;
+              onUpdate?.({ categoryId: newKey ?? undefined });
             }}
+            onClear={() => onUpdate?.({ categoryId: undefined })}
+            onValueChange={(value: string) => {
+              searchCategories({ query: value });
+            }}
+            onOpenChange={(open) => {
+              if (open && !isSearchingCategories) {
+                searchCategories({ query: '' });
+              }
+            }}
+            isLoading={isSearchingCategories}
             isDisabled={isUpdating}
+            renderSelectedItem={(selectedKey) => {
+              const category = categoriesOptions.find((c) => c.id === selectedKey);
+              if (!category) return null;
+              return (
+                <span className="truncate text-xs font-medium">
+                  {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                </span>
+              );
+            }}
           >
-            {categories.map((category) => (
-              <BaseSelectItem key={category.id}>
-                {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
-              </BaseSelectItem>
+            {categoriesOptions.map((category) => (
+              <BaseAutocompleteItem
+                key={category.id}
+                textValue={category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+              >
+                <div className="flex flex-col">
+                  <span className="text-xs text-[#59636E] dark:text-white">
+                    {category.name}
+                  </span>
+                  {category.sectionName && (
+                    <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                      {category.sectionName}
+                    </span>
+                  )}
+                </div>
+              </BaseAutocompleteItem>
             ))}
-          </BaseSelect>
+          </BaseAutocomplete>
         </PermissionGuard>
       </div>
 

@@ -14,6 +14,8 @@ import { BulkAssignModal } from './BulkAssignModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { BulkDeleteModal } from './BulkDeleteModal';
 import { addToast } from '@heroui/react';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import type { TicketRow } from '../types';
 
 export const TicketGrid: FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +24,21 @@ export const TicketGrid: FC = () => {
 
   // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
   useRealtimeTickets();
+
+  // Enrich tickets with user data (avatars, names, emails)
+  const assigneeIds = items.map(t => t.assigneeId).filter(Boolean);
+  const requesterIds = items.map(t => t.requesterId).filter(Boolean);
+  const allUserIds = [...assigneeIds, ...requesterIds];
+  const { userMap, isLoading: isLoadingUsers } = useUserEnrichment(allUserIds);
+
+  const enrichedItems: TicketRow[] = useMemo(
+    () => items.map(ticket => ({
+      ...ticket,
+      assigneeUserInfo: ticket.assigneeId ? userMap[ticket.assigneeId] : null,
+      requesterUserInfo: ticket.requesterId ? userMap[ticket.requesterId] : null,
+    })),
+    [items, userMap]
+  );
 
   const updateTicketMutation = useUpdateTicket();
   const bulkUpdateMutation = useBulkUpdateTickets();
@@ -49,7 +66,7 @@ export const TicketGrid: FC = () => {
   );
 
   const { table } = useTicketsTable({
-    data: items,
+    data: enrichedItems,
     columns,
     totalCount,
     pagination,
@@ -207,7 +224,7 @@ export const TicketGrid: FC = () => {
       <BaseTable
         table={table}
         fullHeight
-        isLoading={isLoading}
+        isLoading={isLoading || isLoadingUsers}
         showInfo={false}
         paginationTemplate={paginationTemplate}
       />
