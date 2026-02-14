@@ -1,6 +1,7 @@
 import { type FC, useState, useCallback } from 'react';
 import { BaseButton, Icon, BaseTextarea } from '@brainforgeau/components';
-import { Card, CardBody, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { Box } from '@brainforgeau/components/base';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
 import { PermissionGuard } from '@brainforgeau/security';
 import {
@@ -118,20 +119,17 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
 
   if (isLoading) {
     return (
-      <Card>
-        <CardBody>
-          <div className="text-center py-4">Loading approval status...</div>
-        </CardBody>
-      </Card>
+      <Box title="Approval">
+        <div className="text-center py-4">Loading approval status...</div>
+      </Box>
     );
   }
 
   if (!approval) {
     return (
-      <Card>
-        <CardBody>
+      <>
+        <Box title="Approval">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Approval</h3>
             <PermissionGuard requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]} fallback={null}>
               <BaseButton
                 size="sm"
@@ -144,7 +142,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
             </PermissionGuard>
           </div>
           <p className="text-sm text-gray-500">No approval requested for this ticket</p>
-        </CardBody>
+        </Box>
 
         {/* Request Approval Modal */}
         <Modal isOpen={showRequestModal} onClose={() => setShowRequestModal(false)}>
@@ -186,16 +184,14 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
             </ModalFooter>
           </ModalContent>
         </Modal>
-      </Card>
+      </>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardBody className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Approval Status</h3>
+      <Box title="Approval Status">
+          <div className="flex items-center justify-end mb-4">
             <StatusBadge color={getStateChipColor(approval.overallState)}>
               {ApprovalState[approval.overallState]}
             </StatusBadge>
@@ -299,8 +295,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
               </div>
             </PermissionGuard>
           )}
-        </CardBody>
-      </Card>
+      </Box>
 
       {/* Decision Modal */}
       <Modal isOpen={showDecisionModal} onClose={() => setShowDecisionModal(false)}>

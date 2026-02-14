@@ -1,6 +1,7 @@
 import { type FC, useCallback, useState } from 'react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
 import { PermissionGuard } from '@brainforgeau/security';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
@@ -237,8 +238,8 @@ export const TicketDetail: FC = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Header */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-start justify-between mb-4">
+          <Box title={`Ticket #${ticket.id?.substring(0, 8)}`}>
+            <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-2xl font-semibold">{ticket.subject}</h1>
@@ -249,7 +250,6 @@ export const TicketDetail: FC = () => {
                     {priorityConfig.label}
                   </StatusBadge>
                 </div>
-                <p className="text-sm text-gray-500">Ticket #{ticket.id?.substring(0, 8)}</p>
               </div>
 
               {/* Actions Dropdown */}
@@ -274,20 +274,18 @@ export const TicketDetail: FC = () => {
                 </Dropdown>
               </PermissionGuard>
             </div>
-          </div>
+          </Box>
 
           {/* Description */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Description</h2>
+          <Box title="Description">
             <div className="prose max-w-none">
               <p className="whitespace-pre-wrap">{ticket.description}</p>
             </div>
-          </div>
+          </Box>
 
           {/* Attachments */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Attachments</h2>
+          <Box title="Attachments">
+            <div className="flex items-center justify-end mb-4">
               <BaseButton
                 size="sm"
                 variant="light"
@@ -318,20 +316,18 @@ export const TicketDetail: FC = () => {
                 )}
               </div>
             )}
-          </div>
+          </Box>
 
           {/* Comment Thread */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Comments</h2>
+          <Box title="Comments">
             <div className="space-y-4">
               <CommentThread comments={comments} isLoading={commentsLoading} />
               <ReplyEditor ticketId={id ?? ''} categoryId={ticket.categoryId ?? undefined} />
             </div>
-          </div>
+          </Box>
 
           {/* Activity Timeline - Placeholder */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Activity Timeline</h2>
+          <Box title="Activity Timeline">
             <div className="space-y-4">
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -359,19 +355,19 @@ export const TicketDetail: FC = () => {
                 </div>
               )}
             </div>
-          </div>
+          </Box>
         </div>
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           {/* Ticket Info */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <Box title="Ticket Details">
             <TicketDetailSidebar
               ticket={ticket}
               onUpdate={handleUpdate}
               isUpdating={updateTicketMutation.isPending}
             />
-          </div>
+          </Box>
 
           {/* SLA Indicator */}
           {slaData && (

@@ -1,6 +1,6 @@
 import type { FC } from 'react';
-import { Card } from '@heroui/react';
 import { Icon } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSatisfactionRatingByTicket } from '@/hooks/useSatisfaction';
 import { TicketStatus } from '@/types/ticket';
@@ -21,18 +21,18 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
 
   if (isLoading) {
     return (
-      <Card className="p-4">
+      <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
           <Icon name="star" className="h-5 w-5 text-gray-400 animate-pulse" />
           <p className="text-sm text-gray-500">Loading satisfaction rating...</p>
         </div>
-      </Card>
+      </Box>
     );
   }
 
   if (!rating) {
     return (
-      <Card className="p-4 bg-gray-50">
+      <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
           <Icon name="star" className="h-5 w-5 text-gray-400" />
           <p className="text-sm text-gray-600">No customer satisfaction rating yet</p>
@@ -40,16 +40,15 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
         <p className="text-xs text-gray-500 mt-1">
           Customer will receive a survey email after ticket closure.
         </p>
-      </Card>
+      </Box>
     );
   }
 
   return (
-    <Card className="p-4">
+    <Box title="Customer Satisfaction">
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-sm font-semibold mb-1">Customer Satisfaction</h3>
             <p className="text-xs text-gray-600">
               Rated on {new Date(rating.ratedAt).toLocaleDateString()}
             </p>
@@ -71,6 +70,6 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
           </div>
         )}
       </div>
-    </Card>
+    </Box>
   );
 };
