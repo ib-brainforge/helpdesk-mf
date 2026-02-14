@@ -35,7 +35,6 @@ export enum TicketOrigin {
   Web = 'Web',
   Email = 'Email',
   Api = 'Api',
-  Widget = 'Widget',
 }
 
 // Local type aliases for convenience (maps from generated types)
