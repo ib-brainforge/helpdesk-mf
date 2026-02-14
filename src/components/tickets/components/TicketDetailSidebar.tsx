@@ -345,6 +345,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               label="Tags"
               placeholder="Select tags..."
               selectionMode="multiple"
+              isVirtualized={true}
+              maxListboxHeight={300}
               selectedKeys={new Set(ticketTags?.map(t => t.id) ?? [])}
               onSelectionChange={(keys) => handleTagsChange(Array.from(keys) as string[])}
               isDisabled={isUpdating}

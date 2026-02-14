@@ -41,7 +41,8 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   useEffect(() => {
     searchUsers({ query: '' });
     searchCategories({ query: '' });
-  }, [searchUsers, searchCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Map data to options
   const usersOptions = useMemo(
