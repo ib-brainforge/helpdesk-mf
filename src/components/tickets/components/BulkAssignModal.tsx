@@ -36,7 +36,8 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
     if (isOpen) {
       searchUsers({ query: '' });
     }
-  }, [isOpen, searchUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Map users data to options for the autocomplete
   const usersOptions = useMemo(
