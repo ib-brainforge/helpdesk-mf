@@ -1,7 +1,6 @@
 import type { FC } from 'react';
-import { Card } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
-import { Icon } from '@brainforgeau/components/base';
+import { Box, Icon } from '@brainforgeau/components/base';
 import { SlaStatus, type SlaIndicatorDto } from '@/types';
 
 interface SlaIndicatorProps {
@@ -78,8 +77,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
   }
 
   return (
-    <Card className="p-4">
-      <h3 className="mb-4 text-lg font-semibold">SLA Status</h3>
+    <Box title="SLA Status">
       <div className="space-y-4">
         {slaData.responseStatus !== undefined && (
           <div className="flex items-center justify-between">
@@ -125,6 +123,6 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
           </div>
         )}
       </div>
-    </Card>
+    </Box>
   );
 };

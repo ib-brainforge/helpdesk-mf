@@ -1,8 +1,8 @@
 import type { FC } from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { Card } from '@heroui/react';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon, BaseInput } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
 import type { TimeEntryDto, TicketTimeTrackingDto } from '@/types';
 
 interface TimeTrackerProps {
@@ -76,9 +76,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
   }, [manualMinutes, manualNotes, onAddManualEntry]);
 
   return (
-    <Card className="p-4">
-      <h3 className="mb-4 text-lg font-semibold">Time Tracking</h3>
-
+    <Box title="Time Tracking">
       {/* Timer Display */}
       <div className="mb-6 rounded-lg bg-gray-100 p-6 text-center">
         <div className="mb-2 text-4xl font-mono font-bold">
@@ -194,6 +192,6 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
           ))}
         </div>
       )}
-    </Card>
+    </Box>
   );
 };

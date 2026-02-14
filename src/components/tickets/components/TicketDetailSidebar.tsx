@@ -1,4 +1,4 @@
-import { type FC, useCallback, useState, useMemo, useEffect } from 'react';
+import { type FC, useCallback, useMemo, useEffect } from 'react';
 import {
   BaseSelect,
   BaseSelectItem,
@@ -9,8 +9,7 @@ import {
 import { PermissionGuard } from '@brainforgeau/security';
 import { StatusBadge } from '@/components/shared';
 import { TicketStatus, TicketPriority, type TicketDto } from '@/types/ticket';
-import { TagInput } from '@/components/tags/TagInput';
-import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket, useCreateTag } from '@/components/tags/hooks/useTags';
+import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket } from '@/components/tags/hooks/useTags';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useAtom } from 'jotai';
 import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
@@ -72,15 +71,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   const priorityConfig = getPriorityConfig(ticket.priority as any);
 
   // Tags
-  const { tags: availableTags, refetch: refetchAvailableTags } = useTags();
+  const { tags: availableTags } = useTags();
   const { tags: ticketTags, refetch: refetchTicketTags } = useTicketTags(ticket.id ?? '');
   const addTagMutation = useAddTagToTicket();
   const removeTagMutation = useRemoveTagFromTicket();
-  const createTagMutation = useCreateTag();
-
-  const [selectedTagNames, setSelectedTagNames] = useState<string[]>(
-    ticketTags?.map(t => t.name) ?? []
-  );
 
   // Users search mutation for assignee autocomplete
   const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
@@ -92,7 +86,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   useEffect(() => {
     searchUsers({ query: '' });
     searchCategories({ query: '' });
-  }, [searchUsers, searchCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Map data to options
   const usersOptions = useMemo(
@@ -106,38 +101,22 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   );
 
   const handleTagsChange = useCallback(
-    async (newTagNames: string[]) => {
-      setSelectedTagNames(newTagNames);
+    async (newTagIds: string[]) => {
+      const currentTagIds = ticketTags?.map(t => t.id) ?? [];
+      const added = newTagIds.filter(id => !currentTagIds.includes(id));
+      const removed = currentTagIds.filter(id => !newTagIds.includes(id));
 
-      const currentTagNames = ticketTags?.map(t => t.name) ?? [];
-      const added = newTagNames.filter(name => !currentTagNames.includes(name));
-      const removed = ticketTags?.filter(tag => !newTagNames.includes(tag.name)) ?? [];
-
-      // REVIEW: Add new tags - create tag first if doesn't exist, then add to ticket
-      for (const tagName of added) {
-        let tagId = availableTags.find(t => t.name === tagName)?.id;
-
-        // Create tag if it doesn't exist
-        if (!tagId) {
-          const newTagId = await createTagMutation.mutateAsync({ name: tagName });
-          tagId = newTagId as string;
-          await refetchAvailableTags();
-        }
-
-        // Add tag to ticket
-        if (tagId) {
-          await addTagMutation.mutateAsync({ ticketId: ticket.id ?? '', tagId });
-        }
+      for (const tagId of added) {
+        await addTagMutation.mutateAsync({ ticketId: ticket.id ?? '', tagId });
       }
 
-      // Remove tags
-      for (const tag of removed) {
-        await removeTagMutation.mutateAsync({ ticketId: ticket.id ?? '', tagId: tag.id });
+      for (const tagId of removed) {
+        await removeTagMutation.mutateAsync({ ticketId: ticket.id ?? '', tagId });
       }
 
       await refetchTicketTags();
     },
-    [ticket.id, ticketTags, availableTags, addTagMutation, removeTagMutation, createTagMutation, refetchTicketTags, refetchAvailableTags]
+    [ticket.id, ticketTags, addTagMutation, removeTagMutation, refetchTicketTags]
   );
 
   return (
@@ -362,11 +341,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               ) : null
             }
           >
-            <TagInput
-              selectedTags={selectedTagNames}
-              availableTags={availableTags}
-              onTagsChange={handleTagsChange}
-            />
+            <BaseSelect
+              label="Tags"
+              placeholder="Select tags..."
+              selectionMode="multiple"
+              selectedKeys={new Set(ticketTags?.map(t => t.id) ?? [])}
+              onSelectionChange={(keys) => handleTagsChange(Array.from(keys) as string[])}
+              isDisabled={isUpdating}
+            >
+              {availableTags.map((tag) => (
+                <BaseSelectItem key={tag.id}>{tag.name}</BaseSelectItem>
+              ))}
+            </BaseSelect>
           </PermissionGuard>
         </div>
       </div>
