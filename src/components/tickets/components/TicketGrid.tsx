@@ -16,9 +16,12 @@ import { BulkDeleteModal } from './BulkDeleteModal';
 import { addToast } from '@heroui/react';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import type { TicketRow } from '../types';
+import { TicketSidebar } from '../TicketSidebar';
 
 export const TicketGrid: FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { items, totalCount, pagination, setPagination, filters, setFilters, isLoading, refetch } =
     useTicketsData();
 
@@ -153,9 +156,33 @@ export const TicketGrid: FC = () => {
     setFilters({ ...filters, searchTerm: term });
   }, [filters, setFilters]);
 
+  const handleCategorySelect = useCallback((categoryId: string | null) => {
+    setSelectedCategoryId(categoryId);
+    // REVIEW: Category filtering not yet wired to API - add to filters when backend supports it
+  }, []);
+
+  const handleTagSelect = useCallback((tag: string) => {
+    setSelectedTags((prev) => {
+      if (prev.includes(tag)) {
+        return prev.filter((t) => t !== tag);
+      }
+      return [...prev, tag];
+    });
+    // REVIEW: Tag filtering not yet wired to API - add to filters when backend supports it
+  }, []);
+
   return (
-    <>
-      <div className="mb-5">
+    <div className="flex h-full gap-0">
+      {/* Sidebar */}
+      <TicketSidebar
+        onCategorySelect={handleCategorySelect}
+        onTagSelect={handleTagSelect}
+        selectedTags={selectedTags}
+      />
+
+      {/* Main content */}
+      <div className="flex-1 overflow-auto px-6">
+        <div className="mb-5">
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Tickets</h1>
@@ -248,6 +275,7 @@ export const TicketGrid: FC = () => {
         onConfirm={handleBulkDeleteConfirm}
         ticketCount={selectedRows.length}
       />
-    </>
+      </div>
+    </div>
   );
 };
