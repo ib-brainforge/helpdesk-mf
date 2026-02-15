@@ -107,28 +107,23 @@ function ReportsSummaryPage() {
   };
 
   // Transform API data for pie charts
+  // API returns dictionaries like { "CategoryName": count } not arrays
   const categoryChartData = useMemo(() => {
     if (!summaryData?.byCategory) return [];
-    return summaryData.byCategory.map((item) => ({
-      name: item.categoryName,
-      value: item.count,
-    }));
+    const dict = summaryData.byCategory as unknown as Record<string, number>;
+    return Object.entries(dict).map(([name, value]) => ({ name, value }));
   }, [summaryData]);
 
   const statusChartData = useMemo(() => {
     if (!summaryData?.byStatus) return [];
-    return summaryData.byStatus.map((item) => ({
-      name: item.statusName,
-      value: item.count,
-    }));
+    const dict = summaryData.byStatus as unknown as Record<string, number>;
+    return Object.entries(dict).map(([name, value]) => ({ name, value }));
   }, [summaryData]);
 
   const priorityChartData = useMemo(() => {
     if (!summaryData?.byPriority) return [];
-    return summaryData.byPriority.map((item) => ({
-      name: item.priorityName,
-      value: item.count,
-    }));
+    const dict = summaryData.byPriority as unknown as Record<string, number>;
+    return Object.entries(dict).map(([name, value]) => ({ name, value }));
   }, [summaryData]);
 
   // Filter tickets by category if selected
@@ -294,31 +289,35 @@ function ReportsSummaryPage() {
             <StatCard
               label="Tickets Created"
               value={summaryData?.totalCreated ?? 0}
-              icon="plus-circle"
+              icon="plus"
             />
             <StatCard
               label="Tickets Closed"
               value={summaryData?.totalClosed ?? 0}
-              icon="check-circle"
+              icon="check"
             />
             <StatCard
               label="Tickets Open"
-              value={summaryData?.totalOpen ?? 0}
+              value={(summaryData?.totalCreated ?? 0) - (summaryData?.totalClosed ?? 0)}
               icon="clock"
             />
             <StatCard
               label="Avg Response Time"
-              value="N/A"
-              icon="bolt"
+              value={
+                (summaryData as any)?.avgFirstResponseMinutes != null
+                  ? `${((summaryData as any).avgFirstResponseMinutes / 60).toFixed(1)}h`
+                  : 'N/A'
+              }
+              icon="flash"
             />
             <StatCard
               label="Avg Resolution Time"
               value={
-                summaryData?.averageResolutionTimeHours
-                  ? `${summaryData.averageResolutionTimeHours.toFixed(1)}h`
+                (summaryData as any)?.avgResolutionMinutes != null
+                  ? `${((summaryData as any).avgResolutionMinutes / 60).toFixed(1)}h`
                   : 'N/A'
               }
-              icon="chart-bar"
+              icon="speedometer"
             />
           </div>
         </>
