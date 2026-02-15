@@ -9,6 +9,7 @@ import { addToast } from '@heroui/react';
 import { useCreateCannedResponse, useUpdateCannedResponse } from '../hooks/useCannedResponses';
 import { CannedResponseScope } from '@/types/canned-response';
 import type { CannedResponseDto } from '@/types/canned-response';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 
 interface CannedResponseEditorModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function CannedResponseEditorModal({
 
   const isEditing = !!cannedResponse;
 
+  const { categories, isLoading: isLoadingCategories } = useCategoriesData();
   const createMutation = useCreateCannedResponse();
   const updateMutation = useUpdateCannedResponse();
 
@@ -198,15 +200,25 @@ export function CannedResponseEditorModal({
           </BaseSelectItem>
         </BaseSelect>
 
-        <BaseInput
+        <BaseSelect
           label="Category"
-          placeholder="Category (optional)"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          description="Leave empty for no category, or enter category ID"
-        />
-
-        {/* REVIEW: Category and Group fields simplified - should be proper selects with actual data */}
+          placeholder="Select category (optional)"
+          selectedKeys={categoryId ? new Set([categoryId]) : new Set()}
+          onSelectionChange={(keys) => {
+            const key = Array.from(keys)[0] as string;
+            setCategoryId(key || '');
+          }}
+          isLoading={isLoadingCategories}
+        >
+          {[
+            <BaseSelectItem key="">None</BaseSelectItem>,
+            ...categories.map((cat) => (
+              <BaseSelectItem key={cat.id}>
+                {cat.sectionName ? `${cat.sectionName} / ${cat.name}` : cat.name}
+              </BaseSelectItem>
+            )),
+          ]}
+        </BaseSelect>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <BaseButton variant="bordered" onPress={onClose}>

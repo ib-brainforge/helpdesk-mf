@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Icon } from '@brainforgeau/components/base';
-import { Chip } from '@heroui/react';
+import { Chip, Spinner } from '@heroui/react';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { useTags } from '@/components/tags/hooks/useTags';
+import type { CategoryDto, SectionDto } from '@/types/category';
 
 type Category = {
   id: string;
@@ -10,42 +13,9 @@ type Category = {
 
 type TicketSidebarProps = {
   onCategorySelect?: (categoryId: string | null) => void;
-  onTagSelect?: (tag: string) => void;
+  onTagSelect?: (tagId: string) => void;
   selectedTags?: string[];
 };
-
-// REVIEW: Hardcoded categories for now - should come from API
-const mockCategories: Category[] = [
-  {
-    id: '1',
-    name: 'Technical Support',
-    children: [
-      { id: '1-1', name: 'Hardware' },
-      { id: '1-2', name: 'Software' },
-      { id: '1-3', name: 'Network' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Customer Service',
-    children: [
-      { id: '2-1', name: 'Billing' },
-      { id: '2-2', name: 'Account' },
-      { id: '2-3', name: 'General' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Sales',
-    children: [
-      { id: '3-1', name: 'New Customer' },
-      { id: '3-2', name: 'Upgrade' },
-    ],
-  },
-];
-
-// REVIEW: Hardcoded tags for now - should come from API
-const mockTags = ['urgent', 'vip', 'bug', 'feature-request', 'feedback'];
 
 function CategoryTree({
   categories,
@@ -110,6 +80,50 @@ function CategoryTree({
 }
 
 export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = [] }: TicketSidebarProps) {
+  const { categories, sections, isLoading: isLoadingCategories } = useCategoriesData();
+  const { tags, isLoading: isLoadingTags } = useTags();
+
+  // Group categories by section to build hierarchy
+  const categoryTree: Category[] = useMemo(() => {
+    const tree: Category[] = [];
+
+    // Sort sections by sortOrder
+    const sortedSections = [...sections].sort((a: SectionDto, b: SectionDto) => a.sortOrder - b.sortOrder);
+
+    for (const section of sortedSections) {
+      if (!section.isActive) continue;
+
+      const sectionCategories = categories
+        .filter((cat: CategoryDto) => cat.sectionId === section.id && cat.isActive)
+        .sort((a: CategoryDto, b: CategoryDto) => a.sortOrder - b.sortOrder)
+        .map((cat: CategoryDto) => ({
+          id: cat.id,
+          name: cat.name,
+        }));
+
+      if (sectionCategories.length > 0) {
+        tree.push({
+          id: section.id,
+          name: section.name,
+          children: sectionCategories,
+        });
+      }
+    }
+
+    // Add categories without sections
+    const orphanCategories = categories
+      .filter((cat: CategoryDto) => !cat.sectionId && cat.isActive)
+      .sort((a: CategoryDto, b: CategoryDto) => a.sortOrder - b.sortOrder)
+      .map((cat: CategoryDto) => ({
+        id: cat.id,
+        name: cat.name,
+      }));
+
+    tree.push(...orphanCategories);
+
+    return tree;
+  }, [categories, sections]);
+
   return (
     <div className="flex h-full w-64 flex-col border-r border-default-200 bg-default-50 p-4">
       {/* Categories Section */}
@@ -124,26 +138,49 @@ export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = []
             Clear
           </button>
         </div>
-        <CategoryTree categories={mockCategories} onSelect={onCategorySelect || (() => {})} />
+        {isLoadingCategories ? (
+          <div className="flex justify-center py-4">
+            <Spinner size="sm" />
+          </div>
+        ) : (
+          <CategoryTree categories={categoryTree} onSelect={onCategorySelect || (() => {})} />
+        )}
       </div>
 
       {/* Tags Section */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-default-700">Tags</h3>
-        <div className="flex flex-wrap gap-2">
-          {mockTags.map((tag) => (
-            <Chip
-              key={tag}
-              size="sm"
-              variant={selectedTags.includes(tag) ? 'solid' : 'bordered'}
-              color={selectedTags.includes(tag) ? 'primary' : 'default'}
-              className="cursor-pointer"
-              onClick={() => onTagSelect?.(tag)}
-            >
-              {tag}
-            </Chip>
-          ))}
-        </div>
+        {isLoadingTags ? (
+          <div className="flex justify-center py-4">
+            <Spinner size="sm" />
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Chip
+                key={tag.id}
+                size="sm"
+                variant={selectedTags.includes(tag.id!) ? 'solid' : 'bordered'}
+                color={selectedTags.includes(tag.id!) ? 'primary' : 'default'}
+                className="cursor-pointer"
+                onClick={() => onTagSelect?.(tag.id!)}
+                style={
+                  tag.color
+                    ? {
+                        backgroundColor: selectedTags.includes(tag.id!)
+                          ? tag.color
+                          : 'transparent',
+                        borderColor: tag.color,
+                        color: selectedTags.includes(tag.id!) ? '#fff' : tag.color,
+                      }
+                    : undefined
+                }
+              >
+                {tag.name}
+              </Chip>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

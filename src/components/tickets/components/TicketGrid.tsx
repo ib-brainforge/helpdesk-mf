@@ -158,18 +158,21 @@ export const TicketGrid: FC = () => {
 
   const handleCategorySelect = useCallback((categoryId: string | null) => {
     setSelectedCategoryId(categoryId);
-    // REVIEW: Category filtering not yet wired to API - add to filters when backend supports it
-  }, []);
+    setFilters({ ...filters, categoryId: categoryId ? [categoryId] : undefined });
+  }, [filters, setFilters]);
 
-  const handleTagSelect = useCallback((tag: string) => {
+  const handleTagSelect = useCallback((tagId: string) => {
     setSelectedTags((prev) => {
-      if (prev.includes(tag)) {
-        return prev.filter((t) => t !== tag);
-      }
-      return [...prev, tag];
+      const newTags = prev.includes(tagId)
+        ? prev.filter((t) => t !== tagId)
+        : [...prev, tagId];
+
+      // Update filters with tag IDs
+      setFilters({ ...filters, tagIds: newTags.length > 0 ? newTags : undefined });
+
+      return newTags;
     });
-    // REVIEW: Tag filtering not yet wired to API - add to filters when backend supports it
-  }, []);
+  }, [filters, setFilters]);
 
   return (
     <div className="flex h-full gap-0">

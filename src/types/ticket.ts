@@ -78,6 +78,7 @@ export interface TicketFilters {
   categoryId?: string[];
   assigneeId?: string[];
   searchTerm?: string;
+  tagIds?: string[]; // Filter by tag IDs
 }
 
 export interface CreateTicketDto {
