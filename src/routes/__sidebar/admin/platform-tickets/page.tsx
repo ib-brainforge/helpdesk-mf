@@ -1,7 +1,21 @@
 import React from 'react';
-import { useNavigate } from '@modern-js/runtime/router';
 import { Card, CardBody, CardHeader, Checkbox, Spinner } from '@heroui/react';
 import { usePlatformTicketsData } from '@/components/admin/hooks/usePlatformTickets';
+import type { PlatformTicketStatus, PlatformTicketPriority } from '@/types/admin';
+
+const statusStyles: Record<PlatformTicketStatus, string> = {
+  Open: 'bg-blue-100 text-blue-800',
+  InProgress: 'bg-yellow-100 text-yellow-800',
+  Resolved: 'bg-green-100 text-green-800',
+  Closed: 'bg-gray-100 text-gray-800',
+};
+
+const priorityStyles: Record<PlatformTicketPriority, string> = {
+  Critical: 'text-red-600',
+  High: 'text-orange-600',
+  Medium: 'text-blue-600',
+  Low: 'text-gray-600',
+};
 
 /**
  * Platform Tickets Management Page
@@ -9,7 +23,6 @@ import { usePlatformTicketsData } from '@/components/admin/hooks/usePlatformTick
  * For users with platform.support role to view and manage all platform tickets across tenants.
  */
 export default function PlatformTicketsPage() {
-  const navigate = useNavigate();
   const { items, totalCount, filters, setFilters, isLoading } = usePlatformTicketsData();
 
   return (
@@ -47,8 +60,7 @@ export default function PlatformTicketsPage() {
               {items.map((ticket) => (
                 <div
                   key={ticket.id}
-                  onClick={() => navigate(`/tickets/${ticket.id}`)}
-                  className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -57,39 +69,29 @@ export default function PlatformTicketsPage() {
                           {ticket.id?.substring(0, 8)}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs ${
-                            ticket.status === 'New'
-                              ? 'bg-blue-100 text-blue-800'
-                              : ticket.status === 'InProgress'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : ticket.status === 'Closed'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                          className={`px-2 py-0.5 rounded-full text-xs ${statusStyles[ticket.status] ?? 'bg-gray-100 text-gray-800'}`}
                         >
-                          {ticket.status?.replace('InProgress', 'In Progress')}
+                          {ticket.status === 'InProgress' ? 'In Progress' : ticket.status}
                         </span>
                         <span
-                          className={`font-medium text-xs ${
-                            ticket.priority === 'Critical'
-                              ? 'text-red-600'
-                              : ticket.priority === 'High'
-                              ? 'text-orange-600'
-                              : 'text-blue-600'
-                          }`}
+                          className={`font-medium text-xs ${priorityStyles[ticket.priority] ?? 'text-gray-600'}`}
                         >
                           {ticket.priority}
                         </span>
                       </div>
                       <h3 className="font-medium text-gray-900 truncate">{ticket.subject}</h3>
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                        <span>Requester: {ticket.requesterName ?? 'Unknown'}</span>
-                        <span>
-                          Assigned: {ticket.assigneeName ?? <span className="text-gray-400">Unassigned</span>}
-                        </span>
-                        {ticket.createdAt && (
-                          <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                        <span>{ticket.submitterEmail}</span>
+                        <span className="text-gray-400">|</span>
+                        <span>Tenant: {ticket.submitterTenantName}</span>
+                        {ticket.categoryName && (
+                          <>
+                            <span className="text-gray-400">|</span>
+                            <span>{ticket.categoryName}</span>
+                          </>
                         )}
+                        <span className="text-gray-400">|</span>
+                        <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
