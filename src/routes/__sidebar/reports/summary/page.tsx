@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, Icon, BaseSelect, BaseSelectItem, BaseTable } from '@brainforgeau/components';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody } from '@heroui/react';
+import { Card, CardBody, Spinner } from '@heroui/react';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { addToast } from '@heroui/react';
 import {
@@ -12,67 +12,9 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-
-// REVIEW: Mock data - replace with actual API call when backend is ready
-type ReportData = {
-  category: string;
-  status: string;
-  priority: string;
-  ticketId: string;
-  subject: string;
-  requester: string;
-  created: string;
-};
-
-const mockData: ReportData[] = [
-  {
-    category: 'Technical Support',
-    status: 'Open',
-    priority: 'High',
-    ticketId: 'TKT-001',
-    subject: 'Server outage in EU region',
-    requester: 'John Doe',
-    created: '2026-02-14',
-  },
-  {
-    category: 'Billing',
-    status: 'Closed',
-    priority: 'Normal',
-    ticketId: 'TKT-002',
-    subject: 'Invoice inquiry',
-    requester: 'Jane Smith',
-    created: '2026-02-13',
-  },
-  {
-    category: 'Customer Service',
-    status: 'In Progress',
-    priority: 'Critical',
-    ticketId: 'TKT-003',
-    subject: 'Account access issue',
-    requester: 'Bob Wilson',
-    created: '2026-02-12',
-  },
-];
-
-const mockCategoryData = [
-  { name: 'Technical Support', value: 45 },
-  { name: 'Billing', value: 25 },
-  { name: 'Customer Service', value: 20 },
-  { name: 'Other', value: 10 },
-];
-
-const mockStatusData = [
-  { name: 'Open', value: 30 },
-  { name: 'In Progress', value: 50 },
-  { name: 'Closed', value: 20 },
-];
-
-const mockPriorityData = [
-  { name: 'Critical', value: 15 },
-  { name: 'High', value: 35 },
-  { name: 'Normal', value: 40 },
-  { name: 'Low', value: 10 },
-];
+import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
+import { useTicketsData } from '@/components/tickets/hooks/useTickets';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 
 function PieChart({ data, title }: { data: { name: string; value: number }[]; title: string }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -133,11 +75,23 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
 
 function ReportsSummaryPage() {
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString());
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
+
+  // Fetch report summary data
+  const { data: summaryData, isLoading: isLoadingSummary } = useTicketSummaryReport(startDate, endDate);
+
+  // Fetch categories for filter dropdown
+  const { categories } = useCategoriesData();
+
+  // Fetch tickets for table with category filter
+  const {
+    items: tickets,
+    isLoading: isLoadingTickets,
+  } = useTicketsData();
 
   const handleDateRangeChange = (start: string, end: string) => {
     setStartDate(start);
@@ -152,13 +106,44 @@ function ReportsSummaryPage() {
     });
   };
 
-  const columns: ColumnDef<ReportData, any>[] = useMemo(
+  // Transform API data for pie charts
+  const categoryChartData = useMemo(() => {
+    if (!summaryData?.byCategory) return [];
+    return summaryData.byCategory.map((item) => ({
+      name: item.categoryName,
+      value: item.count,
+    }));
+  }, [summaryData]);
+
+  const statusChartData = useMemo(() => {
+    if (!summaryData?.byStatus) return [];
+    return summaryData.byStatus.map((item) => ({
+      name: item.statusName,
+      value: item.count,
+    }));
+  }, [summaryData]);
+
+  const priorityChartData = useMemo(() => {
+    if (!summaryData?.byPriority) return [];
+    return summaryData.byPriority.map((item) => ({
+      name: item.priorityName,
+      value: item.count,
+    }));
+  }, [summaryData]);
+
+  // Filter tickets by category if selected
+  const filteredTickets = useMemo(() => {
+    if (selectedCategory === 'all') return tickets;
+    return tickets.filter((ticket) => ticket.categoryId === selectedCategory);
+  }, [tickets, selectedCategory]);
+
+  const columns: ColumnDef<typeof tickets[0], any>[] = useMemo(
     () => [
       {
-        accessorKey: 'ticketId',
+        accessorKey: 'ticketNumber',
         header: 'Ticket ID',
         cell: (info) => (
-          <span className="text-primary font-medium">{info.getValue() as string}</span>
+          <span className="text-primary font-medium">#{info.getValue() as string}</span>
         ),
       },
       {
@@ -167,7 +152,7 @@ function ReportsSummaryPage() {
         cell: (info) => info.getValue() as string,
       },
       {
-        accessorKey: 'category',
+        accessorKey: 'categoryName',
         header: 'Category',
         cell: (info) => info.getValue() as string,
       },
@@ -177,8 +162,8 @@ function ReportsSummaryPage() {
         cell: (info) => {
           const status = info.getValue() as string;
           const colors: Record<string, string> = {
-            Open: 'bg-primary-100 text-primary-800',
-            'In Progress': 'bg-warning-100 text-warning-800',
+            New: 'bg-primary-100 text-primary-800',
+            InProgress: 'bg-warning-100 text-warning-800',
             Closed: 'bg-success-100 text-success-800',
           };
           return (
@@ -198,6 +183,7 @@ function ReportsSummaryPage() {
             High: 'bg-warning-100 text-warning-800',
             Normal: 'bg-default-100 text-default-800',
             Low: 'bg-default-50 text-default-600',
+            None: 'bg-default-50 text-default-600',
           };
           return (
             <span className={`px-2 py-0.5 rounded-full text-xs ${colors[priority] || 'bg-default-100'}`}>
@@ -207,21 +193,24 @@ function ReportsSummaryPage() {
         },
       },
       {
-        accessorKey: 'requester',
+        accessorKey: 'requesterName',
         header: 'Requester',
         cell: (info) => info.getValue() as string,
       },
       {
-        accessorKey: 'created',
+        accessorKey: 'createdAt',
         header: 'Created',
-        cell: (info) => info.getValue() as string,
+        cell: (info) => {
+          const date = info.getValue() as string;
+          return date ? new Date(date).toLocaleDateString() : '';
+        },
       },
     ],
     [],
   );
 
   const table = useReactTable({
-    data: mockData,
+    data: filteredTickets,
     columns,
     state: {
       sorting,
@@ -266,10 +255,12 @@ function ReportsSummaryPage() {
           }}
           className="w-48"
         >
-          <BaseSelectItem key="all">All categories</BaseSelectItem>
-          <BaseSelectItem key="technical">Technical Support</BaseSelectItem>
-          <BaseSelectItem key="billing">Billing</BaseSelectItem>
-          <BaseSelectItem key="customer">Customer Service</BaseSelectItem>
+          {[
+            <BaseSelectItem key="all">All categories</BaseSelectItem>,
+            ...categories.map((cat) => (
+              <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+            )),
+          ]}
         </BaseSelect>
         <DateRangeSelector
           startDate={startDate}
@@ -285,28 +276,60 @@ function ReportsSummaryPage() {
         </BaseButton>
       </div>
 
-      {/* Charts */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <PieChart data={mockCategoryData} title="By Category" />
-        <PieChart data={mockStatusData} title="By Status" />
-        <PieChart data={mockPriorityData} title="By Priority" />
-      </div>
+      {isLoadingSummary ? (
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <>
+          {/* Charts */}
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <PieChart data={categoryChartData} title="By Category" />
+            <PieChart data={statusChartData} title="By Status" />
+            <PieChart data={priorityChartData} title="By Priority" />
+          </div>
 
-      {/* Stats */}
-      <div className="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard label="Tickets Created" value="156" icon="plus-circle" />
-        <StatCard label="Tickets Closed" value="98" icon="check-circle" />
-        <StatCard label="Tickets Open" value="58" icon="clock" />
-        <StatCard label="Avg Response Time" value="2.4h" icon="bolt" />
-        <StatCard label="Avg Resolution Time" value="8.7h" icon="chart-bar" />
-      </div>
+          {/* Stats */}
+          <div className="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+            <StatCard
+              label="Tickets Created"
+              value={summaryData?.totalCreated ?? 0}
+              icon="plus-circle"
+            />
+            <StatCard
+              label="Tickets Closed"
+              value={summaryData?.totalClosed ?? 0}
+              icon="check-circle"
+            />
+            <StatCard
+              label="Tickets Open"
+              value={summaryData?.totalOpen ?? 0}
+              icon="clock"
+            />
+            <StatCard
+              label="Avg Response Time"
+              value="N/A"
+              icon="bolt"
+            />
+            <StatCard
+              label="Avg Resolution Time"
+              value={
+                summaryData?.averageResolutionTimeHours
+                  ? `${summaryData.averageResolutionTimeHours.toFixed(1)}h`
+                  : 'N/A'
+              }
+              icon="chart-bar"
+            />
+          </div>
+        </>
+      )}
 
       {/* Ticket Table */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-4">Ticket Details</h2>
         <BaseTable
           table={table}
-          isLoading={false}
+          isLoading={isLoadingTickets}
           fullHeight={false}
         />
       </div>
