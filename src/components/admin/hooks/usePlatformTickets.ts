@@ -1,12 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { configAtom } from '@/state/config';
 import { getDefaultStore } from 'jotai';
-import type { TicketListDto, PagedResult } from '@/types/ticket';
-import type { PlatformTicketFilters } from '@/types/admin';
-import { toApiTicketStatus, toApiTicketPriority } from '@/utils/typeMappers';
+import type { PlatformTicketListItem, PlatformTicketFilters, PagedResult } from '@/types/admin';
 
 const store = getDefaultStore();
 
@@ -14,27 +11,25 @@ const store = getDefaultStore();
  * Hook for managing platform tickets (for platform.support role)
  */
 export const usePlatformTicketsData = () => {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(25);
   const [filters, setFilters] = useState<PlatformTicketFilters>({ mine: false });
 
-  const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
-    queryKey: ['platform-tickets', pagination, filters],
+  const { data, isLoading, refetch } = useQuery<PagedResult<PlatformTicketListItem>>({
+    queryKey: ['platform-tickets', page, pageSize, filters],
     queryFn: async () => {
       const config = store.get(configAtom);
       const baseUrl = config?.api?.baseUrl ?? '';
 
       const params = new URLSearchParams();
-      if (filters.status?.[0]) {
-        params.append('status', toApiTicketStatus(filters.status[0]));
+      if (filters.status) {
+        params.append('status', filters.status);
       }
-      if (filters.priority?.[0]) {
-        params.append('priority', toApiTicketPriority(filters.priority[0]));
+      if (filters.priority) {
+        params.append('priority', filters.priority);
       }
-      if (filters.categoryId?.[0]) {
-        params.append('categoryId', filters.categoryId[0]);
+      if (filters.categoryId) {
+        params.append('categoryId', filters.categoryId);
       }
       if (filters.searchTerm) {
         params.append('searchTerm', filters.searchTerm);
@@ -42,8 +37,8 @@ export const usePlatformTicketsData = () => {
       if (filters.mine !== undefined) {
         params.append('mine', String(filters.mine));
       }
-      params.append('page', String(pagination.pageIndex + 1));
-      params.append('pageSize', String(pagination.pageSize));
+      params.append('page', String(page));
+      params.append('pageSize', String(pageSize));
       params.append('sortBy', 'CreatedAt');
       params.append('sortDirection', 'desc');
 
@@ -51,21 +46,16 @@ export const usePlatformTicketsData = () => {
         `${baseUrl}/v1/platform/tickets?${params.toString()}`
       );
 
-      const result = response.data;
-      return {
-        items: result.items ?? [],
-        totalCount: result.totalCount ?? 0,
-        page: result.page ?? 1,
-        pageSize: result.pageSize ?? pagination.pageSize,
-      };
+      return response.data;
     },
   });
 
   return {
     items: data?.items ?? [],
     totalCount: data?.totalCount ?? 0,
-    pagination,
-    setPagination,
+    page,
+    setPage,
+    pageSize,
     filters,
     setFilters,
     isLoading,
@@ -131,18 +121,18 @@ export const useAddPlatformTicketComment = () => {
     mutationFn: async ({
       ticketId,
       body,
-      isInternal,
+      isInternalNote,
     }: {
       ticketId: string;
       body: string;
-      isInternal?: boolean;
+      isInternalNote?: boolean;
     }) => {
       const config = store.get(configAtom);
       const baseUrl = config?.api?.baseUrl ?? '';
 
       const response = await authorizedAxios.post(
         `${baseUrl}/v1/platform/tickets/${ticketId}/comments`,
-        { body, isInternalNote: isInternal ?? false }
+        { body, isInternalNote: isInternalNote ?? false }
       );
       return response.data;
     },
