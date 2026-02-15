@@ -95,22 +95,26 @@ function CategoriesPage() {
         />
 
         <div className="mb-5 items-start gap-5 lg:flex">
-          <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-            Category Management
-          </h1>
+          <div className="flex-1">
+            <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
+              Ticket Categories and Permissions
+            </h1>
+            <p className="text-default-500 mt-1">Organize tickets into categories and subcategories</p>
+          </div>
           <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
             <BaseButton
               icon={<Icon name="plus" className="h-3.5 w-3.5" />}
               onPress={handleCreateSection}
               variant="bordered"
             >
-              Section
+              Add Section
             </BaseButton>
             <BaseButton
+              color="primary"
               icon={<Icon name="plus" className="h-3.5 w-3.5" />}
               onPress={handleCreateCategory}
             >
-              Category
+              Add New Category
             </BaseButton>
           </div>
         </div>

@@ -24,6 +24,7 @@ import { ReplyEditor } from '@/components/comments/components/ReplyEditor';
 import { useComments } from '@/components/comments/hooks/useComments';
 import { MergeTicketModal } from './MergeTicketModal';
 import { LinkTicketModal } from './LinkTicketModal';
+import { AiAssistantModal } from './AiAssistantModal';
 import { useMergeTickets, useLinkTickets } from '../hooks/useTickets';
 import { addToast } from '@heroui/react';
 
@@ -90,6 +91,7 @@ export const TicketDetail: FC = () => {
   const [showAttachments, setShowAttachments] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   const handleUpdate = useCallback(
     (updates: any) => {
@@ -109,6 +111,18 @@ export const TicketDetail: FC = () => {
 
   const handleLink = useCallback(() => {
     setIsLinkModalOpen(true);
+  }, []);
+
+  const handleAiAssistant = useCallback(() => {
+    setIsAiAssistantOpen(true);
+  }, []);
+
+  const handleComingSoon = useCallback((feature: string) => {
+    addToast({
+      title: 'Coming soon',
+      description: `${feature} will be available soon`,
+      severity: 'warning',
+    });
   }, []);
 
   const handleMergeConfirm = useCallback((targetTicketId: string) => {
@@ -252,27 +266,78 @@ export const TicketDetail: FC = () => {
                 </div>
               </div>
 
-              {/* Actions Dropdown */}
-              <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
-                <Dropdown>
-                  <DropdownTrigger>
-                    <BaseButton
-                      variant="bordered"
-                      icon={<Icon name="ellipsis-vertical" className="h-4 w-4" />}
-                    >
-                      Actions
-                    </BaseButton>
-                  </DropdownTrigger>
-                  <DropdownMenu aria-label="Ticket actions">
-                    <DropdownItem key="merge" onPress={handleMerge}>
-                      Merge Ticket
-                    </DropdownItem>
-                    <DropdownItem key="link" onPress={handleLink}>
-                      Link Ticket
-                    </DropdownItem>
-                  </DropdownMenu>
-                </Dropdown>
-              </PermissionGuard>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+                  <BaseButton
+                    variant="bordered"
+                    onPress={handleAiAssistant}
+                    icon={<Icon name="sparkles" className="h-4 w-4" />}
+                  >
+                    AI Assistant
+                  </BaseButton>
+                </PermissionGuard>
+                <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <BaseButton
+                        variant="bordered"
+                        icon={<Icon name="ellipsis-vertical" className="h-4 w-4" />}
+                      />
+                    </DropdownTrigger>
+                    <DropdownMenu aria-label="Ticket actions">
+                      <DropdownItem key="summary" onPress={() => handleComingSoon('Ticket Summary')}>
+                        Ticket Summary
+                      </DropdownItem>
+                      <DropdownItem key="edit" onPress={() => handleComingSoon('Edit')}>
+                        Edit
+                      </DropdownItem>
+                      <DropdownItem key="spam" onPress={() => handleComingSoon('Mark As Spam')}>
+                        Mark As Spam
+                      </DropdownItem>
+                      <DropdownItem key="forward" onPress={() => handleComingSoon('Forward Ticket By Email')}>
+                        Forward Ticket By Email
+                      </DropdownItem>
+                      <DropdownItem key="print" onPress={() => handleComingSoon('Print')}>
+                        Print
+                      </DropdownItem>
+                      <DropdownItem key="close" onPress={() => handleUpdate({ status: TicketStatus.Closed })}>
+                        Close Ticket
+                      </DropdownItem>
+                      <DropdownItem key="duplicate" onPress={() => handleComingSoon('Duplicate')}>
+                        Duplicate
+                      </DropdownItem>
+                      <DropdownItem key="merge" onPress={handleMerge}>
+                        Merge
+                      </DropdownItem>
+                      <DropdownItem key="subtask" onPress={() => handleComingSoon('Add Subtask')}>
+                        Add Subtask
+                      </DropdownItem>
+                      <DropdownItem key="parent" onPress={() => handleComingSoon('Add Parent Ticket')}>
+                        Add Parent Ticket
+                      </DropdownItem>
+                      <DropdownItem key="convert" onPress={() => handleComingSoon('Convert To Reply')}>
+                        Convert To Reply
+                      </DropdownItem>
+                      <DropdownItem key="problem" onPress={() => handleComingSoon('Problem/Idol')}>
+                        Problem/Idol
+                      </DropdownItem>
+                      <DropdownItem key="publish" onPress={() => handleComingSoon('Publish To Ideas Forum')}>
+                        Publish To "Ideas Forum"
+                      </DropdownItem>
+                      <DropdownItem key="subscribe" onPress={() => handleComingSoon('Subscribe')}>
+                        Subscribe
+                      </DropdownItem>
+                      <DropdownItem key="systemlog" onPress={() => handleComingSoon('Toggle System Log')}>
+                        Hide/Show System Log Entries
+                      </DropdownItem>
+                      <DropdownItem key="delete" className="text-danger" color="danger" onPress={() => handleComingSoon('Delete')}>
+                        Delete
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
+                </PermissionGuard>
+              </div>
             </div>
           </Box>
 
@@ -405,6 +470,10 @@ export const TicketDetail: FC = () => {
         onClose={() => setIsLinkModalOpen(false)}
         onConfirm={handleLinkConfirm}
         currentTicketId={id ?? ''}
+      />
+      <AiAssistantModal
+        isOpen={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
       />
     </div>
   );

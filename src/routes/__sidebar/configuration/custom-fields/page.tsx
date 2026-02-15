@@ -16,7 +16,10 @@ import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 
+type CustomFieldTabType = 'tickets' | 'users' | 'companies' | 'assets';
+
 function CustomFieldsPage() {
+  const [selectedTab, setSelectedTab] = useState<CustomFieldTabType>('tickets');
   const { items, totalCount, pagination, setPagination, isLoading, refetch } = useCustomFieldsData();
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<CustomFieldDefinitionDto | undefined>(undefined);
@@ -118,14 +121,79 @@ function CustomFieldsPage() {
         </div>
       </div>
 
-      <BaseTable
-        fullHeight
-        table={table}
-        showInfo={false}
-        paginationTemplate={paginationTemplate}
-        isLoading={isLoading}
-        loading={{ title: 'Loading...' }}
-      />
+      <div className="flex gap-6">
+        {/* Left Sidebar */}
+        <div className="w-64 flex-shrink-0 border-r border-default-200 pr-6">
+          <nav className="space-y-1">
+            <button
+              type="button"
+              onClick={() => setSelectedTab('tickets')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === 'tickets'
+                  ? 'bg-primary text-white'
+                  : 'text-default-700 hover:bg-default-100'
+              }`}
+            >
+              Custom fields (Tickets)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedTab('users')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === 'users'
+                  ? 'bg-primary text-white'
+                  : 'text-default-700 hover:bg-default-100'
+              }`}
+            >
+              Custom fields (Users)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedTab('companies')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === 'companies'
+                  ? 'bg-primary text-white'
+                  : 'text-default-700 hover:bg-default-100'
+              }`}
+            >
+              Custom fields (Companies)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedTab('assets')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedTab === 'assets'
+                  ? 'bg-primary text-white'
+                  : 'text-default-700 hover:bg-default-100'
+              }`}
+            >
+              Custom fields (Assets)
+            </button>
+          </nav>
+        </div>
+
+        {/* Right Content */}
+        <div className="flex-1">
+          {selectedTab === 'tickets' ? (
+            <BaseTable
+              fullHeight
+              table={table}
+              showInfo={false}
+              paginationTemplate={paginationTemplate}
+              isLoading={isLoading}
+              loading={{ title: 'Loading...' }}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
+              <Icon name="inbox" className="h-12 w-12 text-default-300 mb-3" />
+              <p className="text-default-500 mb-1">No custom fields yet</p>
+              <p className="text-default-400 text-sm mb-4">
+                Custom fields for {selectedTab} are not yet available
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       <CustomFieldEditorModal
         isOpen={isEditorModalOpen}
