@@ -272,7 +272,7 @@ export const TicketDetail: FC = () => {
                   <BaseButton
                     variant="bordered"
                     onPress={handleAiAssistant}
-                    icon={<Icon name="sparkles" className="h-4 w-4" />}
+                    icon={<Icon name="flash" className="h-4 w-4" />}
                   >
                     AI Assistant
                   </BaseButton>
@@ -282,7 +282,7 @@ export const TicketDetail: FC = () => {
                     <DropdownTrigger>
                       <BaseButton
                         variant="bordered"
-                        icon={<Icon name="ellipsis-vertical" className="h-4 w-4" />}
+                        icon={<Icon name="dotsV" className="h-4 w-4" />}
                       />
                     </DropdownTrigger>
                     <DropdownMenu aria-label="Ticket actions">
