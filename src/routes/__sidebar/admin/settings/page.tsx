@@ -105,14 +105,12 @@ function AdministrationPage() {
           description: 'Create and manage custom priority levels',
           icon: 'exclamation-triangle',
           href: '/configuration/custom-priorities',
-          isComingSoon: true,
         },
         {
           title: 'Canned responses',
           description: 'Pre-written responses for common questions',
           icon: 'document-text',
           href: '/configuration/canned-responses',
-          isComingSoon: true,
         },
       ],
     },
@@ -130,7 +128,6 @@ function AdministrationPage() {
           description: 'Configure AI-powered assistance and suggestions',
           icon: 'sparkles',
           href: '/configuration/ai-features',
-          isComingSoon: true,
         },
         {
           title: 'Live Chat widget',

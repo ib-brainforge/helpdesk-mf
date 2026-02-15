@@ -62,7 +62,6 @@ function ReportsHubPage() {
           description: 'Overview of ticket metrics with charts and trends',
           icon: 'chart-pie',
           href: '/reports/summary',
-          isComingSoon: true,
         },
         {
           title: 'Tickets per day',
