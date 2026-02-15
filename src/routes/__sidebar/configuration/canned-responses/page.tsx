@@ -98,14 +98,14 @@ function CannedResponsesPage() {
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
-            onClick={handleExportCSV}
+            onPress={handleExportCSV}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
           >
             Export (CSV)
           </BaseButton>
           <BaseButton
             color="primary"
-            onClick={handleCreate}
+            onPress={handleCreate}
             icon={<Icon name="plus" className="h-4 w-4" />}
           >
             Create
@@ -132,7 +132,7 @@ function CannedResponsesPage() {
           <Icon name="document-text" className="h-12 w-12 text-default-300 mb-3" />
           <p className="text-default-500 mb-1">No canned responses yet</p>
           <p className="text-default-400 text-sm mb-4">Create your first canned response to get started</p>
-          <BaseButton color="primary" onClick={handleCreate}>
+          <BaseButton color="primary" onPress={handleCreate}>
             Create Canned Response
           </BaseButton>
         </div>
