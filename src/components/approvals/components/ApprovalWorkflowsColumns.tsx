@@ -83,7 +83,7 @@ export const createApprovalWorkflowsColumns = ({
             <BaseButton
               size="sm"
               variant="light"
-              icon={<Icon name="ellipsis-vertical" className="h-3.5 w-3.5" />}
+              icon={<Icon name="dotsV" className="h-3.5 w-3.5" />}
             />
           </DropdownTrigger>
           <DropdownMenu aria-label="Workflow actions">

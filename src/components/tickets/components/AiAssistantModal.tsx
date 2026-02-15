@@ -54,7 +54,7 @@ export function AiAssistantModal({ isOpen, onClose }: AiAssistantModalProps) {
       <ModalContent>
         <ModalHeader>
           <div className="flex items-center gap-2">
-            <Icon name="sparkles" className="h-5 w-5 text-primary" />
+            <Icon name="flash" className="h-5 w-5 text-primary" />
             <span>Jitbit AI Assistant</span>
           </div>
         </ModalHeader>

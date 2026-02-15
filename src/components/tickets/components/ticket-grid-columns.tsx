@@ -202,7 +202,7 @@ export const createTicketColumns = (
               size="none"
               className="text-foreground hover:text-blue"
               aria-label="Quick actions"
-              icon={<Icon name="ellipsis-vertical" className="h-4 w-4" />}
+              icon={<Icon name="dotsV" className="h-4 w-4" />}
             />
           </DropdownTrigger>
           <DropdownMenu aria-label="Ticket actions">
