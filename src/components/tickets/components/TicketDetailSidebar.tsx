@@ -5,6 +5,8 @@ import {
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
+  BaseButton,
+  Icon,
 } from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
 import { StatusBadge } from '@/components/shared';
@@ -14,6 +16,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useAtom } from 'jotai';
 import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
 import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
+import { addToast } from '@heroui/react';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -51,6 +54,33 @@ const getPriorityConfig = (priority: TicketPriority) => {
   }
 };
 
+const getOriginConfig = (origin: string) => {
+  switch (origin) {
+    case 'Web':
+      return { label: 'Web', color: 'primary' as const };
+    case 'Email':
+      return { label: 'Email', color: 'secondary' as const };
+    case 'Api':
+      return { label: 'API', color: 'success' as const };
+    default:
+      return { label: origin || 'Unknown', color: 'default' as const };
+  }
+};
+
+const formatTimeSpent = (timeSpan: string | undefined) => {
+  if (!timeSpan) return '0h 0m';
+
+  // Parse TimeSpan format: "HH:MM:SS" or duration in seconds
+  if (typeof timeSpan === 'string' && timeSpan.includes(':')) {
+    const parts = timeSpan.split(':');
+    const hours = parseInt(parts[0] || '0', 10);
+    const minutes = parseInt(parts[1] || '0', 10);
+    return `${hours}h ${minutes}m`;
+  }
+
+  return timeSpan || '0h 0m';
+};
+
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', {
@@ -69,6 +99,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 }) => {
   const statusConfig = getStatusConfig(ticket.status as any);
   const priorityConfig = getPriorityConfig(ticket.priority as any);
+  const originConfig = getOriginConfig((ticket as any).origin);
 
   // Tags
   const { tags: availableTags } = useTags();
@@ -302,11 +333,41 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <p className="text-sm">{ticket.requesterName ?? '—'}</p>
         </div>
 
+        {/* Via (Origin) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Via</label>
+          <StatusBadge color={originConfig.color}>
+            {originConfig.label}
+          </StatusBadge>
+        </div>
+
+        {/* Time Spent */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Time Spent</label>
+          <p className="text-sm">{formatTimeSpent((ticket as any).timeSpent)}</p>
+        </div>
+
         {/* Due Date */}
         {ticket.dueDate && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
             <p className="text-sm">{formatDate(ticket.dueDate)}</p>
+          </div>
+        )}
+
+        {/* Started At */}
+        {(ticket as any).startedAtUtc && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Started At</label>
+            <p className="text-sm">{formatDate((ticket as any).startedAtUtc)}</p>
+          </div>
+        )}
+
+        {/* Closed At */}
+        {(ticket as any).closedAtUtc && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Closed At</label>
+            <p className="text-sm">{formatDate((ticket as any).closedAtUtc)}</p>
           </div>
         )}
 
@@ -321,6 +382,23 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">Updated</label>
           <p className="text-sm">{ticket.modifiedAt ? formatDate(ticket.modifiedAt) : '-'}</p>
         </div>
+
+        {/* Subscribers */}
+        {(ticket as any).subscriberIds && (ticket as any).subscriberIds.length > 0 && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subscribers</label>
+            <div className="flex flex-wrap gap-2">
+              {(ticket as any).subscriberIds.map((subscriberId: string) => (
+                <BaseAvatar
+                  key={subscriberId}
+                  name={subscriberId.substring(0, 2).toUpperCase()}
+                  size="xs"
+                />
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">{(ticket as any).subscriberIds.length} subscriber{(ticket as any).subscriberIds.length !== 1 ? 's' : ''}</p>
+          </div>
+        )}
 
         {/* Tags */}
         <div>
@@ -359,7 +437,32 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       </div>
 
-      {/* Custom Fields - Placeholder */}
+      {/* Recurring - Placeholder */}
+      <div className="border-t pt-6">
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Recurring</label>
+          <p className="text-sm text-gray-500">None</p>
+        </div>
+
+        {/* Assets - Placeholder */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Assets</label>
+          <BaseButton
+            size="sm"
+            variant="bordered"
+            icon={<Icon name="link" className="h-4 w-4" />}
+            onPress={() => addToast({
+              title: 'Coming soon',
+              description: 'Asset linking will be available soon',
+              severity: 'warning',
+            })}
+          >
+            Link Asset
+          </BaseButton>
+        </div>
+      </div>
+
+      {/* Custom Fields */}
       {ticket.customFields && ticket.customFields.length > 0 && (
         <div className="border-t pt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Custom Fields</label>
@@ -373,6 +476,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           </div>
         </div>
       )}
+
+      {/* Suggested KB Articles - Placeholder */}
+      <div className="border-t pt-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Suggested KB Articles</label>
+        <p className="text-xs text-gray-400 italic">No suggestions available</p>
+      </div>
     </div>
   );
 };

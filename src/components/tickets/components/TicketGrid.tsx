@@ -1,7 +1,9 @@
 import { type FC, useState, useCallback, useMemo } from 'react';
 import { BaseTable, BaseButton, Icon, TablePagination } from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
-import { NavLink } from '@modern-js/runtime/router';
+import { useNavigate } from '@modern-js/runtime/router';
+import { NewTicketModal } from './NewTicketModal';
+import { Tabs, Tab, Chip } from '@heroui/react';
 import { useTicketsData } from '../hooks/useTickets';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { createTicketColumns } from './ticket-grid-columns';
@@ -17,11 +19,16 @@ import { addToast } from '@heroui/react';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import type { TicketRow } from '../types';
 import { TicketSidebar } from '../TicketSidebar';
+import { useAuth } from '@brainforgeau/security';
 
 export const TicketGrid: FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const currentUserId = user?.profile?.sub;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTab, setSelectedTab] = useState<string>('all');
   const { items, totalCount, pagination, setPagination, filters, setFilters, isLoading, refetch } =
     useTicketsData();
 
@@ -47,6 +54,7 @@ export const TicketGrid: FC = () => {
   const bulkUpdateMutation = useBulkUpdateTickets();
   const bulkDeleteMutation = useBulkDeleteTickets();
 
+  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
@@ -174,6 +182,47 @@ export const TicketGrid: FC = () => {
     });
   }, [filters, setFilters]);
 
+  const handleTabChange = useCallback((key: string | number) => {
+    const tabKey = String(key);
+    setSelectedTab(tabKey);
+
+    // Apply filters based on selected tab
+    let newFilters = { ...filters };
+
+    switch (tabKey) {
+      case 'unanswered':
+        // REVIEW: Backend doesn't have "unanswered" status - using New status as proxy
+        newFilters = { ...filters, status: [TicketStatus.New] };
+        break;
+      case 'unclosed':
+        // REVIEW: Unclosed = everything except Closed
+        newFilters = { ...filters, status: [TicketStatus.New, TicketStatus.InProgress] };
+        break;
+      case 'unassigned':
+        newFilters = { ...filters, assigneeId: ['unassigned'], status: undefined };
+        break;
+      case 'assigned-to-you':
+        newFilters = { ...filters, assigneeId: currentUserId ? [currentUserId] : undefined, status: undefined };
+        break;
+      case 'all':
+      default:
+        newFilters = { ...filters, status: undefined, assigneeId: undefined };
+        break;
+    }
+
+    setFilters(newFilters);
+  }, [filters, setFilters, currentUserId]);
+
+  // Calculate badge counts for each tab
+  // REVIEW: For now showing totalCount - ideally each tab should fetch its own count
+  const tabCounts = useMemo(() => ({
+    unanswered: 0, // Would need separate API call
+    unclosed: 0,
+    unassigned: 0,
+    assignedToYou: 0,
+    all: totalCount,
+  }), [totalCount]);
+
   return (
     <div className="flex h-full gap-0">
       {/* Sidebar */}
@@ -184,21 +233,92 @@ export const TicketGrid: FC = () => {
       />
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto px-6">
-        <div className="mb-5">
+      <div className="flex flex-1 flex-col overflow-auto px-6">
+        <div className="shrink-0">
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Tickets</h1>
           <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
             <BaseButton
-              as={NavLink}
-              href="/tickets/new"
-              color="primary"
+              onPress={() => setIsNewTicketModalOpen(true)}
               icon={<Icon name="plus" className="h-4 w-4" />}
             >
               New Ticket
             </BaseButton>
           </PermissionGuard>
+        </div>
+
+        {/* Tab Bar */}
+        <div className="mb-4">
+          <Tabs
+            selectedKey={selectedTab}
+            onSelectionChange={handleTabChange}
+            variant="underlined"
+            aria-label="Ticket filter tabs"
+            classNames={{
+              tabList:
+                'gap-0.5 w-full relative rounded-none p-0 shadow-[inset_0_-1px_0_0_var(--color-white),inset_0_-3px_0_0_var(--color-light)]',
+              cursor: 'w-full bg-blue',
+              tab: 'max-w-fit h-11.5 px-1 md:px-5 font-medium text-sm relative z-10 span:text-blue !opacity-100 *:min-h-1 hover:*:!text-blue',
+              tabContent: 'group-data-[selected=true]:text-blue',
+              panel: 'p-0',
+            }}
+            color="primary"
+          >
+            <Tab
+              key="unanswered"
+              title={
+                <div className="flex items-center gap-2">
+                  <span>Unanswered</span>
+                  {tabCounts.unanswered > 0 && (
+                    <Chip size="sm" variant="flat">{tabCounts.unanswered}</Chip>
+                  )}
+                </div>
+              }
+            />
+            <Tab
+              key="unclosed"
+              title={
+                <div className="flex items-center gap-2">
+                  <span>Unclosed</span>
+                  {tabCounts.unclosed > 0 && (
+                    <Chip size="sm" variant="flat">{tabCounts.unclosed}</Chip>
+                  )}
+                </div>
+              }
+            />
+            <Tab
+              key="unassigned"
+              title={
+                <div className="flex items-center gap-2">
+                  <span>Unassigned</span>
+                  {tabCounts.unassigned > 0 && (
+                    <Chip size="sm" variant="flat">{tabCounts.unassigned}</Chip>
+                  )}
+                </div>
+              }
+            />
+            <Tab
+              key="assigned-to-you"
+              title={
+                <div className="flex items-center gap-2">
+                  <span>Assigned to you</span>
+                  {tabCounts.assignedToYou > 0 && (
+                    <Chip size="sm" variant="flat">{tabCounts.assignedToYou}</Chip>
+                  )}
+                </div>
+              }
+            />
+            <Tab
+              key="all"
+              title={
+                <div className="flex items-center gap-2">
+                  <span>All</span>
+                  <Chip size="sm" variant="flat">{tabCounts.all}</Chip>
+                </div>
+              }
+            />
+          </Tabs>
         </div>
 
         {/* Filters */}
@@ -251,13 +371,15 @@ export const TicketGrid: FC = () => {
       </div>
 
       {/* Table */}
-      <BaseTable
-        table={table}
-        fullHeight
-        isLoading={isLoading || isLoadingUsers}
-        showInfo={false}
-        paginationTemplate={paginationTemplate}
-      />
+      <div className="flex flex-1 flex-col">
+        <BaseTable
+          table={table}
+          fullHeight
+          isLoading={isLoading || isLoadingUsers}
+          showInfo={false}
+          paginationTemplate={paginationTemplate}
+        />
+      </div>
 
       {/* Bulk Action Modals */}
       <BulkAssignModal
@@ -277,6 +399,11 @@ export const TicketGrid: FC = () => {
         onClose={() => setIsBulkDeleteModalOpen(false)}
         onConfirm={handleBulkDeleteConfirm}
         ticketCount={selectedRows.length}
+      />
+      <NewTicketModal
+        isOpen={isNewTicketModalOpen}
+        onClose={() => setIsNewTicketModalOpen(false)}
+        onCreated={(ticketId) => navigate(`/tickets/${ticketId}`)}
       />
       </div>
     </div>
