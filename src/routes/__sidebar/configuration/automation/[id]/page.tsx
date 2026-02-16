@@ -9,6 +9,7 @@ import { AutomationRulesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { ConditionField } from '@/components/automation/components/ConditionField';
 import { ActionField } from '@/components/automation/components/ActionField';
+import { AutomationRightPanel } from '@/components/automation/components/AutomationRightPanel';
 import { TRIGGER_TYPE_LABELS } from '@/components/automation';
 import {
   AutomationTriggerType,
@@ -238,19 +239,22 @@ function EditAutomationRulePage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {errors.length > 0 && (
-          <Alert className="mb-4" color="danger" variant="flat">
-            <div className="flex flex-col gap-1">
-              {errors.map((error, index) => (
-                <div key={index}>{error}</div>
-              ))}
-            </div>
-          </Alert>
-        )}
+      {/* 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Main editor (2/3 width) */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {errors.length > 0 && (
+            <Alert className="mb-4" color="danger" variant="flat">
+              <div className="flex flex-col gap-1">
+                {errors.map((error, index) => (
+                  <div key={index}>{error}</div>
+                ))}
+              </div>
+            </Alert>
+          )}
 
-        {/* Basic Info */}
-        <Card>
+          {/* Basic Info */}
+          <Card>
           <CardHeader>
             <h3 className="text-lg font-semibold">Basic Information</h3>
           </CardHeader>
@@ -421,6 +425,12 @@ function EditAutomationRulePage() {
             )}
           </CardBody>
         </Card>
+        </div>
+
+        {/* Right: Helper panel (1/3 width) */}
+        <div className="lg:col-span-1">
+          <AutomationRightPanel />
+        </div>
       </div>
     </>
   );

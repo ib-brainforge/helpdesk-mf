@@ -156,7 +156,7 @@ export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = []
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
+            {tags.slice(0, 10).map((tag) => (
               <Chip
                 key={tag.id}
                 size="sm"

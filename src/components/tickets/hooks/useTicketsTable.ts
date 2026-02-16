@@ -6,7 +6,6 @@ import {
   type VisibilityState,
   type RowSelectionState,
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   getFilteredRowModel,
   useReactTable,
@@ -46,6 +45,7 @@ export const useTicketsTable = ({
     },
     getRowId: (row) => row.id ?? '',
     manualPagination: true,
+    pageCount: Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     rowCount: totalCount,
     enableSorting: true,
     enableGlobalFilter: true,
@@ -63,7 +63,6 @@ export const useTicketsTable = ({
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
 

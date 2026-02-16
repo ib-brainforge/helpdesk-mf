@@ -1,8 +1,8 @@
-import { type FC, useCallback, useState } from 'react';
+import { type FC, useCallback, useState, useRef } from 'react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { PermissionGuard } from '@brainforgeau/security';
+import { PermissionGuard, useAuth } from '@brainforgeau/security';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
 import { useTicketDetail, useUpdateTicket } from '../hooks/useTickets';
@@ -25,6 +25,7 @@ import { useComments } from '@/components/comments/hooks/useComments';
 import { MergeTicketModal } from './MergeTicketModal';
 import { LinkTicketModal } from './LinkTicketModal';
 import { AiAssistantModal } from './AiAssistantModal';
+import { NewTicketModal } from './NewTicketModal';
 import { useMergeTickets, useLinkTickets } from '../hooks/useTickets';
 import { addToast } from '@heroui/react';
 
@@ -61,6 +62,9 @@ const getPriorityConfig = (priority: TicketPriority) => {
 export const TicketDetail: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const currentUserId = user?.profile?.sub;
+  const replyEditorRef = useRef<HTMLDivElement>(null);
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   const updateTicketMutation = useUpdateTicket();
 
@@ -92,6 +96,7 @@ export const TicketDetail: FC = () => {
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
 
   const handleUpdate = useCallback(
     (updates: any) => {
@@ -207,6 +212,50 @@ export const TicketDetail: FC = () => {
     },
     [id, deleteTimeEntryMutation]
   );
+
+  const handleReply = useCallback(() => {
+    // Scroll to reply editor
+    replyEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Focus the editor after scroll
+    setTimeout(() => {
+      const editorElement = replyEditorRef.current?.querySelector('[contenteditable]');
+      if (editorElement) {
+        (editorElement as HTMLElement).focus();
+      }
+    }, 300);
+  }, []);
+
+  const handleTakeover = useCallback(() => {
+    if (!id || !currentUserId) return;
+    updateTicketMutation.mutate(
+      { id, updates: { assigneeId: currentUserId } },
+      {
+        onSuccess: () => {
+          addToast({
+            title: 'Ticket assigned',
+            description: 'Ticket has been assigned to you',
+            severity: 'success',
+          });
+        },
+      }
+    );
+  }, [id, currentUserId, updateTicketMutation]);
+
+  const handleCloseTicket = useCallback(() => {
+    if (!id) return;
+    updateTicketMutation.mutate(
+      { id, updates: { status: TicketStatus.Closed } },
+      {
+        onSuccess: () => {
+          addToast({
+            title: 'Ticket closed',
+            description: 'Ticket status updated to Closed',
+            severity: 'success',
+          });
+        },
+      }
+    );
+  }, [id, updateTicketMutation]);
 
   if (isLoading) {
     return (
@@ -341,6 +390,49 @@ export const TicketDetail: FC = () => {
             </div>
           </Box>
 
+          {/* Action Button Row */}
+          <Box>
+            <div className="flex items-center gap-3">
+              <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+                <BaseButton
+                  onPress={() => setIsNewTicketModalOpen(true)}
+                  icon={<Icon name="plus" className="h-4 w-4" />}
+                >
+                  New Ticket
+                </BaseButton>
+              </PermissionGuard>
+              <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+                <BaseButton
+                  color="primary"
+                  onPress={handleReply}
+                  icon={<Icon name="chat-bubble-left" className="h-4 w-4" />}
+                >
+                  Reply
+                </BaseButton>
+              </PermissionGuard>
+              <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketAssign]} fallback={null}>
+                <BaseButton
+                  variant="bordered"
+                  onPress={handleTakeover}
+                  icon={<Icon name="user-plus" className="h-4 w-4" />}
+                  isDisabled={ticket.assigneeId === currentUserId}
+                >
+                  Takeover
+                </BaseButton>
+              </PermissionGuard>
+              <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+                <BaseButton
+                  variant="bordered"
+                  onPress={handleCloseTicket}
+                  icon={<Icon name="check-circle" className="h-4 w-4" />}
+                  isDisabled={ticket.status === TicketStatus.Closed}
+                >
+                  Close ticket
+                </BaseButton>
+              </PermissionGuard>
+            </div>
+          </Box>
+
           {/* Description */}
           <Box title="Description">
             <div className="prose max-w-none">
@@ -387,7 +479,15 @@ export const TicketDetail: FC = () => {
           <Box title="Comments">
             <div className="space-y-4">
               <CommentThread comments={comments} isLoading={commentsLoading} />
-              <ReplyEditor ticketId={id ?? ''} categoryId={ticket.categoryId ?? undefined} />
+              <div ref={replyEditorRef}>
+                <ReplyEditor ticketId={id ?? ''} categoryId={ticket.categoryId ?? undefined} />
+              </div>
+              {/* Subscriber info */}
+              {(ticket as any).subscriberIds && (ticket as any).subscriberIds.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  (subscribers: {(ticket as any).subscriberIds.length} user{(ticket as any).subscriberIds.length !== 1 ? 's' : ''})
+                </p>
+              )}
             </div>
           </Box>
 
@@ -474,6 +574,11 @@ export const TicketDetail: FC = () => {
       <AiAssistantModal
         isOpen={isAiAssistantOpen}
         onClose={() => setIsAiAssistantOpen(false)}
+      />
+      <NewTicketModal
+        isOpen={isNewTicketModalOpen}
+        onClose={() => setIsNewTicketModalOpen(false)}
+        onCreated={(ticketId) => navigate(`/tickets/${ticketId}`)}
       />
     </div>
   );
