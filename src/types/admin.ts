@@ -21,8 +21,8 @@ export interface PlatformTicketListItem {
   modifiedAt?: string; // Phase 2: Aligned with regular tickets (was updatedAt)
 }
 
-export type PlatformTicketStatus = 'Open' | 'InProgress' | 'Resolved' | 'Closed';
-export type PlatformTicketPriority = 'Low' | 'Medium' | 'High' | 'Critical';
+export type PlatformTicketStatus = 'New' | 'InProgress' | 'Closed';
+export type PlatformTicketPriority = 'None' | 'Low' | 'Normal' | 'High' | 'Critical';
 
 export interface PlatformTicketFilters {
   status?: PlatformTicketStatus;
@@ -55,13 +55,13 @@ export interface PlatformTicketDetail {
 // Phase 2: Updated to match aligned field names
 export interface PlatformTicketComment {
   id: string;
-  platformTicketId: string;
+  ticketId: string;
   authorId: string;
   authorEmail: string;
-  content: string; // Phase 2: Aligned with regular tickets (was body)
-  commentType: string; // Phase 2: Aligned with regular tickets (was isInternalNote boolean)
+  body: string;
+  commentType: string;
+  idempotencyKey?: string | null;
   createdAt: string;
-  modifiedAt: string; // Phase 2: Aligned with regular tickets (was updatedAt)
 }
 
 export interface TenantTicketFilters {

@@ -19,12 +19,10 @@ import Placeholder from '@tiptap/extension-placeholder';
 
 const getStatusConfig = (status: PlatformTicketStatus) => {
   switch (status) {
-    case 'Open':
-      return { label: 'Open', color: 'primary' as const };
+    case 'New':
+      return { label: 'New', color: 'primary' as const };
     case 'InProgress':
       return { label: 'In Progress', color: 'warning' as const };
-    case 'Resolved':
-      return { label: 'Resolved', color: 'success' as const };
     case 'Closed':
       return { label: 'Closed', color: 'default' as const };
     default:
@@ -38,8 +36,10 @@ const getPriorityConfig = (priority: string) => {
       return { label: 'Critical', color: 'danger' as const };
     case 'High':
       return { label: 'High', color: 'warning' as const };
-    case 'Medium':
-      return { label: 'Medium', color: 'primary' as const };
+    case 'Normal':
+      return { label: 'Normal', color: 'primary' as const };
+    case 'None':
+      return { label: 'None', color: 'default' as const };
     case 'Low':
       return { label: 'Low', color: 'default' as const };
     default:
@@ -71,7 +71,7 @@ const CommentItem: FC<{ comment: PlatformTicketComment; authorName?: string }> =
       </div>
       <div
         className={`text-sm ${isInternal ? '' : 'text-foreground'}`}
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content) }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.body) }}
       />
     </div>
   );
@@ -90,7 +90,7 @@ export const PlatformTicketDetail: FC = () => {
   // Enrich user data for submitter, assignee, and comment authors
   const commentAuthorIds = ticket?.comments?.map(c => c.authorId) ?? [];
   const allUserIds = [
-    ticket?.submitterUserId,
+    ticket?.requesterId,
     ticket?.assigneeId,
     ...commentAuthorIds,
   ].filter(Boolean);
@@ -178,9 +178,9 @@ export const PlatformTicketDetail: FC = () => {
     );
   }
 
-  const statusConfig = getStatusConfig(ticket.status);
-  const priorityConfig = getPriorityConfig(ticket.priority);
-  const submitterName = userMap[ticket.submitterUserId]?.name ?? ticket.submitterEmail;
+  const statusConfig = getStatusConfig(ticket.status as PlatformTicketStatus ?? 'New');
+  const priorityConfig = getPriorityConfig(ticket.priority ?? 'None');
+  const submitterName = userMap[ticket.requesterId ?? '']?.name ?? ticket.submitterEmail;
   const assigneeName = ticket.assigneeId ? (userMap[ticket.assigneeId]?.name ?? 'Assigned') : 'Unassigned';
 
   return (
@@ -226,15 +226,6 @@ export const PlatformTicketDetail: FC = () => {
               >
                 Reply
               </BaseButton>
-              {ticket.status !== 'Resolved' && (
-                <BaseButton
-                  variant="bordered"
-                  onPress={() => handleStatusChange('Resolved')}
-                  icon={<Icon name="check-circle" className="h-4 w-4" />}
-                >
-                  Resolve
-                </BaseButton>
-              )}
               {ticket.status !== 'Closed' && (
                 <BaseButton
                   variant="bordered"
@@ -244,7 +235,7 @@ export const PlatformTicketDetail: FC = () => {
                   Close
                 </BaseButton>
               )}
-              {ticket.status === 'Open' && (
+              {ticket.status === 'New' && (
                 <BaseButton
                   variant="bordered"
                   onPress={() => handleStatusChange('InProgress')}
@@ -260,7 +251,7 @@ export const PlatformTicketDetail: FC = () => {
           <Box title="Description">
             <div
               className="prose max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticket.body) }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticket.description ?? '') }}
             />
           </Box>
 
@@ -276,8 +267,8 @@ export const PlatformTicketDetail: FC = () => {
                 ticket.comments?.map((comment) => (
                   <CommentItem
                     key={comment.id}
-                    comment={comment}
-                    authorName={userMap[comment.authorId]?.name}
+                    comment={comment as unknown as PlatformTicketComment}
+                    authorName={userMap[comment.authorId ?? '']?.name}
                   />
                 ))
               )}
