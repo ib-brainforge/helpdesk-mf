@@ -101,8 +101,8 @@ export const MailServerEditorModal = ({
       } else {
         // Map frontend enum to backend enum
         const backendProtocol = data.protocol === MailProtocol.Imap
-          ? HelpdeskEmailDomainEnumsMailProtocol.Imap
-          : HelpdeskEmailDomainEnumsMailProtocol.Pop3;
+          ? HelpdeskEmailDomainEnumsMailProtocol.IMAP
+          : HelpdeskEmailDomainEnumsMailProtocol.POP3;
 
         // Map form data to backend command structure
         await client.v1MailServersPost({

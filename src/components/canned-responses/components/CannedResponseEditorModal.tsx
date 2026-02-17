@@ -59,7 +59,7 @@ export function CannedResponseEditorModal({
   useEffect(() => {
     if (isOpen && cannedResponse) {
       setTitle(cannedResponse.title || '');
-      setScope((cannedResponse.scope as CannedResponseScope) || CannedResponseScope.Personal);
+      setScope((cannedResponse.scope as unknown as CannedResponseScope) || CannedResponseScope.Personal);
       setCategoryId(cannedResponse.categoryId || '');
       editor?.commands.setContent(cannedResponse.body || '');
     } else if (isOpen && !cannedResponse) {

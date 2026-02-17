@@ -160,7 +160,7 @@ function CannedResponsesPage() {
                     </button>
                   </td>
                   <td className="px-4 py-3">
-                    {getScopeBadge(response.scope as CannedResponseScope)}
+                    {getScopeBadge(response.scope as unknown as CannedResponseScope)}
                   </td>
                   <td className="px-4 py-3 text-sm text-default-600">
                     {response.categoryName || '-'}

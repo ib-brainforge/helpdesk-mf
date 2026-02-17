@@ -29,6 +29,7 @@ export const useUsersData = () => {
     queryFn: async () => {
       const client = await createIdentityApiClient(UsersApi);
       const { data } = await client.v1UsersGet(
+        undefined, // tenantId
         true, // isActive
         undefined, // search
         false, // includeServiceAccounts
