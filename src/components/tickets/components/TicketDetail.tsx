@@ -371,12 +371,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
                       <DropdownItem key="duplicate" onPress={() => handleComingSoon('Duplicate')}>
                         Duplicate
                       </DropdownItem>
-                      {/* Phase 2: Merge only for tickets with capability */}
-                      {capabilities.canMerge && (
-                        <DropdownItem key="merge" onPress={handleMerge}>
-                          Merge
-                        </DropdownItem>
-                      )}
+                      <DropdownItem key="merge" onPress={handleMerge} className={capabilities.canMerge ? '' : 'hidden'}>
+                        Merge
+                      </DropdownItem>
                       <DropdownItem key="subtask" onPress={() => handleComingSoon('Add Subtask')}>
                         Add Subtask
                       </DropdownItem>

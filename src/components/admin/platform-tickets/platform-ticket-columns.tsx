@@ -14,12 +14,10 @@ const columnHelper = createColumnHelper<PlatformTicketRow>();
 
 const getStatusConfig = (status: PlatformTicketStatus) => {
   switch (status) {
-    case 'Open':
-      return { label: 'Open', color: 'primary' as const };
+    case 'New':
+      return { label: 'New', color: 'primary' as const };
     case 'InProgress':
       return { label: 'In Progress', color: 'warning' as const };
-    case 'Resolved':
-      return { label: 'Resolved', color: 'success' as const };
     case 'Closed':
       return { label: 'Closed', color: 'default' as const };
     default:
@@ -33,10 +31,12 @@ const getPriorityConfig = (priority: PlatformTicketPriority) => {
       return { label: 'Critical', color: 'danger' as const };
     case 'High':
       return { label: 'High', color: 'warning' as const };
-    case 'Medium':
-      return { label: 'Medium', color: 'primary' as const };
+    case 'Normal':
+      return { label: 'Normal', color: 'primary' as const };
     case 'Low':
       return { label: 'Low', color: 'default' as const };
+    case 'None':
+      return { label: 'None', color: 'default' as const };
     default:
       return { label: 'Unknown', color: 'default' as const };
   }
