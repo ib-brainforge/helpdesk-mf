@@ -135,19 +135,13 @@ export const UnifiedTicketGrid: FC<UnifiedTicketGridProps> = ({ source, tenantId
   }, [totalCount, pagination, setPagination]);
 
   const getStatusOptions = () => {
-    if (source === 'platform') {
-      return ['Open', 'InProgress', 'Resolved', 'Closed'];
-    } else {
-      return ['New', 'InProgress', 'Closed'];
-    }
+    // Both sources use aligned enum values after Phase 1
+    return ['New', 'InProgress', 'Closed'];
   };
 
   const getPriorityOptions = () => {
-    if (source === 'platform') {
-      return ['Critical', 'High', 'Medium', 'Low'];
-    } else {
-      return ['Critical', 'High', 'Normal', 'Low', 'None'];
-    }
+    // Both sources use aligned enum values after Phase 1
+    return ['Critical', 'High', 'Normal', 'Low', 'None'];
   };
 
   return (

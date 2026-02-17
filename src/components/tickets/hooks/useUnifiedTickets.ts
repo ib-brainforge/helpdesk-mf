@@ -13,7 +13,7 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { configAtom } from '@/state/config';
 import { getDefaultStore } from 'jotai';
-import type { UnifiedTicketListItem, TicketSource } from '@/types/unified-ticket';
+import type { UnifiedTicketListItem, UnifiedTicketDetail, TicketSource } from '@/types/unified-ticket';
 
 const store = getDefaultStore();
 
@@ -196,4 +196,29 @@ async function fetchTenantTickets(
     items,
     totalCount: result.totalCount ?? 0,
   };
+}
+
+/**
+ * Unified hook for fetching a single ticket detail by source
+ *
+ * Routes to the correct API based on source type.
+ */
+export function useUnifiedTicketDetail(ticketId: string, source: TicketSource) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['unified-ticket-detail', source, ticketId],
+    queryFn: async (): Promise<UnifiedTicketDetail> => {
+      if (source === 'platform') {
+        const client = await createHelpdeskApiClient(PlatformTicketsApi);
+        const response = await client.v1PlatformTicketsIdGet(ticketId);
+        return response.data as unknown as UnifiedTicketDetail;
+      }
+      // Regular and tenant both use the same tickets API
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsIdGet(ticketId);
+      return response.data as unknown as UnifiedTicketDetail;
+    },
+    enabled: !!ticketId,
+  });
+
+  return { data: data ?? null, isLoading, error };
 }

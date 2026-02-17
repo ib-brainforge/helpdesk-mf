@@ -1,135 +1,28 @@
-import { useState, useCallback, useMemo } from 'react';
+/**
+ * Tenant Viewer Panel - embeddable in the unified tickets tab bar
+ *
+ * Provides a tenant dropdown + ticket grid for cross-tenant admin viewing.
+ * Extracted from the standalone admin/tenant-viewer page.
+ */
+
+import { type FC, useState, useCallback, useMemo } from 'react';
 import { useAtomValue } from 'jotai';
 import { BaseTable, BaseInput, BaseSelect, BaseSelectItem, Icon, TablePagination } from '@brainforgeau/components';
 import {
   type SortingState,
   type VisibilityState,
   type RowSelectionState,
-  type ColumnDef,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
   useReactTable,
-  createColumnHelper,
 } from '@tanstack/react-table';
-import { NavLink } from '@modern-js/runtime/router';
 import { useTenantTicketsData } from '@/components/admin/hooks/useTenantViewer';
 import { authStateAtom } from '@/state/auth-atoms';
-import { StatusBadge } from '@/components/shared';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { TicketStatus, TicketPriority } from '@/types/ticket';
-import type { TicketListDto } from '@/types/ticket';
-import type { UserInfo } from '@/hooks/useUserEnrichment';
+import { createUnifiedColumns, type UnifiedTicketRow } from './unified-ticket-columns';
 
-type TenantTicketRow = TicketListDto & {
-  assigneeUserInfo?: UserInfo | null;
-  requesterUserInfo?: UserInfo | null;
-};
-
-const columnHelper = createColumnHelper<TenantTicketRow>();
-
-const getStatusConfig = (status: string) => {
-  switch (status) {
-    case TicketStatus.New:
-      return { label: 'New', color: 'primary' as const };
-    case TicketStatus.InProgress:
-      return { label: 'In Progress', color: 'warning' as const };
-    case TicketStatus.Closed:
-      return { label: 'Closed', color: 'success' as const };
-    default:
-      return { label: status ?? 'Unknown', color: 'default' as const };
-  }
-};
-
-const getPriorityConfig = (priority: string) => {
-  switch (priority) {
-    case TicketPriority.Critical:
-      return { label: 'Critical', color: 'danger' as const };
-    case TicketPriority.High:
-      return { label: 'High', color: 'warning' as const };
-    case TicketPriority.Normal:
-      return { label: 'Normal', color: 'primary' as const };
-    case TicketPriority.Low:
-      return { label: 'Low', color: 'default' as const };
-    default:
-      return { label: priority ?? 'Unknown', color: 'default' as const };
-  }
-};
-
-const tenantViewerColumns: ColumnDef<TenantTicketRow, any>[] = [
-  columnHelper.accessor('id', {
-    header: 'ID',
-    cell: ({ getValue }) => {
-      const value = getValue();
-      return <span className="font-mono text-xs">{value?.substring(0, 8) ?? '—'}</span>;
-    },
-    size: 100,
-  }),
-  columnHelper.accessor('subject', {
-    header: 'Subject',
-    cell: ({ getValue, row }) => (
-      <NavLink
-        to={`/tickets/${row.original.id}`}
-        className="font-medium text-foreground hover:text-blue hover:underline"
-      >
-        {getValue() ?? 'Untitled Ticket'}
-      </NavLink>
-    ),
-    size: 300,
-  }),
-  columnHelper.accessor('status', {
-    header: 'Status',
-    cell: ({ getValue }) => {
-      const config = getStatusConfig(getValue() as string);
-      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
-    },
-    size: 120,
-  }),
-  columnHelper.accessor('priority', {
-    header: 'Priority',
-    cell: ({ getValue }) => {
-      const config = getPriorityConfig(getValue() as string);
-      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
-    },
-    size: 120,
-  }),
-  columnHelper.accessor('categoryName', {
-    header: 'Category',
-    cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
-    size: 150,
-  }),
-  columnHelper.display({
-    id: 'requester',
-    header: 'Requester',
-    cell: ({ row }) => {
-      const name = row.original.requesterUserInfo?.name ?? row.original.requesterName ?? 'Unknown';
-      return <span className="text-sm">{name}</span>;
-    },
-    size: 200,
-  }),
-  columnHelper.display({
-    id: 'assignee',
-    header: 'Assignee',
-    cell: ({ row }) => {
-      if (!row.original.assigneeId) {
-        return <span className="text-sm text-muted-foreground">Unassigned</span>;
-      }
-      const name = row.original.assigneeUserInfo?.name ?? row.original.assigneeName ?? 'Assigned';
-      return <span className="text-sm">{name}</span>;
-    },
-    size: 200,
-  }),
-  columnHelper.accessor('createdAt', {
-    header: 'Created',
-    cell: ({ getValue }) => {
-      const date = getValue();
-      return <span className="text-sm">{date ? new Date(date).toLocaleDateString() : '—'}</span>;
-    },
-    size: 120,
-  }),
-];
-
-export default function TenantViewerPage() {
+export const TenantViewerPanel: FC = () => {
   const authState = useAtomValue(authStateAtom);
   const availableContexts = authState.availableContexts;
 
@@ -148,18 +41,21 @@ export default function TenantViewerPage() {
   const allUserIds = [...assigneeIds, ...requesterIds];
   const { userMap, isLoading: isLoadingUsers } = useUserEnrichment(allUserIds);
 
-  const enrichedItems: TenantTicketRow[] = useMemo(
+  const enrichedItems: UnifiedTicketRow[] = useMemo(
     () => items.map(ticket => ({
       ...ticket,
-      assigneeUserInfo: ticket.assigneeId ? userMap[ticket.assigneeId] : null,
       requesterUserInfo: ticket.requesterId ? userMap[ticket.requesterId] : null,
+      assigneeUserInfo: ticket.assigneeId ? userMap[ticket.assigneeId] : null,
+      submitterUserInfo: null,
     })),
     [items, userMap]
   );
 
+  const columns = useMemo(() => createUnifiedColumns('tenant'), []);
+
   const table = useReactTable({
     data: enrichedItems,
-    columns: tenantViewerColumns,
+    columns,
     state: {
       sorting,
       columnVisibility,
@@ -179,8 +75,7 @@ export default function TenantViewerPage() {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: (updater) => {
-      const newPagination =
-        typeof updater === 'function' ? updater(pagination) : updater;
+      const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
       setPagination(newPagination);
     },
     getCoreRowModel: getCoreRowModel(),
@@ -220,7 +115,7 @@ export default function TenantViewerPage() {
     );
   }, [totalCount, pagination, setPagination]);
 
-  // Deduplicate tenants (availableContexts may have multiple entries per tenant for different orgs/divisions)
+  // Deduplicate tenants
   const tenantOptions = useMemo(() => {
     const seen = new Set<string>();
     return availableContexts.filter(ctx => {
@@ -233,13 +128,6 @@ export default function TenantViewerPage() {
   return (
     <div className="flex flex-col h-full">
       <div className="shrink-0 px-6">
-        <div className="mb-5">
-          <h1 className="text-2xl font-semibold">Tenant Ticket Viewer</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            View tickets from any tenant for debugging and support purposes
-          </p>
-        </div>
-
         <div className="mb-4 flex w-full flex-wrap items-end gap-2.5">
           <div className="min-w-60">
             <BaseSelect
@@ -316,4 +204,4 @@ export default function TenantViewerPage() {
       </div>
     </div>
   );
-}
+};
