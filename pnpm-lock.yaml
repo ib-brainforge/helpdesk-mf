@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@brainforgeau/components':
-        specifier: 0.2.160-develop.441e717
-        version: 0.2.160-develop.441e717(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
+        specifier: 0.2.161-develop.bba85fa
+        version: 0.2.161-develop.bba85fa(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
       '@brainforgeau/helpdesk-client':
         specifier: file:/tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz
         version: file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz
       '@brainforgeau/identity-management-client':
-        specifier: 0.1.217-develop.5a45cbb
-        version: 0.1.217-develop.5a45cbb
+        specifier: 0.1.225-develop.a444583
+        version: 0.1.225-develop.a444583
       '@brainforgeau/observability':
         specifier: 0.2.26-develop.772063c
         version: 0.2.26-develop.772063c(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -895,8 +895,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@brainforgeau/components@0.2.160-develop.441e717':
-    resolution: {integrity: sha512-JM7QdMdGtAbje3qjc97EyBbMUx4MYK7Bq6prhEClshFPkx1ELzEBjsbwGn+pPPxh4cOTK/wYa+quuLQ0pOI36Q==, tarball: https://npm.pkg.github.com/download/@brainforgeau/components/0.2.160-develop.441e717/041087f155dccb66b906ad6e5feb535b3138950a}
+  '@brainforgeau/components@0.2.161-develop.bba85fa':
+    resolution: {integrity: sha512-N+cFerHCEPPunjY4Q0EWRp8n++asq2VXmCZ34BnVojExncCn52RKuXVKJJv+hlLr53VWu/+aXNh9Z2U5tweL4A==, tarball: https://npm.pkg.github.com/download/@brainforgeau/components/0.2.161-develop.bba85fa/f42d5c3b0eda3efb9e17a7182156fb8cc2a50b81}
     peerDependencies:
       '@heroicons/react': ^2.1.1
       '@heroui/react': 2.8.2
@@ -907,11 +907,11 @@ packages:
       react-error-boundary: ^6.0.0
 
   '@brainforgeau/helpdesk-client@file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz':
-    resolution: {integrity: sha512-Cr3htgq83f4igqkGnZAD1IcjL8XpeC9eIzdV5in9IKl3tezvWXiFpU9WRqGt5DX1HwtcQvBHnidtnCE7O4fX9g==, tarball: file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz}
-    version: 0.1.99
+    resolution: {integrity: sha512-+CUQbt14VqJrX4ZsP8TuVDRDCc9sU/h4TNJZAjOT9wDdhucQZIqRcB3erR2QVnRm0UjludmYqLtp0+DcgQofcw==, tarball: file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz}
+    version: 0.1.99-local
 
-  '@brainforgeau/identity-management-client@0.1.217-develop.5a45cbb':
-    resolution: {integrity: sha512-JuckHXKCLuVvjaPOdhjKz/pOW0SKrar+YPZ7tkwgdXwMene4YovEtzLQGY1Ln+lxLy3ZQ8iOTRpOPgNXdmNpZg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.217-develop.5a45cbb/f46894ce3d337b2f0a83aaa5f05e8a9d1cfe5329}
+  '@brainforgeau/identity-management-client@0.1.225-develop.a444583':
+    resolution: {integrity: sha512-zYvvMVVsBLoyUSFaZugzfCFUwiitlNKC9SV2XKuKdQ882c1SwFqxsIeFyGM38D6ZfeialD68YEUS4aoHRQZQtQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.225-develop.a444583/9a8a8af63a2f2edbc2491589b45121a7e396a3c5}
     engines: {node: '>=18.0.0'}
 
   '@brainforgeau/observability@0.2.26-develop.772063c':
@@ -4409,9 +4409,6 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
-
-  axios@0.27.2:
-    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
 
   axios@1.13.5:
     resolution: {integrity: sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==}
@@ -9185,7 +9182,7 @@ snapshots:
   '@biomejs/cli-win32-x64@1.9.4':
     optional: true
 
-  '@brainforgeau/components@0.2.160-develop.441e717(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)':
+  '@brainforgeau/components@0.2.161-develop.bba85fa(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)':
     dependencies:
       '@heroicons/react': 2.2.0(react@18.3.1)
       '@heroui/react': 2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
@@ -9207,11 +9204,11 @@ snapshots:
 
   '@brainforgeau/helpdesk-client@file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz':
     dependencies:
-      axios: 0.27.2
+      axios: 1.13.5
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/identity-management-client@0.1.217-develop.5a45cbb':
+  '@brainforgeau/identity-management-client@0.1.225-develop.a444583':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
@@ -14095,13 +14092,6 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
-
-  axios@0.27.2:
-    dependencies:
-      follow-redirects: 1.15.11
-      form-data: 4.0.5
-    transitivePeerDependencies:
-      - debug
 
   axios@1.13.5:
     dependencies:

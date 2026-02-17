@@ -19,6 +19,7 @@ export const usersMutationAtom = atomWithMutation<UserDto[], { query: string }>(
   mutationFn: async ({ query }: { query: string }) => {
     const client = await createIdentityApiClient(UsersApi);
     const response = await client.v1UsersGet(
+      undefined, // tenantId
       true, // isActive
       query, // search
     );
