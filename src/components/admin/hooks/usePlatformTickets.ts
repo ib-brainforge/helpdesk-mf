@@ -1,61 +1,64 @@
+/**
+ * Platform Tickets Hooks - MIGRATED to Generated Client
+ *
+ * Phase 2: Frontend Unification
+ * Updated to use @brainforgeau/helpdesk-client generated API instead of raw axios
+ *
+ * DEPRECATED: Use useUnifiedTicketsData with source='platform' instead
+ * These hooks are kept for backward compatibility during migration
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
-import { getDefaultStore } from 'jotai';
-import type { PlatformTicketListItem, PlatformTicketFilters, PagedResult } from '@/types/admin';
-
-const store = getDefaultStore();
+import type { PaginationState } from '@tanstack/react-table';
+import { PlatformTicketsApi } from '@brainforgeau/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { PlatformTicketListItem, PlatformTicketDetail, PlatformTicketFilters, PagedResult } from '@/types/admin';
 
 /**
  * Hook for managing platform tickets (for platform.support role)
+ * @deprecated Use useUnifiedTicketsData({ source: 'platform' }) instead
  */
 export const usePlatformTicketsData = () => {
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(25);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
   const [filters, setFilters] = useState<PlatformTicketFilters>({ mine: false });
 
-  const { data, isLoading, refetch } = useQuery<PagedResult<PlatformTicketListItem>>({
-    queryKey: ['platform-tickets', page, pageSize, filters],
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['platform-tickets', pagination.pageIndex, pagination.pageSize, filters],
     queryFn: async () => {
-      const config = store.get(configAtom);
-      const baseUrl = config?.api?.baseUrl ?? '';
+      const client = await createHelpdeskApiClient(PlatformTicketsApi);
 
-      const params = new URLSearchParams();
-      if (filters.status) {
-        params.append('status', filters.status);
-      }
-      if (filters.priority) {
-        params.append('priority', filters.priority);
-      }
-      if (filters.categoryId) {
-        params.append('categoryId', filters.categoryId);
-      }
-      if (filters.searchTerm) {
-        params.append('searchTerm', filters.searchTerm);
-      }
-      if (filters.mine !== undefined) {
-        params.append('mine', String(filters.mine));
-      }
-      params.append('page', String(page));
-      params.append('pageSize', String(pageSize));
-      params.append('sortBy', 'CreatedAt');
-      params.append('sortDirection', 'desc');
-
-      const response = await authorizedAxios.get(
-        `${baseUrl}/v1/platform/tickets?${params.toString()}`
+      const response = await client.v1PlatformTicketsGet(
+        filters.status as any,
+        filters.priority as any,
+        filters.categoryId,
+        filters.mine,
+        filters.searchTerm,
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        'createdAt',
+        'desc'
       );
 
-      return response.data;
+      // Normalize response from generated client
+      const result = response.data;
+      return {
+        items: result.items ?? [],
+        totalCount: result.totalCount ?? 0,
+        page: result.page ?? pagination.pageIndex + 1,
+        pageSize: result.pageSize ?? pagination.pageSize,
+      };
     },
   });
 
   return {
     items: data?.items ?? [],
     totalCount: data?.totalCount ?? 0,
-    page,
-    setPage,
-    pageSize,
+    pagination,
+    setPagination,
     filters,
     setFilters,
     isLoading,
@@ -73,13 +76,8 @@ export const useAssignPlatformTicket = () => {
 
   return useMutation({
     mutationFn: async ({ ticketId, assigneeId }: { ticketId: string; assigneeId: string }) => {
-      const config = store.get(configAtom);
-      const baseUrl = config?.api?.baseUrl ?? '';
-
-      const response = await authorizedAxios.put(
-        `${baseUrl}/v1/platform/tickets/${ticketId}/assign`,
-        { assigneeId }
-      );
+      const client = await createHelpdeskApiClient(PlatformTicketsApi);
+      const response = await client.v1PlatformTicketsIdAssignPatch(ticketId, { assigneeId });
       return response.data;
     },
     onSuccess: () => {
@@ -96,13 +94,8 @@ export const useUpdatePlatformTicketStatus = () => {
 
   return useMutation({
     mutationFn: async ({ ticketId, status }: { ticketId: string; status: string }) => {
-      const config = store.get(configAtom);
-      const baseUrl = config?.api?.baseUrl ?? '';
-
-      const response = await authorizedAxios.put(
-        `${baseUrl}/v1/platform/tickets/${ticketId}/status`,
-        { status }
-      );
+      const client = await createHelpdeskApiClient(PlatformTicketsApi);
+      const response = await client.v1PlatformTicketsIdStatusPatch(ticketId, { status: status as any });
       return response.data;
     },
     onSuccess: () => {
@@ -127,17 +120,39 @@ export const useAddPlatformTicketComment = () => {
       body: string;
       isInternalNote?: boolean;
     }) => {
-      const config = store.get(configAtom);
-      const baseUrl = config?.api?.baseUrl ?? '';
-
-      const response = await authorizedAxios.post(
-        `${baseUrl}/v1/platform/tickets/${ticketId}/comments`,
-        { body, isInternalNote: isInternalNote ?? false }
-      );
+      const client = await createHelpdeskApiClient(PlatformTicketsApi);
+      const response = await client.v1PlatformTicketsIdCommentsPost(ticketId, {
+        body,
+        isInternalNote: isInternalNote ?? false,
+      });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['platform-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-ticket', variables.ticketId] });
     },
   });
+};
+
+/**
+ * Hook for fetching a single platform ticket with comments
+ */
+export const usePlatformTicketDetail = (ticketId: string) => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['platform-ticket', ticketId],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(PlatformTicketsApi);
+      const response = await client.v1PlatformTicketsIdGet(ticketId);
+      // Generated client returns the DTO directly
+      return response.data;
+    },
+    enabled: Boolean(ticketId),
+  });
+
+  return {
+    data: data ?? null,
+    isLoading,
+    error,
+    refetch,
+  };
 };
