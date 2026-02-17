@@ -57,28 +57,7 @@ const navItemsTop: GuardedItem<NavItem>[] = [
 ];
 
 const navItemsBottom: GuardedItem<NavItem>[] = [
-  {
-    label: 'Admin',
-    icon: 'shield-check',
-    testId: 'nav-admin',
-    requiredRoles: ['platform.support', 'platform.admin'],
-    children: [
-      {
-        label: 'Platform Tickets',
-        href: '/admin/platform-tickets',
-        icon: 'ticket',
-        testId: 'nav-admin-platform-tickets',
-        requiredRoles: ['platform.support'],
-      },
-      {
-        label: 'Tenant Viewer',
-        href: '/admin/tenant-viewer',
-        icon: 'building-office',
-        testId: 'nav-admin-tenant-viewer',
-        requiredRoles: ['platform.admin'],
-      },
-    ],
-  },
+  // Platform Tickets and Tenant Viewer are now accessible via tabs on the /tickets page
   {
     label: 'Configuration',
     icon: 'settings',

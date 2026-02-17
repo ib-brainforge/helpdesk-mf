@@ -70,8 +70,16 @@ export interface UnifiedTicketDetail {
   submitterTenantId?: string;
   submitterTenantName?: string;
 
-  // Comments (different types but we'll handle at API level)
-  comments?: any[];
+  // Comments from platform tickets (regular tickets fetch comments separately)
+  comments?: Array<{
+    id?: string;
+    ticketId?: string;
+    authorId?: string | null;
+    body?: string;
+    commentType?: string;
+    createdAt?: string;
+    authorEmail?: string;
+  }>;
 }
 
 /**

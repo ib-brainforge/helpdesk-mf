@@ -5,7 +5,8 @@ import { Box } from '@brainforgeau/components/base';
 import { PermissionGuard, useAuth } from '@brainforgeau/security';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
-import { useTicketDetail, useUpdateTicket } from '../hooks/useTickets';
+import { useUpdateTicket } from '../hooks/useTickets';
+import { useUnifiedTicketDetail } from '../hooks/useUnifiedTickets';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
 import { AttachmentList } from '@/components/file-upload/AttachmentList';
@@ -73,29 +74,31 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
   const replyEditorRef = useRef<HTMLDivElement>(null);
-  const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
+  const { data: ticket, isLoading, error } = useUnifiedTicketDetail(id ?? '', source);
   const updateTicketMutation = useUpdateTicket();
 
   // Phase 2: Get capabilities for this ticket source
   const capabilities = SOURCE_CAPABILITIES[source];
 
-  // REVIEW: Real-time updates via SignalR - auto-refreshes comments when added/updated
-  // Phase 2: Hook is called unconditionally (React rules), but UI conditional on capabilities
-  useRealtimeComments(id ?? '');
+  // Hooks use empty string to disable when capability not available (enabled: Boolean(ticketId))
+  const regularOnlyId = source === 'regular' ? (id ?? '') : '';
 
-  // Comments
-  const { comments, isLoading: commentsLoading } = useComments(id ?? '');
+  // Real-time updates via SignalR - only for regular tickets with real-time capability
+  useRealtimeComments(capabilities.hasRealTimeUpdates ? (id ?? '') : '');
 
-  // Attachments - Phase 2: Hooks called unconditionally, UI conditional on capabilities
-  const { attachments, isLoading: attachmentsLoading } = useAttachments(id);
+  // Comments - regular tickets use dedicated comments API; platform uses embedded comments
+  const { comments, isLoading: commentsLoading } = useComments(regularOnlyId);
+
+  // Attachments - only for regular tickets
+  const { attachments, isLoading: attachmentsLoading } = useAttachments(capabilities.hasAttachments ? id : undefined);
   const { uploadFiles, uploadProgress, isUploading } = useUploadAttachment();
   const deleteAttachmentMutation = useDeleteAttachment();
 
-  // SLA - Phase 2: Hooks called unconditionally, UI conditional on capabilities
-  const { slaData } = useSla(id ?? '');
+  // SLA - only for regular tickets
+  const { slaData } = useSla(capabilities.hasSla ? (id ?? '') : '');
 
-  // Time Tracking - Phase 2: Hooks called unconditionally, UI conditional on capabilities
-  const { timeTracking } = useTimeTracking(id ?? '');
+  // Time Tracking - only for regular tickets
+  const { timeTracking } = useTimeTracking(capabilities.hasTimeTracking ? (id ?? '') : '');
   const startTimerMutation = useStartTimer();
   const stopTimerMutation = useStopTimer();
   const pauseTimerMutation = usePauseTimer();
@@ -516,7 +519,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
                 <div>
                   <p className="text-sm font-medium">Ticket created</p>
                   <p className="text-xs text-gray-500">
-                    by {ticket.requesterName} on{' '}
+                    by {(ticket as any).requesterName ?? 'Unknown'} on{' '}
                     {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : ''}
                   </p>
                 </div>
@@ -543,7 +546,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
           {/* Ticket Info */}
           <Box title="Ticket Details">
             <TicketDetailSidebar
-              ticket={ticket}
+              ticket={ticket as any}
               onUpdate={handleUpdate}
               isUpdating={updateTicketMutation.isPending}
             />

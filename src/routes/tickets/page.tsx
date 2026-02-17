@@ -1,29 +1,23 @@
 import React, { useState } from 'react';
 import { PageSpinner } from '@brainforgeau/components/base';
-import { withAuthenticationRequired, useAuth } from '@brainforgeau/security';
+import { withAuthenticationRequired, usePermissions } from '@brainforgeau/security';
 import { Tabs, Tab } from '@heroui/react';
 import { UnifiedTicketGrid } from '@/components/tickets/components/UnifiedTicketGrid';
+import { TenantViewerPanel } from '@/components/tickets/components/TenantViewerPanel';
 
 /**
  * Unified Tickets Page with tabbed interface
  *
- * Phase 2: Frontend Unification
  * - "My Tickets" tab: Regular tenant tickets
- * - "Platform Tickets" tab: Platform-wide support tickets (visible to platform.support role)
- * - "Tenant Viewer" tab: Admin cross-tenant viewer (visible to platform.admin role)
+ * - "Platform Tickets" tab: Platform-wide support tickets (requires helpdesk.platform.manage)
+ * - "Tenant Viewer" tab: Admin cross-tenant viewer (requires elevated access)
  */
 function TicketsPage() {
-  const { user } = useAuth();
+  const { hasPermission, hasElevatedAccess } = usePermissions();
   const [activeTab, setActiveTab] = useState<string>('regular');
 
-  // Check role-based tab visibility
-  const userRoles = user?.profile?.role ?? [];
-  const hasPlatformSupport = Array.isArray(userRoles)
-    ? userRoles.includes('platform.support')
-    : userRoles === 'platform.support';
-  const hasPlatformAdmin = Array.isArray(userRoles)
-    ? userRoles.includes('platform.admin')
-    : userRoles === 'platform.admin';
+  const hasPlatformManage = hasPermission('helpdesk.platform.manage');
+  const hasTenantViewer = hasElevatedAccess;
 
   return (
     <div className="flex flex-col h-full">
@@ -35,23 +29,15 @@ function TicketsPage() {
           aria-label="Ticket views"
         >
           <Tab key="regular" title="My Tickets" />
-          {hasPlatformSupport && <Tab key="platform" title="Platform Tickets" />}
-          {hasPlatformAdmin && <Tab key="tenant" title="Tenant Viewer" />}
+          {hasPlatformManage && <Tab key="platform" title="Platform Tickets" />}
+          {hasTenantViewer && <Tab key="tenant" title="Tenant Viewer" />}
         </Tabs>
       </div>
 
       <div className="flex-1 overflow-hidden">
         {activeTab === 'regular' && <UnifiedTicketGrid source="regular" />}
-        {activeTab === 'platform' && hasPlatformSupport && <UnifiedTicketGrid source="platform" />}
-        {activeTab === 'tenant' && hasPlatformAdmin && (
-          <div className="px-6">
-            <p className="text-sm text-muted-foreground mb-4">
-              Select a tenant to view their tickets:
-            </p>
-            {/* TODO: Add tenant dropdown selector and pass tenantId to UnifiedTicketGrid */}
-            <p className="text-sm text-muted-foreground">Tenant viewer coming soon...</p>
-          </div>
-        )}
+        {activeTab === 'platform' && hasPlatformManage && <UnifiedTicketGrid source="platform" />}
+        {activeTab === 'tenant' && hasTenantViewer && <TenantViewerPanel />}
       </div>
     </div>
   );
