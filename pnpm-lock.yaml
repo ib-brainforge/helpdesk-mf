@@ -907,9 +907,8 @@ packages:
       react-error-boundary: ^6.0.0
 
   '@brainforgeau/helpdesk-client@file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz':
-    resolution: {integrity: sha512-TJHyOhc+qHJLiwuS8eT/+cLFIgunAuMOSWPQQQVL8exlgH+rV18TFOn2Pcc+KDqeq+zuydOqD9FRu8TlZM0Zww==, tarball: file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz}
-    version: 0.1.99-local
-    engines: {node: '>=18.0.0'}
+    resolution: {integrity: sha512-Cr3htgq83f4igqkGnZAD1IcjL8XpeC9eIzdV5in9IKl3tezvWXiFpU9WRqGt5DX1HwtcQvBHnidtnCE7O4fX9g==, tarball: file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz}
+    version: 0.1.99
 
   '@brainforgeau/identity-management-client@0.1.217-develop.5a45cbb':
     resolution: {integrity: sha512-JuckHXKCLuVvjaPOdhjKz/pOW0SKrar+YPZ7tkwgdXwMene4YovEtzLQGY1Ln+lxLy3ZQ8iOTRpOPgNXdmNpZg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.217-develop.5a45cbb/f46894ce3d337b2f0a83aaa5f05e8a9d1cfe5329}
@@ -4410,6 +4409,9 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  axios@0.27.2:
+    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
 
   axios@1.13.5:
     resolution: {integrity: sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==}
@@ -9205,7 +9207,7 @@ snapshots:
 
   '@brainforgeau/helpdesk-client@file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz':
     dependencies:
-      axios: 1.13.5
+      axios: 0.27.2
     transitivePeerDependencies:
       - debug
 
@@ -14093,6 +14095,13 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
+
+  axios@0.27.2:
+    dependencies:
+      follow-redirects: 1.15.11
+      form-data: 4.0.5
+    transitivePeerDependencies:
+      - debug
 
   axios@1.13.5:
     dependencies:

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
+import type { PaginationState } from '@tanstack/react-table';
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { configAtom } from '@/state/config';
 import { getDefaultStore } from 'jotai';
@@ -12,19 +13,21 @@ const store = getDefaultStore();
  * Hook for viewing tickets from a specific tenant (for platform.admin role)
  */
 export const useTenantTicketsData = (tenantId: string | null) => {
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(25);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
   const [filters, setFilters] = useState<TenantTicketFilters>({});
 
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
-    queryKey: ['tenant-tickets', tenantId, page, pageSize, filters],
+    queryKey: ['tenant-tickets', tenantId, pagination.pageIndex, pagination.pageSize, filters],
     queryFn: async () => {
       if (!tenantId) {
         return {
           items: [],
           totalCount: 0,
           page: 1,
-          pageSize,
+          pageSize: pagination.pageSize,
         } as PagedResult<TicketListDto>;
       }
 
@@ -44,8 +47,8 @@ export const useTenantTicketsData = (tenantId: string | null) => {
       if (filters.searchTerm) {
         params.append('searchTerm', filters.searchTerm);
       }
-      params.append('page', String(page));
-      params.append('pageSize', String(pageSize));
+      params.append('page', String(pagination.pageIndex + 1));
+      params.append('pageSize', String(pagination.pageSize));
       params.append('sortBy', 'CreatedAt');
       params.append('sortDirection', 'desc');
 
@@ -61,9 +64,8 @@ export const useTenantTicketsData = (tenantId: string | null) => {
   return {
     items: data?.items ?? [],
     totalCount: data?.totalCount ?? 0,
-    page,
-    setPage,
-    pageSize,
+    pagination,
+    setPagination,
     filters,
     setFilters,
     isLoading,
