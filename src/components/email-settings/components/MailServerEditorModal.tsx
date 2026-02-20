@@ -12,8 +12,9 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  ValidationAlert,
 } from '@brainforgeau/components';
-import { Alert, addToast, Switch } from '@heroui/react';
+import { addToast, Switch } from '@heroui/react';
 import { MailServerApi, HelpdeskEmailDomainEnumsMailProtocol } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { MailServerConfigDto } from '@/types/email';
@@ -167,15 +168,7 @@ export const MailServerEditorModal = ({
               form.handleSubmit();
             }}
           >
-            {errors.length > 0 && (
-              <Alert className="mb-4" color="danger" variant="flat">
-                <div className="flex flex-col gap-1">
-                  {errors.map((error, index) => (
-                    <div key={index}>{error}</div>
-                  ))}
-                </div>
-              </Alert>
-            )}
+            <ValidationAlert errors={errors} onClose={() => setErrors([])} />
 
             <div className="flex flex-col gap-4">
               {/* General Settings */}
