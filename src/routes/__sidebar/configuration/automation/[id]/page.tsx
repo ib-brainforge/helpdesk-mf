@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useParams, useNavigate } from '@modern-js/runtime/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, Icon } from '@brainforgeau/components';
-import { Alert, addToast, Switch, Card, CardBody, CardHeader } from '@heroui/react';
+import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, Icon,
+  ValidationAlert,
+} from '@brainforgeau/components';
+import { extractErrorMessages } from '@/utils/error-handling';
+import { addToast, Switch, Card, CardBody, CardHeader } from '@heroui/react';
 import { Textarea } from '@heroui/react';
 import { AutomationRulesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -138,8 +141,7 @@ function EditAutomationRulePage() {
       navigate('/configuration/automation');
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to update automation rule';
-      setErrors([errorMessage]);
+      setErrors(extractErrorMessages(error, 'Failed to update automation rule'));
     },
   });
 
@@ -243,15 +245,7 @@ function EditAutomationRulePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Main editor (2/3 width) */}
         <div className="lg:col-span-2 flex flex-col gap-4">
-          {errors.length > 0 && (
-            <Alert className="mb-4" color="danger" variant="flat">
-              <div className="flex flex-col gap-1">
-                {errors.map((error, index) => (
-                  <div key={index}>{error}</div>
-                ))}
-              </div>
-            </Alert>
-          )}
+          <ValidationAlert errors={errors} onClose={() => setErrors([])} />
 
           {/* Basic Info */}
           <Card>
