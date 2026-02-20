@@ -71,6 +71,11 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
     },
   });
 
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
+
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
     return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
@@ -79,7 +84,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={isEdit ? 'Edit Section' : 'Create Section'}
       size="md"
     >
@@ -131,7 +136,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
         </form.Field>
 
         <div className="flex justify-end gap-2 mt-4">
-          <BaseButton variant="bordered" onPress={onClose} type="button">
+          <BaseButton variant="bordered" onPress={handleClose} type="button">
             Cancel
           </BaseButton>
           <BaseButton type="submit" isLoading={mutation.isPending}>
