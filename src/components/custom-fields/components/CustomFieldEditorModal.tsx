@@ -126,6 +126,14 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   const [selectedFieldType, setSelectedFieldType] = useState(field?.fieldType ?? CustomFieldType.Text);
   const needsOptions = selectedFieldType === CustomFieldType.Dropdown || selectedFieldType === CustomFieldType.MultiSelect;
 
+  const handleClose = () => {
+    form.reset();
+    setOptions(field?.options || []);
+    setNewOptionValue('');
+    setSelectedFieldType(field?.fieldType ?? CustomFieldType.Text);
+    onClose();
+  };
+
   const handleAddOption = () => {
     if (newOptionValue.trim()) {
       const newOption: CustomFieldOptionDto = {
@@ -155,7 +163,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
       size="2xl"
     >
@@ -331,7 +339,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
         )}
 
         <div className="flex justify-end gap-2 mt-4">
-          <BaseButton variant="bordered" onPress={onClose} type="button">
+          <BaseButton variant="bordered" onPress={handleClose} type="button">
             Cancel
           </BaseButton>
           <BaseButton type="submit" isLoading={mutation.isPending}>

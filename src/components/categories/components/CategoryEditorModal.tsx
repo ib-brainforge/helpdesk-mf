@@ -117,6 +117,11 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
     },
   });
 
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
+
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
     return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
@@ -125,7 +130,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={isEdit ? 'Edit Category' : 'Create Category'}
       size="2xl"
     >
@@ -251,7 +256,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
         </form.Field>
 
         <div className="flex justify-end gap-2 mt-4">
-          <BaseButton variant="bordered" onPress={onClose} type="button">
+          <BaseButton variant="bordered" onPress={handleClose} type="button">
             Cancel
           </BaseButton>
           <BaseButton type="submit" isLoading={mutation.isPending}>
