@@ -4,8 +4,10 @@ import { useParams, useNavigate } from '@modern-js/runtime/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Alert, addToast, Switch, Textarea } from '@heroui/react';
+import { BaseButton, BaseInput, BaseSelect, BaseSelectItem,
+  ValidationAlert,
+} from '@brainforgeau/components';
+import { addToast, Switch, Textarea } from '@heroui/react';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { VariablePicker, NOTIFICATION_TYPE_LABELS } from '@/components/email-templates';
@@ -179,15 +181,7 @@ function EditEmailTemplatePage() {
           form.handleSubmit();
         }}
       >
-        {errors.length > 0 && (
-          <Alert className="mb-4" color="danger" variant="flat">
-            <div className="flex flex-col gap-1">
-              {errors.map((error, index) => (
-                <div key={index}>{error}</div>
-              ))}
-            </div>
-          </Alert>
-        )}
+        <ValidationAlert errors={errors} onClose={() => setErrors([])} />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
