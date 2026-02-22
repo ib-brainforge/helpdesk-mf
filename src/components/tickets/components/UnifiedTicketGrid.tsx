@@ -20,6 +20,7 @@ import {
 import { useUnifiedTicketsData } from '../hooks/useUnifiedTickets';
 import { createUnifiedColumns, type UnifiedTicketRow } from './unified-ticket-columns';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { useTimezone } from '@brainforgeau/security';
 import type { TicketSource } from '@/types/unified-ticket';
 import { SOURCE_CAPABILITIES } from '@/types/unified-ticket';
 
@@ -36,6 +37,7 @@ export interface UnifiedTicketGridProps {
  */
 export const UnifiedTicketGrid: FC<UnifiedTicketGridProps> = ({ source, tenantId }) => {
   const capabilities = SOURCE_CAPABILITIES[source];
+  const timezone = useTimezone();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -67,7 +69,7 @@ export const UnifiedTicketGrid: FC<UnifiedTicketGridProps> = ({ source, tenantId
     [items, userMap, source]
   );
 
-  const columns = useMemo(() => createUnifiedColumns(source), [source]);
+  const columns = useMemo(() => createUnifiedColumns(source, timezone), [source, timezone]);
 
   const table = useReactTable({
     data: enrichedItems,

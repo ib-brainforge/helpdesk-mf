@@ -1,5 +1,6 @@
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
+import { formatDateTime } from '@brainforgeau/components/utils';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
 import { NavLink } from '@modern-js/runtime/router';
@@ -47,6 +48,7 @@ interface CreateColumnsOptions {
   onAssign?: (ticketId: string, assigneeId: string) => void;
   onChangeStatus?: (ticketId: string, status: TicketStatus) => void;
   onChangePriority?: (ticketId: string, priority: TicketPriority) => void;
+  timezone?: string | null;
 }
 
 export const createTicketColumns = (
@@ -178,7 +180,7 @@ export const createTicketColumns = (
     header: 'Created',
     cell: ({ getValue }) => {
       const date = getValue();
-      return <span className="text-sm">{new Date(date).toLocaleDateString()}</span>;
+      return <span className="text-sm">{formatDateTime(date, { timezone: options.timezone })}</span>;
     },
     size: 120,
   }),
@@ -186,7 +188,7 @@ export const createTicketColumns = (
     header: 'Updated',
     cell: ({ getValue }) => {
       const date = getValue();
-      return <span className="text-sm">{date ? new Date(date).toLocaleDateString() : '-'}</span>;
+      return <span className="text-sm">{formatDateTime(date, { timezone: options.timezone })}</span>;
     },
     size: 120,
   }),

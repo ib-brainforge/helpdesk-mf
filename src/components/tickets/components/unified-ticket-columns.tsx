@@ -13,6 +13,7 @@ import type { UnifiedTicketListItem, TicketSource } from '@/types/unified-ticket
 import { SOURCE_CAPABILITIES } from '@/types/unified-ticket';
 import { getStatusConfig, getPriorityConfig } from '@/utils/ticketDisplayHelpers';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
+import { formatDateTime } from '@brainforgeau/components/utils';
 
 /**
  * Extended row type with enriched user data
@@ -32,7 +33,7 @@ const columnHelper = createColumnHelper<UnifiedTicketRow>();
  * @param source - Ticket source type
  * @returns Array of column definitions adapted for the source
  */
-export const createUnifiedColumns = (source: TicketSource): ColumnDef<UnifiedTicketRow, any>[] => {
+export const createUnifiedColumns = (source: TicketSource, timezone?: string | null): ColumnDef<UnifiedTicketRow, any>[] => {
   const capabilities = SOURCE_CAPABILITIES[source];
 
   const columns: ColumnDef<UnifiedTicketRow, any>[] = [];
@@ -225,7 +226,7 @@ export const createUnifiedColumns = (source: TicketSource): ColumnDef<UnifiedTic
       header: 'Created',
       cell: ({ getValue }) => {
         const date = getValue();
-        return <span className="text-sm">{date ? new Date(date).toLocaleDateString() : '—'}</span>;
+        return <span className="text-sm">{formatDateTime(date, { timezone })}</span>;
       },
       size: 120,
     })
@@ -237,7 +238,7 @@ export const createUnifiedColumns = (source: TicketSource): ColumnDef<UnifiedTic
       header: 'Updated',
       cell: ({ getValue }) => {
         const date = getValue();
-        return <span className="text-sm">{date ? new Date(date).toLocaleDateString() : '—'}</span>;
+        return <span className="text-sm">{formatDateTime(date, { timezone })}</span>;
       },
       size: 120,
     })

@@ -1,6 +1,6 @@
 import { type FC, useState, useCallback, useMemo } from 'react';
 import { BaseTable, BaseButton, Icon, TablePagination } from '@brainforgeau/components';
-import { PermissionGuard } from '@brainforgeau/security';
+import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { NewTicketModal } from './NewTicketModal';
 import { Tabs, Tab, Chip } from '@heroui/react';
@@ -23,6 +23,7 @@ import { useAuth } from '@brainforgeau/security';
 
 export const TicketGrid: FC = () => {
   const navigate = useNavigate();
+  const timezone = useTimezone();
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,8 +73,8 @@ export const TicketGrid: FC = () => {
   }, [updateTicketMutation]);
 
   const columns = useMemo(
-    () => createTicketColumns({ onAssign: handleAssign, onChangeStatus: handleChangeStatus, onChangePriority: handleChangePriority }),
-    [handleAssign, handleChangeStatus, handleChangePriority]
+    () => createTicketColumns({ onAssign: handleAssign, onChangeStatus: handleChangeStatus, onChangePriority: handleChangePriority, timezone }),
+    [handleAssign, handleChangeStatus, handleChangePriority, timezone]
   );
 
   const { table } = useTicketsTable({

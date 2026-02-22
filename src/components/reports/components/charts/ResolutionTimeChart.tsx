@@ -9,6 +9,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { formatDateTimeAsDate } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import type { DynamicsDataPointDto } from '@/types';
 
 interface ResolutionTimeChartProps {
@@ -16,10 +18,11 @@ interface ResolutionTimeChartProps {
 }
 
 export const ResolutionTimeChart: FC<ResolutionTimeChartProps> = ({ data }) => {
+  const timezone = useTimezone();
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    date: new Date(item.periodStart).toLocaleDateString(),
+    date: formatDateTimeAsDate(item.periodStart, { timezone }),
     avgResolutionTime: (item.avgResolutionMinutes ?? 0) / 60,
   }));
 

@@ -3,6 +3,8 @@ import { Helmet } from '@modern-js/runtime/head';
 import { Card } from '@heroui/react';
 import { Icon, BaseInput } from '@brainforgeau/components';
 import { useState } from 'react';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { useQuery } from '@tanstack/react-query';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -12,6 +14,7 @@ import { KnowledgeBaseStatus } from '@/types';
 
 function KnowledgeBaseCategoryPage() {
   const { categorySlug } = useParams();
+  const timezone = useTimezone();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: categories } = useKnowledgeBaseCategories();
@@ -160,7 +163,7 @@ function KnowledgeBaseCategoryPage() {
                     )}
                   </div>
                   {article.publishedAt && (
-                    <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                    <span>{formatDateTime(article.publishedAt, { timezone })}</span>
                   )}
                 </div>
               </Card>

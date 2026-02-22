@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from '@modern-js/runtime/router';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { Helmet } from '@modern-js/runtime/head';
 import { Card } from '@heroui/react';
 import { Icon, BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
@@ -11,6 +13,7 @@ import { TagChip } from '@/components/tags';
 import DOMPurify from 'dompurify';
 
 function KnowledgeBaseSearchPage() {
+  const timezone = useTimezone();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const initialCategory = searchParams.get('category') || '';
@@ -159,7 +162,7 @@ function KnowledgeBaseSearchPage() {
                         {article.publishedAt && (
                           <span className="flex items-center gap-1">
                             <Icon name="calendar" className="h-3 w-3" />
-                            {new Date(article.publishedAt).toLocaleDateString()}
+                            {formatDateTime(article.publishedAt, { timezone })}
                           </span>
                         )}
                         {article.relevance && (

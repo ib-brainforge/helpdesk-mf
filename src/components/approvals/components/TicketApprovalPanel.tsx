@@ -3,7 +3,8 @@ import { BaseButton, Icon, BaseTextarea } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
-import { PermissionGuard } from '@brainforgeau/security';
+import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { formatDateTime } from '@brainforgeau/components/utils';
 import {
   useTicketApproval,
   useRequestApproval,
@@ -26,6 +27,7 @@ interface TicketApprovalPanelProps {
 }
 
 export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) => {
+  const timezone = useTimezone();
   const { data: approval, isLoading } = useTicketApproval(ticketId);
   const { items: workflows } = useApprovalWorkflows();
   const requestApprovalMutation = useRequestApproval();
@@ -209,14 +211,14 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
             <div className="flex justify-between">
               <span className="text-gray-600">Requested at:</span>
               <span className="font-medium">
-                {new Date(approval.requestedAt).toLocaleString()}
+                {formatDateTime(approval.requestedAt, { timezone })}
               </span>
             </div>
             {approval.completedAt && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Completed at:</span>
                 <span className="font-medium">
-                  {new Date(approval.completedAt).toLocaleString()}
+                  {formatDateTime(approval.completedAt, { timezone })}
                 </span>
               </div>
             )}

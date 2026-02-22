@@ -1,5 +1,7 @@
 import { Icon } from '@brainforgeau/components/base';
 import { Chip } from '@heroui/react';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import type { KnowledgeBaseArticleListDto } from '@/types';
 import { KnowledgeBaseStatus } from '@/types';
 
@@ -36,6 +38,7 @@ const getStatusLabel = (status: KnowledgeBaseStatus): string => {
 };
 
 export function KbArticleListView({ articles, categories, isLoading }: KbArticleListViewProps) {
+  const timezone = useTimezone();
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -112,7 +115,7 @@ export function KbArticleListView({ articles, categories, isLoading }: KbArticle
                       {getStatusLabel(article.status)}
                     </Chip>
                     <span className="text-sm text-default-500">
-                      {article.createdAt ? new Date(article.createdAt).toLocaleDateString() : ''}
+                      {formatDateTime(article.createdAt, { timezone })}
                     </span>
                   </div>
                 </div>

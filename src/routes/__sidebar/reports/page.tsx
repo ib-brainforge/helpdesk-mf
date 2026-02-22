@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
+import { useTimezone } from '@brainforgeau/security';
 import { Tabs, Tab } from '@heroui/react';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -25,6 +26,7 @@ import { ReportGranularity, type TechPerformanceDto, type CustomReportResultDto 
 
 function ReportsPage() {
   const navigate = useNavigate();
+  const timezone = useTimezone();
   const [selectedTab, setSelectedTab] = useState('dynamics');
   const [granularity, setGranularity] = useState<ReportGranularity>(ReportGranularity.Daily);
 
@@ -97,7 +99,7 @@ function ReportsPage() {
   });
 
   const handleExportCustom = (data: CustomReportResultDto, format: 'csv' | 'excel') => {
-    const formattedData = formatReportData(data.rows);
+    const formattedData = formatReportData(data.rows, timezone);
     const filename = `custom-report-${new Date().toISOString().split('T')[0]}`;
 
     if (format === 'csv') {

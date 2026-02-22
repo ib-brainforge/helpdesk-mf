@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { StatusBadge } from '@/components/shared';
 import { Box, Icon } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { SlaStatus, type SlaIndicatorDto } from '@/types';
 
 interface SlaIndicatorProps {
@@ -12,6 +14,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
   slaData,
   variant = 'full',
 }) => {
+  const timezone = useTimezone();
   const formatTimeRemaining = (minutes: number | undefined): string => {
     if (minutes === undefined) return 'N/A';
 
@@ -94,7 +97,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
               </p>
               {slaData.responseTimeDeadline && (
                 <p className="text-xs text-gray-500">
-                  Due: {new Date(slaData.responseTimeDeadline).toLocaleString()}
+                  Due: {formatDateTime(slaData.responseTimeDeadline, { timezone })}
                 </p>
               )}
             </div>
@@ -116,7 +119,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
               </p>
               {slaData.resolutionTimeDeadline && (
                 <p className="text-xs text-gray-500">
-                  Due: {new Date(slaData.resolutionTimeDeadline).toLocaleString()}
+                  Due: {formatDateTime(slaData.resolutionTimeDeadline, { timezone })}
                 </p>
               )}
             </div>

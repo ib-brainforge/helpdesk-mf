@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import type { AttachmentDto } from '@/types';
 
 interface AttachmentListProps {
@@ -14,6 +16,7 @@ export const AttachmentList: FC<AttachmentListProps> = ({
   onDelete,
   canDelete = false,
 }) => {
+  const timezone = useTimezone();
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -71,7 +74,7 @@ export const AttachmentList: FC<AttachmentListProps> = ({
             <p className="text-xs text-gray-500">
               {formatFileSize(attachment.fileSize)} •{' '}
               {attachment.uploadedByName || 'Unknown'} •{' '}
-              {new Date(attachment.uploadedAt).toLocaleDateString()}
+              {formatDateTime(attachment.uploadedAt, { timezone })}
             </p>
           </div>
 
