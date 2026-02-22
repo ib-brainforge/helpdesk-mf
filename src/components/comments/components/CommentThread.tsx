@@ -2,6 +2,8 @@ import { CommentType, type CommentDto } from '@/types/comment';
 import { StatusBadge } from '@/components/shared';
 import DOMPurify from 'dompurify';
 import { fromApiCommentType } from '@/utils/typeMappers';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 
 interface CommentThreadProps {
   comments: CommentDto[];
@@ -44,6 +46,7 @@ const getCommentTextClass = (type: CommentType): string => {
 };
 
 export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoading }) => {
+  const timezone = useTimezone();
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -82,7 +85,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
                 </StatusBadge>
               </div>
               <span className="text-xs text-default-400">
-                {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}
+                {formatDateTime(comment.createdAt, { timezone })}
               </span>
             </div>
             <div

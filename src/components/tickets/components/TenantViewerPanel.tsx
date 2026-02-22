@@ -20,10 +20,12 @@ import {
 import { useTenantTicketsData } from '@/components/admin/hooks/useTenantViewer';
 import { authStateAtom } from '@/state/auth-atoms';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { useTimezone } from '@brainforgeau/security';
 import { createUnifiedColumns, type UnifiedTicketRow } from './unified-ticket-columns';
 
 export const TenantViewerPanel: FC = () => {
   const authState = useAtomValue(authStateAtom);
+  const timezone = useTimezone();
   const availableContexts = authState.availableContexts;
 
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export const TenantViewerPanel: FC = () => {
     [items, userMap]
   );
 
-  const columns = useMemo(() => createUnifiedColumns('tenant'), []);
+  const columns = useMemo(() => createUnifiedColumns('tenant', timezone), [timezone]);
 
   const table = useReactTable({
     data: enrichedItems,

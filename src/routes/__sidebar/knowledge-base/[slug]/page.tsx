@@ -3,6 +3,8 @@ import { Helmet } from '@modern-js/runtime/head';
 import { Card, Divider } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { useKnowledgeBaseArticle, useRateKnowledgeBaseArticle } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
 import DOMPurify from 'dompurify';
@@ -10,6 +12,7 @@ import { RelatedArticles } from '@/components/knowledge-base/components/RelatedA
 
 function KnowledgeBaseArticlePage() {
   const { slug } = useParams();
+  const timezone = useTimezone();
   const { data: article, isLoading } = useKnowledgeBaseArticle(slug || '');
   const rateArticle = useRateKnowledgeBaseArticle();
 
@@ -77,7 +80,7 @@ function KnowledgeBaseArticlePage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Icon name="calendar" className="h-4 w-4" />
-                  {new Date(article.createdAt).toLocaleDateString()}
+                  {formatDateTime(article.createdAt, { timezone })}
                 </span>
                 <span className="flex items-center gap-1">
                   <Icon name="eye" className="h-4 w-4" />
@@ -153,14 +156,14 @@ function KnowledgeBaseArticlePage() {
                 <div>
                   <span className="font-medium">Last Updated:</span>{' '}
                   <span className="text-gray-600">
-                    {new Date(article.updatedAt).toLocaleDateString()}
+                    {formatDateTime(article.updatedAt, { timezone })}
                   </span>
                 </div>
                 {article.publishedAt && (
                   <div>
                     <span className="font-medium">Published:</span>{' '}
                     <span className="text-gray-600">
-                      {new Date(article.publishedAt).toLocaleDateString()}
+                      {formatDateTime(article.publishedAt, { timezone })}
                     </span>
                   </div>
                 )}

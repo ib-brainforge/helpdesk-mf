@@ -5,6 +5,8 @@ import { BaseButton } from '@brainforgeau/components/button';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import {
   useReactTable,
   getCoreRowModel,
@@ -52,6 +54,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) => {
+  const timezone = useTimezone();
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     'id',
     'subject',
@@ -97,7 +100,7 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
             const value = info.getValue();
             // Format dates
             if (colKey.includes('Date') || colKey.includes('At')) {
-              return value ? new Date(value as string).toLocaleString() : '-';
+              return formatDateTime(value as string, { timezone });
             }
             // Format time values
             if (colKey.includes('Time')) {

@@ -8,7 +8,8 @@ import {
   BaseButton,
   Icon,
 } from '@brainforgeau/components';
-import { PermissionGuard } from '@brainforgeau/security';
+import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { formatDateTime } from '@brainforgeau/components/utils';
 import { StatusBadge } from '@/components/shared';
 import { TicketStatus, TicketPriority, type TicketDto } from '@/types/ticket';
 import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket } from '@/components/tags/hooks/useTags';
@@ -81,22 +82,13 @@ const formatTimeSpent = (timeSpan: string | undefined) => {
   return timeSpan || '0h 0m';
 };
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-};
 
 export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   ticket,
   onUpdate,
   isUpdating = false,
 }) => {
+  const timezone = useTimezone();
   const statusConfig = getStatusConfig(ticket.status as any);
   const priorityConfig = getPriorityConfig(ticket.priority as any);
   const originConfig = getOriginConfig((ticket as any).origin);
@@ -351,7 +343,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {ticket.dueDate && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-            <p className="text-sm">{formatDate(ticket.dueDate)}</p>
+            <p className="text-sm">{formatDateTime(ticket.dueDate, { timezone })}</p>
           </div>
         )}
 
@@ -359,7 +351,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {(ticket as any).startedAtUtc && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Started At</label>
-            <p className="text-sm">{formatDate((ticket as any).startedAtUtc)}</p>
+            <p className="text-sm">{formatDateTime((ticket as any).startedAtUtc, { timezone })}</p>
           </div>
         )}
 
@@ -367,20 +359,20 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {(ticket as any).closedAtUtc && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Closed At</label>
-            <p className="text-sm">{formatDate((ticket as any).closedAtUtc)}</p>
+            <p className="text-sm">{formatDateTime((ticket as any).closedAtUtc, { timezone })}</p>
           </div>
         )}
 
         {/* Created */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-          <p className="text-sm">{ticket.createdAt ? formatDate(ticket.createdAt) : '-'}</p>
+          <p className="text-sm">{formatDateTime(ticket.createdAt, { timezone })}</p>
         </div>
 
         {/* Updated */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Updated</label>
-          <p className="text-sm">{ticket.modifiedAt ? formatDate(ticket.modifiedAt) : '-'}</p>
+          <p className="text-sm">{formatDateTime(ticket.modifiedAt, { timezone })}</p>
         </div>
 
         {/* Subscribers */}

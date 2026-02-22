@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@brainforgeau/components':
-        specifier: 0.2.169-develop.4ce21a8
-        version: 0.2.169-develop.4ce21a8(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
+        specifier: 0.2.173-develop.682bd9d
+        version: 0.2.173-develop.682bd9d(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
       '@brainforgeau/helpdesk-client':
         specifier: file:/tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz
         version: file:../../../../../tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz
@@ -21,8 +21,8 @@ importers:
         specifier: 0.2.26-develop.772063c
         version: 0.2.26-develop.772063c(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@brainforgeau/security':
-        specifier: 0.2.156-develop.9bdf437
-        version: 0.2.156-develop.9bdf437(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
+        specifier: 0.2.158-develop.7ad9bf7
+        version: 0.2.158-develop.7ad9bf7(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
       '@brainforgeau/theme':
         specifier: 0.2.34-develop.33c87e8
         version: 0.2.34-develop.33c87e8(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
@@ -901,8 +901,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@brainforgeau/components@0.2.169-develop.4ce21a8':
-    resolution: {integrity: sha512-1TWNpq2ykXCYu9WxCrjGd6cITle75VH2bSJCiMmSl/A7gDqb9wZPz8NGKoMV/bDJi7/LmhQ2qxur5K1JlGmXjQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/components/0.2.169-develop.4ce21a8/9ba4c0be9410d64b535039be8aa09bb402c269a5}
+  '@brainforgeau/components@0.2.173-develop.682bd9d':
+    resolution: {integrity: sha512-UymuLOK7pzPfHMgIKPy4TueAEQJbVoxpx1mi+Xy8OifzQzcyMkRfJcy6T/WrArMz4jtkRxqmMRo8/ydbTViNMQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/components/0.2.173-develop.682bd9d/603a2d3e088b2c487f8caf90bf5450a6e4bc03e5}
     peerDependencies:
       '@heroicons/react': ^2.1.1
       '@heroui/react': 2.8.2
@@ -926,8 +926,8 @@ packages:
       react: 18.3.1
       react-dom: 18.3.1
 
-  '@brainforgeau/security@0.2.156-develop.9bdf437':
-    resolution: {integrity: sha512-+igqIYPEzXU7ztBSiKaTlLEcat4wJVTW6ODUXPhtU6pPOOjyLbWDWuRQsxLpggy5AD3Y8Sd3g07PnUXxAlkDTw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.2.156-develop.9bdf437/c65b7c990f9b9829e8dd1c0ba902bf58c48a1903}
+  '@brainforgeau/security@0.2.158-develop.7ad9bf7':
+    resolution: {integrity: sha512-g5aK0QNXVRfBYaIivt4hV1ATeiBDRM/+oFknTrfRPoPOjHVUFC7ZkJZUDa1ng27g/Uq9buksUm0FElFahLjQEg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.2.158-develop.7ad9bf7/d33039fa42dbd65e1d2720f8b9aea83d72323e5a}
     peerDependencies:
       react: 18.3.1
       react-dom: 18.3.1
@@ -9185,7 +9185,7 @@ snapshots:
   '@biomejs/cli-win32-x64@1.9.4':
     optional: true
 
-  '@brainforgeau/components@0.2.169-develop.4ce21a8(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)':
+  '@brainforgeau/components@0.2.173-develop.682bd9d(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)':
     dependencies:
       '@heroicons/react': 2.2.0(react@18.3.1)
       '@heroui/react': 2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
@@ -9234,7 +9234,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@brainforgeau/security@0.2.156-develop.9bdf437(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
+  '@brainforgeau/security@0.2.158-develop.7ad9bf7(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, Icon, BaseSelect, BaseSelectItem, BaseTable } from '@brainforgeau/components';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Card, CardBody, Spinner } from '@heroui/react';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
@@ -74,6 +76,7 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
 }
 
 function ReportsSummaryPage() {
+  const timezone = useTimezone();
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
@@ -197,11 +200,11 @@ function ReportsSummaryPage() {
         header: 'Created',
         cell: (info) => {
           const date = info.getValue() as string;
-          return date ? new Date(date).toLocaleDateString() : '';
+          return formatDateTime(date, { timezone });
         },
       },
     ],
-    [],
+    [timezone],
   );
 
   const table = useReactTable({

@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon, BaseInput } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import type { TimeEntryDto, TicketTimeTrackingDto } from '@/types';
 
 interface TimeTrackerProps {
@@ -26,6 +28,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
   onEditEntry,
   onDeleteEntry,
 }) => {
+  const timezone = useTimezone();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [manualMinutes, setManualMinutes] = useState('');
   const [manualNotes, setManualNotes] = useState('');
@@ -175,7 +178,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
                   )}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {entry.userName} • {new Date(entry.startTime).toLocaleString()}
+                  {entry.userName} • {formatDateTime(entry.startTime, { timezone })}
                 </p>
                 {entry.notes && <p className="text-xs text-gray-600">{entry.notes}</p>}
               </div>

@@ -2,7 +2,8 @@ import { type FC, useCallback, useState, useRef } from 'react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { PermissionGuard, useAuth } from '@brainforgeau/security';
+import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
+import { formatDateTime } from '@brainforgeau/components/utils';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
 import { useUpdateTicket } from '../hooks/useTickets';
@@ -71,6 +72,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
   const { id: urlId } = useParams<{ id: string }>();
   const id = ticketId ?? urlId;
   const navigate = useNavigate();
+  const timezone = useTimezone();
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
   const replyEditorRef = useRef<HTMLDivElement>(null);
@@ -520,7 +522,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
                   <p className="text-sm font-medium">Ticket created</p>
                   <p className="text-xs text-gray-500">
                     by {(ticket as any).requesterName ?? 'Unknown'} on{' '}
-                    {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : ''}
+                    {formatDateTime(ticket.createdAt, { timezone })}
                   </p>
                 </div>
               </div>
@@ -532,7 +534,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
                   <div>
                     <p className="text-sm font-medium">Ticket updated</p>
                     <p className="text-xs text-gray-500">
-                      on {new Date(ticket.modifiedAt).toLocaleString()}
+                      on {formatDateTime(ticket.modifiedAt, { timezone })}
                     </p>
                   </div>
                 </div>

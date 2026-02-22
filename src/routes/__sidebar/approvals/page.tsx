@@ -3,6 +3,8 @@ import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Card, CardBody } from '@heroui/react';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { StatusBadge } from '@/components/shared';
 import { usePendingApprovals } from '@/components/approvals';
 
@@ -10,6 +12,7 @@ import { usePendingApprovals } from '@/components/approvals';
 
 function PendingApprovalsPage() {
   const navigate = useNavigate();
+  const timezone = useTimezone();
   const { items, isLoading, refetch } = usePendingApprovals();
 
   const handleViewTicket = useCallback(
@@ -91,7 +94,7 @@ function PendingApprovalsPage() {
                       <div className="flex items-center gap-2">
                         <Icon name="clock" className="h-4 w-4" />
                         <span>
-                          Requested {new Date(approval.requestedAt).toLocaleString()} by{' '}
+                          Requested {formatDateTime(approval.requestedAt, { timezone })} by{' '}
                           {approval.requestedByUserName}
                         </span>
                       </div>

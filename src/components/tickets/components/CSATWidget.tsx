@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSatisfactionRatingByTicket } from '@/hooks/useSatisfaction';
 import { TicketStatus } from '@/types/ticket';
@@ -12,6 +14,7 @@ interface CSATWidgetProps {
 }
 
 export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
+  const timezone = useTimezone();
   const { data: rating, isLoading } = useSatisfactionRatingByTicket(ticketId);
 
   // Don't show widget for non-closed tickets
@@ -50,7 +53,7 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-gray-600">
-              Rated on {new Date(rating.ratedAt).toLocaleDateString()}
+              Rated on {formatDateTime(rating.ratedAt, { timezone })}
             </p>
           </div>
           <StarRating value={rating.rating} readonly size="md" />

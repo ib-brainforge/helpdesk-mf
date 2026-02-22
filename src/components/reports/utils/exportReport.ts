@@ -1,6 +1,8 @@
 // REVIEW: Client-side export utilities for CSV/Excel
 // For large datasets, backend export via Redis Streams would be preferred
 
+import { formatDateTime } from '@brainforgeau/components/utils';
+
 export const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
   if (!data || data.length === 0) {
     console.warn('No data to export');
@@ -57,13 +59,14 @@ export const exportToExcel = async (data: Record<string, unknown>[], filename: s
 
 export const formatReportData = (
   data: Record<string, unknown>[],
+  timezone?: string | null,
 ): Record<string, unknown>[] => {
   return data.map((row) => {
     const formatted: Record<string, unknown> = {};
     Object.entries(row).forEach(([key, value]) => {
       // Format dates
       if (typeof value === 'string' && !isNaN(Date.parse(value)) && key.toLowerCase().includes('date')) {
-        formatted[key] = new Date(value).toLocaleString();
+        formatted[key] = formatDateTime(value, { timezone });
       }
       // Format numbers
       else if (typeof value === 'number') {
