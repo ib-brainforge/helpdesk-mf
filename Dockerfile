@@ -62,6 +62,9 @@ ENV NODE_ENV=production \
 
 RUN NODE_ENV=production pnpm run deploy
 
+# Persist build-time version for runtime
+RUN echo "${APP_VERSION}" > .app-version
+
 # Stage 2: Production runtime with nginx + Node.js (BFF support)
 FROM fholzer/nginx-brotli:latest
 
@@ -76,6 +79,9 @@ COPY --from=app-builder /build/.output/static /usr/share/nginx/html/static
 
 # Copy Node.js BFF server
 COPY --from=app-builder /build/.output ./bff
+
+# Copy build-time version file for runtime config
+COPY --from=app-builder /build/.app-version /app/.app-version
 
 # Copy nginx configuration template (will be processed at runtime)
 COPY nginx.conf /etc/nginx/templates/default.conf.template
