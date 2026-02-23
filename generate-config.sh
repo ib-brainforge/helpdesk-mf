@@ -5,6 +5,11 @@
 CONFIG_FILE="/usr/share/nginx/html/config.js"
 INDEX_FILE="/usr/share/nginx/html/index.html"
 
+# Read version from build-time file if APP_VERSION is not set via env
+if [ -z "$APP_VERSION" ] || [ "$APP_VERSION" = "unknown" ]; then
+  APP_VERSION=$(cat /app/.app-version 2>/dev/null || echo "unknown")
+fi
+
 # Construct script path using BASE_PATH
 SCRIPT_PATH="${BASE_PATH%/}/config.js"
 
