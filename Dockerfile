@@ -25,7 +25,7 @@ RUN mkdir -p src/routes && \
     echo "" > src/routes/index.css
 
 # Set environment for type generation
-ENV MF_NAVBAR_URL=https://app.brainforge.com.au/mfs/packages/navbar
+ENV MF_NAVBAR_URL="https://app.brainforge.com.au/mfs/packages/navbar"
 
 # Single pnpm install (with mount cache for faster rebuilds)
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
@@ -38,24 +38,25 @@ RUN pnpm mf dts
 COPY . .
 
 # Build the app for production deployment with optimizations
+# Domain-agnostic: empty defaults, values injected at runtime via generate-config.sh
 ENV NODE_ENV=production \
-    OIDC_AUTHORITY="https://auth.brainforge.com.au/realms/test" \
-    OIDC_CLIENT_ID="helpdesk-mf" \
-    OIDC_REDIRECT_URI="https://app.brainforge.com.au/helpdesk" \
+    OIDC_AUTHORITY="" \
+    OIDC_CLIENT_ID="" \
+    OIDC_REDIRECT_URI="" \
     OIDC_SCOPE="openid profile email" \
-    API_BASE_URL="https://app.brainforge.com.au/backend/helpdesk" \
-    NOTIFICATION_API_URL="https://app.brainforge.com.au/backend/notification" \
+    API_BASE_URL="" \
+    NOTIFICATION_API_URL="" \
     MF_NAVBAR_URL="https://app.brainforge.com.au/mfs/packages/navbar" \
-    MFS_PACKAGES_URL="https://app.brainforge.com.au/mfs/packages" \
-    IDENTITY_BASE_URL="https://auth.brainforge.com.au/identity" \
+    MFS_PACKAGES_URL="" \
+    IDENTITY_BASE_URL="" \
     STANDALONE="true" \
     BASE_PATH="/helpdesk" \
-    OBSERVABILITY_ENABLED="true" \
-    TRACING_ENABLED="true" \
-    TRACING_PROXY_URL="https://app.brainforge.com.au/helpdesk/edge/traces" \
-    TRACING_IGNORE_URLS_PATTERN="auth\\.brainforge\\.com\\.au" \
-    LOKI_PROXY_URL="https://app.brainforge.com.au/helpdesk/edge/logs" \
-    METRICS_ENABLED="true" \
+    OBSERVABILITY_ENABLED="false" \
+    TRACING_ENABLED="false" \
+    TRACING_PROXY_URL="" \
+    TRACING_IGNORE_URLS_PATTERN="" \
+    LOKI_PROXY_URL="" \
+    METRICS_ENABLED="false" \
     ENABLE_WHITELABEL="false" \
     APP_VERSION=${APP_VERSION}
 
@@ -79,21 +80,45 @@ COPY --from=app-builder /build/.output ./bff
 # Copy nginx configuration template (will be processed at runtime)
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Create entrypoint script to run both nginx and Node.js
-# Generates random session secret and processes nginx config template
+# Copy and make executable the runtime config generator
+COPY generate-config.sh /generate-config.sh
+RUN chmod +x /generate-config.sh
+
+# Create entrypoint script to run generate-config.sh, nginx template processing, and BFF
+# Generates random session secret, generates runtime config, and starts services
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
     echo 'export BF_SESSION_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d "/+=" | head -c 32)' >> /entrypoint.sh && \
+    echo '/generate-config.sh' >> /entrypoint.sh && \
     echo 'envsubst "\$BF_SESSION_SECRET" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /entrypoint.sh && \
     echo 'cd /app/bff && node index.cjs &' >> /entrypoint.sh && \
     echo 'nginx -g "daemon off;"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
-# Runtime environment variables for BFF proxies (credentials kept server-side)
+# Runtime environment variables (domain-agnostic — set via Kubernetes env/configmap)
 ENV NODE_ENV=production \
     PORT=3000 \
     LOKI_URL="http://loki-proxy.brainforge.svc.cluster.local:3100" \
     TEMPO_ENDPOINT="http://tempo-proxy.brainforge.svc.cluster.local:4318/v1/traces" \
-    ALLOWED_ORIGINS="https://app.brainforge.com.au,https://auth.brainforge.com.au"
+    ALLOWED_ORIGINS="" \
+    OIDC_AUTHORITY="" \
+    OIDC_CLIENT_ID="" \
+    OIDC_REDIRECT_URI="" \
+    OIDC_SCOPE="" \
+    OIDC_APP="" \
+    API_BASE_URL="" \
+    NOTIFICATION_API_URL="" \
+    SIGNALR_HUB_URL="" \
+    OBSERVABILITY_ENABLED="false" \
+    TRACING_ENABLED="false" \
+    TRACING_PROXY_URL="" \
+    TRACING_IGNORE_URLS_PATTERN="" \
+    LOKI_PROXY_URL="" \
+    METRICS_ENABLED="false" \
+    BASE_PATH="/helpdesk" \
+    APP_VERSION="unknown" \
+    MFS_PACKAGES_URL="" \
+    IDENTITY_BASE_URL="" \
+    ENABLE_WHITELABEL="false"
 
 EXPOSE 8080
 
