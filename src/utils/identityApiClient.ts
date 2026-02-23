@@ -18,16 +18,19 @@ type IdentityApiConstructor<TClient> = new (
 export const createIdentityApiClient = async <TClient>(
   ClientCtor: IdentityApiConstructor<TClient>,
 ): Promise<TClient> => {
-  if (!__IDENTITY_BASE_URL__) {
+  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
+  const identityBaseUrl = runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '';
+
+  if (!identityBaseUrl) {
     throw new Error('Identity API base URL is not configured');
   }
 
   const authorizedAxios = createAuthorizedAxios({
-    identityBaseUrl: __IDENTITY_BASE_URL__,
+    identityBaseUrl,
   });
 
   const configuration = new Configuration({
-    basePath: __IDENTITY_BASE_URL__,
+    basePath: identityBaseUrl,
   });
 
   return new ClientCtor(configuration, undefined, authorizedAxios);

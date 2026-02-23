@@ -12,7 +12,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const config = useAtomValue(configAtom);
-  const identityBaseUrl = __IDENTITY_BASE_URL__ || '';
+  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
+  const identityBaseUrl = runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '';
 
   return (
     <FlexibleAuthProvider
