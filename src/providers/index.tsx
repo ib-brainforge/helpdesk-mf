@@ -13,7 +13,8 @@ export function Providers({
 }: {
   children: React.ReactNode;
 }) {
-  const identityBaseUrl = __IDENTITY_BASE_URL__ || '';
+  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
+  const identityBaseUrl = runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '';
 
   // Configure context token refresh for automatic 403 retry
   useEffect(() => {
