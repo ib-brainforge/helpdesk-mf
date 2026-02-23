@@ -134,6 +134,8 @@ export default function Layout() {
     }
   };
 
+  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
+
   const { isAuthenticated } = useAuth();
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
@@ -161,7 +163,12 @@ export default function Layout() {
         {isAuthenticated && (
           <TopNavbar
             data-testid={TEST_IDS.navbar.top}
-            config={{ identityBaseUrl: __IDENTITY_BASE_URL__ || '', app: 'helpdesk' }}
+            config={{
+              identityBaseUrl: runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '',
+              notificationHubUrl: runtimeConfig?.api?.signalRHubUrl || '',
+              notificationApiUrl: runtimeConfig?.api?.notificationUrl || '',
+              app: 'helpdesk',
+            }}
             onExtend={handleNavExtend}
             logoComponent={<Logo hideOnMobile />}
           />

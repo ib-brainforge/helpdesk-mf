@@ -30,6 +30,7 @@ window.__RUNTIME_CONFIG__ = {
     notificationUrl: "${NOTIFICATION_API_URL:-}",
     signalRHubUrl: "${SIGNALR_HUB_URL:-}"
   },
+  identityBaseUrl: "${IDENTITY_BASE_URL:-}",
   version: "${APP_VERSION:-unknown}",
   packageVersions: {},
   observability: {
