@@ -5,11 +5,16 @@ export interface HelpdeskConfig extends RuntimeConfig {
   signalrHubUrl?: string;
 }
 
-// Access global config injected by Modern.js build
 declare const __HELPDESK_CONFIG__: string;
 
-// Parse config from global variable
-const buildConfigFromGlobals = (): HelpdeskConfig => {
+const getConfig = (): HelpdeskConfig => {
+  if (typeof window !== 'undefined' && (window as any).__RUNTIME_CONFIG__) {
+    const rc = (window as any).__RUNTIME_CONFIG__;
+    if (rc.oidc?.authority) {
+      return rc as HelpdeskConfig;
+    }
+  }
+
   if (typeof __HELPDESK_CONFIG__ !== 'undefined') {
     try {
       return JSON.parse(__HELPDESK_CONFIG__) as HelpdeskConfig;
@@ -18,11 +23,9 @@ const buildConfigFromGlobals = (): HelpdeskConfig => {
       return defaultConfig;
     }
   }
+
   return defaultConfig;
 };
 
-// Atom to hold the config state - initialized from global variable
-export const configAtom = atom<HelpdeskConfig>(buildConfigFromGlobals());
-
-// Global SignalR hub connection status (synced by useSignalR hook)
+export const configAtom = atom<HelpdeskConfig>(getConfig());
 export const hubConnectedAtom = atom<boolean>(false);
