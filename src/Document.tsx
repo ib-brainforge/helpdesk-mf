@@ -1,5 +1,6 @@
 import { Html, Head, Body, Scripts } from '@modern-js/runtime/document';
 
+const APP_TITLE = process.env.APP_TITLE || 'Loading...';
 const BASE_PATH = process.env.BASE_PATH || '';
 const withBasePath = (path: string) => {
   let effectiveBasePath = BASE_PATH;
@@ -13,7 +14,7 @@ export default function Document() {
   return (
     <Html lang="en" data-app-loading="true">
       <Head>
-        <title>BrainForge</title>
+        <title>{APP_TITLE}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="icon" type="image/png" href={withBasePath('favicon-96x96.png')} sizes="96x96" />
         <link rel="icon" type="image/svg+xml" href={withBasePath('favicon.svg')} />
