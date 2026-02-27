@@ -68,8 +68,19 @@ export function parseHelpdeskConfig(): HelpdeskConfig | null {
   }
 }
 
-// Parse config once at module load
-const helpdeskConfig = parseHelpdeskConfig();
+/**
+ * Get config from runtime injection (generate-config.sh)
+ * This takes priority over build-time config for environment-specific values
+ */
+function getRuntimeConfig(): HelpdeskConfig | null {
+  if (typeof window !== 'undefined' && (window as any).__RUNTIME_CONFIG__) {
+    return (window as any).__RUNTIME_CONFIG__ as HelpdeskConfig;
+  }
+  return null;
+}
+
+// Prefer runtime config (from generate-config.sh) over build-time config
+const helpdeskConfig = getRuntimeConfig() || parseHelpdeskConfig();
 
 /**
  * Lazy getter for userId from the auth user's profile (JWT sub claim)
