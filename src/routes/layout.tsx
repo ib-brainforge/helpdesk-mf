@@ -14,8 +14,7 @@ import { useAtomValue } from 'jotai';
 import { hubConnectedAtom } from '@/state/config';
 import { SignalIcon } from '@heroicons/react/24/solid';
 import { Logo } from '@/components/Logo';
-
-declare const __IDENTITY_BASE_URL__: string | undefined;
+import { getAppConfig } from '@/state/config';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -134,7 +133,7 @@ export default function Layout() {
     }
   };
 
-  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
+  const appConfig = getAppConfig();
 
   const { isAuthenticated } = useAuth();
   const { filterNavItems, permissions } = usePermissions();
@@ -164,9 +163,9 @@ export default function Layout() {
           <TopNavbar
             data-testid={TEST_IDS.navbar.top}
             config={{
-              identityBaseUrl: runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '',
-              notificationHubUrl: runtimeConfig?.api?.signalRHubUrl || '',
-              notificationApiUrl: runtimeConfig?.api?.notificationUrl || '',
+              identityBaseUrl: appConfig?.identityBaseUrl || '',
+              notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+              notificationApiUrl: appConfig?.api?.notificationUrl || '',
               app: 'helpdesk',
             }}
             onExtend={handleNavExtend}

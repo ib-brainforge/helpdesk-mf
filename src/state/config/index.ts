@@ -1,31 +1,51 @@
 import { RuntimeConfig, defaultConfig } from '@brainforgeau/security';
 import { atom } from 'jotai';
 
-export interface HelpdeskConfig extends RuntimeConfig {
-  signalrHubUrl?: string;
-}
-
 declare const __HELPDESK_CONFIG__: string;
 
-const getConfig = (): HelpdeskConfig => {
+export interface AppConfig extends RuntimeConfig {
+  signalrHubUrl?: string;
+  identityBaseUrl?: string;
+  hideAppSwitcher?: boolean;
+  hideContextSwitcher?: boolean;
+  version?: string;
+  packageVersions?: Record<string, string>;
+  observability?: {
+    enabled: boolean;
+    loki: { url: string };
+    tracing: { enabled: boolean; endpoint: string; ignoreUrlsPattern?: string };
+    metrics: { enabled: boolean; webVitals: boolean };
+  };
+  [key: string]: any;
+}
+
+let _cachedConfig: AppConfig | null = null;
+
+export function getAppConfig(): AppConfig {
+  if (_cachedConfig) return _cachedConfig;
+
   if (typeof window !== 'undefined' && (window as any).__RUNTIME_CONFIG__) {
     const rc = (window as any).__RUNTIME_CONFIG__;
     if (rc.oidc?.authority) {
-      return rc as HelpdeskConfig;
+      _cachedConfig = rc as AppConfig;
+      return _cachedConfig;
     }
   }
 
   if (typeof __HELPDESK_CONFIG__ !== 'undefined') {
     try {
-      return JSON.parse(__HELPDESK_CONFIG__) as HelpdeskConfig;
+      _cachedConfig = JSON.parse(__HELPDESK_CONFIG__) as AppConfig;
+      return _cachedConfig;
     } catch (error) {
       console.error('Failed to parse __HELPDESK_CONFIG__:', error);
-      return defaultConfig;
+      _cachedConfig = defaultConfig as AppConfig;
+      return _cachedConfig;
     }
   }
 
-  return defaultConfig;
-};
+  _cachedConfig = defaultConfig as AppConfig;
+  return _cachedConfig;
+}
 
-export const configAtom = atom<HelpdeskConfig>(getConfig());
+export const configAtom = atom<AppConfig>(getAppConfig());
 export const hubConnectedAtom = atom<boolean>(false);

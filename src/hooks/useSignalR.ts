@@ -6,7 +6,7 @@ import {
   LogLevel,
 } from '@microsoft/signalr';
 import { getAccessToken, getContextToken } from '@brainforgeau/security';
-import { configAtom, hubConnectedAtom, type HelpdeskConfig } from '@/state/config';
+import { configAtom, hubConnectedAtom, type AppConfig } from '@/state/config';
 import { useAtomValue, useSetAtom } from 'jotai';
 
 export type SignalRConnectionState = 'connected' | 'disconnected' | 'reconnecting' | 'error';
@@ -41,7 +41,7 @@ export interface UseSignalRReturn {
 export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
   const { hubPath, autoConnect = true, onConnected, onDisconnected, onReconnecting, onReconnected, onError } = options;
 
-  const config = useAtomValue(configAtom) as HelpdeskConfig;
+  const config = useAtomValue(configAtom) as AppConfig;
   const setHubConnected = useSetAtom(hubConnectedAtom);
   const connectionRef = useRef<HubConnection | null>(null);
   const [connectionState, setConnectionState] = useState<SignalRConnectionState>('disconnected');

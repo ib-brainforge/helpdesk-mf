@@ -1,7 +1,6 @@
 import { Configuration } from '@brainforgeau/identity-management-client';
 import { createAuthorizedAxios } from '@/state/authorizedAxios';
-
-declare const __IDENTITY_BASE_URL__: string | undefined;
+import { getAppConfig } from '@/state/config';
 
 type IdentityApiConstructor<TClient> = new (
   configuration?: Configuration,
@@ -18,8 +17,8 @@ type IdentityApiConstructor<TClient> = new (
 export const createIdentityApiClient = async <TClient>(
   ClientCtor: IdentityApiConstructor<TClient>,
 ): Promise<TClient> => {
-  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
-  const identityBaseUrl = runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '';
+  const appConfig = getAppConfig();
+  const identityBaseUrl = appConfig?.identityBaseUrl || '';
 
   if (!identityBaseUrl) {
     throw new Error('Identity API base URL is not configured');

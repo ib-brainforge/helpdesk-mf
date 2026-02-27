@@ -5,16 +5,15 @@ import QueryProvider from './QueryProvider';
 import { AuthProvider } from './AuthProvider';
 import { ObservabilityProvider } from '@/observability';
 import { configureContextTokenRefresh } from '@/state/authorizedAxios';
-
-declare const __IDENTITY_BASE_URL__: string | undefined;
+import { getAppConfig } from '@/state/config';
 
 export function Providers({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
-  const identityBaseUrl = runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '';
+  const appConfig = getAppConfig();
+  const identityBaseUrl = appConfig?.identityBaseUrl || '';
 
   // Configure context token refresh for automatic 403 retry
   useEffect(() => {
