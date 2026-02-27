@@ -1,19 +1,18 @@
 import React from 'react';
 import { PageSpinner } from '@brainforgeau/components';
 
-import { configAtom } from '@/state/config';
+import { configAtom, getAppConfig } from '@/state/config';
 import { useAtomValue } from 'jotai';
 import { FlexibleAuthProvider } from '@brainforgeau/security';
 
 declare const __HELPDESK_STANDALONE__: boolean;
-declare const __IDENTITY_BASE_URL__: string | undefined;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const config = useAtomValue(configAtom);
-  const runtimeConfig = typeof window !== 'undefined' ? (window as any).__RUNTIME_CONFIG__ : null;
-  const identityBaseUrl = runtimeConfig?.identityBaseUrl || __IDENTITY_BASE_URL__ || '';
+  const appConfig = getAppConfig();
+  const identityBaseUrl = appConfig?.identityBaseUrl || '';
 
   return (
     <FlexibleAuthProvider

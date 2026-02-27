@@ -27,7 +27,7 @@
 export { ObservabilityProvider } from './ObservabilityProvider';
 
 // Config
-export { observabilityConfig, parseHelpdeskConfig, type HelpdeskConfig } from './config';
+export { observabilityConfig } from './config';
 
 // Hooks
 export { usePageTracking, useActionTracking, type UserActionType } from './hooks';
