@@ -64,7 +64,6 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
-          MF_NAVBAR_URL: https://app.brainforge.com.au/mfs/packages/navbar
 
       - name: Run tests
         run: pnpm test --passWithNoTests || true

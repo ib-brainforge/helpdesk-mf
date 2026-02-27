@@ -46,7 +46,6 @@ ENV NODE_ENV=production \
     OIDC_SCOPE="openid profile email" \
     API_BASE_URL="" \
     NOTIFICATION_API_URL="" \
-    MF_NAVBAR_URL="https://app.brainforge.com.au/mfs/packages/navbar" \
     MFS_PACKAGES_URL="" \
     IDENTITY_BASE_URL="" \
     STANDALONE="true" \

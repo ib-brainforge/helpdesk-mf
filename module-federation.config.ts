@@ -1,7 +1,9 @@
 import { createModuleFederationConfig } from '@module-federation/modern-js';
 
 const mfPackagesUrl = process.env.MF_PACKAGES_URL || 'http://localhost';
-const mfNavbarUrl = process.env.MF_NAVBAR_URL || `${mfPackagesUrl}:3001`;
+const mfNavbarUrl = process.env.NODE_ENV === 'production'
+  ? '/mfs/packages/navbar'
+  : (process.env.MF_NAVBAR_URL || `${mfPackagesUrl}:3001`);
 
 export default createModuleFederationConfig({
   name: 'helpdesk_mf',
