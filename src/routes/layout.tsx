@@ -5,8 +5,11 @@ import './index.css';
 import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 import { Providers } from '@/providers';
 import { useAuth, usePermissions, type GuardedItem } from '@brainforgeau/security';
-import { TopNavbar } from '@brainforgeau/navbar/Navbar';
 import { ErrorBoundary, SideNav, SideNavDesktopMode, PageSpinner, useNavbarAction } from '@brainforgeau/components';
+
+const TopNavbar = React.lazy(() =>
+  import('@brainforgeau/navbar/Navbar').then(m => ({ default: m.TopNavbar })),
+);
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
 import { HelpdeskPermissions } from '@/constants/permissions';
@@ -158,21 +161,23 @@ export default function Layout() {
   return (
     <Providers>
       <PageTracker category="helpdesk" />
-      <Suspense fallback={<PageSpinner title="Loading..." />}>
-        {isAuthenticated && (
-          <TopNavbar
-            data-testid={TEST_IDS.navbar.top}
-            config={{
-              identityBaseUrl: appConfig?.identityBaseUrl || '',
-              notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
-              notificationApiUrl: appConfig?.api?.notificationUrl || '',
-              app: 'helpdesk',
-            }}
-            onExtend={handleNavExtend}
-            logoComponent={<Logo hideOnMobile />}
-          />
-        )}
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<PageSpinner title="Loading..." />}>
+          {isAuthenticated && (
+            <TopNavbar
+              data-testid={TEST_IDS.navbar.top}
+              config={{
+                identityBaseUrl: appConfig?.identityBaseUrl || '',
+                notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+                notificationApiUrl: appConfig?.api?.notificationUrl || '',
+                app: 'helpdesk',
+              }}
+              onExtend={handleNavExtend}
+              logoComponent={<Logo hideOnMobile />}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
       <div className="flex flex-1">
         {isAuthenticated && (
           <SideNav

@@ -52,13 +52,4 @@ export default createModuleFederationConfig({
       requiredVersion: false,
     }
   },
-  dts: {
-    consumeTypes: {
-      typesFolder: '@mf-types',
-      consumeAPITypes: true,
-      abortOnError: false,
-      maxRetries: 3,
-      deleteTypesFolder: true,
-    },
-  },
 });

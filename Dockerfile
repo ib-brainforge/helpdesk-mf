@@ -24,15 +24,9 @@ RUN mkdir -p src/routes && \
     echo "import './index.css'; const Index = () => (<div></div>); export default Index;" > src/routes/page.tsx && \
     echo "" > src/routes/index.css
 
-# Set environment for type generation
-ENV MF_NAVBAR_URL="https://app.brainforge.com.au/mfs/packages/navbar"
-
 # Single pnpm install (with mount cache for faster rebuilds)
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
-
-# Generate federation types (creates @mf-types directory)
-RUN pnpm mf dts
 
 # Copy full source code (after dependencies are installed for better caching)
 COPY . .
