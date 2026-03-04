@@ -52,11 +52,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Module Federation types
-        run: pnpm exec mf dts
-        env:
-          MF_NAVBAR_URL: https://app.brainforge.com.au/mfs/packages/navbar
-
       - name: Type check
         run: pnpm exec tsc --noEmit || true
 
