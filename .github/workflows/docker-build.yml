@@ -24,7 +24,7 @@ jobs:
   # This is a GATE - PRs cannot merge if build fails
   build:
     name: Build & Verify
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     permissions:
       contents: read
       packages: read
@@ -66,7 +66,7 @@ jobs:
   # Push job - only runs on push to develop/main (not PRs)
   push:
     name: Push to Registry
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     needs: build
     if: github.event_name == 'push'
     permissions:
