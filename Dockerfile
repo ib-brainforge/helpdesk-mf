@@ -59,7 +59,7 @@ RUN NODE_ENV=production pnpm run deploy
 RUN echo "${APP_VERSION}" > .app-version
 
 # Stage 2: Production runtime with nginx + Node.js (BFF support)
-FROM fholzer/nginx-brotli:latest
+FROM ghcr.io/brainforgeau/nginx-brotli:latest
 
 # Install Node.js and curl
 RUN apk add --no-cache nodejs npm curl
