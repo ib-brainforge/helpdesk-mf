@@ -1,5 +1,5 @@
 # Stage 1: Build the application (includes type generation)
-FROM node:18-alpine AS app-builder
+FROM ghcr.io/brainforgeau/node-18-alpine AS app-builder
 
 WORKDIR /build
 
