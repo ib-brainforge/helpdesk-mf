@@ -140,7 +140,7 @@ jobs:
       - name: Update Flux deployment
         if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
         run: |
-          git clone https://x-access-token:${{ secrets.INFRA_ORG_PAT_TOKEN }}@github.com/${{ github.repository_owner }}/infra.git
+          rm -rf infra && git clone https://x-access-token:${{ secrets.INFRA_ORG_PAT_TOKEN }}@github.com/${{ github.repository_owner }}/infra.git
           cd infra
 
           IMAGE_TAG="${{ steps.version.outputs.image_name }}:${{ steps.version.outputs.version }}"
