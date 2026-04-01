@@ -15,10 +15,18 @@ jobs:
     runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     environment: ${{ inputs.environment_name }}
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Update Flux deployment
         run: |
           rm -rf infra && git clone --branch "${{ vars.INFRA_BRANCH }}" --single-branch \
-            https://x-access-token:${{ secrets.INFRA_ORG_PAT_TOKEN }}@github.com/${{ github.repository_owner }}/infra.git
+            https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository_owner }}/infra.git
           cd infra
 
           SERVICE="${{ vars.SERVICE_NAME }}"
