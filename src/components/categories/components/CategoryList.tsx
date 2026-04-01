@@ -1,11 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput } from '@brainforgeau/components';
+import { BaseInput, BaseTable } from '@brainforgeau/components';
 import { StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { addToast } from '@heroui/react';
+import {
+  createColumnHelper,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+} from '@tanstack/react-table';
 
 interface CategoryListProps {
   categories: CategoryDto[];
@@ -35,6 +41,10 @@ const getAccessLevelName = (level: AccessLevel): string => {
   return names[level] || 'Unknown';
 };
 
+type CategoryRow = CategoryDto & { sectionName?: string };
+
+const columnHelper = createColumnHelper<CategoryRow>();
+
 export const CategoryList: React.FC<CategoryListProps> = ({
   categories,
   sections,
@@ -46,37 +56,6 @@ export const CategoryList: React.FC<CategoryListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Group categories by section
-  const categoriesBySection = useMemo(() => {
-    const grouped = new Map<string | undefined, CategoryDto[]>();
-
-    categories.forEach((category) => {
-      const sectionId = category.sectionId;
-      if (!grouped.has(sectionId)) {
-        grouped.set(sectionId, []);
-      }
-      grouped.get(sectionId)!.push(category);
-    });
-
-    return grouped;
-  }, [categories]);
-
-  const handleTagsClick = () => {
-    addToast({
-      title: 'Coming soon',
-      description: 'Tag filtering will be available soon',
-      severity: 'warning',
-    });
-  };
-
-  const handleMoreFilters = () => {
-    addToast({
-      title: 'Coming soon',
-      description: 'Advanced filters will be available soon',
-      severity: 'warning',
-    });
-  };
-
   const handleDuplicate = (category: CategoryDto) => {
     addToast({
       title: 'Coming soon',
@@ -84,6 +63,107 @@ export const CategoryList: React.FC<CategoryListProps> = ({
       severity: 'warning',
     });
   };
+
+  const columns = useMemo(
+    (): ColumnDef<CategoryRow, any>[] => [
+      columnHelper.display({
+        id: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => onEditCategory(row.original)}
+            className="text-primary hover:underline font-medium"
+          >
+            {row.original.name}
+          </button>
+        ),
+        size: 300,
+      }),
+      columnHelper.display({
+        id: 'accessLevel',
+        header: 'Access Type',
+        cell: ({ row }) => (
+          <StatusBadge color={getAccessLevelColor(row.original.accessLevel as AccessLevel)}>
+            {getAccessLevelName(row.original.accessLevel as AccessLevel)}
+          </StatusBadge>
+        ),
+        size: 150,
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => handleDuplicate(row.original)}
+              className="p-1 hover:bg-default-100 rounded"
+              title="Duplicate"
+            >
+              <Icon name="document-duplicate" className="h-4 w-4 text-default-600" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDeleteCategory(row.original.id)}
+              className="p-1 hover:bg-danger-50 rounded"
+              title="Delete"
+            >
+              <Icon name="trash" className="h-4 w-4 text-danger" />
+            </button>
+          </div>
+        ),
+        size: 100,
+      }),
+    ],
+    [onEditCategory, onDeleteCategory],
+  );
+
+  // Build flat rows with section grouping info
+  const rows = useMemo(() => {
+    const result: CategoryRow[] = [];
+    const categoriesBySection = new Map<string | undefined, CategoryDto[]>();
+
+    categories.forEach((cat) => {
+      const sectionId = cat.sectionId;
+      if (!categoriesBySection.has(sectionId)) {
+        categoriesBySection.set(sectionId, []);
+      }
+      categoriesBySection.get(sectionId)!.push(cat);
+    });
+
+    // Sectioned categories
+    sections.forEach((section) => {
+      const sectionCats = categoriesBySection.get(section.id) || [];
+      sectionCats.forEach((cat) => {
+        result.push({ ...cat, sectionName: section.name });
+      });
+    });
+
+    // Unsectioned categories
+    const unsectioned = categoriesBySection.get(undefined) || [];
+    unsectioned.forEach((cat) => {
+      result.push({ ...cat, sectionName: undefined });
+    });
+
+    return result;
+  }, [categories, sections]);
+
+  // Filter by search
+  const filteredRows = useMemo(() => {
+    if (!searchTerm) return rows;
+    return rows.filter((row) =>
+      row.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [rows, searchTerm]);
+
+  const table = useReactTable({
+    data: filteredRows,
+    columns,
+    getRowId: (row) => row.id,
+    getCoreRowModel: getCoreRowModel(),
+    enableSorting: false,
+  });
 
   if (isLoading) {
     return (
@@ -104,149 +184,14 @@ export const CategoryList: React.FC<CategoryListProps> = ({
           startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-default-400" />}
           className="max-w-md"
         />
-        <BaseButton
-          variant="bordered"
-          onPress={handleTagsClick}
-          icon={<Icon name="tag" className="h-4 w-4" />}
-        >
-          Tags
-        </BaseButton>
-        <BaseButton
-          variant="bordered"
-          onPress={handleMoreFilters}
-          icon={<Icon name="adjustments-horizontal" className="h-4 w-4" />}
-        >
-          More filters
-        </BaseButton>
       </div>
 
-      {/* Tree Layout Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-default-100 border-b">
-            <tr>
-              <th className="text-left px-4 py-3 text-sm font-semibold">Name</th>
-              <th className="text-left px-4 py-3 text-sm font-semibold">Access Type</th>
-              <th className="text-right px-4 py-3 text-sm font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sections.map((section) => {
-              const sectionCategories = categoriesBySection.get(section.id) || [];
-              const filteredCategories = searchTerm
-                ? sectionCategories.filter((cat) =>
-                    cat.name?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                : sectionCategories;
-
-              if (searchTerm && filteredCategories.length === 0) {
-                return null;
-              }
-
-              return (
-                <>
-                  {/* Section Row */}
-                  <tr key={`section-${section.id}`} className="bg-default-50 border-b">
-                    <td className="px-4 py-3" colSpan={3}>
-                      <div className="flex items-center gap-2">
-                        <Icon name="folder" className="h-4 w-4 text-default-400" />
-                        <span className="font-semibold text-default-700">{section.name}</span>
-                      </div>
-                    </td>
-                  </tr>
-                  {/* Category Rows */}
-                  {filteredCategories.map((category) => (
-                    <tr key={category.id} className="border-b hover:bg-default-50 transition-colors">
-                      <td className="px-4 py-3 pl-10">
-                        <button
-                          type="button"
-                          onClick={() => onEditCategory(category)}
-                          className="text-primary hover:underline font-medium"
-                        >
-                          {category.name}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge color={getAccessLevelColor(category.accessLevel as AccessLevel)}>
-                          {getAccessLevelName(category.accessLevel as AccessLevel)}
-                        </StatusBadge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicate(category)}
-                            className="p-1 hover:bg-default-100 rounded"
-                            title="Duplicate"
-                          >
-                            <Icon name="document-duplicate" className="h-4 w-4 text-default-600" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDeleteCategory(category.id)}
-                            className="p-1 hover:bg-danger-50 rounded"
-                            title="Delete"
-                          >
-                            <Icon name="trash" className="h-4 w-4 text-danger" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              );
-            })}
-            {/* Categories without section */}
-            {(() => {
-              const unsectionedCategories = categoriesBySection.get(undefined) || [];
-              const filteredUnsectioned = searchTerm
-                ? unsectionedCategories.filter((cat) =>
-                    cat.name?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                : unsectionedCategories;
-
-              return filteredUnsectioned.map((category) => (
-                <tr key={category.id} className="border-b hover:bg-default-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => onEditCategory(category)}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      {category.name}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge color={getAccessLevelColor(category.accessLevel as AccessLevel)}>
-                      {getAccessLevelName(category.accessLevel as AccessLevel)}
-                    </StatusBadge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleDuplicate(category)}
-                        className="p-1 hover:bg-default-100 rounded"
-                        title="Duplicate"
-                      >
-                        <Icon name="document-duplicate" className="h-4 w-4 text-default-600" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteCategory(category.id)}
-                        className="p-1 hover:bg-danger-50 rounded"
-                        title="Delete"
-                      >
-                        <Icon name="trash" className="h-4 w-4 text-danger" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ));
-            })()}
-          </tbody>
-        </table>
-      </div>
+      <BaseTable
+        table={table}
+        showInfo={false}
+        isLoading={isLoading}
+        loading={{ title: 'Loading categories...' }}
+      />
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+import { Link } from '@modern-js/runtime/router';
 import { Card } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { useQuery } from '@tanstack/react-query';
@@ -56,9 +57,9 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
       <h3 className="mb-3 text-lg font-semibold">{title}</h3>
       <div className="space-y-3">
         {relatedArticles.map((article: any) => (
-          <a
+          <Link
             key={article.id}
-            href={`/knowledge-base/${article.slug}`}
+            to={`/knowledge-base/${article.slug}`}
             className="block p-2 rounded-lg hover:bg-default-100 transition-colors"
           >
             <div className="flex items-start gap-2">
@@ -70,7 +71,7 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
                 )}
               </div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </Card>

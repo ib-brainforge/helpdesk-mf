@@ -1,4 +1,5 @@
-import { type FC, useMemo } from 'react';
+import { type FC } from 'react';
+import { Link } from '@modern-js/runtime/router';
 import { Card } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { useSimilarArticles } from '../hooks/useKnowledgeBase';
@@ -40,9 +41,9 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
       ) : (
         <div className="space-y-2">
           {suggestions?.map((article: any) => (
-            <a
+            <Link
               key={article.id}
-              href={`/knowledge-base/${article.slug}`}
+              to={`/knowledge-base/${article.slug}`}
               onClick={(e) => {
                 if (onArticleClick) {
                   e.preventDefault();
@@ -70,7 +71,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
                   </div>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useParams } from '@modern-js/runtime/router';
+import { useParams, Link } from '@modern-js/runtime/router';
 import { Helmet } from '@modern-js/runtime/head';
 import { Card } from '@heroui/react';
 import { Icon, BaseInput } from '@brainforgeau/components';
@@ -77,9 +77,9 @@ function KnowledgeBaseCategoryPage() {
       <div className="mb-5">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-sm mb-4">
-          <a href="/knowledge-base" className="text-primary hover:underline">
+          <Link to="/knowledge-base" className="text-primary hover:underline">
             Knowledge Base
-          </a>
+          </Link>
           <Icon name="chevron-right" className="h-4 w-4 text-gray-400" />
           <span className="text-gray-600">{category?.name}</span>
         </nav>
