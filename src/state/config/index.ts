@@ -4,12 +4,14 @@ import { atom } from 'jotai';
 declare const __HELPDESK_CONFIG__: string;
 
 export interface AppConfig extends RuntimeConfig {
-  signalrHubUrl?: string;
   identityBaseUrl?: string;
   hideAppSwitcher?: boolean;
   hideContextSwitcher?: boolean;
   version?: string;
   packageVersions?: Record<string, string>;
+  api: RuntimeConfig['api'] & {
+    signalRHubUrl?: string;
+  };
   observability?: {
     enabled: boolean;
     loki: { url: string };

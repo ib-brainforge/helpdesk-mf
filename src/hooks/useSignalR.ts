@@ -48,7 +48,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
 
   useEffect(() => {
     let cancelled = false;
-    const hubBaseUrl = config?.signalrHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
+    const hubBaseUrl = config?.api?.signalRHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
 
     if (!hubBaseUrl) {
       console.warn('[useSignalR] SignalR hub URL not configured, connection will not be established');
@@ -148,7 +148,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
         });
       }
     };
-  }, [hubPath, config?.signalrHubUrl, config?.api?.baseUrl, autoConnect]);
+  }, [hubPath, config?.api?.signalRHubUrl, config?.api?.baseUrl, autoConnect]);
 
   const connect = async () => {
     const connection = connectionRef.current;
