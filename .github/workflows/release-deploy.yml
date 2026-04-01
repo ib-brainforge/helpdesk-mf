@@ -1,0 +1,25 @@
+name: Deploy Release to Production
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  prepare:
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+    steps:
+      - name: Build lowercase image tag
+        id: tag
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=${IMAGE_NAME}:${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+
+  deploy-production:
+    needs: prepare
+    uses: ./.github/workflows/deploy-to-flux.yml
+    with:
+      environment_name: production
+      image_tag: ${{ needs.prepare.outputs.image_tag }}
+    secrets: inherit

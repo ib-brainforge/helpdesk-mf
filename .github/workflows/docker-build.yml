@@ -2,7 +2,7 @@ name: Build and Deploy Helpdesk MF
 
 on:
   push:
-    branches: [develop, main]
+    branches: [develop]
     paths-ignore:
       - 'e2e/**'
       - '*.md'
@@ -63,12 +63,15 @@ jobs:
       - name: Run tests
         run: pnpm test --passWithNoTests || true
 
-  # Push job - only runs on push to develop/main (not PRs)
+  # Push job - only runs on push to develop (not PRs)
   push:
     name: Push to Registry
     runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     needs: build
     if: github.event_name == 'push'
+    outputs:
+      image_tag: ${{ steps.version.outputs.image_name }}:${{ steps.version.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
     permissions:
       contents: read
       packages: write
@@ -137,25 +140,17 @@ jobs:
             NPM_TOKEN=${{ secrets.PACKAGES_PAT_TOKEN }}
             APP_VERSION=${{ steps.version.outputs.version }}
 
-      - name: Update Flux deployment
-        if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
-        run: |
-          rm -rf infra && git clone https://x-access-token:${{ secrets.INFRA_ORG_PAT_TOKEN }}@github.com/${{ github.repository_owner }}/infra.git
-          cd infra
-
-          IMAGE_TAG="${{ steps.version.outputs.image_name }}:${{ steps.version.outputs.version }}"
-          echo "Selected tag: $IMAGE_TAG"
-
-          sed -i "s|image: ghcr.io/[Bb]rain[Ff]orge[Aa][Uu]/helpdesk-mf:[^[:space:]]*|image: $IMAGE_TAG|g" namespaces/brainforge/deployments/helpdesk-mf.yaml
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add namespaces/brainforge/deployments/helpdesk-mf.yaml
-          git commit -m "Update helpdesk-mf image to ${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
-          git push origin main || echo "No changes to push"
-
       - name: Output image info
         run: |
           echo "Image: ${{ steps.version.outputs.image_name }}"
           echo "Version: ${{ steps.version.outputs.version }}"
           echo "Tags: ${{ steps.meta.outputs.tags }}"
+
+  deploy-dev:
+    needs: push
+    if: github.ref == 'refs/heads/develop'
+    uses: ./.github/workflows/deploy-to-flux.yml
+    with:
+      environment_name: development
+      image_tag: ${{ needs.push.outputs.image_tag }}
+    secrets: inherit

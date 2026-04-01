@@ -1,0 +1,54 @@
+name: Deploy to Flux
+
+on:
+  workflow_call:
+    inputs:
+      environment_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    environment: ${{ inputs.environment_name }}
+    steps:
+      - name: Update Flux deployment
+        run: |
+          rm -rf infra && git clone --branch "${{ vars.INFRA_BRANCH }}" --single-branch \
+            https://x-access-token:${{ secrets.INFRA_ORG_PAT_TOKEN }}@github.com/${{ github.repository_owner }}/infra.git
+          cd infra
+
+          SERVICE="${{ vars.SERVICE_NAME }}"
+          FILE="${{ vars.INFRA_DEPLOY_PATH }}/$SERVICE.yaml"
+          IMAGE="${{ inputs.image_tag }}"
+
+          echo "Deploying $SERVICE to ${{ inputs.environment_name }}"
+          echo "Image: $IMAGE"
+          echo "File: $FILE"
+          echo "Branch: ${{ vars.INFRA_BRANCH }}"
+
+          sed -i "s|image: ghcr.io/[Bb]rain[Ff]orge[Aa][Uu]/$SERVICE:[^[:space:]]*|image: $IMAGE|g" "$FILE"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "deploy(${{ inputs.environment_name }}): $SERVICE ${IMAGE##*:} [skip ci]"
+
+          for i in 1 2 3; do
+            git pull --rebase origin "${{ vars.INFRA_BRANCH }}"
+            if git push origin "${{ vars.INFRA_BRANCH }}"; then
+              echo "Successfully deployed $SERVICE to ${{ inputs.environment_name }}"
+              exit 0
+            fi
+            echo "Push failed, retrying ($i/3)..."
+            sleep $((i * 2))
+          done
+          echo "Failed to push after 3 retries" && exit 1

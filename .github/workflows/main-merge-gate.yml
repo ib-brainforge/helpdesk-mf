@@ -1,0 +1,20 @@
+name: Main Branch Merge Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source-branch:
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    steps:
+      - name: Verify source branch
+        run: |
+          SOURCE="${{ github.head_ref }}"
+          if [[ "$SOURCE" == "develop" || "$SOURCE" == hotfix/* ]]; then
+            echo "Allowed: merging $SOURCE → main"
+          else
+            echo "BLOCKED: Only 'develop' and 'hotfix/*' branches can merge to main."
+            echo "Source branch: $SOURCE"
+            exit 1
+          fi
