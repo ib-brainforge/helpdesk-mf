@@ -147,9 +147,10 @@ jobs:
           echo "Tags: ${{ steps.meta.outputs.tags }}"
 
   deploy-dev:
+    name: Deploy to Dev
     needs: push
     if: github.ref == 'refs/heads/develop'
-    uses: ./.github/workflows/deploy-to-flux.yml
+    uses: BrainForgeAU/.github/.github/workflows/deploy-to-flux.yml@main
     with:
       environment_name: development
       image_tag: ${{ needs.push.outputs.image_tag }}
