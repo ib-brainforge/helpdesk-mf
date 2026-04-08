@@ -21,8 +21,8 @@ importers:
         specifier: 0.2.30-develop.5ea4845
         version: 0.2.30-develop.5ea4845(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@brainforgeau/security':
-        specifier: 0.2.228-develop.5ea4845
-        version: 0.2.228-develop.5ea4845(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
+        specifier: 0.2.236-develop.a6bb6ee
+        version: 0.2.236-develop.a6bb6ee(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
       '@brainforgeau/theme':
         specifier: 0.2.44-develop.5ea4845
         version: 0.2.44-develop.5ea4845(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
@@ -926,8 +926,8 @@ packages:
       react: 18.3.1
       react-dom: 18.3.1
 
-  '@brainforgeau/security@0.2.228-develop.5ea4845':
-    resolution: {integrity: sha512-VrgNqMwDsLJn0BpxVDaVj1NivNg4741t9RgsJjAKcbXBjSqGTW6mgWuRnAQDnWNqljlBKUsS5fckY+gQsVy//Q==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.2.228-develop.5ea4845/ec244fa8f3672ae0ff56a3e3cab6dd78fd163aed}
+  '@brainforgeau/security@0.2.236-develop.a6bb6ee':
+    resolution: {integrity: sha512-8vENN1mlxyCxeApJAlEoEU9myrqvI+8SYtZDgdSjGc/Xi9ZZSmxWuSLwK/he29M395UnwqDXSIsZ/8/jLnf4BA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.2.236-develop.a6bb6ee/883ed78f5c0c284caa0cdc0a3d4f643ac95e5b78}
     peerDependencies:
       react: 18.3.1
       react-dom: 18.3.1
@@ -9234,7 +9234,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@brainforgeau/security@0.2.228-develop.5ea4845(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
+  '@brainforgeau/security@0.2.236-develop.a6bb6ee(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
