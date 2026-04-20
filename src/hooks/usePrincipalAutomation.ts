@@ -1,20 +1,9 @@
-/**
- * usePrincipalAutomation — CRUD hooks for principal-scoped automation rules.
- *
- * The published @brainforgeau/helpdesk-client does not yet export PrincipalAutomationApi
- * or the Principal-prefixed command types. We use AutomationRulesApi as the class token
- * (for createHelpdeskApiClient) and cast to `any` to call the principal-scoped methods
- * at runtime. The backend routes /v1/principals/{principalId}/automation-rules/* exist.
- *
- * REVIEW: Remove casts once helpdesk-backend republishes with PrincipalAutomationApi exported.
- */
-
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
-  type HelpdeskApplicationAutomationCommandsCreateRuleCreateAutomationRuleCommand,
-  type HelpdeskApplicationAutomationCommandsUpdateRuleUpdateAutomationRuleCommand,
+  PrincipalAutomationApi,
+  type HelpdeskApplicationAutomationCommandsCreateRuleCreatePrincipalAutomationRuleCommand,
+  type HelpdeskApplicationAutomationCommandsUpdateRuleUpdatePrincipalAutomationRuleCommand,
   type HelpdeskDomainAutomationEnumsAutomationTriggerType,
-  AutomationRulesApi,
 } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
@@ -39,8 +28,7 @@ export function usePrincipalAutomation(
   const query = useQuery({
     queryKey: [QUERY_KEY, principalId, pagination, filters],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
+      const client = await createHelpdeskApiClient(PrincipalAutomationApi);
       const response = await client.v1PrincipalsPrincipalIdAutomationRulesGet(
         principalId,
         filters?.triggerType,
@@ -66,8 +54,7 @@ export function usePrincipalAutomationRule(principalId: string, id: string) {
   return useQuery({
     queryKey: [QUERY_KEY, principalId, id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
+      const client = await createHelpdeskApiClient(PrincipalAutomationApi);
       const response = await client.v1PrincipalsPrincipalIdAutomationRulesIdGet(
         principalId,
         id,
@@ -82,16 +69,12 @@ export function useCreatePrincipalAutomationRule(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (
-      command: HelpdeskApplicationAutomationCommandsCreateRuleCreateAutomationRuleCommand,
+      command: HelpdeskApplicationAutomationCommandsCreateRuleCreatePrincipalAutomationRuleCommand,
     ) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
+      const client = await createHelpdeskApiClient(PrincipalAutomationApi);
       const response = await client.v1PrincipalsPrincipalIdAutomationRulesPost(
         principalId,
-        {
-          ...command,
-          principalId,
-        },
+        command,
       );
       return response.data;
     },
@@ -109,18 +92,13 @@ export function useUpdatePrincipalAutomationRule(principalId: string) {
       command,
     }: {
       id: string;
-      command: HelpdeskApplicationAutomationCommandsUpdateRuleUpdateAutomationRuleCommand;
+      command: HelpdeskApplicationAutomationCommandsUpdateRuleUpdatePrincipalAutomationRuleCommand;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
+      const client = await createHelpdeskApiClient(PrincipalAutomationApi);
       await client.v1PrincipalsPrincipalIdAutomationRulesIdPut(
         principalId,
         id,
-        {
-          ...command,
-          id,
-          principalId,
-        },
+        command,
       );
     },
     onSuccess: (_data, variables) => {
@@ -134,8 +112,7 @@ export function useDeletePrincipalAutomationRule(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
+      const client = await createHelpdeskApiClient(PrincipalAutomationApi);
       await client.v1PrincipalsPrincipalIdAutomationRulesIdDelete(
         principalId,
         id,
@@ -147,15 +124,15 @@ export function useDeletePrincipalAutomationRule(principalId: string) {
   });
 }
 
+// REVIEW: PrincipalAutomationApi does not expose enable/disable endpoints in the current
+// client version. These hooks will throw at runtime until helpdesk-backend adds
+// v1/principals/{principalId}/automation-rules/{id}/enable and /disable routes.
 export function useEnablePrincipalAutomationRule(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
-      await client.v1PrincipalsPrincipalIdAutomationRulesIdEnablePost(
-        principalId,
-        id,
+    mutationFn: async (_id: string) => {
+      throw new Error(
+        'Enable endpoint not yet available on PrincipalAutomationApi — awaiting backend route.',
       );
     },
     onSuccess: () => {
@@ -167,12 +144,9 @@ export function useEnablePrincipalAutomationRule(principalId: string) {
 export function useDisablePrincipalAutomationRule(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(AutomationRulesApi);
-      await client.v1PrincipalsPrincipalIdAutomationRulesIdDisablePost(
-        principalId,
-        id,
+    mutationFn: async (_id: string) => {
+      throw new Error(
+        'Disable endpoint not yet available on PrincipalAutomationApi — awaiting backend route.',
       );
     },
     onSuccess: () => {

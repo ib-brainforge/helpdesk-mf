@@ -1,32 +1,12 @@
-/**
- * usePrincipalApprovalWorkflows — CRUD hooks for principal-scoped approval workflows.
- *
- * The published @brainforgeau/helpdesk-client does not yet export PrincipalApprovalsApi
- * or the Principal-prefixed command types. We use ApprovalWorkflowsApi as the class token
- * and cast to `any` to call the principal-scoped methods at runtime.
- *
- * REVIEW: Remove casts once helpdesk-backend republishes with PrincipalApprovalsApi exported.
- */
-
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
-  type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowCommand,
-  ApprovalWorkflowsApi,
+  PrincipalApprovalsApi,
+  type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreatePrincipalApprovalWorkflowCommand,
+  type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdatePrincipalApprovalWorkflowCommand,
 } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const QUERY_KEY = 'principal-approval-workflows';
-
-// Reuse the non-principal type for the update command shape (same fields at runtime)
-type UpdateApprovalWorkflowCommand = {
-  name?: string;
-  description?: string | null;
-  approvalMode?: string;
-  isActive?: boolean;
-  triggerOnCreation?: boolean;
-  triggerOnStatusChange?: boolean;
-  steps?: unknown[];
-};
 
 export function usePrincipalApprovalWorkflows(
   principalId: string,
@@ -35,8 +15,7 @@ export function usePrincipalApprovalWorkflows(
   return useQuery({
     queryKey: [QUERY_KEY, principalId, isActive],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const client = await createHelpdeskApiClient(PrincipalApprovalsApi);
       const response = await client.v1PrincipalsPrincipalIdApprovalWorkflowsGet(
         principalId,
         isActive,
@@ -51,8 +30,7 @@ export function usePrincipalApprovalWorkflow(principalId: string, id: string) {
   return useQuery({
     queryKey: [QUERY_KEY, principalId, id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const client = await createHelpdeskApiClient(PrincipalApprovalsApi);
       const response =
         await client.v1PrincipalsPrincipalIdApprovalWorkflowsIdGet(
           principalId,
@@ -68,15 +46,11 @@ export function useCreatePrincipalApprovalWorkflow(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (
-      command: HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowCommand,
+      command: HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreatePrincipalApprovalWorkflowCommand,
     ) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const client = await createHelpdeskApiClient(PrincipalApprovalsApi);
       const response =
-        await client.v1PrincipalsPrincipalIdApprovalWorkflowsPost(principalId, {
-          ...command,
-          principalId,
-        });
+        await client.v1PrincipalsPrincipalIdApprovalWorkflowsPost(principalId, command);
       return response.data;
     },
     onSuccess: () => {
@@ -93,18 +67,13 @@ export function useUpdatePrincipalApprovalWorkflow(principalId: string) {
       command,
     }: {
       id: string;
-      command: UpdateApprovalWorkflowCommand;
+      command: HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdatePrincipalApprovalWorkflowCommand;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const client = await createHelpdeskApiClient(PrincipalApprovalsApi);
       await client.v1PrincipalsPrincipalIdApprovalWorkflowsIdPut(
         principalId,
         id,
-        {
-          ...command,
-          workflowId: id,
-          principalId,
-        },
+        command,
       );
     },
     onSuccess: (_data, variables) => {
@@ -118,8 +87,7 @@ export function useDeletePrincipalApprovalWorkflow(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const client = await createHelpdeskApiClient(PrincipalApprovalsApi);
       await client.v1PrincipalsPrincipalIdApprovalWorkflowsIdDelete(
         principalId,
         id,

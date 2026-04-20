@@ -1,16 +1,6 @@
-/**
- * usePrincipalTicket — fetches a single ticket detail in a principal's console.
- *
- * The published @brainforgeau/helpdesk-client does not yet export PrincipalTicketsApi.
- * We use TicketsApi as the class token and cast to `any` to call the principal-scoped
- * methods at runtime. The backend routes /v1/principals/{principalId}/tickets/* exist.
- *
- * REVIEW: Remove casts once helpdesk-backend republishes with PrincipalTicketsApi exported.
- */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  TicketsApi,
+  PrincipalTicketsApi,
   type HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand,
   type HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand,
   type HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand,
@@ -21,8 +11,7 @@ export function usePrincipalTicket(principalId: string, ticketId: string) {
   return useQuery({
     queryKey: ['principal-ticket', principalId, ticketId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       const response = await client.v1PrincipalsPrincipalIdTicketsIdGet(principalId, ticketId);
       return response.data;
     },
@@ -41,8 +30,7 @@ export function useUpdatePrincipalTicketStatus(principalId: string) {
       ticketId: string;
       command: HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdStatusPatch(principalId, ticketId, command);
     },
     onSuccess: (_data, variables) => {
@@ -63,8 +51,7 @@ export function useUpdatePrincipalTicketPriority(principalId: string) {
       ticketId: string;
       command: HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdPriorityPatch(principalId, ticketId, command);
     },
     onSuccess: (_data, variables) => {
@@ -85,8 +72,7 @@ export function useAssignPrincipalTicket(principalId: string) {
       ticketId: string;
       command: HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdAssignPatch(principalId, ticketId, command);
     },
     onSuccess: (_data, variables) => {

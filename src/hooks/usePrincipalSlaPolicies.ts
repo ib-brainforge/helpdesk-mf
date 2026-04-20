@@ -1,18 +1,8 @@
-/**
- * usePrincipalSlaPolicies — CRUD hooks for principal-scoped SLA policies.
- *
- * The published @brainforgeau/helpdesk-client does not yet export PrincipalSlaPoliciesApi
- * or the Principal-prefixed command types. We use SlaApi as the class token and cast to
- * `any` to call the principal-scoped methods at runtime.
- *
- * REVIEW: Remove casts once helpdesk-backend republishes with PrincipalSlaPoliciesApi exported.
- */
-
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
-  type HelpdeskApplicationSlaCommandsCreateSlaPolicyCreateSlaPolicyCommand,
-  type HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdateSlaPolicyCommand,
-  SlaApi,
+  PrincipalSlaPoliciesApi,
+  type HelpdeskApplicationSlaCommandsCreateSlaPolicyCreatePrincipalSlaPolicyCommand,
+  type HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdatePrincipalSlaPolicyCommand,
 } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -22,8 +12,7 @@ export function usePrincipalSlaPolicies(principalId: string) {
   return useQuery({
     queryKey: [QUERY_KEY, principalId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(SlaApi);
+      const client = await createHelpdeskApiClient(PrincipalSlaPoliciesApi);
       const response =
         await client.v1PrincipalsPrincipalIdSlaPoliciesGet(principalId);
       return response.data ?? [];
@@ -36,8 +25,7 @@ export function usePrincipalSlaPolicy(principalId: string, id: string) {
   return useQuery({
     queryKey: [QUERY_KEY, principalId, id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(SlaApi);
+      const client = await createHelpdeskApiClient(PrincipalSlaPoliciesApi);
       const response = await client.v1PrincipalsPrincipalIdSlaPoliciesIdGet(
         principalId,
         id,
@@ -52,16 +40,12 @@ export function useCreatePrincipalSlaPolicy(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (
-      command: HelpdeskApplicationSlaCommandsCreateSlaPolicyCreateSlaPolicyCommand,
+      command: HelpdeskApplicationSlaCommandsCreateSlaPolicyCreatePrincipalSlaPolicyCommand,
     ) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(SlaApi);
+      const client = await createHelpdeskApiClient(PrincipalSlaPoliciesApi);
       const response = await client.v1PrincipalsPrincipalIdSlaPoliciesPost(
         principalId,
-        {
-          ...command,
-          principalId,
-        },
+        command,
       );
       return response.data;
     },
@@ -79,15 +63,10 @@ export function useUpdatePrincipalSlaPolicy(principalId: string) {
       command,
     }: {
       id: string;
-      command: HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdateSlaPolicyCommand;
+      command: HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdatePrincipalSlaPolicyCommand;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(SlaApi);
-      await client.v1PrincipalsPrincipalIdSlaPoliciesIdPut(principalId, id, {
-        ...command,
-        id,
-        principalId,
-      });
+      const client = await createHelpdeskApiClient(PrincipalSlaPoliciesApi);
+      await client.v1PrincipalsPrincipalIdSlaPoliciesIdPut(principalId, id, command);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY, principalId] });
@@ -100,8 +79,7 @@ export function useDeletePrincipalSlaPolicy(principalId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client: any = await createHelpdeskApiClient(SlaApi);
+      const client = await createHelpdeskApiClient(PrincipalSlaPoliciesApi);
       await client.v1PrincipalsPrincipalIdSlaPoliciesIdDelete(principalId, id);
     },
     onSuccess: () => {
