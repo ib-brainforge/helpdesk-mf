@@ -12,6 +12,7 @@ import {
 } from '@/hooks/usePrincipalSlaPolicies';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseModal,
   BaseModalBody,
@@ -214,15 +215,12 @@ function PrincipalSlaPoliciesPage() {
                   onValueChange={setNewDescription}
                   placeholder="Optional description"
                 />
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={newIsDefault}
-                    onChange={e => setNewIsDefault(e.target.checked)}
-                    className="h-4 w-4"
-                  />
+                <BaseCheckbox
+                  isSelected={newIsDefault}
+                  onValueChange={setNewIsDefault}
+                >
                   Set as default policy
-                </label>
+                </BaseCheckbox>
               </BaseModalBody>
               <BaseModalFooter>
                 <BaseButton variant="light" onPress={onClose}>

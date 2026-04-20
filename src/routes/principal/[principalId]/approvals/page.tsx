@@ -12,6 +12,7 @@ import {
 } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseModal,
   BaseModalBody,
@@ -265,24 +266,18 @@ function PrincipalApprovalsPage() {
                   )}
                 </BaseSelect>
                 <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newIsActive}
-                      onChange={e => setNewIsActive(e.target.checked)}
-                      className="h-4 w-4"
-                    />
+                  <BaseCheckbox
+                    isSelected={newIsActive}
+                    onValueChange={setNewIsActive}
+                  >
                     Active
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newTriggerOnCreation}
-                      onChange={e => setNewTriggerOnCreation(e.target.checked)}
-                      className="h-4 w-4"
-                    />
+                  </BaseCheckbox>
+                  <BaseCheckbox
+                    isSelected={newTriggerOnCreation}
+                    onValueChange={setNewTriggerOnCreation}
+                  >
                     Trigger on ticket creation
-                  </label>
+                  </BaseCheckbox>
                 </div>
               </BaseModalBody>
               <BaseModalFooter>

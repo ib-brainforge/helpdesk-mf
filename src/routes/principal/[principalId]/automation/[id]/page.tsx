@@ -13,6 +13,7 @@ import {
 } from '@/hooks/usePrincipalAutomation';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -176,15 +177,9 @@ function PrincipalAutomationRuleEditPage() {
             <BaseSelectItem key={value}>{label}</BaseSelectItem>
           ))}
         </BaseSelect>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={isEnabled}
-            onChange={e => setIsEnabled(e.target.checked)}
-            className="h-4 w-4"
-          />
+        <BaseCheckbox isSelected={isEnabled} onValueChange={setIsEnabled}>
           Rule enabled
-        </label>
+        </BaseCheckbox>
         {/* Condition/action builder is read-only here */}
         {(rule.conditions?.length ?? 0) > 0 && (
           <div className="rounded border p-3 text-sm text-default-500">

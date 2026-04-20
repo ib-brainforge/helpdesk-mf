@@ -8,6 +8,7 @@ import {
 } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -171,33 +172,21 @@ function PrincipalApprovalWorkflowEditPage() {
           ))}
         </BaseSelect>
         <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={e => setIsActive(e.target.checked)}
-              className="h-4 w-4"
-            />
+          <BaseCheckbox isSelected={isActive} onValueChange={setIsActive}>
             Active
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={triggerOnCreation}
-              onChange={e => setTriggerOnCreation(e.target.checked)}
-              className="h-4 w-4"
-            />
+          </BaseCheckbox>
+          <BaseCheckbox
+            isSelected={triggerOnCreation}
+            onValueChange={setTriggerOnCreation}
+          >
             Trigger on ticket creation
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={triggerOnStatusChange}
-              onChange={e => setTriggerOnStatusChange(e.target.checked)}
-              className="h-4 w-4"
-            />
+          </BaseCheckbox>
+          <BaseCheckbox
+            isSelected={triggerOnStatusChange}
+            onValueChange={setTriggerOnStatusChange}
+          >
             Trigger on status change
-          </label>
+          </BaseCheckbox>
         </div>
         {(workflow.steps?.length ?? 0) > 0 && (
           <div className="rounded border p-3 text-sm text-default-500">

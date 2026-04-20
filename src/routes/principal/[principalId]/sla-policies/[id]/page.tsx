@@ -6,7 +6,12 @@ import {
   usePrincipalSlaPolicy,
   useUpdatePrincipalSlaPolicy,
 } from '@/hooks/usePrincipalSlaPolicies';
-import { BaseButton, BaseInput, PageSpinner } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseCheckbox,
+  BaseInput,
+  PageSpinner,
+} from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { addToast } from '@heroui/react';
 import {
@@ -117,15 +122,9 @@ function PrincipalSlaPolicyEditPage() {
           value={description}
           onValueChange={setDescription}
         />
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={isDefault}
-            onChange={e => setIsDefault(e.target.checked)}
-            className="h-4 w-4"
-          />
+        <BaseCheckbox isSelected={isDefault} onValueChange={setIsDefault}>
           Set as default policy
-        </label>
+        </BaseCheckbox>
       </div>
 
       <div className="flex gap-3">

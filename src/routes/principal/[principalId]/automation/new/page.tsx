@@ -9,6 +9,7 @@
 import { useCreatePrincipalAutomationRule } from '@/hooks/usePrincipalAutomation';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -134,15 +135,9 @@ function PrincipalAutomationRuleNewPage() {
             <BaseSelectItem key={value}>{label}</BaseSelectItem>
           ))}
         </BaseSelect>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={isEnabled}
-            onChange={e => setIsEnabled(e.target.checked)}
-            className="h-4 w-4"
-          />
+        <BaseCheckbox isSelected={isEnabled} onValueChange={setIsEnabled}>
           Enable rule immediately
-        </label>
+        </BaseCheckbox>
         <p className="text-xs text-default-400">
           Note: Conditions and actions can be added after creation from the edit
           view.

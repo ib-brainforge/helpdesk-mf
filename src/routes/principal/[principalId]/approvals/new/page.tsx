@@ -5,6 +5,7 @@
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -122,24 +123,15 @@ function PrincipalApprovalWorkflowNewPage() {
           ))}
         </BaseSelect>
         <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={e => setIsActive(e.target.checked)}
-              className="h-4 w-4"
-            />
+          <BaseCheckbox isSelected={isActive} onValueChange={setIsActive}>
             Active
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={triggerOnCreation}
-              onChange={e => setTriggerOnCreation(e.target.checked)}
-              className="h-4 w-4"
-            />
+          </BaseCheckbox>
+          <BaseCheckbox
+            isSelected={triggerOnCreation}
+            onValueChange={setTriggerOnCreation}
+          >
             Trigger on ticket creation
-          </label>
+          </BaseCheckbox>
         </div>
       </div>
 
