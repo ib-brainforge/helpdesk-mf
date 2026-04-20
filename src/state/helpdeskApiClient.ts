@@ -1,5 +1,5 @@
 import { configAtom } from '@/state/config';
-import { authorizedAxios, getAccessToken } from '@/state/authorizedAxios';
+import { authorizedAxios } from '@/state/authorizedAxios';
 import { Configuration } from '@brainforgeau/helpdesk-client';
 import type { RuntimeConfig } from '@brainforgeau/security';
 import { getDefaultStore } from 'jotai';
@@ -9,10 +9,6 @@ const store = getDefaultStore();
 export const createHelpdeskApiConfiguration = (config: RuntimeConfig) =>
   new Configuration({
     basePath: config?.api?.baseUrl ?? '',
-    apiKey: async () => {
-      const latestToken = await getAccessToken();
-      return latestToken ? `Bearer ${latestToken}` : '';
-    },
   });
 
 type HelpdeskApiConstructor<TClient> = new (...args: any[]) => TClient;
