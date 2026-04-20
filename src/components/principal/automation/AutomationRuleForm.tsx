@@ -19,6 +19,8 @@
 import {
   MATCH_TYPE_LABELS,
   TRIGGER_LABELS,
+  PRINCIPAL_CONDITION_TYPE_LABELS,
+  PRINCIPAL_ACTION_TYPE_LABELS,
 } from '@/constants/automationLabels';
 import {
   BaseButton,
@@ -72,64 +74,9 @@ const NO_VALUE_CONDITION_TYPES: ConditionType[] = [
   HelpdeskDomainAutomationEnumsConditionType.TicketUpdatedByTech,
 ];
 
-const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
-  Status: 'Status',
-  Priority: 'Priority',
-  Category: 'Category',
-  SubjectContains: 'Subject contains',
-  BodyContains: 'Body contains',
-  EmailContains: 'Email contains',
-  Company: 'Company',
-  Department: 'Department',
-  AssignedTo: 'Assigned to',
-  Tag: 'Tag',
-  CustomField: 'Custom field',
-  Overdue: 'Is overdue',
-  BeforeOverdue: 'Before overdue (hours)',
-  DueDate: 'Due date',
-  NotUpdated: 'Not updated (hours)',
-  TicketUnanswered: 'Ticket unanswered',
-  TicketUnassigned: 'Ticket unassigned',
-  TicketUpdatedByCustomer: 'Updated by customer',
-  TicketUpdatedByTech: 'Updated by tech',
-  ToEmailContains: 'To email contains',
-  CurrentTimeBetween: 'Current time between',
-  DayOfWeek: 'Day of week',
-  Location: 'Location',
-  LoggedBy: 'Logged by',
-  LatestResponderEmailContains: 'Latest responder email contains',
-  LatestCommentContains: 'Latest comment contains',
-  UpdatedCustomField: 'Updated custom field',
-  ApprovalState: 'Approval state',
-};
-
-const ACTION_TYPE_LABELS: Record<ActionType, string> = {
-  SetStatus: 'Set status',
-  Assign: 'Assign to agent',
-  SetPriority: 'Set priority',
-  SetCategory: 'Set category',
-  AddTag: 'Add tag',
-  SetDueDate: 'Set due date',
-  CloseTicket: 'Close ticket',
-  ReopenTicket: 'Reopen ticket',
-  DeleteTicket: 'Delete ticket',
-  MarkUnanswered: 'Mark unanswered',
-  MarkAnswered: 'Mark answered',
-  MarkSpam: 'Mark as spam',
-  AddReply: 'Add reply',
-  NotifyAdmins: 'Notify admins',
-  NotifyTechs: 'Notify technicians',
-  NotifyAssignee: 'Notify assignee',
-  NotifySubmitter: 'Notify submitter',
-  SendEmailToUser: 'Send email to user',
-  AddSubscriber: 'Add subscriber',
-  CustomField: 'Set custom field',
-  AddTimeSpent: 'Add time spent',
-  SetSubmitter: 'Set submitter',
-  TriggerAnotherRule: 'Trigger another rule',
-  HttpRequest: 'HTTP request',
-  RequestApproval: 'Request approval',
-};
+// Label maps imported from @/constants/automationLabels — do not re-define locally.
+const CONDITION_TYPE_LABELS = PRINCIPAL_CONDITION_TYPE_LABELS;
+const ACTION_TYPE_LABELS = PRINCIPAL_ACTION_TYPE_LABELS;
 
 // Action types we render a config input for; others render a note
 const SUPPORTED_ACTION_TYPES: ActionType[] = [
