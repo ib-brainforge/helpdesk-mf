@@ -22,6 +22,7 @@ import {
 } from '@/constants/automationLabels';
 import {
   BaseButton,
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -36,8 +37,7 @@ import {
   HelpdeskDomainAutomationEnumsConditionType,
 } from '@brainforgeau/helpdesk-client';
 import { addToast } from '@heroui/react';
-import { useCallback } from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 // ─── Type helpers ─────────────────────────────────────────────────────────────
 
@@ -570,18 +570,9 @@ export function AutomationRuleForm({
 
         {/* isEnabled only on create (Update command doesn't carry this field) */}
         {mode === 'create' && (
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isEnabled"
-              checked={isEnabled}
-              onChange={e => setIsEnabled(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <label htmlFor="isEnabled" className="text-sm">
-              Enable rule immediately
-            </label>
-          </div>
+          <BaseCheckbox isSelected={isEnabled} onValueChange={setIsEnabled}>
+            Enable rule immediately
+          </BaseCheckbox>
         )}
       </section>
 
