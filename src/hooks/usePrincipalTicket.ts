@@ -1,8 +1,3 @@
-/**
- * usePrincipalTicket — fetches a single ticket detail in a principal's console.
- * Wraps PrincipalTicketsApi.v1PrincipalsPrincipalIdTicketsIdGet.
- */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   PrincipalTicketsApi,
@@ -38,8 +33,8 @@ export function useUpdatePrincipalTicketStatus(principalId: string) {
       const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdStatusPatch(principalId, ticketId, command);
     },
-    onSuccess: (_data, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, ticketId] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
     },
   });
@@ -59,8 +54,8 @@ export function useUpdatePrincipalTicketPriority(principalId: string) {
       const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdPriorityPatch(principalId, ticketId, command);
     },
-    onSuccess: (_data, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, ticketId] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
     },
   });
@@ -80,8 +75,8 @@ export function useAssignPrincipalTicket(principalId: string) {
       const client = await createHelpdeskApiClient(PrincipalTicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdAssignPatch(principalId, ticketId, command);
     },
-    onSuccess: (_data, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, ticketId] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
     },
   });

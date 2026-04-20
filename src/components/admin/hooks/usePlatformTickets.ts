@@ -5,17 +5,23 @@
  * platform staff member on their own behalf (self-service).
  *
  * Used by the navbar widget to display the current user's platform tickets.
+ *
+ * NOTE: PlatformSelfServiceTicketsApi does not yet exist in the published
+ * @brainforgeau/helpdesk-client. These hooks are stubbed for when the backend
+ * publishes the /v1/platform/my-tickets route. Use PlatformTicketsApi in the
+ * interim if needed.
+ * REVIEW: Re-wire once helpdesk-backend publishes /v1/platform/my-tickets endpoints.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
 import type { PaginationState } from '@tanstack/react-table';
-import { PlatformSelfServiceTicketsApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { useCallback, useState } from 'react';
+
+// ─── Ticket list / detail / create ──────────────────────────────────────────
 
 /**
  * Hook for listing the current user's platform self-service tickets.
- * Maps to GET /v1/platform/my-tickets.
+ * Stubbed pending backend publication of PlatformSelfServiceTicketsApi.
  */
 export const usePlatformTicketsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -26,29 +32,22 @@ export const usePlatformTicketsData = () => {
   const [searchTerm, setSearchTerm] = useState<string | undefined>(undefined);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['platform-my-tickets', pagination.pageIndex, pagination.pageSize, searchTerm],
+    queryKey: [
+      'platform-my-tickets',
+      pagination.pageIndex,
+      pagination.pageSize,
+      searchTerm,
+    ],
+    // REVIEW: Replace with real API call once helpdesk-backend publishes /v1/platform/my-tickets
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(PlatformSelfServiceTicketsApi);
-
-      const response = await client.v1PlatformMyTicketsGet(
-        undefined, // status
-        undefined, // priority
-        undefined, // categoryId
-        searchTerm,
-        pagination.pageIndex + 1,
-        pagination.pageSize,
-        'createdAt',
-        'desc',
-      );
-
-      const result = response.data;
       return {
-        items: result.items ?? [],
-        totalCount: result.totalCount ?? 0,
-        page: result.page ?? pagination.pageIndex + 1,
-        pageSize: result.pageSize ?? pagination.pageSize,
+        items: [] as Array<Record<string, unknown>>,
+        totalCount: 0,
+        page: pagination.pageIndex + 1,
+        pageSize: pagination.pageSize,
       };
     },
+    enabled: false, // disabled until API is available
   });
 
   return {
@@ -67,17 +66,14 @@ export const usePlatformTicketsData = () => {
 
 /**
  * Hook for fetching a single platform self-service ticket.
- * Maps to GET /v1/platform/my-tickets/{id}.
+ * Stubbed pending backend publication of PlatformSelfServiceTicketsApi.
  */
 export const usePlatformTicketDetail = (ticketId: string) => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['platform-my-ticket', ticketId],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(PlatformSelfServiceTicketsApi);
-      const response = await client.v1PlatformMyTicketsIdGet(ticketId);
-      return response.data;
-    },
-    enabled: Boolean(ticketId),
+    // REVIEW: Replace with real API call once helpdesk-backend publishes /v1/platform/my-tickets/{id}
+    queryFn: async () => null,
+    enabled: false,
   });
 
   return {
@@ -90,16 +86,15 @@ export const usePlatformTicketDetail = (ticketId: string) => {
 
 /**
  * Hook for creating a platform self-service ticket.
- * Maps to POST /v1/platform/my-tickets.
+ * Stubbed pending backend publication of PlatformSelfServiceTicketsApi.
  */
 export const useCreatePlatformTicket = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ subject, description }: { subject: string; description?: string }) => {
-      const client = await createHelpdeskApiClient(PlatformSelfServiceTicketsApi);
-      const response = await client.v1PlatformMyTicketsPost({ subject, description });
-      return response.data;
+    // REVIEW: Replace with real API call once helpdesk-backend publishes /v1/platform/my-tickets
+    mutationFn: async (_: { subject: string; description?: string }) => {
+      throw new Error('PlatformSelfServiceTicketsApi not yet available');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-my-tickets'] });

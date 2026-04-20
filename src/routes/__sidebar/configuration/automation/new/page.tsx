@@ -22,66 +22,15 @@ import {
   type AutomationActionDto,
   type CreateAutomationRuleDto,
 } from '@/types/automation';
+import {
+  TENANT_CONDITION_TYPE_LABELS,
+  TENANT_ACTION_TYPE_LABELS,
+} from '@/constants/automationLabels';
 import { toApiAutomationTriggerType, toApiConditionMatchType } from '@/utils/typeMappers';
 
-// Import the same labels from the edit page
-const CONDITION_TYPE_LABELS: Record<ConditionType, string> = {
-  [ConditionType.StatusIs]: 'Status is',
-  [ConditionType.StatusIsNot]: 'Status is not',
-  [ConditionType.PriorityIs]: 'Priority is',
-  [ConditionType.PriorityIsNot]: 'Priority is not',
-  [ConditionType.CategoryIs]: 'Category is',
-  [ConditionType.CategoryIsNot]: 'Category is not',
-  [ConditionType.AssigneeIs]: 'Assignee is',
-  [ConditionType.AssigneeIsNot]: 'Assignee is not',
-  [ConditionType.RequesterIs]: 'Requester is',
-  [ConditionType.RequesterIsNot]: 'Requester is not',
-  [ConditionType.SubjectContains]: 'Subject contains',
-  [ConditionType.SubjectNotContains]: 'Subject does not contain',
-  [ConditionType.DescriptionContains]: 'Description contains',
-  [ConditionType.DescriptionNotContains]: 'Description does not contain',
-  [ConditionType.TagsContain]: 'Tags contain',
-  [ConditionType.TagsNotContain]: 'Tags do not contain',
-  [ConditionType.CreatedBefore]: 'Created before',
-  [ConditionType.CreatedAfter]: 'Created after',
-  [ConditionType.UpdatedBefore]: 'Updated before',
-  [ConditionType.UpdatedAfter]: 'Updated after',
-  [ConditionType.DueDateBefore]: 'Due date before',
-  [ConditionType.DueDateAfter]: 'Due date after',
-  [ConditionType.CustomFieldEquals]: 'Custom field equals',
-  [ConditionType.CustomFieldNotEquals]: 'Custom field does not equal',
-  [ConditionType.CustomFieldContains]: 'Custom field contains',
-  [ConditionType.CustomFieldNotContains]: 'Custom field does not contain',
-  [ConditionType.HasAttachments]: 'Has attachments',
-};
-
-const ACTION_TYPE_LABELS: Record<ActionType, string> = {
-  [ActionType.SetStatus]: 'Set status',
-  [ActionType.SetPriority]: 'Set priority',
-  [ActionType.SetCategory]: 'Set category',
-  [ActionType.AssignToAgent]: 'Assign to agent',
-  [ActionType.AssignToGroup]: 'Assign to group',
-  [ActionType.AddTag]: 'Add tag',
-  [ActionType.RemoveTag]: 'Remove tag',
-  [ActionType.SendEmail]: 'Send email',
-  [ActionType.SendWebhook]: 'Send webhook',
-  [ActionType.AddComment]: 'Add comment',
-  [ActionType.AddInternalNote]: 'Add internal note',
-  [ActionType.SetCustomField]: 'Set custom field',
-  [ActionType.SetDueDate]: 'Set due date',
-  [ActionType.AddSubscriber]: 'Add subscriber',
-  [ActionType.RemoveSubscriber]: 'Remove subscriber',
-  [ActionType.CloseTicket]: 'Close ticket',
-  [ActionType.ReopenTicket]: 'Reopen ticket',
-  [ActionType.MergeTicket]: 'Merge ticket',
-  [ActionType.SplitTicket]: 'Split ticket',
-  [ActionType.SendSms]: 'Send SMS',
-  [ActionType.CreateTask]: 'Create task',
-  [ActionType.AssignToMe]: 'Assign to me',
-  [ActionType.NotifyAssignee]: 'Notify assignee',
-  [ActionType.NotifyRequester]: 'Notify requester',
-  [ActionType.NotifySubscribers]: 'Notify subscribers',
-};
+// Label maps imported from @/constants/automationLabels — do not re-define locally.
+const CONDITION_TYPE_LABELS = TENANT_CONDITION_TYPE_LABELS;
+const ACTION_TYPE_LABELS = TENANT_ACTION_TYPE_LABELS;
 
 function NewAutomationRulePage() {
   const navigate = useNavigate();

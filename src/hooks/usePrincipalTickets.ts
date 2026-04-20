@@ -1,8 +1,3 @@
-/**
- * usePrincipalTickets — fetches the paginated ticket list for a principal.
- * Wraps PrincipalTicketsApi.v1PrincipalsPrincipalIdTicketsGet from the generated client.
- */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { PaginationState } from '@tanstack/react-table';
