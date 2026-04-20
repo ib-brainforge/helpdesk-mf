@@ -53,6 +53,12 @@ function PrincipalTicketsPage() {
     { searchTerm: searchTerm || undefined },
   );
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    // Reset to first page when search changes
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+  };
+
   const createMutation = useCreatePrincipalTicket(principalId ?? context?.principalId ?? '');
   const [newSubject, setNewSubject] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -167,7 +173,7 @@ function PrincipalTicketsPage() {
         <BaseInput
           placeholder="Search tickets..."
           value={searchTerm}
-          onValueChange={setSearchTerm}
+          onValueChange={handleSearchChange}
           className="w-64"
         />
       </div>

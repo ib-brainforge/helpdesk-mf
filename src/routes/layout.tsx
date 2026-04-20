@@ -59,7 +59,7 @@ const navItemsTop: GuardedItem<NavItem>[] = [
 ];
 
 const navItemsBottom: GuardedItem<NavItem>[] = [
-  // Platform Tickets and Tenant Viewer are now accessible via tabs on the /tickets page
+  // Principal Picker + helpdesk principal routes are accessible via /principal/{id}/*
   {
     label: 'Configuration',
     icon: 'settings',
