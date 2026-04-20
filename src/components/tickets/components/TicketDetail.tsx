@@ -6,8 +6,7 @@ import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
-import { useUpdateTicket } from '../hooks/useTickets';
-import { useUnifiedTicketDetail } from '../hooks/useUnifiedTickets';
+import { useUpdateTicket, useTicketDetail, useMergeTickets, useLinkTickets } from '../hooks/useTickets';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
 import { AttachmentList } from '@/components/file-upload/AttachmentList';
@@ -28,10 +27,7 @@ import { MergeTicketModal } from './MergeTicketModal';
 import { LinkTicketModal } from './LinkTicketModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { NewTicketModal } from './NewTicketModal';
-import { useMergeTickets, useLinkTickets } from '../hooks/useTickets';
 import { addToast } from '@heroui/react';
-import type { TicketSource } from '@/types/unified-ticket';
-import { SOURCE_CAPABILITIES } from '@/types/unified-ticket';
 
 const getStatusConfig = (status: TicketStatus) => {
   switch (status) {
@@ -65,10 +61,9 @@ const getPriorityConfig = (priority: TicketPriority) => {
 
 export interface TicketDetailProps {
   ticketId?: string;
-  source?: TicketSource; // Phase 2: Source for feature toggling
 }
 
-export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regular' }) => {
+export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const { id: urlId } = useParams<{ id: string }>();
   const id = ticketId ?? urlId;
   const navigate = useNavigate();
@@ -76,31 +71,24 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
   const replyEditorRef = useRef<HTMLDivElement>(null);
-  const { data: ticket, isLoading, error } = useUnifiedTicketDetail(id ?? '', source);
+  const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   const updateTicketMutation = useUpdateTicket();
 
-  // Phase 2: Get capabilities for this ticket source
-  const capabilities = SOURCE_CAPABILITIES[source];
+  // Tenant tickets have full feature set
+  useRealtimeComments(id ?? '');
 
-  // Hooks use empty string to disable when capability not available (enabled: Boolean(ticketId))
-  const regularOnlyId = source === 'regular' ? (id ?? '') : '';
+  const { comments, isLoading: commentsLoading } = useComments(id ?? '');
 
-  // Real-time updates via SignalR - only for regular tickets with real-time capability
-  useRealtimeComments(capabilities.hasRealTimeUpdates ? (id ?? '') : '');
-
-  // Comments - regular tickets use dedicated comments API; platform uses embedded comments
-  const { comments, isLoading: commentsLoading } = useComments(regularOnlyId);
-
-  // Attachments - only for regular tickets
-  const { attachments, isLoading: attachmentsLoading } = useAttachments(capabilities.hasAttachments ? id : undefined);
-  const { uploadFiles, uploadProgress, isUploading } = useUploadAttachment();
+  // Attachments
+  const { attachments, isLoading: attachmentsLoading } = useAttachments(id);
+  const { uploadFiles, uploadProgress } = useUploadAttachment();
   const deleteAttachmentMutation = useDeleteAttachment();
 
-  // SLA - only for regular tickets
-  const { slaData } = useSla(capabilities.hasSla ? (id ?? '') : '');
+  // SLA
+  const { slaData } = useSla(id ?? '');
 
-  // Time Tracking - only for regular tickets
-  const { timeTracking } = useTimeTracking(capabilities.hasTimeTracking ? (id ?? '') : '');
+  // Time Tracking
+  const { timeTracking } = useTimeTracking(id ?? '');
   const startTimerMutation = useStartTimer();
   const stopTimerMutation = useStopTimer();
   const pauseTimerMutation = usePauseTimer();
@@ -334,8 +322,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                {/* Phase 2: AI Assistant only for tickets with capability */}
-                {capabilities.hasAiAssistant && (
+                {/* AI Assistant */}
+                {(
                   <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
                     <BaseButton
                       variant="bordered"
@@ -376,7 +364,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
                       <DropdownItem key="duplicate" onPress={() => handleComingSoon('Duplicate')}>
                         Duplicate
                       </DropdownItem>
-                      <DropdownItem key="merge" onPress={handleMerge} className={capabilities.canMerge ? '' : 'hidden'}>
+                      <DropdownItem key="merge" onPress={handleMerge}>
                         Merge
                       </DropdownItem>
                       <DropdownItem key="subtask" onPress={() => handleComingSoon('Add Subtask')}>
@@ -554,59 +542,46 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId, source = 'regula
             />
           </Box>
 
-          {/* SLA Indicator - Phase 2: Only for tickets with capability */}
-          {capabilities.hasSla && slaData && (
+          {/* SLA Indicator */}
+          {slaData && (
             <SlaIndicator slaData={slaData} variant="full" />
           )}
 
-          {/* Time Tracker - Phase 2: Only for tickets with capability */}
-          {capabilities.hasTimeTracking && (
-            <TimeTracker
-              ticketId={id ?? ''}
-              timeTracking={timeTracking}
-              onStartTimer={handleStartTimer}
-              onStopTimer={handleStopTimer}
-              onPauseTimer={handlePauseTimer}
-              onAddManualEntry={handleAddManualEntry}
-              onDeleteEntry={handleDeleteTimeEntry}
-            />
-          )}
+          {/* Time Tracker */}
+          <TimeTracker
+            ticketId={id ?? ''}
+            timeTracking={timeTracking}
+            onStartTimer={handleStartTimer}
+            onStopTimer={handleStopTimer}
+            onPauseTimer={handlePauseTimer}
+            onAddManualEntry={handleAddManualEntry}
+            onDeleteEntry={handleDeleteTimeEntry}
+          />
 
-          {/* Approval Panel - Phase 2: Only for tickets with capability */}
-          {capabilities.hasApprovals && (
-            <TicketApprovalPanel ticketId={id ?? ''} />
-          )}
+          {/* Approval Panel */}
+          <TicketApprovalPanel ticketId={id ?? ''} />
 
-          {/* CSAT Widget - Phase 2: Only for tickets with capability */}
-          {capabilities.hasCsat && (
-            <CSATWidget ticketId={id ?? ''} ticketStatus={ticket.status as any} />
-          )}
+          {/* CSAT Widget */}
+          <CSATWidget ticketId={id ?? ''} ticketStatus={ticket.status as any} />
         </div>
       </div>
 
-      {/* Modals - Phase 2: Only render if capability enabled */}
-      {capabilities.canMerge && (
-        <MergeTicketModal
-          isOpen={isMergeModalOpen}
-          onClose={() => setIsMergeModalOpen(false)}
-          onConfirm={handleMergeConfirm}
-          currentTicketId={id ?? ''}
-        />
-      )}
-      {capabilities.canLink && (
-        <LinkTicketModal
-          isOpen={isLinkModalOpen}
-          onClose={() => setIsLinkModalOpen(false)}
-          onConfirm={handleLinkConfirm}
-          currentTicketId={id ?? ''}
-        />
-      )}
-      {capabilities.hasAiAssistant && (
-        <AiAssistantModal
-          isOpen={isAiAssistantOpen}
-          onClose={() => setIsAiAssistantOpen(false)}
-        />
-      )}
+      <MergeTicketModal
+        isOpen={isMergeModalOpen}
+        onClose={() => setIsMergeModalOpen(false)}
+        onConfirm={handleMergeConfirm}
+        currentTicketId={id ?? ''}
+      />
+      <LinkTicketModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        onConfirm={handleLinkConfirm}
+        currentTicketId={id ?? ''}
+      />
+      <AiAssistantModal
+        isOpen={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
+      />
       <NewTicketModal
         isOpen={isNewTicketModalOpen}
         onClose={() => setIsNewTicketModalOpen(false)}
