@@ -2,16 +2,22 @@
  * Principal automation rules list page — /principal/[principalId]/automation
  *
  * Admin-only. Lists principal-scoped automation rules with pagination.
- * Wired to PrincipalAutomationApi from @brainforgeau/helpdesk-client.
+ * Each row has an inline enable/disable toggle using dedicated endpoints
+ * (isEnabled is not editable via the update command).
  */
 
 import {
   useDeletePrincipalAutomationRule,
+  useDisablePrincipalAutomationRule,
+  useEnablePrincipalAutomationRule,
   usePrincipalAutomation,
 } from '@/hooks/usePrincipalAutomation';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { TRIGGER_LABELS } from '@/constants/automationLabels';
 import {
   BaseButton,
   BaseTable,
+  BaseToggle,
   PageSpinner,
   TablePagination,
 } from '@brainforgeau/components';
@@ -19,7 +25,7 @@ import { formatDateTime } from '@brainforgeau/components/utils';
 import type { HelpdeskApplicationAutomationDTOsAutomationRuleListDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+import { addToast, useDisclosure } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -30,7 +36,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
 const columnHelper =
@@ -45,6 +51,12 @@ function PrincipalAutomationPage() {
   const { items, totalCount, pagination, setPagination, isLoading, error } =
     usePrincipalAutomation(principalId ?? '');
   const deleteMutation = useDeletePrincipalAutomationRule(principalId ?? '');
+  const enableMutation = useEnablePrincipalAutomationRule(principalId ?? '');
+  const disableMutation = useDisablePrincipalAutomationRule(principalId ?? '');
+
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
   if (context?.level !== 'admin') {
     return (
@@ -57,16 +69,40 @@ function PrincipalAutomationPage() {
     );
   }
 
-  const handleDelete = useCallback(
+  const handleDeleteRequest = useCallback(
     (id: string, name: string) => {
-      if (!confirm(`Delete automation rule "${name}"? This cannot be undone.`))
-        return;
-      deleteMutation.mutate(id, {
-        onSuccess: () =>
-          addToast({ title: 'Automation rule deleted', severity: 'success' }),
-      });
+      setPendingDeleteId(id);
+      setPendingDeleteName(name);
+      onDeleteOpen();
     },
-    [deleteMutation],
+    [onDeleteOpen],
+  );
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSuccess: () => {
+        addToast({ title: 'Automation rule deleted', severity: 'success' });
+        setPendingDeleteId(null);
+      },
+    });
+  }, [pendingDeleteId, deleteMutation]);
+
+  const handleToggleEnabled = useCallback(
+    (id: string, currentlyEnabled: boolean) => {
+      if (currentlyEnabled) {
+        disableMutation.mutate(id, {
+          onSuccess: () =>
+            addToast({ title: 'Rule disabled', severity: 'success' }),
+        });
+      } else {
+        enableMutation.mutate(id, {
+          onSuccess: () =>
+            addToast({ title: 'Rule enabled', severity: 'success' }),
+        });
+      }
+    },
+    [enableMutation, disableMutation],
   );
 
   const columns = [
@@ -76,18 +112,30 @@ function PrincipalAutomationPage() {
     }),
     columnHelper.accessor('triggerType', {
       header: 'Trigger',
-      cell: info => <span className="text-sm">{info.getValue()}</span>,
+      cell: info => (
+        <span className="text-sm">
+          {TRIGGER_LABELS[info.getValue() as keyof typeof TRIGGER_LABELS] ??
+            info.getValue()}
+        </span>
+      ),
     }),
     columnHelper.accessor('isEnabled', {
-      header: 'Status',
+      header: 'Enabled',
       cell: info => (
-        <span
-          className={
-            info.getValue() ? 'font-medium text-success' : 'text-default-400'
+        <BaseToggle
+          isSelected={info.getValue() ?? false}
+          onValueChange={() =>
+            handleToggleEnabled(
+              info.row.original.id ?? '',
+              info.getValue() ?? false,
+            )
           }
-        >
-          {info.getValue() ? 'Enabled' : 'Disabled'}
-        </span>
+          aria-label={info.getValue() ? 'Disable rule' : 'Enable rule'}
+          isDisabled={
+            enableMutation.isPending || disableMutation.isPending
+          }
+          size="sm"
+        />
       ),
     }),
     columnHelper.accessor('conditionCount', {
@@ -104,7 +152,7 @@ function PrincipalAutomationPage() {
         info.getValue() ? formatDateTime(info.getValue()!, { timezone }) : '—',
     }),
     columnHelper.display({
-      id: 'actions',
+      id: 'row-actions',
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-2">
@@ -123,8 +171,10 @@ function PrincipalAutomationPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDelete(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending}
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>
@@ -175,6 +225,15 @@ function PrincipalAutomationPage() {
         isLoading={isLoading}
         loading={{ title: 'Loading...' }}
         paginationTemplate={paginationTemplate}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Automation Rule"
+        message={`Delete automation rule "${pendingDeleteName}"? This cannot be undone.`}
+        isPending={deleteMutation.isPending}
       />
     </div>
   );

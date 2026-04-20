@@ -1,25 +1,26 @@
 /**
  * Principal automation rule edit page — /principal/[principalId]/automation/[id]
  *
- * Renders name, description, trigger type, and enabled toggle.
- * Condition/action builder is a complex UI outside the scope of this wiring task;
- * those are shown as read-only summaries.
- * REVIEW: Add full condition/action builder UI in a follow-up iteration.
+ * Renders name, description, trigger type, and condition/action builder.
+ * isEnabled is NOT editable on the update command (UpdatePrincipalAutomationRuleCommand
+ * does not carry IsEnabled). Enable/disable is done from the list page via dedicated
+ * enable/disable endpoints.
+ *
+ * See: helpdesk-backend issue "Add IsEnabled to UpdatePrincipalAutomationRuleCommand"
  */
 
+import { AutomationRuleForm } from '@/components/principal/automation/AutomationRuleForm';
 import {
   usePrincipalAutomationRule,
   useUpdatePrincipalAutomationRule,
 } from '@/hooks/usePrincipalAutomation';
-import {
-  BaseButton,
-  BaseCheckbox,
-  BaseInput,
-  BaseSelect,
-  BaseSelectItem,
-  PageSpinner,
-} from '@brainforgeau/components';
-import { HelpdeskDomainAutomationEnumsAutomationTriggerType } from '@brainforgeau/helpdesk-client';
+import { BaseButton, PageSpinner } from '@brainforgeau/components';
+import type {
+  HelpdeskApplicationAutomationDTOsAutomationActionDto,
+  HelpdeskApplicationAutomationDTOsAutomationConditionDto,
+  HelpdeskDomainAutomationEnumsAutomationTriggerType,
+  HelpdeskDomainAutomationEnumsConditionMatchType,
+} from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { addToast } from '@heroui/react';
 import {
@@ -27,23 +28,7 @@ import {
   useOutletContext,
   useParams,
 } from '@modern-js/runtime/router';
-import { useCallback, useEffect, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-
-const TRIGGER_LABELS: Record<string, string> = {
-  TicketCreated: 'Ticket Created',
-  TicketOverdue: 'Ticket Overdue',
-  TicketNotUpdated: 'Ticket Not Updated',
-  TicketClosed: 'Ticket Closed',
-  TicketUpdated: 'Ticket Updated',
-  TicketCategoryChanged: 'Category Changed',
-  TicketAssigneeChanged: 'Assignee Changed',
-  TicketStatusChanged: 'Status Changed',
-  TicketPriorityChanged: 'Priority Changed',
-  TicketUpdatedByCustomer: 'Updated By Customer',
-  TicketReopened: 'Ticket Reopened',
-  TriggerManually: 'Trigger Manually',
-};
 
 function PrincipalAutomationRuleEditPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();
@@ -56,25 +41,6 @@ function PrincipalAutomationRuleEditPage() {
   );
   const updateMutation = useUpdatePrincipalAutomationRule(principalId ?? '');
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [triggerType, setTriggerType] = useState<string>(
-    HelpdeskDomainAutomationEnumsAutomationTriggerType.TicketCreated,
-  );
-  const [isEnabled, setIsEnabled] = useState(true);
-
-  useEffect(() => {
-    if (rule) {
-      setName(rule.name ?? '');
-      setDescription(rule.description ?? '');
-      setTriggerType(
-        rule.triggerType ??
-          HelpdeskDomainAutomationEnumsAutomationTriggerType.TicketCreated,
-      );
-      setIsEnabled(rule.isEnabled ?? true);
-    }
-  }, [rule]);
-
   if (context?.level !== 'admin') {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
@@ -85,39 +51,6 @@ function PrincipalAutomationRuleEditPage() {
       </div>
     );
   }
-
-  const handleSave = useCallback(() => {
-    if (!id || !name.trim()) return;
-    updateMutation.mutate(
-      {
-        id,
-        command: {
-          name: name.trim(),
-          description: description.trim() || null,
-          triggerType:
-            triggerType as (typeof HelpdeskDomainAutomationEnumsAutomationTriggerType)[keyof typeof HelpdeskDomainAutomationEnumsAutomationTriggerType],
-          conditions: rule?.conditions ?? [],
-          actions: rule?.actions ?? [],
-          elseActions: rule?.elseActions ?? [],
-        },
-      },
-      {
-        onSuccess: () => {
-          addToast({ title: 'Automation rule updated', severity: 'success' });
-          navigate(`/principal/${principalId}/automation`);
-        },
-      },
-    );
-  }, [
-    id,
-    name,
-    description,
-    triggerType,
-    rule,
-    updateMutation,
-    navigate,
-    principalId,
-  ]);
 
   if (isLoading) {
     return (
@@ -141,8 +74,40 @@ function PrincipalAutomationRuleEditPage() {
     );
   }
 
+  const handleSave = (values: {
+    name: string;
+    description: string;
+    triggerType: HelpdeskDomainAutomationEnumsAutomationTriggerType;
+    matchType: HelpdeskDomainAutomationEnumsConditionMatchType;
+    conditions: HelpdeskApplicationAutomationDTOsAutomationConditionDto[];
+    actions: HelpdeskApplicationAutomationDTOsAutomationActionDto[];
+    elseActions: HelpdeskApplicationAutomationDTOsAutomationActionDto[];
+  }) => {
+    if (!id) return;
+    updateMutation.mutate(
+      {
+        id,
+        command: {
+          name: values.name,
+          description: values.description || null,
+          triggerType: values.triggerType,
+          matchType: values.matchType,
+          conditions: values.conditions,
+          actions: values.actions,
+          elseActions: values.elseActions,
+        },
+      },
+      {
+        onSuccess: () => {
+          addToast({ title: 'Automation rule updated', severity: 'success' });
+          navigate(`/principal/${principalId}/automation`);
+        },
+      },
+    );
+  };
+
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center gap-3">
         <BaseButton
           variant="light"
@@ -153,59 +118,33 @@ function PrincipalAutomationRuleEditPage() {
         <h1 className="text-2xl font-semibold">Edit Automation Rule</h1>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-        />
-        <BaseSelect
-          label="Trigger"
-          selectedKeys={[triggerType]}
-          onSelectionChange={keys => {
-            const val = Array.from(keys)[0];
-            if (val) setTriggerType(String(val));
-          }}
-        >
-          {Object.entries(TRIGGER_LABELS).map(([value, label]) => (
-            <BaseSelectItem key={value}>{label}</BaseSelectItem>
-          ))}
-        </BaseSelect>
-        <BaseCheckbox isSelected={isEnabled} onValueChange={setIsEnabled}>
-          Rule enabled
-        </BaseCheckbox>
-        {/* Condition/action builder is read-only here */}
-        {(rule.conditions?.length ?? 0) > 0 && (
-          <div className="rounded border p-3 text-sm text-default-500">
-            {rule.conditions?.length} condition(s) and {rule.actions?.length}{' '}
-            action(s) configured. Full condition/action editor coming in a
-            follow-up iteration.
-          </div>
-        )}
-      </div>
-
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleSave}
-          isLoading={updateMutation.isPending}
-          isDisabled={!name.trim()}
-        >
-          Save changes
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/automation`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
+      <AutomationRuleForm
+        mode="edit"
+        initialValues={{
+          name: rule.name ?? '',
+          description: rule.description ?? '',
+          triggerType: rule.triggerType,
+          matchType: rule.matchType,
+          conditions: rule.conditions ?? [],
+          actions: (
+            rule.actions ??
+            ([] as HelpdeskApplicationAutomationDTOsAutomationActionDto[])
+          ).filter(
+            (a: HelpdeskApplicationAutomationDTOsAutomationActionDto) =>
+              !a.isElseAction,
+          ),
+          elseActions: (
+            rule.elseActions ??
+            ([] as HelpdeskApplicationAutomationDTOsAutomationActionDto[])
+          ).filter(
+            (a: HelpdeskApplicationAutomationDTOsAutomationActionDto) =>
+              a.isElseAction,
+          ),
+        }}
+        onSave={handleSave}
+        onCancel={() => navigate(`/principal/${principalId}/automation`)}
+        isSaving={updateMutation.isPending}
+      />
     </div>
   );
 }
