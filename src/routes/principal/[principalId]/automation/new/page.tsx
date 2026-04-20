@@ -1,21 +1,15 @@
 /**
  * Principal automation rule create page — /principal/[principalId]/automation/new
  *
- * Creates a rule with name, description, trigger type, and enabled flag.
- * Conditions/actions are set as empty arrays — full builder is a follow-up task.
- * REVIEW: Add condition/action builder UI in a follow-up iteration.
+ * Creates a rule with full condition/action builder via AutomationRuleForm.
  */
 
 import { useCreatePrincipalAutomationRule } from '@/hooks/usePrincipalAutomation';
 import {
-  BaseButton,
-  BaseCheckbox,
-  BaseInput,
-  BaseSelect,
-  BaseSelectItem,
-  PageSpinner,
-} from '@brainforgeau/components';
-import { HelpdeskDomainAutomationEnumsAutomationTriggerType } from '@brainforgeau/helpdesk-client';
+  AutomationRuleForm,
+  type AutomationRuleFormValues,
+} from '@/components/principal/automation/AutomationRuleForm';
+import { BaseButton, PageSpinner } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { addToast } from '@heroui/react';
 import {
@@ -23,35 +17,12 @@ import {
   useOutletContext,
   useParams,
 } from '@modern-js/runtime/router';
-import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-
-const TRIGGER_LABELS: Record<string, string> = {
-  TicketCreated: 'Ticket Created',
-  TicketOverdue: 'Ticket Overdue',
-  TicketNotUpdated: 'Ticket Not Updated',
-  TicketClosed: 'Ticket Closed',
-  TicketUpdated: 'Ticket Updated',
-  TicketCategoryChanged: 'Category Changed',
-  TicketAssigneeChanged: 'Assignee Changed',
-  TicketStatusChanged: 'Status Changed',
-  TicketPriorityChanged: 'Priority Changed',
-  TicketUpdatedByCustomer: 'Updated By Customer',
-  TicketReopened: 'Ticket Reopened',
-  TriggerManually: 'Trigger Manually',
-};
 
 function PrincipalAutomationRuleNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [triggerType, setTriggerType] = useState<string>(
-    HelpdeskDomainAutomationEnumsAutomationTriggerType.TicketCreated,
-  );
-  const [isEnabled, setIsEnabled] = useState(true);
 
   const createMutation = useCreatePrincipalAutomationRule(principalId ?? '');
 
@@ -66,19 +37,18 @@ function PrincipalAutomationRuleNewPage() {
     );
   }
 
-  const handleCreate = useCallback(() => {
-    if (!name.trim()) return;
+  const handleCreate = (values: AutomationRuleFormValues) => {
     createMutation.mutate(
       {
-        name: name.trim(),
-        description: description.trim() || null,
-        triggerType:
-          triggerType as (typeof HelpdeskDomainAutomationEnumsAutomationTriggerType)[keyof typeof HelpdeskDomainAutomationEnumsAutomationTriggerType],
-        isEnabled,
+        name: values.name,
+        description: values.description || null,
+        triggerType: values.triggerType,
+        matchType: values.matchType,
+        isEnabled: values.isEnabled ?? true,
         isNested: false,
-        conditions: [],
-        actions: [],
-        elseActions: [],
+        conditions: values.conditions,
+        actions: values.actions,
+        elseActions: values.elseActions,
       },
       {
         onSuccess: () => {
@@ -87,18 +57,10 @@ function PrincipalAutomationRuleNewPage() {
         },
       },
     );
-  }, [
-    name,
-    description,
-    triggerType,
-    isEnabled,
-    createMutation,
-    navigate,
-    principalId,
-  ]);
+  };
 
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center gap-3">
         <BaseButton
           variant="light"
@@ -109,57 +71,12 @@ function PrincipalAutomationRuleNewPage() {
         <h1 className="text-2xl font-semibold">New Automation Rule</h1>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          placeholder="e.g. Auto-assign on create"
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-          placeholder="Optional description"
-        />
-        <BaseSelect
-          label="Trigger"
-          selectedKeys={[triggerType]}
-          onSelectionChange={keys => {
-            const val = Array.from(keys)[0];
-            if (val) setTriggerType(String(val));
-          }}
-        >
-          {Object.entries(TRIGGER_LABELS).map(([value, label]) => (
-            <BaseSelectItem key={value}>{label}</BaseSelectItem>
-          ))}
-        </BaseSelect>
-        <BaseCheckbox isSelected={isEnabled} onValueChange={setIsEnabled}>
-          Enable rule immediately
-        </BaseCheckbox>
-        <p className="text-xs text-default-400">
-          Note: Conditions and actions can be added after creation from the edit
-          view.
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleCreate}
-          isLoading={createMutation.isPending}
-          isDisabled={!name.trim()}
-        >
-          Create
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/automation`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
+      <AutomationRuleForm
+        mode="create"
+        onSave={handleCreate}
+        onCancel={() => navigate(`/principal/${principalId}/automation`)}
+        isSaving={createMutation.isPending}
+      />
     </div>
   );
 }
