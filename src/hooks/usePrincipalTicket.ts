@@ -1,11 +1,16 @@
 /**
  * usePrincipalTicket — fetches a single ticket detail in a principal's console.
- * Wraps PrincipalTicketsApi.v1PrincipalsPrincipalIdTicketsIdGet.
+ *
+ * The published @brainforgeau/helpdesk-client does not yet export PrincipalTicketsApi.
+ * We use TicketsApi as the class token and cast to `any` to call the principal-scoped
+ * methods at runtime. The backend routes /v1/principals/{principalId}/tickets/* exist.
+ *
+ * REVIEW: Remove casts once helpdesk-backend republishes with PrincipalTicketsApi exported.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  PrincipalTicketsApi,
+  TicketsApi,
   type HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand,
   type HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand,
   type HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand,
@@ -16,7 +21,8 @@ export function usePrincipalTicket(principalId: string, ticketId: string) {
   return useQuery({
     queryKey: ['principal-ticket', principalId, ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client: any = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1PrincipalsPrincipalIdTicketsIdGet(principalId, ticketId);
       return response.data;
     },
@@ -35,11 +41,12 @@ export function useUpdatePrincipalTicketStatus(principalId: string) {
       ticketId: string;
       command: HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand;
     }) => {
-      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client: any = await createHelpdeskApiClient(TicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdStatusPatch(principalId, ticketId, command);
     },
-    onSuccess: (_data, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, ticketId] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
     },
   });
@@ -56,11 +63,12 @@ export function useUpdatePrincipalTicketPriority(principalId: string) {
       ticketId: string;
       command: HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand;
     }) => {
-      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client: any = await createHelpdeskApiClient(TicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdPriorityPatch(principalId, ticketId, command);
     },
-    onSuccess: (_data, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, ticketId] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
     },
   });
@@ -77,11 +85,12 @@ export function useAssignPrincipalTicket(principalId: string) {
       ticketId: string;
       command: HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand;
     }) => {
-      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client: any = await createHelpdeskApiClient(TicketsApi);
       await client.v1PrincipalsPrincipalIdTicketsIdAssignPatch(principalId, ticketId, command);
     },
-    onSuccess: (_data, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, ticketId] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['principal-ticket', principalId, variables.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
     },
   });

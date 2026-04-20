@@ -25,9 +25,20 @@ import {
   PageSpinner,
 } from '@brainforgeau/components';
 import {
-  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
   HelpdeskDomainApprovalsEnumsApprovalMode,
 } from '@brainforgeau/helpdesk-client';
+
+// REVIEW: HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto not yet in published client.
+// Remove once helpdesk-backend republishes with approval workflow DTO exported.
+interface HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto {
+  id?: string;
+  name?: string;
+  description?: string | null;
+  approvalMode?: string;
+  isActive?: boolean;
+  triggerOnCreation?: boolean;
+  stepCount?: number;
+}
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { addToast, useDisclosure } from '@heroui/react';
 import {

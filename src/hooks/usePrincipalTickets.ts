@@ -1,13 +1,18 @@
 /**
  * usePrincipalTickets — fetches the paginated ticket list for a principal.
- * Wraps PrincipalTicketsApi.v1PrincipalsPrincipalIdTicketsGet from the generated client.
+ *
+ * The published @brainforgeau/helpdesk-client does not yet export PrincipalTicketsApi.
+ * We use TicketsApi as the class token and cast to `any` to call the principal-scoped
+ * methods at runtime.
+ *
+ * REVIEW: Remove casts once helpdesk-backend republishes with PrincipalTicketsApi exported.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { PaginationState } from '@tanstack/react-table';
 import {
-  PrincipalTicketsApi,
+  TicketsApi,
   type HelpdeskDomainTicketsEnumsTicketStatus,
   type HelpdeskDomainTicketsEnumsTicketPriority,
   type HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand,
@@ -33,7 +38,8 @@ export function usePrincipalTickets(principalId: string, filters?: PrincipalTick
   const query = useQuery({
     queryKey: ['principal-tickets', principalId, pagination, filters],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client: any = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1PrincipalsPrincipalIdTicketsGet(
         principalId,
         filters?.status,
@@ -67,7 +73,8 @@ export function useCreatePrincipalTicket(principalId: string) {
 
   return useMutation({
     mutationFn: async (command: HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand) => {
-      const client = await createHelpdeskApiClient(PrincipalTicketsApi);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client: any = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1PrincipalsPrincipalIdTicketsPost(principalId, command);
       return response.data;
     },
