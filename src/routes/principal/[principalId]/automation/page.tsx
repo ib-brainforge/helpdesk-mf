@@ -90,15 +90,23 @@ function PrincipalAutomationPage() {
 
   const handleToggleEnabled = useCallback(
     (id: string, currentlyEnabled: boolean) => {
+      const onError = () =>
+        addToast({
+          title: 'Enable/disable not yet available',
+          description: 'This feature is pending a backend update.',
+          severity: 'warning',
+        });
       if (currentlyEnabled) {
         disableMutation.mutate(id, {
           onSuccess: () =>
             addToast({ title: 'Rule disabled', severity: 'success' }),
+          onError,
         });
       } else {
         enableMutation.mutate(id, {
           onSuccess: () =>
             addToast({ title: 'Rule enabled', severity: 'success' }),
+          onError,
         });
       }
     },
