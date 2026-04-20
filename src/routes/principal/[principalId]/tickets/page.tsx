@@ -7,7 +7,19 @@
 
 import { useState, useMemo } from 'react';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { PageSpinner, BaseTable, TablePagination } from '@brainforgeau/components';
+import {
+  PageSpinner,
+  BaseTable,
+  TablePagination,
+  BaseButton,
+  BaseInput,
+  BaseTextarea,
+  BaseModal,
+  BaseModalContent,
+  BaseModalHeader,
+  BaseModalBody,
+  BaseModalFooter,
+} from '@brainforgeau/components';
 import { useOutletContext, useParams } from '@modern-js/runtime/router';
 import { useTimezone } from '@brainforgeau/security';
 import {
@@ -23,18 +35,7 @@ import { StatusBadge } from '@/components/shared';
 import { usePrincipalTickets, useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
 import type { PrincipalOutletContext } from '../layout';
 import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-  Textarea,
-  useDisclosure,
-  addToast,
-} from '@heroui/react';
+import { useDisclosure, addToast } from '@heroui/react';
 
 const columnHelper = createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
 
@@ -154,21 +155,20 @@ function PrincipalTicketsPage() {
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Tickets</h1>
-        <Button
+        <BaseButton
           color="primary"
           onPress={onOpen}
         >
           New Ticket
-        </Button>
+        </BaseButton>
       </div>
 
       <div className="flex items-center gap-2">
-        <input
-          type="text"
+        <BaseInput
           placeholder="Search tickets..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="border rounded px-3 py-1.5 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue"
+          onValueChange={setSearchTerm}
+          className="w-64"
         />
       </div>
 
@@ -187,42 +187,42 @@ function PrincipalTicketsPage() {
         </>
       )}
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <ModalContent>
+      <BaseModal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <BaseModalContent>
           {onClose => (
             <>
-              <ModalHeader>New Ticket</ModalHeader>
-              <ModalBody>
-                <Input
+              <BaseModalHeader>New Ticket</BaseModalHeader>
+              <BaseModalBody>
+                <BaseInput
                   label="Subject"
                   value={newSubject}
                   onValueChange={setNewSubject}
                   isRequired
                 />
-                <Textarea
+                <BaseTextarea
                   label="Description"
                   value={newDescription}
                   onValueChange={setNewDescription}
                   minRows={3}
                 />
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </BaseModalBody>
+              <BaseModalFooter>
+                <BaseButton variant="light" onPress={onClose}>
                   Cancel
-                </Button>
-                <Button
+                </BaseButton>
+                <BaseButton
                   color="primary"
                   isDisabled={!newSubject.trim()}
                   isLoading={createMutation.isPending}
                   onPress={() => handleCreate(onClose)}
                 >
                   Create
-                </Button>
-              </ModalFooter>
+                </BaseButton>
+              </BaseModalFooter>
             </>
           )}
-        </ModalContent>
-      </Modal>
+        </BaseModalContent>
+      </BaseModal>
     </div>
   );
 }

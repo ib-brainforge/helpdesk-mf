@@ -2,14 +2,14 @@
  * Principal ticket detail page — /principal/[principalId]/tickets/[ticketId]
  */
 
-import { PageSpinner } from '@brainforgeau/components';
+import { PageSpinner, BaseButton, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams, useNavigate } from '@modern-js/runtime/router';
 import { usePrincipalTicket, useUpdatePrincipalTicketStatus } from '@/hooks/usePrincipalTicket';
 import { StatusBadge } from '@/components/shared';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { Button, Select, SelectItem, addToast } from '@heroui/react';
+import { addToast } from '@heroui/react';
 
 function PrincipalTicketDetailPage() {
   const { principalId, ticketId } = useParams<{ principalId: string; ticketId: string }>();
@@ -30,13 +30,13 @@ function PrincipalTicketDetailPage() {
     return (
       <div className="flex h-32 flex-col items-center justify-center gap-2 text-center">
         <p className="font-semibold">Ticket not found</p>
-        <Button
-          variant="flat"
+        <BaseButton
+          variant="light"
           size="sm"
           onPress={() => navigate(`/principal/${principalId}/tickets`)}
         >
           Back to tickets
-        </Button>
+        </BaseButton>
       </div>
     );
   }
@@ -68,19 +68,19 @@ function PrincipalTicketDetailPage() {
             {ticket.id?.substring(0, 8)}
           </p>
         </div>
-        <Button
-          variant="flat"
+        <BaseButton
+          variant="light"
           size="sm"
           onPress={() => navigate(`/principal/${principalId}/tickets`)}
         >
           Back
-        </Button>
+        </BaseButton>
       </div>
 
       <div className="flex flex-wrap gap-4">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground uppercase tracking-wide">Status</span>
-          <Select
+          <BaseSelect
             size="sm"
             selectedKeys={ticket.status ? [ticket.status] : []}
             onSelectionChange={keys => {
@@ -90,9 +90,9 @@ function PrincipalTicketDetailPage() {
             className="w-40"
           >
             {['New', 'InProgress', 'Closed'].map(s => (
-              <SelectItem key={s}>{s}</SelectItem>
+              <BaseSelectItem key={s}>{s}</BaseSelectItem>
             ))}
-          </Select>
+          </BaseSelect>
         </div>
 
         <div className="flex flex-col gap-1">
