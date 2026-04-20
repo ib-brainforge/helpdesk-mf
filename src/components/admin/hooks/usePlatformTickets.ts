@@ -7,11 +7,66 @@
  * Used by the navbar widget to display the current user's platform tickets.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import { PlatformSelfServiceTicketsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { PlatformSelfServiceTicketsApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useState } from 'react';
+
+// ─── Comments ────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches paginated comments for a platform self-service ticket.
+ * Maps to GET /v1/platform/my-tickets/{id}/comments.
+ */
+export const usePlatformTicketComments = (
+  ticketId: string,
+  page = 1,
+  pageSize = 50,
+) => {
+  return useQuery({
+    queryKey: ['platform-my-ticket-comments', ticketId, page, pageSize],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(
+        PlatformSelfServiceTicketsApi,
+      );
+      const response = await client.v1PlatformMyTicketsIdCommentsGet(
+        ticketId,
+        page,
+        pageSize,
+      );
+      return response.data;
+    },
+    enabled: Boolean(ticketId),
+  });
+};
+
+/**
+ * Adds a comment to a platform self-service ticket.
+ * Maps to POST /v1/platform/my-tickets/{id}/comments.
+ */
+export const useAddPlatformTicketComment = (ticketId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: string) => {
+      const client = await createHelpdeskApiClient(
+        PlatformSelfServiceTicketsApi,
+      );
+      const response = await client.v1PlatformMyTicketsIdCommentsPost(
+        ticketId,
+        { body },
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['platform-my-ticket-comments', ticketId],
+      });
+    },
+  });
+};
+
+// ─── Ticket list / detail / create ──────────────────────────────────────────
 
 /**
  * Hook for listing the current user's platform self-service tickets.
@@ -26,9 +81,16 @@ export const usePlatformTicketsData = () => {
   const [searchTerm, setSearchTerm] = useState<string | undefined>(undefined);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['platform-my-tickets', pagination.pageIndex, pagination.pageSize, searchTerm],
+    queryKey: [
+      'platform-my-tickets',
+      pagination.pageIndex,
+      pagination.pageSize,
+      searchTerm,
+    ],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(PlatformSelfServiceTicketsApi);
+      const client = await createHelpdeskApiClient(
+        PlatformSelfServiceTicketsApi,
+      );
 
       const response = await client.v1PlatformMyTicketsGet(
         undefined, // status
@@ -73,7 +135,9 @@ export const usePlatformTicketDetail = (ticketId: string) => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['platform-my-ticket', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(PlatformSelfServiceTicketsApi);
+      const client = await createHelpdeskApiClient(
+        PlatformSelfServiceTicketsApi,
+      );
       const response = await client.v1PlatformMyTicketsIdGet(ticketId);
       return response.data;
     },
@@ -96,9 +160,17 @@ export const useCreatePlatformTicket = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ subject, description }: { subject: string; description?: string }) => {
-      const client = await createHelpdeskApiClient(PlatformSelfServiceTicketsApi);
-      const response = await client.v1PlatformMyTicketsPost({ subject, description });
+    mutationFn: async ({
+      subject,
+      description,
+    }: { subject: string; description?: string }) => {
+      const client = await createHelpdeskApiClient(
+        PlatformSelfServiceTicketsApi,
+      );
+      const response = await client.v1PlatformMyTicketsPost({
+        subject,
+        description,
+      });
       return response.data;
     },
     onSuccess: () => {
