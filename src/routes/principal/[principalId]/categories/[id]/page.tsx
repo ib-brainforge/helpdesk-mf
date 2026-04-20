@@ -2,6 +2,7 @@
  * Principal category edit page — /principal/[principalId]/categories/[id]
  */
 
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import {
   usePrincipalCategory,
   useUpdatePrincipalCategory,
@@ -23,12 +24,6 @@ import {
 } from '@modern-js/runtime/router';
 import { useCallback, useEffect, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-
-const ACCESS_LEVEL_LABELS: Record<string, string> = {
-  Everyone: 'Everyone',
-  AgentsOnly: 'Agents only',
-  AdminsOnly: 'Admins only',
-};
 
 function PrincipalCategoryEditPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();

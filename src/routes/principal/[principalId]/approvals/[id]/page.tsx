@@ -2,6 +2,7 @@
  * Principal approval workflow edit page — /principal/[principalId]/approvals/[id]
  */
 
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   usePrincipalApprovalWorkflow,
   useUpdatePrincipalApprovalWorkflow,
@@ -24,12 +25,6 @@ import {
 } from '@modern-js/runtime/router';
 import { useCallback, useEffect, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-
-const APPROVAL_MODE_LABELS: Record<string, string> = {
-  Sequential: 'Sequential',
-  Parallel: 'Parallel',
-  AnyOne: 'Any one approver',
-};
 
 function PrincipalApprovalWorkflowEditPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();

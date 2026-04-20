@@ -1,44 +1,21 @@
 /**
  * Principal approval workflows list page — /principal/[principalId]/approvals
  *
- * Admin-only. Lists principal-scoped approval workflows with create/edit/delete.
- * Wired to PrincipalApprovalsApi from @brainforgeau/helpdesk-client.
+ * Admin-only. Lists principal-scoped approval workflows.
+ * Create navigates to /approvals/new. Delete uses ConfirmDeleteModal.
  */
 
 import {
-  useCreatePrincipalApprovalWorkflow,
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
 } from '@/hooks/usePrincipalApprovalWorkflows';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   BaseButton,
-  BaseCheckbox,
-  BaseInput,
-  BaseModal,
-  BaseModalBody,
-  BaseModalContent,
-  BaseModalFooter,
-  BaseModalHeader,
-  BaseSelect,
-  BaseSelectItem,
   BaseTable,
   PageSpinner,
 } from '@brainforgeau/components';
-import {
-  HelpdeskDomainApprovalsEnumsApprovalMode,
-} from '@brainforgeau/helpdesk-client';
-
-// REVIEW: HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto not yet in published client.
-// Remove once helpdesk-backend republishes with approval workflow DTO exported.
-interface HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto {
-  id?: string;
-  name?: string;
-  description?: string | null;
-  approvalMode?: string;
-  isActive?: boolean;
-  triggerOnCreation?: boolean;
-  stepCount?: number;
-}
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { addToast, useDisclosure } from '@heroui/react';
 import {
@@ -54,35 +31,34 @@ import {
 import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
-const columnHelper =
-  createColumnHelper<HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto>();
+// REVIEW: HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto not yet in published client.
+// Remove once helpdesk-backend republishes with approval workflow DTO exported.
+interface ApprovalWorkflowDto {
+  id?: string;
+  name?: string;
+  description?: string | null;
+  approvalMode?: string;
+  isActive?: boolean;
+  triggerOnCreation?: boolean;
+  stepCount?: number;
+}
 
-const APPROVAL_MODE_LABELS: Record<string, string> = {
-  Sequential: 'Sequential',
-  Parallel: 'Parallel',
-  AnyOne: 'Any one approver',
-};
+const columnHelper = createColumnHelper<ApprovalWorkflowDto>();
 
 function PrincipalApprovalsPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newApprovalMode, setNewApprovalMode] = useState<string>(
-    HelpdeskDomainApprovalsEnumsApprovalMode.Sequential,
-  );
-  const [newIsActive, setNewIsActive] = useState(true);
-  const [newTriggerOnCreation, setNewTriggerOnCreation] = useState(false);
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
   const {
     data: workflows,
     isLoading,
     error,
   } = usePrincipalApprovalWorkflows(principalId ?? '');
-  const createMutation = useCreatePrincipalApprovalWorkflow(principalId ?? '');
   const deleteMutation = useDeletePrincipalApprovalWorkflow(principalId ?? '');
 
   if (context?.level !== 'admin') {
@@ -96,61 +72,24 @@ function PrincipalApprovalsPage() {
     );
   }
 
-  const handleCreate = useCallback(
-    (onClose: () => void) => {
-      if (!newName.trim()) return;
-      createMutation.mutate(
-        {
-          name: newName.trim(),
-          description: newDescription.trim() || null,
-          approvalMode:
-            newApprovalMode as HelpdeskDomainApprovalsEnumsApprovalMode,
-          isActive: newIsActive,
-          triggerOnCreation: newTriggerOnCreation,
-          triggerOnStatusChange: false,
-          steps: [],
-        },
-        {
-          onSuccess: () => {
-            addToast({
-              title: 'Approval workflow created',
-              severity: 'success',
-            });
-            setNewName('');
-            setNewDescription('');
-            setNewApprovalMode(
-              HelpdeskDomainApprovalsEnumsApprovalMode.Sequential,
-            );
-            setNewIsActive(true);
-            setNewTriggerOnCreation(false);
-            onClose();
-          },
-        },
-      );
+  const handleDeleteRequest = useCallback(
+    (id: string, name: string) => {
+      setPendingDeleteId(id);
+      setPendingDeleteName(name);
+      onDeleteOpen();
     },
-    [
-      newName,
-      newDescription,
-      newApprovalMode,
-      newIsActive,
-      newTriggerOnCreation,
-      createMutation,
-    ],
+    [onDeleteOpen],
   );
 
-  const handleDelete = useCallback(
-    (id: string, name: string) => {
-      if (
-        !confirm(`Delete approval workflow "${name}"? This cannot be undone.`)
-      )
-        return;
-      deleteMutation.mutate(id, {
-        onSuccess: () =>
-          addToast({ title: 'Approval workflow deleted', severity: 'success' }),
-      });
-    },
-    [deleteMutation],
-  );
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSuccess: () => {
+        addToast({ title: 'Approval workflow deleted', severity: 'success' });
+        setPendingDeleteId(null);
+      },
+    });
+  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -160,7 +99,8 @@ function PrincipalApprovalsPage() {
     columnHelper.accessor('approvalMode', {
       header: 'Mode',
       cell: info =>
-        APPROVAL_MODE_LABELS[info.getValue() ?? ''] ?? info.getValue(),
+        APPROVAL_MODE_LABELS[info.getValue() as keyof typeof APPROVAL_MODE_LABELS] ??
+        info.getValue(),
     }),
     columnHelper.accessor('stepCount', {
       header: 'Steps',
@@ -200,8 +140,8 @@ function PrincipalApprovalsPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDelete(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending}
+            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
+            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>
@@ -211,7 +151,7 @@ function PrincipalApprovalsPage() {
   ];
 
   const table = useReactTable({
-    data: workflows ?? [],
+    data: (workflows ?? []) as ApprovalWorkflowDto[],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -220,7 +160,9 @@ function PrincipalApprovalsPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Approval Workflows</h1>
-        <BaseButton onPress={onOpen}>New Workflow</BaseButton>
+        <BaseButton onPress={() => navigate(`/principal/${principalId}/approvals/new`)}>
+          New Workflow
+        </BaseButton>
       </div>
 
       {isLoading && (
@@ -243,71 +185,14 @@ function PrincipalApprovalsPage() {
         />
       )}
 
-      <BaseModal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <BaseModalContent>
-          {onClose => (
-            <>
-              <BaseModalHeader>New Approval Workflow</BaseModalHeader>
-              <BaseModalBody className="flex flex-col gap-4">
-                <BaseInput
-                  label="Name"
-                  value={newName}
-                  onValueChange={setNewName}
-                  placeholder="e.g. Manager Approval"
-                  isRequired
-                />
-                <BaseInput
-                  label="Description"
-                  value={newDescription}
-                  onValueChange={setNewDescription}
-                  placeholder="Optional description"
-                />
-                <BaseSelect
-                  label="Approval mode"
-                  selectedKeys={[newApprovalMode]}
-                  onSelectionChange={keys => {
-                    const val = Array.from(keys)[0];
-                    if (val) setNewApprovalMode(String(val));
-                  }}
-                >
-                  {Object.entries(APPROVAL_MODE_LABELS).map(
-                    ([value, label]) => (
-                      <BaseSelectItem key={value}>{label}</BaseSelectItem>
-                    ),
-                  )}
-                </BaseSelect>
-                <div className="flex flex-col gap-2">
-                  <BaseCheckbox
-                    isSelected={newIsActive}
-                    onValueChange={setNewIsActive}
-                  >
-                    Active
-                  </BaseCheckbox>
-                  <BaseCheckbox
-                    isSelected={newTriggerOnCreation}
-                    onValueChange={setNewTriggerOnCreation}
-                  >
-                    Trigger on ticket creation
-                  </BaseCheckbox>
-                </div>
-              </BaseModalBody>
-              <BaseModalFooter>
-                <BaseButton variant="light" onPress={onClose}>
-                  Cancel
-                </BaseButton>
-                <BaseButton
-                  color="primary"
-                  onPress={() => handleCreate(onClose)}
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
-                >
-                  Create
-                </BaseButton>
-              </BaseModalFooter>
-            </>
-          )}
-        </BaseModalContent>
-      </BaseModal>
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Approval Workflow"
+        message={`Delete approval workflow "${pendingDeleteName}"? This cannot be undone.`}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 }

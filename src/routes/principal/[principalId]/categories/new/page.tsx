@@ -20,12 +20,7 @@ import {
 } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-
-const ACCESS_LEVEL_LABELS: Record<string, string> = {
-  Everyone: 'Everyone',
-  AgentsOnly: 'Agents only',
-  AdminsOnly: 'Admins only',
-};
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 
 function PrincipalCategoryNewPage() {
   const { principalId } = useParams<{ principalId: string }>();

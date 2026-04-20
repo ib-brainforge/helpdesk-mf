@@ -1,32 +1,22 @@
 /**
  * Principal categories list page — /principal/[principalId]/categories
  *
- * Admin-only. Lists all principal-scoped categories with create/edit/delete actions.
- * Wired to PrincipalCategoriesApi from @brainforgeau/helpdesk-client.
+ * Admin-only. Lists all principal-scoped categories.
+ * Create navigates to /categories/new. Delete uses ConfirmDeleteModal.
  */
 
 import {
-  useCreatePrincipalCategory,
   useDeletePrincipalCategory,
   usePrincipalCategories,
 } from '@/hooks/usePrincipalCategories';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import {
   BaseButton,
-  BaseInput,
-  BaseModal,
-  BaseModalBody,
-  BaseModalContent,
-  BaseModalFooter,
-  BaseModalHeader,
-  BaseSelect,
-  BaseSelectItem,
   BaseTable,
   PageSpinner,
 } from '@brainforgeau/components';
-import {
-  type HelpdeskApplicationCategoriesModelsCategoryDto,
-  HelpdeskDomainCategoriesEnumsAccessLevel,
-} from '@brainforgeau/helpdesk-client';
+import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { addToast, useDisclosure } from '@heroui/react';
 import {
@@ -45,30 +35,20 @@ import type { PrincipalOutletContext } from '../layout';
 const columnHelper =
   createColumnHelper<HelpdeskApplicationCategoriesModelsCategoryDto>();
 
-const ACCESS_LEVEL_LABELS: Record<string, string> = {
-  Everyone: 'Everyone',
-  AgentsOnly: 'Agents only',
-  AdminsOnly: 'Admins only',
-};
-
 function PrincipalCategoriesPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newAccessLevel, setNewAccessLevel] = useState<string>(
-    HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
-  );
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
   const {
     data: categories,
     isLoading,
     error,
   } = usePrincipalCategories(principalId ?? '');
-  const createMutation = useCreatePrincipalCategory(principalId ?? '');
   const deleteMutation = useDeletePrincipalCategory(principalId ?? '');
 
   if (context?.level !== 'admin') {
@@ -82,43 +62,24 @@ function PrincipalCategoriesPage() {
     );
   }
 
-  const handleCreate = useCallback(
-    (onClose: () => void) => {
-      if (!newName.trim()) return;
-      createMutation.mutate(
-        {
-          name: newName.trim(),
-          description: newDescription.trim() || null,
-          accessLevel:
-            newAccessLevel as HelpdeskDomainCategoriesEnumsAccessLevel,
-          sortOrder: 0,
-        },
-        {
-          onSuccess: () => {
-            addToast({ title: 'Category created', severity: 'success' });
-            setNewName('');
-            setNewDescription('');
-            setNewAccessLevel(
-              HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
-            );
-            onClose();
-          },
-        },
-      );
+  const handleDeleteRequest = useCallback(
+    (id: string, name: string) => {
+      setPendingDeleteId(id);
+      setPendingDeleteName(name);
+      onDeleteOpen();
     },
-    [newName, newDescription, newAccessLevel, createMutation],
+    [onDeleteOpen],
   );
 
-  const handleDelete = useCallback(
-    (id: string, name: string) => {
-      if (!confirm(`Delete category "${name}"? This cannot be undone.`)) return;
-      deleteMutation.mutate(id, {
-        onSuccess: () =>
-          addToast({ title: 'Category deleted', severity: 'success' }),
-      });
-    },
-    [deleteMutation],
-  );
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSuccess: () => {
+        addToast({ title: 'Category deleted', severity: 'success' });
+        setPendingDeleteId(null);
+      },
+    });
+  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -134,7 +95,8 @@ function PrincipalCategoriesPage() {
     columnHelper.accessor('accessLevel', {
       header: 'Access',
       cell: info =>
-        ACCESS_LEVEL_LABELS[info.getValue() ?? ''] ?? info.getValue(),
+        ACCESS_LEVEL_LABELS[info.getValue() as keyof typeof ACCESS_LEVEL_LABELS] ??
+        info.getValue(),
     }),
     columnHelper.accessor('isActive', {
       header: 'Active',
@@ -168,8 +130,8 @@ function PrincipalCategoriesPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDelete(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending}
+            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
+            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>
@@ -188,7 +150,9 @@ function PrincipalCategoriesPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Categories</h1>
-        <BaseButton onPress={onOpen}>New Category</BaseButton>
+        <BaseButton onPress={() => navigate(`/principal/${principalId}/categories/new`)}>
+          New Category
+        </BaseButton>
       </div>
 
       {isLoading && (
@@ -211,55 +175,14 @@ function PrincipalCategoriesPage() {
         />
       )}
 
-      <BaseModal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <BaseModalContent>
-          {onClose => (
-            <>
-              <BaseModalHeader>New Category</BaseModalHeader>
-              <BaseModalBody className="flex flex-col gap-4">
-                <BaseInput
-                  label="Name"
-                  value={newName}
-                  onValueChange={setNewName}
-                  placeholder="e.g. Technical Support"
-                  isRequired
-                />
-                <BaseInput
-                  label="Description"
-                  value={newDescription}
-                  onValueChange={setNewDescription}
-                  placeholder="Optional description"
-                />
-                <BaseSelect
-                  label="Access level"
-                  selectedKeys={[newAccessLevel]}
-                  onSelectionChange={keys => {
-                    const val = Array.from(keys)[0];
-                    if (val) setNewAccessLevel(String(val));
-                  }}
-                >
-                  {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
-                    <BaseSelectItem key={value}>{label}</BaseSelectItem>
-                  ))}
-                </BaseSelect>
-              </BaseModalBody>
-              <BaseModalFooter>
-                <BaseButton variant="light" onPress={onClose}>
-                  Cancel
-                </BaseButton>
-                <BaseButton
-                  color="primary"
-                  onPress={() => handleCreate(onClose)}
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
-                >
-                  Create
-                </BaseButton>
-              </BaseModalFooter>
-            </>
-          )}
-        </BaseModalContent>
-      </BaseModal>
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Category"
+        message={`Delete category "${pendingDeleteName}"? This cannot be undone.`}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 }

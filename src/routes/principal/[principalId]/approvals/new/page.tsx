@@ -21,12 +21,7 @@ import {
 } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-
-const APPROVAL_MODE_LABELS: Record<string, string> = {
-  Sequential: 'Sequential',
-  Parallel: 'Parallel',
-  AnyOne: 'Any one approver',
-};
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 
 function PrincipalApprovalWorkflowNewPage() {
   const { principalId } = useParams<{ principalId: string }>();

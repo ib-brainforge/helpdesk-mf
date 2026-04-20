@@ -1,24 +1,17 @@
 /**
  * Principal SLA policies list page — /principal/[principalId]/sla-policies
  *
- * Admin-only. Lists all principal-scoped SLA policies with create/edit/delete actions.
- * Wired to PrincipalSlaPoliciesApi from @brainforgeau/helpdesk-client.
+ * Admin-only. Lists all principal-scoped SLA policies.
+ * Create navigates to /sla-policies/new. Delete uses ConfirmDeleteModal.
  */
 
 import {
-  useCreatePrincipalSlaPolicy,
   useDeletePrincipalSlaPolicy,
   usePrincipalSlaPolicies,
 } from '@/hooks/usePrincipalSlaPolicies';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import {
   BaseButton,
-  BaseCheckbox,
-  BaseInput,
-  BaseModal,
-  BaseModalBody,
-  BaseModalContent,
-  BaseModalFooter,
-  BaseModalHeader,
   BaseTable,
   PageSpinner,
 } from '@brainforgeau/components';
@@ -45,22 +38,16 @@ function PrincipalSlaPoliciesPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-  const {
-    isOpen: isCreateOpen,
-    onOpen: onCreateOpen,
-    onOpenChange: onCreateOpenChange,
-  } = useDisclosure();
 
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newIsDefault, setNewIsDefault] = useState(false);
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
   const {
     data: policies,
     isLoading,
     error,
   } = usePrincipalSlaPolicies(principalId ?? '');
-  const createMutation = useCreatePrincipalSlaPolicy(principalId ?? '');
   const deleteMutation = useDeletePrincipalSlaPolicy(principalId ?? '');
 
   if (context?.level !== 'admin') {
@@ -74,40 +61,24 @@ function PrincipalSlaPoliciesPage() {
     );
   }
 
-  const handleCreate = useCallback(
-    (onClose: () => void) => {
-      if (!newName.trim()) return;
-      createMutation.mutate(
-        {
-          name: newName.trim(),
-          description: newDescription.trim() || null,
-          isDefault: newIsDefault,
-        },
-        {
-          onSuccess: () => {
-            addToast({ title: 'SLA policy created', severity: 'success' });
-            setNewName('');
-            setNewDescription('');
-            setNewIsDefault(false);
-            onClose();
-          },
-        },
-      );
+  const handleDeleteRequest = useCallback(
+    (id: string, name: string) => {
+      setPendingDeleteId(id);
+      setPendingDeleteName(name);
+      onDeleteOpen();
     },
-    [newName, newDescription, newIsDefault, createMutation],
+    [onDeleteOpen],
   );
 
-  const handleDelete = useCallback(
-    (id: string, name: string) => {
-      if (!confirm(`Delete SLA policy "${name}"? This cannot be undone.`))
-        return;
-      deleteMutation.mutate(id, {
-        onSuccess: () =>
-          addToast({ title: 'SLA policy deleted', severity: 'success' }),
-      });
-    },
-    [deleteMutation],
-  );
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSuccess: () => {
+        addToast({ title: 'SLA policy deleted', severity: 'success' });
+        setPendingDeleteId(null);
+      },
+    });
+  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -152,8 +123,8 @@ function PrincipalSlaPoliciesPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDelete(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending}
+            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
+            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>
@@ -172,7 +143,9 @@ function PrincipalSlaPoliciesPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">SLA Policies</h1>
-        <BaseButton onPress={onCreateOpen}>New SLA Policy</BaseButton>
+        <BaseButton onPress={() => navigate(`/principal/${principalId}/sla-policies/new`)}>
+          New SLA Policy
+        </BaseButton>
       </div>
 
       {isLoading && (
@@ -195,50 +168,14 @@ function PrincipalSlaPoliciesPage() {
         />
       )}
 
-      {/* Create modal */}
-      <BaseModal isOpen={isCreateOpen} onOpenChange={onCreateOpenChange}>
-        <BaseModalContent>
-          {onClose => (
-            <>
-              <BaseModalHeader>New SLA Policy</BaseModalHeader>
-              <BaseModalBody className="flex flex-col gap-4">
-                <BaseInput
-                  label="Name"
-                  value={newName}
-                  onValueChange={setNewName}
-                  placeholder="e.g. Standard SLA"
-                  isRequired
-                />
-                <BaseInput
-                  label="Description"
-                  value={newDescription}
-                  onValueChange={setNewDescription}
-                  placeholder="Optional description"
-                />
-                <BaseCheckbox
-                  isSelected={newIsDefault}
-                  onValueChange={setNewIsDefault}
-                >
-                  Set as default policy
-                </BaseCheckbox>
-              </BaseModalBody>
-              <BaseModalFooter>
-                <BaseButton variant="light" onPress={onClose}>
-                  Cancel
-                </BaseButton>
-                <BaseButton
-                  color="primary"
-                  onPress={() => handleCreate(onClose)}
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
-                >
-                  Create
-                </BaseButton>
-              </BaseModalFooter>
-            </>
-          )}
-        </BaseModalContent>
-      </BaseModal>
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirm={handleDeleteConfirm}
+        title="Delete SLA Policy"
+        message={`Delete SLA policy "${pendingDeleteName}"? This cannot be undone.`}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 }
