@@ -143,6 +143,12 @@ export default function Layout() {
   const location = useLocation();
   const { setAction } = useNavbarAction();
 
+  // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
+  const isPrincipalRoute = useMemo(
+    () => location.pathname.startsWith('/principal/'),
+    [location.pathname],
+  );
+
   useEffect(() => {
     setAction(<HelpdeskAction />);
     return () => setAction(null);
@@ -179,7 +185,7 @@ export default function Layout() {
         </Suspense>
       </ErrorBoundary>
       <div className="flex flex-1">
-        {isAuthenticated && (
+        {isAuthenticated && !isPrincipalRoute && (
           <SideNav
             data-testid={TEST_IDS.navbar.side}
             sections={navSections}
@@ -199,13 +205,19 @@ export default function Layout() {
             )}
           />
         )}
-        <div className="flex flex-1">
-          <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
-            <ErrorBoundary>
-              <Outlet />
-            </ErrorBoundary>
+        {isPrincipalRoute ? (
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        ) : (
+          <div className="flex flex-1">
+            <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
+              <ErrorBoundary>
+                <Outlet />
+              </ErrorBoundary>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Providers>
   );
