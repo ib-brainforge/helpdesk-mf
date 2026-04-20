@@ -7,9 +7,19 @@
  */
 
 import { usePrincipalTicketVolume } from '@/hooks/usePrincipalReports';
-import { BaseButton, BaseInput, PageSpinner } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseInput,
+  BaseTable,
+  PageSpinner,
+} from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
+import {
+  createColumnHelper,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import {
   Bar,
@@ -20,6 +30,28 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+
+// REVIEW: Chart bar color #6366f1 is Tailwind indigo-500 / HeroUI primary-500.
+// Swap for `var(--color-primary)` once HeroUI exposes the CSS variable on BarChart fill.
+const CHART_BAR_COLOR = '#6366f1';
+
+interface TicketVolumeRow {
+  date: string;
+  count: number;
+}
+
+const columnHelper = createColumnHelper<TicketVolumeRow>();
+
+const columns = [
+  columnHelper.accessor('date', {
+    header: 'Date',
+    cell: info => <span className="font-mono text-xs">{info.getValue()}</span>,
+  }),
+  columnHelper.accessor('count', {
+    header: 'Count',
+    cell: info => <span className="tabular-nums">{info.getValue()}</span>,
+  }),
+];
 
 function toIsoDateString(date: Date): string {
   return date.toISOString().split('T')[0];
@@ -50,11 +82,11 @@ function PrincipalReportsPage() {
   );
 
   const totalCount = useMemo(
-    () => (data ?? []).reduce((sum, d) => sum + (d.count ?? 0), 0),
+    () => (data ?? []).reduce((sum, item) => sum + (item.count ?? 0), 0),
     [data],
   );
 
-  const chartData = useMemo(
+  const chartData = useMemo<TicketVolumeRow[]>(
     () =>
       (data ?? []).map(item => ({
         date: item.date ? item.date.slice(0, 10) : '',
@@ -62,6 +94,12 @@ function PrincipalReportsPage() {
       })),
     [data],
   );
+
+  const table = useReactTable({
+    data: chartData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   const handleApply = () => {
     setAppliedFrom(from);
@@ -136,7 +174,7 @@ function PrincipalReportsPage() {
                   <Bar
                     dataKey="count"
                     name="Tickets"
-                    fill="#6366f1"
+                    fill={CHART_BAR_COLOR}
                     radius={[2, 2, 0, 0]}
                   />
                 </BarChart>
@@ -150,26 +188,11 @@ function PrincipalReportsPage() {
 
           {/* Bucket table */}
           {chartData.length > 0 && (
-            <div className="rounded-lg border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-default-50">
-                    <th className="px-4 py-2 text-left font-medium">Date</th>
-                    <th className="px-4 py-2 text-right font-medium">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chartData.map(row => (
-                    <tr key={row.date} className="border-b last:border-0">
-                      <td className="px-4 py-2 font-mono text-xs">
-                        {row.date}
-                      </td>
-                      <td className="px-4 py-2 text-right">{row.count}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <BaseTable
+              table={table}
+              isLoading={false}
+              loading={{ title: 'Loading...' }}
+            />
           )}
         </>
       )}
