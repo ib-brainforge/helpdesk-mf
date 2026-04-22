@@ -87,6 +87,13 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
+        label: 'Workflows',
+        href: '/configuration/workflows',
+        icon: 'arrows-right-left',
+        testId: 'nav-configuration-workflows',
+        requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
         label: 'Email Templates',
         href: '/configuration/email-templates',
         icon: 'envelope',
