@@ -10,6 +10,7 @@ import {
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
+import { useLogger } from '@brainforgeau/observability';
 import { addToast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
@@ -42,6 +43,7 @@ export function PrincipalWorkflowListPage() {
   const createMutation = useCreatePrincipalDefinition();
   const deleteMutation = useDeletePrincipalDefinition();
   const navigate = useNavigate();
+  const logger = useLogger('PrincipalWorkflowListPage');
 
   const [newName, setNewName] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -70,7 +72,10 @@ export function PrincipalWorkflowListPage() {
       setNewName('');
       setIsCreateOpen(false);
       navigate(`/principal/${principalId}/workflows/${result.id}`);
-    } catch {
+    } catch (err) {
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'principal_workflow_list_create_failed',
+      });
       addToast({ title: 'Failed to create workflow', severity: 'danger' });
     }
   }
@@ -81,6 +86,9 @@ export function PrincipalWorkflowListPage() {
       await deleteMutation.mutateAsync({ principalId, id: pendingDeleteId });
       addToast({ title: 'Workflow deleted', severity: 'success' });
     } catch (err) {
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'principal_workflow_list_delete_failed',
+      });
       addToast({
         title: 'Delete failed',
         description: err instanceof Error ? err.message : 'Unknown error',

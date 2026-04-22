@@ -9,6 +9,7 @@ import {
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
+import { useLogger } from '@brainforgeau/observability';
 import { addToast } from '@heroui/react';
 import { useState } from 'react';
 import { useWorkflowApi } from '../state/useWorkflowApi';
@@ -56,6 +57,7 @@ export function WorkflowToolbar({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const validateMutation = useValidateVersion();
+  const logger = useLogger('WorkflowToolbar');
 
   async function handleSave() {
     if (!onSaveDraft) return;
@@ -79,15 +81,32 @@ export function WorkflowToolbar({
 
   async function handleValidate() {
     if (!definitionId) return;
-    const result = await validateMutation.mutateAsync({
-      definitionId,
-      versionId: version.id,
-    });
-    if (result.isValid) {
-      setValidationErrors([]);
-      addToast({ title: 'Validation passed', severity: 'success' });
-    } else {
-      setValidationErrors(result.errors.map(e => e.message));
+    try {
+      const result = await validateMutation.mutateAsync({
+        definitionId,
+        versionId: version.id,
+      });
+      if (result.isValid) {
+        setValidationErrors([]);
+        addToast({ title: 'Validation passed', severity: 'success' });
+      } else {
+        const errors = result.errors.map(e => e.message);
+        setValidationErrors(errors);
+        logger.warn('workflow_toolbar_validation_failed', {
+          definitionId,
+          versionId: version.id,
+          errorCount: errors.length,
+        });
+      }
+    } catch (err) {
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'workflow_toolbar_validate_failed',
+      });
+      addToast({
+        title: 'Validation request failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        severity: 'danger',
+      });
     }
   }
 

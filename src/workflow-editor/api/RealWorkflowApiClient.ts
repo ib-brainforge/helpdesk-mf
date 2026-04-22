@@ -512,12 +512,23 @@ export function createRealWorkflowApiClient(
       };
     },
 
-    // ── Clone (no backend endpoint — implemented via compose) ────────────────────
+    // ── Clone (frontend-composed — no dedicated backend clone endpoint yet) ───────
     //
-    // REVIEW: No POST /v1/workflows/{id}/clone endpoint exists in the backend.
+    // REVIEW: No POST /v1/workflows/{id}/clone endpoint exists in the backend yet.
     // Implemented as: createDefinition → createDraft → updateDraft (copy states+transitions).
     // The initial draft from createDefinition is empty; we overwrite it with the
     // source version's states/transitions via updateDraft.
+    //
+    // When backend Plan 9 lands and adds a clone endpoint returning
+    // { definitionId, initialDraftVersionId }, this method should be updated to:
+    //   const res = await workflows.v1WorkflowsIdClonePost(input.sourceDefinitionId, ...);
+    //   const responseAny = res.data as any;
+    //   // Handle either old shape (full DTO) or new shape ({ definitionId, ... })
+    //   if ('definitionId' in responseAny && !responseAny.id) {
+    //     return this.getDefinition(responseAny.definitionId);
+    //   }
+    //   return toDefinitionDto(res.data);
+    // Until then, the compose approach below is used and the build remains clean.
 
     async cloneDefinition(
       input: CloneDefinitionInput,
