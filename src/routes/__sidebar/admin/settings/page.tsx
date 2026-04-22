@@ -121,7 +121,7 @@ function AdministrationPage() {
           title: 'Automation rules',
           description: 'Automate ticket workflows with conditional rules',
           icon: 'bolt',
-          href: '/configuration/automation',
+          href: '/configuration/automations',
         },
         {
           title: 'AI features',

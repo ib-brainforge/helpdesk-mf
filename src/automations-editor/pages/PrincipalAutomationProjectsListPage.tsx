@@ -4,8 +4,10 @@
  * Mirrors PrincipalWorkflowListPage pattern — uses principalId from route params,
  * same columns and interactions as the tenant-scoped list page.
  *
- * REVIEW: Principal automations share the same backend rule-projects API;
- * the principalId is passed as a context header via the context token.
+ * The principal scope reuses the same backend rule-projects API; the principalId
+ * is carried via the context token (X-Context-Token header), not a separate
+ * endpoint or query parameter. The generated client has no PrincipalRuleProjectsApi,
+ * confirming this design.
  */
 import {
   BaseButton,
@@ -74,8 +76,6 @@ function toSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-// REVIEW: Principal scope reuses the same rule-projects endpoint — context token
-// carries the principal context. No additional principalId query param needed.
 export function PrincipalAutomationProjectsListPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const { data, isLoading } = useRuleProjects();

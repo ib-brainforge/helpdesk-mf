@@ -4,24 +4,83 @@
  * Mirrors the pattern in src/workflow-editor/state/workflowQueries.ts —
  * all query keys include `contextKey` so data refreshes automatically when
  * the tenant context changes.
+ *
+ * Uses generated `RuleProjectsApi` + `RuleGraphsApi` from
+ * `@brainforgeau/helpdesk-client` via `createHelpdeskApiClient`.
  */
 import { contextQueryKeyAtom } from '@/state/context-query-key';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
-import {
-  listRuleProjects,
-  createRuleProject,
-  updateRuleProject,
-  deleteRuleProject,
-  listRuleGraphs,
-  getRuleGraph,
-  createRuleGraph,
-  updateRuleGraph,
-  deleteRuleGraph,
-  createRuleGraphVersion,
-  publishRuleGraphVersion,
-} from '../api/ruleProjectsApi';
+import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
+import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
 import type { RuleGraphContent } from '@brainforgeau/rules-ui';
+import type {
+  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
+  ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
+  ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
+} from '@brainforgeau/helpdesk-client';
+import type { RuleProjectDto, RuleGraphDto, RuleGraphVersionDto, ScheduleConfigDto } from '@brainforgeau/rules-ui';
+
+// ── DTO mappers ────────────────────────────────────────────────────────────────
+
+function toRuleGraphVersionDto(v: GenRuleGraphVersionDto): RuleGraphVersionDto {
+  return {
+    id: v.id ?? '',
+    versionNumber: v.versionNumber ?? 0,
+    name: v.name ?? null,
+    contentSnapshot: (v.contentSnapshot as RuleGraphContent | null | undefined) ?? null,
+    createdAt: v.createdAt ?? '',
+  };
+}
+
+function toRuleProjectDto(p: GenRuleProjectDto): RuleProjectDto {
+  return {
+    id: p.id ?? '',
+    name: p.name ?? '',
+    key: p.key ?? '',
+    description: p.description ?? null,
+    isEnabled: p.isEnabled ?? true,
+    status: p.status ?? 'Draft',
+    graphCount: p.graphCount,
+    createdAt: p.createdAt ?? '',
+    modifiedAt: p.modifiedAt,
+  };
+}
+
+function toRuleGraphDto(g: GenRuleGraphDto): RuleGraphDto {
+  const versions = (g.versions ?? []).map(toRuleGraphVersionDto);
+  const publishedVersion = g.publishedVersion
+    ? toRuleGraphVersionDto(g.publishedVersion)
+    : null;
+
+  return {
+    id: g.id ?? '',
+    projectId: g.projectId ?? '',
+    name: g.name ?? '',
+    key: g.key ?? '',
+    description: g.description ?? null,
+    category: g.category ?? null,
+    isPublished: g.isPublished ?? false,
+    publishedAt: g.publishedAt ?? null,
+    publishedVersion,
+    versions,
+    createdAt: g.createdAt ?? '',
+    modifiedAt: g.modifiedAt ?? '',
+    isEnabled: g.isEnabled ?? true,
+    cooldownMinutes: g.cooldownMinutes ?? 0,
+    consecutivePacketsRequired: g.consecutivePacketsRequired ?? 1,
+    schedule: (g.schedule as ScheduleConfigDto | undefined) ?? null,
+    assets: [],
+    assetGroups: [],
+    linkedGeofences: [],
+    assetIds: [],
+    assetGroupIds: [],
+    linkedGeofenceIds: [],
+    mapColor: null,
+    mapLabel: null,
+  };
+}
 
 // ── Query key factory ──────────────────────────────────────────────────────────
 
@@ -43,17 +102,24 @@ export function useRuleProjects() {
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useQuery({
     queryKey: ruleProjectKeys.list(contextKey),
-    queryFn: () => listRuleProjects(),
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(RuleProjectsApi);
+      const res = await client.v1RuleProjectsGet();
+      return (res.data ?? []).map(toRuleProjectDto);
+    },
   });
 }
 
 export function useRuleProject(id: string | null) {
   const contextKey = useAtomValue(contextQueryKeyAtom);
-  // We load the project detail from the list cache — individual project GET
-  // isn't strictly needed for the list page; load graphs separately.
   return useQuery({
     queryKey: ruleProjectKeys.detail(contextKey, id ?? '__null__'),
-    queryFn: () => listRuleProjects().then(list => list.find(p => p.id === id) ?? null),
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(RuleProjectsApi);
+      const res = await client.v1RuleProjectsGet();
+      const list = (res.data ?? []).map(toRuleProjectDto);
+      return list.find(p => p.id === id) ?? null;
+    },
     enabled: !!id,
   });
 }
@@ -62,7 +128,7 @@ export function useCreateRuleProject() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       name,
       key,
       description,
@@ -70,7 +136,11 @@ export function useCreateRuleProject() {
       name: string;
       key: string;
       description?: string;
-    }) => createRuleProject(name, key, description),
+    }) => {
+      const client = await createHelpdeskApiClient(RuleProjectsApi);
+      const res = await client.v1RuleProjectsPost({ name, key, description });
+      return toRuleProjectDto(res.data);
+    },
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ruleProjectKeys.list(contextKey) }),
   });
@@ -80,7 +150,41 @@ export function useDeleteRuleProject() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: (id: string) => deleteRuleProject(id),
+    mutationFn: async (id: string) => {
+      const client = await createHelpdeskApiClient(RuleProjectsApi);
+      await client.v1RuleProjectsIdDelete(id);
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ruleProjectKeys.list(contextKey) }),
+  });
+}
+
+export function useUpdateRuleProject() {
+  const qc = useQueryClient();
+  const contextKey = useAtomValue(contextQueryKeyAtom);
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: {
+        name: string;
+        description?: string | null;
+        isEnabled: boolean;
+        status: string;
+      };
+    }) => {
+      const client = await createHelpdeskApiClient(RuleProjectsApi);
+      const res = await client.v1RuleProjectsIdPut(id, {
+        id,
+        name: payload.name,
+        description: payload.description,
+        isEnabled: payload.isEnabled,
+        status: payload.status,
+      });
+      return toRuleProjectDto(res.data);
+    },
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ruleProjectKeys.list(contextKey) }),
   });
@@ -92,7 +196,11 @@ export function useRuleGraphs(projectId: string | null) {
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useQuery({
     queryKey: ruleProjectKeys.graphs(contextKey, projectId ?? '__null__'),
-    queryFn: () => listRuleGraphs(projectId!),
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      const res = await client.v1RuleProjectsProjectIdRulesGet(projectId!);
+      return (res.data ?? []).map(toRuleGraphDto);
+    },
     enabled: !!projectId,
   });
 }
@@ -108,7 +216,11 @@ export function useRuleGraph(
       projectId ?? '__null__',
       ruleId ?? '__null__',
     ),
-    queryFn: () => getRuleGraph(projectId!, ruleId!),
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      const res = await client.v1RuleProjectsProjectIdRulesIdGet(projectId!, ruleId!);
+      return toRuleGraphDto(res.data);
+    },
     enabled: !!projectId && !!ruleId,
   });
 }
@@ -117,7 +229,7 @@ export function useCreateRuleGraph() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       projectId,
       name,
       key,
@@ -129,7 +241,16 @@ export function useCreateRuleGraph() {
       key: string;
       description?: string;
       category?: string | null;
-    }) => createRuleGraph(projectId, name, key, description, category),
+    }) => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      const res = await client.v1RuleProjectsProjectIdRulesPost(projectId, {
+        name,
+        key,
+        description,
+        category,
+      });
+      return toRuleGraphDto(res.data);
+    },
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({
         queryKey: ruleProjectKeys.graphs(contextKey, variables.projectId),
@@ -141,7 +262,7 @@ export function useUpdateRuleGraph() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       projectId,
       ruleId,
       request,
@@ -162,7 +283,21 @@ export function useUpdateRuleGraph() {
         mapLabel?: string | null;
         linkedGeofenceIds?: string[];
       };
-    }) => updateRuleGraph(projectId, ruleId, request),
+    }) => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      const res = await client.v1RuleProjectsProjectIdRulesIdPut(projectId, ruleId, {
+        id: ruleId,
+        projectId,
+        name: request.name,
+        description: request.description,
+        category: request.category,
+        isEnabled: request.isEnabled,
+        cooldownMinutes: request.cooldownMinutes,
+        consecutivePacketsRequired: request.consecutivePacketsRequired,
+        schedule: request.schedule as never,
+      });
+      return toRuleGraphDto(res.data);
+    },
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({
         queryKey: ruleProjectKeys.graph(
@@ -178,13 +313,16 @@ export function useDeleteRuleGraph() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       projectId,
       ruleId,
     }: {
       projectId: string;
       ruleId: string;
-    }) => deleteRuleGraph(projectId, ruleId),
+    }) => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      await client.v1RuleProjectsProjectIdRulesIdDelete(projectId, ruleId);
+    },
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({
         queryKey: ruleProjectKeys.graphs(contextKey, variables.projectId),
@@ -196,7 +334,7 @@ export function useCreateRuleGraphVersion() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       projectId,
       ruleId,
       content,
@@ -206,7 +344,14 @@ export function useCreateRuleGraphVersion() {
       ruleId: string;
       content: RuleGraphContent;
       versionName?: string;
-    }) => createRuleGraphVersion(projectId, ruleId, content, versionName),
+    }) => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      const res = await client.v1RuleProjectsProjectIdRulesIdVersionsPost(projectId, ruleId, {
+        name: versionName ?? null,
+        contentSnapshot: content,
+      });
+      return toRuleGraphVersionDto(res.data);
+    },
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({
         queryKey: ruleProjectKeys.graph(
@@ -222,7 +367,7 @@ export function usePublishRuleGraphVersion() {
   const qc = useQueryClient();
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       projectId,
       ruleId,
       versionId,
@@ -230,7 +375,15 @@ export function usePublishRuleGraphVersion() {
       projectId: string;
       ruleId: string;
       versionId: string;
-    }) => publishRuleGraphVersion(projectId, ruleId, versionId),
+    }) => {
+      const client = await createHelpdeskApiClient(RuleGraphsApi);
+      const res = await client.v1RuleProjectsProjectIdRulesIdVersionsVersionIdPublishPost(
+        projectId,
+        ruleId,
+        versionId,
+      );
+      return toRuleGraphDto(res.data);
+    },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({
         queryKey: ruleProjectKeys.graph(
@@ -243,26 +396,5 @@ export function usePublishRuleGraphVersion() {
         queryKey: ruleProjectKeys.graphs(contextKey, variables.projectId),
       });
     },
-  });
-}
-
-export function useUpdateRuleProject() {
-  const qc = useQueryClient();
-  const contextKey = useAtomValue(contextQueryKeyAtom);
-  return useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string;
-      payload: {
-        name: string;
-        description?: string | null;
-        isEnabled: boolean;
-        status: string;
-      };
-    }) => updateRuleProject(id, payload),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ruleProjectKeys.list(contextKey) }),
   });
 }
