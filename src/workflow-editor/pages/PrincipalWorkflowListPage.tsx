@@ -1,55 +1,78 @@
-import { BaseButton, BaseInput } from '@brainforgeau/components';
-import { Spinner, addToast } from '@heroui/react';
-import { useNavigate, useParams } from '@modern-js/runtime/router';
-import { useState } from 'react';
+import {
+  BaseButton,
+  BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+  BaseTable,
+  Icon,
+  TablePagination,
+} from '@brainforgeau/components';
+import { addToast } from '@heroui/react';
+import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
+import type { ColumnDef, PaginationState } from '@tanstack/react-table';
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { useCallback, useMemo, useState } from 'react';
+import { BulkCloneModal } from '../components/BulkCloneModal';
 import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import { PrincipalLookup } from '../components/PrincipalLookup';
+import { ScopeBadge } from '../components/ScopeBadge';
 import { VersionBadge } from '../components/VersionBadge';
 import {
   useCreatePrincipalDefinition,
   useDeletePrincipalDefinition,
   usePrincipalWorkflowList,
 } from '../state/workflowQueries';
-import { VersionStatus } from '../types/enums';
+import type { WorkflowDefinitionDto } from '../types/workflow';
+import { isTenantOwned } from '../types/workflow';
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 export function PrincipalWorkflowListPage() {
   const { principalId } = useParams<{ principalId: string }>();
-  const { data, isLoading, error } = usePrincipalWorkflowList(
-    principalId ?? '',
-  );
+  const { data, isLoading } = usePrincipalWorkflowList(principalId ?? '');
   const createMutation = useCreatePrincipalDefinition();
   const deleteMutation = useDeletePrincipalDefinition();
   const navigate = useNavigate();
+
   const [newName, setNewName] = useState('');
-  const [showCreate, setShowCreate] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [cloneTarget, setCloneTarget] = useState<WorkflowDefinitionDto | null>(
+    null,
+  );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner label="Loading workflows..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-        Failed to load workflows. Please try again.
-      </div>
-    );
-  }
+  const filteredData = useMemo(() => {
+    const all = data ?? [];
+    if (!searchTerm.trim()) return all;
+    const lower = searchTerm.toLowerCase();
+    return all.filter(d => d.name.toLowerCase().includes(lower));
+  }, [data, searchTerm]);
 
   async function handleCreate() {
     if (!principalId) return;
     const name = newName.trim() || 'Untitled workflow';
-    const result = await createMutation.mutateAsync({
-      principalId,
-      name,
-    });
-    setNewName('');
-    setShowCreate(false);
-    navigate(`/principal/${principalId}/workflows/${result.id}`);
+    try {
+      const result = await createMutation.mutateAsync({ principalId, name });
+      setNewName('');
+      setIsCreateOpen(false);
+      navigate(`/principal/${principalId}/workflows/${result.id}`);
+    } catch {
+      addToast({ title: 'Failed to create workflow', severity: 'danger' });
+    }
   }
 
   async function handleDeleteConfirm() {
@@ -68,120 +91,215 @@ export function PrincipalWorkflowListPage() {
     }
   }
 
+  const columns = useMemo<ColumnDef<WorkflowDefinitionDto>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <NavLink
+            to={`/principal/${principalId}/workflows/${row.original.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {row.original.name}
+          </NavLink>
+        ),
+      },
+      {
+        id: 'type',
+        header: 'Scope',
+        cell: ({ row }) => <ScopeBadge ownerScope={row.original.ownerScope} />,
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: ({ row }) =>
+          row.original.latestVersion ? (
+            <VersionBadge status={row.original.latestVersion.status} />
+          ) : row.original.draftVersion ? (
+            <VersionBadge status={row.original.draftVersion.status} />
+          ) : (
+            <span className="text-xs text-default-400">No version</span>
+          ),
+      },
+      {
+        id: 'lastPublished',
+        header: 'Last published',
+        cell: ({ row }) =>
+          row.original.latestVersion?.publishedAt
+            ? formatDate(row.original.latestVersion.publishedAt)
+            : '—',
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <BaseButton
+              size="sm"
+              isIconOnly
+              variant="light"
+              aria-label="Clone workflow"
+              onPress={() => setCloneTarget(row.original)}
+              icon={<Icon name="copy" className="h-4 w-4" />}
+            />
+            <BaseButton
+              size="sm"
+              isIconOnly
+              variant="light"
+              color="danger"
+              aria-label="Delete workflow"
+              onPress={() => setPendingDeleteId(row.original.id)}
+              isDisabled={!isTenantOwned(row.original)}
+              icon={<Icon name="trash" className="h-4 w-4" />}
+            />
+          </div>
+        ),
+      },
+    ],
+    [principalId],
+  );
+
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    state: { pagination },
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: false,
+    pageCount: Math.max(
+      1,
+      Math.ceil(filteredData.length / pagination.pageSize),
+    ),
+  });
+
+  const paginationTemplate = useCallback(() => {
+    const totalPages = Math.max(
+      1,
+      Math.ceil(filteredData.length / pagination.pageSize),
+    );
+    return (
+      <TablePagination
+        totalPages={totalPages}
+        currentPage={pagination.pageIndex + 1}
+        onPageChange={(page: number) =>
+          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
+        }
+      />
+    );
+  }, [filteredData.length, pagination]);
+
   const pendingDelete = data?.find(d => d.id === pendingDeleteId);
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Principal Workflows</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            <PrincipalLookup principalId={principalId ?? ''} />
-          </p>
-        </div>
-        <BaseButton
-          color="primary"
-          onPress={() => setShowCreate(prev => !prev)}
-        >
-          {showCreate ? 'Cancel' : 'New Workflow'}
-        </BaseButton>
-      </div>
-
-      {showCreate && (
-        <div className="flex gap-2 items-end p-4 border border-gray-200 rounded-lg bg-gray-50">
-          <BaseInput
-            label="Workflow Name"
-            value={newName}
-            onValueChange={setNewName}
-            placeholder="e.g. Principal Support Flow"
-            labelPlacement="outside"
-            size="sm"
-            className="flex-1"
-          />
-          <BaseButton
-            color="primary"
-            onPress={handleCreate}
-            isLoading={createMutation.isPending}
-          >
-            Create
-          </BaseButton>
-        </div>
-      )}
-
-      {data?.length === 0 && (
-        <div className="flex h-40 items-center justify-center text-gray-500">
-          No workflow definitions yet. Create your first one above.
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {data?.map(d => (
-          <div
-            key={d.id}
-            className="relative text-left p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all bg-white"
-          >
-            <button
-              type="button"
-              className="w-full text-left"
-              onClick={() =>
-                navigate(`/principal/${principalId}/workflows/${d.id}`)
-              }
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0 pr-8">
-                  <div className="font-semibold text-gray-900 truncate">
-                    {d.name}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-0.5 truncate">
-                    {d.description ?? 'No description'}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {d.versions.length} version
-                    {d.versions.length !== 1 ? 's' : ''}
-                  </div>
-                </div>
-                <div className="ml-3 flex-shrink-0">
-                  {d.draftVersion ? (
-                    <VersionBadge status={d.draftVersion.status} />
-                  ) : d.latestVersion ? (
-                    <VersionBadge status={d.latestVersion.status} />
-                  ) : (
-                    <VersionBadge status={VersionStatus.Draft} />
-                  )}
-                </div>
-              </div>
-            </button>
-            {/* Delete icon button */}
-            <button
-              type="button"
-              aria-label={`Delete ${d.name}`}
-              className="absolute top-3 right-3 p-1 text-gray-400 hover:text-danger rounded transition-colors"
-              onClick={e => {
-                e.stopPropagation();
-                setPendingDeleteId(d.id);
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </button>
+    <>
+      <div className="mb-5">
+        <div className="mb-5 flex items-start gap-5 lg:flex">
+          <div>
+            <h1 className="text-gray mb-1 text-2xl font-semibold dark:text-white">
+              Principal Workflows
+            </h1>
+            <p className="text-sm text-default-500">
+              <PrincipalLookup principalId={principalId ?? ''} />
+            </p>
           </div>
-        ))}
+          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
+            <BaseButton
+              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+              onPress={() => setIsCreateOpen(true)}
+            >
+              New Workflow
+            </BaseButton>
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex w-full flex-wrap items-end gap-2.5">
+            <div className="min-w-60 flex-1">
+              <BaseInput
+                aria-label="Search workflows"
+                startContent={
+                  <Icon name="search" className="-ml-0.5 h-4.5 w-4.5" />
+                }
+                placeholder="Search by name"
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+              />
+            </div>
+            <div className="flex gap-2">
+              <BaseButton
+                variant="bordered"
+                color="light"
+                aria-label="Clear filters"
+                onClick={() => setSearchTerm('')}
+              >
+                CLEAR
+              </BaseButton>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Delete confirm modal */}
+      <BaseTable
+        fullHeight
+        table={table}
+        showInfo={false}
+        paginationTemplate={paginationTemplate}
+        isLoading={isLoading}
+        loading={{ title: 'Loading...' }}
+      />
+
+      {/* Create modal */}
+      <BaseModal
+        isOpen={isCreateOpen}
+        onOpenChange={open => setIsCreateOpen(open)}
+        size="md"
+      >
+        <BaseModalContent>
+          {onClose => (
+            <>
+              <BaseModalHeader>New Workflow</BaseModalHeader>
+              <BaseModalBody>
+                <BaseInput
+                  label="Workflow Name"
+                  value={newName}
+                  onValueChange={setNewName}
+                  placeholder="e.g. Principal Support Flow"
+                  labelPlacement="outside"
+                  isRequired
+                />
+              </BaseModalBody>
+              <BaseModalFooter>
+                <BaseButton variant="light" onPress={onClose}>
+                  Cancel
+                </BaseButton>
+                <BaseButton
+                  color="primary"
+                  isLoading={createMutation.isPending}
+                  isDisabled={!newName.trim()}
+                  onPress={handleCreate}
+                >
+                  Create
+                </BaseButton>
+              </BaseModalFooter>
+            </>
+          )}
+        </BaseModalContent>
+      </BaseModal>
+
+      {/* Clone modal */}
+      {cloneTarget && (
+        <BulkCloneModal
+          isOpen={!!cloneTarget}
+          onOpenChange={open => !open && setCloneTarget(null)}
+          sourceDefinitionId={cloneTarget.id}
+          sourceDefinitionName={cloneTarget.name}
+          principalId={principalId}
+          getDetailUrl={newId => `/principal/${principalId}/workflows/${newId}`}
+        />
+      )}
+
+      {/* Delete confirm */}
       <ConfirmActionModal
         isOpen={pendingDeleteId !== null}
         onOpenChange={open => !open && setPendingDeleteId(null)}
@@ -198,6 +316,6 @@ export function PrincipalWorkflowListPage() {
         isLoading={deleteMutation.isPending}
         onConfirm={handleDeleteConfirm}
       />
-    </div>
+    </>
   );
 }

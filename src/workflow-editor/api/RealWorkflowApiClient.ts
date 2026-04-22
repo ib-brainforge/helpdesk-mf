@@ -7,13 +7,12 @@
 // `void` (the OpenAPI spec omits response schemas for those list/get endpoints).
 // We cast via `unknown` where needed; the actual runtime payload is the full DTO.
 
-// Plan 8 Task 1 barrel fix: WorkflowsApi / PrincipalWorkflowsApi are now re-exported
-// from the main barrel (@brainforgeau/helpdesk-client). Direct path imports dropped.
-import {
-  PrincipalWorkflowsApi,
-  WorkflowsApi,
-} from '@brainforgeau/helpdesk-client';
 import type { Configuration } from '@brainforgeau/helpdesk-client';
+// Direct path imports: the generated client's barrel (api.d.ts) does not re-export
+// WorkflowsApi / PrincipalWorkflowsApi (generator quirk — files exist on disk but
+// aren't in the index). Importing from their direct paths is functionally identical.
+import { PrincipalWorkflowsApi } from '@brainforgeau/helpdesk-client/dist/api/principal-workflows-api';
+import { WorkflowsApi } from '@brainforgeau/helpdesk-client/dist/api/workflows-api';
 // REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
 // to avoid a direct `import from 'axios'` that is not in project dependencies.
 import type { authorizedAxios as _AuthorizedAxios } from '@brainforgeau/security';
@@ -64,13 +63,6 @@ interface BackendWorkflowStateDto {
   } | null;
 }
 
-interface BackendApprovalSpecDto {
-  required?: boolean;
-  approverRoles?: string[];
-  approverUserIds?: string[];
-  description?: string | null;
-}
-
 interface BackendWorkflowTransitionDto {
   id: string;
   fromStateId: string;
@@ -79,7 +71,6 @@ interface BackendWorkflowTransitionDto {
   eventName?: string | null;
   guards?: Array<{ expression?: string }> | null;
   displayMetadata?: Record<string, string> | null;
-  approvalSpec?: BackendApprovalSpecDto | null;
 }
 
 interface BackendVersionSummaryDto {
@@ -159,17 +150,6 @@ function toTransitionDto(
   // Backend stores guard expression in guards[0].expression (CEL)
   const guardExpression = t.guards?.[0]?.expression ?? null;
 
-  // Plan 8 Task 4: approvalSpec is now embedded by the backend when
-  // RequiresApprovalSpecId is set on the transition (Plan 8 Task 3 + critical fix C1).
-  const approvalSpec = t.approvalSpec
-    ? {
-        required: t.approvalSpec.required ?? false,
-        approverRoles: t.approvalSpec.approverRoles ?? [],
-        approverUserIds: t.approvalSpec.approverUserIds ?? [],
-        description: t.approvalSpec.description ?? undefined,
-      }
-    : undefined;
-
   return {
     id: t.id,
     fromStateId: t.fromStateId,
@@ -179,7 +159,10 @@ function toTransitionDto(
     triggerSpec: t.eventName ? { eventName: t.eventName } : null,
     guardExpression: guardExpression || null,
     actions: [],
-    approvalSpec,
+    // REVIEW: approvalSpec — backend stores approvals in a separate aggregate;
+    // not embedded in transition row. Leaving undefined here; future iteration
+    // can compose from a separate GET /v1/workflows/{id}/approvals endpoint.
+    approvalSpec: undefined,
   };
 }
 
@@ -529,32 +512,101 @@ export function createRealWorkflowApiClient(
       };
     },
 
-    // ── Clone (Plan 8: real backend endpoint) ────────────────────────────────────
+    // ── Clone (no backend endpoint — implemented via compose) ────────────────────
+    //
+    // REVIEW: No POST /v1/workflows/{id}/clone endpoint exists in the backend.
+    // Implemented as: createDefinition → createDraft → updateDraft (copy states+transitions).
+    // The initial draft from createDefinition is empty; we overwrite it with the
+    // source version's states/transitions via updateDraft.
 
     async cloneDefinition(
       input: CloneDefinitionInput,
     ): Promise<WorkflowDefinitionDto> {
+      // 1. Get source to copy states and transitions
+      const source = input.principalId
+        ? await this.getPrincipalDefinition(
+            input.principalId,
+            input.sourceDefinitionId,
+          )
+        : await this.getDefinition(input.sourceDefinitionId);
+
+      const sourceVersion = source.latestVersion ?? source.draftVersion;
+
+      // 2. Create the new definition
+      let newDef: WorkflowDefinitionDto;
       if (input.principalId) {
-        const res = await principal.v1PrincipalsPrincipalIdWorkflowsIdClonePost(
-          input.principalId,
-          input.sourceDefinitionId,
-          {
-            newName: input.newName,
-            newDescription: input.newDescription ?? null,
-          },
-        );
-        const data = res.data as unknown as BackendWorkflowDefinitionDto;
-        return toDefinitionDto(data);
+        newDef = await this.createPrincipalDefinition({
+          principalId: input.principalId,
+          name: input.newName,
+          description: input.newDescription,
+        });
+      } else {
+        newDef = await this.createDefinition({
+          name: input.newName,
+          description: input.newDescription,
+        });
       }
-      const res = await workflows.v1WorkflowsIdClonePost(
-        input.sourceDefinitionId,
-        {
-          newName: input.newName,
-          newDescription: input.newDescription ?? null,
-        },
-      );
-      const data = res.data as unknown as BackendWorkflowDefinitionDto;
-      return toDefinitionDto(data);
+
+      // 3. Create a draft on the new definition
+      let draftVersion: WorkflowDefinitionVersionDto;
+      if (input.principalId) {
+        draftVersion = await this.createPrincipalDraft(
+          input.principalId,
+          newDef.id,
+        );
+      } else {
+        draftVersion = await this.createDraft(newDef.id);
+      }
+
+      if (!sourceVersion) {
+        // Source has no versions — return the empty new definition
+        return this.getDefinition(newDef.id);
+      }
+
+      // 4. Re-ID states and rewrite transition references
+      const clonedStates: WorkflowStateDto[] = sourceVersion.states.map(s => ({
+        ...s,
+        id: crypto.randomUUID(),
+      }));
+      const stateIdMap = new Map<string, string>();
+      sourceVersion.states.forEach((s, i) => {
+        stateIdMap.set(s.id, clonedStates[i].id);
+      });
+      const clonedTransitions: WorkflowTransitionDto[] =
+        sourceVersion.transitions.map(t => ({
+          ...t,
+          id: crypto.randomUUID(),
+          fromStateId: stateIdMap.get(t.fromStateId) ?? t.fromStateId,
+          toStateId: stateIdMap.get(t.toStateId) ?? t.toStateId,
+        }));
+      const newStartStateId = sourceVersion.startStateId
+        ? (stateIdMap.get(sourceVersion.startStateId) ?? null)
+        : null;
+
+      // 5. Update the draft with the cloned content
+      if (input.principalId) {
+        await this.updatePrincipalDraft({
+          principalId: input.principalId,
+          definitionId: newDef.id,
+          versionId: draftVersion.id,
+          states: clonedStates,
+          transitions: clonedTransitions,
+          startStateId: newStartStateId,
+        });
+      } else {
+        await this.updateDraft({
+          definitionId: newDef.id,
+          versionId: draftVersion.id,
+          states: clonedStates,
+          transitions: clonedTransitions,
+          startStateId: newStartStateId,
+        });
+      }
+
+      // 6. Return the final definition with draft
+      return input.principalId
+        ? this.getPrincipalDefinition(input.principalId, newDef.id)
+        : this.getDefinition(newDef.id);
     },
   };
 }

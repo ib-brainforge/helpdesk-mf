@@ -14,6 +14,25 @@ export type WorkflowOwnerScope =
   | TenantOwnerScope
   | PrincipalOwnerScope;
 
+// ── Scope helpers ─────────────────────────────────────────────────────────────
+export function isTenantOwned(
+  def: Pick<WorkflowDefinitionDto, 'ownerScope'>,
+): boolean {
+  return def.ownerScope.startsWith('tenant:');
+}
+
+export function isSystemOwned(
+  def: Pick<WorkflowDefinitionDto, 'ownerScope'>,
+): boolean {
+  return def.ownerScope.startsWith('system:');
+}
+
+export function isPrincipalOwned(
+  def: Pick<WorkflowDefinitionDto, 'ownerScope'>,
+): boolean {
+  return def.ownerScope.startsWith('principal:');
+}
+
 export interface WorkflowDefinitionDto {
   id: string;
   name: string;
