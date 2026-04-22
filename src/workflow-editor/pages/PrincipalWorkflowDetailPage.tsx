@@ -5,6 +5,7 @@ import { Card, Chip, Spinner, addToast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
 import { useState } from 'react';
 import { BulkCloneModal } from '../components/BulkCloneModal';
+import { ComponentsPalette } from '../components/ComponentsPalette';
 import { PrincipalLookup } from '../components/PrincipalLookup';
 import { ScopeBadge } from '../components/ScopeBadge';
 import { VersionBadge } from '../components/VersionBadge';
@@ -45,6 +46,7 @@ export function PrincipalWorkflowDetailPage() {
   const publishMut = usePublishPrincipalDraft();
   const [cloneOpen, setCloneOpen] = useState(false);
   const [showVersionsSidebar, setShowVersionsSidebar] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
   const logger = useLogger('PrincipalWorkflowDetailPage');
 
   const { level: principalAccessLevel, isLoading: isAccessLoading } =
@@ -224,6 +226,16 @@ export function PrincipalWorkflowDetailPage() {
               Clone to Tenant
             </BaseButton>
           )}
+          {!isReadOnly && (
+            <BaseButton
+              size="sm"
+              variant="bordered"
+              color={showPalette ? 'primary' : undefined}
+              onPress={() => setShowPalette(p => !p)}
+            >
+              Components
+            </BaseButton>
+          )}
           <BaseButton
             size="sm"
             variant="bordered"
@@ -283,6 +295,9 @@ export function PrincipalWorkflowDetailPage() {
               onPublish={hasDraft && canEdit ? handlePublish : undefined}
             />
           </div>
+
+          {/* Components palette sidebar — drag sources for new states */}
+          {showPalette && !isReadOnly && <ComponentsPalette />}
 
           {/* Right sidebar: version history + diff */}
           {showVersionsSidebar && (

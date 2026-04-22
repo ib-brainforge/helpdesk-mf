@@ -4,6 +4,7 @@ import { Card, Chip, Spinner, addToast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
 import { useState } from 'react';
 import { BulkCloneModal } from '../components/BulkCloneModal';
+import { ComponentsPalette } from '../components/ComponentsPalette';
 import { ScopeBadge } from '../components/ScopeBadge';
 import { VersionBadge } from '../components/VersionBadge';
 import { VersionDiffViewer } from '../components/VersionDiffViewer';
@@ -37,6 +38,7 @@ export function WorkflowDetailPage() {
   const publishMut = usePublishDraft();
   const [cloneOpen, setCloneOpen] = useState(false);
   const [showVersionsSidebar, setShowVersionsSidebar] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
   const logger = useLogger('WorkflowDetailPage');
 
   if (isLoading) {
@@ -196,6 +198,16 @@ export function WorkflowDetailPage() {
               Clone to Tenant
             </BaseButton>
           )}
+          {!isReadOnly && (
+            <BaseButton
+              size="sm"
+              variant="bordered"
+              color={showPalette ? 'primary' : undefined}
+              onPress={() => setShowPalette(p => !p)}
+            >
+              Components
+            </BaseButton>
+          )}
           <BaseButton
             size="sm"
             variant="bordered"
@@ -252,6 +264,9 @@ export function WorkflowDetailPage() {
               onPublish={hasDraft ? handlePublish : undefined}
             />
           </div>
+
+          {/* Components palette sidebar — drag sources for new states */}
+          {showPalette && !isReadOnly && <ComponentsPalette />}
 
           {/* Right sidebar: version history + diff */}
           {showVersionsSidebar && (

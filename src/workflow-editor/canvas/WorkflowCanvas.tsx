@@ -13,13 +13,14 @@ import {
   ReactFlowProvider,
   applyEdgeChanges,
   applyNodeChanges,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLogger } from '@brainforgeau/observability';
 import { useCallback, useMemo, useRef } from 'react';
 import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
-import { StateType, TriggerType } from '../types/enums';
+import { StateCategory, StateType, TriggerType } from '../types/enums';
 import { CANVAS_TOKENS } from './canvasTheme';
 import {
   ParallelStateNode,
@@ -44,6 +45,12 @@ export interface WorkflowCanvasProps {
   onSelectState?: (stateId: string | null) => void;
   onSelectTransition?: (transitionId: string | null) => void;
   readOnly?: boolean;
+  onAddState?: (
+    state: Omit<WorkflowStateDto, 'id'> & {
+      positionX: number;
+      positionY: number;
+    },
+  ) => void;
 }
 
 const NODE_TYPES = {
@@ -72,6 +79,13 @@ export function WorkflowCanvas(props: WorkflowCanvasProps) {
   );
 }
 
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 function WorkflowCanvasInner({
   states,
   transitions,
@@ -79,8 +93,10 @@ function WorkflowCanvasInner({
   onSelectState,
   onSelectTransition,
   readOnly,
+  onAddState,
 }: WorkflowCanvasProps) {
   const logger = useLogger('WorkflowCanvas');
+  const { screenToFlowPosition } = useReactFlow();
 
   // Keep refs for latest states/transitions so callbacks stay stable across renders.
   // This is critical: if `handleStateChange` changes on every state update, the
@@ -244,8 +260,55 @@ function WorkflowCanvasInner({
     [readOnly, states, transitions, onChange],
   );
 
+  // REVIEW: Using ref for onAddState to keep handleDrop stable across re-renders
+  const onAddStateRef = useRef(onAddState);
+  onAddStateRef.current = onAddState;
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const raw = event.dataTransfer.getData('application/x-workflow-node');
+      if (!raw) return;
+      try {
+        const payload = JSON.parse(raw) as {
+          stateType: StateType;
+          category: StateCategory;
+          label: string;
+        };
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        onAddStateRef.current?.({
+          name: payload.label,
+          slug: slugify(payload.label),
+          description: null,
+          category: payload.category,
+          type: payload.stateType,
+          sortOrder: 99,
+          positionX: position.x,
+          positionY: position.y,
+          metadata: {},
+          parallelSpec: null,
+        });
+      } catch (err) {
+        logger.warn('workflow_canvas_drop_parse_error');
+      }
+    },
+    [screenToFlowPosition, logger],
+  );
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
   return (
-    <div className="w-full h-full min-h-[500px]">
+    <div
+      className="w-full h-full min-h-[500px]"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}

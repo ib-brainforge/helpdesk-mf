@@ -50,24 +50,19 @@ export function WorkflowEditor({
     setDirty(false);
   }
 
-  function handleAddState(
-    partial: Omit<WorkflowStateDto, 'id' | 'positionX' | 'positionY'>,
+  // REVIEW: handleAddFromPalette accepts positionX/Y from the drag-drop coordinate;
+  // the canvas converts the screen position to flow position via screenToFlowPosition.
+  function handleAddFromPalette(
+    newStateData: Omit<WorkflowStateDto, 'id'> & {
+      positionX: number;
+      positionY: number;
+    },
   ) {
-    // Place new state to the right of the rightmost existing node so it's
-    // visible in the current viewport. Fallback grid for the first few states.
-    const rightmostX = states.length > 0
-      ? Math.max(...states.map(s => s.positionX))
-      : 0;
-    const newState: WorkflowStateDto = {
-      ...partial,
+    const fullState: WorkflowStateDto = {
+      ...newStateData,
       id: crypto.randomUUID(),
-      positionX: rightmostX > 0 ? rightmostX + 300 : 100 + states.length * 300,
-      positionY: 120 + Math.floor(states.length / 4) * 180,
     };
-
-    // If type changed away from Parallel, clear sourceHandleId on related transitions
-    // (handled at node level, but ensure consistent state on add)
-    setStates(prev => [...prev, newState]);
+    setStates(prev => [...prev, fullState]);
     setDirty(true);
   }
 
@@ -96,7 +91,6 @@ export function WorkflowEditor({
         definitionId={definitionId}
         onSaveDraft={handleSaveDraft}
         onPublish={onPublish}
-        onAddState={handleAddState}
       />
       {/* Canvas takes full width — state/transition editing is now inline in nodes */}
       <div className="flex-1 overflow-hidden">
@@ -105,6 +99,7 @@ export function WorkflowEditor({
           transitions={transitions}
           onChange={handleCanvasChange}
           readOnly={readOnly}
+          onAddState={readOnly ? undefined : handleAddFromPalette}
         />
       </div>
     </div>
