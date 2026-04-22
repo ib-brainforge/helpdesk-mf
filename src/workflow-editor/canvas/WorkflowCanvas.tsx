@@ -4,36 +4,25 @@ import {
   type Connection,
   Controls,
   type Edge,
-  type EdgeChange,
   MarkerType,
   MiniMap,
   type Node,
-  type NodeChange,
   ReactFlow,
   ReactFlowProvider,
-  applyEdgeChanges,
-  applyNodeChanges,
+  useEdgesState,
+  useNodesState,
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLogger } from '@brainforgeau/observability';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 import { StateCategory, StateType, TriggerType } from '../types/enums';
 import { CANVAS_TOKENS } from './canvasTheme';
-import {
-  ParallelStateNode,
-  type ParallelStateNodeType,
-} from './nodes/ParallelStateNode';
-import {
-  TerminalStateNode,
-  type TerminalStateNodeType,
-} from './nodes/TerminalStateNode';
-import {
-  WorkflowStateNode,
-  type WorkflowStateNodeType,
-} from './nodes/WorkflowStateNode';
+import { ParallelStateNode } from './nodes/ParallelStateNode';
+import { TerminalStateNode } from './nodes/TerminalStateNode';
+import { WorkflowStateNode } from './nodes/WorkflowStateNode';
 
 export interface WorkflowCanvasProps {
   states: WorkflowStateDto[];
@@ -63,14 +52,12 @@ const EDGE_TYPES = {
   workflowTransition: WorkflowTransitionEdge,
 };
 
-/** Map a StateType to a node type key */
 function nodeTypeForState(s: WorkflowStateDto): string {
   if (s.type === StateType.Terminal) return 'terminalState';
   if (s.type === StateType.Parallel) return 'parallelState';
   return 'workflowState';
 }
 
-/** Top-level canvas wraps the inner component in ReactFlowProvider */
 export function WorkflowCanvas(props: WorkflowCanvasProps) {
   return (
     <ReactFlowProvider>
@@ -86,6 +73,26 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+function buildEdges(
+  transitions: WorkflowTransitionDto[],
+  onTransitionChange: (edgeId: string, next: WorkflowTransitionDto) => void,
+  onTransitionDelete: (edgeId: string) => void,
+): Edge[] {
+  return transitions.map(t => ({
+    id: t.id,
+    source: t.fromStateId,
+    target: t.toStateId,
+    sourceHandle: t.sourceHandleId ?? undefined,
+    type: 'workflowTransition',
+    data: {
+      transition: t,
+      onChange: onTransitionChange,
+      onDelete: onTransitionDelete,
+    },
+    markerEnd: { type: MarkerType.ArrowClosed, color: CANVAS_TOKENS.edge },
+  }));
+}
+
 function WorkflowCanvasInner({
   states,
   transitions,
@@ -98,21 +105,20 @@ function WorkflowCanvasInner({
   const logger = useLogger('WorkflowCanvas');
   const { screenToFlowPosition } = useReactFlow();
 
-  // Keep refs for latest states/transitions so callbacks stay stable across renders.
-  // This is critical: if `handleStateChange` changes on every state update, the
-  // `nodes` useMemo produces a new array and each node's `data` object is a new
-  // reference — which makes xyflow's internal drag tracker lose track of node
-  // identity and fall back to pane drag (= whole canvas moves instead of node).
+  // Refs keep inline-node callbacks and drop handlers reading latest props
+  // without forcing the xyflow-owned node/edge stores to rebuild.
   const statesRef = useRef(states);
   const transitionsRef = useRef(transitions);
   const readOnlyRef = useRef(readOnly);
   const onChangeRef = useRef(onChange);
+  const onAddStateRef = useRef(onAddState);
   statesRef.current = states;
   transitionsRef.current = transitions;
   readOnlyRef.current = readOnly;
   onChangeRef.current = onChange;
+  onAddStateRef.current = onAddState;
 
-  // STABLE callbacks — empty dep array; read latest via refs.
+  // Stable callbacks for inline node/edge editing (empty deps, ref-based).
   const handleStateChange = useCallback(
     (nodeId: string, next: WorkflowStateDto) => {
       if (readOnlyRef.current) return;
@@ -165,104 +171,114 @@ function WorkflowCanvasInner({
     onChangeRef.current(currStates, nextTransitions);
   }, []);
 
-  const nodes: Node[] = useMemo(
-    () =>
-      states.map(s => ({
-        id: s.id,
-        type: nodeTypeForState(s),
-        position: { x: s.positionX, y: s.positionY },
-        data: {
+  // xyflow-owned node/edge state is critical: ResizeObserver measurements
+  // and internal node refs persist across external prop updates, which is
+  // what flips `visibility: hidden` off and lets drag/connect fire.
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  // Sync external `states` → internal node store. Merges by id so that
+  // existing node objects (and their measured dimensions) are preserved
+  // when only a position/data field changes.
+  useEffect(() => {
+    setNodes(currentNodes => {
+      const byId = new Map(currentNodes.map(n => [n.id, n]));
+      return states.map(s => {
+        const existing = byId.get(s.id);
+        const nextType = nodeTypeForState(s);
+        const nextData = {
           state: s,
           allStates: states,
           onChange: handleStateChange,
           onDelete: handleStateDelete,
-        },
-        draggable: !readOnly,
-      })),
-    // handleStateChange + handleStateDelete are stable (ref-based); omitted from deps.
-    [states, readOnly],
-  );
-
-  const edges: Edge[] = useMemo(
-    () =>
-      transitions.map(t => ({
-        id: t.id,
-        source: t.fromStateId,
-        target: t.toStateId,
-        // Pass sourceHandle so xyflow renders from the correct parallel branch anchor
-        sourceHandle: t.sourceHandleId ?? undefined,
-        type: 'workflowTransition',
-        data: {
-          transition: t,
-          onChange: handleTransitionChange,
-          onDelete: handleTransitionDelete,
-        },
-        markerEnd: { type: MarkerType.ArrowClosed, color: CANVAS_TOKENS.edge },
-      })),
-    // handleTransitionChange + handleTransitionDelete are stable (ref-based); omitted from deps.
-    [transitions],
-  );
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      if (readOnly) return;
-      const nextNodes = applyNodeChanges(changes, nodes);
-      const nextStates = nextNodes.map(n => {
-        const s = states.find(st => st.id === n.id)!;
-        return { ...s, positionX: n.position.x, positionY: n.position.y };
+        };
+        if (existing) {
+          return {
+            ...existing,
+            type: nextType,
+            position:
+              existing.position.x === s.positionX &&
+              existing.position.y === s.positionY
+                ? existing.position
+                : { x: s.positionX, y: s.positionY },
+            data: nextData,
+            draggable: !readOnly,
+          };
+        }
+        return {
+          id: s.id,
+          type: nextType,
+          position: { x: s.positionX, y: s.positionY },
+          data: nextData,
+          draggable: !readOnly,
+        };
       });
-      onChange(nextStates, transitions);
-    },
-    [nodes, states, transitions, onChange, readOnly],
-  );
+    });
+  }, [states, readOnly, setNodes, handleStateChange, handleStateDelete]);
 
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      if (readOnly) return;
-      const nextEdges = applyEdgeChanges(changes, edges);
-      // Build O(1) lookup map so we never silently drop transitions on edge changes.
-      const transitionMap = new Map<string, WorkflowTransitionDto>(
-        transitions.map(t => [t.id, t]),
+  useEffect(() => {
+    setEdges(() =>
+      buildEdges(transitions, handleTransitionChange, handleTransitionDelete),
+    );
+  }, [transitions, setEdges, handleTransitionChange, handleTransitionDelete]);
+
+  // Emit final position to parent on drag-stop (not during every frame).
+  const handleNodeDragStop = useCallback(
+    (_event: unknown, _node: Node, draggedNodes: Node[]) => {
+      if (readOnlyRef.current) return;
+      const currStates = statesRef.current;
+      const byId = new Map(
+        draggedNodes.map(n => [n.id, n.position] as const),
       );
-      const nextTransitions = nextEdges.reduce<WorkflowTransitionDto[]>(
-        (acc, e) => {
-          const t = transitionMap.get(e.id);
-          if (t) {
-            acc.push(t);
-          } else {
-            logger.warn(`Edge ${e.id} not found in transitions map — skipping`);
-          }
-          return acc;
-        },
-        [],
-      );
-      onChange(states, nextTransitions);
+      const nextStates = currStates.map(s => {
+        const p = byId.get(s.id);
+        return p
+          ? { ...s, positionX: Math.round(p.x), positionY: Math.round(p.y) }
+          : s;
+      });
+      onChangeRef.current(nextStates, transitionsRef.current);
     },
-    [edges, states, transitions, onChange, readOnly],
+    [],
   );
 
-  const onConnect = useCallback(
-    (c: Connection) => {
-      if (readOnly || !c.source || !c.target) return;
-      const newTransition: WorkflowTransitionDto = {
-        id: crypto.randomUUID(),
-        fromStateId: c.source,
-        toStateId: c.target,
-        triggerType: TriggerType.Manual,
-        triggerSpec: null,
-        guardExpression: null,
-        actions: [],
-        // Capture which handle was used — important for Parallel state branch wiring
-        sourceHandleId: c.sourceHandle ?? null,
-      } satisfies WorkflowTransitionDto;
-      onChange(states, [...transitions, newTransition]);
-    },
-    [readOnly, states, transitions, onChange],
-  );
+  const handleNodesDelete = useCallback((deleted: Node[]) => {
+    if (readOnlyRef.current) return;
+    const ids = new Set(deleted.map(n => n.id));
+    const currStates = statesRef.current;
+    const currTransitions = transitionsRef.current;
+    const nextStates = currStates.filter(s => !ids.has(s.id));
+    const nextTransitions = currTransitions.filter(
+      t => !ids.has(t.fromStateId) && !ids.has(t.toStateId),
+    );
+    onChangeRef.current(nextStates, nextTransitions);
+  }, []);
 
-  // REVIEW: Using ref for onAddState to keep handleDrop stable across re-renders
-  const onAddStateRef = useRef(onAddState);
-  onAddStateRef.current = onAddState;
+  const handleEdgesDelete = useCallback((deleted: Edge[]) => {
+    if (readOnlyRef.current) return;
+    const ids = new Set(deleted.map(e => e.id));
+    const currStates = statesRef.current;
+    const currTransitions = transitionsRef.current;
+    const nextTransitions = currTransitions.filter(t => !ids.has(t.id));
+    onChangeRef.current(currStates, nextTransitions);
+  }, []);
+
+  const onConnect = useCallback((c: Connection) => {
+    if (readOnlyRef.current || !c.source || !c.target) return;
+    const newTransition: WorkflowTransitionDto = {
+      id: crypto.randomUUID(),
+      fromStateId: c.source,
+      toStateId: c.target,
+      triggerType: TriggerType.Manual,
+      triggerSpec: null,
+      guardExpression: null,
+      actions: [],
+      sourceHandleId: c.sourceHandle ?? null,
+    } satisfies WorkflowTransitionDto;
+    onChangeRef.current(statesRef.current, [
+      ...transitionsRef.current,
+      newTransition,
+    ]);
+  }, []);
 
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
@@ -286,12 +302,12 @@ function WorkflowCanvasInner({
           category: payload.category,
           type: payload.stateType,
           sortOrder: 99,
-          positionX: position.x,
-          positionY: position.y,
+          positionX: Math.round(position.x),
+          positionY: Math.round(position.y),
           metadata: {},
           parallelSpec: null,
         });
-      } catch (err) {
+      } catch {
         logger.warn('workflow_canvas_drop_parse_error');
       }
     },
@@ -316,6 +332,9 @@ function WorkflowCanvasInner({
         edgeTypes={EDGE_TYPES}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStop={handleNodeDragStop}
+        onNodesDelete={handleNodesDelete}
+        onEdgesDelete={handleEdgesDelete}
         onConnect={onConnect}
         onNodeClick={(_event, n) => onSelectState?.(n.id)}
         onEdgeClick={(_event, e) => onSelectTransition?.(e.id)}
@@ -323,12 +342,10 @@ function WorkflowCanvasInner({
           onSelectState?.(null);
           onSelectTransition?.(null);
         }}
-        // Belt + suspenders: per-node `draggable` should be sufficient, but
-        // explicitly flipping canvas-level nodesDraggable ensures xyflow v12
-        // disables drag-to-move deterministically when in read-only mode.
         nodesDraggable={!readOnly}
         nodesConnectable={!readOnly}
         edgesReconnectable={!readOnly}
+        deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
         fitView
         defaultEdgeOptions={{ type: 'workflowTransition' }}
         proOptions={{ hideAttribution: true }}
