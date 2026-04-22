@@ -1,4 +1,5 @@
 import { BaseButton } from '@brainforgeau/components';
+import { useLogger } from '@brainforgeau/observability';
 import { Card, Chip, Spinner, addToast } from '@heroui/react';
 import { useState } from 'react';
 import { ConfirmActionModal } from '../components/ConfirmActionModal';
@@ -10,6 +11,7 @@ import {
 export function RuleMigrationReportPage() {
   const { data, isLoading } = useRuleMigrationReport();
   const apply = useApplyRuleMigration();
+  const logger = useLogger('RuleMigrationReportPage');
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
 
   if (isLoading) {
@@ -28,6 +30,11 @@ export function RuleMigrationReportPage() {
         severity: 'success',
       });
     } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'rule_migration_dry_run_failed' });
+      } else {
+        logger.error('rule_migration_dry_run_failed');
+      }
       addToast({
         title: 'Dry run failed',
         description: err instanceof Error ? err.message : 'Unknown error',
@@ -44,6 +51,11 @@ export function RuleMigrationReportPage() {
         severity: 'success',
       });
     } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'rule_migration_apply_failed' });
+      } else {
+        logger.error('rule_migration_apply_failed');
+      }
       addToast({
         title: 'Migration failed',
         description: err instanceof Error ? err.message : 'Unknown error',

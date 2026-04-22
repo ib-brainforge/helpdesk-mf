@@ -1,3 +1,4 @@
+import { useLogger } from '@brainforgeau/observability';
 import { Spinner, addToast } from '@heroui/react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { WorkflowEditor } from '../components/WorkflowEditor';
@@ -14,6 +15,7 @@ export function PrincipalWorkflowEditorPage() {
     id: string;
   }>();
   const navigate = useNavigate();
+  const logger = useLogger('PrincipalWorkflowEditorPage');
   const { data, isLoading, error } = usePrincipalWorkflowDefinition(
     principalId ?? '',
     id ?? null,
@@ -73,6 +75,13 @@ export function PrincipalWorkflowEditorPage() {
       });
       addToast({ title: 'Draft saved', severity: 'success' });
     } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, {
+          context: 'principal_workflow_editor_save_failed',
+        });
+      } else {
+        logger.error('principal_workflow_editor_save_failed');
+      }
       addToast({
         title: 'Save failed',
         description: err instanceof Error ? err.message : 'Unknown error',
@@ -93,6 +102,13 @@ export function PrincipalWorkflowEditorPage() {
       addToast({ title: 'Workflow published', severity: 'success' });
       navigate(`/principal/${principalId}/workflows/${id}`);
     } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, {
+          context: 'principal_workflow_editor_publish_failed',
+        });
+      } else {
+        logger.error('principal_workflow_editor_publish_failed');
+      }
       addToast({
         title: 'Publish failed',
         description: err instanceof Error ? err.message : 'Unknown error',

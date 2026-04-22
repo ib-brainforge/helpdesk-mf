@@ -1,3 +1,4 @@
+import { useLogger } from '@brainforgeau/observability';
 import { Spinner, addToast } from '@heroui/react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { WorkflowEditor } from '../components/WorkflowEditor';
@@ -11,6 +12,7 @@ import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 export function WorkflowEditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const logger = useLogger('WorkflowEditorPage');
   const { data, isLoading, error } = useWorkflowDefinition(id ?? null);
   const updateMut = useUpdateDraft();
   const publishMut = usePublishDraft();
@@ -65,6 +67,11 @@ export function WorkflowEditorPage() {
       });
       addToast({ title: 'Draft saved', severity: 'success' });
     } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'workflow_editor_save_failed' });
+      } else {
+        logger.error('workflow_editor_save_failed');
+      }
       addToast({
         title: 'Save failed',
         description: err instanceof Error ? err.message : 'Unknown error',
@@ -83,6 +90,11 @@ export function WorkflowEditorPage() {
       addToast({ title: 'Workflow published', severity: 'success' });
       navigate(`/configuration/workflows/${id}`);
     } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'workflow_editor_publish_failed' });
+      } else {
+        logger.error('workflow_editor_publish_failed');
+      }
       addToast({
         title: 'Publish failed',
         description: err instanceof Error ? err.message : 'Unknown error',

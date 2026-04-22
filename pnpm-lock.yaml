@@ -12,8 +12,8 @@ importers:
         specifier: 0.2.201-develop.5ea4845
         version: 0.2.201-develop.5ea4845(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
       '@brainforgeau/helpdesk-client':
-        specifier: 0.1.64-develop.7ded056
-        version: 0.1.64-develop.7ded056
+        specifier: 0.1.71-develop.23e452b
+        version: 0.1.71-develop.23e452b
       '@brainforgeau/identity-management-client':
         specifier: 0.1.408-develop.d9d4845
         version: 0.1.408-develop.d9d4845
@@ -915,8 +915,8 @@ packages:
       react-dom: 18.3.1
       react-error-boundary: ^6.0.0
 
-  '@brainforgeau/helpdesk-client@0.1.64-develop.7ded056':
-    resolution: {integrity: sha512-Ihcl4UdfAk83GlkKp4xDu6x6XhjBJ2vKjDc/YnYqKf41H29VmENKPhYdJeEAIx7CH6hnpUf0407e6dfrMmuUXg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.1.64-develop.7ded056/cb778044d51b9a39c0da413f1c13a39369a0492f}
+  '@brainforgeau/helpdesk-client@0.1.71-develop.23e452b':
+    resolution: {integrity: sha512-smSPJteCTDaf2IltQ3ggXBUec51TbsV6dcsGq89LKAC8tivH4Dt+jA7huuchPuxQaDo/gKiO+3w+uF6X5+jgyQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.1.71-develop.23e452b/81d1475ea8e51ce69f7f1f22fd9513773d538b40}
     engines: {node: '>=18.0.0'}
 
   '@brainforgeau/identity-management-client@0.1.408-develop.d9d4845':
@@ -9270,7 +9270,7 @@ snapshots:
     transitivePeerDependencies:
       - tailwindcss
 
-  '@brainforgeau/helpdesk-client@0.1.64-develop.7ded056':
+  '@brainforgeau/helpdesk-client@0.1.71-develop.23e452b':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:

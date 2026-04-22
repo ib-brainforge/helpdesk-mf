@@ -578,19 +578,17 @@ class MockClient implements IWorkflowApiClient {
       ownerScope = 'tenant:11111111111111111111111111111111';
     }
 
-    // Clone states and transitions from the source's latest published version
+    // Clone states and transitions from the source's latest published version.
+    // Build the old→new ID map inline during clone to avoid index-pairing fragility.
     const sourceVersion = source.latestVersion ?? source.draftVersion;
-    const clonedStates = sourceVersion
-      ? sourceVersion.states.map(s => ({ ...s, id: crypto.randomUUID() }))
-      : [];
-
-    // Build old→new ID map to rewrite transition references
     const stateIdMap = new Map<string, string>();
-    if (sourceVersion) {
-      sourceVersion.states.forEach((s, i) => {
-        stateIdMap.set(s.id, clonedStates[i].id);
-      });
-    }
+    const clonedStates = sourceVersion
+      ? sourceVersion.states.map(s => {
+          const newId = crypto.randomUUID();
+          stateIdMap.set(s.id, newId);
+          return { ...s, id: newId };
+        })
+      : [];
 
     const clonedTransitions = sourceVersion
       ? sourceVersion.transitions.map(t => ({

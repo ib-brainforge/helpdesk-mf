@@ -1,7 +1,12 @@
-// TimerTriggerEditor — duration picker + business-hours toggle for Timer trigger transitions.
+// TimerTriggerEditor — duration picker + business-hours dropdown for Timer trigger transitions.
 // Cron picker library deferred to Plan 7; this uses a friendly input approach.
 
-import { BaseInput } from '@brainforgeau/components';
+import { useBusinessHoursSchedules } from '@/hooks/useBusinessHoursSchedules';
+import {
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+} from '@brainforgeau/components';
 import { Switch } from '@heroui/react';
 import { useMemo } from 'react';
 import type { TimerTriggerSpecDto } from '../types';
@@ -12,13 +17,17 @@ export interface TimerTriggerEditorProps {
   onChange: (spec: TimerTriggerSpecDto | null) => void;
 }
 
-/** Rough human-readable approximation of an ISO-8601 duration */
+/** Rough human-readable approximation of an ISO-8601 duration.
+ * Anchors hour/minute extraction to the T portion to avoid matching
+ * month-designator M (e.g. P1M must not match as minutes).
+ */
 function describeIso8601Duration(duration: string): string {
   if (!duration) return '';
   // Match common patterns: PT1H30M, P7D, PT2H, etc.
   const dayMatch = duration.match(/(\d+)D/i);
-  const hourMatch = duration.match(/(\d+)H/i);
-  const minMatch = duration.match(/(\d+)M(?!O)/i); // M not followed by O (month)
+  // REVIEW: Anchored to T portion — avoids matching P1M (months) as minutes.
+  const hourMatch = duration.match(/T.*?(\d+)H/);
+  const minMatch = duration.match(/T.*?(\d+)M/);
 
   const parts: string[] = [];
   if (dayMatch)
@@ -39,6 +48,10 @@ export function TimerTriggerEditor({
   const spec = value as Partial<TimerTriggerSpecDto> | null | undefined;
   const duration = spec?.duration ?? '';
   const useBusinessHours = spec?.useBusinessHours ?? false;
+  const businessHoursScheduleId = spec?.businessHoursScheduleId;
+
+  const { data: schedules, isLoading: schedulesLoading } =
+    useBusinessHoursSchedules();
 
   const preview = useMemo(() => {
     if (!duration) return '';
@@ -49,6 +62,11 @@ export function TimerTriggerEditor({
       : `${base} (calendar time)`;
   }, [duration, useBusinessHours]);
 
+  const selectedSchedule = useMemo(
+    () => schedules?.find(s => s.id === businessHoursScheduleId) ?? null,
+    [schedules, businessHoursScheduleId],
+  );
+
   function update(patch: Partial<TimerTriggerSpecDto>) {
     const next: TimerTriggerSpecDto = {
       duration: spec?.duration ?? '',
@@ -57,6 +75,13 @@ export function TimerTriggerEditor({
       ...patch,
     };
     onChange(next);
+  }
+
+  function handleScheduleChange(keys: {
+    currentKey?: string | number | bigint | null;
+  }) {
+    const id = keys.currentKey != null ? String(keys.currentKey) : undefined;
+    update({ businessHoursScheduleId: id, useBusinessHours: true });
   }
 
   return (
@@ -88,14 +113,39 @@ export function TimerTriggerEditor({
           <span className="text-sm text-gray-700">Use business hours</span>
           <p className="text-xs text-gray-400 mt-0.5">
             Timer counts only during configured business hours.
-            {useBusinessHours && (
-              <span className="block text-gray-400 mt-0.5">
-                Business hours schedule — wired in Plan 7.
-              </span>
-            )}
           </p>
         </div>
       </div>
+
+      {useBusinessHours && (
+        <div className="space-y-1">
+          <BaseSelect
+            label="Business hours schedule"
+            placeholder={
+              schedulesLoading ? 'Loading schedules…' : 'Select a schedule'
+            }
+            selectedKeys={
+              businessHoursScheduleId ? [businessHoursScheduleId] : []
+            }
+            onSelectionChange={handleScheduleChange}
+            isDisabled={readOnly || schedulesLoading}
+            labelPlacement="outside"
+            size="sm"
+            aria-label="Select business hours schedule"
+          >
+            {(schedules ?? []).map(s => (
+              <BaseSelectItem key={s.id ?? ''}>
+                {s.name ?? s.id ?? ''}
+              </BaseSelectItem>
+            ))}
+          </BaseSelect>
+          {selectedSchedule?.timeWindowSummary && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              {selectedSchedule.timeWindowSummary}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
