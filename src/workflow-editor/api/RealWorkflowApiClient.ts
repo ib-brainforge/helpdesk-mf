@@ -87,14 +87,18 @@ interface BackendWorkflowVersionDto extends BackendVersionSummaryDto {
   transitions: BackendWorkflowTransitionDto[];
 }
 
+// Backend returns ALL versions (each with full states+transitions) in a single
+// `versions` array. The frontend derives `latestVersion` + `draftVersion` from it
+// (see toDefinitionDto). Matches Helpdesk.Application.Workflows.Queries.GetWorkflowDefinition.WorkflowDefinitionDto.
 interface BackendWorkflowDefinitionDto {
   id: string;
   name: string;
   description: string | null;
+  subjectType: string;
   ownerScope: string;
-  latestVersion: BackendWorkflowVersionDto | null;
-  draftVersion: BackendWorkflowVersionDto | null;
-  versions: BackendVersionSummaryDto[];
+  isActive: boolean;
+  isDefault: boolean;
+  versions: BackendWorkflowVersionDto[];
 }
 
 interface BackendListResponse {
@@ -192,14 +196,22 @@ function toVersionDto(
 function toDefinitionDto(
   d: BackendWorkflowDefinitionDto,
 ): WorkflowDefinitionDto {
+  const versions = d.versions ?? [];
+  // Derive split: latest published (highest versionNumber with Published status)
+  // and draft (should be at most one per definition per backend invariant).
+  const publishedVersions = versions.filter(v => v.status === 'Published');
+  const latestVersion = publishedVersions.length > 0
+    ? publishedVersions.reduce((a, b) => (a.versionNumber > b.versionNumber ? a : b))
+    : null;
+  const draftVersion = versions.find(v => v.status === 'Draft') ?? null;
   return {
     id: d.id,
     name: d.name,
     description: d.description ?? null,
     ownerScope: d.ownerScope as WorkflowDefinitionDto['ownerScope'],
-    latestVersion: d.latestVersion ? toVersionDto(d.latestVersion) : null,
-    draftVersion: d.draftVersion ? toVersionDto(d.draftVersion) : null,
-    versions: (d.versions ?? []).map(toVersionSummaryDto),
+    latestVersion: latestVersion ? toVersionDto(latestVersion) : null,
+    draftVersion: draftVersion ? toVersionDto(draftVersion) : null,
+    versions: versions.map(toVersionSummaryDto),
   };
 }
 
