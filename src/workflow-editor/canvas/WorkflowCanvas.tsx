@@ -16,7 +16,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLogger } from '@brainforgeau/observability';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 import { StateType, TriggerType } from '../types/enums';
@@ -82,55 +82,72 @@ function WorkflowCanvasInner({
 }: WorkflowCanvasProps) {
   const logger = useLogger('WorkflowCanvas');
 
-  // Stable callbacks so memoised nodes/edges can reference them without re-creating
+  // Keep refs for latest states/transitions so callbacks stay stable across renders.
+  // This is critical: if `handleStateChange` changes on every state update, the
+  // `nodes` useMemo produces a new array and each node's `data` object is a new
+  // reference — which makes xyflow's internal drag tracker lose track of node
+  // identity and fall back to pane drag (= whole canvas moves instead of node).
+  const statesRef = useRef(states);
+  const transitionsRef = useRef(transitions);
+  const readOnlyRef = useRef(readOnly);
+  const onChangeRef = useRef(onChange);
+  statesRef.current = states;
+  transitionsRef.current = transitions;
+  readOnlyRef.current = readOnly;
+  onChangeRef.current = onChange;
+
+  // STABLE callbacks — empty dep array; read latest via refs.
   const handleStateChange = useCallback(
     (nodeId: string, next: WorkflowStateDto) => {
-      if (readOnly) return;
-      // If type changed away from Parallel, clear sourceHandleId on related transitions
-      const prev = states.find(s => s.id === nodeId);
+      if (readOnlyRef.current) return;
+      const currStates = statesRef.current;
+      const currTransitions = transitionsRef.current;
+      const prev = currStates.find(s => s.id === nodeId);
       const wasParallel = prev?.type === StateType.Parallel;
       const isNowParallel = next.type === StateType.Parallel;
-      let nextTransitions = transitions;
+      let nextTransitions = currTransitions;
       if (wasParallel && !isNowParallel) {
-        nextTransitions = transitions.map(t =>
+        nextTransitions = currTransitions.map(t =>
           t.fromStateId === nodeId ? { ...t, sourceHandleId: null } : t,
         );
       }
-      const nextStates = states.map(s => (s.id === nodeId ? next : s));
-      onChange(nextStates, nextTransitions);
+      const nextStates = currStates.map(s => (s.id === nodeId ? next : s));
+      onChangeRef.current(nextStates, nextTransitions);
     },
-    [readOnly, states, transitions, onChange],
+    [],
   );
 
-  const handleStateDelete = useCallback(
-    (nodeId: string) => {
-      if (readOnly) return;
-      const nextStates = states.filter(s => s.id !== nodeId);
-      const nextTransitions = transitions.filter(
-        t => t.fromStateId !== nodeId && t.toStateId !== nodeId,
-      );
-      onChange(nextStates, nextTransitions);
-    },
-    [readOnly, states, transitions, onChange],
-  );
+  const handleStateDelete = useCallback((nodeId: string) => {
+    if (readOnlyRef.current) return;
+    const currStates = statesRef.current;
+    const currTransitions = transitionsRef.current;
+    const nextStates = currStates.filter(s => s.id !== nodeId);
+    const nextTransitions = currTransitions.filter(
+      t => t.fromStateId !== nodeId && t.toStateId !== nodeId,
+    );
+    onChangeRef.current(nextStates, nextTransitions);
+  }, []);
 
   const handleTransitionChange = useCallback(
     (edgeId: string, next: WorkflowTransitionDto) => {
-      if (readOnly) return;
-      const nextTransitions = transitions.map(t => (t.id === edgeId ? next : t));
-      onChange(states, nextTransitions);
+      if (readOnlyRef.current) return;
+      const currStates = statesRef.current;
+      const currTransitions = transitionsRef.current;
+      const nextTransitions = currTransitions.map(t =>
+        t.id === edgeId ? next : t,
+      );
+      onChangeRef.current(currStates, nextTransitions);
     },
-    [readOnly, states, transitions, onChange],
+    [],
   );
 
-  const handleTransitionDelete = useCallback(
-    (edgeId: string) => {
-      if (readOnly) return;
-      const nextTransitions = transitions.filter(t => t.id !== edgeId);
-      onChange(states, nextTransitions);
-    },
-    [readOnly, states, transitions, onChange],
-  );
+  const handleTransitionDelete = useCallback((edgeId: string) => {
+    if (readOnlyRef.current) return;
+    const currStates = statesRef.current;
+    const currTransitions = transitionsRef.current;
+    const nextTransitions = currTransitions.filter(t => t.id !== edgeId);
+    onChangeRef.current(currStates, nextTransitions);
+  }, []);
 
   const nodes: Node[] = useMemo(
     () =>
@@ -146,7 +163,8 @@ function WorkflowCanvasInner({
         },
         draggable: !readOnly,
       })),
-    [states, handleStateChange, handleStateDelete, readOnly],
+    // handleStateChange + handleStateDelete are stable (ref-based); omitted from deps.
+    [states, readOnly],
   );
 
   const edges: Edge[] = useMemo(
@@ -165,7 +183,8 @@ function WorkflowCanvasInner({
         },
         markerEnd: { type: MarkerType.ArrowClosed, color: CANVAS_TOKENS.edge },
       })),
-    [transitions, handleTransitionChange, handleTransitionDelete],
+    // handleTransitionChange + handleTransitionDelete are stable (ref-based); omitted from deps.
+    [transitions],
   );
 
   const onNodesChange = useCallback(
