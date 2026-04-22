@@ -40,6 +40,7 @@
     "@brainforgeau/helpdesk-client": "0.1.71-develop.23e452b",
     "@brainforgeau/identity-management-client": "0.1.408-develop.d9d4845",
     "@brainforgeau/observability": "0.2.30-develop.5ea4845",
+    "@brainforgeau/rules-ui": "0.2.7-develop.73b1fb1",
     "@brainforgeau/security": "0.2.243-develop.46d4c9e",
     "@brainforgeau/theme": "0.2.44-develop.5ea4845",
     "@fontsource/inter": "^5.2.6",

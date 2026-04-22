@@ -20,6 +20,9 @@ importers:
       '@brainforgeau/observability':
         specifier: 0.2.30-develop.5ea4845
         version: 0.2.30-develop.5ea4845(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@brainforgeau/rules-ui':
+        specifier: 0.2.7-develop.73b1fb1
+        version: 0.2.7-develop.73b1fb1(tljoik3bviq2rsx33pdv7umlky)
       '@brainforgeau/security':
         specifier: 0.2.243-develop.46d4c9e
         version: 0.2.243-develop.46d4c9e(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
@@ -926,6 +929,16 @@ packages:
   '@brainforgeau/observability@0.2.30-develop.5ea4845':
     resolution: {integrity: sha512-RvV2/meJHpVVJM386zo5cBKSuiPYCQttmSXb9sU4Jtrczidr5JExDUUZeyLYo1rCzLK5DkV232/f9jgKiNGt3Q==, tarball: https://npm.pkg.github.com/download/@brainforgeau/observability/0.2.30-develop.5ea4845/c98730183ea9747b2ce1b098587a7aecda5a47e9}
     peerDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1
+
+  '@brainforgeau/rules-ui@0.2.7-develop.73b1fb1':
+    resolution: {integrity: sha512-TCBPhna6gqcrQAgwoKfCP1c2ciTQf6FEGErtzJe+H0+Pw+Dz45mYTHE8YaSPLFbPKyFSV5zpF7rgfQqMariXNw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/rules-ui/0.2.7-develop.73b1fb1/c107b6dfb5b52e769ea5e0df155b5f26cd59122b}
+    peerDependencies:
+      '@brainforgeau/components': '*'
+      '@heroui/react': 2.8.2
+      '@tanstack/react-table': ^8.21.3
+      '@xyflow/react': ^12.10.0
       react: 18.3.1
       react-dom: 18.3.1
 
@@ -9298,6 +9311,15 @@ snapshots:
       web-vitals: 4.2.4
     transitivePeerDependencies:
       - supports-color
+
+  '@brainforgeau/rules-ui@0.2.7-develop.73b1fb1(tljoik3bviq2rsx33pdv7umlky)':
+    dependencies:
+      '@brainforgeau/components': 0.2.201-develop.5ea4845(@heroicons/react@2.2.0(react@18.3.1))(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(@tanstack/react-table@8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-error-boundary@6.1.0(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
+      '@heroui/react': 2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
+      '@tanstack/react-table': 8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@xyflow/react': 12.10.2(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   '@brainforgeau/security@0.2.243-develop.46d4c9e(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
     dependencies:

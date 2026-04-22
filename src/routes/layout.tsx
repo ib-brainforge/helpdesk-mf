@@ -87,6 +87,13 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
+        label: 'Automations',
+        href: '/configuration/automations',
+        icon: 'cpu-chip',
+        testId: 'nav-configuration-automations',
+        requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
         label: 'Workflows',
         href: '/configuration/workflows',
         icon: 'arrows-right-left',
