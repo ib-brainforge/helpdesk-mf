@@ -114,8 +114,7 @@ export function StateInspector({
         selectedKeys={new Set([String(state.category)])}
         onSelectionChange={keys => {
           const first = Array.from(keys)[0];
-          if (first != null)
-            update({ category: Number(first) as StateCategory });
+          if (first != null) update({ category: first as StateCategory });
         }}
         isDisabled={readOnly}
         labelPlacement="outside"
@@ -130,7 +129,7 @@ export function StateInspector({
         selectedKeys={new Set([String(state.type)])}
         onSelectionChange={keys => {
           const first = Array.from(keys)[0];
-          if (first != null) handleTypeChange(Number(first) as StateType);
+          if (first != null) handleTypeChange(first as StateType);
         }}
         isDisabled={readOnly}
         labelPlacement="outside"

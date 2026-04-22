@@ -99,7 +99,7 @@ export function WorkflowToolbar({
       name,
       slug,
       description: null,
-      category: Number(newStateCategory) as StateCategory,
+      category: newStateCategory as StateCategory,
       type: StateType.Normal,
       sortOrder: 99,
       metadata: {},
@@ -181,7 +181,7 @@ export function WorkflowToolbar({
         onOpenChange={open => !open && setAddStateOpen(false)}
       >
         <BaseModalContent>
-          {() => (
+          {onClose => (
             <>
               <BaseModalHeader>Add New State</BaseModalHeader>
               <BaseModalBody>
@@ -210,10 +210,7 @@ export function WorkflowToolbar({
                 </div>
               </BaseModalBody>
               <BaseModalFooter>
-                <BaseButton
-                  variant="light"
-                  onPress={() => setAddStateOpen(false)}
-                >
+                <BaseButton variant="light" onPress={onClose}>
                   Cancel
                 </BaseButton>
                 <BaseButton

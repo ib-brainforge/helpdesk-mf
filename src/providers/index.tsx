@@ -1,19 +1,36 @@
 import { ObservabilityProvider } from '@/observability';
-import { configureContextTokenRefresh } from '@/state/authorizedAxios';
-import { getAppConfig } from '@/state/config';
-import { WorkflowApiProvider } from '@/workflow-editor';
-import { buildWorkflowApiClient } from '@/workflow-editor/state/clientSwitch';
+import {
+  authorizedAxios,
+  configureContextTokenRefresh,
+} from '@/state/authorizedAxios';
+import { configAtom, getAppConfig } from '@/state/config';
+import { WorkflowApiProvider, buildWorkflowApiClient } from '@/workflow-editor';
 import { ErrorBoundary } from '@brainforgeau/components';
+import { Configuration } from '@brainforgeau/helpdesk-client';
+import type { RuntimeConfig } from '@brainforgeau/security';
+import { getDefaultStore } from 'jotai';
 import React, { useEffect } from 'react';
 import { AuthProvider } from './AuthProvider';
 import { HeroProvider } from './HeroProvider';
 import QueryProvider from './QueryProvider';
 
+// Resolve the helpdesk API base URL at module load time (same pattern as
+// createHelpdeskApiClient in helpdeskApiClient.ts).
+const store = getDefaultStore();
+const runtimeConfig = store.get(configAtom) as RuntimeConfig | undefined;
+const helpdeskBaseUrl = runtimeConfig?.api?.baseUrl ?? '';
+
 // Module-scoped client — persists across renders, survives HMR navigation.
-// When USE_REAL_CLIENT = true in clientSwitch.ts, pass real API instances here
-// e.g.: buildWorkflowApiClient(new WorkflowsApi(helpdeskAxios))
-// USE_REAL_CLIENT=false → mock is built directly; pass real API instance here when flipping the flag.
-const workflowApiClient = buildWorkflowApiClient(undefined);
+// USE_REAL_CLIENT=true → real WorkflowsApi backed by authorizedAxios.
+// USE_REAL_CLIENT=false → in-memory mock (set in clientSwitch.ts).
+const workflowApiClient = buildWorkflowApiClient(
+  helpdeskBaseUrl
+    ? {
+        configuration: new Configuration({ basePath: helpdeskBaseUrl }),
+        axios: authorizedAxios,
+      }
+    : undefined,
+);
 
 export function Providers({
   children,

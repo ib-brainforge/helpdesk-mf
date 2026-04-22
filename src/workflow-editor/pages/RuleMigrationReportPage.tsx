@@ -1,5 +1,7 @@
 import { BaseButton } from '@brainforgeau/components';
 import { Card, Chip, Spinner, addToast } from '@heroui/react';
+import { useState } from 'react';
+import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import {
   useApplyRuleMigration,
   useRuleMigrationReport,
@@ -8,6 +10,7 @@ import {
 export function RuleMigrationReportPage() {
   const { data, isLoading } = useRuleMigrationReport();
   const apply = useApplyRuleMigration();
+  const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -75,7 +78,7 @@ export function RuleMigrationReportPage() {
             color="primary"
             isDisabled={!hasRules || apply.isPending}
             isLoading={apply.isPending}
-            onPress={handleApply}
+            onPress={() => setApplyConfirmOpen(true)}
           >
             Apply Migration
           </BaseButton>
@@ -157,6 +160,18 @@ export function RuleMigrationReportPage() {
           </Card>
         ))}
       </div>
+
+      {/* Apply Migration confirm modal */}
+      <ConfirmActionModal
+        isOpen={applyConfirmOpen}
+        onOpenChange={open => !open && setApplyConfirmOpen(false)}
+        title="Apply legacy rule migration?"
+        description={`This will convert ${data?.length ?? 0} legacy rule(s) to workflow-aware types. The change is irreversible.`}
+        confirmLabel="Apply"
+        destructive
+        isLoading={apply.isPending}
+        onConfirm={handleApply}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   applyNodeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useLogger } from '@brainforgeau/observability';
 import { useCallback, useMemo } from 'react';
 import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
@@ -79,6 +80,7 @@ function WorkflowCanvasInner({
   onSelectTransition,
   readOnly,
 }: WorkflowCanvasProps) {
+  const logger = useLogger('WorkflowCanvas');
   const nodes: Node[] = useMemo(
     () =>
       states.map(s => ({
@@ -135,9 +137,7 @@ function WorkflowCanvasInner({
           if (t) {
             acc.push(t);
           } else {
-            console.warn(
-              `[WorkflowCanvas] Edge ${e.id} not found in transitions map — skipping`,
-            );
+            logger.warn(`Edge ${e.id} not found in transitions map — skipping`);
           }
           return acc;
         },
@@ -170,7 +170,7 @@ function WorkflowCanvasInner({
   );
 
   return (
-    <div className="w-full h-full" style={{ minHeight: '500px' }}>
+    <div className="w-full h-full min-h-[500px]">
       <ReactFlow
         nodes={nodes}
         edges={edges}

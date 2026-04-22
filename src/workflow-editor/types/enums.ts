@@ -1,26 +1,26 @@
 export enum StateCategory {
-  New = 1,
-  Open = 2,
-  Pending = 3,
-  Resolved = 4,
-  Closed = 5,
+  New = 'New',
+  Open = 'Open',
+  Pending = 'Pending',
+  Resolved = 'Resolved',
+  Closed = 'Closed',
 }
 
 export enum StateType {
-  Initial = 1,
-  Normal = 2,
-  Parallel = 3,
-  Terminal = 4,
+  Initial = 'Initial',
+  Normal = 'Normal',
+  Parallel = 'Parallel',
+  Terminal = 'Terminal',
 }
 
 export enum TriggerType {
-  Manual = 1,
-  Event = 2,
-  Timer = 3,
+  Manual = 'Manual',
+  Event = 'Event',
+  Timer = 'Timer',
 }
 
 export enum VersionStatus {
-  Draft = 1,
-  Published = 2,
-  Archived = 3,
+  Draft = 'Draft',
+  Published = 'Published',
+  Archived = 'Archived',
 }

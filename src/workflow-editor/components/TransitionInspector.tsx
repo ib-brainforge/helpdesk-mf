@@ -4,8 +4,10 @@ import {
   BaseSelectItem,
   BaseTextarea,
 } from '@brainforgeau/components';
-import type { WorkflowTransitionDto } from '../types';
+import type { TimerTriggerSpecDto, WorkflowTransitionDto } from '../types';
 import { TriggerType } from '../types/enums';
+import { ApprovalStepEditor } from './ApprovalStepEditor';
+import { TimerTriggerEditor } from './TimerTriggerEditor';
 
 interface TransitionInspectorProps {
   transition: WorkflowTransitionDto;
@@ -59,7 +61,7 @@ export function TransitionInspector({
           const first = Array.from(keys)[0];
           if (first != null) {
             update({
-              triggerType: Number(first) as TriggerType,
+              triggerType: first as TriggerType,
               triggerSpec: null,
             });
           }
@@ -85,16 +87,14 @@ export function TransitionInspector({
         />
       )}
 
-      {/* Timer duration — shown for Timer trigger */}
+      {/* Timer trigger editor — shown for Timer trigger */}
       {transition.triggerType === TriggerType.Timer && (
-        <BaseInput
-          label="Duration (ISO 8601)"
-          value={(transition.triggerSpec?.duration as string) ?? ''}
-          onValueChange={val => update({ triggerSpec: { duration: val } })}
-          isReadOnly={readOnly}
-          labelPlacement="outside"
-          size="sm"
-          placeholder="e.g. P7D (7 days), PT1H (1 hour)"
+        <TimerTriggerEditor
+          value={transition.triggerSpec as TimerTriggerSpecDto | null}
+          readOnly={readOnly}
+          onChange={spec =>
+            update({ triggerSpec: spec as Record<string, unknown> | null })
+          }
         />
       )}
 
@@ -113,6 +113,15 @@ export function TransitionInspector({
       <div className="text-xs text-gray-400 italic">
         Actions — configure in a future release.
       </div>
+
+      {/* Approval section */}
+      <ApprovalStepEditor
+        value={transition.approvalSpec}
+        readOnly={readOnly}
+        onChange={approvalSpec =>
+          update({ approvalSpec: approvalSpec ?? undefined })
+        }
+      />
     </div>
   );
 }

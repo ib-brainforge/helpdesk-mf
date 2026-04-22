@@ -4,10 +4,12 @@
 // by the real adapter. The mock skips that indirection for simplicity.
 
 import type {
+  CloneDefinitionInput,
   CreateDefinitionInput,
   CreatePrincipalDefinitionInput,
   IWorkflowApiClient,
   MigrationResult,
+  PrincipalOwnerScope,
   PublishDraftInput,
   PublishPrincipalDraftInput,
   RuleMigrationReportItem,
@@ -64,7 +66,8 @@ function buildLegacyRules(): RuleMigrationReportItem[] {
 // Seeded principal ID for browser testing. Format: 22222222-2222-2222-2222-222222222222
 // Use a format without dashes when constructing ownerScope to match: `principal:{guid:N}`
 const SEED_PRINCIPAL_ID = '22222222-2222-2222-2222-222222222222';
-const SEED_PRINCIPAL_SCOPE = `principal:${SEED_PRINCIPAL_ID.replace(/-/g, '')}`;
+const SEED_PRINCIPAL_SCOPE =
+  `principal:${SEED_PRINCIPAL_ID.replace(/-/g, '')}` as const;
 
 function seed(store: Map<string, WorkflowDefinitionDto>) {
   const standardId = crypto.randomUUID();
@@ -449,6 +452,13 @@ class MockClient implements IWorkflowApiClient {
     if (!d.draftVersion || d.draftVersion.id !== input.versionId) {
       throw new Error('Draft version not found or ID mismatch');
     }
+    // Archive any previously published versions (mirrors backend Plan 2d behavior)
+    const previousPublished = d.versions.filter(
+      v => v.status === VersionStatus.Published,
+    );
+    for (const prev of previousPublished) {
+      prev.status = VersionStatus.Archived;
+    }
     const published: WorkflowDefinitionVersionDto = {
       ...d.draftVersion,
       status: VersionStatus.Published,
@@ -477,7 +487,7 @@ class MockClient implements IWorkflowApiClient {
   // ── Principal-scoped ─────────────────────────────────────────────────────────
 
   /** Normalises principalId to match ownerScope format (strips dashes) */
-  private principalScope(principalId: string): string {
+  private principalScope(principalId: string): PrincipalOwnerScope {
     return `principal:${principalId.replace(/-/g, '')}`;
   }
 
@@ -548,6 +558,76 @@ class MockClient implements IWorkflowApiClient {
   ): Promise<WorkflowDefinitionVersionDto> {
     await this.getPrincipalDefinition(input.principalId, input.definitionId);
     return this.publishDraft(input);
+  }
+
+  // ── Clone ────────────────────────────────────────────────────────────────────
+
+  async cloneDefinition(
+    input: CloneDefinitionInput,
+  ): Promise<WorkflowDefinitionDto> {
+    const source = await this.getDefinition(input.sourceDefinitionId);
+
+    // Determine owner scope for the clone
+    let ownerScope: WorkflowDefinitionDto['ownerScope'];
+    if (input.principalId) {
+      ownerScope = this.principalScope(input.principalId);
+    } else if (source.ownerScope.startsWith('principal:')) {
+      // Keep same principal scope if source was principal-scoped and no override
+      ownerScope = source.ownerScope;
+    } else {
+      ownerScope = 'tenant:11111111111111111111111111111111';
+    }
+
+    // Clone states and transitions from the source's latest published version
+    const sourceVersion = source.latestVersion ?? source.draftVersion;
+    const clonedStates = sourceVersion
+      ? sourceVersion.states.map(s => ({ ...s, id: crypto.randomUUID() }))
+      : [];
+
+    // Build old→new ID map to rewrite transition references
+    const stateIdMap = new Map<string, string>();
+    if (sourceVersion) {
+      sourceVersion.states.forEach((s, i) => {
+        stateIdMap.set(s.id, clonedStates[i].id);
+      });
+    }
+
+    const clonedTransitions = sourceVersion
+      ? sourceVersion.transitions.map(t => ({
+          ...t,
+          id: crypto.randomUUID(),
+          fromStateId: stateIdMap.get(t.fromStateId) ?? t.fromStateId,
+          toStateId: stateIdMap.get(t.toStateId) ?? t.toStateId,
+        }))
+      : [];
+
+    const draftVersionId = crypto.randomUUID();
+    const draftVersion: WorkflowDefinitionVersionDto = {
+      id: draftVersionId,
+      versionNumber: 1,
+      status: VersionStatus.Draft,
+      publishedAt: null,
+      publishedBy: null,
+      states: clonedStates,
+      transitions: clonedTransitions,
+      startStateId: sourceVersion?.startStateId
+        ? (stateIdMap.get(sourceVersion.startStateId) ?? null)
+        : null,
+    };
+
+    const newId = crypto.randomUUID();
+    const cloned: WorkflowDefinitionDto = {
+      id: newId,
+      name: input.newName,
+      description: input.newDescription ?? source.description,
+      ownerScope,
+      latestVersion: null,
+      draftVersion,
+      versions: [],
+    };
+
+    this.store.set(newId, cloned);
+    return structuredClone(cloned);
   }
 
   // ── Admin — rule migration ───────────────────────────────────────────────────

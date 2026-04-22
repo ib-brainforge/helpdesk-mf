@@ -1,30 +1,39 @@
 // clientSwitch.ts — selects between mock and real API client.
-//
-// To swap to the real client when @brainforgeau/helpdesk-client regenerates with workflow endpoints:
-//   1. Set USE_REAL_CLIENT = true below.
-//   2. Pass real WorkflowsApi/PrincipalWorkflowsApi instances to buildWorkflowApiClient().
-//   3. Update Providers to instantiate those API classes with the authenticated axios instance.
-//   4. Ship — the mock is never called when USE_REAL_CLIENT = true.
 
+import type { Configuration } from '@brainforgeau/helpdesk-client';
+// REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
+// to avoid a direct `import from 'axios'` that is not in project dependencies.
+import type { authorizedAxios as _AuthorizedAxios } from '@brainforgeau/security';
+type AxiosInstance = typeof _AuthorizedAxios;
 import { createMockWorkflowApiClient } from '../api/MockWorkflowApiClient';
 import { createRealWorkflowApiClient } from '../api/RealWorkflowApiClient';
 import type { IWorkflowApiClient } from '../types';
 
 /**
- * Set to `true` when @brainforgeau/helpdesk-client has workflow endpoints regenerated.
- * @see src/workflow-editor/api/RealWorkflowApiClient.ts for expected call shapes.
+ * When true, the real @brainforgeau/helpdesk-client WorkflowsApi is used.
+ * Set to false to fall back to the in-memory mock (useful for offline dev / testing).
  */
-const USE_REAL_CLIENT = false;
+export const USE_REAL_CLIENT = true;
+
+export interface RealClientDeps {
+  configuration: Configuration;
+  axios?: AxiosInstance;
+}
 
 /**
  * Factory that returns the appropriate API client implementation.
  *
- * @param realApi - The generated API client instance (e.g. WorkflowsApi).
+ * @param realClientDeps - Configuration + optional axios instance for the real client.
  *   Ignored when USE_REAL_CLIENT = false.
  */
-export function buildWorkflowApiClient(realApi: unknown): IWorkflowApiClient {
-  if (USE_REAL_CLIENT) {
-    return createRealWorkflowApiClient(realApi);
+export function buildWorkflowApiClient(
+  realClientDeps: RealClientDeps | undefined,
+): IWorkflowApiClient {
+  if (USE_REAL_CLIENT && realClientDeps) {
+    return createRealWorkflowApiClient(
+      realClientDeps.configuration,
+      realClientDeps.axios,
+    );
   }
   return createMockWorkflowApiClient();
 }

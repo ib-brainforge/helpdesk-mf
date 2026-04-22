@@ -50,6 +50,9 @@ export interface IWorkflowApiClient {
   // Admin — rule migration
   getRuleMigrationReport(): Promise<RuleMigrationReportItem[]>;
   applyRuleMigration(dryRun: boolean): Promise<MigrationResult>;
+
+  // Clone
+  cloneDefinition(input: CloneDefinitionInput): Promise<WorkflowDefinitionDto>;
 }
 
 export interface CreateDefinitionInput {
@@ -81,6 +84,16 @@ export interface ValidationError {
   message: string;
   stateId?: string;
   transitionId?: string;
+}
+
+// ── Plan 5 additions ──────────────────────────────────────────────────────────
+
+export interface CloneDefinitionInput {
+  sourceDefinitionId: string;
+  newName: string;
+  newDescription?: string;
+  /** For principal-scoped clone; otherwise tenant-scoped. */
+  principalId?: string;
 }
 
 // ── Plan 4 additions ──────────────────────────────────────────────────────────

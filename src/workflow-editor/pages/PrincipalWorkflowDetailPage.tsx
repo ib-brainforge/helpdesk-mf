@@ -1,7 +1,11 @@
 import { BaseButton } from '@brainforgeau/components';
 import { Chip, Spinner } from '@heroui/react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useState } from 'react';
+import { BulkCloneModal } from '../components/BulkCloneModal';
+import { PrincipalLookup } from '../components/PrincipalLookup';
 import { VersionBadge } from '../components/VersionBadge';
+import { VersionDiffViewer } from '../components/VersionDiffViewer';
 import {
   useCreatePrincipalDraft,
   usePrincipalWorkflowDefinition,
@@ -18,6 +22,7 @@ export function PrincipalWorkflowDetailPage() {
     id ?? null,
   );
   const createDraftMutation = useCreatePrincipalDraft();
+  const [cloneOpen, setCloneOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -48,6 +53,8 @@ export function PrincipalWorkflowDetailPage() {
     navigate(`/principal/${principalId}/workflows/${id}/editor`);
   }
 
+  const showDiff = !!(data.latestVersion && data.draftVersion);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -64,8 +71,16 @@ export function PrincipalWorkflowDetailPage() {
           {data.description && (
             <p className="text-gray-500 mt-1">{data.description}</p>
           )}
+          {principalId && (
+            <p className="text-sm text-gray-400 mt-1">
+              <PrincipalLookup principalId={principalId} />
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <BaseButton variant="bordered" onPress={() => setCloneOpen(true)}>
+            Clone
+          </BaseButton>
           {data.draftVersion ? (
             <BaseButton color="primary" onPress={handleEditDraft}>
               Edit Draft
@@ -131,6 +146,14 @@ export function PrincipalWorkflowDetailPage() {
         )}
       </div>
 
+      {/* Version diff — shown only when both published and draft exist */}
+      {showDiff && (
+        <VersionDiffViewer
+          published={data.latestVersion}
+          draft={data.draftVersion}
+        />
+      )}
+
       {/* Version history */}
       {data.versions.length > 0 && (
         <div>
@@ -170,6 +193,18 @@ export function PrincipalWorkflowDetailPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Clone modal */}
+      {id && principalId && (
+        <BulkCloneModal
+          isOpen={cloneOpen}
+          onOpenChange={setCloneOpen}
+          sourceDefinitionId={id}
+          sourceDefinitionName={data.name}
+          principalId={principalId}
+          getDetailUrl={newId => `/principal/${principalId}/workflows/${newId}`}
+        />
       )}
     </div>
   );

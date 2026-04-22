@@ -1,4 +1,10 @@
-import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import {
+  BaseCheckbox,
+  BaseRadio,
+  BaseRadioGroup,
+  BaseSelect,
+  BaseSelectItem,
+} from '@brainforgeau/components';
 import type { ParallelSpecDto, WorkflowStateDto } from '../types';
 
 interface ParallelSpecEditorProps {
@@ -8,11 +14,6 @@ interface ParallelSpecEditorProps {
   readOnly?: boolean;
   onChange: (next: ParallelSpecDto) => void;
 }
-
-const JOIN_MODE_ITEMS = [
-  { id: 'AllMustComplete', name: 'All Must Complete' },
-  { id: 'AnyBranch', name: 'Any Branch' },
-];
 
 export function ParallelSpecEditor({
   spec,
@@ -24,14 +25,14 @@ export function ParallelSpecEditor({
     onChange({ ...spec, ...patch });
   }
 
-  // Multi-select for branch starts uses checkboxes since HeroUI BaseSelect is single-select.
+  // Multi-select for branch starts uses BaseCheckbox since HeroUI BaseSelect is single-select.
   // REVIEW: Using checkbox list for multi-select since BaseSelect does not expose selectionMode=multiple.
-  function toggleBranchStart(stateId: string) {
+  function toggleBranchState(stateId: string, checked: boolean) {
     if (readOnly) return;
     const current = spec.branchStartStateIds;
-    const next = current.includes(stateId)
-      ? current.filter(id => id !== stateId)
-      : [...current, stateId];
+    const next = checked
+      ? [...current, stateId]
+      : current.filter(id => id !== stateId);
     update({ branchStartStateIds: next });
   }
 
@@ -53,25 +54,17 @@ export function ParallelSpecEditor({
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
             {availableStates.map(s => (
-              <label
+              <BaseCheckbox
                 key={s.id}
-                className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 px-1 py-0.5 rounded"
+                isSelected={spec.branchStartStateIds.includes(s.id)}
+                onValueChange={checked => toggleBranchState(s.id, checked)}
+                isDisabled={readOnly}
               >
-                <input
-                  type="checkbox"
-                  checked={spec.branchStartStateIds.includes(s.id)}
-                  onChange={() => toggleBranchStart(s.id)}
-                  disabled={readOnly}
-                  className="rounded"
-                  aria-label={`Branch start: ${s.name}`}
-                />
-                <span>{s.name}</span>
+                {s.name}
                 {s.slug !== s.name.toLowerCase() && (
-                  <span className="text-xs text-gray-400 font-mono">
-                    ({s.slug})
-                  </span>
+                  <span className="text-xs text-gray-500"> ({s.slug})</span>
                 )}
-              </label>
+              </BaseCheckbox>
             ))}
           </div>
         )}
@@ -102,33 +95,19 @@ export function ParallelSpecEditor({
         {s => <BaseSelectItem key={s.id}>{s.name}</BaseSelectItem>}
       </BaseSelect>
 
-      {/* Join Mode — radio */}
-      <div>
-        <div className="text-xs font-medium text-gray-700 mb-2">Join Mode</div>
-        <div className="space-y-1">
-          {JOIN_MODE_ITEMS.map(item => (
-            <label
-              key={item.id}
-              className="flex items-center gap-2 text-sm cursor-pointer"
-            >
-              <input
-                type="radio"
-                name="joinMode"
-                value={item.id}
-                checked={spec.joinMode === item.id}
-                onChange={() =>
-                  update({
-                    joinMode: item.id as ParallelSpecDto['joinMode'],
-                  })
-                }
-                disabled={readOnly}
-                aria-label={item.name}
-              />
-              <span>{item.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      {/* Join Mode — BaseRadioGroup */}
+      <BaseRadioGroup
+        label="Join Mode"
+        value={spec.joinMode}
+        onValueChange={value =>
+          update({ joinMode: value as ParallelSpecDto['joinMode'] })
+        }
+        isDisabled={readOnly}
+        size="sm"
+      >
+        <BaseRadio value="AllMustComplete">All must complete</BaseRadio>
+        <BaseRadio value="AnyBranch">Any branch</BaseRadio>
+      </BaseRadioGroup>
     </div>
   );
 }

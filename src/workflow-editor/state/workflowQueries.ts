@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  CloneDefinitionInput,
   CreateDefinitionInput,
   CreatePrincipalDefinitionInput,
   PublishDraftInput,
@@ -49,6 +50,24 @@ export function useCreateDefinition() {
   return useMutation({
     mutationFn: (input: CreateDefinitionInput) => api.createDefinition(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: workflowKeys.list() }),
+  });
+}
+
+export function useDeleteDefinition() {
+  const api = useWorkflowApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteDefinition(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: workflowKeys.list() }),
+  });
+}
+
+export function useCloneDefinition() {
+  const api = useWorkflowApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CloneDefinitionInput) => api.cloneDefinition(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: workflowKeys.all }),
   });
 }
 

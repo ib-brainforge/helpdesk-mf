@@ -5,11 +5,20 @@ import type {
   VersionStatus,
 } from './enums';
 
+// ── Owner scope template-literal types ───────────────────────────────────────
+export type SystemOwnerScope = `system:${string}`;
+export type TenantOwnerScope = `tenant:${string}`;
+export type PrincipalOwnerScope = `principal:${string}`;
+export type WorkflowOwnerScope =
+  | SystemOwnerScope
+  | TenantOwnerScope
+  | PrincipalOwnerScope;
+
 export interface WorkflowDefinitionDto {
   id: string;
   name: string;
   description: string | null;
-  ownerScope: string; // "tenant:{guid:N}" | "system:helpdesk" | "principal:{guid:N}"
+  ownerScope: WorkflowOwnerScope;
   latestVersion: WorkflowDefinitionVersionDto | null;
   draftVersion: WorkflowDefinitionVersionDto | null;
   versions: WorkflowDefinitionVersionSummaryDto[];
@@ -60,6 +69,26 @@ export interface WorkflowTransitionDto {
   actions: WorkflowTransitionActionDto[];
   /** For transitions leaving a Parallel state node, identifies which branch handle (e.g. "branch-a") */
   sourceHandleId?: string | null;
+  // PLAN-7: Backend stores approvals in WorkflowApproval aggregate keyed by transition; not a transition-row field.
+  // Mock-only here; real adapter must compose from a separate query OR backend embeds it server-side.
+  approvalSpec?: ApprovalSpecDto | null;
+}
+
+// ── Approval spec (Task 7) ───────────────────────────────────────────────────
+export interface ApprovalSpecDto {
+  required: boolean;
+  /** Role names that can approve (OR logic with approverUserIds) */
+  approverRoles?: string[];
+  /** Specific user IDs that can approve (OR logic with approverRoles) */
+  approverUserIds?: string[];
+  description?: string;
+}
+
+// ── Timer trigger spec (Task 8) ──────────────────────────────────────────────
+export interface TimerTriggerSpecDto {
+  duration: string; // ISO-8601 duration e.g. "PT1H30M"
+  useBusinessHours?: boolean;
+  businessHoursScheduleId?: string; // PLAN-7: backend BusinessHoursSchedule lookup wires real value here.
 }
 
 export interface WorkflowTransitionActionDto {
