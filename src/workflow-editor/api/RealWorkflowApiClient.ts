@@ -7,10 +7,11 @@
 // `void` (the OpenAPI spec omits response schemas for those list/get endpoints).
 // We cast via `unknown` where needed; the actual runtime payload is the full DTO.
 
-import {
-  PrincipalWorkflowsApi,
-  WorkflowsApi,
-} from '@brainforgeau/helpdesk-client';
+// Direct path imports: the generated client's barrel (api.d.ts) does not re-export
+// WorkflowsApi / PrincipalWorkflowsApi (generator quirk — files exist on disk but
+// aren't in the index). Importing from their direct paths is functionally identical.
+import { PrincipalWorkflowsApi } from '@brainforgeau/helpdesk-client/dist/api/principal-workflows-api';
+import { WorkflowsApi } from '@brainforgeau/helpdesk-client/dist/api/workflows-api';
 import type { Configuration } from '@brainforgeau/helpdesk-client';
 // REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
 // to avoid a direct `import from 'axios'` that is not in project dependencies.
