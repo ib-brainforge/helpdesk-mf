@@ -58,9 +58,31 @@ export interface WorkflowTransitionDto {
   triggerSpec: Record<string, unknown> | null;
   guardExpression: string | null;
   actions: WorkflowTransitionActionDto[];
+  /** For transitions leaving a Parallel state node, identifies which branch handle (e.g. "branch-a") */
+  sourceHandleId?: string | null;
 }
 
 export interface WorkflowTransitionActionDto {
   type: string;
   parameters: Record<string, unknown>;
+}
+
+// ── Plan 4 additions ──────────────────────────────────────────────────────────
+
+export interface RuleMigrationReportItem {
+  ruleId: string;
+  name: string;
+  isEnabled: boolean;
+  statusConditionCount: number;
+  statusMutatingActionCount: number;
+  mutatingActionTypes: string[];
+  categoryId: string | null;
+  categoryName: string | null;
+}
+
+export interface MigrationResult {
+  rulesScanned: number;
+  conditionsMigrated: number;
+  actionsMigrated: number;
+  warnings: string[];
 }

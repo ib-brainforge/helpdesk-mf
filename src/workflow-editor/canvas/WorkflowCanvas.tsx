@@ -16,10 +16,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useMemo } from 'react';
-import {
-  WorkflowTransitionEdge,
-  type WorkflowTransitionEdgeType,
-} from '../edges/WorkflowTransitionEdge';
+import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 import { StateType, TriggerType } from '../types/enums';
 import { CANVAS_TOKENS } from './canvasTheme';
@@ -100,6 +97,8 @@ function WorkflowCanvasInner({
         id: t.id,
         source: t.fromStateId,
         target: t.toStateId,
+        // Pass sourceHandle so xyflow renders from the correct parallel branch anchor
+        sourceHandle: t.sourceHandleId ?? undefined,
         type: 'workflowTransition',
         data: { transition: t },
         markerEnd: { type: MarkerType.ArrowClosed, color: CANVAS_TOKENS.edge },
@@ -160,21 +159,14 @@ function WorkflowCanvasInner({
         triggerSpec: null,
         guardExpression: null,
         actions: [],
-      };
-      const newEdge: WorkflowTransitionEdgeType = {
-        id: newTransition.id,
-        source: newTransition.fromStateId,
-        target: newTransition.toStateId,
-        type: 'workflowTransition',
-        data: { transition: newTransition },
-        markerEnd: { type: MarkerType.ArrowClosed, color: CANVAS_TOKENS.edge },
-      };
+        // Capture which handle was used — important for Parallel state branch wiring
+        sourceHandleId: c.sourceHandle ?? null,
+      } satisfies WorkflowTransitionDto;
       // addEdge (from xyflow) is intentionally NOT called here — we manage edges via
-      // the transitions array passed to onChange. The newEdge binding above is kept
-      // only for type construction of WorkflowTransitionEdgeType.
+      // the transitions array passed to onChange.
       onChange(states, [...transitions, newTransition]);
     },
-    [readOnly, states, transitions, edges, onChange],
+    [readOnly, states, transitions, onChange],
   );
 
   return (

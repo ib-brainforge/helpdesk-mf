@@ -6,6 +6,7 @@ import type {
   WorkflowStateDto,
   WorkflowTransitionDto,
 } from '../types';
+import { StateType } from '../types/enums';
 import { StateInspector } from './StateInspector';
 import { TransitionInspector } from './TransitionInspector';
 import { WorkflowToolbar } from './WorkflowToolbar';
@@ -107,8 +108,24 @@ export function WorkflowEditor({
           {selectedState && (
             <StateInspector
               state={selectedState}
+              allStates={states}
               readOnly={readOnly}
               onChange={next => {
+                // If type changed away from Parallel, clear sourceHandleId on any
+                // transitions that originated from this state — their branch handles
+                // no longer exist on the node.
+                const prev = states.find(s => s.id === next.id);
+                const wasParallel = prev?.type === StateType.Parallel;
+                const isNowParallel = next.type === StateType.Parallel;
+                if (wasParallel && !isNowParallel) {
+                  setTransitions(current =>
+                    current.map(t =>
+                      t.fromStateId === next.id
+                        ? { ...t, sourceHandleId: null }
+                        : t,
+                    ),
+                  );
+                }
                 setStates(prev => prev.map(s => (s.id === next.id ? next : s)));
                 setDirty(true);
               }}

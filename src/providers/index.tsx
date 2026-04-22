@@ -2,17 +2,18 @@ import { ObservabilityProvider } from '@/observability';
 import { configureContextTokenRefresh } from '@/state/authorizedAxios';
 import { getAppConfig } from '@/state/config';
 import { WorkflowApiProvider } from '@/workflow-editor';
-import { createMockWorkflowApiClient } from '@/workflow-editor/testing';
+import { buildWorkflowApiClient } from '@/workflow-editor/state/clientSwitch';
 import { ErrorBoundary } from '@brainforgeau/components';
 import React, { useEffect } from 'react';
 import { AuthProvider } from './AuthProvider';
 import { HeroProvider } from './HeroProvider';
 import QueryProvider from './QueryProvider';
 
-// Module-scoped mock client — persists across renders, survives HMR navigation
-// REVIEW: Using MockWorkflowApiClient here. Plan 4 will swap to RealWorkflowApiClient
-// once @brainforgeau/helpdesk-client regenerates with workflow endpoints.
-const workflowApiClient = createMockWorkflowApiClient();
+// Module-scoped client — persists across renders, survives HMR navigation.
+// When USE_REAL_CLIENT = true in clientSwitch.ts, pass real API instances here
+// e.g.: buildWorkflowApiClient(new WorkflowsApi(helpdeskAxios))
+// USE_REAL_CLIENT=false → mock is built directly; pass real API instance here when flipping the flag.
+const workflowApiClient = buildWorkflowApiClient(undefined);
 
 export function Providers({
   children,

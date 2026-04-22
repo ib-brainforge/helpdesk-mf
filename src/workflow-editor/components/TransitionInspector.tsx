@@ -43,6 +43,13 @@ export function TransitionInspector({
           <span className="font-medium">To:</span>{' '}
           {transition.toStateId.slice(0, 8)}…
         </div>
+        {transition.sourceHandleId && (
+          <div className="mt-1">
+            <span className="inline-block px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-mono">
+              Branch: {transition.sourceHandleId}
+            </span>
+          </div>
+        )}
       </div>
 
       <BaseSelect

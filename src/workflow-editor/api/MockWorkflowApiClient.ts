@@ -5,9 +5,14 @@
 
 import type {
   CreateDefinitionInput,
+  CreatePrincipalDefinitionInput,
   IWorkflowApiClient,
+  MigrationResult,
   PublishDraftInput,
+  PublishPrincipalDraftInput,
+  RuleMigrationReportItem,
   UpdateDraftInput,
+  UpdatePrincipalDraftInput,
   ValidationResult,
   WorkflowDefinitionDto,
   WorkflowDefinitionVersionDto,
@@ -16,9 +21,50 @@ import { StateCategory, StateType, TriggerType, VersionStatus } from '../types';
 
 export function createMockWorkflowApiClient(): IWorkflowApiClient {
   const store = new Map<string, WorkflowDefinitionDto>();
+  const legacyRules: RuleMigrationReportItem[] = buildLegacyRules();
   seed(store);
-  return new MockClient(store);
+  return new MockClient(store, legacyRules);
 }
+
+function buildLegacyRules(): RuleMigrationReportItem[] {
+  return [
+    {
+      ruleId: crypto.randomUUID(),
+      name: 'Auto-close stale tickets',
+      isEnabled: true,
+      statusConditionCount: 1,
+      statusMutatingActionCount: 1,
+      mutatingActionTypes: ['SetStatus'],
+      categoryId: null,
+      categoryName: null,
+    },
+    {
+      ruleId: crypto.randomUUID(),
+      name: 'Reopen on customer reply',
+      isEnabled: true,
+      statusConditionCount: 0,
+      statusMutatingActionCount: 1,
+      mutatingActionTypes: ['ReopenTicket'],
+      categoryId: null,
+      categoryName: null,
+    },
+    {
+      ruleId: crypto.randomUUID(),
+      name: 'Escalate unresolved after 48h',
+      isEnabled: false,
+      statusConditionCount: 2,
+      statusMutatingActionCount: 2,
+      mutatingActionTypes: ['SetStatus', 'NotifyAgent'],
+      categoryId: null,
+      categoryName: null,
+    },
+  ];
+}
+
+// Seeded principal ID for browser testing. Format: 22222222-2222-2222-2222-222222222222
+// Use a format without dashes when constructing ownerScope to match: `principal:{guid:N}`
+const SEED_PRINCIPAL_ID = '22222222-2222-2222-2222-222222222222';
+const SEED_PRINCIPAL_SCOPE = `principal:${SEED_PRINCIPAL_ID.replace(/-/g, '')}`;
 
 function seed(store: Map<string, WorkflowDefinitionDto>) {
   const standardId = crypto.randomUUID();
@@ -233,10 +279,106 @@ function seed(store: Map<string, WorkflowDefinitionDto>) {
       },
     ],
   });
+
+  // Third seed: principal-owned workflow
+  const principalDefId = crypto.randomUUID();
+  const principalVersionId = crypto.randomUUID();
+  const pStateNew = {
+    id: crypto.randomUUID(),
+    name: 'Submitted',
+    slug: 'submitted',
+    description: null,
+    category: StateCategory.New,
+    type: StateType.Initial,
+    sortOrder: 0,
+    positionX: 100,
+    positionY: 200,
+    metadata: {},
+    parallelSpec: null,
+  };
+  const pStateInReview = {
+    id: crypto.randomUUID(),
+    name: 'In Review',
+    slug: 'in-review',
+    description: 'Under principal review',
+    category: StateCategory.Open,
+    type: StateType.Normal,
+    sortOrder: 1,
+    positionX: 350,
+    positionY: 200,
+    metadata: {},
+    parallelSpec: null,
+  };
+  const pStateClosed = {
+    id: crypto.randomUUID(),
+    name: 'Resolved',
+    slug: 'resolved',
+    description: null,
+    category: StateCategory.Resolved,
+    type: StateType.Terminal,
+    sortOrder: 2,
+    positionX: 600,
+    positionY: 200,
+    metadata: {},
+    parallelSpec: null,
+  };
+
+  const principalVersion: WorkflowDefinitionVersionDto = {
+    id: principalVersionId,
+    versionNumber: 1,
+    status: VersionStatus.Published,
+    publishedAt: new Date().toISOString(),
+    publishedBy: 'system',
+    states: [pStateNew, pStateInReview, pStateClosed],
+    transitions: [
+      {
+        id: crypto.randomUUID(),
+        fromStateId: pStateNew.id,
+        toStateId: pStateInReview.id,
+        triggerType: TriggerType.Manual,
+        triggerSpec: null,
+        guardExpression: null,
+        actions: [],
+      },
+      {
+        id: crypto.randomUUID(),
+        fromStateId: pStateInReview.id,
+        toStateId: pStateClosed.id,
+        triggerType: TriggerType.Manual,
+        triggerSpec: null,
+        guardExpression: null,
+        actions: [],
+      },
+    ],
+    startStateId: pStateNew.id,
+  };
+
+  store.set(principalDefId, {
+    id: principalDefId,
+    name: 'Principal Support Flow',
+    description: 'Ticket workflow for principal-scoped support',
+    ownerScope: SEED_PRINCIPAL_SCOPE,
+    latestVersion: principalVersion,
+    draftVersion: null,
+    versions: [
+      {
+        id: principalVersionId,
+        versionNumber: 1,
+        status: VersionStatus.Published,
+        publishedAt: principalVersion.publishedAt,
+        publishedBy: 'system',
+      },
+    ],
+  });
 }
 
 class MockClient implements IWorkflowApiClient {
-  constructor(private store: Map<string, WorkflowDefinitionDto>) {}
+  constructor(
+    private store: Map<string, WorkflowDefinitionDto>,
+    private legacyRules: RuleMigrationReportItem[],
+  ) {}
+
+  // ── Tenant-scoped ────────────────────────────────────────────────────────────
 
   async listDefinitions(): Promise<WorkflowDefinitionDto[]> {
     return Array.from(this.store.values()).map(d => structuredClone(d));
@@ -262,7 +404,7 @@ class MockClient implements IWorkflowApiClient {
       versions: [],
     };
     this.store.set(id, def);
-    return def;
+    return structuredClone(def);
   }
 
   async deleteDefinition(id: string): Promise<void> {
@@ -284,7 +426,7 @@ class MockClient implements IWorkflowApiClient {
       startStateId: d.latestVersion?.startStateId ?? null,
     };
     d.draftVersion = draft;
-    return draft;
+    return structuredClone(draft);
   }
 
   async updateDraft(
@@ -330,5 +472,111 @@ class MockClient implements IWorkflowApiClient {
     _versionId: string,
   ): Promise<ValidationResult> {
     return { isValid: true, errors: [] };
+  }
+
+  // ── Principal-scoped ─────────────────────────────────────────────────────────
+
+  /** Normalises principalId to match ownerScope format (strips dashes) */
+  private principalScope(principalId: string): string {
+    return `principal:${principalId.replace(/-/g, '')}`;
+  }
+
+  async listPrincipalDefinitions(
+    principalId: string,
+  ): Promise<WorkflowDefinitionDto[]> {
+    const expected = this.principalScope(principalId);
+    return Array.from(this.store.values())
+      .filter(d => d.ownerScope === expected)
+      .map(d => structuredClone(d));
+  }
+
+  async getPrincipalDefinition(
+    principalId: string,
+    id: string,
+  ): Promise<WorkflowDefinitionDto> {
+    const d = this.store.get(id);
+    const expected = this.principalScope(principalId);
+    if (!d || d.ownerScope !== expected) {
+      throw new Error(`Workflow ${id} not found for principal ${principalId}`);
+    }
+    return structuredClone(d);
+  }
+
+  async createPrincipalDefinition(
+    input: CreatePrincipalDefinitionInput,
+  ): Promise<WorkflowDefinitionDto> {
+    const id = crypto.randomUUID();
+    const def: WorkflowDefinitionDto = {
+      id,
+      name: input.name,
+      description: input.description ?? null,
+      ownerScope: this.principalScope(input.principalId),
+      latestVersion: null,
+      draftVersion: null,
+      versions: [],
+    };
+    this.store.set(id, def);
+    return structuredClone(def);
+  }
+
+  async deletePrincipalDefinition(
+    principalId: string,
+    id: string,
+  ): Promise<void> {
+    await this.getPrincipalDefinition(principalId, id); // throws if not found/mismatch
+    this.store.delete(id);
+  }
+
+  async createPrincipalDraft(
+    principalId: string,
+    definitionId: string,
+  ): Promise<WorkflowDefinitionVersionDto> {
+    // Ownership check — throws if mismatch
+    await this.getPrincipalDefinition(principalId, definitionId);
+    return this.createDraft(definitionId);
+  }
+
+  async updatePrincipalDraft(
+    input: UpdatePrincipalDraftInput,
+  ): Promise<WorkflowDefinitionVersionDto> {
+    await this.getPrincipalDefinition(input.principalId, input.definitionId);
+    return this.updateDraft(input);
+  }
+
+  async publishPrincipalDraft(
+    input: PublishPrincipalDraftInput,
+  ): Promise<WorkflowDefinitionVersionDto> {
+    await this.getPrincipalDefinition(input.principalId, input.definitionId);
+    return this.publishDraft(input);
+  }
+
+  // ── Admin — rule migration ───────────────────────────────────────────────────
+
+  async getRuleMigrationReport(): Promise<RuleMigrationReportItem[]> {
+    return structuredClone(this.legacyRules);
+  }
+
+  async applyRuleMigration(dryRun: boolean): Promise<MigrationResult> {
+    const rulesScanned = this.legacyRules.length;
+    const conditionsMigrated = this.legacyRules.reduce(
+      (acc, r) => acc + r.statusConditionCount,
+      0,
+    );
+    const actionsMigrated = this.legacyRules.reduce(
+      (acc, r) => acc + r.statusMutatingActionCount,
+      0,
+    );
+
+    if (!dryRun) {
+      // Simulate cleanup — in real backend this would migrate and remove records
+      this.legacyRules.length = 0;
+    }
+
+    return {
+      rulesScanned,
+      conditionsMigrated,
+      actionsMigrated,
+      warnings: [],
+    };
   }
 }

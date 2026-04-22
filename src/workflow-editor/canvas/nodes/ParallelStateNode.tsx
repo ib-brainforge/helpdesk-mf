@@ -8,8 +8,24 @@ export type ParallelStateNodeType = Node<
   'parallelState'
 >;
 
+/** Minimum number of branch handles to render for visual stability */
+const MIN_HANDLES = 2;
+
 export const ParallelStateNode = memo(
   ({ data, selected }: NodeProps<ParallelStateNodeType>) => {
+    const branchCount = Math.max(
+      data.state.parallelSpec?.branchStartStateIds.length ?? 0,
+      MIN_HANDLES,
+    );
+
+    // Distribute handles evenly along the right side.
+    // topPct returns a percentage string placing the i-th handle of n total.
+    function topPct(i: number, total: number): string {
+      // Spread across 20%–80% of the node height to avoid overlapping corners.
+      const step = 60 / (total + 1);
+      return `${20 + step * (i + 1)}%`;
+    }
+
     return (
       <div
         style={{
@@ -36,23 +52,27 @@ export const ParallelStateNode = memo(
           </span>
         </div>
         <div className="text-sm font-semibold">{data.state.name}</div>
+
+        {/* Single incoming handle on the left */}
         <Handle
           type="target"
           position={Position.Left}
           style={{ background: PARALLEL_COLORS.border }}
         />
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="branch-a"
-          style={{ background: PARALLEL_COLORS.border, top: '35%' }}
-        />
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="branch-b"
-          style={{ background: PARALLEL_COLORS.border, top: '65%' }}
-        />
+
+        {/* One outgoing handle per branch, dynamically positioned on the right */}
+        {Array.from({ length: branchCount }, (_, i) => (
+          <Handle
+            key={`branch-${i}`}
+            type="source"
+            position={Position.Right}
+            id={`branch-${i}`}
+            style={{
+              background: PARALLEL_COLORS.border,
+              top: topPct(i, branchCount),
+            }}
+          />
+        ))}
       </div>
     );
   },

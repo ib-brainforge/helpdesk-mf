@@ -6,9 +6,12 @@ import {
 } from '@brainforgeau/components';
 import type { WorkflowStateDto } from '../types';
 import { StateCategory, StateType } from '../types/enums';
+import { ParallelSpecEditor } from './ParallelSpecEditor';
 
 interface StateInspectorProps {
   state: WorkflowStateDto;
+  /** All states in the workflow — used to populate the ParallelSpecEditor pickers */
+  allStates?: WorkflowStateDto[];
   readOnly?: boolean;
   onChange: (next: WorkflowStateDto) => void;
 }
@@ -24,7 +27,7 @@ const CATEGORY_ITEMS = [
 const TYPE_ITEMS = [
   { id: String(StateType.Initial), name: 'Initial' },
   { id: String(StateType.Normal), name: 'Normal' },
-  // TODO(plan-4): re-enable Parallel + scaffold parallelSpec UI
+  { id: String(StateType.Parallel), name: 'Parallel' },
   { id: String(StateType.Terminal), name: 'Terminal' },
 ];
 
@@ -37,6 +40,7 @@ function slugify(name: string): string {
 
 export function StateInspector({
   state,
+  allStates = [],
   readOnly,
   onChange,
 }: StateInspectorProps) {
@@ -50,6 +54,27 @@ export function StateInspector({
     const newSlug = state.slug === currentAutoSlug ? slugify(name) : state.slug;
     update({ name, slug: newSlug });
   }
+
+  function handleTypeChange(next: StateType) {
+    if (next === StateType.Parallel) {
+      // Scaffold default parallelSpec on type change to Parallel
+      onChange({
+        ...state,
+        type: next,
+        parallelSpec: state.parallelSpec ?? {
+          branchStartStateIds: [],
+          joinStateId: '',
+          joinMode: 'AllMustComplete',
+        },
+      });
+    } else {
+      // Clear parallelSpec when switching away from Parallel
+      onChange({ ...state, type: next, parallelSpec: null });
+    }
+  }
+
+  // States available for parallelSpec pickers (all states except this one)
+  const availableForSpec = allStates.filter(s => s.id !== state.id);
 
   return (
     <div className="space-y-4">
@@ -105,7 +130,7 @@ export function StateInspector({
         selectedKeys={new Set([String(state.type)])}
         onSelectionChange={keys => {
           const first = Array.from(keys)[0];
-          if (first != null) update({ type: Number(first) as StateType });
+          if (first != null) handleTypeChange(Number(first) as StateType);
         }}
         isDisabled={readOnly}
         labelPlacement="outside"
@@ -114,6 +139,16 @@ export function StateInspector({
       >
         {item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>}
       </BaseSelect>
+
+      {/* Parallel spec editor — shown only when type is Parallel */}
+      {state.type === StateType.Parallel && state.parallelSpec && (
+        <ParallelSpecEditor
+          spec={state.parallelSpec}
+          availableStates={availableForSpec}
+          readOnly={readOnly}
+          onChange={nextSpec => update({ parallelSpec: nextSpec })}
+        />
+      )}
     </div>
   );
 }
