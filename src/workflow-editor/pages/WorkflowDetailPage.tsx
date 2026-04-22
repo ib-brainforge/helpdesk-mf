@@ -2,12 +2,14 @@ import { BaseButton } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import { Card, Chip, Spinner, addToast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { autoLayout } from '../canvas/layoutUtils';
 import { BulkCloneModal } from '../components/BulkCloneModal';
 import { ComponentsPalette } from '../components/ComponentsPalette';
 import { ScopeBadge } from '../components/ScopeBadge';
 import { VersionBadge } from '../components/VersionBadge';
 import { VersionDiffViewer } from '../components/VersionDiffViewer';
+import { WorkflowActionButtons } from '../components/WorkflowActionButtons';
 import { WorkflowEditor } from '../components/WorkflowEditor';
 import {
   useCreateDraft,
@@ -41,33 +43,37 @@ export function WorkflowDetailPage() {
   const [showPalette, setShowPalette] = useState(false);
   const logger = useLogger('WorkflowDetailPage');
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner label="Loading workflow..." />
-      </div>
-    );
-  }
+  // Canvas state lifted up so Save/Validate/Publish share the top bar.
+  const hasDraft = !!data?.draftVersion;
+  const activeVersion = data ? (data.draftVersion ?? data.latestVersion) : null;
+  const [states, setStates] = useState<WorkflowStateDto[]>([]);
+  const [transitions, setTransitions] = useState<WorkflowTransitionDto[]>([]);
+  const [dirty, setDirty] = useState(false);
+  const [loadedVersionId, setLoadedVersionId] = useState<string | null>(null);
 
-  if (error || !data) {
-    return (
-      <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-        Failed to load workflow. Please try again.
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!activeVersion) {
+      setStates([]);
+      setTransitions([]);
+      setDirty(false);
+      setLoadedVersionId(null);
+      return;
+    }
+    if (loadedVersionId !== activeVersion.id) {
+      setStates(autoLayout(activeVersion.states));
+      setTransitions(activeVersion.transitions);
+      setDirty(false);
+      setLoadedVersionId(activeVersion.id);
+    }
+  }, [activeVersion, loadedVersionId]);
 
-  const tenantOwned = isTenantOwned(data);
-  const hasDraft = data.draftVersion !== null;
-  // Show draft in canvas if it exists, otherwise show the published version
-  const activeVersion = data.draftVersion ?? data.latestVersion;
+  const tenantOwned = data ? isTenantOwned(data) : false;
   const isReadOnly = !hasDraft;
 
   async function handleCreateDraft() {
     if (!id) return;
     try {
       await createDraftMutation.mutateAsync(id);
-      // No navigation — the query refetch will load the draft into the canvas
       addToast({ title: 'Draft created', severity: 'success' });
     } catch (err) {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
@@ -81,19 +87,17 @@ export function WorkflowDetailPage() {
     }
   }
 
-  async function handleSaveDraft(
-    states: WorkflowStateDto[],
-    transitions: WorkflowTransitionDto[],
-    startStateId: string | null,
-  ) {
+  async function handleSaveDraft() {
+    if (!data?.draftVersion) return;
     try {
       await updateMut.mutateAsync({
-        definitionId: data!.id,
-        versionId: data!.draftVersion!.id,
+        definitionId: data.id,
+        versionId: data.draftVersion.id,
         states,
         transitions,
-        startStateId,
+        startStateId: data.draftVersion.startStateId,
       });
+      setDirty(false);
       addToast({ title: 'Draft saved', severity: 'success' });
     } catch (err) {
       if (err instanceof Error) {
@@ -111,10 +115,11 @@ export function WorkflowDetailPage() {
   }
 
   async function handlePublish() {
+    if (!data?.draftVersion) return;
     try {
       await publishMut.mutateAsync({
-        definitionId: data!.id,
-        versionId: data!.draftVersion!.id,
+        definitionId: data.id,
+        versionId: data.draftVersion.id,
       });
       addToast({ title: 'Workflow published', severity: 'success' });
     } catch (err) {
@@ -132,12 +137,55 @@ export function WorkflowDetailPage() {
     }
   }
 
+  function handleCanvasChange(
+    nextStates: WorkflowStateDto[],
+    nextTransitions: WorkflowTransitionDto[],
+  ) {
+    setStates(nextStates);
+    setTransitions(nextTransitions);
+    setDirty(true);
+  }
+
+  function handleAddFromPalette(
+    newStateData: Omit<WorkflowStateDto, 'id'> & {
+      positionX: number;
+      positionY: number;
+    },
+  ) {
+    const fullState: WorkflowStateDto = {
+      ...newStateData,
+      id: crypto.randomUUID(),
+    };
+    setStates(prev => [...prev, fullState]);
+    setDirty(true);
+  }
+
+  const reversedVersions = useMemo(
+    () => (data ? [...data.versions].reverse() : []),
+    [data],
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner label="Loading workflow..." />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
+        Failed to load workflow. Please try again.
+      </div>
+    );
+  }
+
   return (
     // REVIEW: -m-5 override matches tracking-mf rules page pattern for full-height canvas
     <div className="-m-5 flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
-      {/* Top bar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-default-200 bg-white px-4 py-2 dark:bg-default-50">
-        {/* Left: breadcrumb + title + badges */}
+      {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-default-200 bg-white px-4 py-2 dark:bg-default-50">
         <div className="flex min-w-0 items-center gap-3">
           <nav className="flex items-center gap-1.5 text-xs text-default-500">
             <NavLink
@@ -153,12 +201,16 @@ export function WorkflowDetailPage() {
           </nav>
           <ScopeBadge ownerScope={data.ownerScope} />
           {activeVersion && (
-            <VersionBadge status={activeVersion.status} />
+            <>
+              <span className="text-xs font-medium text-default-600">
+                v{activeVersion.versionNumber}
+              </span>
+              <VersionBadge status={activeVersion.status} />
+            </>
           )}
         </div>
 
-        {/* Right: action buttons */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {tenantOwned ? (
             <>
               <BaseButton
@@ -168,17 +220,7 @@ export function WorkflowDetailPage() {
               >
                 Clone
               </BaseButton>
-              {hasDraft ? (
-                // Draft is already loaded in the canvas — button is a visual indicator
-                <BaseButton
-                  size="sm"
-                  variant="bordered"
-                  color="warning"
-                  isDisabled
-                >
-                  Editing Draft (v{data.draftVersion!.versionNumber})
-                </BaseButton>
-              ) : (
+              {!hasDraft && (
                 <BaseButton
                   size="sm"
                   color="primary"
@@ -215,6 +257,15 @@ export function WorkflowDetailPage() {
           >
             Versions
           </BaseButton>
+          {!isReadOnly && data.draftVersion && (
+            <WorkflowActionButtons
+              definitionId={data.id}
+              versionId={data.draftVersion.id}
+              dirty={dirty}
+              onSaveDraft={handleSaveDraft}
+              onPublish={handlePublish}
+            />
+          )}
         </div>
       </div>
 
@@ -250,25 +301,22 @@ export function WorkflowDetailPage() {
         </div>
       )}
 
-      {/* Canvas + right sidebar */}
+      {/* Canvas + right sidebars */}
       {activeVersion && (
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          {/* Canvas area */}
           <div className="min-w-0 flex-1 overflow-hidden">
             <WorkflowEditor
               key={activeVersion.id}
-              definitionId={data.id}
-              version={activeVersion}
+              states={states}
+              transitions={transitions}
+              onChange={handleCanvasChange}
+              onAddFromPalette={handleAddFromPalette}
               readOnly={isReadOnly}
-              onSaveDraft={hasDraft ? handleSaveDraft : undefined}
-              onPublish={hasDraft ? handlePublish : undefined}
             />
           </div>
 
-          {/* Components palette sidebar — drag sources for new states */}
           {showPalette && !isReadOnly && <ComponentsPalette />}
 
-          {/* Right sidebar: version history + diff */}
           {showVersionsSidebar && (
             <aside
               className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-default-200 bg-white dark:bg-default-50"
@@ -288,8 +336,7 @@ export function WorkflowDetailPage() {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Diff viewer when both published and draft exist */}
+              <div className="flex-1 space-y-4 overflow-y-auto p-4">
                 {data.latestVersion && data.draftVersion && (
                   <VersionDiffViewer
                     published={data.latestVersion}
@@ -297,7 +344,6 @@ export function WorkflowDetailPage() {
                   />
                 )}
 
-                {/* States chip overview */}
                 {activeVersion.states.length > 0 && (
                   <div>
                     <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-default-500">
@@ -313,7 +359,6 @@ export function WorkflowDetailPage() {
                   </div>
                 )}
 
-                {/* Version list */}
                 {data.versions.length > 0 && (
                   <Card shadow="none" className="border border-default-200">
                     <div className="px-4 pt-4 pb-2">
@@ -322,7 +367,7 @@ export function WorkflowDetailPage() {
                       </h3>
                     </div>
                     <ul className="divide-y divide-default-100 px-2 pb-2">
-                      {[...data.versions].reverse().map(v => (
+                      {reversedVersions.map(v => (
                         <li
                           key={v.id}
                           className="flex items-center gap-3 py-2.5"
@@ -345,7 +390,7 @@ export function WorkflowDetailPage() {
                 )}
 
                 {data.versions.length === 0 && (
-                  <p className="text-xs text-default-400 italic">
+                  <p className="text-xs italic text-default-400">
                     No published versions yet.
                   </p>
                 )}
@@ -355,7 +400,6 @@ export function WorkflowDetailPage() {
         </div>
       )}
 
-      {/* Clone modal */}
       {activeVersion && id && (
         <BulkCloneModal
           isOpen={cloneOpen}

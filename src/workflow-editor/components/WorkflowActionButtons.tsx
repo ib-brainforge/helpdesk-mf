@@ -1,36 +1,34 @@
-import {
-  BaseButton,
-} from '@brainforgeau/components';
+import { BaseButton } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import { addToast } from '@heroui/react';
 import { useState } from 'react';
 import { useValidateVersion } from '../state/workflowQueries';
-import type { WorkflowDefinitionVersionDto } from '../types';
-import { VersionBadge } from './VersionBadge';
 
-interface WorkflowToolbarProps {
-  version: WorkflowDefinitionVersionDto;
+export interface WorkflowActionButtonsProps {
+  definitionId: string;
+  versionId: string;
   dirty: boolean;
-  readOnly?: boolean;
   onSaveDraft?: () => Promise<unknown> | void;
   onPublish?: () => Promise<unknown> | void;
-  definitionId?: string;
 }
 
-export function WorkflowToolbar({
-  version,
+/**
+ * Validate / Save Draft / Publish action cluster — renders inline in the
+ * detail-page top bar. Combined into a single row so the editor chrome
+ * does not waste a second bar on actions.
+ */
+export function WorkflowActionButtons({
+  definitionId,
+  versionId,
   dirty,
-  readOnly,
   onSaveDraft,
   onPublish,
-  definitionId,
-}: WorkflowToolbarProps) {
+}: WorkflowActionButtonsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-
   const validateMutation = useValidateVersion();
-  const logger = useLogger('WorkflowToolbar');
+  const logger = useLogger('WorkflowActionButtons');
 
   async function handleSave() {
     if (!onSaveDraft) return;
@@ -53,11 +51,10 @@ export function WorkflowToolbar({
   }
 
   async function handleValidate() {
-    if (!definitionId) return;
     try {
       const result = await validateMutation.mutateAsync({
         definitionId,
-        versionId: version.id,
+        versionId,
       });
       if (result.isValid) {
         setValidationErrors([]);
@@ -65,15 +62,15 @@ export function WorkflowToolbar({
       } else {
         const errors = result.errors.map(e => e.message);
         setValidationErrors(errors);
-        logger.warn('workflow_toolbar_validation_failed', {
+        logger.warn('workflow_validation_failed', {
           definitionId,
-          versionId: version.id,
+          versionId,
           errorCount: errors.length,
         });
       }
     } catch (err) {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
-        context: 'workflow_toolbar_validate_failed',
+        context: 'workflow_validate_failed',
       });
       addToast({
         title: 'Validation request failed',
@@ -84,61 +81,43 @@ export function WorkflowToolbar({
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 bg-white flex-wrap">
-      {/* Version info */}
-      <div className="flex items-center gap-2 mr-2">
-        <span className="text-sm font-medium text-gray-700">
-          v{version.versionNumber}
-        </span>
-        <VersionBadge status={version.status} />
-      </div>
-
-      <div className="flex-1" />
-
-      {/* Validation errors */}
+    <>
       {validationErrors.length > 0 && (
         <div
-          className="text-xs text-red-600 max-w-xs truncate"
+          className="max-w-xs truncate text-xs text-red-600"
           title={validationErrors.join('; ')}
         >
           {validationErrors.length} validation error
           {validationErrors.length > 1 ? 's' : ''}
         </div>
       )}
-
-      {!readOnly && (
-        <>
-          <BaseButton
-            size="sm"
-            variant="bordered"
-            onPress={handleValidate}
-            isLoading={validateMutation.isPending}
-          >
-            Validate
-          </BaseButton>
-
-          <BaseButton
-            size="sm"
-            color="primary"
-            variant="bordered"
-            onPress={handleSave}
-            isDisabled={!dirty}
-            isLoading={isSaving}
-          >
-            Save Draft
-          </BaseButton>
-
-          <BaseButton
-            size="sm"
-            color="primary"
-            onPress={handlePublish}
-            isDisabled={dirty}
-            isLoading={isPublishing}
-          >
-            Publish
-          </BaseButton>
-        </>
-      )}
-    </div>
+      <BaseButton
+        size="sm"
+        variant="bordered"
+        onPress={handleValidate}
+        isLoading={validateMutation.isPending}
+      >
+        Validate
+      </BaseButton>
+      <BaseButton
+        size="sm"
+        variant="bordered"
+        color="primary"
+        onPress={handleSave}
+        isDisabled={!dirty}
+        isLoading={isSaving}
+      >
+        Save Draft
+      </BaseButton>
+      <BaseButton
+        size="sm"
+        color="primary"
+        onPress={handlePublish}
+        isDisabled={dirty}
+        isLoading={isPublishing}
+      >
+        Publish
+      </BaseButton>
+    </>
   );
 }
