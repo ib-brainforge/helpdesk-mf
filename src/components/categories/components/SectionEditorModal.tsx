@@ -1,4 +1,9 @@
-import { BaseModal } from '@brainforgeau/components';
+import {
+  BaseModal,
+  BaseModalContent,
+  BaseModalHeader,
+  BaseModalBody,
+} from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseInput } from '@brainforgeau/components';
 import { useForm } from '@tanstack/react-form';
@@ -85,65 +90,72 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isEdit ? 'Edit Section' : 'Create Section'}
       size="md"
     >
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          await form.handleSubmit();
-        }}
-        className="flex flex-col gap-4"
-      >
-        <form.Field name="name">
-          {(field) => (
-            <BaseInput
-              label="Name"
-              isRequired
-              name={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              errorMessage={formatFormErrors(field.state.meta.errors)}
-              isInvalid={field.state.meta.errors.length > 0}
-            />
-          )}
-        </form.Field>
+      <BaseModalContent>
+        <BaseModalHeader
+          title={isEdit ? 'Edit Section' : 'Create Section'}
+          onClose={handleClose}
+        />
+        <BaseModalBody>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              await form.handleSubmit();
+            }}
+            className="flex flex-col gap-4 pb-4"
+          >
+            <form.Field name="name">
+              {(field) => (
+                <BaseInput
+                  label="Name"
+                  isRequired
+                  name={field.name}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  errorMessage={formatFormErrors(field.state.meta.errors)}
+                  isInvalid={field.state.meta.errors.length > 0}
+                />
+              )}
+            </form.Field>
 
-        <form.Field name="sortOrder">
-          {(field) => (
-            <BaseInput
-              label="Sort Order"
-              type="number"
-              name={field.name}
-              value={String(field.state.value)}
-              onChange={(e) => field.handleChange(Number(e.target.value))}
-              errorMessage={formatFormErrors(field.state.meta.errors)}
-              isInvalid={field.state.meta.errors.length > 0}
-            />
-          )}
-        </form.Field>
+            <form.Field name="sortOrder">
+              {(field) => (
+                <BaseInput
+                  label="Sort Order"
+                  type="number"
+                  name={field.name}
+                  value={String(field.state.value)}
+                  onChange={(e) => field.handleChange(Number(e.target.value))}
+                  errorMessage={formatFormErrors(field.state.meta.errors)}
+                  isInvalid={field.state.meta.errors.length > 0}
+                />
+              )}
+            </form.Field>
 
-        <form.Field name="isActive">
-          {(field) => (
-            <Switch
-              isSelected={field.state.value}
-              onValueChange={(checked) => field.handleChange(checked)}
-            >
-              Active
-            </Switch>
-          )}
-        </form.Field>
+            <form.Field name="isActive">
+              {(field) => (
+                <Switch
+                  isSelected={field.state.value}
+                  onValueChange={(checked) => field.handleChange(checked)}
+                >
+                  Active
+                </Switch>
+              )}
+            </form.Field>
 
-        <div className="flex justify-end gap-2 mt-4">
-          <BaseButton variant="bordered" onPress={handleClose} type="button">
-            Cancel
-          </BaseButton>
-          <BaseButton type="submit" isLoading={mutation.isPending}>
-            {isEdit ? 'Update' : 'Create'}
-          </BaseButton>
-        </div>
-      </form>
+            <div className="flex justify-end gap-2 mt-4">
+              <BaseButton variant="bordered" onPress={handleClose} type="button">
+                Cancel
+              </BaseButton>
+              <BaseButton type="submit" isLoading={mutation.isPending}>
+                {isEdit ? 'Update' : 'Create'}
+              </BaseButton>
+            </div>
+          </form>
+        </BaseModalBody>
+      </BaseModalContent>
     </BaseModal>
   );
 };

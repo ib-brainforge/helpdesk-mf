@@ -1,4 +1,4 @@
-import { useParams } from '@modern-js/runtime/router';
+import { useParams, Link } from '@modern-js/runtime/router';
 import { Helmet } from '@modern-js/runtime/head';
 import { Card, Divider } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
@@ -47,24 +47,24 @@ function KnowledgeBaseArticlePage() {
 
       <div className="mb-5">
         <div className="mb-4 flex items-center justify-between">
-          <BaseButton
-            variant="light"
-            size="sm"
-            as="a"
-            href="/knowledge-base"
-            icon={<Icon name="arrow-left" className="h-4 w-4" />}
-          >
-            Back to Knowledge Base
-          </BaseButton>
-          <BaseButton
-            variant="bordered"
-            size="sm"
-            as="a"
-            href={`/knowledge-base/${slug}/edit`}
-            icon={<Icon name="pencil" className="h-4 w-4" />}
-          >
-            Edit Article
-          </BaseButton>
+          <Link to="/knowledge-base">
+            <BaseButton
+              variant="light"
+              size="sm"
+              icon={<Icon name="arrow-left" className="h-4 w-4" />}
+            >
+              Back to Knowledge Base
+            </BaseButton>
+          </Link>
+          <Link to={`/knowledge-base/${slug}/edit`}>
+            <BaseButton
+              variant="bordered"
+              size="sm"
+              icon={<Icon name="pencil" className="h-4 w-4" />}
+            >
+              Edit Article
+            </BaseButton>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

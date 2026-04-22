@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
+import { Link } from '@modern-js/runtime/router';
 import { Icon, BaseInput } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, addToast } from '@heroui/react';
@@ -42,14 +43,14 @@ function KnowledgeBasePage() {
             >
               Quick Create
             </BaseButton>
-            <BaseButton
-              color="primary"
-              icon={<Icon name="plus" className="h-4 w-4" />}
-              as="a"
-              href="/knowledge-base/new"
-            >
-              Create Article
-            </BaseButton>
+            <Link to="/knowledge-base/new">
+              <BaseButton
+                color="primary"
+                icon={<Icon name="plus" className="h-4 w-4" />}
+              >
+                Create Article
+              </BaseButton>
+            </Link>
             <Dropdown>
               <DropdownTrigger>
                 <BaseButton

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from '@modern-js/runtime/router';
+import { useSearchParams, Link } from '@modern-js/runtime/router';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { Helmet } from '@modern-js/runtime/head';
@@ -108,10 +108,8 @@ function KnowledgeBaseSearchPage() {
             </div>
             <div className="space-y-4">
               {searchResults.items?.map((article: any) => (
+                <Link key={article.id} to={`/knowledge-base/${article.slug}`} className="block">
                 <Card
-                  key={article.id}
-                  as="a"
-                  href={`/knowledge-base/${article.slug}`}
                   className="p-5 hover:shadow-lg transition-shadow cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -180,6 +178,7 @@ function KnowledgeBaseSearchPage() {
                     />
                   </div>
                 </Card>
+                </Link>
               ))}
             </div>
           </div>

@@ -1,4 +1,9 @@
-import { BaseModal } from '@brainforgeau/components';
+import {
+  BaseModal,
+  BaseModalContent,
+  BaseModalHeader,
+  BaseModalBody,
+} from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
@@ -164,189 +169,196 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
       size="2xl"
     >
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          await form.handleSubmit();
-        }}
-        className="flex flex-col gap-4"
-      >
-        <form.Field name="name">
-          {(field) => (
-            <BaseInput
-              label="Name"
-              isRequired
-              name={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              errorMessage={formatFormErrors(field.state.meta.errors)}
-              isInvalid={field.state.meta.errors.length > 0}
-            />
-          )}
-        </form.Field>
+      <BaseModalContent>
+        <BaseModalHeader
+          title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
+          onClose={handleClose}
+        />
+        <BaseModalBody>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              await form.handleSubmit();
+            }}
+            className="flex flex-col gap-4 pb-4"
+          >
+            <form.Field name="name">
+              {(field) => (
+                <BaseInput
+                  label="Name"
+                  isRequired
+                  name={field.name}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  errorMessage={formatFormErrors(field.state.meta.errors)}
+                  isInvalid={field.state.meta.errors.length > 0}
+                />
+              )}
+            </form.Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <form.Field name="fieldType">
-            {(field) => (
-              <BaseSelect
-                label="Field Type"
-                placeholder="Select type"
-                isRequired
-                selectedKeys={[String(field.state.value)]}
-                onSelectionChange={(keys) => {
-                  const newValue = Number(keys.currentKey) as CustomFieldType;
-                  field.handleChange(newValue);
-                  setSelectedFieldType(newValue);
-                }}
-                errorMessage={formatFormErrors(field.state.meta.errors)}
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                {FIELD_TYPE_OPTIONS.map((option) => (
-                  <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
-                ))}
-              </BaseSelect>
-            )}
-          </form.Field>
+            <div className="grid grid-cols-2 gap-4">
+              <form.Field name="fieldType">
+                {(field) => (
+                  <BaseSelect
+                    label="Field Type"
+                    placeholder="Select type"
+                    isRequired
+                    selectedKeys={[String(field.state.value)]}
+                    onSelectionChange={(keys) => {
+                      const newValue = Number(keys.currentKey) as CustomFieldType;
+                      field.handleChange(newValue);
+                      setSelectedFieldType(newValue);
+                    }}
+                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    isInvalid={field.state.meta.errors.length > 0}
+                  >
+                    {FIELD_TYPE_OPTIONS.map((option) => (
+                      <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                    ))}
+                  </BaseSelect>
+                )}
+              </form.Field>
 
-          <form.Field name="usageType">
-            {(field) => (
-              <BaseSelect
-                label="Usage Type"
-                placeholder="Select usage"
-                isRequired
-                selectedKeys={[String(field.state.value)]}
-                onSelectionChange={(keys) => {
-                  const newValue = Number(keys.currentKey) as CustomFieldUsageType;
-                  field.handleChange(newValue);
-                }}
-                errorMessage={formatFormErrors(field.state.meta.errors)}
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                {USAGE_TYPE_OPTIONS.map((option) => (
-                  <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
-                ))}
-              </BaseSelect>
-            )}
-          </form.Field>
-        </div>
-
-        <form.Field name="accessLevel">
-          {(field) => (
-            <BaseSelect
-              label="Access Level"
-              placeholder="Select access level"
-              isRequired
-              selectedKeys={[String(field.state.value)]}
-              onSelectionChange={(keys) => {
-                const newValue = Number(keys.currentKey) as AccessLevel;
-                field.handleChange(newValue);
-              }}
-              errorMessage={formatFormErrors(field.state.meta.errors)}
-              isInvalid={field.state.meta.errors.length > 0}
-            >
-              {ACCESS_LEVEL_OPTIONS.map((option) => (
-                <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
-              ))}
-            </BaseSelect>
-          )}
-        </form.Field>
-
-        <div className="flex gap-4">
-          <form.Field name="isRequired">
-            {(field) => (
-              <Switch
-                isSelected={field.state.value}
-                onValueChange={(checked) => field.handleChange(checked)}
-              >
-                Required
-              </Switch>
-            )}
-          </form.Field>
-
-          <form.Field name="isActive">
-            {(field) => (
-              <Switch
-                isSelected={field.state.value}
-                onValueChange={(checked) => field.handleChange(checked)}
-              >
-                Active
-              </Switch>
-            )}
-          </form.Field>
-        </div>
-
-        {needsOptions && (
-          <div className="border-t pt-4">
-            <h3 className="text-sm font-semibold mb-3">Options</h3>
-            <div className="flex gap-2 mb-3">
-              <BaseInput
-                placeholder="Add option..."
-                value={newOptionValue}
-                onChange={(e) => setNewOptionValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddOption();
-                  }
-                }}
-              />
-              <BaseButton
-                type="button"
-                onPress={handleAddOption}
-                icon={<Icon name="plus" className="h-4 w-4" />}
-              >
-                Add
-              </BaseButton>
+              <form.Field name="usageType">
+                {(field) => (
+                  <BaseSelect
+                    label="Usage Type"
+                    placeholder="Select usage"
+                    isRequired
+                    selectedKeys={[String(field.state.value)]}
+                    onSelectionChange={(keys) => {
+                      const newValue = Number(keys.currentKey) as CustomFieldUsageType;
+                      field.handleChange(newValue);
+                    }}
+                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    isInvalid={field.state.meta.errors.length > 0}
+                  >
+                    {USAGE_TYPE_OPTIONS.map((option) => (
+                      <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                    ))}
+                  </BaseSelect>
+                )}
+              </form.Field>
             </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {options.map((option, index) => (
-                <div key={option.id} className="flex items-center gap-2 p-2 bg-content1 rounded border">
-                  <div className="flex flex-col gap-1">
-                    <BaseButton
-                      type="button"
-                      variant="link"
-                      size="none"
-                      isDisabled={index === 0}
-                      onPress={() => handleMoveOption(index, 'up')}
-                      icon={<Icon name="chevron-up" className="h-3 w-3" />}
-                    />
-                    <BaseButton
-                      type="button"
-                      variant="link"
-                      size="none"
-                      isDisabled={index === options.length - 1}
-                      onPress={() => handleMoveOption(index, 'down')}
-                      icon={<Icon name="chevron-down" className="h-3 w-3" />}
-                    />
-                  </div>
-                  <span className="flex-1 text-sm">{option.value}</span>
+
+            <form.Field name="accessLevel">
+              {(field) => (
+                <BaseSelect
+                  label="Access Level"
+                  placeholder="Select access level"
+                  isRequired
+                  selectedKeys={[String(field.state.value)]}
+                  onSelectionChange={(keys) => {
+                    const newValue = Number(keys.currentKey) as AccessLevel;
+                    field.handleChange(newValue);
+                  }}
+                  errorMessage={formatFormErrors(field.state.meta.errors)}
+                  isInvalid={field.state.meta.errors.length > 0}
+                >
+                  {ACCESS_LEVEL_OPTIONS.map((option) => (
+                    <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                  ))}
+                </BaseSelect>
+              )}
+            </form.Field>
+
+            <div className="flex gap-4">
+              <form.Field name="isRequired">
+                {(field) => (
+                  <Switch
+                    isSelected={field.state.value}
+                    onValueChange={(checked) => field.handleChange(checked)}
+                  >
+                    Required
+                  </Switch>
+                )}
+              </form.Field>
+
+              <form.Field name="isActive">
+                {(field) => (
+                  <Switch
+                    isSelected={field.state.value}
+                    onValueChange={(checked) => field.handleChange(checked)}
+                  >
+                    Active
+                  </Switch>
+                )}
+              </form.Field>
+            </div>
+
+            {needsOptions && (
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3">Options</h3>
+                <div className="flex gap-2 mb-3">
+                  <BaseInput
+                    placeholder="Add option..."
+                    value={newOptionValue}
+                    onChange={(e) => setNewOptionValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddOption();
+                      }
+                    }}
+                  />
                   <BaseButton
                     type="button"
-                    variant="link"
-                    size="none"
-                    className="text-danger"
-                    onPress={() => handleRemoveOption(option.id)}
-                    icon={<Icon name="trash" className="h-4 w-4" />}
-                  />
+                    onPress={handleAddOption}
+                    icon={<Icon name="plus" className="h-4 w-4" />}
+                  >
+                    Add
+                  </BaseButton>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {options.map((option, index) => (
+                    <div key={option.id} className="flex items-center gap-2 p-2 bg-content1 rounded border">
+                      <div className="flex flex-col gap-1">
+                        <BaseButton
+                          type="button"
+                          variant="link"
+                          size="none"
+                          isDisabled={index === 0}
+                          onPress={() => handleMoveOption(index, 'up')}
+                          icon={<Icon name="chevron-up" className="h-3 w-3" />}
+                        />
+                        <BaseButton
+                          type="button"
+                          variant="link"
+                          size="none"
+                          isDisabled={index === options.length - 1}
+                          onPress={() => handleMoveOption(index, 'down')}
+                          icon={<Icon name="chevron-down" className="h-3 w-3" />}
+                        />
+                      </div>
+                      <span className="flex-1 text-sm">{option.value}</span>
+                      <BaseButton
+                        type="button"
+                        variant="link"
+                        size="none"
+                        className="text-danger"
+                        onPress={() => handleRemoveOption(option.id)}
+                        icon={<Icon name="trash" className="h-4 w-4" />}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        <div className="flex justify-end gap-2 mt-4">
-          <BaseButton variant="bordered" onPress={handleClose} type="button">
-            Cancel
-          </BaseButton>
-          <BaseButton type="submit" isLoading={mutation.isPending}>
-            {isEdit ? 'Update' : 'Create'}
-          </BaseButton>
-        </div>
-      </form>
+            <div className="flex justify-end gap-2 mt-4">
+              <BaseButton variant="bordered" onPress={handleClose} type="button">
+                Cancel
+              </BaseButton>
+              <BaseButton type="submit" isLoading={mutation.isPending}>
+                {isEdit ? 'Update' : 'Create'}
+              </BaseButton>
+            </div>
+          </form>
+        </BaseModalBody>
+      </BaseModalContent>
     </BaseModal>
   );
 };

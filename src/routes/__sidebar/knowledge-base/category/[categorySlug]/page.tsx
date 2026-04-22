@@ -121,10 +121,8 @@ function KnowledgeBaseCategoryPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {articles.items?.map((article: any) => (
+              <Link key={article.id} to={`/knowledge-base/${article.slug}`} className="block">
               <Card
-                key={article.id}
-                as="a"
-                href={`/knowledge-base/${article.slug}`}
                 className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="mb-3 flex items-start justify-between">
@@ -167,6 +165,7 @@ function KnowledgeBaseCategoryPage() {
                   )}
                 </div>
               </Card>
+              </Link>
             ))}
           </div>
         )}
