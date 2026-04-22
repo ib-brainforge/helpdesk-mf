@@ -185,6 +185,12 @@ function WorkflowCanvasInner({
           onSelectState?.(null);
           onSelectTransition?.(null);
         }}
+        // Belt + suspenders: per-node `draggable` should be sufficient, but
+        // explicitly flipping canvas-level nodesDraggable ensures xyflow v12
+        // disables drag-to-move deterministically when in read-only mode.
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
+        edgesReconnectable={!readOnly}
         fitView
         defaultEdgeOptions={{ type: 'workflowTransition' }}
         proOptions={{ hideAttribution: true }}
