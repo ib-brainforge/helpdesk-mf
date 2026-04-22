@@ -49,3 +49,20 @@ export const PARALLEL_COLORS = {
   text: '#4c1d95',
   label: 'Parallel',
 };
+
+/**
+ * Design tokens for rich-node inline styling.
+ * Mirrors rules-ui ruleEditorTheme T tokens for visual consistency.
+ */
+export const T = {
+  bg: '#f8f9fb',
+  surface: '#ffffff',
+  surfaceAlt: '#f3f4f7',
+  text: '#1a1d27',
+  textMuted: '#6b7084',
+  textDim: '#9ba1b4',
+  border: '#e2e5eb',
+  red: '#dc2626',
+  redLight: '#fee2e2',
+  redBorder: '#fca5a5',
+} as const;

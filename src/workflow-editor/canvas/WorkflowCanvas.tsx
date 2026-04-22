@@ -81,16 +81,72 @@ function WorkflowCanvasInner({
   readOnly,
 }: WorkflowCanvasProps) {
   const logger = useLogger('WorkflowCanvas');
+
+  // Stable callbacks so memoised nodes/edges can reference them without re-creating
+  const handleStateChange = useCallback(
+    (nodeId: string, next: WorkflowStateDto) => {
+      if (readOnly) return;
+      // If type changed away from Parallel, clear sourceHandleId on related transitions
+      const prev = states.find(s => s.id === nodeId);
+      const wasParallel = prev?.type === StateType.Parallel;
+      const isNowParallel = next.type === StateType.Parallel;
+      let nextTransitions = transitions;
+      if (wasParallel && !isNowParallel) {
+        nextTransitions = transitions.map(t =>
+          t.fromStateId === nodeId ? { ...t, sourceHandleId: null } : t,
+        );
+      }
+      const nextStates = states.map(s => (s.id === nodeId ? next : s));
+      onChange(nextStates, nextTransitions);
+    },
+    [readOnly, states, transitions, onChange],
+  );
+
+  const handleStateDelete = useCallback(
+    (nodeId: string) => {
+      if (readOnly) return;
+      const nextStates = states.filter(s => s.id !== nodeId);
+      const nextTransitions = transitions.filter(
+        t => t.fromStateId !== nodeId && t.toStateId !== nodeId,
+      );
+      onChange(nextStates, nextTransitions);
+    },
+    [readOnly, states, transitions, onChange],
+  );
+
+  const handleTransitionChange = useCallback(
+    (edgeId: string, next: WorkflowTransitionDto) => {
+      if (readOnly) return;
+      const nextTransitions = transitions.map(t => (t.id === edgeId ? next : t));
+      onChange(states, nextTransitions);
+    },
+    [readOnly, states, transitions, onChange],
+  );
+
+  const handleTransitionDelete = useCallback(
+    (edgeId: string) => {
+      if (readOnly) return;
+      const nextTransitions = transitions.filter(t => t.id !== edgeId);
+      onChange(states, nextTransitions);
+    },
+    [readOnly, states, transitions, onChange],
+  );
+
   const nodes: Node[] = useMemo(
     () =>
       states.map(s => ({
         id: s.id,
         type: nodeTypeForState(s),
         position: { x: s.positionX, y: s.positionY },
-        data: { state: s },
+        data: {
+          state: s,
+          allStates: states,
+          onChange: handleStateChange,
+          onDelete: handleStateDelete,
+        },
         draggable: !readOnly,
       })),
-    [states, readOnly],
+    [states, handleStateChange, handleStateDelete, readOnly],
   );
 
   const edges: Edge[] = useMemo(
@@ -102,10 +158,14 @@ function WorkflowCanvasInner({
         // Pass sourceHandle so xyflow renders from the correct parallel branch anchor
         sourceHandle: t.sourceHandleId ?? undefined,
         type: 'workflowTransition',
-        data: { transition: t },
+        data: {
+          transition: t,
+          onChange: handleTransitionChange,
+          onDelete: handleTransitionDelete,
+        },
         markerEnd: { type: MarkerType.ArrowClosed, color: CANVAS_TOKENS.edge },
       })),
-    [transitions],
+    [transitions, handleTransitionChange, handleTransitionDelete],
   );
 
   const onNodesChange = useCallback(
@@ -126,8 +186,6 @@ function WorkflowCanvasInner({
       if (readOnly) return;
       const nextEdges = applyEdgeChanges(changes, edges);
       // Build O(1) lookup map so we never silently drop transitions on edge changes.
-      // Edges not in the map are unexpected (onConnect handles new connections directly)
-      // — warn and skip rather than creating a broken transition.
       const transitionMap = new Map<string, WorkflowTransitionDto>(
         transitions.map(t => [t.id, t]),
       );
@@ -162,8 +220,6 @@ function WorkflowCanvasInner({
         // Capture which handle was used — important for Parallel state branch wiring
         sourceHandleId: c.sourceHandle ?? null,
       } satisfies WorkflowTransitionDto;
-      // addEdge (from xyflow) is intentionally NOT called here — we manage edges via
-      // the transitions array passed to onChange.
       onChange(states, [...transitions, newTransition]);
     },
     [readOnly, states, transitions, onChange],

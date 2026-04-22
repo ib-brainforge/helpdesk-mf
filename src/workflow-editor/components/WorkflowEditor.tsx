@@ -7,8 +7,6 @@ import type {
   WorkflowTransitionDto,
 } from '../types';
 import { StateType } from '../types/enums';
-import { StateInspector } from './StateInspector';
-import { TransitionInspector } from './TransitionInspector';
 import { WorkflowToolbar } from './WorkflowToolbar';
 
 export interface WorkflowEditorProps {
@@ -36,15 +34,7 @@ export function WorkflowEditor({
   const [transitions, setTransitions] = useState<WorkflowTransitionDto[]>(
     version.transitions,
   );
-  const [selectedStateId, setSelectedStateId] = useState<string | null>(null);
-  const [selectedTransitionId, setSelectedTransitionId] = useState<
-    string | null
-  >(null);
   const [dirty, setDirty] = useState(false);
-
-  const selectedState = states.find(s => s.id === selectedStateId) ?? null;
-  const selectedTransition =
-    transitions.find(t => t.id === selectedTransitionId) ?? null;
 
   function handleCanvasChange(
     nextStates: WorkflowStateDto[],
@@ -74,7 +64,26 @@ export function WorkflowEditor({
       positionX: rightmostX > 0 ? rightmostX + 300 : 100 + states.length * 300,
       positionY: 120 + Math.floor(states.length / 4) * 180,
     };
+
+    // If type changed away from Parallel, clear sourceHandleId on related transitions
+    // (handled at node level, but ensure consistent state on add)
     setStates(prev => [...prev, newState]);
+    setDirty(true);
+  }
+
+  // Canvas-level state change handler that also handles type transitions
+  function handleStateChange(nodeId: string, next: WorkflowStateDto) {
+    const prev = states.find(s => s.id === nodeId);
+    const wasParallel = prev?.type === StateType.Parallel;
+    const isNowParallel = next.type === StateType.Parallel;
+    if (wasParallel && !isNowParallel) {
+      setTransitions(current =>
+        current.map(t =>
+          t.fromStateId === next.id ? { ...t, sourceHandleId: null } : t,
+        ),
+      );
+    }
+    setStates(prev => prev.map(s => (s.id === next.id ? next : s)));
     setDirty(true);
   }
 
@@ -89,71 +98,14 @@ export function WorkflowEditor({
         onPublish={onPublish}
         onAddState={handleAddState}
       />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden">
-          <WorkflowCanvas
-            states={states}
-            transitions={transitions}
-            onChange={handleCanvasChange}
-            onSelectState={id => {
-              setSelectedStateId(id);
-              setSelectedTransitionId(null);
-            }}
-            onSelectTransition={id => {
-              setSelectedTransitionId(id);
-              setSelectedStateId(null);
-            }}
-            readOnly={readOnly}
-          />
-        </div>
-        <aside
-          className="w-80 border-l border-gray-200 p-4 overflow-y-auto bg-white flex-shrink-0"
-          aria-label="Properties panel"
-        >
-          {selectedState && (
-            <StateInspector
-              state={selectedState}
-              allStates={states}
-              readOnly={readOnly}
-              onChange={next => {
-                // If type changed away from Parallel, clear sourceHandleId on any
-                // transitions that originated from this state — their branch handles
-                // no longer exist on the node.
-                const prev = states.find(s => s.id === next.id);
-                const wasParallel = prev?.type === StateType.Parallel;
-                const isNowParallel = next.type === StateType.Parallel;
-                if (wasParallel && !isNowParallel) {
-                  setTransitions(current =>
-                    current.map(t =>
-                      t.fromStateId === next.id
-                        ? { ...t, sourceHandleId: null }
-                        : t,
-                    ),
-                  );
-                }
-                setStates(prev => prev.map(s => (s.id === next.id ? next : s)));
-                setDirty(true);
-              }}
-            />
-          )}
-          {selectedTransition && (
-            <TransitionInspector
-              transition={selectedTransition}
-              readOnly={readOnly}
-              onChange={next => {
-                setTransitions(prev =>
-                  prev.map(t => (t.id === next.id ? next : t)),
-                );
-                setDirty(true);
-              }}
-            />
-          )}
-          {!selectedState && !selectedTransition && (
-            <p className="text-sm text-gray-500">
-              Select a state or transition to edit its properties.
-            </p>
-          )}
-        </aside>
+      {/* Canvas takes full width — state/transition editing is now inline in nodes */}
+      <div className="flex-1 overflow-hidden">
+        <WorkflowCanvas
+          states={states}
+          transitions={transitions}
+          onChange={handleCanvasChange}
+          readOnly={readOnly}
+        />
       </div>
     </div>
   );
