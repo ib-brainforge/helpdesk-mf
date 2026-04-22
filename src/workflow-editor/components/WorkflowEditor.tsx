@@ -63,11 +63,16 @@ export function WorkflowEditor({
   function handleAddState(
     partial: Omit<WorkflowStateDto, 'id' | 'positionX' | 'positionY'>,
   ) {
+    // Place new state to the right of the rightmost existing node so it's
+    // visible in the current viewport. Fallback grid for the first few states.
+    const rightmostX = states.length > 0
+      ? Math.max(...states.map(s => s.positionX))
+      : 0;
     const newState: WorkflowStateDto = {
       ...partial,
       id: crypto.randomUUID(),
-      positionX: 100 + states.length * 60,
-      positionY: 100 + Math.floor(states.length / 4) * 150,
+      positionX: rightmostX > 0 ? rightmostX + 300 : 100 + states.length * 300,
+      positionY: 120 + Math.floor(states.length / 4) * 180,
     };
     setStates(prev => [...prev, newState]);
     setDirty(true);
