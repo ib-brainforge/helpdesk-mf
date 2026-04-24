@@ -79,13 +79,14 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         testId: 'nav-configuration-custom-fields',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
-      {
-        label: 'Automation',
-        href: '/configuration/automation',
-        icon: 'bolt',
-        testId: 'nav-configuration-automation',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
-      },
+      // TODO: re-enable when migrated to WorkflowsApi/RuleGraphsApi
+      // {
+      //   label: 'Automation',
+      //   href: '/configuration/automation',
+      //   icon: 'bolt',
+      //   testId: 'nav-configuration-automation',
+      //   requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      // },
       {
         label: 'Email Templates',
         href: '/configuration/email-templates',
@@ -168,7 +169,9 @@ export default function Layout() {
               data-testid={TEST_IDS.navbar.top}
               config={{
                 identityBaseUrl: appConfig?.identityBaseUrl || '',
-                notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+                // RuntimeConfig.api no longer exposes a separate signalR hub URL;
+                // notificationUrl is the canonical notification service base.
+                notificationHubUrl: appConfig?.api?.notificationUrl || '',
                 notificationApiUrl: appConfig?.api?.notificationUrl || '',
                 app: 'helpdesk',
               }}

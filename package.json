@@ -36,11 +36,11 @@
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.2.201-develop.5ea4845",
-    "@brainforgeau/helpdesk-client": "file:/tmp/brainforgeau-helpdesk-client-0.1.99-local.tgz",
+    "@brainforgeau/components": "0.2.208-develop.750e49b",
+    "@brainforgeau/helpdesk-client": "0.1.84-develop.61f20f9",
     "@brainforgeau/identity-management-client": "0.1.408-develop.d9d4845",
     "@brainforgeau/observability": "0.2.30-develop.5ea4845",
-    "@brainforgeau/security": "0.2.228-develop.5ea4845",
+    "@brainforgeau/security": "0.2.252-develop.2c6d710",
     "@brainforgeau/theme": "0.2.44-develop.5ea4845",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
