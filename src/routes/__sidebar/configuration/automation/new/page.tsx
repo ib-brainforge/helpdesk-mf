@@ -7,7 +7,7 @@ import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, Icon,
 } from '@brainforgeau/components';
 import { extractErrorMessages } from '@/utils/error-handling';
 import { addToast, Switch, Card, CardBody, CardHeader, Textarea } from '@heroui/react';
-import { AutomationRulesApi } from '@brainforgeau/helpdesk-client';
+import { AutomationRulesApi } from '@/utils/automationRulesApiStub';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { ConditionField } from '@/components/automation/components/ConditionField';
 import { ActionField } from '@/components/automation/components/ActionField';

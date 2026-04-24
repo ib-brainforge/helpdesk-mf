@@ -168,7 +168,7 @@ export default function Layout() {
               data-testid={TEST_IDS.navbar.top}
               config={{
                 identityBaseUrl: appConfig?.identityBaseUrl || '',
-                notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+                notificationHubUrl: appConfig?.signalrHubUrl || '',
                 notificationApiUrl: appConfig?.api?.notificationUrl || '',
                 app: 'helpdesk',
               }}

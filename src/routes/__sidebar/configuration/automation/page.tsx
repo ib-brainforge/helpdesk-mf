@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@modern-js/runtime/router';
 import { BaseTable, TablePagination, BaseButton, Icon } from '@brainforgeau/components';
 import { addToast } from '@heroui/react';
-import { AutomationRulesApi } from '@brainforgeau/helpdesk-client';
+import { AutomationRulesApi } from '@/utils/automationRulesApiStub';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   useAutomationRulesData,

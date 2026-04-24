@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 import type { PaginationState } from '@tanstack/react-table';
-import { AutomationRulesApi } from '@brainforgeau/helpdesk-client';
+import { AutomationRulesApi } from '@/utils/automationRulesApiStub';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AutomationRuleListDto } from '@/types/automation';
 
