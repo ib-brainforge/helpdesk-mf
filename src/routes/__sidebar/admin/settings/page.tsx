@@ -159,7 +159,6 @@ function AdministrationPage() {
           description: 'Connect with third-party tools and services',
           icon: 'puzzle-piece',
           href: '/configuration/integrations',
-          isComingSoon: true,
         },
         {
           title: 'Import and Export',
