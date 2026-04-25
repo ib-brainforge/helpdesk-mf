@@ -95,7 +95,6 @@ function AdministrationPage() {
           description: 'Manage users, roles, and permissions',
           icon: 'users',
           href: '/admin/users',
-          isComingSoon: true,
         },
       ],
     },
