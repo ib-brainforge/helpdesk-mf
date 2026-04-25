@@ -372,7 +372,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Updated */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Updated</label>
-          <p className="text-sm">{formatDateTime(ticket.modifiedAt, { timezone })}</p>
+          <p className="text-sm">{formatDateTime(ticket.updatedAt, { timezone })}</p>
         </div>
 
         {/* Subscribers */}

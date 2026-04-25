@@ -514,7 +514,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   </p>
                 </div>
               </div>
-              {ticket.modifiedAt && ticket.modifiedAt !== ticket.createdAt && (
+              {ticket.updatedAt && ticket.updatedAt !== ticket.createdAt && (
                 <div className="flex gap-3">
                   <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                     <Icon name="pencil" className="h-4 w-4 text-gray-600" />
@@ -522,7 +522,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <div>
                     <p className="text-sm font-medium">Ticket updated</p>
                     <p className="text-xs text-gray-500">
-                      on {formatDateTime(ticket.modifiedAt, { timezone })}
+                      on {formatDateTime(ticket.updatedAt, { timezone })}
                     </p>
                   </div>
                 </div>

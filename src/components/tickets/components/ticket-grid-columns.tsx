@@ -184,7 +184,7 @@ export const createTicketColumns = (
     },
     size: 120,
   }),
-  columnHelper.accessor('modifiedAt', {
+  columnHelper.accessor('updatedAt', {
     header: 'Updated',
     cell: ({ getValue }) => {
       const date = getValue();
