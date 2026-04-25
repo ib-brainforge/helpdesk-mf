@@ -119,7 +119,6 @@ function AdministrationPage() {
           description: 'Define custom ticket statuses beyond open/closed',
           icon: 'flag',
           href: '/configuration/custom-statuses',
-          isComingSoon: true,
         },
         {
           title: 'Custom priorities',
