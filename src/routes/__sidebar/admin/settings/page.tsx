@@ -3,6 +3,7 @@ import { NavLink } from '@modern-js/runtime/router';
 import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Card, CardBody } from '@heroui/react';
+import { getAppConfig } from '@/state/config';
 
 type SettingCardProps = {
   title: string;
@@ -10,9 +11,10 @@ type SettingCardProps = {
   icon: string;
   href: string;
   isComingSoon?: boolean;
+  isExternal?: boolean;
 };
 
-function SettingCard({ title, description, icon, href, isComingSoon }: SettingCardProps) {
+function SettingCard({ title, description, icon, href, isComingSoon, isExternal }: SettingCardProps) {
   const content = (
     <Card
       className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
@@ -24,7 +26,12 @@ function SettingCard({ title, description, icon, href, isComingSoon }: SettingCa
             <Icon name={icon} className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold mb-1">{title}</h3>
+            <div className="flex items-center gap-1.5 mb-1">
+              <h3 className="text-base font-semibold">{title}</h3>
+              {isExternal && (
+                <Icon name="arrow-top-right-on-square" className="h-3.5 w-3.5 text-default-400" />
+              )}
+            </div>
             <p className="text-sm text-default-500">{description}</p>
             {isComingSoon && (
               <span className="inline-block mt-2 text-xs text-warning">Coming soon</span>
@@ -37,6 +44,14 @@ function SettingCard({ title, description, icon, href, isComingSoon }: SettingCa
 
   if (isComingSoon) {
     return content;
+  }
+
+  if (isExternal) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+        {content}
+      </a>
+    );
   }
 
   return (
@@ -52,7 +67,13 @@ type SettingSection = {
 };
 
 function AdministrationPage() {
-  // REVIEW: Links map to existing pages where available, placeholders for not-yet-implemented pages
+  const config = getAppConfig();
+  // REVIEW: userManualUrl and apiDocsUrl can be overridden per environment via runtime config
+  const userManualUrl: string =
+    (config as any).userManualUrl ?? 'https://docs.brainforge.au/helpdesk';
+  const apiDocsUrl: string =
+    (config as any).apiDocsUrl ?? `${config?.api?.baseUrl ?? ''}/swagger`;
+
   const sections: SettingSection[] = [
     {
       title: 'General settings',
@@ -164,17 +185,17 @@ function AdministrationPage() {
       items: [
         {
           title: 'User manual',
-          description: 'Comprehensive documentation and guides',
+          description: 'Comprehensive documentation and guides — opens in a new tab',
           icon: 'book-open',
-          href: '/help/manual',
-          isComingSoon: true,
+          href: userManualUrl,
+          isExternal: true,
         },
         {
-          title: 'API',
-          description: 'Developer documentation and API reference',
+          title: 'API documentation',
+          description: 'Developer documentation and OpenAPI reference — opens in a new tab',
           icon: 'code-bracket',
-          href: '/help/api',
-          isComingSoon: true,
+          href: apiDocsUrl,
+          isExternal: true,
         },
       ],
     },

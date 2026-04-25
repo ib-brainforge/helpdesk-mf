@@ -6,7 +6,7 @@ import { useTimezone } from '@brainforgeau/security';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Card, CardBody, Spinner } from '@heroui/react';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
-import { addToast } from '@heroui/react';
+import { AdvancedFiltersModal, type AdvancedFilterValues } from '@/components/reports/components/AdvancedFiltersModal';
 import {
   useReactTable,
   getCoreRowModel,
@@ -83,6 +83,15 @@ function ReportsSummaryPage() {
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilterValues>({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    statuses: [],
+    priorities: [],
+    categoryIds: [],
+    assigneeIds: [],
+  });
 
   // Fetch report summary data
   const { data: summaryData, isLoading: isLoadingSummary } = useTicketSummaryReport(startDate, endDate);
@@ -101,13 +110,18 @@ function ReportsSummaryPage() {
     setEndDate(end);
   };
 
-  const handleMoreFilters = () => {
-    addToast({
-      title: 'Coming soon',
-      description: 'Advanced filters will be available soon',
-      severity: 'warning',
-    });
+  const handleApplyAdvancedFilters = (values: AdvancedFilterValues) => {
+    setAdvancedFilters(values);
+    // Sync date range with advanced filters
+    if (values.startDate) setStartDate(values.startDate);
+    if (values.endDate) setEndDate(values.endDate);
   };
+
+  const activeAdvancedFilterCount = [
+    advancedFilters.statuses.length > 0,
+    advancedFilters.priorities.length > 0,
+    advancedFilters.categoryIds.length > 0,
+  ].filter(Boolean).length;
 
   // Transform API data for pie charts
   // API returns dictionaries like { "CategoryName": count } not arrays
@@ -129,11 +143,27 @@ function ReportsSummaryPage() {
     return Object.entries(dict).map(([name, value]) => ({ name, value }));
   }, [summaryData]);
 
-  // Filter tickets by category if selected
+  // Filter tickets by category + advanced filters
   const filteredTickets = useMemo(() => {
-    if (selectedCategory === 'all') return tickets;
-    return tickets.filter((ticket) => ticket.categoryId === selectedCategory);
-  }, [tickets, selectedCategory]);
+    let result = tickets;
+
+    if (selectedCategory !== 'all') {
+      result = result.filter((ticket) => ticket.categoryId === selectedCategory);
+    }
+
+    // Apply advanced filters if active
+    if (advancedFilters.statuses.length > 0) {
+      result = result.filter((ticket) => ticket.status != null && advancedFilters.statuses.includes(ticket.status));
+    }
+    if (advancedFilters.priorities.length > 0) {
+      result = result.filter((ticket) => ticket.priority != null && advancedFilters.priorities.includes(ticket.priority));
+    }
+    if (advancedFilters.categoryIds.length > 0) {
+      result = result.filter((ticket) => ticket.categoryId != null && advancedFilters.categoryIds.includes(ticket.categoryId));
+    }
+
+    return result;
+  }, [tickets, selectedCategory, advancedFilters]);
 
   const columns: ColumnDef<typeof tickets[0], any>[] = useMemo(
     () => [
@@ -267,10 +297,15 @@ function ReportsSummaryPage() {
         />
         <BaseButton
           variant="bordered"
-          onPress={handleMoreFilters}
+          onPress={() => setIsAdvancedFiltersOpen(true)}
           icon={<Icon name="adjustments-horizontal" className="h-4 w-4" />}
         >
           More filters
+          {activeAdvancedFilterCount > 0 && (
+            <span className="ml-1.5 bg-primary text-white text-xs rounded-full px-1.5 py-0.5">
+              {activeAdvancedFilterCount}
+            </span>
+          )}
         </BaseButton>
       </div>
 
@@ -335,6 +370,15 @@ function ReportsSummaryPage() {
           fullHeight={false}
         />
       </div>
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFiltersModal
+        isOpen={isAdvancedFiltersOpen}
+        initialValues={advancedFilters}
+        categories={categories as any}
+        onApply={handleApplyAdvancedFilters}
+        onClose={() => setIsAdvancedFiltersOpen(false)}
+      />
     </>
   );
 }

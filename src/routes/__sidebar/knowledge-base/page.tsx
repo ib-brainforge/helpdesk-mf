@@ -3,28 +3,27 @@ import { Helmet } from '@modern-js/runtime/head';
 import { Link } from '@modern-js/runtime/router';
 import { Icon, BaseInput } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, addToast } from '@heroui/react';
-import { useKnowledgeBaseArticles, useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import {
+  useKnowledgeBaseArticles,
+  useKnowledgeBaseCategories,
+  useExportKb,
+} from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KbArticleListView } from '@/components/knowledge-base/components/KbArticleListView';
 import { NewArticleModal } from '@/components/knowledge-base/components/NewArticleModal';
+import { KbImportModal } from '@/components/knowledge-base/components/KbImportModal';
 
 function KnowledgeBasePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const { data: categories, isLoading: loadingCategories } = useKnowledgeBaseCategories();
   const { data: articles, isLoading: loadingArticles } = useKnowledgeBaseArticles(
     '',
     searchTerm,
   );
-
-  const handleComingSoon = (feature: string) => {
-    addToast({
-      title: 'Coming soon',
-      description: `${feature} will be available soon`,
-      severity: 'warning',
-    });
-  };
+  const exportMutation = useExportKb();
 
   return (
     <>
@@ -61,13 +60,16 @@ function KnowledgeBasePage() {
                 </BaseButton>
               </DropdownTrigger>
               <DropdownMenu aria-label="Knowledge base actions">
-                <DropdownItem key="import" onPress={() => handleComingSoon('Import')}>
+                <DropdownItem key="import" onPress={() => setIsImportOpen(true)}>
                   Import
                 </DropdownItem>
-                <DropdownItem key="export" onPress={() => handleComingSoon('Export')}>
-                  Export
+                <DropdownItem
+                  key="export"
+                  onPress={() => exportMutation.mutate()}
+                >
+                  {exportMutation.isPending ? 'Exporting...' : 'Export'}
                 </DropdownItem>
-                <DropdownItem key="categories" onPress={() => handleComingSoon('Manage Categories')}>
+                <DropdownItem key="categories" href="/knowledge-base/settings">
                   Manage Categories
                 </DropdownItem>
               </DropdownMenu>
@@ -98,6 +100,12 @@ function KnowledgeBasePage() {
       <NewArticleModal
         isOpen={isQuickCreateOpen}
         onClose={() => setIsQuickCreateOpen(false)}
+      />
+
+      {/* Import Modal */}
+      <KbImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
       />
     </>
   );

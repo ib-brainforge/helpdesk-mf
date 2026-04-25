@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { authorizedAxios } from '@/state/authorizedAxios';
+import { getDefaultStore } from 'jotai';
+import { configAtom } from '@/state/config';
 import type {
   KnowledgeBaseArticleListDto,
   KnowledgeBaseCategoryDto,
@@ -11,6 +14,13 @@ import type {
 } from '@/types';
 import { KnowledgeBaseStatus } from '@/types';
 import { addToast } from '@heroui/react';
+
+const store = getDefaultStore();
+
+function getApiBaseUrl(): string {
+  const config = store.get(configAtom);
+  return config?.api?.baseUrl ?? '';
+}
 
 export const useKnowledgeBaseCategories = () => {
   return useQuery<KnowledgeBaseCategoryDto[]>({
@@ -163,5 +173,97 @@ export const useSimilarArticles = (text: string, limit = 5) => {
     },
     enabled: text.length >= 3,
     staleTime: 60_000, // Cache for 1 minute
+  });
+};
+
+export interface KbImportResult {
+  articlesImported: number;
+  categoriesImported: number;
+  errors: string[];
+  isPartial: boolean;
+}
+
+// REVIEW: Using authorizedAxios directly for new Wave 5 endpoints not yet in the generated client.
+// Backend PR #57 merged at commit 1a8356e but the "Generate and Publish NPM Client" workflow
+// has been failing (CI billing-blocked), so no client snapshot containing these endpoints is
+// available yet. TODO: replace with typed KnowledgeBaseApi methods once a post-billing-fix
+// snapshot is published.
+
+export const useImportKb = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<KbImportResult, Error, File>({
+    mutationFn: async (file: File) => {
+      const baseUrl = getApiBaseUrl();
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await authorizedAxios.post<KbImportResult>(
+        `${baseUrl}/v1/kb/import`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+      return response.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base'] });
+      const message = result.isPartial
+        ? `Imported ${result.articlesImported} articles, ${result.categoriesImported} categories (${result.errors.length} errors)`
+        : `Imported ${result.articlesImported} articles and ${result.categoriesImported} categories successfully`;
+      addToast({ title: 'Import complete', description: message, severity: result.isPartial ? 'warning' : 'success' });
+    },
+    onError: () => {
+      addToast({ title: 'Import failed', description: 'Failed to import KB content', severity: 'danger' });
+    },
+  });
+};
+
+export const useExportKb = () => {
+  return useMutation<void, Error, void>({
+    mutationFn: async () => {
+      const baseUrl = getApiBaseUrl();
+      const response = await authorizedAxios.get(`${baseUrl}/v1/kb/export`, {
+        responseType: 'blob',
+      });
+      // Trigger browser download
+      const contentDisposition = response.headers['content-disposition'] as string | undefined;
+      const fileNameMatch = contentDisposition?.match(/filename="?([^"]+)"?/);
+      const fileName = fileNameMatch?.[1] ?? `kb-export-${new Date().toISOString().slice(0, 10)}.zip`;
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
+    onSuccess: () => {
+      addToast({ title: 'Export complete', description: 'KB content downloaded successfully', severity: 'success' });
+    },
+    onError: () => {
+      addToast({ title: 'Export failed', description: 'Failed to export KB content', severity: 'danger' });
+    },
+  });
+};
+
+export const useDuplicateKbCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<KnowledgeBaseCategoryDto, Error, { id: string; includeArticles: boolean }>({
+    mutationFn: async ({ id, includeArticles }) => {
+      const baseUrl = getApiBaseUrl();
+      const response = await authorizedAxios.post<KnowledgeBaseCategoryDto>(
+        `${baseUrl}/v1/kb/categories/${id}/duplicate?includeArticles=${includeArticles}`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });
+      addToast({ title: 'Category duplicated', description: 'Category copied successfully', severity: 'success' });
+    },
+    onError: () => {
+      addToast({ title: 'Duplication failed', description: 'Failed to duplicate category', severity: 'danger' });
+    },
   });
 };
