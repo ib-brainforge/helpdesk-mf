@@ -165,7 +165,6 @@ function AdministrationPage() {
           description: 'Bulk import/export tickets and data',
           icon: 'arrow-down-tray',
           href: '/configuration/import-export',
-          isComingSoon: true,
         },
         {
           title: 'Billing',
