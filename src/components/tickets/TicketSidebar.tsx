@@ -15,6 +15,8 @@ type TicketSidebarProps = {
   onCategorySelect?: (categoryId: string | null) => void;
   onTagSelect?: (tagId: string) => void;
   selectedTags?: string[];
+  /** Called when user wants to close the sidebar (mobile drawer close button) */
+  onClose?: () => void;
 };
 
 function CategoryTree({
@@ -79,7 +81,7 @@ function CategoryTree({
   );
 }
 
-export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = [] }: TicketSidebarProps) {
+export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = [], onClose }: TicketSidebarProps) {
   const { categories, sections, isLoading: isLoadingCategories } = useCategoriesData();
   const { tags, isLoading: isLoadingTags } = useTags();
 
@@ -125,7 +127,22 @@ export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = []
   }, [categories, sections]);
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-default-200 bg-default-50 p-4">
+    <div className="flex h-full w-full flex-col p-4">
+      {/* Mobile close button — only visible when onClose is provided (inside drawer) */}
+      {onClose && (
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm font-semibold text-default-700">Filter</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close filter sidebar"
+            className="flex items-center justify-center rounded-md p-1 hover:bg-default-100 transition-colors"
+          >
+            <Icon name="XMarkIcon" className="h-5 w-5 text-default-500" />
+          </button>
+        </div>
+      )}
+
       {/* Categories Section */}
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between">

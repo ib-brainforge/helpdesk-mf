@@ -3,7 +3,7 @@ import { BaseTable, BaseButton, Icon, TablePagination } from '@brainforgeau/comp
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { NewTicketModal } from './NewTicketModal';
-import { Tabs, Tab, Chip } from '@heroui/react';
+import { Tabs, Tab, Chip, Drawer, DrawerContent, DrawerBody } from '@heroui/react';
 import { useTicketsData } from '../hooks/useTickets';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { createTicketColumns } from './ticket-grid-columns';
@@ -30,6 +30,7 @@ export const TicketGrid: FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('all');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { items, totalCount, pagination, setPagination, filters, setFilters, isLoading, refetch } =
     useTicketsData();
 
@@ -168,6 +169,8 @@ export const TicketGrid: FC = () => {
   const handleCategorySelect = useCallback((categoryId: string | null) => {
     setSelectedCategoryId(categoryId);
     setFilters({ ...filters, categoryId: categoryId ? [categoryId] : undefined });
+    // Close mobile drawer after selecting a category
+    setIsMobileSidebarOpen(false);
   }, [filters, setFilters]);
 
   const handleTagSelect = useCallback((tagId: string) => {
@@ -224,21 +227,59 @@ export const TicketGrid: FC = () => {
     all: totalCount,
   }), [totalCount]);
 
+  const sidebarProps = {
+    onCategorySelect: handleCategorySelect,
+    onTagSelect: handleTagSelect,
+    selectedTags,
+  };
+
   return (
     <div className="flex h-full gap-0">
-      {/* Sidebar */}
-      <TicketSidebar
-        onCategorySelect={handleCategorySelect}
-        onTagSelect={handleTagSelect}
-        selectedTags={selectedTags}
-      />
+      {/* Desktop sidebar — always visible, hidden on mobile */}
+      <aside className="hidden md:flex h-full w-64 flex-shrink-0 flex-col border-r border-default-200 bg-default-50">
+        <TicketSidebar {...sidebarProps} />
+      </aside>
+
+      {/* Mobile sidebar — rendered as a Drawer overlay */}
+      <Drawer
+        isOpen={isMobileSidebarOpen}
+        onOpenChange={(open) => setIsMobileSidebarOpen(open)}
+        placement="left"
+        size="xs"
+        classNames={{
+          base: 'md:hidden max-w-72',
+          body: 'p-0',
+          closeButton: 'hidden',
+          header: 'hidden',
+        }}
+      >
+        <DrawerContent>
+          <DrawerBody>
+            <TicketSidebar
+              {...sidebarProps}
+              onClose={() => setIsMobileSidebarOpen(false)}
+            />
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-auto px-6">
+      <div className="flex flex-1 flex-col overflow-auto px-4 md:px-6">
         <div className="shrink-0">
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Tickets</h1>
+          <div className="flex items-center gap-2">
+            {/* Hamburger button — mobile only */}
+            <button
+              type="button"
+              className="md:hidden flex items-center justify-center rounded-md p-1.5 hover:bg-default-100 transition-colors"
+              aria-label="Open filter sidebar"
+              onClick={() => setIsMobileSidebarOpen(true)}
+            >
+              <Icon name="Bars3Icon" className="h-5 w-5 text-default-600" />
+            </button>
+            <h1 className="text-2xl font-semibold">Tickets</h1>
+          </div>
           <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
             <BaseButton
               onPress={() => setIsNewTicketModalOpen(true)}
