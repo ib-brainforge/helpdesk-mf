@@ -1121,6 +1121,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         <AiAssistantModal
           isOpen={isAiAssistantOpen}
           onClose={() => setIsAiAssistantOpen(false)}
+          ticketId={id ?? ''}
         />
         <NewTicketModal
           isOpen={isNewTicketModalOpen}
