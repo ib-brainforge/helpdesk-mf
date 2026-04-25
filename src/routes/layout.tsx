@@ -56,6 +56,13 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     icon: 'chart-bar',
     testId: 'nav-reports',
   },
+  {
+    label: 'Ideas Forum',
+    href: '/ideas',
+    icon: 'light-bulb',
+    testId: 'nav-ideas',
+    requiredPermissions: [HelpdeskPermissions.TicketRead],
+  },
 ];
 
 const navItemsBottom: GuardedItem<NavItem>[] = [

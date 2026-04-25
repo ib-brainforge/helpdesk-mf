@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { addToast } from '@heroui/react';
+import { useDuplicateCategory } from '@/components/categories/hooks/useCategoriesData';
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -55,12 +56,24 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   onDeleteSection,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const duplicateCategoryMutation = useDuplicateCategory();
 
   const handleDuplicate = (category: CategoryDto) => {
-    addToast({
-      title: 'Coming soon',
-      description: 'Category duplication will be available soon',
-      severity: 'warning',
+    duplicateCategoryMutation.mutate(category.id, {
+      onSuccess: () => {
+        addToast({
+          title: 'Category duplicated',
+          description: `"${category.name} (copy)" has been created.`,
+          severity: 'success',
+        });
+      },
+      onError: () => {
+        addToast({
+          title: 'Duplication failed',
+          description: 'Could not duplicate the category. Please try again.',
+          severity: 'danger',
+        });
+      },
     });
   };
 

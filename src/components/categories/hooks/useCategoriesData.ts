@@ -1,7 +1,37 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { configAtom } from '@/state/config';
+import { authorizedAxios } from '@/state/authorizedAxios';
 import type { CategoryDto, SectionDto } from '@/types/category';
+import type { RuntimeConfig } from '@brainforgeau/security';
+import { getDefaultStore } from 'jotai';
+
+// REVIEW: useDuplicateCategory uses authorizedAxios directly because the POST /v1/categories/{id}/duplicate
+// endpoint is not yet in the published @brainforgeau/helpdesk-client. Switch to generated client
+// after the backend Wave 6 PR is merged and the client package is regenerated.
+const getCategoryApiBaseUrl = (): string => {
+  const store = getDefaultStore();
+  const config = store.get(configAtom) as RuntimeConfig;
+  return config?.api?.baseUrl ?? '';
+};
+
+export const useDuplicateCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (categoryId: string) => {
+      const baseUrl = getCategoryApiBaseUrl();
+      const response = await authorizedAxios.post<string>(
+        `${baseUrl}/v1/categories/${categoryId}/duplicate`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
+    },
+  });
+};
 
 // REVIEW: Using generated client types directly, flattening hierarchy into flat array for UI
 type CategoryHierarchyDto = {

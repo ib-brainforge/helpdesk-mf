@@ -1,4 +1,6 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { configAtom } from '@/state/config';
+import { authorizedAxios } from '@/state/authorizedAxios';
 import type {
   CreateTicketDto,
   PagedResult,
@@ -11,9 +13,20 @@ import type {
 } from '@/types/ticket';
 import { toApiTicketPriority, toApiTicketStatus } from '@/utils/typeMappers';
 import { TicketsApi } from '@brainforgeau/helpdesk-client';
+import type { RuntimeConfig } from '@brainforgeau/security';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
+import { getDefaultStore } from 'jotai';
+
+// REVIEW: Wave 6 hooks below use authorizedAxios directly because the new endpoints are not yet
+// in the published @brainforgeau/helpdesk-client. Switch to the generated client after the backend
+// PR is merged and the client package is regenerated and published.
+const getApiBaseUrl = (): string => {
+  const store = getDefaultStore();
+  const config = store.get(configAtom) as RuntimeConfig;
+  return config?.api?.baseUrl ?? '';
+};
 
 export const useTicketsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -537,6 +550,125 @@ export const useUnlinkAsset = () => {
       queryClient.invalidateQueries({
         queryKey: ['ticket-linked-assets', variables.ticketId],
       });
+    },
+  });
+};
+
+// ── Wave 6 hooks ─────────────────────────────────────────────────────────────
+
+export type CreateSubtaskDto = {
+  subject: string;
+  description?: string;
+  assigneeId?: string;
+  priority?: number;
+  categoryId?: string;
+};
+
+export const useCreateSubtask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      parentTicketId,
+      data,
+    }: { parentTicketId: string; data: CreateSubtaskDto }) => {
+      const baseUrl = getApiBaseUrl();
+      const response = await authorizedAxios.post<string>(
+        `${baseUrl}/v1/tickets/${parentTicketId}/subtasks`,
+        data,
+      );
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', variables.parentTicketId] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-children', variables.parentTicketId] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useMarkTicketAsProblem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const baseUrl = getApiBaseUrl();
+      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/mark-problem`);
+      return ticketId;
+    },
+    onSuccess: (ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+    },
+  });
+};
+
+export const useUnmarkTicketAsProblem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const baseUrl = getApiBaseUrl();
+      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/unmark-problem`);
+      return ticketId;
+    },
+    onSuccess: (ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+    },
+  });
+};
+
+export const usePublishTicketAsIdea = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const baseUrl = getApiBaseUrl();
+      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/publish-as-idea`);
+      return ticketId;
+    },
+    onSuccess: (ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
+    },
+  });
+};
+
+export const useUnpublishTicketAsIdea = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const baseUrl = getApiBaseUrl();
+      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/unpublish-as-idea`);
+      return ticketId;
+    },
+    onSuccess: (ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
+    },
+  });
+};
+
+export type IdeaListItem = {
+  id: string;
+  subject: string;
+  description?: string;
+  requesterId: string;
+  submitterEmail: string;
+  publishedAt: string;
+  voteCount: number;
+  createdAt: string;
+};
+
+export const useIdeasForum = (page = 1, pageSize = 20) => {
+  return useQuery<{ items: IdeaListItem[]; totalCount: number; page: number; pageSize: number }>({
+    queryKey: ['ideas', page, pageSize],
+    queryFn: async () => {
+      const baseUrl = getApiBaseUrl();
+      const response = await authorizedAxios.get(
+        `${baseUrl}/v1/ideas?page=${page}&pageSize=${pageSize}`,
+      );
+      return response.data;
     },
   });
 };

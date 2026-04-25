@@ -40,20 +40,26 @@ import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useRef, useState } from 'react';
 import {
   useConvertToReply,
+  useCreateSubtask,
   useDeleteTicket,
   useDuplicateTicket,
   useLinkTickets,
+  useMarkTicketAsProblem,
   useMarkTicketAsSpam,
   useMergeTickets,
   useMyTicketSubscription,
+  usePublishTicketAsIdea,
   useSetTicketParent,
   useSubscribeToTicket,
   useTicketChildren,
   useTicketDetail,
+  useUnmarkTicketAsProblem,
+  useUnpublishTicketAsIdea,
   useUnsubscribeFromTicket,
   useUpdateTicket,
 } from '../hooks/useTickets';
 import { AddParentTicketModal } from './AddParentTicketModal';
+import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { CSATWidget } from './CSATWidget';
 import { ConvertToReplyModal } from './ConvertToReplyModal';
@@ -150,6 +156,13 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const setParentMutation = useSetTicketParent();
   const { data: children } = useTicketChildren(id ?? '');
 
+  // Wave 6 mutations
+  const createSubtaskMutation = useCreateSubtask();
+  const markAsProblemMutation = useMarkTicketAsProblem();
+  const unmarkAsProblemMutation = useUnmarkTicketAsProblem();
+  const publishAsIdeaMutation = usePublishTicketAsIdea();
+  const unpublishAsIdeaMutation = useUnpublishTicketAsIdea();
+
   const [showAttachments, setShowAttachments] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -165,6 +178,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const [isConvertToReplyModalOpen, setIsConvertToReplyModalOpen] =
     useState(false);
   const [isAddParentModalOpen, setIsAddParentModalOpen] = useState(false);
+
+  // Wave 6 modal state
+  const [isAddSubtaskModalOpen, setIsAddSubtaskModalOpen] = useState(false);
 
   // Hide/Show System Log — persisted in localStorage
   const [showSystemLog, setShowSystemLog] = useState<boolean>(() => {
@@ -497,6 +513,64 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     [id, setParentMutation],
   );
 
+  // Wave 6 handlers
+  const handleAddSubtaskSubmit = useCallback(
+    (data: { subject: string; description?: string }) => {
+      if (!id) return;
+      createSubtaskMutation.mutate(
+        { parentTicketId: id, data },
+        {
+          onSuccess: (newTicketId) => {
+            addToast({
+              title: 'Subtask created',
+              description: 'The subtask has been created successfully.',
+              severity: 'success',
+            });
+            setIsAddSubtaskModalOpen(false);
+          },
+          onError: () => {
+            addToast({
+              title: 'Error',
+              description: 'Failed to create subtask. Please try again.',
+              severity: 'danger',
+            });
+          },
+        },
+      );
+    },
+    [id, createSubtaskMutation],
+  );
+
+  const handleToggleProblem = useCallback(() => {
+    if (!id || !ticket) return;
+    if (ticket.isProblem) {
+      unmarkAsProblemMutation.mutate(id, {
+        onSuccess: () => addToast({ title: 'Problem flag removed', severity: 'success' }),
+        onError: () => addToast({ title: 'Error removing problem flag', severity: 'danger' }),
+      });
+    } else {
+      markAsProblemMutation.mutate(id, {
+        onSuccess: () => addToast({ title: 'Marked as Problem', severity: 'success' }),
+        onError: () => addToast({ title: 'Error marking as problem', severity: 'danger' }),
+      });
+    }
+  }, [id, ticket, markAsProblemMutation, unmarkAsProblemMutation]);
+
+  const handleTogglePublishAsIdea = useCallback(() => {
+    if (!id || !ticket) return;
+    if (ticket.isPublishedAsIdea) {
+      unpublishAsIdeaMutation.mutate(id, {
+        onSuccess: () => addToast({ title: 'Removed from Ideas Forum', severity: 'success' }),
+        onError: () => addToast({ title: 'Error removing from Ideas Forum', severity: 'danger' }),
+      });
+    } else {
+      publishAsIdeaMutation.mutate(id, {
+        onSuccess: () => addToast({ title: 'Published to Ideas Forum', severity: 'success' }),
+        onError: () => addToast({ title: 'Error publishing to Ideas Forum', severity: 'danger' }),
+      });
+    }
+  }, [id, ticket, publishAsIdeaMutation, unpublishAsIdeaMutation]);
+
   const handleReply = useCallback(() => {
     // Scroll to reply editor
     replyEditorRef.current?.scrollIntoView({
@@ -616,6 +690,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     <StatusBadge color={priorityConfig.color}>
                       {priorityConfig.label}
                     </StatusBadge>
+                    {ticket.isProblem && (
+                      <StatusBadge color="danger">Problem</StatusBadge>
+                    )}
+                    {ticket.isPublishedAsIdea && (
+                      <StatusBadge color="success">Published to Ideas Forum</StatusBadge>
+                    )}
                   </div>
                 </div>
 
@@ -694,7 +774,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         </DropdownItem>
                         <DropdownItem
                           key="subtask"
-                          onPress={() => handleComingSoon('Add Subtask')}
+                          onPress={() => setIsAddSubtaskModalOpen(true)}
                         >
                           Add Subtask
                         </DropdownItem>
@@ -712,17 +792,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         </DropdownItem>
                         <DropdownItem
                           key="problem"
-                          onPress={() => handleComingSoon('Problem/Idol')}
+                          onPress={handleToggleProblem}
+                          isDisabled={markAsProblemMutation.isPending || unmarkAsProblemMutation.isPending}
                         >
-                          Problem/Idol
+                          {ticket?.isProblem ? 'Unmark as Problem' : 'Mark as Problem'}
                         </DropdownItem>
                         <DropdownItem
                           key="publish"
-                          onPress={() =>
-                            handleComingSoon('Publish To Ideas Forum')
-                          }
+                          onPress={handleTogglePublishAsIdea}
+                          isDisabled={publishAsIdeaMutation.isPending || unpublishAsIdeaMutation.isPending}
                         >
-                          Publish To "Ideas Forum"
+                          {ticket?.isPublishedAsIdea ? 'Remove from Ideas Forum' : 'Publish To "Ideas Forum"'}
                         </DropdownItem>
                         <DropdownItem
                           key="subscribe"
@@ -1017,6 +1097,13 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onConfirm={handleAddParentConfirm}
           isLoading={setParentMutation.isPending}
           currentTicketId={id ?? ''}
+        />
+        <AddSubtaskModal
+          isOpen={isAddSubtaskModalOpen}
+          parentTicketId={id ?? ''}
+          onClose={() => setIsAddSubtaskModalOpen(false)}
+          onSubmit={handleAddSubtaskSubmit}
+          isLoading={createSubtaskMutation.isPending}
         />
 
         <MergeTicketModal

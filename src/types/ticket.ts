@@ -57,6 +57,11 @@ export type TicketDto = GeneratedTicketDto & {
   assigneeName?: string;
   requesterName?: string;
   customFields?: CustomFieldValueDto[];
+  // Wave 6 fields — added to backend TicketDto in Wave 6 PR; not yet in generated client
+  // REVIEW: Remove this manual extension once the helpdesk-client package is regenerated post-merge
+  isProblem?: boolean;
+  isPublishedAsIdea?: boolean;
+  publishedAsIdeaAt?: string | null;
 };
 
 export interface CustomFieldValueDto {
