@@ -39,19 +39,28 @@ import { addToast } from '@heroui/react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useRef, useState } from 'react';
 import {
+  useConvertToReply,
   useDeleteTicket,
+  useDuplicateTicket,
   useLinkTickets,
   useMarkTicketAsSpam,
   useMergeTickets,
   useMyTicketSubscription,
+  useSetTicketParent,
   useSubscribeToTicket,
+  useTicketChildren,
   useTicketDetail,
   useUnsubscribeFromTicket,
   useUpdateTicket,
 } from '../hooks/useTickets';
+import { AddParentTicketModal } from './AddParentTicketModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { CSATWidget } from './CSATWidget';
+import { ConvertToReplyModal } from './ConvertToReplyModal';
 import { DeleteTicketModal } from './DeleteTicketModal';
+import { DuplicateTicketModal } from './DuplicateTicketModal';
+import { EditTicketModal } from './EditTicketModal';
+import { ForwardTicketModal } from './ForwardTicketModal';
 import { LinkTicketModal } from './LinkTicketModal';
 import { MarkSpamModal } from './MarkSpamModal';
 import { MergeTicketModal } from './MergeTicketModal';
@@ -135,6 +144,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const subscribeMutation = useSubscribeToTicket(id ?? '');
   const unsubscribeMutation = useUnsubscribeFromTicket(id ?? '');
 
+  // Wave 3 mutations
+  const duplicateTicketMutation = useDuplicateTicket();
+  const convertToReplyMutation = useConvertToReply();
+  const setParentMutation = useSetTicketParent();
+  const { data: children } = useTicketChildren(id ?? '');
+
   const [showAttachments, setShowAttachments] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -142,6 +157,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMarkSpamModalOpen, setIsMarkSpamModalOpen] = useState(false);
+
+  // Wave 3 modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [isConvertToReplyModalOpen, setIsConvertToReplyModalOpen] =
+    useState(false);
+  const [isAddParentModalOpen, setIsAddParentModalOpen] = useState(false);
 
   // Hide/Show System Log — persisted in localStorage
   const [showSystemLog, setShowSystemLog] = useState<boolean>(() => {
@@ -386,6 +409,94 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     [id, deleteTimeEntryMutation],
   );
 
+  // Wave 3 handlers
+  const handleDuplicateConfirm = useCallback(() => {
+    if (!id) return;
+    duplicateTicketMutation.mutate(id, {
+      onSuccess: newTicketId => {
+        addToast({
+          title: 'Ticket duplicated',
+          description: 'Navigating to the new ticket.',
+          severity: 'success',
+        });
+        setIsDuplicateModalOpen(false);
+        navigate(`/tickets/${newTicketId}`);
+      },
+      onError: () => {
+        addToast({
+          title: 'Error',
+          description: 'Failed to duplicate ticket. Please try again.',
+          severity: 'danger',
+        });
+      },
+    });
+  }, [id, duplicateTicketMutation, navigate]);
+
+  const handleConvertToReplyConfirm = useCallback(
+    (parentTicketId: string) => {
+      if (!id) return;
+      convertToReplyMutation.mutate(
+        { ticketId: id, parentTicketId },
+        {
+          onSuccess: () => {
+            addToast({
+              title: 'Ticket converted',
+              description: 'Content moved to parent ticket as an internal note.',
+              severity: 'success',
+            });
+            setIsConvertToReplyModalOpen(false);
+            navigate(`/tickets/${parentTicketId}`);
+          },
+          onError: () => {
+            addToast({
+              title: 'Error',
+              description: 'Failed to convert ticket. Please try again.',
+              severity: 'danger',
+            });
+          },
+        },
+      );
+    },
+    [id, convertToReplyMutation, navigate],
+  );
+
+  const handleAddParentConfirm = useCallback(
+    (parentTicketId: string) => {
+      if (!id) return;
+      setParentMutation.mutate(
+        { ticketId: id, parentTicketId },
+        {
+          onSuccess: () => {
+            addToast({
+              title: 'Parent set',
+              description: 'Parent ticket linked successfully.',
+              severity: 'success',
+            });
+            setIsAddParentModalOpen(false);
+          },
+          onError: (error: any) => {
+            const errorCode = error?.response?.data?.errors?.[0]?.code;
+            if (errorCode === 'CIRCULAR_HIERARCHY') {
+              addToast({
+                title: 'Circular hierarchy',
+                description:
+                  'Setting this parent would create a circular hierarchy.',
+                severity: 'danger',
+              });
+            } else {
+              addToast({
+                title: 'Error',
+                description: 'Failed to set parent ticket. Please try again.',
+                severity: 'danger',
+              });
+            }
+          },
+        },
+      );
+    },
+    [id, setParentMutation],
+  );
+
   const handleReply = useCallback(() => {
     // Scroll to reply editor
     replyEditorRef.current?.scrollIntoView({
@@ -545,7 +656,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         </DropdownItem>
                         <DropdownItem
                           key="edit"
-                          onPress={() => handleComingSoon('Edit')}
+                          onPress={() => setIsEditModalOpen(true)}
                         >
                           Edit
                         </DropdownItem>
@@ -557,9 +668,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         </DropdownItem>
                         <DropdownItem
                           key="forward"
-                          onPress={() =>
-                            handleComingSoon('Forward Ticket By Email')
-                          }
+                          onPress={() => setIsForwardModalOpen(true)}
                         >
                           Forward Ticket By Email
                         </DropdownItem>
@@ -576,7 +685,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         </DropdownItem>
                         <DropdownItem
                           key="duplicate"
-                          onPress={() => handleComingSoon('Duplicate')}
+                          onPress={() => setIsDuplicateModalOpen(true)}
                         >
                           Duplicate
                         </DropdownItem>
@@ -591,13 +700,13 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         </DropdownItem>
                         <DropdownItem
                           key="parent"
-                          onPress={() => handleComingSoon('Add Parent Ticket')}
+                          onPress={() => setIsAddParentModalOpen(true)}
                         >
                           Add Parent Ticket
                         </DropdownItem>
                         <DropdownItem
                           key="convert"
-                          onPress={() => handleComingSoon('Convert To Reply')}
+                          onPress={() => setIsConvertToReplyModalOpen(true)}
                         >
                           Convert To Reply
                         </DropdownItem>
@@ -847,8 +956,68 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               ticketId={id ?? ''}
               ticketStatus={ticket.status as any}
             />
+
+            {/* Child Tickets */}
+            {children && children.length > 0 && (
+              <Box title="Child Tickets">
+                <div className="space-y-2">
+                  {children.map((child: any) => (
+                    <div
+                      key={child.id}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <button
+                        type="button"
+                        className="text-blue-600 hover:underline font-mono text-xs text-left"
+                        onClick={() => navigate(`/tickets/${child.id}`)}
+                      >
+                        #{child.id?.substring(0, 8)}
+                      </button>
+                      <span className="text-gray-600 truncate ml-2 flex-1">
+                        {child.subject}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Box>
+            )}
           </div>
         </div>
+
+        {/* Wave 3 Modals */}
+        <EditTicketModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          ticketId={id ?? ''}
+          initialSubject={ticket.subject ?? ''}
+          initialDescription={ticket.description}
+        />
+        <ForwardTicketModal
+          isOpen={isForwardModalOpen}
+          onClose={() => setIsForwardModalOpen(false)}
+          ticketId={id ?? ''}
+          defaultSubject={`Fwd: ${ticket.subject ?? ''}`}
+        />
+        <DuplicateTicketModal
+          isOpen={isDuplicateModalOpen}
+          onClose={() => setIsDuplicateModalOpen(false)}
+          onConfirm={handleDuplicateConfirm}
+          isLoading={duplicateTicketMutation.isPending}
+        />
+        <ConvertToReplyModal
+          isOpen={isConvertToReplyModalOpen}
+          onClose={() => setIsConvertToReplyModalOpen(false)}
+          onConfirm={handleConvertToReplyConfirm}
+          isLoading={convertToReplyMutation.isPending}
+          currentTicketId={id ?? ''}
+        />
+        <AddParentTicketModal
+          isOpen={isAddParentModalOpen}
+          onClose={() => setIsAddParentModalOpen(false)}
+          onConfirm={handleAddParentConfirm}
+          isLoading={setParentMutation.isPending}
+          currentTicketId={id ?? ''}
+        />
 
         <MergeTicketModal
           isOpen={isMergeModalOpen}

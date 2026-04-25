@@ -380,3 +380,163 @@ export const useUnmarkTicketAsSpam = () => {
     },
   });
 };
+
+// Wave 3 hooks
+
+export const useForwardTicket = () => {
+  return useMutation({
+    mutationFn: async ({
+      ticketId,
+      to,
+      cc,
+      subject,
+      body,
+      includeAttachments,
+    }: {
+      ticketId: string;
+      to: string[];
+      cc?: string[];
+      subject: string;
+      body: string;
+      includeAttachments: boolean;
+    }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdForwardPost(ticketId, {
+        to,
+        cc: cc ?? null,
+        subject,
+        body,
+        includeAttachments,
+      });
+    },
+  });
+};
+
+export const useDuplicateTicket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsIdDuplicatePost(ticketId);
+      return response.data as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useConvertToReply = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      ticketId,
+      parentTicketId,
+    }: { ticketId: string; parentTicketId: string }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdConvertToReplyPost(ticketId, { parentTicketId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useSetTicketParent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      ticketId,
+      parentTicketId,
+    }: { ticketId: string; parentTicketId: string }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdParentPut(ticketId, { parentTicketId });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', variables.ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useClearTicketParent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdParentDelete(ticketId);
+    },
+    onSuccess: (_, ticketId) => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+    },
+  });
+};
+
+export const useTicketChildren = (ticketId: string) => {
+  return useQuery({
+    queryKey: ['ticket-children', ticketId],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsIdChildrenGet(ticketId, 1, 50);
+      return response.data?.items ?? [];
+    },
+    enabled: !!ticketId,
+  });
+};
+
+export const useLinkedAssets = (ticketId: string) => {
+  return useQuery({
+    queryKey: ['ticket-linked-assets', ticketId],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsIdLinkedAssetsGet(ticketId);
+      return response.data ?? [];
+    },
+    enabled: !!ticketId,
+  });
+};
+
+export const useLinkAsset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      ticketId,
+      assetId,
+    }: { ticketId: string; assetId: string }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsIdLinkedAssetsPost(ticketId, {
+        assetId,
+      });
+      return response.data as string;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-linked-assets', variables.ticketId],
+      });
+    },
+  });
+};
+
+export const useUnlinkAsset = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      ticketId,
+      assetId,
+    }: { ticketId: string; assetId: string }) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdLinkedAssetsAssetIdDelete(ticketId, assetId);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-linked-assets', variables.ticketId],
+      });
+    },
+  });
+};

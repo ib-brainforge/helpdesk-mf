@@ -5,8 +5,6 @@ import {
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
-  BaseButton,
-  Icon,
 } from '@brainforgeau/components';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { formatDateTime } from '@brainforgeau/components/utils';
@@ -17,7 +15,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useAtom } from 'jotai';
 import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
 import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
-import { addToast } from '@heroui/react';
+import { LinkedAssetsSection } from './LinkedAssetsSection';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -436,22 +434,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <p className="text-sm text-gray-500">None</p>
         </div>
 
-        {/* Assets - Placeholder */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Assets</label>
-          <BaseButton
-            size="sm"
-            variant="bordered"
-            icon={<Icon name="link" className="h-4 w-4" />}
-            onPress={() => addToast({
-              title: 'Coming soon',
-              description: 'Asset linking will be available soon',
-              severity: 'warning',
-            })}
-          >
-            Link Asset
-          </BaseButton>
-        </div>
+        {/* Assets */}
+        <LinkedAssetsSection ticketId={ticket.id ?? ''} />
+
+        {/* Parent ticket */}
+        {(ticket as any).parentTicketId && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Parent Ticket</label>
+            <p className="text-sm font-mono text-blue-600">
+              #{(ticket as any).parentTicketId?.substring(0, 8)}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Custom Fields */}
