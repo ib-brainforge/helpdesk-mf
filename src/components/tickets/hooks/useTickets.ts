@@ -1,19 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import { TicketsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
-  TicketListDto,
-  TicketDto,
-  PagedResult,
-  TicketFilters,
   CreateTicketDto,
-  UpdateTicketDto,
-  TicketStatus,
+  PagedResult,
+  TicketDto,
+  TicketFilters,
+  TicketListDto,
   TicketPriority,
+  TicketStatus,
+  UpdateTicketDto,
 } from '@/types/ticket';
-import { toApiTicketStatus, toApiTicketPriority } from '@/utils/typeMappers';
+import { toApiTicketPriority, toApiTicketStatus } from '@/utils/typeMappers';
+import { TicketsApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useState } from 'react';
 
 export const useTicketsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -28,12 +28,15 @@ export const useTicketsData = () => {
       const client = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1TicketsGet(
         filters.status?.[0] ? toApiTicketStatus(filters.status[0]) : undefined,
-        filters.priority?.[0] ? toApiTicketPriority(filters.priority[0]) : undefined,
+        filters.priority?.[0]
+          ? toApiTicketPriority(filters.priority[0])
+          : undefined,
         filters.categoryId?.[0],
         filters.assigneeId?.[0],
         undefined, // requesterId
         filters.searchTerm,
         undefined, // unreadOnly
+        undefined, // spamOnly — default view excludes spam
         pagination.pageIndex + 1,
         pagination.pageSize,
       );
@@ -102,7 +105,10 @@ export const useUpdateTicket = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: UpdateTicketDto }) => {
+    mutationFn: async ({
+      id,
+      updates,
+    }: { id: string; updates: UpdateTicketDto }) => {
       const client = await createHelpdeskApiClient(TicketsApi);
 
       // REVIEW: Backend has separate endpoints for different updates
@@ -116,22 +122,30 @@ export const useUpdateTicket = () => {
 
       // Status change
       if (updates.status) {
-        await client.v1TicketsIdStatusPatch(id, { newStatus: toApiTicketStatus(updates.status) });
+        await client.v1TicketsIdStatusPatch(id, {
+          newStatus: toApiTicketStatus(updates.status),
+        });
       }
 
       // Priority change
       if (updates.priority) {
-        await client.v1TicketsIdPriorityPatch(id, { newPriority: toApiTicketPriority(updates.priority) });
+        await client.v1TicketsIdPriorityPatch(id, {
+          newPriority: toApiTicketPriority(updates.priority),
+        });
       }
 
       // Category change
       if (updates.categoryId) {
-        await client.v1TicketsIdCategoryPatch(id, { newCategoryId: updates.categoryId });
+        await client.v1TicketsIdCategoryPatch(id, {
+          newCategoryId: updates.categoryId,
+        });
       }
 
       // Assignment change
       if (updates.assigneeId) {
-        await client.v1TicketsIdAssignPatch(id, { assigneeId: updates.assigneeId });
+        await client.v1TicketsIdAssignPatch(id, {
+          assigneeId: updates.assigneeId,
+        });
       }
 
       return { id, ...updates };
@@ -148,9 +162,12 @@ export const useBulkUpdateTickets = () => {
 
   // REVIEW: Using simple loop for bulk updates - backend doesn't have dedicated bulk endpoint
   return useMutation({
-    mutationFn: async ({ ids, updates }: { ids: string[]; updates: UpdateTicketDto }) => {
+    mutationFn: async ({
+      ids,
+      updates,
+    }: { ids: string[]; updates: UpdateTicketDto }) => {
       const client = await createHelpdeskApiClient(TicketsApi);
-      const promises = ids.map(async (id) => {
+      const promises = ids.map(async id => {
         // Basic fields
         if (updates.subject || updates.description) {
           await client.v1TicketsIdPut(id, {
@@ -161,22 +178,30 @@ export const useBulkUpdateTickets = () => {
 
         // Status change
         if (updates.status) {
-          await client.v1TicketsIdStatusPatch(id, { newStatus: toApiTicketStatus(updates.status) });
+          await client.v1TicketsIdStatusPatch(id, {
+            newStatus: toApiTicketStatus(updates.status),
+          });
         }
 
         // Priority change
         if (updates.priority) {
-          await client.v1TicketsIdPriorityPatch(id, { newPriority: toApiTicketPriority(updates.priority) });
+          await client.v1TicketsIdPriorityPatch(id, {
+            newPriority: toApiTicketPriority(updates.priority),
+          });
         }
 
         // Category change
         if (updates.categoryId) {
-          await client.v1TicketsIdCategoryPatch(id, { newCategoryId: updates.categoryId });
+          await client.v1TicketsIdCategoryPatch(id, {
+            newCategoryId: updates.categoryId,
+          });
         }
 
         // Assignment change
         if (updates.assigneeId !== undefined) {
-          await client.v1TicketsIdAssignPatch(id, { assigneeId: updates.assigneeId });
+          await client.v1TicketsIdAssignPatch(id, {
+            assigneeId: updates.assigneeId,
+          });
         }
       });
       await Promise.all(promises);
@@ -195,7 +220,7 @@ export const useBulkDeleteTickets = () => {
   return useMutation({
     mutationFn: async (ids: string[]) => {
       const client = await createHelpdeskApiClient(TicketsApi);
-      const promises = ids.map(async (id) => {
+      const promises = ids.map(async id => {
         await client.v1TicketsIdDelete(id);
       });
       await Promise.all(promises);
@@ -211,16 +236,25 @@ export const useMergeTickets = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ primaryTicketId, ticketIdToMerge }: { primaryTicketId: string; ticketIdToMerge: string }) => {
+    mutationFn: async ({
+      primaryTicketId,
+      ticketIdToMerge,
+    }: { primaryTicketId: string; ticketIdToMerge: string }) => {
       const client = await createHelpdeskApiClient(TicketsApi);
       // REVIEW: Backend expects mergedTicketId field based on MergeTicketsCommand
-      await client.v1TicketsIdMergePost(primaryTicketId, { mergedTicketId: ticketIdToMerge } as any);
+      await client.v1TicketsIdMergePost(primaryTicketId, {
+        mergedTicketId: ticketIdToMerge,
+      } as any);
       return { primaryTicketId, ticketIdToMerge };
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['ticket', data.primaryTicketId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket', data.ticketIdToMerge] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', data.primaryTicketId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', data.ticketIdToMerge],
+      });
     },
   });
 };
@@ -229,16 +263,120 @@ export const useLinkTickets = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ sourceTicketId, targetTicketId, linkType }: { sourceTicketId: string; targetTicketId: string; linkType: string }) => {
+    mutationFn: async ({
+      sourceTicketId,
+      targetTicketId,
+      linkType,
+    }: {
+      sourceTicketId: string;
+      targetTicketId: string;
+      linkType: string;
+    }) => {
       const client = await createHelpdeskApiClient(TicketsApi);
       // REVIEW: Using linkType as any to bypass enum type check - backend should accept string linkType
-      await client.v1TicketsIdLinksPost(sourceTicketId, { targetTicketId, linkType: linkType as any });
+      await client.v1TicketsIdLinksPost(sourceTicketId, {
+        targetTicketId,
+        linkType: linkType as any,
+      });
       return { sourceTicketId, targetTicketId };
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['ticket', data.sourceTicketId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket', data.targetTicketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', data.sourceTicketId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', data.targetTicketId],
+      });
+    },
+  });
+};
+
+export const useDeleteTicket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdDelete(ticketId);
+      return ticketId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useMyTicketSubscription = (ticketId: string) => {
+  return useQuery<boolean>({
+    queryKey: ['ticket-subscription', ticketId],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsIdSubscribeMeGet(ticketId);
+      return response.data as boolean;
+    },
+    enabled: !!ticketId,
+  });
+};
+
+export const useSubscribeToTicket = (ticketId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdSubscribePost(ticketId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-subscription', ticketId],
+      });
+    },
+  });
+};
+
+export const useUnsubscribeFromTicket = (ticketId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdSubscribeDelete(ticketId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-subscription', ticketId],
+      });
+    },
+  });
+};
+
+export const useMarkTicketAsSpam = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdMarkSpamPost(ticketId);
+      return ticketId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
+
+export const useUnmarkTicketAsSpam = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketId: string) => {
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdUnmarkSpamPost(ticketId);
+      return ticketId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
 };
