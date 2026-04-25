@@ -171,7 +171,6 @@ function AdministrationPage() {
           description: 'Manage subscription and billing settings',
           icon: 'credit-card',
           href: '/configuration/billing',
-          isComingSoon: true,
         },
       ],
     },
