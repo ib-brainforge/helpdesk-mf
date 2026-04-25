@@ -5,7 +5,9 @@ import {
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
+  BaseButton,
 } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { StatusBadge } from '@/components/shared';
@@ -21,6 +23,9 @@ interface TicketDetailSidebarProps {
   ticket: TicketDto;
   onUpdate?: (updates: Partial<TicketDto>) => void;
   isUpdating?: boolean;
+  isSubscribed?: boolean;
+  isSubscribeLoading?: boolean;
+  onSubscribeToggle?: () => void;
 }
 
 const getStatusConfig = (status: TicketStatus) => {
@@ -85,6 +90,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   ticket,
   onUpdate,
   isUpdating = false,
+  isSubscribed = false,
+  isSubscribeLoading = false,
+  onSubscribeToggle,
 }) => {
   const timezone = useTimezone();
   const statusConfig = getStatusConfig(ticket.status as any);
@@ -374,21 +382,39 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
 
         {/* Subscribers */}
-        {(ticket as any).subscriberIds && (ticket as any).subscriberIds.length > 0 && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Subscribers</label>
-            <div className="flex flex-wrap gap-2">
-              {(ticket as any).subscriberIds.map((subscriberId: string) => (
-                <BaseAvatar
-                  key={subscriberId}
-                  name={subscriberId.substring(0, 2).toUpperCase()}
-                  size="xs"
-                />
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">{(ticket as any).subscriberIds.length} subscriber{(ticket as any).subscriberIds.length !== 1 ? 's' : ''}</p>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">Subscribers</label>
+            {onSubscribeToggle && (
+              <BaseButton
+                size="sm"
+                variant={isSubscribed ? 'ghost' : 'bordered'}
+                color={isSubscribed ? 'primary' : undefined}
+                onPress={onSubscribeToggle}
+                isDisabled={isSubscribeLoading}
+                icon={<Icon name={isSubscribed ? 'bell' : 'bell-slash'} className="h-3.5 w-3.5" />}
+              >
+                {isSubscribed ? 'Subscribed' : 'Subscribe me'}
+              </BaseButton>
+            )}
           </div>
-        )}
+          {ticket.subscriberIds && ticket.subscriberIds.length > 0 ? (
+            <>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {ticket.subscriberIds.map((subscriberId: string) => (
+                  <BaseAvatar
+                    key={subscriberId}
+                    name={subscriberId.substring(0, 2).toUpperCase()}
+                    size="xs"
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">{ticket.subscriberIds.length} subscriber{ticket.subscriberIds.length !== 1 ? 's' : ''}</p>
+            </>
+          ) : (
+            <p className="text-xs text-gray-500 mt-1">No subscribers yet.</p>
+          )}
+        </div>
 
         {/* Tags */}
         <div>

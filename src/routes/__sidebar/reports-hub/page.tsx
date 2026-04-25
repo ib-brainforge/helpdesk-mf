@@ -68,18 +68,21 @@ function ReportsHubPage() {
           description: 'Daily ticket volume and trends',
           icon: 'chart-bar',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Custom reports',
           description: 'Build custom reports with flexible filters',
           icon: 'adjustments-horizontal',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Response speed',
           description: 'First response and resolution time metrics',
           icon: 'clock',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Overdue tickets',
@@ -121,6 +124,7 @@ function ReportsHubPage() {
           description: 'Agent performance and activity metrics',
           icon: 'user-circle',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Companies statistics',

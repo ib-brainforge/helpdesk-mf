@@ -33,6 +33,7 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownSection,
   DropdownTrigger,
 } from '@heroui/react';
 import { addToast } from '@heroui/react';
@@ -54,6 +55,7 @@ import {
   useTicketChildren,
   useTicketDetail,
   useUnmarkTicketAsProblem,
+  useUnmarkTicketAsSpam,
   useUnpublishTicketAsIdea,
   useUnsubscribeFromTicket,
   useUpdateTicket,
@@ -146,6 +148,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   // Wave 2 mutations
   const deleteTicketMutation = useDeleteTicket();
   const markSpamMutation = useMarkTicketAsSpam();
+  const unmarkSpamMutation = useUnmarkTicketAsSpam();
   const { data: isSubscribed } = useMyTicketSubscription(id ?? '');
   const subscribeMutation = useSubscribeToTicket(id ?? '');
   const unsubscribeMutation = useUnsubscribeFromTicket(id ?? '');
@@ -335,6 +338,26 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       },
     });
   }, [id, markSpamMutation, navigate]);
+
+  const handleUnmarkSpam = useCallback(() => {
+    if (!id) return;
+    unmarkSpamMutation.mutate(id, {
+      onSuccess: () => {
+        addToast({
+          title: 'Spam flag removed',
+          description: 'The ticket has been returned to normal ticket views.',
+          severity: 'success',
+        });
+      },
+      onError: () => {
+        addToast({
+          title: 'Error',
+          description: 'Failed to unmark spam. Please try again.',
+          severity: 'danger',
+        });
+      },
+    });
+  }, [id, unmarkSpamMutation]);
 
   const handleMergeConfirm = useCallback(
     (targetTicketId: string) => {
@@ -653,6 +676,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const isSubscribeLoading =
     subscribeMutation.isPending || unsubscribeMutation.isPending;
 
+  // State-conflict derived flags
+  // REVIEW: isDeleted and isSpam are not in the current TicketDto generated client model.
+  // When the helpdesk-backend-client is updated to expose these fields, remove the `as any` casts.
+  const isDeleted = !!(ticket as any).isDeleted;
+  const isSpam = !!(ticket as any).isSpam;
+  // Tickets that are spam or deleted cannot be moderated further
+  const canModerate = !isDeleted && !isSpam;
+  // All actions are disabled when ticket is deleted
+  const actionsDisabled = isDeleted;
+
   return (
     <>
       {/* Print stylesheet — hides navigation and sidebar, keeps main content only */}
@@ -678,11 +711,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6 helpdesk-print-full">
+            {/* Deleted banner */}
+            {isDeleted && (
+              <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-2 flex items-center gap-2">
+                <Icon name="trash" className="h-4 w-4 text-danger" />
+                <span className="text-sm font-medium text-danger">This ticket is deleted.</span>
+              </div>
+            )}
+
             {/* Header */}
             <Box title={`Ticket #${ticket.id?.substring(0, 8)}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h1 className="text-2xl font-semibold">{ticket.subject}</h1>
                     <StatusBadge color={statusConfig.color}>
                       {statusConfig.label}
@@ -690,6 +731,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     <StatusBadge color={priorityConfig.color}>
                       {priorityConfig.label}
                     </StatusBadge>
+                    {isSpam && (
+                      <StatusBadge color="warning">Spam</StatusBadge>
+                    )}
                     {ticket.isProblem && (
                       <StatusBadge color="danger">Problem</StatusBadge>
                     )}
@@ -702,20 +746,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 helpdesk-print-hide">
                   {/* AI Assistant */}
-                  {
-                    <PermissionGuard
-                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                      fallback={null}
+                  <PermissionGuard
+                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                    fallback={null}
+                  >
+                    <BaseButton
+                      variant="bordered"
+                      onPress={handleAiAssistant}
+                      isDisabled={actionsDisabled}
+                      icon={<Icon name="flash" className="h-4 w-4" />}
                     >
-                      <BaseButton
-                        variant="bordered"
-                        onPress={handleAiAssistant}
-                        icon={<Icon name="flash" className="h-4 w-4" />}
-                      >
-                        AI Assistant
-                      </BaseButton>
-                    </PermissionGuard>
-                  }
+                      AI Assistant
+                    </BaseButton>
+                  </PermissionGuard>
                   <PermissionGuard
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     fallback={null}
@@ -727,106 +770,123 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           icon={<Icon name="dotsV" className="h-4 w-4" />}
                         />
                       </DropdownTrigger>
-                      <DropdownMenu aria-label="Ticket actions">
-                        <DropdownItem
-                          key="summary"
-                          onPress={() => handleComingSoon('Ticket Summary')}
-                        >
-                          Ticket Summary
-                        </DropdownItem>
-                        <DropdownItem
-                          key="edit"
-                          onPress={() => setIsEditModalOpen(true)}
-                        >
-                          Edit
-                        </DropdownItem>
-                        <DropdownItem
-                          key="spam"
-                          onPress={() => setIsMarkSpamModalOpen(true)}
-                        >
-                          Mark As Spam
-                        </DropdownItem>
-                        <DropdownItem
-                          key="forward"
-                          onPress={() => setIsForwardModalOpen(true)}
-                        >
-                          Forward Ticket By Email
-                        </DropdownItem>
-                        <DropdownItem key="print" onPress={handlePrint}>
-                          Print
-                        </DropdownItem>
-                        <DropdownItem
-                          key="close"
-                          onPress={() =>
-                            handleUpdate({ status: TicketStatus.Closed })
-                          }
-                        >
-                          Close Ticket
-                        </DropdownItem>
-                        <DropdownItem
-                          key="duplicate"
-                          onPress={() => setIsDuplicateModalOpen(true)}
-                        >
-                          Duplicate
-                        </DropdownItem>
-                        <DropdownItem key="merge" onPress={handleMerge}>
-                          Merge
-                        </DropdownItem>
-                        <DropdownItem
-                          key="subtask"
-                          onPress={() => setIsAddSubtaskModalOpen(true)}
-                        >
-                          Add Subtask
-                        </DropdownItem>
-                        <DropdownItem
-                          key="parent"
-                          onPress={() => setIsAddParentModalOpen(true)}
-                        >
-                          Add Parent Ticket
-                        </DropdownItem>
-                        <DropdownItem
-                          key="convert"
-                          onPress={() => setIsConvertToReplyModalOpen(true)}
-                        >
-                          Convert To Reply
-                        </DropdownItem>
-                        <DropdownItem
-                          key="problem"
-                          onPress={handleToggleProblem}
-                          isDisabled={markAsProblemMutation.isPending || unmarkAsProblemMutation.isPending}
-                        >
-                          {ticket?.isProblem ? 'Unmark as Problem' : 'Mark as Problem'}
-                        </DropdownItem>
-                        <DropdownItem
-                          key="publish"
-                          onPress={handleTogglePublishAsIdea}
-                          isDisabled={publishAsIdeaMutation.isPending || unpublishAsIdeaMutation.isPending}
-                        >
-                          {ticket?.isPublishedAsIdea ? 'Remove from Ideas Forum' : 'Publish To "Ideas Forum"'}
-                        </DropdownItem>
-                        <DropdownItem
-                          key="subscribe"
-                          onPress={handleSubscribeToggle}
-                          isDisabled={isSubscribeLoading}
-                        >
-                          {isSubscribed ? 'Unsubscribe' : 'Subscribe'}
-                        </DropdownItem>
-                        <DropdownItem
-                          key="systemlog"
-                          onPress={handleToggleSystemLog}
-                        >
-                          {showSystemLog
-                            ? 'Hide System Log Entries'
-                            : 'Show System Log Entries'}
-                        </DropdownItem>
-                        <DropdownItem
-                          key="delete"
-                          className="text-danger"
-                          color="danger"
-                          onPress={() => setIsDeleteModalOpen(true)}
-                        >
-                          Delete
-                        </DropdownItem>
+                      <DropdownMenu aria-label="Ticket actions" disabledKeys={actionsDisabled ? ['edit', 'print', 'summary', 'subtask', 'parent', 'convert', 'link-asset', 'duplicate', 'forward', 'spam', 'unspam', 'problem', 'publish'] : []}>
+                        {/* Edit & View */}
+                        <DropdownSection title="Edit & View" showDivider>
+                          <DropdownItem
+                            key="edit"
+                            onPress={() => setIsEditModalOpen(true)}
+                          >
+                            Edit
+                          </DropdownItem>
+                          <DropdownItem
+                            key="print"
+                            onPress={handlePrint}
+                          >
+                            Print
+                          </DropdownItem>
+                          <DropdownItem
+                            key="systemlog"
+                            onPress={handleToggleSystemLog}
+                          >
+                            {showSystemLog ? 'Hide System Log' : 'Show System Log'}
+                          </DropdownItem>
+                          <DropdownItem
+                            key="summary"
+                            onPress={() => handleComingSoon('Ticket Summary')}
+                          >
+                            Ticket Summary
+                          </DropdownItem>
+                        </DropdownSection>
+
+                        {/* Relate */}
+                        <DropdownSection title="Relate" showDivider>
+                          <DropdownItem
+                            key="subtask"
+                            onPress={() => setIsAddSubtaskModalOpen(true)}
+                          >
+                            Add Subtask
+                          </DropdownItem>
+                          <DropdownItem
+                            key="parent"
+                            onPress={() => setIsAddParentModalOpen(true)}
+                          >
+                            Add Parent
+                          </DropdownItem>
+                          <DropdownItem
+                            key="convert"
+                            onPress={() => setIsConvertToReplyModalOpen(true)}
+                            description="Merges this ticket into another as a comment"
+                          >
+                            Convert to Reply
+                          </DropdownItem>
+                          <DropdownItem
+                            key="link-asset"
+                            onPress={() => handleComingSoon('Link Asset')}
+                          >
+                            Link Asset
+                          </DropdownItem>
+                          <DropdownItem
+                            key="duplicate"
+                            onPress={() => setIsDuplicateModalOpen(true)}
+                          >
+                            Duplicate
+                          </DropdownItem>
+                        </DropdownSection>
+
+                        {/* Lifecycle */}
+                        <DropdownSection title="Lifecycle" showDivider>
+                          <DropdownItem
+                            key="forward"
+                            onPress={() => setIsForwardModalOpen(true)}
+                          >
+                            Forward by Email
+                          </DropdownItem>
+                          {canModerate ? (
+                            <DropdownItem
+                              key="problem"
+                              onPress={handleToggleProblem}
+                              isDisabled={markAsProblemMutation.isPending || unmarkAsProblemMutation.isPending}
+                            >
+                              {ticket?.isProblem ? 'Unmark as Problem' : 'Mark as Problem'}
+                            </DropdownItem>
+                          ) : (
+                            <DropdownItem key="problem" isDisabled>
+                              {ticket?.isProblem ? 'Unmark as Problem' : 'Mark as Problem'}
+                            </DropdownItem>
+                          )}
+                          {canModerate ? (
+                            <DropdownItem
+                              key="publish"
+                              onPress={handleTogglePublishAsIdea}
+                              isDisabled={publishAsIdeaMutation.isPending || unpublishAsIdeaMutation.isPending}
+                            >
+                              {ticket?.isPublishedAsIdea ? 'Remove from Ideas Forum' : 'Publish to Ideas Forum'}
+                            </DropdownItem>
+                          ) : (
+                            <DropdownItem key="publish" isDisabled>
+                              {ticket?.isPublishedAsIdea ? 'Remove from Ideas Forum' : 'Publish to Ideas Forum'}
+                            </DropdownItem>
+                          )}
+                          <DropdownItem
+                            key="spam"
+                            onPress={isSpam ? handleUnmarkSpam : () => setIsMarkSpamModalOpen(true)}
+                          >
+                            {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
+                          </DropdownItem>
+                        </DropdownSection>
+
+                        {/* Danger Zone */}
+                        <DropdownSection title="Danger Zone">
+                          <DropdownItem
+                            key="delete"
+                            className="text-danger"
+                            color="danger"
+                            onPress={() => setIsDeleteModalOpen(true)}
+                          >
+                            Delete
+                          </DropdownItem>
+                        </DropdownSection>
                       </DropdownMenu>
                     </Dropdown>
                   </PermissionGuard>
@@ -855,6 +915,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <BaseButton
                     color="primary"
                     onPress={handleReply}
+                    isDisabled={actionsDisabled}
                     icon={<Icon name="chat-bubble-left" className="h-4 w-4" />}
                   >
                     Reply
@@ -868,7 +929,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     variant="bordered"
                     onPress={handleTakeover}
                     icon={<Icon name="user-plus" className="h-4 w-4" />}
-                    isDisabled={ticket.assigneeId === currentUserId}
+                    isDisabled={actionsDisabled || ticket.assigneeId === currentUserId}
                   >
                     Takeover
                   </BaseButton>
@@ -881,7 +942,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     variant="bordered"
                     onPress={handleCloseTicket}
                     icon={<Icon name="check-circle" className="h-4 w-4" />}
-                    isDisabled={ticket.status === TicketStatus.Closed}
+                    isDisabled={actionsDisabled || ticket.status === TicketStatus.Closed}
                   >
                     Close ticket
                   </BaseButton>
@@ -1011,6 +1072,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 ticket={ticket as any}
                 onUpdate={handleUpdate}
                 isUpdating={updateTicketMutation.isPending}
+                isSubscribed={isSubscribed}
+                isSubscribeLoading={isSubscribeLoading}
+                onSubscribeToggle={handleSubscribeToggle}
               />
             </Box>
 
