@@ -153,7 +153,6 @@ function AdministrationPage() {
           description: 'Embed live chat on your website',
           icon: 'chat-bubble-left-right',
           href: '/configuration/live-chat',
-          isComingSoon: true,
         },
         {
           title: 'Integration',
