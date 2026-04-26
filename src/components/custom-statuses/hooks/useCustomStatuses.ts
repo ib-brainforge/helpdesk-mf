@@ -1,23 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
-import { getDefaultStore } from 'jotai';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { CustomStatusesApi } from '@brainforgeau/helpdesk-client';
 import type {
   CustomTicketStatusDto,
   CreateCustomStatusRequest,
   UpdateCustomStatusRequest,
 } from '@/types/custom-status';
-import type { RuntimeConfig } from '@brainforgeau/security';
-
-// REVIEW: Using authorizedAxios directly until helpdesk-client is updated with Wave 7.1 endpoints (backend PR #59).
-// Replace with CustomStatusesApi from @brainforgeau/helpdesk-client once available.
-
-const store = getDefaultStore();
-
-function getBaseUrl(): string {
-  const config = store.get(configAtom) as RuntimeConfig;
-  return config?.api?.baseUrl ?? '';
-}
 
 const QUERY_KEY = 'helpdesk-custom-statuses';
 
@@ -25,11 +13,9 @@ export const useCustomStatuses = () => {
   const { data, isLoading, refetch } = useQuery<CustomTicketStatusDto[]>({
     queryKey: [QUERY_KEY],
     queryFn: async () => {
-      const baseUrl = getBaseUrl();
-      const response = await authorizedAxios.get<CustomTicketStatusDto[]>(
-        `${baseUrl}/v1/custom-statuses`,
-      );
-      return response.data ?? [];
+      const client = await createHelpdeskApiClient(CustomStatusesApi);
+      const response = await client.v1CustomStatusesGet();
+      return (response.data as unknown as CustomTicketStatusDto[]) ?? [];
     },
   });
 
@@ -45,12 +31,9 @@ export const useCreateCustomStatus = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateCustomStatusRequest) => {
-      const baseUrl = getBaseUrl();
-      const response = await authorizedAxios.post<string>(
-        `${baseUrl}/v1/custom-statuses`,
-        payload,
-      );
-      return response.data;
+      const client = await createHelpdeskApiClient(CustomStatusesApi);
+      const response = await client.v1CustomStatusesPost(payload as never);
+      return response.data as string;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -63,8 +46,8 @@ export const useUpdateCustomStatus = () => {
 
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: UpdateCustomStatusRequest }) => {
-      const baseUrl = getBaseUrl();
-      await authorizedAxios.put(`${baseUrl}/v1/custom-statuses/${id}`, payload);
+      const client = await createHelpdeskApiClient(CustomStatusesApi);
+      await client.v1CustomStatusesIdPut(id, payload as never);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -77,8 +60,8 @@ export const useDeleteCustomStatus = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const baseUrl = getBaseUrl();
-      await authorizedAxios.delete(`${baseUrl}/v1/custom-statuses/${id}`);
+      const client = await createHelpdeskApiClient(CustomStatusesApi);
+      await client.v1CustomStatusesIdDelete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });

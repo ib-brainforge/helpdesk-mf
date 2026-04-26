@@ -1,6 +1,4 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { configAtom } from '@/state/config';
-import { authorizedAxios } from '@/state/authorizedAxios';
 import type {
   CreateTicketDto,
   PagedResult,
@@ -12,21 +10,10 @@ import type {
   UpdateTicketDto,
 } from '@/types/ticket';
 import { toApiTicketPriority, toApiTicketStatus } from '@/utils/typeMappers';
-import { TicketsApi } from '@brainforgeau/helpdesk-client';
-import type { RuntimeConfig } from '@brainforgeau/security';
+import { IdeasApi, TicketsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
-import { getDefaultStore } from 'jotai';
-
-// REVIEW: Wave 6 hooks below use authorizedAxios directly because the new endpoints are not yet
-// in the published @brainforgeau/helpdesk-client. Switch to the generated client after the backend
-// PR is merged and the client package is regenerated and published.
-const getApiBaseUrl = (): string => {
-  const store = getDefaultStore();
-  const config = store.get(configAtom) as RuntimeConfig;
-  return config?.api?.baseUrl ?? '';
-};
 
 export const useTicketsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -572,10 +559,10 @@ export const useCreateSubtask = () => {
       parentTicketId,
       data,
     }: { parentTicketId: string; data: CreateSubtaskDto }) => {
-      const baseUrl = getApiBaseUrl();
-      const response = await authorizedAxios.post<string>(
-        `${baseUrl}/v1/tickets/${parentTicketId}/subtasks`,
-        data,
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const response = await client.v1TicketsParentIdSubtasksPost(
+        parentTicketId,
+        data as never,
       );
       return response.data;
     },
@@ -592,8 +579,8 @@ export const useMarkTicketAsProblem = () => {
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const baseUrl = getApiBaseUrl();
-      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/mark-problem`);
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdMarkProblemPost(ticketId);
       return ticketId;
     },
     onSuccess: (ticketId) => {
@@ -607,8 +594,8 @@ export const useUnmarkTicketAsProblem = () => {
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const baseUrl = getApiBaseUrl();
-      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/unmark-problem`);
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdUnmarkProblemPost(ticketId);
       return ticketId;
     },
     onSuccess: (ticketId) => {
@@ -622,8 +609,8 @@ export const usePublishTicketAsIdea = () => {
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const baseUrl = getApiBaseUrl();
-      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/publish-as-idea`);
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdPublishAsIdeaPost(ticketId);
       return ticketId;
     },
     onSuccess: (ticketId) => {
@@ -638,8 +625,8 @@ export const useUnpublishTicketAsIdea = () => {
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const baseUrl = getApiBaseUrl();
-      await authorizedAxios.post(`${baseUrl}/v1/tickets/${ticketId}/unpublish-as-idea`);
+      const client = await createHelpdeskApiClient(TicketsApi);
+      await client.v1TicketsIdUnpublishAsIdeaPost(ticketId);
       return ticketId;
     },
     onSuccess: (ticketId) => {
@@ -664,11 +651,9 @@ export const useIdeasForum = (page = 1, pageSize = 20) => {
   return useQuery<{ items: IdeaListItem[]; totalCount: number; page: number; pageSize: number }>({
     queryKey: ['ideas', page, pageSize],
     queryFn: async () => {
-      const baseUrl = getApiBaseUrl();
-      const response = await authorizedAxios.get(
-        `${baseUrl}/v1/ideas?page=${page}&pageSize=${pageSize}`,
-      );
-      return response.data;
+      const client = await createHelpdeskApiClient(IdeasApi);
+      const response = await client.v1IdeasGet(page, pageSize);
+      return response.data as { items: IdeaListItem[]; totalCount: number; page: number; pageSize: number };
     },
   });
 };

@@ -1,19 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
-import { getDefaultStore } from 'jotai';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { AdminUsersApi } from '@brainforgeau/helpdesk-client';
 import type { TenantUserDto, UserRoleDto } from '@/types/admin-user';
-import type { RuntimeConfig } from '@brainforgeau/security';
-
-// REVIEW: Using authorizedAxios directly until helpdesk-client is updated with Wave 7.2 endpoints (backend PR #60).
-// Replace with generated AdminUsersApi once the PR is merged and a new client version published.
-
-const store = getDefaultStore();
-
-function getBaseUrl(): string {
-  const config = store.get(configAtom) as RuntimeConfig;
-  return config?.api?.baseUrl ?? '';
-}
 
 const TENANT_USERS_KEY = 'helpdesk-admin-tenant-users';
 
@@ -21,11 +9,9 @@ export const useTenantUsers = () => {
   const { data, isLoading, refetch } = useQuery<TenantUserDto[]>({
     queryKey: [TENANT_USERS_KEY],
     queryFn: async () => {
-      const baseUrl = getBaseUrl();
-      const response = await authorizedAxios.get<TenantUserDto[]>(
-        `${baseUrl}/v1/admin/tenant-users`,
-      );
-      return response.data ?? [];
+      const client = await createHelpdeskApiClient(AdminUsersApi);
+      const response = await client.v1AdminTenantUsersGet();
+      return (response.data as TenantUserDto[]) ?? [];
     },
   });
 
@@ -41,11 +27,9 @@ export const useUserRoles = (userId: string | null) => {
     queryKey: ['helpdesk-user-roles', userId],
     queryFn: async () => {
       if (!userId) return [];
-      const baseUrl = getBaseUrl();
-      const response = await authorizedAxios.get<UserRoleDto[]>(
-        `${baseUrl}/v1/admin/users/${userId}/roles`,
-      );
-      return response.data ?? [];
+      const client = await createHelpdeskApiClient(AdminUsersApi);
+      const response = await client.v1AdminUsersUserIdRolesGet(userId);
+      return (response.data as UserRoleDto[]) ?? [];
     },
     enabled: !!userId,
   });
@@ -56,12 +40,9 @@ export const useAssignUserRole = () => {
 
   return useMutation({
     mutationFn: async ({ userId, roleName }: { userId: string; roleName: string }) => {
-      const baseUrl = getBaseUrl();
-      const response = await authorizedAxios.post<string>(
-        `${baseUrl}/v1/admin/users/${userId}/roles`,
-        { roleName },
-      );
-      return response.data;
+      const client = await createHelpdeskApiClient(AdminUsersApi);
+      const response = await client.v1AdminUsersUserIdRolesPost(userId, { roleName } as never);
+      return response.data as string;
     },
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ['helpdesk-user-roles', userId] });
@@ -75,10 +56,8 @@ export const useUnassignUserRole = () => {
 
   return useMutation({
     mutationFn: async ({ userId, roleName }: { userId: string; roleName: string }) => {
-      const baseUrl = getBaseUrl();
-      await authorizedAxios.delete(
-        `${baseUrl}/v1/admin/users/${userId}/roles/${encodeURIComponent(roleName)}`,
-      );
+      const client = await createHelpdeskApiClient(AdminUsersApi);
+      await client.v1AdminUsersUserIdRolesRoleNameDelete(userId, roleName);
     },
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ['helpdesk-user-roles', userId] });

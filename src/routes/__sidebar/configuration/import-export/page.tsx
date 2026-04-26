@@ -3,20 +3,8 @@ import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Card, CardBody, addToast } from '@heroui/react';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
-import { getDefaultStore } from 'jotai';
-import type { RuntimeConfig } from '@brainforgeau/security';
-
-// REVIEW: Using authorizedAxios directly until helpdesk-client is updated with Wave 7.5 endpoints (backend PR #63).
-// Replace with AdminImportExportApi once the client is republished.
-
-const store = getDefaultStore();
-
-function getBaseUrl(): string {
-  const config = store.get(configAtom) as RuntimeConfig;
-  return config?.api?.baseUrl ?? '';
-}
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { AdminImportExportApi } from '@brainforgeau/helpdesk-client';
 
 const NOT_IMPLEMENTED_COPY =
   'This feature is coming in a future release. For immediate data migration or export needs, ' +
@@ -44,13 +32,8 @@ function ImportExportPage() {
 
     setIsImporting(true);
     try {
-      const baseUrl = getBaseUrl();
-      const formData = new FormData();
-      formData.append('file', file);
-
-      await authorizedAxios.post(`${baseUrl}/v1/admin/import`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const client = await createHelpdeskApiClient(AdminImportExportApi);
+      await client.v1AdminImportPost(file);
 
       // Should not reach here — backend returns 501
       addToast({ title: 'Unexpected response', description: 'Please contact support.', severity: 'warning' });
@@ -89,8 +72,8 @@ function ImportExportPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const baseUrl = getBaseUrl();
-      await authorizedAxios.get(`${baseUrl}/v1/admin/export`);
+      const client = await createHelpdeskApiClient(AdminImportExportApi);
+      await client.v1AdminExportGet();
 
       // Should not reach here — backend returns 501
       addToast({ title: 'Unexpected response', description: 'Please contact support.', severity: 'warning' });

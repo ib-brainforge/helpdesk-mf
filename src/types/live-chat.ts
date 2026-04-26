@@ -1,4 +1,6 @@
-// REVIEW: Using local types until @brainforgeau/helpdesk-client is updated with Wave 7.3 endpoints (backend PR #61).
+// Local DTO projections used by hooks; the helpdesk-client now publishes the underlying
+// LiveChatWidgetConfigDto (helpdesk-application-live-chat-dtos-...). Keeping local copies
+// to keep the hook layer decoupled from the generated long type names.
 
 export interface BusinessHoursDayConfig {
   open: string;   // HH:mm

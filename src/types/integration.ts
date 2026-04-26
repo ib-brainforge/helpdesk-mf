@@ -1,4 +1,5 @@
-// REVIEW: Using local types until @brainforgeau/helpdesk-client is updated with Wave 7.4 endpoints (backend PR #62).
+// Local DTO projections used by hooks; the IntegrationsApi is now published in helpdesk-client.
+// Keeping local copies to keep the hook layer decoupled from the generated long type names.
 
 export enum IntegrationType {
   Slack = 1,

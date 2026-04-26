@@ -1,6 +1,5 @@
-// REVIEW: Using local type definitions until @brainforgeau/helpdesk-client is updated
-// to include the /v1/custom-statuses endpoints (Wave 7.1 backend PR #59).
-// Replace with generated client types once the PR is merged and client published.
+// Local DTO projections used by hooks; the CustomStatusesApi is now published in helpdesk-client.
+// Keeping local copies to keep the hook layer decoupled from the generated long type names.
 
 export enum TicketStatus {
   New = 1,
