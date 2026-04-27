@@ -149,13 +149,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         testId: 'nav-configuration-live-chat',
         requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
-      {
-        label: 'Billing',
-        href: '/configuration/billing',
-        icon: 'credit-card',
-        testId: 'nav-configuration-billing',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-      },
     ],
   },
 ];

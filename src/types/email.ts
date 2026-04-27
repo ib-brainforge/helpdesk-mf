@@ -1,58 +1,54 @@
-// TODO: Replace with types from @brainforgeau/helpdesk-backend-client when available
+// Notification-backend tenant mail config types.
+// These mirror the DTOs from notification-backend /v1/tenant-mail-config.
+// No @brainforgeau/notification-client package exists yet — typed manually from OpenAPI.
 
-export enum MailProtocol {
-  Imap = 0,
-  Pop3 = 1,
+/** Matches notification-backend OutboundMailProtocol enum */
+export enum OutboundMailProtocol {
+  Smtp = 0,
+  SendGrid = 1,
 }
 
-export interface MailServerConfigDto {
-  id: string;
-  name: string;
-  protocol: MailProtocol;
-  inboundHost: string;
-  inboundPort: number;
+/** GET /v1/tenant-mail-config response */
+export interface TenantMailConfigDto {
+  isConfigured: boolean;
+  isEnabled: boolean;
+  outboundProtocol: OutboundMailProtocol;
+  outboundHost: string | null;
+  outboundPort: number | null;
+  username: string | null;
+  /** True if an encrypted password is stored — never returns the actual password */
+  hasPassword: boolean;
+  useSsl: boolean;
+  fromEmail: string | null;
+  fromName: string | null;
+}
+
+/** PUT /v1/tenant-mail-config request body */
+export interface UpsertTenantMailConfigRequest {
+  isEnabled: boolean;
+  outboundProtocol: OutboundMailProtocol;
+  outboundHost: string | null;
+  outboundPort: number | null;
+  username: string | null;
+  /** Plaintext — notification-backend encrypts with DataProtection before storage */
+  password: string | null;
+  useSsl: boolean;
+  fromEmail: string | null;
+  fromName: string | null;
+}
+
+/** POST /v1/tenant-mail-config/test request body */
+export interface TestTenantMailConfigRequest {
   outboundHost: string;
   outboundPort: number;
-  username: string;
+  username: string | null;
+  password: string | null;
   useSsl: boolean;
-  isActive: boolean;
-  healthStatus?: string;
-  folder?: string;
 }
 
-export interface CreateMailServerConfigDto {
-  name: string;
-  protocol: MailProtocol;
-  inboundHost: string;
-  inboundPort: number;
-  outboundHost: string;
-  outboundPort: number;
-  username: string;
-  password: string;
-  useSsl: boolean;
-  isActive: boolean;
-  folder?: string;
-}
-
-export interface UpdateMailServerConfigDto {
-  name?: string;
-  protocol?: MailProtocol;
-  inboundHost?: string;
-  inboundPort?: number;
-  outboundHost?: string;
-  outboundPort?: number;
-  username?: string;
-  password?: string;
-  useSsl?: boolean;
-  isActive?: boolean;
-  folder?: string;
-}
-
-export interface TestMailConnectionDto {
-  mailServerConfigId: string;
-}
-
-export interface TestMailConnectionResult {
+/** POST /v1/tenant-mail-config/test response */
+export interface TenantMailConfigTestResult {
   success: boolean;
-  message: string;
+  error: string | null;
+  latencyMs: number | null;
 }

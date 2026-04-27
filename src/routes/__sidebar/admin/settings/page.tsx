@@ -166,12 +166,6 @@ function AdministrationPage() {
           icon: 'arrow-down-tray',
           href: '/configuration/import-export',
         },
-        {
-          title: 'Billing',
-          description: 'Manage subscription and billing settings',
-          icon: 'credit-card',
-          href: '/configuration/billing',
-        },
       ],
     },
     {

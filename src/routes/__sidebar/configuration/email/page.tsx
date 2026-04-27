@@ -1,175 +1,39 @@
-import {
-  MailServerEditorModal,
-  type MailServerRow,
-  createMailServersColumns,
-  useMailServersData,
-  useMailServersTable,
-} from '@/components/email-settings';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import type { MailServerConfigDto } from '@/types/email';
-import {
-  BaseButton,
-  BaseTable,
-  Icon,
-  TablePagination,
-} from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
-import { useMutation } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { TenantMailConfigForm } from '@/components/email-settings';
 
+/**
+ * Email Settings page — thin proxy to notification-backend /v1/tenant-mail-config.
+ *
+ * Stage 4 notification centralization moves outbound mail config from helpdesk
+ * to notification-backend. This page renders the singleton tenant mail config
+ * form. All API calls go to notification-backend via notificationApiClient.
+ */
 function EmailSettingsPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingMailServer, setEditingMailServer] =
-    useState<MailServerConfigDto | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
-    useMailServersData();
-
-  // REVIEW: Delete endpoint not implemented yet in backend - would be v1/mail-servers/{id} DELETE
-  const deleteMutation = useMutation({
-    mutationFn: async (mailServerId: string) => {
-      addToast({
-        title: 'Feature not available',
-        description:
-          'Delete functionality not yet implemented - backend endpoint pending',
-        severity: 'warning',
-      });
-      throw new Error(
-        'Delete functionality not yet available - backend endpoint pending',
-      );
-    },
-    onError: () => {
-      // Error already shown in mutationFn
-    },
-  });
-
-  // REVIEW: Test connection endpoint not implemented yet in backend - would be v1/mail-servers/{id}/test POST
-  const testConnectionMutation = useMutation({
-    mutationFn: async (mailServerId: string) => {
-      addToast({
-        title: 'Feature not available',
-        description:
-          'Test connection not yet implemented - backend endpoint pending',
-        severity: 'warning',
-      });
-      throw new Error(
-        'Test connection not yet available - backend endpoint pending',
-      );
-    },
-    onError: () => {
-      // Error already shown in mutationFn
-    },
-  });
-
-  const handleEdit = useCallback(
-    (mailServerId: string) => {
-      const mailServer = items.find(item => item.id === mailServerId);
-      if (mailServer) {
-        setEditingMailServer(mailServer);
-      }
-    },
-    [items],
-  );
-
-  const handleDelete = useCallback((mailServerId: string) => {
-    setPendingDeleteId(mailServerId);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSettled: () => setPendingDeleteId(null),
-    });
-  }, [pendingDeleteId, deleteMutation]);
-
-  const handleTest = useCallback(
-    (mailServerId: string) => {
-      testConnectionMutation.mutate(mailServerId);
-    },
-    [testConnectionMutation],
-  );
-
-  const columns = useMemo(
-    () =>
-      createMailServersColumns({
-        onEdit: handleEdit,
-        onDelete: handleDelete,
-        onTest: handleTest,
-      }),
-    [handleEdit, handleDelete, handleTest],
-  );
-
-  const { table } = useMailServersTable({
-    data: items,
-    columns,
-    totalCount,
-    pagination,
-    onPaginationChange: setPagination,
-  });
-
-  const paginationTemplate = () => {
-    const totalPages = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
-    return (
-      <TablePagination
-        totalPages={totalPages}
-        currentPage={pagination.pageIndex + 1}
-        onPageChange={(page: number) =>
-          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
-        }
-      />
-    );
-  };
-
   return (
     <>
       <Helmet>
         <title>Email Settings - Configuration</title>
       </Helmet>
-      <div className="mb-5">
-        <div className="mb-5 items-start gap-5 lg:flex">
-          <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-            Email Settings
-          </h1>
-          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
-            <BaseButton
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-              onPress={() => setIsCreateModalOpen(true)}
-            >
-              Mail Server
-            </BaseButton>
-          </div>
-        </div>
+
+      <div className="mb-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Administration', href: '/admin/settings' },
+            { label: 'Email Settings', href: '/configuration/email', isCurrent: true },
+          ]}
+        />
       </div>
 
-      <BaseTable
-        fullHeight
-        table={table}
-        showInfo={false}
-        paginationTemplate={paginationTemplate}
-        isLoading={isLoading}
-        loading={{ title: 'Loading...' }}
-      />
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">Email Settings</h1>
+        <p className="text-default-500 mt-1">
+          Configure the outbound mail server used to send notifications and ticket emails.
+        </p>
+      </div>
 
-      <MailServerEditorModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
-
-      <MailServerEditorModal
-        isOpen={!!editingMailServer}
-        onClose={() => setEditingMailServer(null)}
-        mailServer={editingMailServer ?? undefined}
-      />
-
-      <ConfirmDeleteModal
-        isOpen={pendingDeleteId !== null}
-        onClose={() => setPendingDeleteId(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Mail Server"
-        message="Are you sure you want to delete this mail server? This cannot be undone."
-        isPending={deleteMutation.isPending}
-      />
+      <TenantMailConfigForm />
     </>
   );
 }
