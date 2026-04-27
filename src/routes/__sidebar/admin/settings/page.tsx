@@ -143,12 +143,6 @@ function AdministrationPage() {
           href: '/configuration/automations',
         },
         {
-          title: 'AI features',
-          description: 'Configure AI-powered assistance and suggestions',
-          icon: 'sparkles',
-          href: '/configuration/ai-features',
-        },
-        {
           title: 'Live Chat widget',
           description: 'Embed live chat on your website',
           icon: 'chat-bubble-left-right',

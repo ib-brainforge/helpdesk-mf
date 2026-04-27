@@ -6,7 +6,6 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Card, CardBody, Spinner, addToast } from '@heroui/react';
-import { Link } from '@modern-js/runtime/router';
 import { useState } from 'react';
 import { useGetTicketSummary, useSuggestReply } from '../hooks/useAiAssist';
 
@@ -148,15 +147,7 @@ export function AiAssistantModal({
                     AI features are not configured
                   </p>
                   <p className="text-sm text-default-500">
-                    Configure your AI provider in{' '}
-                    <Link
-                      to="/configuration/ai-features"
-                      className="text-primary underline"
-                      onClick={handleClose}
-                    >
-                      AI Features settings
-                    </Link>{' '}
-                    first.
+                    Contact your administrator to configure the AI provider for this deployment.
                   </p>
                 </div>
               )}

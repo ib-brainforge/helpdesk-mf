@@ -129,13 +129,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
-        label: 'AI Features',
-        href: '/configuration/ai-features',
-        icon: 'cpu-chip',
-        testId: 'nav-configuration-ai-features',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-      },
-      {
         label: 'Integrations',
         href: '/configuration/integrations',
         icon: 'puzzle-piece',
