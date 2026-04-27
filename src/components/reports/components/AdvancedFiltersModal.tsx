@@ -1,8 +1,16 @@
-import { type FC, useState } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Select, SelectItem } from '@heroui/react';
-import { BaseButton } from '@brainforgeau/components/button';
-import { DateRangeSelector } from './DateRangeSelector';
 import type { CategoryDto } from '@/types/category';
+import {
+  BaseButton,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+  BaseSelect,
+  BaseSelectItem,
+} from '@brainforgeau/components';
+import { type FC, useState } from 'react';
+import { DateRangeSelector } from './DateRangeSelector';
 
 export interface AdvancedFilterValues {
   startDate: string;
@@ -48,7 +56,7 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
   const [values, setValues] = useState<AdvancedFilterValues>(initialValues);
 
   const handleDateChange = (startDate: string, endDate: string) => {
-    setValues((v) => ({ ...v, startDate, endDate }));
+    setValues(v => ({ ...v, startDate, endDate }));
   };
 
   const handleApply = () => {
@@ -58,7 +66,9 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
 
   const handleReset = () => {
     const defaultValues: AdvancedFilterValues = {
-      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0],
       endDate: new Date().toISOString().split('T')[0],
       statuses: [],
       priorities: [],
@@ -75,19 +85,19 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
   ].filter(Boolean).length;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
-      <ModalContent>
-        <ModalHeader>
+    <BaseModal isOpen={isOpen} onClose={onClose} size="xl">
+      <BaseModalContent>
+        <BaseModalHeader>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">Advanced Filters</h2>
+            <span>Advanced Filters</span>
             {activeFilterCount > 0 && (
               <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
                 {activeFilterCount} active
               </span>
             )}
           </div>
-        </ModalHeader>
-        <ModalBody>
+        </BaseModalHeader>
+        <BaseModalBody>
           <div className="space-y-5">
             {/* Date Range */}
             <div>
@@ -102,62 +112,71 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
             {/* Status */}
             <div>
               <p className="text-sm font-medium mb-2">Status</p>
-              <Select
+              <BaseSelect
                 label="Filter by status"
                 placeholder="All statuses"
                 selectionMode="multiple"
                 selectedKeys={new Set(values.statuses)}
-                onSelectionChange={(keys) =>
-                  setValues((v) => ({ ...v, statuses: Array.from(keys) as string[] }))
+                onSelectionChange={keys =>
+                  setValues(v => ({
+                    ...v,
+                    statuses: Array.from(keys) as string[],
+                  }))
                 }
                 className="w-full"
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value}>{opt.label}</SelectItem>
+                {STATUS_OPTIONS.map(opt => (
+                  <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
                 ))}
-              </Select>
+              </BaseSelect>
             </div>
 
             {/* Priority */}
             <div>
               <p className="text-sm font-medium mb-2">Priority</p>
-              <Select
+              <BaseSelect
                 label="Filter by priority"
                 placeholder="All priorities"
                 selectionMode="multiple"
                 selectedKeys={new Set(values.priorities)}
-                onSelectionChange={(keys) =>
-                  setValues((v) => ({ ...v, priorities: Array.from(keys) as string[] }))
+                onSelectionChange={keys =>
+                  setValues(v => ({
+                    ...v,
+                    priorities: Array.from(keys) as string[],
+                  }))
                 }
                 className="w-full"
               >
-                {PRIORITY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value}>{opt.label}</SelectItem>
+                {PRIORITY_OPTIONS.map(opt => (
+                  <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
                 ))}
-              </Select>
+              </BaseSelect>
             </div>
 
             {/* Category */}
             <div>
               <p className="text-sm font-medium mb-2">Category</p>
-              <Select
+              <BaseSelect
                 label="Filter by category"
                 placeholder="All categories"
                 selectionMode="multiple"
                 selectedKeys={new Set(values.categoryIds)}
-                onSelectionChange={(keys) =>
-                  setValues((v) => ({ ...v, categoryIds: Array.from(keys) as string[] }))
+                onSelectionChange={keys =>
+                  setValues(v => ({
+                    ...v,
+                    categoryIds: Array.from(keys) as string[],
+                  }))
                 }
                 className="w-full"
               >
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id}>{cat.name}</SelectItem>
+                {categories.map(cat => (
+                  <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
                 ))}
-              </Select>
+              </BaseSelect>
             </div>
           </div>
-        </ModalBody>
-        <ModalFooter>
+        </BaseModalBody>
+        <BaseModalFooter>
           <BaseButton variant="light" onPress={handleReset}>
             Reset
           </BaseButton>
@@ -167,8 +186,8 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
           <BaseButton color="primary" onPress={handleApply}>
             Apply filters
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 };

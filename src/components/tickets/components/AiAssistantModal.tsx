@@ -1,5 +1,11 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, Card, CardBody, Spinner, addToast } from '@heroui/react';
+import {
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalHeader,
+} from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { Card, CardBody, Spinner, addToast } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import { useState } from 'react';
 import { useGetTicketSummary, useSuggestReply } from '../hooks/useAiAssist';
@@ -40,7 +46,11 @@ function isAiNotConfiguredError(error: unknown): boolean {
   return errors.some((e: string) => e.startsWith('AI_NOT_CONFIGURED'));
 }
 
-export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModalProps) {
+export function AiAssistantModal({
+  isOpen,
+  onClose,
+  ticketId,
+}: AiAssistantModalProps) {
   const [activeFeature, setActiveFeature] = useState<ActiveFeature>(null);
   const [aiResult, setAiResult] = useState<string | null>(null);
 
@@ -106,19 +116,23 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
   };
 
   const hasAiError =
-    (activeFeature === 'ticket-summary' && summaryMutation.error && isAiNotConfiguredError(summaryMutation.error)) ||
-    (activeFeature === 'generate-response' && suggestReplyMutation.error && isAiNotConfiguredError(suggestReplyMutation.error));
+    (activeFeature === 'ticket-summary' &&
+      summaryMutation.error &&
+      isAiNotConfiguredError(summaryMutation.error)) ||
+    (activeFeature === 'generate-response' &&
+      suggestReplyMutation.error &&
+      isAiNotConfiguredError(suggestReplyMutation.error));
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="2xl">
-      <ModalContent>
-        <ModalHeader>
+    <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
+      <BaseModalContent>
+        <BaseModalHeader>
           <div className="flex items-center gap-2">
             <Icon name="flash" className="h-5 w-5 text-primary" />
             <span>Jitbit AI Assistant</span>
           </div>
-        </ModalHeader>
-        <ModalBody className="pb-6">
+        </BaseModalHeader>
+        <BaseModalBody className="pb-6">
           {/* Result panel */}
           {(isLoading || aiResult || hasAiError) && (
             <div className="mb-4 rounded-lg border border-default-200 bg-default-50 p-4 min-h-[80px] flex items-start">
@@ -130,7 +144,9 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
               )}
               {!isLoading && hasAiError && (
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-warning-600 font-medium">AI features are not configured</p>
+                  <p className="text-sm text-warning-600 font-medium">
+                    AI features are not configured
+                  </p>
                   <p className="text-sm text-default-500">
                     Configure your AI provider in{' '}
                     <Link
@@ -145,7 +161,9 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
                 </div>
               )}
               {!isLoading && aiResult && (
-                <p className="text-sm text-default-700 whitespace-pre-wrap">{aiResult}</p>
+                <p className="text-sm text-default-700 whitespace-pre-wrap">
+                  {aiResult}
+                </p>
               )}
             </div>
           )}
@@ -165,11 +183,18 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
               <CardBody className="p-4">
                 <div className="flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                    <Icon name="chat-bubble-left-right" className="h-6 w-6 text-primary" />
+                    <Icon
+                      name="chat-bubble-left-right"
+                      className="h-6 w-6 text-primary"
+                    />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">Generate response</h3>
-                    <p className="text-xs text-default-500">AI-powered reply suggestions</p>
+                    <h3 className="text-sm font-semibold mb-0.5">
+                      Generate response
+                    </h3>
+                    <p className="text-xs text-default-500">
+                      AI-powered reply suggestions
+                    </p>
                   </div>
                 </div>
               </CardBody>
@@ -185,11 +210,18 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
               <CardBody className="p-4">
                 <div className="flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                    <Icon name="document-text" className="h-6 w-6 text-primary" />
+                    <Icon
+                      name="document-text"
+                      className="h-6 w-6 text-primary"
+                    />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">Ticket summary</h3>
-                    <p className="text-xs text-default-500">Quick overview of the ticket</p>
+                    <h3 className="text-sm font-semibold mb-0.5">
+                      Ticket summary
+                    </h3>
+                    <p className="text-xs text-default-500">
+                      Quick overview of the ticket
+                    </p>
                   </div>
                 </div>
               </CardBody>
@@ -207,8 +239,12 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
                     <Icon name="sparkles" className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">Improve reply</h3>
-                    <p className="text-xs text-default-500">Enhance your response</p>
+                    <h3 className="text-sm font-semibold mb-0.5">
+                      Improve reply
+                    </h3>
+                    <p className="text-xs text-default-500">
+                      Enhance your response
+                    </p>
                   </div>
                 </div>
               </CardBody>
@@ -226,8 +262,12 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
                     <Icon name="book-open" className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">Generate KB</h3>
-                    <p className="text-xs text-default-500">Create knowledge base article</p>
+                    <h3 className="text-sm font-semibold mb-0.5">
+                      Generate KB
+                    </h3>
+                    <p className="text-xs text-default-500">
+                      Create knowledge base article
+                    </p>
                   </div>
                 </div>
               </CardBody>
@@ -243,17 +283,22 @@ export function AiAssistantModal({ isOpen, onClose, ticketId }: AiAssistantModal
             <CardBody className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
-                  <Icon name="chat-bubble-bottom-center-text" className="h-6 w-6 text-primary" />
+                  <Icon
+                    name="chat-bubble-bottom-center-text"
+                    className="h-6 w-6 text-primary"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold mb-0.5">Custom AI-chat</h3>
+                  <h3 className="text-sm font-semibold mb-0.5">
+                    Custom AI-chat
+                  </h3>
                   <p className="text-xs text-default-500">Ask AI anything</p>
                 </div>
               </div>
             </CardBody>
           </Card>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+        </BaseModalBody>
+      </BaseModalContent>
+    </BaseModal>
   );
 }

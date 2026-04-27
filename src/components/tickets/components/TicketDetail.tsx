@@ -26,7 +26,7 @@ import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { CommentType } from '@/types/comment';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Box } from '@brainforgeau/components/base';
+import { Box, PageSpinner } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
 import {
@@ -480,7 +480,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onSuccess: () => {
             addToast({
               title: 'Ticket converted',
-              description: 'Content moved to parent ticket as an internal note.',
+              description:
+                'Content moved to parent ticket as an internal note.',
               severity: 'success',
             });
             setIsConvertToReplyModalOpen(false);
@@ -543,7 +544,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       createSubtaskMutation.mutate(
         { parentTicketId: id, data },
         {
-          onSuccess: (newTicketId) => {
+          onSuccess: newTicketId => {
             addToast({
               title: 'Subtask created',
               description: 'The subtask has been created successfully.',
@@ -568,13 +569,20 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id || !ticket) return;
     if (ticket.isProblem) {
       unmarkAsProblemMutation.mutate(id, {
-        onSuccess: () => addToast({ title: 'Problem flag removed', severity: 'success' }),
-        onError: () => addToast({ title: 'Error removing problem flag', severity: 'danger' }),
+        onSuccess: () =>
+          addToast({ title: 'Problem flag removed', severity: 'success' }),
+        onError: () =>
+          addToast({
+            title: 'Error removing problem flag',
+            severity: 'danger',
+          }),
       });
     } else {
       markAsProblemMutation.mutate(id, {
-        onSuccess: () => addToast({ title: 'Marked as Problem', severity: 'success' }),
-        onError: () => addToast({ title: 'Error marking as problem', severity: 'danger' }),
+        onSuccess: () =>
+          addToast({ title: 'Marked as Problem', severity: 'success' }),
+        onError: () =>
+          addToast({ title: 'Error marking as problem', severity: 'danger' }),
       });
     }
   }, [id, ticket, markAsProblemMutation, unmarkAsProblemMutation]);
@@ -583,13 +591,23 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id || !ticket) return;
     if (ticket.isPublishedAsIdea) {
       unpublishAsIdeaMutation.mutate(id, {
-        onSuccess: () => addToast({ title: 'Removed from Ideas Forum', severity: 'success' }),
-        onError: () => addToast({ title: 'Error removing from Ideas Forum', severity: 'danger' }),
+        onSuccess: () =>
+          addToast({ title: 'Removed from Ideas Forum', severity: 'success' }),
+        onError: () =>
+          addToast({
+            title: 'Error removing from Ideas Forum',
+            severity: 'danger',
+          }),
       });
     } else {
       publishAsIdeaMutation.mutate(id, {
-        onSuccess: () => addToast({ title: 'Published to Ideas Forum', severity: 'success' }),
-        onError: () => addToast({ title: 'Error publishing to Ideas Forum', severity: 'danger' }),
+        onSuccess: () =>
+          addToast({ title: 'Published to Ideas Forum', severity: 'success' }),
+        onError: () =>
+          addToast({
+            title: 'Error publishing to Ideas Forum',
+            severity: 'danger',
+          }),
       });
     }
   }, [id, ticket, publishAsIdeaMutation, unpublishAsIdeaMutation]);
@@ -643,14 +661,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   }, [id, updateTicketMutation]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading ticket...</p>
-        </div>
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (error || !ticket) {
@@ -659,7 +670,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         <div className="text-center">
           <Icon
             name="exclamation-triangle"
-            className="h-12 w-12 text-red-600 mx-auto mb-4"
+            className="h-12 w-12 text-danger mx-auto mb-4"
           />
           <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
           <p className="text-gray-600 mb-4">
@@ -676,11 +687,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const isSubscribeLoading =
     subscribeMutation.isPending || unsubscribeMutation.isPending;
 
-  // State-conflict derived flags
-  // REVIEW: isDeleted and isSpam are not in the current TicketDto generated client model.
-  // When the helpdesk-backend-client is updated to expose these fields, remove the `as any` casts.
-  const isDeleted = !!(ticket as any).isDeleted;
-  const isSpam = !!(ticket as any).isSpam;
+  // State-conflict derived flags — fields are extended on TicketDto until helpdesk-client is regenerated
+  const isDeleted = !!ticket.isDeleted;
+  const isSpam = !!ticket.isSpam;
   // Tickets that are spam or deleted cannot be moderated further
   const canModerate = !isDeleted && !isSpam;
   // All actions are disabled when ticket is deleted
@@ -715,7 +724,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             {isDeleted && (
               <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-2 flex items-center gap-2">
                 <Icon name="trash" className="h-4 w-4 text-danger" />
-                <span className="text-sm font-medium text-danger">This ticket is deleted.</span>
+                <span className="text-sm font-medium text-danger">
+                  This ticket is deleted.
+                </span>
               </div>
             )}
 
@@ -731,14 +742,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     <StatusBadge color={priorityConfig.color}>
                       {priorityConfig.label}
                     </StatusBadge>
-                    {isSpam && (
-                      <StatusBadge color="warning">Spam</StatusBadge>
-                    )}
+                    {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
                     {ticket.isProblem && (
                       <StatusBadge color="danger">Problem</StatusBadge>
                     )}
                     {ticket.isPublishedAsIdea && (
-                      <StatusBadge color="success">Published to Ideas Forum</StatusBadge>
+                      <StatusBadge color="success">
+                        Published to Ideas Forum
+                      </StatusBadge>
                     )}
                   </div>
                 </div>
@@ -770,7 +781,28 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           icon={<Icon name="dotsV" className="h-4 w-4" />}
                         />
                       </DropdownTrigger>
-                      <DropdownMenu aria-label="Ticket actions" disabledKeys={actionsDisabled ? ['edit', 'print', 'summary', 'subtask', 'parent', 'convert', 'link-asset', 'duplicate', 'forward', 'spam', 'unspam', 'problem', 'publish'] : []}>
+                      <DropdownMenu
+                        aria-label="Ticket actions"
+                        disabledKeys={
+                          actionsDisabled
+                            ? [
+                                'edit',
+                                'print',
+                                'summary',
+                                'subtask',
+                                'parent',
+                                'convert',
+                                'link-asset',
+                                'duplicate',
+                                'forward',
+                                'spam',
+                                'unspam',
+                                'problem',
+                                'publish',
+                              ]
+                            : []
+                        }
+                      >
                         {/* Edit & View */}
                         <DropdownSection title="Edit & View" showDivider>
                           <DropdownItem
@@ -779,17 +811,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           >
                             Edit
                           </DropdownItem>
-                          <DropdownItem
-                            key="print"
-                            onPress={handlePrint}
-                          >
+                          <DropdownItem key="print" onPress={handlePrint}>
                             Print
                           </DropdownItem>
                           <DropdownItem
                             key="systemlog"
                             onPress={handleToggleSystemLog}
                           >
-                            {showSystemLog ? 'Hide System Log' : 'Show System Log'}
+                            {showSystemLog
+                              ? 'Hide System Log'
+                              : 'Show System Log'}
                           </DropdownItem>
                           <DropdownItem
                             key="summary"
@@ -846,31 +877,49 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="problem"
                               onPress={handleToggleProblem}
-                              isDisabled={markAsProblemMutation.isPending || unmarkAsProblemMutation.isPending}
+                              isDisabled={
+                                markAsProblemMutation.isPending ||
+                                unmarkAsProblemMutation.isPending
+                              }
                             >
-                              {ticket?.isProblem ? 'Unmark as Problem' : 'Mark as Problem'}
+                              {ticket?.isProblem
+                                ? 'Unmark as Problem'
+                                : 'Mark as Problem'}
                             </DropdownItem>
                           ) : (
                             <DropdownItem key="problem" isDisabled>
-                              {ticket?.isProblem ? 'Unmark as Problem' : 'Mark as Problem'}
+                              {ticket?.isProblem
+                                ? 'Unmark as Problem'
+                                : 'Mark as Problem'}
                             </DropdownItem>
                           )}
                           {canModerate ? (
                             <DropdownItem
                               key="publish"
                               onPress={handleTogglePublishAsIdea}
-                              isDisabled={publishAsIdeaMutation.isPending || unpublishAsIdeaMutation.isPending}
+                              isDisabled={
+                                publishAsIdeaMutation.isPending ||
+                                unpublishAsIdeaMutation.isPending
+                              }
                             >
-                              {ticket?.isPublishedAsIdea ? 'Remove from Ideas Forum' : 'Publish to Ideas Forum'}
+                              {ticket?.isPublishedAsIdea
+                                ? 'Remove from Ideas Forum'
+                                : 'Publish to Ideas Forum'}
                             </DropdownItem>
                           ) : (
                             <DropdownItem key="publish" isDisabled>
-                              {ticket?.isPublishedAsIdea ? 'Remove from Ideas Forum' : 'Publish to Ideas Forum'}
+                              {ticket?.isPublishedAsIdea
+                                ? 'Remove from Ideas Forum'
+                                : 'Publish to Ideas Forum'}
                             </DropdownItem>
                           )}
                           <DropdownItem
                             key="spam"
-                            onPress={isSpam ? handleUnmarkSpam : () => setIsMarkSpamModalOpen(true)}
+                            onPress={
+                              isSpam
+                                ? handleUnmarkSpam
+                                : () => setIsMarkSpamModalOpen(true)
+                            }
                           >
                             {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
                           </DropdownItem>
@@ -929,7 +978,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     variant="bordered"
                     onPress={handleTakeover}
                     icon={<Icon name="user-plus" className="h-4 w-4" />}
-                    isDisabled={actionsDisabled || ticket.assigneeId === currentUserId}
+                    isDisabled={
+                      actionsDisabled || ticket.assigneeId === currentUserId
+                    }
                   >
                     Takeover
                   </BaseButton>
@@ -942,7 +993,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     variant="bordered"
                     onPress={handleCloseTicket}
                     icon={<Icon name="check-circle" className="h-4 w-4" />}
-                    isDisabled={actionsDisabled || ticket.status === TicketStatus.Closed}
+                    isDisabled={
+                      actionsDisabled || ticket.status === TicketStatus.Closed
+                    }
                   >
                     Close ticket
                   </BaseButton>
@@ -1042,7 +1095,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <div>
                     <p className="text-sm font-medium">Ticket created</p>
                     <p className="text-xs text-gray-500">
-                      by {(ticket as any).requesterName ?? 'Unknown'} on{' '}
+                      by {ticket.requesterName ?? 'Unknown'} on{' '}
                       {formatDateTime(ticket.createdAt, { timezone })}
                     </p>
                   </div>
@@ -1110,13 +1163,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                       key={child.id}
                       className="flex items-center justify-between text-sm"
                     >
-                      <button
-                        type="button"
-                        className="text-blue-600 hover:underline font-mono text-xs text-left"
-                        onClick={() => navigate(`/tickets/${child.id}`)}
+                      <BaseButton
+                        variant="link"
+                        size="sm"
+                        className="font-mono text-xs p-0 h-auto min-h-0"
+                        onPress={() => navigate(`/tickets/${child.id}`)}
                       >
                         #{child.id?.substring(0, 8)}
-                      </button>
+                      </BaseButton>
                       <span className="text-gray-600 truncate ml-2 flex-1">
                         {child.subject}
                       </span>

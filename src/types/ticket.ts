@@ -12,9 +12,9 @@ export {
 
 // Keep local enum aliases for easier use in the UI
 import {
-  HelpdeskDomainTicketsEnumsTicketStatus,
-  HelpdeskDomainTicketsEnumsTicketPriority,
   HelpdeskDomainTicketsEnumsTicketOrigin,
+  HelpdeskDomainTicketsEnumsTicketPriority,
+  HelpdeskDomainTicketsEnumsTicketStatus,
 } from '@brainforgeau/helpdesk-client';
 
 export enum TicketStatus {
@@ -39,9 +39,9 @@ export enum TicketOrigin {
 
 // Local type aliases for convenience (maps from generated types)
 import type {
-  HelpdeskApplicationTicketsDTOsTicketListDto as GeneratedTicketListDto,
-  HelpdeskApplicationTicketsDTOsTicketDto as GeneratedTicketDto,
   HelpdeskApplicationCommonPagedResultTicketListDto as GeneratedPagedResult,
+  HelpdeskApplicationTicketsDTOsTicketDto as GeneratedTicketDto,
+  HelpdeskApplicationTicketsDTOsTicketListDto as GeneratedTicketListDto,
 } from '@brainforgeau/helpdesk-client';
 
 export type TicketListDto = GeneratedTicketListDto & {
@@ -62,6 +62,9 @@ export type TicketDto = GeneratedTicketDto & {
   isProblem?: boolean;
   isPublishedAsIdea?: boolean;
   publishedAsIdeaAt?: string | null;
+  // TODO: Remove these when helpdesk-backend-client exposes isDeleted and isSpam in TicketDto
+  isDeleted?: boolean;
+  isSpam?: boolean;
 };
 
 export interface CustomFieldValueDto {

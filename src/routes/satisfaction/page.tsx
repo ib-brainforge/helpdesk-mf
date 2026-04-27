@@ -50,7 +50,7 @@ function SatisfactionSurveyPage() {
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
           <Card className="max-w-md w-full p-8">
             <div className="text-center">
-              <Icon name="exclamation-circle" className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <Icon name="exclamation-circle" className="h-16 w-16 text-danger mx-auto mb-4" />
               <h1 className="text-2xl font-semibold mb-2">Invalid Survey Link</h1>
               <p className="text-gray-600">
                 This satisfaction survey link is invalid or missing the required token.

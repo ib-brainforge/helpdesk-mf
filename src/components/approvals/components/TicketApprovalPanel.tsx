@@ -1,24 +1,33 @@
-import { type FC, useState, useCallback } from 'react';
-import { BaseButton, Icon, BaseTextarea } from '@brainforgeau/components';
-import { Box } from '@brainforgeau/components/base';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import { StatusBadge } from '@/components/shared';
-import { PermissionGuard, useTimezone } from '@brainforgeau/security';
-import { formatDateTime } from '@brainforgeau/components/utils';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import {
-  useTicketApproval,
-  useRequestApproval,
-  useMakeApprovalDecision,
-  useCancelApproval,
-  useApprovalWorkflows,
-} from '../hooks';
-import {
-  ApprovalState,
   ApprovalDecisionType,
   ApprovalMode,
+  ApprovalState,
   type TicketApprovalDto,
 } from '@/types/approval';
-import { HelpdeskPermissions } from '@/constants/permissions';
+import {
+  BaseButton,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+  BaseTextarea,
+  Icon,
+} from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { type FC, useCallback, useState } from 'react';
+import {
+  useApprovalWorkflows,
+  useCancelApproval,
+  useMakeApprovalDecision,
+  useRequestApproval,
+  useTicketApproval,
+} from '../hooks';
 
 // REVIEW: Component integrates into existing ticket detail view
 
@@ -26,7 +35,9 @@ interface TicketApprovalPanelProps {
   ticketId: string;
 }
 
-export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) => {
+export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
+  ticketId,
+}) => {
   const timezone = useTimezone();
   const { data: approval, isLoading } = useTicketApproval(ticketId);
   const { items: workflows } = useApprovalWorkflows();
@@ -36,9 +47,12 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
   const [selectedStepId, setSelectedStepId] = useState<string>('');
-  const [decision, setDecision] = useState<ApprovalDecisionType>(ApprovalDecisionType.Approved);
+  const [decision, setDecision] = useState<ApprovalDecisionType>(
+    ApprovalDecisionType.Approved,
+  );
   const [comment, setComment] = useState('');
 
   const handleRequestApproval = useCallback(() => {
@@ -50,7 +64,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
           setShowRequestModal(false);
           setSelectedWorkflowId('');
         },
-      }
+      },
     );
   }, [ticketId, selectedWorkflowId, requestApprovalMutation]);
 
@@ -69,15 +83,20 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
           setSelectedStepId('');
           setComment('');
         },
-      }
+      },
     );
   }, [approval, selectedStepId, decision, comment, makeDecisionMutation]);
 
   const handleCancelApproval = useCallback(() => {
     if (!approval) return;
-    if (confirm('Are you sure you want to cancel this approval?')) {
-      cancelApprovalMutation.mutate(approval.id);
-    }
+    setShowCancelConfirm(true);
+  }, [approval]);
+
+  const handleCancelApprovalConfirm = useCallback(() => {
+    if (!approval) return;
+    cancelApprovalMutation.mutate(approval.id, {
+      onSettled: () => setShowCancelConfirm(false),
+    });
   }, [approval, cancelApprovalMutation]);
 
   const getStateChipColor = (state: ApprovalState) => {
@@ -132,7 +151,10 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
       <>
         <Box title="Approval">
           <div className="flex items-center justify-between mb-3">
-            <PermissionGuard requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]} fallback={null}>
+            <PermissionGuard
+              requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]}
+              fallback={null}
+            >
               <BaseButton
                 size="sm"
                 color="primary"
@@ -143,14 +165,19 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
               </BaseButton>
             </PermissionGuard>
           </div>
-          <p className="text-sm text-gray-500">No approval requested for this ticket</p>
+          <p className="text-sm text-gray-500">
+            No approval requested for this ticket
+          </p>
         </Box>
 
         {/* Request Approval Modal */}
-        <Modal isOpen={showRequestModal} onClose={() => setShowRequestModal(false)}>
-          <ModalContent>
-            <ModalHeader>Request Approval</ModalHeader>
-            <ModalBody>
+        <BaseModal
+          isOpen={showRequestModal}
+          onClose={() => setShowRequestModal(false)}
+        >
+          <BaseModalContent>
+            <BaseModalHeader>Request Approval</BaseModalHeader>
+            <BaseModalBody>
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
                   Select a workflow to request approval for this ticket.
@@ -158,21 +185,24 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
                 <select
                   className="w-full px-3 py-2 border rounded-lg"
                   value={selectedWorkflowId}
-                  onChange={(e) => setSelectedWorkflowId(e.target.value)}
+                  onChange={e => setSelectedWorkflowId(e.target.value)}
                 >
                   <option value="">Select workflow...</option>
                   {workflows
-                    .filter((w) => w.isActive)
-                    .map((workflow) => (
+                    .filter(w => w.isActive)
+                    .map(workflow => (
                       <option key={workflow.id} value={workflow.id}>
                         {workflow.name}
                       </option>
                     ))}
                 </select>
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <BaseButton variant="bordered" onPress={() => setShowRequestModal(false)}>
+            </BaseModalBody>
+            <BaseModalFooter>
+              <BaseButton
+                variant="bordered"
+                onPress={() => setShowRequestModal(false)}
+              >
                 Cancel
               </BaseButton>
               <BaseButton
@@ -183,9 +213,9 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
               >
                 Request
               </BaseButton>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+            </BaseModalFooter>
+          </BaseModalContent>
+        </BaseModal>
       </>
     );
   }
@@ -193,132 +223,156 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
   return (
     <>
       <Box title="Approval Status">
-          <div className="flex items-center justify-end mb-4">
-            <StatusBadge color={getStateChipColor(approval.overallState)}>
-              {ApprovalState[approval.overallState]}
-            </StatusBadge>
-          </div>
+        <div className="flex items-center justify-end mb-4">
+          <StatusBadge color={getStateChipColor(approval.overallState)}>
+            {ApprovalState[approval.overallState]}
+          </StatusBadge>
+        </div>
 
-          <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Workflow:</span>
+            <span className="font-medium">{approval.workflowName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Requested by:</span>
+            <span className="font-medium">{approval.requestedByUserName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Requested at:</span>
+            <span className="font-medium">
+              {formatDateTime(approval.requestedAt, { timezone })}
+            </span>
+          </div>
+          {approval.completedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600">Workflow:</span>
-              <span className="font-medium">{approval.workflowName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Requested by:</span>
-              <span className="font-medium">{approval.requestedByUserName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Requested at:</span>
+              <span className="text-gray-600">Completed at:</span>
               <span className="font-medium">
-                {formatDateTime(approval.requestedAt, { timezone })}
+                {formatDateTime(approval.completedAt, { timezone })}
               </span>
             </div>
-            {approval.completedAt && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Completed at:</span>
-                <span className="font-medium">
-                  {formatDateTime(approval.completedAt, { timezone })}
-                </span>
-              </div>
-            )}
-          </div>
+          )}
+        </div>
 
-          <div className="border-t pt-4">
-            <h4 className="font-medium mb-3">Steps</h4>
-            <div className="space-y-2">
-              {approval.decisions.map((decisionItem, index) => {
-                const canDecide =
-                  decisionItem.decision === ApprovalDecisionType.Pending &&
-                  approval.overallState === ApprovalState.Pending;
+        <div className="border-t pt-4">
+          <h4 className="font-medium mb-3">Steps</h4>
+          <div className="space-y-2">
+            {approval.decisions.map((decisionItem, index) => {
+              const canDecide =
+                decisionItem.decision === ApprovalDecisionType.Pending &&
+                approval.overallState === ApprovalState.Pending;
 
-                return (
-                  <div
-                    key={decisionItem.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-6 h-6 bg-white rounded-full border-2">
-                        <span className="text-xs font-medium">{index + 1}</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{decisionItem.stepName}</p>
-                        {decisionItem.approverUserName && (
-                          <p className="text-xs text-gray-500">
-                            {decisionItem.approverUserName}
-                          </p>
-                        )}
-                        {decisionItem.comment && (
-                          <p className="text-xs text-gray-600 mt-1">{decisionItem.comment}</p>
-                        )}
-                      </div>
+              return (
+                <div
+                  key={decisionItem.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-6 h-6 bg-white rounded-full border-2">
+                      <span className="text-xs font-medium">{index + 1}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge color={getDecisionChipColor(decisionItem.decision)}>
-                        {getDecisionLabel(decisionItem.decision)}
-                      </StatusBadge>
-                      {canDecide && (
-                        <PermissionGuard
-                          requiredPermissions={[HelpdeskPermissions.ApprovalsDecide]}
-                          fallback={null}
-                        >
-                          <BaseButton
-                            size="sm"
-                            variant="bordered"
-                            onPress={() => {
-                              setSelectedStepId(decisionItem.stepId);
-                              setDecision(ApprovalDecisionType.Approved);
-                              setShowDecisionModal(true);
-                            }}
-                          >
-                            Decide
-                          </BaseButton>
-                        </PermissionGuard>
+                    <div>
+                      <p className="font-medium text-sm">
+                        {decisionItem.stepName}
+                      </p>
+                      {decisionItem.approverUserName && (
+                        <p className="text-xs text-gray-500">
+                          {decisionItem.approverUserName}
+                        </p>
+                      )}
+                      {decisionItem.comment && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {decisionItem.comment}
+                        </p>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge
+                      color={getDecisionChipColor(decisionItem.decision)}
+                    >
+                      {getDecisionLabel(decisionItem.decision)}
+                    </StatusBadge>
+                    {canDecide && (
+                      <PermissionGuard
+                        requiredPermissions={[
+                          HelpdeskPermissions.ApprovalsDecide,
+                        ]}
+                        fallback={null}
+                      >
+                        <BaseButton
+                          size="sm"
+                          variant="bordered"
+                          onPress={() => {
+                            setSelectedStepId(decisionItem.stepId);
+                            setDecision(ApprovalDecisionType.Approved);
+                            setShowDecisionModal(true);
+                          }}
+                        >
+                          Decide
+                        </BaseButton>
+                      </PermissionGuard>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          {approval.overallState === ApprovalState.Pending && (
-            <PermissionGuard requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]} fallback={null}>
-              <div className="border-t pt-4">
-                <BaseButton
-                  size="sm"
-                  variant="light"
-                  color="danger"
-                  onPress={handleCancelApproval}
-                  icon={<Icon name="x-circle" className="h-3.5 w-3.5" />}
-                >
-                  Cancel Approval
-                </BaseButton>
-              </div>
-            </PermissionGuard>
-          )}
+        {approval.overallState === ApprovalState.Pending && (
+          <PermissionGuard
+            requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]}
+            fallback={null}
+          >
+            <div className="border-t pt-4">
+              <BaseButton
+                size="sm"
+                variant="light"
+                color="danger"
+                onPress={handleCancelApproval}
+                icon={<Icon name="x-circle" className="h-3.5 w-3.5" />}
+              >
+                Cancel Approval
+              </BaseButton>
+            </div>
+          </PermissionGuard>
+        )}
       </Box>
 
       {/* Decision Modal */}
-      <Modal isOpen={showDecisionModal} onClose={() => setShowDecisionModal(false)}>
-        <ModalContent>
-          <ModalHeader>Make Decision</ModalHeader>
-          <ModalBody>
+      <BaseModal
+        isOpen={showDecisionModal}
+        onClose={() => setShowDecisionModal(false)}
+      >
+        <BaseModalContent>
+          <BaseModalHeader>Make Decision</BaseModalHeader>
+          <BaseModalBody>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Decision</label>
+                <label className="block text-sm font-medium mb-2">
+                  Decision
+                </label>
                 <div className="flex gap-3">
                   <BaseButton
                     color="success"
                     onPress={() => setDecision(ApprovalDecisionType.Approved)}
-                    className={decision === ApprovalDecisionType.Approved ? 'opacity-100' : 'opacity-50'}
+                    className={
+                      decision === ApprovalDecisionType.Approved
+                        ? 'opacity-100'
+                        : 'opacity-50'
+                    }
                   >
                     Approve
                   </BaseButton>
                   <BaseButton
                     color="danger"
                     onPress={() => setDecision(ApprovalDecisionType.Rejected)}
-                    className={decision === ApprovalDecisionType.Rejected ? 'opacity-100' : 'opacity-50'}
+                    className={
+                      decision === ApprovalDecisionType.Rejected
+                        ? 'opacity-100'
+                        : 'opacity-50'
+                    }
                   >
                     Reject
                   </BaseButton>
@@ -328,14 +382,17 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
               <BaseTextarea
                 label="Comment (optional)"
                 value={comment}
-                onValueChange={(value) => setComment(value || '')}
+                onValueChange={value => setComment(value || '')}
                 placeholder="Add a comment about your decision..."
                 minRows={3}
               />
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <BaseButton variant="bordered" onPress={() => setShowDecisionModal(false)}>
+          </BaseModalBody>
+          <BaseModalFooter>
+            <BaseButton
+              variant="bordered"
+              onPress={() => setShowDecisionModal(false)}
+            >
               Cancel
             </BaseButton>
             <BaseButton
@@ -345,9 +402,19 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({ ticketId }) 
             >
               Submit Decision
             </BaseButton>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </BaseModalFooter>
+        </BaseModalContent>
+      </BaseModal>
+
+      {/* Cancel approval confirmation */}
+      <ConfirmDeleteModal
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={handleCancelApprovalConfirm}
+        title="Cancel Approval"
+        message="Are you sure you want to cancel this approval? This cannot be undone."
+        isPending={cancelApprovalMutation.isPending}
+      />
     </>
   );
 };

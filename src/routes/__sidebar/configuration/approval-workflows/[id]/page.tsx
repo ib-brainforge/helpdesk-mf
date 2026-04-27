@@ -50,7 +50,7 @@ function EditApprovalWorkflowPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <Icon name="exclamation-triangle" className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <Icon name="exclamation-triangle" className="h-12 w-12 text-danger mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Workflow Not Found</h2>
           <p className="text-gray-600 mb-4">The workflow you are looking for does not exist.</p>
           <BaseButton onPress={() => navigate('/configuration/approval-workflows')}>

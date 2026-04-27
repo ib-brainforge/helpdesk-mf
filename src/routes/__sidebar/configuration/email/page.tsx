@@ -1,31 +1,43 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useMutation } from '@tanstack/react-query';
-import { BaseTable, TablePagination, BaseButton, Icon } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
 import {
-  useMailServersData,
-  useMailServersTable,
-  createMailServersColumns,
   MailServerEditorModal,
   type MailServerRow,
+  createMailServersColumns,
+  useMailServersData,
+  useMailServersTable,
 } from '@/components/email-settings';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import type { MailServerConfigDto } from '@/types/email';
+import {
+  BaseButton,
+  BaseTable,
+  Icon,
+  TablePagination,
+} from '@brainforgeau/components';
+import { addToast } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useMutation } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 
 function EmailSettingsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingMailServer, setEditingMailServer] = useState<MailServerConfigDto | null>(null);
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } = useMailServersData();
+  const [editingMailServer, setEditingMailServer] =
+    useState<MailServerConfigDto | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
+    useMailServersData();
 
   // REVIEW: Delete endpoint not implemented yet in backend - would be v1/mail-servers/{id} DELETE
   const deleteMutation = useMutation({
     mutationFn: async (mailServerId: string) => {
       addToast({
         title: 'Feature not available',
-        description: 'Delete functionality not yet implemented - backend endpoint pending',
+        description:
+          'Delete functionality not yet implemented - backend endpoint pending',
         severity: 'warning',
       });
-      throw new Error('Delete functionality not yet available - backend endpoint pending');
+      throw new Error(
+        'Delete functionality not yet available - backend endpoint pending',
+      );
     },
     onError: () => {
       // Error already shown in mutationFn
@@ -37,10 +49,13 @@ function EmailSettingsPage() {
     mutationFn: async (mailServerId: string) => {
       addToast({
         title: 'Feature not available',
-        description: 'Test connection not yet implemented - backend endpoint pending',
+        description:
+          'Test connection not yet implemented - backend endpoint pending',
         severity: 'warning',
       });
-      throw new Error('Test connection not yet available - backend endpoint pending');
+      throw new Error(
+        'Test connection not yet available - backend endpoint pending',
+      );
     },
     onError: () => {
       // Error already shown in mutationFn
@@ -49,7 +64,7 @@ function EmailSettingsPage() {
 
   const handleEdit = useCallback(
     (mailServerId: string) => {
-      const mailServer = items.find((item) => item.id === mailServerId);
+      const mailServer = items.find(item => item.id === mailServerId);
       if (mailServer) {
         setEditingMailServer(mailServer);
       }
@@ -57,14 +72,16 @@ function EmailSettingsPage() {
     [items],
   );
 
-  const handleDelete = useCallback(
-    (mailServerId: string) => {
-      if (confirm('Are you sure you want to delete this mail server?')) {
-        deleteMutation.mutate(mailServerId);
-      }
-    },
-    [deleteMutation],
-  );
+  const handleDelete = useCallback((mailServerId: string) => {
+    setPendingDeleteId(mailServerId);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSettled: () => setPendingDeleteId(null),
+    });
+  }, [pendingDeleteId, deleteMutation]);
 
   const handleTest = useCallback(
     (mailServerId: string) => {
@@ -74,7 +91,12 @@ function EmailSettingsPage() {
   );
 
   const columns = useMemo(
-    () => createMailServersColumns({ onEdit: handleEdit, onDelete: handleDelete, onTest: handleTest }),
+    () =>
+      createMailServersColumns({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+        onTest: handleTest,
+      }),
     [handleEdit, handleDelete, handleTest],
   );
 
@@ -93,7 +115,7 @@ function EmailSettingsPage() {
         totalPages={totalPages}
         currentPage={pagination.pageIndex + 1}
         onPageChange={(page: number) =>
-          setPagination((prev) => ({ ...prev, pageIndex: page - 1 }))
+          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
         }
       />
     );
@@ -138,6 +160,15 @@ function EmailSettingsPage() {
         isOpen={!!editingMailServer}
         onClose={() => setEditingMailServer(null)}
         mailServer={editingMailServer ?? undefined}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Mail Server"
+        message="Are you sure you want to delete this mail server? This cannot be undone."
+        isPending={deleteMutation.isPending}
       />
     </>
   );

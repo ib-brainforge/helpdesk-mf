@@ -1,12 +1,13 @@
 import {
   BaseButton,
+  BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
   BaseModalHeader,
+  BaseTextarea,
 } from '@brainforgeau/components';
-import { Input, Textarea } from '@heroui/react';
 import { type FC, useState } from 'react';
 
 interface AddSubtaskModalProps {
@@ -33,7 +34,10 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
       return;
     }
     setSubjectError('');
-    onSubmit({ subject: subject.trim(), description: description.trim() || undefined });
+    onSubmit({
+      subject: subject.trim(),
+      description: description.trim() || undefined,
+    });
   };
 
   const handleClose = () => {
@@ -46,12 +50,10 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader title="Add Subtask">
-          Add Subtask
-        </BaseModalHeader>
+        <BaseModalHeader title="Add Subtask">Add Subtask</BaseModalHeader>
         <BaseModalBody>
           <div className="flex flex-col gap-4">
-            <Input
+            <BaseInput
               label="Subject"
               placeholder="Enter subtask subject"
               value={subject}
@@ -61,7 +63,7 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
               errorMessage={subjectError}
               isDisabled={isLoading}
             />
-            <Textarea
+            <BaseTextarea
               label="Description"
               placeholder="Optional description"
               value={description}
@@ -70,7 +72,8 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
               isDisabled={isLoading}
             />
             <p className="text-sm text-default-500">
-              The subtask will inherit the parent ticket's assignee, category, and priority.
+              The subtask will inherit the parent ticket's assignee, category,
+              and priority.
             </p>
           </div>
         </BaseModalBody>

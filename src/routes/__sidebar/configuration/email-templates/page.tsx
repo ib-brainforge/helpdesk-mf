@@ -1,20 +1,28 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from '@modern-js/runtime/router';
-import { BaseTable, TablePagination, BaseButton, Icon } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
-import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
+  createEmailTemplatesColumns,
   useEmailTemplatesData,
   useEmailTemplatesTable,
-  createEmailTemplatesColumns,
 } from '@/components/email-templates';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import {
+  BaseButton,
+  BaseTable,
+  Icon,
+  TablePagination,
+} from '@brainforgeau/components';
+import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import { addToast } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useMutation } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 
 function EmailTemplatesPage() {
   const navigate = useNavigate();
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } = useEmailTemplatesData();
+  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
+    useEmailTemplatesData();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // REVIEW: Email templates are stored in AppSettings with category 'EmailTemplate'
   const deleteMutation = useMutation({
@@ -23,7 +31,10 @@ function EmailTemplatesPage() {
       await client.v1AppSettingsIdDelete(templateId);
     },
     onSuccess: () => {
-      addToast({ title: 'Email template deleted successfully', severity: 'success' });
+      addToast({
+        title: 'Email template deleted successfully',
+        severity: 'success',
+      });
       refetch();
     },
     onError: () => {
@@ -38,17 +49,23 @@ function EmailTemplatesPage() {
     [navigate],
   );
 
-  const handleDelete = useCallback(
-    (templateId: string) => {
-      if (confirm('Are you sure you want to delete this email template?')) {
-        deleteMutation.mutate(templateId);
-      }
-    },
-    [deleteMutation],
-  );
+  const handleDelete = useCallback((templateId: string) => {
+    setPendingDeleteId(templateId);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSettled: () => setPendingDeleteId(null),
+    });
+  }, [pendingDeleteId, deleteMutation]);
 
   const columns = useMemo(
-    () => createEmailTemplatesColumns({ onEdit: handleEdit, onDelete: handleDelete }),
+    () =>
+      createEmailTemplatesColumns({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      }),
     [handleEdit, handleDelete],
   );
 
@@ -67,7 +84,7 @@ function EmailTemplatesPage() {
         totalPages={totalPages}
         currentPage={pagination.pageIndex + 1}
         onPageChange={(page: number) =>
-          setPagination((prev) => ({ ...prev, pageIndex: page - 1 }))
+          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
         }
       />
     );
@@ -101,6 +118,15 @@ function EmailTemplatesPage() {
         paginationTemplate={paginationTemplate}
         isLoading={isLoading}
         loading={{ title: 'Loading...' }}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Email Template"
+        message="Are you sure you want to delete this email template? This cannot be undone."
+        isPending={deleteMutation.isPending}
       />
     </>
   );

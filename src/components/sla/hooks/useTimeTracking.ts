@@ -1,10 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { TimeTrackingApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type {
-  TicketTimeTrackingDto,
-  TimeEntryDto,
-} from '@/types';
+import type { TicketTimeTrackingDto, TimeEntryDto } from '@/types';
+import { TimeTrackingApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useTimeTracking = (ticketId: string) => {
   const { data, isLoading, refetch } = useQuery<TicketTimeTrackingDto>({
@@ -13,20 +10,20 @@ export const useTimeTracking = (ticketId: string) => {
       const client = await createHelpdeskApiClient(TimeTrackingApi);
 
       // REVIEW: Backend returns list of time entries, we need to aggregate client-side
-      const response = await client.v1TimeTrackingTicketsTicketIdEntriesGet(ticketId);
+      const response =
+        await client.v1TimeTrackingTicketsTicketIdEntriesGet(ticketId);
       const entries = (response.data ?? []) as unknown as TimeEntryDto[];
 
       // Calculate totals
       const totalMinutes = entries.reduce(
         (sum, entry) => sum + (entry.durationMinutes ?? 0),
-        0
+        0,
       );
       const billableMinutes = entries
         .filter(e => e.isBillable)
         .reduce((sum, entry) => sum + (entry.durationMinutes ?? 0), 0);
 
       // REVIEW: activeEntry is not supported by backend yet
-      // Timer functionality needs backend endpoints: start/stop/pause
 
       return {
         ticketId,
@@ -46,22 +43,24 @@ export const useTimeTracking = (ticketId: string) => {
   };
 };
 
-// REVIEW: Timer functionality placeholders - backend doesn't have these endpoints yet
-// Backend needs to add: POST /v1/time-tracking/ticket/{ticketId}/start
-// Backend needs to add: POST /v1/time-tracking/ticket/{ticketId}/stop
-// Backend needs to add: POST /v1/time-tracking/ticket/{ticketId}/pause
+// SLA timer mutations wire directly to the SLA API endpoints:
+// POST /v1/sla/ticket/{ticketId}/timer/start
+// POST /v1/sla/ticket/{ticketId}/timer/stop
+// POST /v1/sla/ticket/{ticketId}/timer/pause
 
 export const useStartTimer = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      // REVIEW: Placeholder - backend endpoint not available yet
-      console.warn('Start timer endpoint not implemented in backend yet');
-      return null;
+      const { SlaApi } = await import('@brainforgeau/helpdesk-client');
+      const client = await createHelpdeskApiClient(SlaApi);
+      const response = await client.v1SlaTicketTicketIdTimerStartPost(ticketId);
+      return response.data;
     },
     onSuccess: (_, ticketId) => {
       queryClient.invalidateQueries({ queryKey: ['time-tracking', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['sla', ticketId] });
     },
   });
 };
@@ -71,12 +70,14 @@ export const useStopTimer = () => {
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      // REVIEW: Placeholder - backend endpoint not available yet
-      console.warn('Stop timer endpoint not implemented in backend yet');
-      return null;
+      const { SlaApi } = await import('@brainforgeau/helpdesk-client');
+      const client = await createHelpdeskApiClient(SlaApi);
+      const response = await client.v1SlaTicketTicketIdTimerStopPost(ticketId);
+      return response.data;
     },
     onSuccess: (_, ticketId) => {
       queryClient.invalidateQueries({ queryKey: ['time-tracking', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['sla', ticketId] });
     },
   });
 };
@@ -86,12 +87,14 @@ export const usePauseTimer = () => {
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      // REVIEW: Placeholder - backend endpoint not available yet
-      console.warn('Pause timer endpoint not implemented in backend yet');
-      return null;
+      const { SlaApi } = await import('@brainforgeau/helpdesk-client');
+      const client = await createHelpdeskApiClient(SlaApi);
+      const response = await client.v1SlaTicketTicketIdTimerPausePost(ticketId);
+      return response.data;
     },
     onSuccess: (_, ticketId) => {
       queryClient.invalidateQueries({ queryKey: ['time-tracking', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['sla', ticketId] });
     },
   });
 };
@@ -123,7 +126,9 @@ export const useAddTimeEntry = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['time-tracking', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['time-tracking', variables.ticketId],
+      });
     },
   });
 };
@@ -153,7 +158,9 @@ export const useUpdateTimeEntry = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['time-tracking', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['time-tracking', variables.ticketId],
+      });
     },
   });
 };
@@ -162,7 +169,10 @@ export const useDeleteTimeEntry = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ entryId, ticketId }: { entryId: string; ticketId: string }) => {
+    mutationFn: async ({
+      entryId,
+      ticketId,
+    }: { entryId: string; ticketId: string }) => {
       const client = await createHelpdeskApiClient(TimeTrackingApi);
 
       // REVIEW: Backend deletes a time entry
@@ -170,7 +180,9 @@ export const useDeleteTimeEntry = () => {
       return { entryId, ticketId };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['time-tracking', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['time-tracking', variables.ticketId],
+      });
     },
   });
 };

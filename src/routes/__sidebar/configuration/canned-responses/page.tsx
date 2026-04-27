@@ -1,21 +1,34 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { CannedResponseEditorModal } from '@/components/canned-responses/components/CannedResponseEditorModal';
+import {
+  useCannedResponses,
+  useDeleteCannedResponse,
+} from '@/components/canned-responses/hooks/useCannedResponses';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import type { CannedResponseDto } from '@/types/canned-response';
+import { CannedResponseScope } from '@/types/canned-response';
+import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput } from '@brainforgeau/components';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { useCannedResponses, useDeleteCannedResponse } from '@/components/canned-responses/hooks/useCannedResponses';
-import { CannedResponseEditorModal } from '@/components/canned-responses/components/CannedResponseEditorModal';
-import type { CannedResponseDto } from '@/types/canned-response';
 import { addToast } from '@heroui/react';
-import { CannedResponseScope } from '@/types/canned-response';
+import { Helmet } from '@modern-js/runtime/head';
+import { useState } from 'react';
 
 function CannedResponsesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingResponse, setEditingResponse] = useState<CannedResponseDto | undefined>();
+  const [editingResponse, setEditingResponse] = useState<
+    CannedResponseDto | undefined
+  >();
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
-  const { cannedResponses, isLoading } = useCannedResponses(undefined, searchTerm);
+  const { cannedResponses, isLoading } = useCannedResponses(
+    undefined,
+    searchTerm,
+  );
   const deleteMutation = useDeleteCannedResponse();
 
   const handleCreate = () => {
@@ -28,22 +41,27 @@ function CannedResponsesPage() {
     setIsEditorOpen(true);
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (confirm(`Are you sure you want to delete "${title}"?`)) {
-      try {
-        await deleteMutation.mutateAsync(id);
-        addToast({
-          title: 'Deleted',
-          description: 'Canned response deleted successfully',
-          severity: 'success',
-        });
-      } catch (error) {
-        addToast({
-          title: 'Error',
-          description: 'Failed to delete canned response',
-          severity: 'danger',
-        });
-      }
+  const handleDeleteRequest = (id: string, title: string) => {
+    setPendingDelete({ id, title });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDelete) return;
+    try {
+      await deleteMutation.mutateAsync(pendingDelete.id);
+      addToast({
+        title: 'Deleted',
+        description: 'Canned response deleted successfully',
+        severity: 'success',
+      });
+    } catch {
+      addToast({
+        title: 'Error',
+        description: 'Failed to delete canned response',
+        severity: 'danger',
+      });
+    } finally {
+      setPendingDelete(null);
     }
   };
 
@@ -85,7 +103,11 @@ function CannedResponsesPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Configuration', href: '/configuration' },
-            { label: 'Canned Responses', href: '/configuration/canned-responses', isCurrent: true },
+            {
+              label: 'Canned Responses',
+              href: '/configuration/canned-responses',
+              isCurrent: true,
+            },
           ]}
         />
       </div>
@@ -93,7 +115,9 @@ function CannedResponsesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Canned Responses</h1>
-          <p className="text-default-500 mt-1">Manage pre-written responses for common questions</p>
+          <p className="text-default-500 mt-1">
+            Manage pre-written responses for common questions
+          </p>
         </div>
         <div className="flex gap-2">
           <BaseButton
@@ -117,8 +141,13 @@ function CannedResponsesPage() {
         <BaseInput
           placeholder="Search canned responses..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-default-400" />}
+          onChange={e => setSearchTerm(e.target.value)}
+          startContent={
+            <Icon
+              name="magnifying-glass"
+              className="h-4 w-4 text-default-400"
+            />
+          }
           className="max-w-md"
         />
       </div>
@@ -129,9 +158,14 @@ function CannedResponsesPage() {
         </div>
       ) : cannedResponses.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
-          <Icon name="document-text" className="h-12 w-12 text-default-300 mb-3" />
+          <Icon
+            name="document-text"
+            className="h-12 w-12 text-default-300 mb-3"
+          />
           <p className="text-default-500 mb-1">No canned responses yet</p>
-          <p className="text-default-400 text-sm mb-4">Create your first canned response to get started</p>
+          <p className="text-default-400 text-sm mb-4">
+            Create your first canned response to get started
+          </p>
           <BaseButton color="primary" onPress={handleCreate}>
             Create Canned Response
           </BaseButton>
@@ -141,15 +175,26 @@ function CannedResponsesPage() {
           <table className="w-full">
             <thead className="bg-default-100 border-b">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold">Name</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold">Scope</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold">Category</th>
-                <th className="text-right px-4 py-3 text-sm font-semibold">Actions</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold">
+                  Name
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-semibold">
+                  Scope
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-semibold">
+                  Category
+                </th>
+                <th className="text-right px-4 py-3 text-sm font-semibold">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
-              {cannedResponses.map((response) => (
-                <tr key={response.id} className="border-b hover:bg-default-50 transition-colors">
+              {cannedResponses.map(response => (
+                <tr
+                  key={response.id}
+                  className="border-b hover:bg-default-50 transition-colors"
+                >
                   <td className="px-4 py-3">
                     <button
                       type="button"
@@ -160,7 +205,9 @@ function CannedResponsesPage() {
                     </button>
                   </td>
                   <td className="px-4 py-3">
-                    {getScopeBadge(response.scope as unknown as CannedResponseScope)}
+                    {getScopeBadge(
+                      response.scope as unknown as CannedResponseScope,
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-default-600">
                     {response.categoryName || '-'}
@@ -173,11 +220,16 @@ function CannedResponsesPage() {
                         className="p-1 hover:bg-default-100 rounded"
                         title="Edit"
                       >
-                        <Icon name="pencil" className="h-4 w-4 text-default-600" />
+                        <Icon
+                          name="pencil"
+                          className="h-4 w-4 text-default-600"
+                        />
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(response.id!, response.title!)}
+                        onClick={() =>
+                          handleDeleteRequest(response.id!, response.title!)
+                        }
                         className="p-1 hover:bg-danger-50 rounded"
                         title="Delete"
                       >
@@ -199,6 +251,15 @@ function CannedResponsesPage() {
           setEditingResponse(undefined);
         }}
         cannedResponse={editingResponse}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Canned Response"
+        message={`Are you sure you want to delete "${pendingDelete?.title}"? This cannot be undone.`}
+        isPending={deleteMutation.isPending}
       />
     </>
   );

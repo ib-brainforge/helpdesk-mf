@@ -1,49 +1,61 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate } from '@modern-js/runtime/router';
-import { BaseTable, TablePagination, BaseButton, Icon } from '@brainforgeau/components';
 import {
+  createApprovalWorkflowsColumns,
   useApprovalWorkflows,
   useApprovalWorkflowsTable,
   useDeleteApprovalWorkflow,
-  createApprovalWorkflowsColumns,
 } from '@/components/approvals';
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import {
+  BaseButton,
+  BaseTable,
+  Icon,
+  TablePagination,
+} from '@brainforgeau/components';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useCallback, useMemo, useState } from 'react';
 
 // REVIEW: Following existing pattern from automation rules admin page
 
 function ApprovalWorkflowsPage() {
   const navigate = useNavigate();
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } = useApprovalWorkflows();
+  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
+    useApprovalWorkflows();
 
   const deleteMutation = useDeleteApprovalWorkflow();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleEdit = useCallback(
     (workflowId: string) => {
       navigate(`/configuration/approval-workflows/${workflowId}`);
     },
-    [navigate]
+    [navigate],
   );
 
-  const handleDelete = useCallback(
-    (workflowId: string) => {
-      if (confirm('Are you sure you want to delete this approval workflow?')) {
-        deleteMutation.mutate(workflowId, {
-          onSuccess: () => {
-            refetch();
-          },
-        });
-      }
-    },
-    [deleteMutation, refetch]
-  );
+  const handleDeleteRequest = useCallback((workflowId: string) => {
+    setPendingDeleteId(workflowId);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!pendingDeleteId) return;
+    deleteMutation.mutate(pendingDeleteId, {
+      onSuccess: () => {
+        refetch();
+        setPendingDeleteId(null);
+      },
+      onError: () => {
+        setPendingDeleteId(null);
+      },
+    });
+  }, [pendingDeleteId, deleteMutation, refetch]);
 
   const columns = useMemo(
     () =>
       createApprovalWorkflowsColumns({
         onEdit: handleEdit,
-        onDelete: handleDelete,
+        onDelete: handleDeleteRequest,
       }),
-    [handleEdit, handleDelete]
+    [handleEdit, handleDeleteRequest],
   );
 
   const { table } = useApprovalWorkflowsTable({
@@ -61,7 +73,7 @@ function ApprovalWorkflowsPage() {
         totalPages={totalPages}
         currentPage={pagination.pageIndex + 1}
         onPageChange={(page: number) =>
-          setPagination((prev) => ({ ...prev, pageIndex: page - 1 }))
+          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
         }
       />
     );
@@ -87,7 +99,8 @@ function ApprovalWorkflowsPage() {
           </div>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Configure approval workflows for tickets requiring managerial or team approval.
+          Configure approval workflows for tickets requiring managerial or team
+          approval.
         </p>
       </div>
 
@@ -98,6 +111,15 @@ function ApprovalWorkflowsPage() {
         paginationTemplate={paginationTemplate}
         isLoading={isLoading}
         loading={{ title: 'Loading...' }}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Approval Workflow"
+        message="Are you sure you want to delete this approval workflow? This cannot be undone."
+        isPending={deleteMutation.isPending}
       />
     </>
   );

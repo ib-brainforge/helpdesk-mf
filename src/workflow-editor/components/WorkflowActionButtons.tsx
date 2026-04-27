@@ -84,7 +84,7 @@ export function WorkflowActionButtons({
     <>
       {validationErrors.length > 0 && (
         <div
-          className="max-w-xs truncate text-xs text-red-600"
+          className="max-w-xs truncate text-xs text-danger"
           title={validationErrors.join('; ')}
         >
           {validationErrors.length} validation error
