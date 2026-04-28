@@ -1,0 +1,353 @@
+/**
+ * Principal-scoped automation rule-graph detail / editor page.
+ *
+ * Mirrors PrincipalWorkflowDetailPage — uses principalId + ruleId from params,
+ * same canvas + top-bar layout as the tenant AutomationDetailPage.
+ */
+import { BaseButton } from '@brainforgeau/components';
+import { useLogger } from '@brainforgeau/observability';
+import { Card, Chip, Spinner, addToast } from '@heroui/react';
+import { NavLink, useParams } from '@modern-js/runtime/router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  GraphEditor,
+  NodePalette,
+  type RuleGraphContent,
+  type RuleGraphVersionDto,
+} from '@brainforgeau/rules-ui';
+import {
+  useRuleGraph,
+  useCreateRuleGraphVersion,
+  usePublishRuleGraphVersion,
+} from '../state/ruleProjectQueries';
+import { HELPDESK_ACTION_TYPES } from '../catalogs/helpdeskActionTypeCatalog';
+import { HELPDESK_INPUT_FIELDS } from '../catalogs/helpdeskInputFieldCatalog';
+import { HELPDESK_OUTPUT_FIELDS } from '../catalogs/helpdeskOutputFieldCatalog';
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function versionStatusBadge(isPublished: boolean) {
+  return isPublished ? (
+    <Chip size="sm" color="success" variant="flat">
+      Published
+    </Chip>
+  ) : (
+    <Chip size="sm" color="warning" variant="flat">
+      Draft
+    </Chip>
+  );
+}
+
+// REVIEW: Using controlled component pattern; content state lifted up to share
+// between top bar Save/Publish actions and the canvas.
+export function PrincipalAutomationDetailPage() {
+  const { principalId, projectId, ruleId } = useParams<{
+    principalId: string;
+    projectId: string;
+    ruleId: string;
+  }>();
+
+  const { data: rule, isLoading, error } = useRuleGraph(
+    projectId ?? null,
+    ruleId ?? null,
+  );
+  const createVersionMutation = useCreateRuleGraphVersion();
+  const publishMutation = usePublishRuleGraphVersion();
+  const logger = useLogger('PrincipalAutomationDetailPage');
+
+  const [showVersionsSidebar, setShowVersionsSidebar] = useState(false);
+  const [showPalette, setShowPalette] = useState(true);
+  const [editableContent, setEditableContent] = useState<RuleGraphContent | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [loadedVersionId, setLoadedVersionId] = useState<string | null>(null);
+
+  const activeVersion = useMemo(() => {
+    if (!rule) return null;
+    if (rule.versions.length > 0) {
+      return [...rule.versions].sort((a, b) => b.versionNumber - a.versionNumber)[0];
+    }
+    return rule.publishedVersion ?? null;
+  }, [rule]);
+
+  useEffect(() => {
+    if (!activeVersion) {
+      setEditableContent({ nodes: [], edges: [] });
+      setIsDirty(false);
+      setLoadedVersionId(null);
+      return;
+    }
+    if (loadedVersionId !== activeVersion.id) {
+      const snapshot = activeVersion.contentSnapshot ?? { nodes: [], edges: [] };
+      setEditableContent(JSON.parse(JSON.stringify(snapshot)));
+      setIsDirty(false);
+      setLoadedVersionId(activeVersion.id);
+    }
+  }, [activeVersion, loadedVersionId]);
+
+  const handleContentChange = useCallback((content: RuleGraphContent) => {
+    setEditableContent(content);
+    setIsDirty(true);
+  }, []);
+
+  async function handleSaveDraft() {
+    if (!projectId || !ruleId || !editableContent) return;
+    try {
+      await createVersionMutation.mutateAsync({
+        projectId,
+        ruleId,
+        content: editableContent,
+      });
+      setIsDirty(false);
+      addToast({ title: 'Draft saved', severity: 'success' });
+    } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'principal_automation_detail_save_failed' });
+      } else {
+        logger.error('principal_automation_detail_save_failed');
+      }
+      addToast({
+        title: 'Save failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        severity: 'danger',
+      });
+      throw err;
+    }
+  }
+
+  async function handlePublish() {
+    if (!projectId || !ruleId || !editableContent) return;
+    try {
+      const version = await createVersionMutation.mutateAsync({
+        projectId,
+        ruleId,
+        content: editableContent,
+      });
+      await publishMutation.mutateAsync({
+        projectId,
+        ruleId,
+        versionId: version.id,
+      });
+      setIsDirty(false);
+      addToast({ title: 'Automation published', severity: 'success' });
+    } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'principal_automation_detail_publish_failed' });
+      } else {
+        logger.error('principal_automation_detail_publish_failed');
+      }
+      addToast({
+        title: 'Publish failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        severity: 'danger',
+      });
+      throw err;
+    }
+  }
+
+  async function handlePublishVersion(version: RuleGraphVersionDto) {
+    if (!projectId || !ruleId) return;
+    try {
+      await publishMutation.mutateAsync({
+        projectId,
+        ruleId,
+        versionId: version.id,
+      });
+      addToast({ title: 'Version published', severity: 'success' });
+    } catch (err) {
+      if (err instanceof Error) {
+        logger.captureError(err, { context: 'principal_automation_detail_publish_version_failed' });
+      }
+      addToast({
+        title: 'Publish failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        severity: 'danger',
+      });
+    }
+  }
+
+  const reversedVersions = useMemo(
+    () => (rule ? [...rule.versions].reverse() : []),
+    [rule],
+  );
+
+  const isSaving = createVersionMutation.isPending;
+  const isPublishing = publishMutation.isPending;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner label="Loading automation..." />
+      </div>
+    );
+  }
+
+  if (error || !rule) {
+    return (
+      <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
+        Failed to load automation. Please try again.
+      </div>
+    );
+  }
+
+  return (
+    // REVIEW: -m-5 override matches workflow-editor and tracking-mf pattern for full-height canvas
+    <div className="-m-5 flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
+      {/* Top bar */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-default-200 bg-white px-4 py-2 dark:bg-default-50">
+        <div className="flex min-w-0 items-center gap-3">
+          <nav className="flex items-center gap-1.5 text-xs text-default-500">
+            <NavLink
+              to={`/principal/${principalId}/automations`}
+              className="text-default-500 no-underline hover:text-default-700"
+            >
+              Automations
+            </NavLink>
+            <span>/</span>
+            <span className="font-semibold text-default-900 dark:text-white">
+              {rule.name}
+            </span>
+          </nav>
+          {activeVersion && (
+            <>
+              <span className="text-xs font-medium text-default-600">
+                v{activeVersion.versionNumber}
+              </span>
+              {versionStatusBadge(rule.isPublished)}
+            </>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <BaseButton
+            size="sm"
+            variant="bordered"
+            color={showPalette ? 'primary' : undefined}
+            onPress={() => setShowPalette(p => !p)}
+          >
+            Components
+          </BaseButton>
+          <BaseButton
+            size="sm"
+            variant="bordered"
+            onPress={() => setShowVersionsSidebar(prev => !prev)}
+          >
+            Versions
+          </BaseButton>
+          {isDirty && (
+            <BaseButton
+              size="sm"
+              variant="bordered"
+              isLoading={isSaving}
+              onPress={handleSaveDraft}
+            >
+              Save Draft
+            </BaseButton>
+          )}
+          <BaseButton
+            size="sm"
+            color="primary"
+            isLoading={isPublishing}
+            onPress={handlePublish}
+          >
+            Publish
+          </BaseButton>
+        </div>
+      </div>
+
+      {/* Canvas + right sidebar */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <GraphEditor
+            key={activeVersion?.id ?? 'empty'}
+            content={editableContent}
+            onChange={handleContentChange}
+            actionTypeCatalog={HELPDESK_ACTION_TYPES}
+            inputFieldCatalog={HELPDESK_INPUT_FIELDS}
+            outputFieldCatalog={HELPDESK_OUTPUT_FIELDS}
+          />
+        </div>
+
+        <NodePalette
+          collapsed={!showPalette}
+          onToggle={() => setShowPalette(false)}
+        />
+
+        {showVersionsSidebar && (
+          <aside
+            className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-default-200 bg-white dark:bg-default-50"
+            aria-label="Version history"
+          >
+            <div className="flex items-center justify-between border-b border-default-200 px-4 py-3">
+              <span className="text-sm font-semibold text-default-700">
+                Version History
+              </span>
+              <button
+                type="button"
+                className="text-sm text-default-400 hover:text-default-600"
+                onClick={() => setShowVersionsSidebar(false)}
+                aria-label="Close version history"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+              {rule.versions.length > 0 && (
+                <Card shadow="none" className="border border-default-200">
+                  <div className="px-4 pt-4 pb-2">
+                    <h3 className="text-sm font-semibold text-default-700">
+                      All Versions
+                    </h3>
+                  </div>
+                  <ul className="divide-y divide-default-100 px-2 pb-2">
+                    {reversedVersions.map(v => (
+                      <li
+                        key={v.id}
+                        className="flex items-center gap-3 py-2.5"
+                      >
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">
+                            v{v.versionNumber}
+                          </span>
+                          {v.name && (
+                            <span className="ml-1 text-xs text-default-400">
+                              — {v.name}
+                            </span>
+                          )}
+                          <span className="ml-2 text-xs text-default-400">
+                            {formatDate(v.createdAt)}
+                          </span>
+                        </div>
+                        <BaseButton
+                          size="sm"
+                          variant="light"
+                          color="success"
+                          isLoading={publishMutation.isPending}
+                          onPress={() => handlePublishVersion(v)}
+                        >
+                          Publish
+                        </BaseButton>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {rule.versions.length === 0 && (
+                <p className="text-xs italic text-default-400">
+                  No versions yet. Save or publish to create the first version.
+                </p>
+              )}
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,17 +1,23 @@
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 
 import './index.css';
 
 import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 import { Providers } from '@/providers';
 import { useAuth, usePermissions, type GuardedItem } from '@brainforgeau/security';
-import { TopNavbar } from '@brainforgeau/navbar/Navbar';
-import { ErrorBoundary, SideNav, SideNavDesktopMode, PageSpinner } from '@brainforgeau/components';
+import { ErrorBoundary, SideNav, SideNavDesktopMode, PageSpinner, useNavbarAction } from '@brainforgeau/components';
+
+const TopNavbar = React.lazy(() =>
+  import('@brainforgeau/navbar/Navbar').then(m => ({ default: m.TopNavbar })),
+);
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
 import { HelpdeskPermissions } from '@/constants/permissions';
-
-declare const __IDENTITY_BASE_URL__: string | undefined;
+import { useAtomValue } from 'jotai';
+import { hubConnectedAtom } from '@/state/config';
+import { SignalIcon } from '@heroicons/react/24/solid';
+import { Logo } from '@/components/Logo';
+import { getAppConfig } from '@/state/config';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -31,30 +37,127 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     icon: 'grids',
     testId: 'nav-dashboard',
   },
+  {
+    label: 'Tickets',
+    href: '/tickets',
+    icon: 'ticket',
+    testId: 'nav-tickets',
+    requiredPermissions: [HelpdeskPermissions.TicketRead],
+  },
+  {
+    label: 'Knowledge Base',
+    href: '/knowledge-base',
+    icon: 'book-open',
+    testId: 'nav-knowledge-base',
+  },
+  {
+    label: 'Reports',
+    href: '/reports',
+    icon: 'chart-bar',
+    testId: 'nav-reports',
+  },
+  {
+    label: 'Ideas Forum',
+    href: '/ideas',
+    icon: 'light-bulb',
+    testId: 'nav-ideas',
+    requiredPermissions: [HelpdeskPermissions.TicketRead],
+  },
 ];
 
 const navItemsBottom: GuardedItem<NavItem>[] = [
+  // Principal Picker + helpdesk principal routes are accessible via /principal/{id}/*
   {
     label: 'Configuration',
-    href: '/configuration',
     icon: 'settings',
     testId: 'nav-configuration',
     children: [
       {
-        label: 'Settings',
-        href: '/configuration',
-        icon: 'settings',
-        testId: 'nav-configuration-settings',
+        label: 'Ticket Categories',
+        href: '/configuration/categories',
+        icon: 'folder',
+        testId: 'nav-configuration-categories',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
+        label: 'Custom Statuses',
+        href: '/configuration/custom-statuses',
+        icon: 'tag',
+        testId: 'nav-configuration-custom-statuses',
+        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
+      },
+      {
+        label: 'Custom Priorities',
+        href: '/configuration/custom-priorities',
+        icon: 'flag',
+        testId: 'nav-configuration-custom-priorities',
+        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
+      },
+      {
+        label: 'Custom Fields',
+        href: '/configuration/custom-fields',
+        icon: 'adjustments-horizontal',
+        testId: 'nav-configuration-custom-fields',
+        requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
+        label: 'Automation',
+        href: '/configuration/automations',
+        icon: 'cpu-chip',
+        testId: 'nav-configuration-automations',
+        requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
+        label: 'Workflows',
+        href: '/configuration/workflows',
+        icon: 'arrows-right-left',
+        testId: 'nav-configuration-workflows',
+        requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
+        label: 'Email Templates',
+        href: '/configuration/email-templates',
+        icon: 'envelope',
+        testId: 'nav-configuration-email-templates',
+        requiredPermissions: [HelpdeskPermissions.Settings.Read],
+      },
+      {
+        label: 'Email Settings',
+        href: '/configuration/email',
+        icon: 'envelope-open',
+        testId: 'nav-configuration-email',
+        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
+      },
+      {
+        label: 'Integrations',
+        href: '/configuration/integrations',
+        icon: 'puzzle-piece',
+        testId: 'nav-configuration-integrations',
+        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
+      },
+      {
+        label: 'Live Chat',
+        href: '/configuration/live-chat',
+        icon: 'chat-bubble-left-right',
+        testId: 'nav-configuration-live-chat',
+        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
     ],
   },
 ];
 
-// Simple logo component for Helpdesk module
-const Logo = () => (
-  <span className="font-semibold text-primary">Helpdesk</span>
-);
+const HelpdeskAction = () => {
+  const hubConnected = useAtomValue(hubConnectedAtom);
+  return (
+    <div className="flex items-center gap-1.5">
+      {hubConnected && (
+        <span className="flex items-center gap-1 text-green-500" title="Live connection active">
+          <SignalIcon className="h-3.5 w-3.5" />
+        </span>
+      )}
+    </div>
+  );
+};
 
 export default function Layout() {
   // Desktop sidebar: extended (full) or collapsed (icons only)
@@ -75,9 +178,23 @@ export default function Layout() {
     }
   };
 
+  const appConfig = getAppConfig();
+
   const { isAuthenticated } = useAuth();
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
+  const { setAction } = useNavbarAction();
+
+  // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
+  const isPrincipalRoute = useMemo(
+    () => location.pathname.startsWith('/principal/'),
+    [location.pathname],
+  );
+
+  useEffect(() => {
+    setAction(<HelpdeskAction />);
+    return () => setAction(null);
+  }, [setAction]);
 
   // Filter navigation items based on user permissions
   // Include permissions in deps to ensure re-render when context token changes
@@ -92,18 +209,25 @@ export default function Layout() {
   return (
     <Providers>
       <PageTracker category="helpdesk" />
-      <Suspense fallback={<PageSpinner title="Loading..." />}>
-        {isAuthenticated && (
-          <TopNavbar
-            data-testid={TEST_IDS.navbar.top}
-            config={{ identityBaseUrl: __IDENTITY_BASE_URL__ || '', app: 'helpdesk' }}
-            onExtend={handleNavExtend}
-            logoComponent={<Logo />}
-          />
-        )}
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<PageSpinner title="Loading..." />}>
+          {isAuthenticated && (
+            <TopNavbar
+              data-testid={TEST_IDS.navbar.top}
+              config={{
+                identityBaseUrl: appConfig?.identityBaseUrl || '',
+                notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+                notificationApiUrl: appConfig?.api?.notificationUrl || '',
+                app: 'helpdesk',
+              }}
+              onExtend={handleNavExtend}
+              logoComponent={<Logo hideOnMobile />}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
       <div className="flex flex-1">
-        {isAuthenticated && (
+        {isAuthenticated && !isPrincipalRoute && (
           <SideNav
             data-testid={TEST_IDS.navbar.side}
             sections={navSections}
@@ -123,13 +247,19 @@ export default function Layout() {
             )}
           />
         )}
-        <div className="flex flex-1">
-          <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
-            <ErrorBoundary>
-              <Outlet />
-            </ErrorBoundary>
+        {isPrincipalRoute ? (
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        ) : (
+          <div className="flex flex-1">
+            <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
+              <ErrorBoundary>
+                <Outlet />
+              </ErrorBoundary>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Providers>
   );

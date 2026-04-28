@@ -24,6 +24,13 @@ function ConfigurationPage() {
             <h2 className="text-lg font-semibold">App Settings</h2>
             <p className="text-default-500 text-sm">Manage application settings and configuration</p>
           </Link>
+          <Link
+            to="/configuration/workflows"
+            className="p-4 border rounded-lg hover:bg-default-100 transition-colors"
+          >
+            <h2 className="text-lg font-semibold">Workflows</h2>
+            <p className="text-default-500 text-sm">Design and manage ticket workflow definitions</p>
+          </Link>
         </div>
       </div>
     </div>

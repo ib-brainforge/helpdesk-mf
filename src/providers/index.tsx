@@ -1,19 +1,44 @@
-import React, { useEffect } from 'react';
+import { ObservabilityProvider } from '@/observability';
+import {
+  authorizedAxios,
+  configureContextTokenRefresh,
+} from '@/state/authorizedAxios';
+import { configAtom, getAppConfig } from '@/state/config';
+import { WorkflowApiProvider, buildWorkflowApiClient } from '@/workflow-editor';
 import { ErrorBoundary } from '@brainforgeau/components';
+import { Configuration } from '@brainforgeau/helpdesk-client';
+import type { RuntimeConfig } from '@brainforgeau/security';
+import { getDefaultStore } from 'jotai';
+import React, { useEffect } from 'react';
+import { AuthProvider } from './AuthProvider';
 import { HeroProvider } from './HeroProvider';
 import QueryProvider from './QueryProvider';
-import { AuthProvider } from './AuthProvider';
-import { ObservabilityProvider } from '@/observability';
-import { configureContextTokenRefresh } from '@/state/authorizedAxios';
 
-declare const __IDENTITY_BASE_URL__: string | undefined;
+// Resolve the helpdesk API base URL at module load time (same pattern as
+// createHelpdeskApiClient in helpdeskApiClient.ts).
+const store = getDefaultStore();
+const runtimeConfig = store.get(configAtom) as RuntimeConfig | undefined;
+const helpdeskBaseUrl = runtimeConfig?.api?.baseUrl ?? '';
+
+// Module-scoped client — persists across renders, survives HMR navigation.
+// USE_REAL_CLIENT=true → real WorkflowsApi backed by authorizedAxios.
+// USE_REAL_CLIENT=false → in-memory mock (set in clientSwitch.ts).
+const workflowApiClient = buildWorkflowApiClient(
+  helpdeskBaseUrl
+    ? {
+        configuration: new Configuration({ basePath: helpdeskBaseUrl }),
+        axios: authorizedAxios,
+      }
+    : undefined,
+);
 
 export function Providers({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) {
-  const identityBaseUrl = __IDENTITY_BASE_URL__ || '';
+  const appConfig = getAppConfig();
+  const identityBaseUrl = appConfig?.identityBaseUrl || '';
 
   // Configure context token refresh for automatic 403 retry
   useEffect(() => {
@@ -31,7 +56,9 @@ export function Providers({
         <AuthProvider>
           <HeroProvider>
             <QueryProvider>
-              {children}
+              <WorkflowApiProvider client={workflowApiClient}>
+                {children}
+              </WorkflowApiProvider>
             </QueryProvider>
           </HeroProvider>
         </AuthProvider>
