@@ -20,6 +20,7 @@ export default function Document() {
         <link rel="icon" type="image/svg+xml" href={withBasePath('favicon.svg')} />
         <link rel="shortcut icon" href={withBasePath('favicon.ico')} />
         <link rel="apple-touch-icon" sizes="180x180" href={withBasePath('apple-touch-icon.png')} />
+        <script src={withBasePath('config.js')} />
         <script
           dangerouslySetInnerHTML={{
             __html: `
