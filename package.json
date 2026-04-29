@@ -41,7 +41,7 @@
     "@brainforgeau/identity-management-client": "0.1.501-develop.6624384",
     "@brainforgeau/observability": "0.2.30-develop.5ea4845",
     "@brainforgeau/rules-ui": "0.2.7-develop.73b1fb1",
-    "@brainforgeau/security": "0.2.252-develop.2c6d710",
+    "@brainforgeau/security": "0.2.260-develop.c733635",
     "@brainforgeau/theme": "0.2.44-develop.5ea4845",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
