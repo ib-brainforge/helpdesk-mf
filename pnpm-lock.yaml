@@ -15,8 +15,8 @@ importers:
         specifier: 0.1.132-develop.7f17d52
         version: 0.1.132-develop.7f17d52
       '@brainforgeau/identity-management-client':
-        specifier: 0.1.408-develop.d9d4845
-        version: 0.1.408-develop.d9d4845
+        specifier: 0.1.501-develop.6624384
+        version: 0.1.501-develop.6624384
       '@brainforgeau/observability':
         specifier: 0.2.30-develop.5ea4845
         version: 0.2.30-develop.5ea4845(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -24,8 +24,8 @@ importers:
         specifier: 0.2.7-develop.73b1fb1
         version: 0.2.7-develop.73b1fb1(88af6421f2f3e2eb4bbb4c167d08e1e5)
       '@brainforgeau/security':
-        specifier: 0.2.243-develop.46d4c9e
-        version: 0.2.243-develop.46d4c9e(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
+        specifier: 0.2.252-develop.2c6d710
+        version: 0.2.252-develop.2c6d710(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)
       '@brainforgeau/theme':
         specifier: 0.2.44-develop.5ea4845
         version: 0.2.44-develop.5ea4845(@heroui/react@2.8.2(@types/react@18.3.28)(framer-motion@12.23.12(@emotion/is-prop-valid@1.4.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.1.13)
@@ -929,8 +929,8 @@ packages:
     resolution: {integrity: sha512-VzGTi3YBiWQ/We1Qtl5NNaA+/YQbYZtMkhH3Ru2FPfbmDCGn3B6DYDqUglYqDeBEv4DS41/d8cJvt8BD7mfb4Q==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.1.132-develop.7f17d52/6633d425fcb2daa5087111b0a03bda06250f9610}
     engines: {node: '>=18.0.0'}
 
-  '@brainforgeau/identity-management-client@0.1.408-develop.d9d4845':
-    resolution: {integrity: sha512-p2bxQHxNKemhdgo/Aq8f3zsCLOb/j6xiae+Jp/UhOKgGIwR3uesZzqOPMgvDwXLzJg415m7xELYvgFOp5YUxfA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.408-develop.d9d4845/70075c4319fa2fa89290c3218ae4400e2dd5e599}
+  '@brainforgeau/identity-management-client@0.1.501-develop.6624384':
+    resolution: {integrity: sha512-CsL6pzuu308tJi97tHh0ZorbAqxIZNCyFrKMCSdYt0j9FUjnY9S71kGXsQMkW2/F0Wjk20RrNb0lkb8g/Sku1g==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.501-develop.6624384/be5dbff9adf5aecebb7362a7241fd0fe8690d716}
     engines: {node: '>=18.0.0'}
 
   '@brainforgeau/observability@0.2.30-develop.5ea4845':
@@ -949,8 +949,8 @@ packages:
       react: 18.3.1
       react-dom: 18.3.1
 
-  '@brainforgeau/security@0.2.243-develop.46d4c9e':
-    resolution: {integrity: sha512-mtZZn4XHMbg2ZLJm765YuF6JIrZfQl5TvewqFtWW3y/IoHqgfcBI/p9ivqFUdN98NnjnJ5iWAyMFlQyKIHN/Jw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.2.243-develop.46d4c9e/fdf511b68d6393f8ebb52317b1ba253ad55ee61f}
+  '@brainforgeau/security@0.2.252-develop.2c6d710':
+    resolution: {integrity: sha512-hCd7/m893C92YrmWQIAaBaPOw8K2JK6S3QSxMMibCKRaVEMywPzr4GSBajfECMx2YEdOHGFajbjsfTgkzOVPtQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.2.252-develop.2c6d710/21e50aca338688fafef5f90c1bc505daa790bd07}
     peerDependencies:
       react: 18.3.1
       react-dom: 18.3.1
@@ -9514,7 +9514,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/identity-management-client@0.1.408-develop.d9d4845':
+  '@brainforgeau/identity-management-client@0.1.501-develop.6624384':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
@@ -9546,7 +9546,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@brainforgeau/security@0.2.243-develop.46d4c9e(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
+  '@brainforgeau/security@0.2.252-develop.2c6d710(react-dom@18.3.1(react@18.3.1))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@18.3.1))(react@18.3.1)':
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
