@@ -24,8 +24,8 @@ importers:
         specifier: 0.2.7-develop.73b1fb1
         version: 0.2.7-develop.73b1fb1(2aokdi53ish4d45txj3nsey57q)
       '@brainforgeau/security':
-        specifier: 0.4.282-develop.a97ed31
-        version: 0.4.282-develop.a97ed31(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
+        specifier: 0.4.284-develop.d604c52
+        version: 0.4.284-develop.d604c52(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
         specifier: 0.2.44-develop.5ea4845
         version: 0.2.44-develop.5ea4845(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
@@ -951,8 +951,8 @@ packages:
       react: 18.3.1
       react-dom: 18.3.1
 
-  '@brainforgeau/security@0.4.282-develop.a97ed31':
-    resolution: {integrity: sha512-2kBAcX/ye/4rsm+EGx8b5+M76S/vwl11jdqNaLzkzXf6mXWfB+gXH42Aay3FDaCyUQEsuTsfBudJcFe3Fty/1w==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.4.282-develop.a97ed31/b497d8178c307bc23fd9832246f5cd652a5c1c48}
+  '@brainforgeau/security@0.4.284-develop.d604c52':
+    resolution: {integrity: sha512-rTP05RKaTJ8IGSUFPaQmmZbqNXGzZa2Qjk8y4ZdcyKW/5CnAdxV/j0i4LzpQnYTRYsH9kiPhv8VYY4SBJgZtpw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.4.284-develop.d604c52/21c33ee00349a06dacd4f1b2a3d506d523a2bc39}
     peerDependencies:
       react: ^19.2.5
       react-dom: ^19.2.5
@@ -8421,7 +8421,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@brainforgeau/security@0.4.282-develop.a97ed31(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/security@0.4.284-develop.d604c52(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
