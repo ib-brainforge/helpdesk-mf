@@ -3,7 +3,8 @@ import { BaseTable, BaseButton, Icon, TablePagination } from '@brainforgeau/comp
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { NewTicketModal } from './NewTicketModal';
-import { Tabs, Tab, Chip, Drawer, DrawerContent, DrawerBody } from '@heroui/react';
+import { Chip, DrawerRoot, DrawerBackdrop, DrawerContent, DrawerDialog, DrawerBody, toast, useOverlayState } from '@heroui/react';
+import { BaseTabs, BaseTab } from '@brainforgeau/components';
 import { useTicketsData } from '../hooks/useTickets';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { createTicketColumns } from './ticket-grid-columns';
@@ -15,7 +16,7 @@ import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { BulkAssignModal } from './BulkAssignModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { BulkDeleteModal } from './BulkDeleteModal';
-import { addToast } from '@heroui/react';
+
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import type { TicketRow } from '../types';
 import { TicketSidebar } from '../TicketSidebar';
@@ -30,7 +31,7 @@ export const TicketGrid: FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('all');
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const mobileSidebarState = useOverlayState();
   const { items, totalCount, pagination, setPagination, filters, setFilters, isLoading, refetch } =
     useTicketsData();
 
@@ -119,11 +120,7 @@ export const TicketGrid: FC = () => {
       { ids, updates: { assigneeId } },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Tickets assigned',
-            description: `Successfully assigned ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
-            severity: 'success',
-          });
+          toast('Tickets assigned', { description: `Successfully assigned ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`, variant: 'success' });
           table.resetRowSelection();
         },
       }
@@ -136,11 +133,7 @@ export const TicketGrid: FC = () => {
       { ids, updates: { status } },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Status updated',
-            description: `Successfully updated ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
-            severity: 'success',
-          });
+          toast('Status updated', { description: `Successfully updated ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`, variant: 'success' });
           table.resetRowSelection();
         },
       }
@@ -151,11 +144,7 @@ export const TicketGrid: FC = () => {
     const ids = selectedRows.map(row => row.original.id).filter((id): id is string => !!id);
     bulkDeleteMutation.mutate(ids, {
       onSuccess: () => {
-        addToast({
-          title: 'Tickets deleted',
-          description: `Successfully deleted ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
-          severity: 'success',
-        });
+        toast('Tickets deleted', { description: `Successfully deleted ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`, variant: 'success' });
         table.resetRowSelection();
       },
     });
@@ -170,8 +159,8 @@ export const TicketGrid: FC = () => {
     setSelectedCategoryId(categoryId);
     setFilters({ ...filters, categoryId: categoryId ? [categoryId] : undefined });
     // Close mobile drawer after selecting a category
-    setIsMobileSidebarOpen(false);
-  }, [filters, setFilters]);
+    mobileSidebarState.close();
+  }, [filters, setFilters, mobileSidebarState]);
 
   const handleTagSelect = useCallback((tagId: string) => {
     setSelectedTags((prev) => {
@@ -240,28 +229,21 @@ export const TicketGrid: FC = () => {
         <TicketSidebar {...sidebarProps} />
       </aside>
 
-      {/* Mobile sidebar — rendered as a Drawer overlay */}
-      <Drawer
-        isOpen={isMobileSidebarOpen}
-        onOpenChange={(open) => setIsMobileSidebarOpen(open)}
-        placement="left"
-        size="xs"
-        classNames={{
-          base: 'md:hidden max-w-72',
-          body: 'p-0',
-          closeButton: 'hidden',
-          header: 'hidden',
-        }}
-      >
-        <DrawerContent>
-          <DrawerBody>
-            <TicketSidebar
-              {...sidebarProps}
-              onClose={() => setIsMobileSidebarOpen(false)}
-            />
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+      {/* Mobile sidebar — rendered as a Drawer overlay (HeroUI 3 compound pattern) */}
+      <DrawerRoot state={mobileSidebarState}>
+        <DrawerBackdrop isDismissable className="md:hidden">
+          <DrawerContent placement="left" className="max-w-72">
+            <DrawerDialog>
+              <DrawerBody>
+                <TicketSidebar
+                  {...sidebarProps}
+                  onClose={() => mobileSidebarState.close()}
+                />
+              </DrawerBody>
+            </DrawerDialog>
+          </DrawerContent>
+        </DrawerBackdrop>
+      </DrawerRoot>
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-auto px-4 md:px-6">
@@ -274,7 +256,7 @@ export const TicketGrid: FC = () => {
               type="button"
               className="md:hidden flex items-center justify-center rounded-md p-1.5 hover:bg-default-100 transition-colors"
               aria-label="Open filter sidebar"
-              onClick={() => setIsMobileSidebarOpen(true)}
+              onClick={() => mobileSidebarState.open()}
             >
               <Icon name="Bars3Icon" className="h-5 w-5 text-default-600" />
             </button>
@@ -292,75 +274,64 @@ export const TicketGrid: FC = () => {
 
         {/* Tab Bar */}
         <div className="mb-4">
-          <Tabs
+          <BaseTabs
             selectedKey={selectedTab}
             onSelectionChange={handleTabChange}
-            variant="underlined"
-            aria-label="Ticket filter tabs"
-            classNames={{
-              tabList:
-                'gap-0.5 w-full relative rounded-none p-0 shadow-[inset_0_-1px_0_0_var(--color-white),inset_0_-3px_0_0_var(--color-light)]',
-              cursor: 'w-full bg-blue',
-              tab: 'max-w-fit h-11.5 px-1 md:px-5 font-medium text-sm relative z-10 span:text-blue !opacity-100 *:min-h-1 hover:*:!text-blue',
-              tabContent: 'group-data-[selected=true]:text-blue',
-              panel: 'p-0',
-            }}
-            color="primary"
           >
-            <Tab
+            <BaseTab
               key="unanswered"
               title={
                 <div className="flex items-center gap-2">
                   <span>Unanswered</span>
                   {tabCounts.unanswered > 0 && (
-                    <Chip size="sm" variant="flat">{tabCounts.unanswered}</Chip>
+                    <Chip size="sm">{tabCounts.unanswered}</Chip>
                   )}
                 </div>
               }
             />
-            <Tab
+            <BaseTab
               key="unclosed"
               title={
                 <div className="flex items-center gap-2">
                   <span>Unclosed</span>
                   {tabCounts.unclosed > 0 && (
-                    <Chip size="sm" variant="flat">{tabCounts.unclosed}</Chip>
+                    <Chip size="sm">{tabCounts.unclosed}</Chip>
                   )}
                 </div>
               }
             />
-            <Tab
+            <BaseTab
               key="unassigned"
               title={
                 <div className="flex items-center gap-2">
                   <span>Unassigned</span>
                   {tabCounts.unassigned > 0 && (
-                    <Chip size="sm" variant="flat">{tabCounts.unassigned}</Chip>
+                    <Chip size="sm">{tabCounts.unassigned}</Chip>
                   )}
                 </div>
               }
             />
-            <Tab
+            <BaseTab
               key="assigned-to-you"
               title={
                 <div className="flex items-center gap-2">
                   <span>Assigned to you</span>
                   {tabCounts.assignedToYou > 0 && (
-                    <Chip size="sm" variant="flat">{tabCounts.assignedToYou}</Chip>
+                    <Chip size="sm">{tabCounts.assignedToYou}</Chip>
                   )}
                 </div>
               }
             />
-            <Tab
+            <BaseTab
               key="all"
               title={
                 <div className="flex items-center gap-2">
                   <span>All</span>
-                  <Chip size="sm" variant="flat">{tabCounts.all}</Chip>
+                  <Chip size="sm">{tabCounts.all}</Chip>
                 </div>
               }
             />
-          </Tabs>
+          </BaseTabs>
         </div>
 
         {/* Filters */}

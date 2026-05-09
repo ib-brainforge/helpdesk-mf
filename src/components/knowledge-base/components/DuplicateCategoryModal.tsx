@@ -60,7 +60,7 @@ export const DuplicateCategoryModal: FC<DuplicateCategoryModalProps> = ({
               </div>
               <Switch
                 isSelected={includeArticles}
-                onValueChange={setIncludeArticles}
+                onChange={setIncludeArticles}
               />
             </div>
 
@@ -82,7 +82,7 @@ export const DuplicateCategoryModal: FC<DuplicateCategoryModalProps> = ({
           <BaseButton
             color="primary"
             onPress={handleDuplicate}
-            isLoading={duplicateMutation.isPending}
+            isDisabled={duplicateMutation.isPending}
           >
             Duplicate
           </BaseButton>

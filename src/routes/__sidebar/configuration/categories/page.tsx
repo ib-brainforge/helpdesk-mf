@@ -1,4 +1,5 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { toast } from '@heroui/react';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
 import {
@@ -7,7 +8,7 @@ import {
   CategoryList,
   useCategoriesData,
 } from '@components/categories';
-import { addToast } from '@heroui/react';
+
 import { Helmet } from '@modern-js/runtime/head';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -28,7 +29,7 @@ function CategoriesPage() {
       await client.v1CategoriesIdDelete(categoryId);
     },
     onSuccess: () => {
-      addToast({ title: 'Category deleted successfully', severity: 'success' });
+      toast('Category deleted successfully', { variant: 'success' });
       refetchAll();
     },
     onError: () => {
@@ -42,7 +43,7 @@ function CategoriesPage() {
       await client.v1CategoriesSectionsIdDelete(sectionId);
     },
     onSuccess: () => {
-      addToast({ title: 'Section deleted successfully', severity: 'success' });
+      toast('Section deleted successfully', { variant: 'success' });
       refetchAll();
     },
     onError: () => {

@@ -11,7 +11,7 @@ import type {
   IntegrationProviderMeta,
 } from '@/types/integration';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Card, CardBody, Chip, Spinner, addToast } from '@heroui/react';
+import { Card, CardContent, Chip, Spinner, toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
@@ -49,17 +49,9 @@ function IntegrationsPage() {
     if (!pendingDelete) return;
     try {
       await deleteMutation.mutateAsync(pendingDelete.id);
-      addToast({
-        title: 'Removed',
-        description: `"${pendingDelete.name}" removed.`,
-        severity: 'success',
-      });
+      toast('Removed', { description: `"${pendingDelete.name}" removed.`, variant: 'success' });
     } catch {
-      addToast({
-        title: 'Error',
-        description: 'Failed to remove integration.',
-        severity: 'danger',
-      });
+      toast('Error', { description: 'Failed to remove integration.', variant: 'danger' });
     } finally {
       setPendingDelete(null);
     }
@@ -125,7 +117,7 @@ function IntegrationsPage() {
                 key={provider.type}
                 className="shadow-none border border-default-200"
               >
-                <CardBody className="p-5">
+                <CardContent className="p-5">
                   {/* Provider header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -166,7 +158,7 @@ function IntegrationsPage() {
                             <Chip
                               size="sm"
                               color={instance.isEnabled ? 'success' : 'default'}
-                              variant="flat"
+                             
                             >
                               {instance.isEnabled ? 'Active' : 'Disabled'}
                             </Chip>
@@ -189,7 +181,7 @@ function IntegrationsPage() {
                               variant="light"
                               color="danger"
                               onPress={() => handleDeleteRequest(instance)}
-                              isLoading={deleteMutation.isPending}
+                              isDisabled={deleteMutation.isPending}
                             >
                               <Icon name="trash" className="w-4 h-4" />
                             </BaseButton>
@@ -204,7 +196,7 @@ function IntegrationsPage() {
                       No {provider.label} integrations configured.
                     </p>
                   )}
-                </CardBody>
+                </CardContent>
               </Card>
             );
           })}

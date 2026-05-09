@@ -22,7 +22,7 @@ function SettingsCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <Chip size="sm" variant="flat" color="warning">
+          <Chip size="sm" color="warning">
             Demo data
           </Chip>
         </div>
@@ -62,7 +62,7 @@ function PrincipalSettingsPage() {
           </div>
           <div>
             <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Account Status</p>
-            <Chip size="sm" color="success" variant="flat">Active (stub)</Chip>
+            <Chip size="sm" color="success">Active (stub)</Chip>
           </div>
         </div>
         <p className="text-xs text-default-400 mt-2">
@@ -75,7 +75,7 @@ function PrincipalSettingsPage() {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Current Plan</p>
-            <Chip size="sm" color="primary" variant="flat">Professional (stub)</Chip>
+            <Chip size="sm" color="accent">Professional (stub)</Chip>
           </div>
           <div>
             <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Renewal Date</p>

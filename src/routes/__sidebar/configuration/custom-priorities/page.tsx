@@ -1,27 +1,20 @@
 import { useState } from 'react';
+import { toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, Icon, BaseInput } from '@brainforgeau/components';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { addToast } from '@heroui/react';
+
 
 function CustomPrioritiesPage() {
   const [priorityName, setPriorityName] = useState('');
 
   const handleAdd = () => {
     if (!priorityName.trim()) {
-      addToast({
-        title: 'Validation error',
-        description: 'Please enter a priority name',
-        severity: 'warning',
-      });
+      toast('Validation error', { description: 'Please enter a priority name', variant: 'warning' });
       return;
     }
 
-    addToast({
-      title: 'Backend not available',
-      description: 'Custom priorities API is not yet implemented',
-      severity: 'warning',
-    });
+    toast('Backend not available', { description: 'Custom priorities API is not yet implemented', variant: 'warning' });
     setPriorityName('');
   };
 

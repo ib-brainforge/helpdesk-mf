@@ -130,8 +130,7 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
             <CheckboxGroup
               value={selectedColumns}
               onChange={(values) => setSelectedColumns(values as string[])}
-              orientation="horizontal"
-              className="gap-4"
+              className="flex flex-row flex-wrap gap-4"
             >
               {AVAILABLE_COLUMNS.map((col) => (
                 <Checkbox key={col.key} value={col.key}>
@@ -177,7 +176,7 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
           <div className="flex gap-3">
             <BaseButton
               onClick={handleGenerate}
-              isLoading={isGenerating}
+              isDisabled={isGenerating}
               icon={<Icon name="chart-bar" className="h-4 w-4" />}
             >
               Generate Report

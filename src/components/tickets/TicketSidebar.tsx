@@ -177,8 +177,8 @@ export function TicketSidebar({ onCategorySelect, onTagSelect, selectedTags = []
               <Chip
                 key={tag.id}
                 size="sm"
-                variant={selectedTags.includes(tag.id!) ? 'solid' : 'bordered'}
-                color={selectedTags.includes(tag.id!) ? 'primary' : 'default'}
+                variant={selectedTags.includes(tag.id!) ? 'primary' : 'tertiary'}
+                color={selectedTags.includes(tag.id!) ? 'accent' : 'default'}
                 className="cursor-pointer"
                 onClick={() => onTagSelect?.(tag.id!)}
                 style={

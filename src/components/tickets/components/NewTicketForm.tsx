@@ -1,4 +1,5 @@
 import { type FC, useCallback, useState, useMemo, useEffect } from 'react';
+import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
@@ -22,7 +23,7 @@ import { AttachmentList } from '@/components/file-upload/AttachmentList';
 import { useTags } from '@/components/tags/hooks/useTags';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
 import type { AttachmentDto } from '@/types';
-import { addToast } from '@heroui/react';
+
 import { useAtom } from 'jotai';
 import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
 import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
@@ -109,11 +110,7 @@ export const NewTicketForm: FC = () => {
         }
       } catch (error) {
         console.error('Failed to create ticket:', error);
-        addToast({
-          title: 'Failed to create ticket',
-          description: error instanceof Error ? error.message : 'An error occurred while creating the ticket',
-          severity: 'danger',
-        });
+        toast('Failed to create ticket', { description: error instanceof Error ? error.message : 'An error occurred while creating the ticket', variant: 'danger' });
       }
     },
   });
@@ -187,9 +184,9 @@ export const NewTicketForm: FC = () => {
               <BaseSelect
                 label="Priority"
                 isRequired
-                selectedKeys={new Set([field.state.value])}
+                selectedKey={field.state.value}
                 onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string;
+                  const value = keys as string;
                   field.handleChange(value as TicketPriority);
                 }}
               >
@@ -366,14 +363,14 @@ export const NewTicketForm: FC = () => {
           <BaseButton
             variant="bordered"
             onPress={handleCancel}
-            isDisabled={createTicketMutation.isPending}
+            isDisabled={createTicketMutation.isPending || createTicketMutation.isPending}
           >
             Cancel
           </BaseButton>
           <BaseButton
             type="submit"
             color="primary"
-            isLoading={createTicketMutation.isPending}
+
             icon={<Icon name="check" className="h-4 w-4" />}
           >
             Create Ticket

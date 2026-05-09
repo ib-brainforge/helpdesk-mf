@@ -72,9 +72,9 @@ function KnowledgeBaseSearchPage() {
           />
           <BaseSelect
             placeholder="All Categories"
-            selectedKeys={selectedCategory ? new Set([selectedCategory]) : new Set()}
+            selectedKey={selectedCategory ? selectedCategory : null}
             onSelectionChange={(keys) => {
-              const key = Array.from(keys)[0] as string;
+              const key = keys as string;
               setSelectedCategory(key || '');
             }}
             className="w-64"

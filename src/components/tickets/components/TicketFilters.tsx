@@ -120,9 +120,9 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           label="View Preset"
           placeholder="Select preset"
           className="w-full"
-          selectedKeys={new Set([preset])}
+          selectedKey={preset}
           onSelectionChange={(keys) => {
-            const value = Array.from(keys)[0] as string;
+            const value = keys as string;
             handlePresetChange(value);
           }}
         >

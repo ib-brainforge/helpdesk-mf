@@ -8,7 +8,7 @@ import { BaseButton } from '@brainforgeau/components/button';
 import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import { addToast, Switch } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -89,10 +89,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
       }
     },
     onSuccess: () => {
-      addToast({
-        title: `Category ${isEdit ? 'updated' : 'created'} successfully`,
-        severity: 'success',
-      });
+      toast(`Category ${isEdit ? 'updated' : 'created'} successfully`, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       onClose();
     },
@@ -171,9 +168,9 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                 <BaseSelect
                   label="Section"
                   placeholder="Select section (optional)"
-                  selectedKeys={field.state.value ? [field.state.value] : []}
+                  selectedKey={field.state.value ? field.state.value : null}
                   onSelectionChange={(keys) => {
-                    const newValue = keys.currentKey || null;
+                    const newValue = keys || null;
                     field.handleChange(newValue);
                   }}
                 >
@@ -190,9 +187,9 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                   label="Access Level"
                   placeholder="Select access level"
                   isRequired
-                  selectedKeys={[String(field.state.value)]}
+                  selectedKey={String(field.state.value)}
                   onSelectionChange={(keys) => {
-                    const newValue = Number(keys.currentKey) as AccessLevel;
+                    const newValue = Number(keys) as AccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
@@ -226,9 +223,9 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                   <BaseSelect
                     label="Email Protocol"
                     placeholder="Select protocol"
-                    selectedKeys={field.state.value ? [field.state.value] : []}
+                    selectedKey={field.state.value ? field.state.value : null}
                     onSelectionChange={(keys) => {
-                      const newValue = keys.currentKey || null;
+                      const newValue = keys || null;
                       field.handleChange(newValue);
                     }}
                   >
@@ -258,7 +255,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
               {(field) => (
                 <Switch
                   isSelected={field.state.value}
-                  onValueChange={(checked) => field.handleChange(checked)}
+                  onChange={(checked) => field.handleChange(checked)}
                 >
                   Active
                 </Switch>
@@ -269,7 +266,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
               <BaseButton variant="bordered" onPress={handleClose} type="button">
                 Cancel
               </BaseButton>
-              <BaseButton type="submit" isLoading={mutation.isPending}>
+              <BaseButton type="submit" isDisabled={mutation.isPending}>
                 {isEdit ? 'Update' : 'Create'}
               </BaseButton>
             </div>

@@ -10,7 +10,8 @@ import { PageSpinner } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { withAuthenticationRequired, useTimezone } from '@brainforgeau/security';
-import { Button, Pagination } from '@heroui/react';
+import { Button } from '@heroui/react';
+import { BaseButton } from '@brainforgeau/components';
 import { useState } from 'react';
 import { useNavigate } from '@modern-js/runtime/router';
 import type { IdeaListItem } from '@/components/tickets/hooks/useTickets';
@@ -88,13 +89,10 @@ function IdeasForumPage() {
           ))}
 
           {totalPages > 1 && (
-            <div className="flex justify-center mt-4">
-              <Pagination
-                total={totalPages}
-                page={page}
-                onChange={setPage}
-                showControls
-              />
+            <div className="flex justify-center items-center gap-2 mt-4">
+              <BaseButton size="sm" variant="bordered" isDisabled={page <= 1} onPress={() => setPage(p => p - 1)}>Prev</BaseButton>
+              <span className="text-sm">{page} / {totalPages}</span>
+              <BaseButton size="sm" variant="bordered" isDisabled={page >= totalPages} onPress={() => setPage(p => p + 1)}>Next</BaseButton>
             </div>
           )}
         </div>

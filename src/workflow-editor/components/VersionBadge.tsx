@@ -15,7 +15,7 @@ const LABELS = {
 
 export function VersionBadge({ status }: { status: VersionStatus }) {
   return (
-    <Chip color={COLORS[status]} variant="flat" size="sm">
+    <Chip color={COLORS[status]} size="sm">
       {LABELS[status]}
     </Chip>
   );

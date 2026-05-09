@@ -74,7 +74,7 @@ export function ApprovalStepEditor({
       <div className="flex items-center gap-3">
         <Switch
           isSelected={isRequired}
-          onValueChange={handleToggle}
+          onChange={handleToggle}
           isDisabled={readOnly}
           size="sm"
           aria-label="Require approval before transition fires"
@@ -88,7 +88,7 @@ export function ApprovalStepEditor({
             label="Approver Roles"
             value={rolesInput}
             onValueChange={handleRolesChange}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             labelPlacement="outside"
             size="sm"
             placeholder="manager, supervisor (comma-separated)"
@@ -99,7 +99,7 @@ export function ApprovalStepEditor({
             label="Approval Note (optional)"
             value={value?.description ?? ''}
             onValueChange={handleDescriptionChange}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             labelPlacement="outside"
             size="sm"
             minRows={2}

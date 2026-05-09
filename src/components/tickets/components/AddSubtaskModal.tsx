@@ -81,14 +81,14 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
           <BaseButton
             variant="bordered"
             onPress={handleClose}
-            isDisabled={isLoading}
+            isDisabled={isLoading || isLoading}
           >
             Cancel
           </BaseButton>
           <BaseButton
             color="primary"
             onPress={handleSubmit}
-            isLoading={isLoading}
+
           >
             Create Subtask
           </BaseButton>

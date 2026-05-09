@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useTimezone } from '@brainforgeau/security';
-import { Tabs, Tab } from '@heroui/react';
+import { BaseTabs, BaseTab } from '@brainforgeau/components';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseTable, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
@@ -134,30 +134,19 @@ function ReportsPage() {
           </div>
         </div>
 
-        <Tabs
+        <BaseTabs
           selectedKey={selectedTab}
           onSelectionChange={(key) => setSelectedTab(key as string)}
-          aria-label="Report tabs"
-          classNames={{
-            tabList:
-              'gap-0.5 w-full relative rounded-none p-0 shadow-[inset_0_-1px_0_0_var(--color-white),inset_0_-3px_0_0_var(--color-light)]',
-            cursor: 'w-full bg-blue',
-            tab: 'max-w-fit h-11.5 px-1 md:px-5 font-medium text-sm relative z-10 span:text-blue !opacity-100 *:min-h-1 hover:*:!text-blue',
-            tabContent: 'group-data-[selected=true]:text-blue',
-            panel: 'p-0 pt-7.5',
-          }}
-          color="primary"
-          variant="underlined"
         >
           {/* Dynamics Tab */}
-          <Tab key="dynamics" title="Dynamics">
+          <BaseTab key="dynamics" title="Dynamics">
             <div className="mt-4 space-y-6">
               <div className="flex gap-4">
                 <BaseSelect
                   label="Granularity"
-                  selectedKeys={new Set([granularity])}
+                  selectedKey={granularity}
                   onSelectionChange={(keys) => {
-                    const key = Array.from(keys)[0] as ReportGranularity;
+                    const key = keys as ReportGranularity;
                     setGranularity(key);
                   }}
                   className="w-48"
@@ -184,10 +173,10 @@ function ReportsPage() {
                 )}
               </Box>
             </div>
-          </Tab>
+          </BaseTab>
 
           {/* Tech Performance Tab */}
-          <Tab key="tech-performance" title="Tech Performance">
+          <BaseTab key="tech-performance" title="Tech Performance">
             <div className="mt-4">
               <BaseTable
                 table={techTable}
@@ -196,15 +185,15 @@ function ReportsPage() {
                 fullHeight
               />
             </div>
-          </Tab>
+          </BaseTab>
 
           {/* Custom Tab */}
-          <Tab key="custom" title="Custom">
+          <BaseTab key="custom" title="Custom">
             <div className="mt-4">
               <CustomReportBuilder onExport={handleExportCustom} />
             </div>
-          </Tab>
-        </Tabs>
+          </BaseTab>
+        </BaseTabs>
       </div>
     </>
   );

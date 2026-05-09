@@ -2,7 +2,7 @@ import { Helmet } from '@modern-js/runtime/head';
 import { NavLink } from '@modern-js/runtime/router';
 import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody } from '@heroui/react';
+import { Card, CardContent } from '@heroui/react';
 
 type ReportCardProps = {
   title: string;
@@ -16,9 +16,8 @@ function ReportCard({ title, description, icon, href, isComingSoon }: ReportCard
   const content = (
     <Card
       className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
-      isPressable={!isComingSoon}
     >
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-1">
             <Icon name={icon} className="h-5 w-5 text-primary" />
@@ -31,7 +30,7 @@ function ReportCard({ title, description, icon, href, isComingSoon }: ReportCard
             )}
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 

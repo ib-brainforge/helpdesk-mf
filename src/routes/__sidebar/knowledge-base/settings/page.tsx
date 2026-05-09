@@ -3,7 +3,7 @@ import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, toast } from '@heroui/react';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import {
   useKnowledgeBaseCategories,
@@ -14,8 +14,7 @@ import type { KnowledgeBaseCategoryDto } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { addToast, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
-import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { BaseModal, BaseModalContent, BaseModalHeader, BaseModalBody, BaseModalFooter, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 
 type ModalMode = 'create' | 'edit' | null;
 
@@ -49,7 +48,7 @@ function CategoryFormModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });
-      addToast({ title: 'Category created', severity: 'success' });
+      toast('Category created', { variant: 'success' });
       onClose();
     },
   });
@@ -67,7 +66,7 @@ function CategoryFormModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });
-      addToast({ title: 'Category updated', severity: 'success' });
+      toast('Category updated', { variant: 'success' });
       onClose();
     },
   });
@@ -76,7 +75,7 @@ function CategoryFormModal({
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      addToast({ title: 'Name required', severity: 'warning' });
+      toast('Name required', { variant: 'warning' });
       return;
     }
     if (mode === 'create') {
@@ -90,12 +89,12 @@ function CategoryFormModal({
   const parentOptions = categories.filter((c) => c.id !== category?.id);
 
   return (
-    <Modal isOpen={mode !== null} onClose={onClose} size="lg">
-      <ModalContent>
-        <ModalHeader>
+    <BaseModal isOpen={mode !== null} onClose={onClose} size="lg">
+      <BaseModalContent>
+        <BaseModalHeader>
           <h2 className="text-xl font-semibold">{mode === 'create' ? 'Create Category' : 'Edit Category'}</h2>
-        </ModalHeader>
-        <ModalBody>
+        </BaseModalHeader>
+        <BaseModalBody>
           <div className="space-y-4">
             <BaseInput
               label="Name"
@@ -114,9 +113,9 @@ function CategoryFormModal({
               <BaseSelect
                 label="Parent category (optional)"
                 placeholder="None (top-level)"
-                selectedKeys={parentId ? new Set([parentId]) : new Set()}
+                selectedKey={parentId ? parentId : null}
                 onSelectionChange={(keys) => {
-                  const key = Array.from(keys)[0] as string;
+                  const key = keys as string;
                   setParentId(key ?? '');
                 }}
               >
@@ -129,15 +128,15 @@ function CategoryFormModal({
               </BaseSelect>
             )}
           </div>
-        </ModalBody>
-        <ModalFooter>
+        </BaseModalBody>
+        <BaseModalFooter>
           <BaseButton variant="bordered" onPress={onClose}>Cancel</BaseButton>
-          <BaseButton color="primary" onPress={handleSubmit} isLoading={isPending}>
+          <BaseButton color="primary" onPress={handleSubmit} isDisabled={isPending}>
             {mode === 'create' ? 'Create' : 'Save'}
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 }
 
@@ -158,34 +157,34 @@ function DeleteCategoryModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });
-      addToast({ title: 'Category deleted', severity: 'success' });
+      toast('Category deleted', { variant: 'success' });
       onClose();
     },
     onError: () => {
-      addToast({ title: 'Cannot delete category', description: 'Categories with articles cannot be deleted.', severity: 'danger' });
+      toast('Cannot delete category', { description: 'Categories with articles cannot be deleted.', variant: 'danger' });
     },
   });
 
   return (
-    <Modal isOpen={!!category} onClose={onClose} size="sm">
-      <ModalContent>
-        <ModalHeader>
+    <BaseModal isOpen={!!category} onClose={onClose} size="sm">
+      <BaseModalContent>
+        <BaseModalHeader>
           <h2 className="text-xl font-semibold">Delete Category</h2>
-        </ModalHeader>
-        <ModalBody>
+        </BaseModalHeader>
+        <BaseModalBody>
           <p className="text-sm text-default-600">
             Are you sure you want to delete <strong>{category?.name}</strong>?
             This action cannot be undone. Categories containing articles cannot be deleted.
           </p>
-        </ModalBody>
-        <ModalFooter>
+        </BaseModalBody>
+        <BaseModalFooter>
           <BaseButton variant="bordered" onPress={onClose}>Cancel</BaseButton>
-          <BaseButton color="danger" onPress={() => deleteMutation.mutate()} isLoading={deleteMutation.isPending}>
+          <BaseButton color="danger" onPress={() => deleteMutation.mutate()} isDisabled={deleteMutation.isPending}>
             Delete
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 }
 
@@ -295,7 +294,7 @@ function KbCategoriesPage() {
                 <DropdownMenu aria-label="Category actions">
                   <DropdownItem key="edit" onPress={() => openEdit(cat)}>Edit</DropdownItem>
                   <DropdownItem key="duplicate" onPress={() => setDuplicatingCategory(cat)}>Duplicate</DropdownItem>
-                  <DropdownItem key="delete" className="text-danger" color="danger" onPress={() => setDeletingCategory(cat)}>Delete</DropdownItem>
+                  <DropdownItem key="delete" className="text-danger" onPress={() => setDeletingCategory(cat)}>Delete</DropdownItem>
                 </DropdownMenu>
               </Dropdown>
             </div>

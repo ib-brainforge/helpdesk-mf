@@ -9,7 +9,7 @@ import {
   BaseSelectItem,
   Icon,
 } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
+
 import {
   useCreateKnowledgeBaseArticle,
   useUpdateKnowledgeBaseArticle,
@@ -197,9 +197,9 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
               <BaseSelect
                 label="Category"
                 placeholder="Select a category (optional)"
-                selectedKeys={field.state.value ? [field.state.value] : []}
+                selectedKey={field.state.value ? field.state.value : null}
                 onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string | undefined;
+                  const value = keys as string | undefined;
                   field.handleChange(value);
                 }}
               >
@@ -267,9 +267,9 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
                 <BaseSelect
                   label="Access Level"
                   isRequired
-                  selectedKeys={[String(field.state.value)]}
+                  selectedKey={String(field.state.value)}
                   onSelectionChange={(keys) => {
-                    const newValue = Number(keys.currentKey) as KnowledgeBaseAccessLevel;
+                    const newValue = Number(keys) as KnowledgeBaseAccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
@@ -292,9 +292,9 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
                 <BaseSelect
                   label="Status"
                   isRequired
-                  selectedKeys={[String(field.state.value)]}
+                  selectedKey={String(field.state.value)}
                   onSelectionChange={(keys) => {
-                    const newValue = Number(keys.currentKey) as KnowledgeBaseStatus;
+                    const newValue = Number(keys) as KnowledgeBaseStatus;
                     field.handleChange(newValue);
                     setCurrentStatus(newValue);
                   }}
@@ -317,7 +317,7 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-6 border-t">
-          <BaseButton variant="bordered" onPress={handleCancel} isDisabled={isLoading}>
+          <BaseButton variant="bordered" onPress={handleCancel} isDisabled={publishArticleMutation.isPending || isLoading}>
             Cancel
           </BaseButton>
 
@@ -326,7 +326,7 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
               <BaseButton
                 color="success"
                 onPress={handlePublish}
-                isLoading={publishArticleMutation.isPending}
+
                 icon={<Icon name="check-circle" className="h-4 w-4" />}
               >
                 Publish
@@ -335,7 +335,7 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
             <BaseButton
               type="submit"
               color="primary"
-              isLoading={createArticleMutation.isPending || updateArticleMutation.isPending}
+              isDisabled={createArticleMutation.isPending || updateArticleMutation.isPending}
               icon={<Icon name="check" className="h-4 w-4" />}
             >
               {mode === 'create' ? 'Create Article' : 'Save Changes'}

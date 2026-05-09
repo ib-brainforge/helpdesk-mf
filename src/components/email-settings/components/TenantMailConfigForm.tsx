@@ -10,7 +10,7 @@ import {
   ValidationAlert,
   Icon,
 } from '@brainforgeau/components';
-import { addToast, Card, CardBody, Switch, Spinner } from '@heroui/react';
+import { Card, CardContent, Switch, Spinner, toast } from '@heroui/react';
 import {
   getTenantMailConfig,
   upsertTenantMailConfig,
@@ -74,7 +74,7 @@ export function TenantMailConfigForm() {
     mutationFn: upsertTenantMailConfig,
     onSuccess: (updated) => {
       queryClient.setQueryData(QUERY_KEY, updated);
-      addToast({ title: 'Email settings saved', severity: 'success' });
+      toast('Email settings saved', { variant: 'success' });
       form.reset(buildDefaultValues(updated));
       setSubmitErrors([]);
     },
@@ -109,7 +109,7 @@ export function TenantMailConfigForm() {
   const handleTest = async () => {
     const values = form.state.values;
     if (!values.outboundHost || !values.outboundPort) {
-      addToast({ title: 'Enter host and port before testing', severity: 'warning' });
+      toast('Enter host and port before testing', { variant: 'warning' });
       return;
     }
 
@@ -127,20 +127,13 @@ export function TenantMailConfigForm() {
       });
       setTestResult(result);
       if (result.success) {
-        addToast({
-          title: `Connection successful${result.latencyMs != null ? ` (${result.latencyMs}ms)` : ''}`,
-          severity: 'success',
-        });
+        toast(`Connection successful${result.latencyMs != null ? ` — ${result.latencyMs}ms` : ''}`, { variant: 'success' });
       } else {
-        addToast({
-          title: 'Connection failed',
-          description: result.error ?? 'Unknown error',
-          severity: 'danger',
-        });
+        toast('Connection failed', { description: result.error ?? 'Unknown error', variant: 'danger' });
       }
     } catch (error: any) {
       const msg = error?.response?.data?.detail || error?.message || 'Test failed';
-      addToast({ title: 'Test failed', description: msg, severity: 'danger' });
+      toast('Test failed', { description: msg, variant: 'danger' });
     } finally {
       setIsTesting(false);
     }
@@ -168,7 +161,7 @@ export function TenantMailConfigForm() {
 
       {/* Enable / Protocol */}
       <Card>
-        <CardBody className="p-5 space-y-4">
+        <CardContent className="p-5 space-y-4">
           <h2 className="text-base font-semibold">Outbound mail server</h2>
 
           <div className="flex items-center gap-6">
@@ -176,7 +169,7 @@ export function TenantMailConfigForm() {
               {(field) => (
                 <Switch
                   isSelected={field.state.value}
-                  onValueChange={field.handleChange}
+                  onChange={field.handleChange}
                 >
                   Enable custom outbound mail
                 </Switch>
@@ -189,9 +182,9 @@ export function TenantMailConfigForm() {
               <BaseSelect
                 label="Protocol"
                 className="max-w-xs"
-                selectedKeys={[String(field.state.value)]}
+                selectedKey={String(field.state.value)}
                 onSelectionChange={(keys) =>
-                  field.handleChange(Number(keys.currentKey) as OutboundMailProtocol)
+                  field.handleChange(Number(keys) as OutboundMailProtocol)
                 }
                 errorMessage={formatFormErrors(field.state.meta.errors)}
                 isInvalid={field.state.meta.errors.length > 0}
@@ -201,12 +194,12 @@ export function TenantMailConfigForm() {
               </BaseSelect>
             )}
           </form.Field>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Server */}
       <Card>
-        <CardBody className="p-5 space-y-4">
+        <CardContent className="p-5 space-y-4">
           <h2 className="text-base font-semibold">Server settings</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -247,17 +240,17 @@ export function TenantMailConfigForm() {
 
           <form.Field name="useSsl">
             {(field) => (
-              <Switch isSelected={field.state.value} onValueChange={field.handleChange}>
+              <Switch isSelected={field.state.value} onChange={field.handleChange}>
                 Use SSL / TLS
               </Switch>
             )}
           </form.Field>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Credentials */}
       <Card>
-        <CardBody className="p-5 space-y-4">
+        <CardContent className="p-5 space-y-4">
           <h2 className="text-base font-semibold">Credentials</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -297,12 +290,12 @@ export function TenantMailConfigForm() {
               )}
             </form.Field>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Sender identity */}
       <Card>
-        <CardBody className="p-5 space-y-4">
+        <CardContent className="p-5 space-y-4">
           <h2 className="text-base font-semibold">Sender identity</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -337,7 +330,7 @@ export function TenantMailConfigForm() {
               )}
             </form.Field>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Test result banner */}
@@ -366,7 +359,7 @@ export function TenantMailConfigForm() {
         <BaseButton
           color="primary"
           type="submit"
-          isLoading={saveMutation.isPending}
+          isDisabled={saveMutation.isPending}
         >
           Save settings
         </BaseButton>
@@ -374,8 +367,8 @@ export function TenantMailConfigForm() {
         <BaseButton
           variant="bordered"
           type="button"
-          isLoading={isTesting}
-          isDisabled={saveMutation.isPending}
+
+          isDisabled={isTesting || saveMutation.isPending}
           onPress={handleTest}
           icon={<Icon name="signal" className="h-4 w-4" />}
         >

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from '@heroui/react';
 import {
   BaseModal,
   BaseModalContent,
@@ -14,7 +15,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Icon } from '@brainforgeau/components/base';
-import { addToast } from '@heroui/react';
+
 import { useCreateCannedResponse, useUpdateCannedResponse } from '../hooks/useCannedResponses';
 import { CannedResponseScope } from '@/types/canned-response';
 import type { CannedResponseDto } from '@/types/canned-response';
@@ -72,11 +73,7 @@ export function CannedResponseEditorModal({
 
   const handleSave = async () => {
     if (!title.trim()) {
-      addToast({
-        title: 'Validation error',
-        description: 'Title is required',
-        severity: 'danger',
-      });
+      toast('Validation error', { description: 'Title is required', variant: 'danger' });
       return;
     }
 
@@ -93,11 +90,7 @@ export function CannedResponseEditorModal({
             categoryId: categoryId || undefined,
           },
         });
-        addToast({
-          title: 'Updated',
-          description: 'Canned response updated successfully',
-          severity: 'success',
-        });
+        toast('Updated', { description: 'Canned response updated successfully', variant: 'success' });
       } else {
         await createMutation.mutateAsync({
           title,
@@ -105,19 +98,11 @@ export function CannedResponseEditorModal({
           scope: scope as any,
           categoryId: categoryId || undefined,
         });
-        addToast({
-          title: 'Created',
-          description: 'Canned response created successfully',
-          severity: 'success',
-        });
+        toast('Created', { description: 'Canned response created successfully', variant: 'success' });
       }
       onClose();
     } catch (error) {
-      addToast({
-        title: 'Error',
-        description: `Failed to ${isEditing ? 'update' : 'create'} canned response`,
-        severity: 'danger',
-      });
+      toast('Error', { description: `Failed to ${isEditing ? 'update' : 'create'} canned response`, variant: 'danger' });
     }
   };
 
@@ -192,9 +177,9 @@ export function CannedResponseEditorModal({
             <BaseSelect
               label="Scope"
               placeholder="Select scope"
-              selectedKeys={new Set([scope.toString()])}
+              selectedKey={scope.toString()}
               onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as string;
+                const key = keys as string;
                 setScope(Number.parseInt(key) as unknown as CannedResponseScope);
               }}
             >
@@ -212,12 +197,12 @@ export function CannedResponseEditorModal({
             <BaseSelect
               label="Category"
               placeholder="Select category (optional)"
-              selectedKeys={categoryId ? new Set([categoryId]) : new Set()}
+              selectedKey={categoryId ? categoryId : null}
               onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as string;
+                const key = keys as string;
                 setCategoryId(key || '');
               }}
-              isLoading={isLoadingCategories}
+
             >
               {[
                 <BaseSelectItem key="">None</BaseSelectItem>,
@@ -237,7 +222,7 @@ export function CannedResponseEditorModal({
           <BaseButton
             color="primary"
             onPress={handleSave}
-            isLoading={createMutation.isPending || updateMutation.isPending}
+            isDisabled={createMutation.isPending || updateMutation.isPending}
           >
             {isEditing ? 'Update' : 'Create'}
           </BaseButton>

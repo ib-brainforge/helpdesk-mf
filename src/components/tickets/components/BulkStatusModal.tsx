@@ -41,9 +41,9 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
           </p>
           <BaseSelect
             label="Status"
-            selectedKeys={new Set([selectedStatus])}
+            selectedKey={selectedStatus}
             onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
+              const value = keys as string;
               setSelectedStatus(value as TicketStatus);
             }}
           >

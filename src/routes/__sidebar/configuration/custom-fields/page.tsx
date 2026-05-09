@@ -1,4 +1,5 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { toast } from '@heroui/react';
 import { BaseTable, TablePagination } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
@@ -8,7 +9,7 @@ import {
   useCustomFieldsData,
   useCustomFieldsTable,
 } from '@components/custom-fields';
-import { addToast } from '@heroui/react';
+
 import { Helmet } from '@modern-js/runtime/head';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
@@ -30,7 +31,7 @@ function CustomFieldsPage() {
       await client.v1CustomFieldsIdDelete(fieldId);
     },
     onSuccess: () => {
-      addToast({ title: 'Custom field deleted successfully', severity: 'success' });
+      toast('Custom field deleted successfully', { variant: 'success' });
       refetch();
     },
     onError: () => {

@@ -4,7 +4,7 @@ import { BaseButton, Icon, BaseSelect, BaseSelectItem, BaseTable } from '@brainf
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody, Spinner } from '@heroui/react';
+import { Card, CardContent, Spinner } from '@heroui/react';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { AdvancedFiltersModal, type AdvancedFilterValues } from '@/components/reports/components/AdvancedFiltersModal';
 import {
@@ -24,7 +24,7 @@ function PieChart({ data, title }: { data: { name: string; value: number }[]; ti
 
   return (
     <Card>
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <h3 className="text-sm font-semibold mb-4">{title}</h3>
         <div className="flex items-center justify-center">
           <div className="relative w-32 h-32">
@@ -52,7 +52,7 @@ function PieChart({ data, title }: { data: { name: string; value: number }[]; ti
             </div>
           ))}
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }
@@ -60,7 +60,7 @@ function PieChart({ data, title }: { data: { name: string; value: number }[]; ti
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
   return (
     <Card>
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-default-500 mb-1">{label}</p>
@@ -70,7 +70,7 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
             <Icon name={icon} className="h-5 w-5 text-primary" />
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }
@@ -276,9 +276,9 @@ function ReportsSummaryPage() {
         <BaseSelect
           label="Category"
           placeholder="All categories"
-          selectedKeys={new Set([selectedCategory])}
+          selectedKey={selectedCategory}
           onSelectionChange={(keys) => {
-            const key = Array.from(keys)[0] as string;
+            const key = keys as string;
             setSelectedCategory(key);
           }}
           className="w-48"

@@ -3,7 +3,7 @@ import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody, Spinner } from '@heroui/react';
+import { Card, CardContent, Spinner } from '@heroui/react';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useCompanyStatisticsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
@@ -11,10 +11,10 @@ import { exportToXlsx } from '@/components/reports/utils/exportReport';
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <Card>
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <p className="text-xs text-default-500 mb-1">{label}</p>
         <p className="text-2xl font-semibold">{value}</p>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }
@@ -98,7 +98,7 @@ function CompanyStatisticsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <h2 className="text-sm font-semibold mb-4">Top Categories</h2>
                 {stats.topCategories.length === 0 ? (
                   <p className="text-default-400 text-sm">No data</p>
@@ -112,11 +112,11 @@ function CompanyStatisticsPage() {
                     ))}
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
 
             <Card>
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <h2 className="text-sm font-semibold mb-4">Top Assignees</h2>
                 {stats.topAssignees.length === 0 ? (
                   <p className="text-default-400 text-sm">No data</p>
@@ -133,7 +133,7 @@ function CompanyStatisticsPage() {
                     ))}
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
         </>

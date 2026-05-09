@@ -208,8 +208,8 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               <BaseButton
                 color="primary"
                 onPress={handleRequestApproval}
-                isDisabled={!selectedWorkflowId}
-                isLoading={requestApprovalMutation.isPending}
+                isDisabled={requestApprovalMutation.isPending || !selectedWorkflowId}
+
               >
                 Request
               </BaseButton>
@@ -382,7 +382,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               <BaseTextarea
                 label="Comment (optional)"
                 value={comment}
-                onValueChange={value => setComment(value || '')}
+                onValueChange={v => setComment(v || '')}
                 placeholder="Add a comment about your decision..."
                 minRows={3}
               />
@@ -398,7 +398,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
             <BaseButton
               color="primary"
               onPress={handleMakeDecision}
-              isLoading={makeDecisionMutation.isPending}
+              isDisabled={makeDecisionMutation.isPending}
             >
               Submit Decision
             </BaseButton>

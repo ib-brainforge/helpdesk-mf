@@ -21,7 +21,7 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Chip, Switch, addToast } from '@heroui/react';
+import { Chip, Switch, toast } from '@heroui/react';
 import { NavLink, useNavigate } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -46,20 +46,20 @@ function formatDate(iso: string): string {
 function statusBadge(status: string) {
   if (status === 'Active') {
     return (
-      <Chip size="sm" color="success" variant="flat">
+      <Chip size="sm" color="success">
         Active
       </Chip>
     );
   }
   if (status === 'Archived') {
     return (
-      <Chip size="sm" color="default" variant="flat">
+      <Chip size="sm" color="default">
         Archived
       </Chip>
     );
   }
   return (
-    <Chip size="sm" color="warning" variant="flat">
+    <Chip size="sm" color="warning">
       Draft
     </Chip>
   );
@@ -118,7 +118,7 @@ export function AutomationProjectsListPage() {
         err instanceof Error ? err : new Error(String(err)),
         { context: 'automation_list_create_failed' },
       );
-      addToast({ title: 'Failed to create automation project', severity: 'danger' });
+      toast('Failed to create automation project', { variant: 'danger' });
     }
   }
 
@@ -126,17 +126,13 @@ export function AutomationProjectsListPage() {
     if (!pendingDeleteId) return;
     try {
       await deleteMutation.mutateAsync(pendingDeleteId);
-      addToast({ title: 'Automation project deleted', severity: 'success' });
+      toast('Automation project deleted', { variant: 'success' });
     } catch (err) {
       logger.captureError(
         err instanceof Error ? err : new Error(String(err)),
         { context: 'automation_list_delete_failed' },
       );
-      addToast({
-        title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Delete failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     } finally {
       setPendingDeleteId(null);
     }
@@ -154,7 +150,7 @@ export function AutomationProjectsListPage() {
         },
       });
     } catch {
-      addToast({ title: 'Failed to update project', severity: 'danger' });
+      toast('Failed to update project', { variant: 'danger' });
     }
   }
 
@@ -192,7 +188,7 @@ export function AutomationProjectsListPage() {
           <Switch
             aria-label={`Toggle ${row.original.name}`}
             isSelected={row.original.isEnabled}
-            onValueChange={() => handleToggleEnabled(row.original)}
+            onChange={() => handleToggleEnabled(row.original)}
             size="sm"
           />
         ),
@@ -329,8 +325,8 @@ export function AutomationProjectsListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
+
+                  isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >
                   Create

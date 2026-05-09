@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Card, CardContent, CardHeader, toast } from '@heroui/react';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { TEMPLATE_VARIABLES, type TemplateVariableCategory } from '@/types/email-template';
-import { addToast } from '@heroui/react';
+
 
 interface VariablePickerProps {
   onVariableSelect?: (placeholder: string) => void;
@@ -24,11 +24,7 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
 
   const handleCopyVariable = (placeholder: string) => {
     navigator.clipboard.writeText(placeholder);
-    addToast({
-      title: 'Variable copied',
-      description: `${placeholder} copied to clipboard`,
-      severity: 'success',
-    });
+    toast('Variable copied', { description: `${placeholder} copied to clipboard`, variant: 'success' });
     if (onVariableSelect) {
       onVariableSelect(placeholder);
     }
@@ -39,7 +35,7 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
       <CardHeader>
         <h3 className="text-sm font-semibold">Template Variables</h3>
       </CardHeader>
-      <CardBody className="overflow-y-auto">
+      <CardContent className="overflow-y-auto">
         <div className="flex flex-col gap-2">
           {TEMPLATE_VARIABLES.map((category: TemplateVariableCategory) => (
             <div key={category.name} className="border-b border-gray-200 pb-2 last:border-b-0 dark:border-gray-700">
@@ -87,7 +83,7 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
             </div>
           ))}
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

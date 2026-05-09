@@ -82,7 +82,7 @@ export function KbArticleListView({ articles, categories, isLoading }: KbArticle
         cell: ({ row }) => (
           <Chip
             size="sm"
-            variant="flat"
+           
             color={getStatusColor(row.original.status)}
           >
             {getStatusLabel(row.original.status)}

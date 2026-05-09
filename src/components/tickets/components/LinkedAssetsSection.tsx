@@ -8,8 +8,9 @@ import {
   BaseModalHeader,
   Icon,
 } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
+
 import { type FC, useState } from 'react';
+import { toast } from '@heroui/react';
 import { useLinkedAssets, useLinkAsset, useUnlinkAsset } from '../hooks/useTickets';
 
 interface AddAssetModalProps {
@@ -58,7 +59,7 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
           <BaseButton
             variant="bordered"
             onPress={onClose}
-            isDisabled={isLoading}
+            isDisabled={isLoading || isLoading}
           >
             Cancel
           </BaseButton>
@@ -66,7 +67,7 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!assetId.trim() || isInvalid}
-            isLoading={isLoading}
+
           >
             Link
           </BaseButton>
@@ -93,19 +94,11 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
       { ticketId, assetId },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Asset linked',
-            description: `Asset ${assetId.substring(0, 8)}... linked to ticket.`,
-            severity: 'success',
-          });
+          toast('Asset linked', { description: `Asset ${assetId.substring(0, 8)}... linked to ticket.`, variant: 'success' });
           setIsAddModalOpen(false);
         },
         onError: () => {
-          addToast({
-            title: 'Error',
-            description: 'Failed to link asset. Please try again.',
-            severity: 'danger',
-          });
+          toast('Error', { description: 'Failed to link asset. Please try again.', variant: 'danger' });
         },
       },
     );
@@ -116,18 +109,10 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
       { ticketId, assetId },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Asset unlinked',
-            description: 'Asset removed from ticket.',
-            severity: 'success',
-          });
+          toast('Asset unlinked', { description: 'Asset removed from ticket.', variant: 'success' });
         },
         onError: () => {
-          addToast({
-            title: 'Error',
-            description: 'Failed to unlink asset. Please try again.',
-            severity: 'danger',
-          });
+          toast('Error', { description: 'Failed to unlink asset. Please try again.', variant: 'danger' });
         },
       },
     );

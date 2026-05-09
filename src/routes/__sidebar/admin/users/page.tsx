@@ -10,9 +10,9 @@ import { UserRolesModal } from '@/components/admin-users/components/UserRolesMod
 import type { TenantUserDto, HelpdeskRole } from '@/types/admin-user';
 import { getAppConfig } from '@/state/config';
 
-const ACTIVITY_ROLE_COLOR: Record<string, 'warning' | 'primary' | 'default'> = {
+const ACTIVITY_ROLE_COLOR: Record<string, 'warning' | 'accent' | 'default'> = {
   admin: 'warning',
-  agent: 'primary',
+  agent: 'accent',
   customer: 'default',
 };
 
@@ -63,7 +63,7 @@ function AdminUsersPage() {
           </p>
         </div>
         {keycloakAdminUrl && (
-          <Link href={keycloakAdminUrl} isExternal>
+          <Link href={keycloakAdminUrl} target="_blank" rel="noopener noreferrer">
             <BaseButton
               variant="bordered"
               icon={<Icon name="arrow-top-right-on-square" className="h-4 w-4" />}
@@ -83,7 +83,7 @@ function AdminUsersPage() {
               This page manages helpdesk-specific roles (agent, admin, customer). To create, delete,
               or manage Keycloak login access for users, use the{' '}
               {keycloakAdminUrl ? (
-                <Link href={keycloakAdminUrl} isExternal className="text-warning-800 underline">
+                <Link href={keycloakAdminUrl} target="_blank" rel="noopener noreferrer" className="text-warning-800 underline">
                   Identity Administration
                 </Link>
               ) : (
@@ -131,12 +131,12 @@ function AdminUsersPage() {
                       <Chip
                         size="sm"
                         color={ACTIVITY_ROLE_COLOR[user.activityRole] ?? 'default'}
-                        variant="flat"
+                       
                       >
                         {user.activityRole}
                       </Chip>
                       {user.assignedRoles.filter((r) => r !== user.activityRole).map((role) => (
-                        <Chip key={role} size="sm" color="secondary" variant="bordered">
+                        <Chip key={role} size="sm" color="default" variant="tertiary">
                           +{role}
                         </Chip>
                       ))}

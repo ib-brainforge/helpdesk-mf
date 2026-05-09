@@ -5,7 +5,7 @@ import {
   BaseModalHeader,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { Card, CardBody, Spinner, addToast } from '@heroui/react';
+import { Card, CardContent, Spinner, toast } from '@heroui/react';
 import { useState } from 'react';
 import { useGetTicketSummary, useSuggestReply } from '../hooks/useAiAssist';
 
@@ -76,11 +76,7 @@ export function AiAssistantModal({
       if (isAiNotConfiguredError(error)) {
         // handled in render
       } else {
-        addToast({
-          title: 'AI error',
-          description: 'Failed to get ticket summary. Please try again.',
-          severity: 'danger',
-        });
+        toast('AI error', { description: 'Failed to get ticket summary. Please try again.', variant: 'danger' });
         setActiveFeature(null);
       }
     }
@@ -96,22 +92,14 @@ export function AiAssistantModal({
       if (isAiNotConfiguredError(error)) {
         // handled in render
       } else {
-        addToast({
-          title: 'AI error',
-          description: 'Failed to get reply suggestion. Please try again.',
-          severity: 'danger',
-        });
+        toast('AI error', { description: 'Failed to get reply suggestion. Please try again.', variant: 'danger' });
         setActiveFeature(null);
       }
     }
   };
 
   const handleComingSoon = () => {
-    addToast({
-      title: 'Coming soon',
-      description: 'AI features will be available soon',
-      severity: 'warning',
-    });
+    toast('Coming soon', { description: 'AI features will be available soon', variant: 'warning' });
   };
 
   const hasAiError =
@@ -165,13 +153,16 @@ export function AiAssistantModal({
 
           <div className="grid grid-cols-2 gap-3">
             {/* Generate response — real */}
+            <button
+              type="button"
+              onClick={handleSuggestReply}
+              disabled={isLoading}
+              className="text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            >
             <Card
-              isPressable
-              onPress={handleSuggestReply}
-              isDisabled={isLoading}
               className="hover:border-primary transition-colors"
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
                     <Icon
@@ -188,17 +179,21 @@ export function AiAssistantModal({
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
+            </button>
 
             {/* Ticket summary — real */}
+            <button
+              type="button"
+              onClick={handleTicketSummary}
+              disabled={isLoading}
+              className="text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            >
             <Card
-              isPressable
-              onPress={handleTicketSummary}
-              isDisabled={isLoading}
               className="hover:border-primary transition-colors"
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
                     <Icon
@@ -215,16 +210,20 @@ export function AiAssistantModal({
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
+            </button>
 
             {/* Improve reply — coming soon */}
+            <button
+              type="button"
+              onClick={handleComingSoon}
+              className="text-left"
+            >
             <Card
-              isPressable
-              onPress={handleComingSoon}
               className="hover:border-primary transition-colors"
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
                     <Icon name="sparkles" className="h-6 w-6 text-primary" />
@@ -238,16 +237,20 @@ export function AiAssistantModal({
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
+            </button>
 
             {/* Generate KB — coming soon */}
+            <button
+              type="button"
+              onClick={handleComingSoon}
+              className="text-left"
+            >
             <Card
-              isPressable
-              onPress={handleComingSoon}
               className="hover:border-primary transition-colors"
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
                     <Icon name="book-open" className="h-6 w-6 text-primary" />
@@ -261,17 +264,21 @@ export function AiAssistantModal({
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
+            </button>
           </div>
 
           {/* Custom AI-chat — full width, coming soon */}
+          <button
+            type="button"
+            onClick={handleComingSoon}
+            className="w-full text-left"
+          >
           <Card
-            isPressable
-            onPress={handleComingSoon}
             className="hover:border-primary transition-colors mt-3"
           >
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
                   <Icon
@@ -286,8 +293,9 @@ export function AiAssistantModal({
                   <p className="text-xs text-default-500">Ask AI anything</p>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
+          </button>
         </BaseModalBody>
       </BaseModalContent>
     </BaseModal>

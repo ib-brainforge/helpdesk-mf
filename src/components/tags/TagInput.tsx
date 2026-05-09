@@ -1,6 +1,6 @@
 import type { FC } from 'react';
-import { useState, useCallback, useRef } from 'react';
-import { Autocomplete, AutocompleteItem } from '@heroui/react';
+import { useState, useCallback } from 'react';
+import { BaseAutocomplete, BaseAutocompleteItem } from '@brainforgeau/components/autocomplete';
 import { TagChip } from './TagChip';
 import type { TagDto } from '@/types';
 
@@ -20,7 +20,6 @@ export const TagInput: FC<TagInputProps> = ({
   maxTags,
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleAddTag = useCallback(
     (tagName: string) => {
@@ -47,19 +46,6 @@ export const TagInput: FC<TagInputProps> = ({
     [selectedTags, onTagsChange],
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleAddTag(inputValue);
-      } else if (e.key === 'Backspace' && !inputValue && selectedTags.length > 0) {
-        // Remove last tag on backspace if input is empty
-        handleRemoveTag(selectedTags[selectedTags.length - 1]);
-      }
-    },
-    [inputValue, selectedTags, handleAddTag, handleRemoveTag],
-  );
-
   const filteredTags = availableTags.filter(
     tag =>
       !selectedTags.includes(tag.name) &&
@@ -68,29 +54,26 @@ export const TagInput: FC<TagInputProps> = ({
 
   return (
     <div className="space-y-2">
-      <Autocomplete
+      <BaseAutocomplete
         label="Tags"
         placeholder={placeholder}
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onKeyDown={handleKeyDown}
+        onValueChange={setInputValue}
         onSelectionChange={(key) => {
           if (key) {
-            const tag = availableTags.find(t => t.id === key);
+            const tag = availableTags.find(t => t.id === String(key));
             if (tag) {
               handleAddTag(tag.name);
             }
           }
         }}
         allowsCustomValue
-        ref={inputRef}
       >
         {filteredTags.map((tag) => (
-          <AutocompleteItem key={tag.id}>
+          <BaseAutocompleteItem key={tag.id} value={tag.id}>
             {tag.name}
-          </AutocompleteItem>
+          </BaseAutocompleteItem>
         ))}
-      </Autocomplete>
+      </BaseAutocomplete>
 
       {selectedTags.length > 0 && (
         <div className="flex flex-wrap gap-2">

@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
+import { toast } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { BaseInput, BaseTable } from '@brainforgeau/components';
 import { StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
-import { addToast } from '@heroui/react';
+
 import { useDuplicateCategory } from '@/components/categories/hooks/useCategoriesData';
 import {
   createColumnHelper,
@@ -61,18 +62,10 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   const handleDuplicate = (category: CategoryDto) => {
     duplicateCategoryMutation.mutate(category.id, {
       onSuccess: () => {
-        addToast({
-          title: 'Category duplicated',
-          description: `"${category.name} (copy)" has been created.`,
-          severity: 'success',
-        });
+        toast('Category duplicated', { description: `"${category.name} (copy)" has been created.`, variant: 'success' });
       },
       onError: () => {
-        addToast({
-          title: 'Duplication failed',
-          description: 'Could not duplicate the category. Please try again.',
-          severity: 'danger',
-        });
+        toast('Duplication failed', { description: 'Could not duplicate the category. Please try again.', variant: 'danger' });
       },
     });
   };

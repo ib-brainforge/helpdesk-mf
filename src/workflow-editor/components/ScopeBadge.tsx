@@ -8,27 +8,27 @@ interface ScopeBadgeProps {
 export function ScopeBadge({ ownerScope }: ScopeBadgeProps) {
   if (ownerScope.startsWith('system:')) {
     return (
-      <Chip color="default" variant="flat" size="sm">
+      <Chip color="default" size="sm">
         System
       </Chip>
     );
   }
   if (ownerScope.startsWith('tenant:')) {
     return (
-      <Chip color="primary" variant="flat" size="sm">
+      <Chip color="accent" size="sm">
         Tenant
       </Chip>
     );
   }
   if (ownerScope.startsWith('principal:')) {
     return (
-      <Chip color="secondary" variant="flat" size="sm">
+      <Chip color="default" size="sm">
         Principal
       </Chip>
     );
   }
   return (
-    <Chip color="default" variant="flat" size="sm">
+    <Chip color="default" size="sm">
       Unknown
     </Chip>
   );

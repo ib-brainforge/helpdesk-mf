@@ -1,6 +1,6 @@
 import { BaseButton } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Card, Chip, Spinner, addToast } from '@heroui/react';
+import { Card, Chip, Spinner, toast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
 import { useEffect, useMemo, useState } from 'react';
 import { autoLayout } from '../canvas/layoutUtils';
@@ -74,16 +74,12 @@ export function WorkflowDetailPage() {
     if (!id) return;
     try {
       await createDraftMutation.mutateAsync(id);
-      addToast({ title: 'Draft created', severity: 'success' });
+      toast('Draft created', { variant: 'success' });
     } catch (err) {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'workflow_detail_create_draft_failed',
       });
-      addToast({
-        title: 'Failed to create draft',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Failed to create draft', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     }
   }
 
@@ -98,18 +94,14 @@ export function WorkflowDetailPage() {
         startStateId: data.draftVersion.startStateId,
       });
       setDirty(false);
-      addToast({ title: 'Draft saved', severity: 'success' });
+      toast('Draft saved', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'workflow_detail_save_failed' });
       } else {
         logger.error('workflow_detail_save_failed');
       }
-      addToast({
-        title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Save failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
       throw err;
     }
   }
@@ -121,18 +113,14 @@ export function WorkflowDetailPage() {
         definitionId: data.id,
         versionId: data.draftVersion.id,
       });
-      addToast({ title: 'Workflow published', severity: 'success' });
+      toast('Workflow published', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'workflow_detail_publish_failed' });
       } else {
         logger.error('workflow_detail_publish_failed');
       }
-      addToast({
-        title: 'Publish failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
       throw err;
     }
   }
@@ -168,7 +156,7 @@ export function WorkflowDetailPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Spinner label="Loading workflow..." />
+        <Spinner />
       </div>
     );
   }
@@ -225,7 +213,7 @@ export function WorkflowDetailPage() {
                   size="sm"
                   color="primary"
                   onPress={handleCreateDraft}
-                  isLoading={createDraftMutation.isPending}
+                  isDisabled={createDraftMutation.isPending}
                 >
                   Create Draft
                 </BaseButton>
@@ -279,7 +267,7 @@ export function WorkflowDetailPage() {
             <BaseButton
               color="primary"
               onPress={handleCreateDraft}
-              isLoading={createDraftMutation.isPending}
+              isDisabled={createDraftMutation.isPending}
             >
               Create first version
             </BaseButton>
@@ -351,7 +339,7 @@ export function WorkflowDetailPage() {
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
                       {activeVersion.states.map(s => (
-                        <Chip key={s.id} size="sm" variant="flat">
+                        <Chip key={s.id} size="sm">
                           {s.name}
                         </Chip>
                       ))}
@@ -360,7 +348,7 @@ export function WorkflowDetailPage() {
                 )}
 
                 {data.versions.length > 0 && (
-                  <Card shadow="none" className="border border-default-200">
+                  <Card className="border border-default-200">
                     <div className="px-4 pt-4 pb-2">
                       <h3 className="text-sm font-semibold text-default-700">
                         All Versions

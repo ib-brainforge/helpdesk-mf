@@ -56,9 +56,9 @@ export function TransitionInspector({
 
       <BaseSelect
         label="Trigger Type"
-        selectedKeys={new Set([String(transition.triggerType)])}
+        selectedKey={String(transition.triggerType)}
         onSelectionChange={keys => {
-          const first = Array.from(keys)[0];
+          const first = keys;
           if (first != null) {
             update({
               triggerType: first as TriggerType,
@@ -67,11 +67,9 @@ export function TransitionInspector({
           }
         }}
         isDisabled={readOnly}
-        labelPlacement="outside"
         size="sm"
-        items={TRIGGER_ITEMS}
       >
-        {item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>}
+        {TRIGGER_ITEMS.map(item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>)}
       </BaseSelect>
 
       {/* Event name input — shown for Event trigger */}
@@ -80,7 +78,7 @@ export function TransitionInspector({
           label="Event Name"
           value={(transition.triggerSpec?.eventName as string) ?? ''}
           onValueChange={val => update({ triggerSpec: { eventName: val } })}
-          isReadOnly={readOnly}
+          readOnly={readOnly}
           labelPlacement="outside"
           size="sm"
           placeholder="e.g. approval.granted"
@@ -102,7 +100,7 @@ export function TransitionInspector({
         label="Guard Expression"
         value={transition.guardExpression ?? ''}
         onValueChange={val => update({ guardExpression: val || null })}
-        isReadOnly={readOnly}
+        readOnly={readOnly}
         labelPlacement="outside"
         size="sm"
         minRows={2}

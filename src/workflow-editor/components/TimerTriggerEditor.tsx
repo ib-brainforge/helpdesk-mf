@@ -80,7 +80,7 @@ export function TimerTriggerEditor({
   function handleScheduleChange(keys: {
     currentKey?: string | number | bigint | null;
   }) {
-    const id = keys.currentKey != null ? String(keys.currentKey) : undefined;
+    const id = keys != null ? String(keys) : undefined;
     update({ businessHoursScheduleId: id, useBusinessHours: true });
   }
 
@@ -94,7 +94,7 @@ export function TimerTriggerEditor({
         label="Duration (ISO 8601)"
         value={duration}
         onValueChange={val => update({ duration: val })}
-        isReadOnly={readOnly}
+        readOnly={readOnly}
         labelPlacement="outside"
         size="sm"
         placeholder="e.g. PT1H30M (1h 30m), P7D (7 days)"
@@ -104,7 +104,7 @@ export function TimerTriggerEditor({
       <div className="flex items-center gap-3">
         <Switch
           isSelected={useBusinessHours}
-          onValueChange={val => update({ useBusinessHours: val })}
+          onChange={val => update({ useBusinessHours: val })}
           isDisabled={readOnly}
           size="sm"
           aria-label="Use business hours for timer calculation"
@@ -129,7 +129,6 @@ export function TimerTriggerEditor({
             }
             onSelectionChange={handleScheduleChange}
             isDisabled={readOnly || schedulesLoading}
-            labelPlacement="outside"
             size="sm"
             aria-label="Select business hours schedule"
           >

@@ -3,6 +3,7 @@
  */
 
 import { useCreatePrincipalSlaPolicy } from '@/hooks/usePrincipalSlaPolicies';
+import { toast } from '@heroui/react';
 import {
   BaseButton,
   BaseCheckbox,
@@ -10,7 +11,7 @@ import {
   PageSpinner,
 } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+
 import {
   useNavigate,
   useOutletContext,
@@ -47,7 +48,7 @@ function PrincipalSlaPolicyNewPage() {
       { name: name.trim(), description: description.trim() || null, isDefault },
       {
         onSuccess: () => {
-          addToast({ title: 'SLA policy created', severity: 'success' });
+          toast('SLA policy created', { variant: 'success' });
           navigate(`/principal/${principalId}/sla-policies`);
         },
       },
@@ -89,8 +90,8 @@ function PrincipalSlaPolicyNewPage() {
         <BaseButton
           color="primary"
           onPress={handleCreate}
-          isLoading={createMutation.isPending}
-          isDisabled={!name.trim()}
+
+          isDisabled={createMutation.isPending || !name.trim()}
         >
           Create
         </BaseButton>

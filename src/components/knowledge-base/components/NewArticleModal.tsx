@@ -1,7 +1,7 @@
 import { type FC, useState, useCallback } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Switch, addToast } from '@heroui/react';
+import { toast } from '@heroui/react';
+import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, BaseModal, BaseModalContent, BaseModalHeader, BaseModalBody, BaseModalFooter } from '@brainforgeau/components';
+import { Switch } from '@heroui/react';
 import { TipTapEditor } from './TipTapEditor';
 import { useCreateKnowledgeBaseArticle, useKnowledgeBaseCategories } from '../hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
@@ -23,11 +23,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
 
   const handleCreate = useCallback(async () => {
     if (!subject.trim()) {
-      addToast({
-        title: 'Subject required',
-        description: 'Please enter an article subject',
-        severity: 'warning',
-      });
+      toast('Subject required', { description: 'Please enter an article subject', variant: 'warning' });
       return;
     }
 
@@ -63,12 +59,12 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
   }, [onClose]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
-      <ModalContent>
-        <ModalHeader>
+    <BaseModal isOpen={isOpen} onClose={onClose} size="3xl">
+      <BaseModalContent>
+        <BaseModalHeader>
           <h2 className="text-xl font-semibold">New Article</h2>
-        </ModalHeader>
-        <ModalBody>
+        </BaseModalHeader>
+        <BaseModalBody>
           <div className="space-y-4">
             <BaseInput
               label="Subject"
@@ -89,9 +85,9 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
 
             <BaseSelect
               label="Category"
-              selectedKeys={categoryId ? new Set([categoryId]) : new Set()}
+              selectedKey={categoryId ? categoryId : null}
               onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0] as string;
+                const selected = keys as string;
                 setCategoryId(selected || null);
               }}
               placeholder="Select a category"
@@ -113,25 +109,25 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
 
             <Switch
               isSelected={forTechniciansOnly}
-              onValueChange={setForTechniciansOnly}
+              onChange={setForTechniciansOnly}
             >
               For technicians only
             </Switch>
           </div>
-        </ModalBody>
-        <ModalFooter>
+        </BaseModalBody>
+        <BaseModalFooter>
           <BaseButton variant="light" onPress={handleCancel}>
             Cancel
           </BaseButton>
           <BaseButton
             color="primary"
             onPress={handleCreate}
-            isLoading={createMutation.isPending}
+            isDisabled={createMutation.isPending}
           >
             Create
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 };

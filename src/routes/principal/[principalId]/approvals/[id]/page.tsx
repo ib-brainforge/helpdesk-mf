@@ -3,6 +3,7 @@
  */
 
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { toast } from '@heroui/react';
 import {
   usePrincipalApprovalWorkflow,
   useUpdatePrincipalApprovalWorkflow,
@@ -17,7 +18,7 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+
 import {
   useNavigate,
   useOutletContext,
@@ -89,7 +90,7 @@ function PrincipalApprovalWorkflowEditPage() {
       },
       {
         onSuccess: () => {
-          addToast({ title: 'Approval workflow updated', severity: 'success' });
+          toast('Approval workflow updated', { variant: 'success' });
           navigate(`/principal/${principalId}/approvals`);
         },
       },
@@ -156,9 +157,9 @@ function PrincipalApprovalWorkflowEditPage() {
         />
         <BaseSelect
           label="Approval mode"
-          selectedKeys={[approvalMode]}
+          selectedKey={approvalMode}
           onSelectionChange={keys => {
-            const val = Array.from(keys)[0];
+            const val = keys;
             if (val) setApprovalMode(String(val));
           }}
         >
@@ -195,8 +196,8 @@ function PrincipalApprovalWorkflowEditPage() {
         <BaseButton
           color="primary"
           onPress={handleSave}
-          isLoading={updateMutation.isPending}
-          isDisabled={!name.trim()}
+
+          isDisabled={updateMutation.isPending || !name.trim()}
         >
           Save changes
         </BaseButton>

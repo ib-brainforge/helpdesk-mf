@@ -6,7 +6,7 @@ import {
   BaseModalFooter,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Chip, Spinner, addToast } from '@heroui/react';
+import { Chip, Spinner, toast } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { useUserRoles, useAssignUserRole, useUnassignUserRole } from '../hooks/useAdminUsers';
 import { HELPDESK_ROLES } from '@/types/admin-user';
@@ -25,9 +25,9 @@ const ROLE_DESCRIPTIONS: Record<HelpdeskRole, string> = {
   customer: 'Can submit and view their own tickets',
 };
 
-const ROLE_COLORS: Record<HelpdeskRole, 'primary' | 'warning' | 'default'> = {
+const ROLE_COLORS: Record<HelpdeskRole, 'accent' | 'warning' | 'default'> = {
   admin: 'warning',
-  agent: 'primary',
+  agent: 'accent',
   customer: 'default',
 };
 
@@ -42,13 +42,13 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
     try {
       if (currentRoles.has(role)) {
         await unassignMutation.mutateAsync({ userId, roleName: role });
-        addToast({ title: 'Role removed', description: `Removed "${role}" from ${userName}`, severity: 'success' });
+        toast('Role removed', { description: `Removed "${role}" from ${userName}`, variant: 'success' });
       } else {
         await assignMutation.mutateAsync({ userId, roleName: role });
-        addToast({ title: 'Role assigned', description: `Assigned "${role}" to ${userName}`, severity: 'success' });
+        toast('Role assigned', { description: `Assigned "${role}" to ${userName}`, variant: 'success' });
       }
     } catch {
-      addToast({ title: 'Error', description: 'Failed to update role', severity: 'danger' });
+      toast('Error', { description: 'Failed to update role', variant: 'danger' });
     }
   };
 
@@ -82,7 +82,7 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
                       <Chip
                         size="sm"
                         color={ROLE_COLORS[role]}
-                        variant={isAssigned ? 'solid' : 'bordered'}
+                        variant={isAssigned ? 'primary' : 'tertiary'}
                       >
                         {role}
                       </Chip>
@@ -92,7 +92,6 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
                       size="sm"
                       variant={isAssigned ? 'bordered' : 'light'}
                       color={isAssigned ? 'danger' : 'primary'}
-                      isLoading={isBusy}
                       isDisabled={isBusy}
                       onPress={() => handleToggle(role)}
                       icon={

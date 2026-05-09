@@ -84,7 +84,7 @@ export function StateInspector({
         label="Name"
         value={state.name}
         onValueChange={handleNameChange}
-        isReadOnly={readOnly}
+        readOnly={readOnly}
         labelPlacement="outside"
         size="sm"
       />
@@ -93,7 +93,7 @@ export function StateInspector({
         label="Slug"
         value={state.slug}
         onValueChange={slug => update({ slug })}
-        isReadOnly={readOnly}
+        readOnly={readOnly}
         labelPlacement="outside"
         size="sm"
         description="URL-safe identifier (auto-generated from name)"
@@ -103,7 +103,7 @@ export function StateInspector({
         label="Description"
         value={state.description ?? ''}
         onValueChange={desc => update({ description: desc || null })}
-        isReadOnly={readOnly}
+        readOnly={readOnly}
         labelPlacement="outside"
         size="sm"
         minRows={2}
@@ -111,32 +111,28 @@ export function StateInspector({
 
       <BaseSelect
         label="Category"
-        selectedKeys={new Set([String(state.category)])}
+        selectedKey={String(state.category)}
         onSelectionChange={keys => {
-          const first = Array.from(keys)[0];
+          const first = keys;
           if (first != null) update({ category: first as StateCategory });
         }}
         isDisabled={readOnly}
-        labelPlacement="outside"
         size="sm"
-        items={CATEGORY_ITEMS}
       >
-        {item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>}
+        {CATEGORY_ITEMS.map(item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>)}
       </BaseSelect>
 
       <BaseSelect
         label="Type"
-        selectedKeys={new Set([String(state.type)])}
+        selectedKey={String(state.type)}
         onSelectionChange={keys => {
-          const first = Array.from(keys)[0];
+          const first = keys;
           if (first != null) handleTypeChange(first as StateType);
         }}
         isDisabled={readOnly}
-        labelPlacement="outside"
         size="sm"
-        items={TYPE_ITEMS}
       >
-        {item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>}
+        {TYPE_ITEMS.map(item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>)}
       </BaseSelect>
 
       {/* Parallel spec editor — shown only when type is Parallel */}

@@ -11,7 +11,8 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { addToast } from '@heroui/react';
+import { toast } from '@heroui/react';
+
 import { NavLink, useNavigate } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -73,7 +74,7 @@ export function WorkflowListPage() {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'workflow_list_create_failed',
       });
-      addToast({ title: 'Failed to create workflow', severity: 'danger' });
+      toast('Failed to create workflow', { variant: 'danger' });
     }
   }
 
@@ -81,16 +82,12 @@ export function WorkflowListPage() {
     if (!pendingDeleteId) return;
     try {
       await deleteMutation.mutateAsync(pendingDeleteId);
-      addToast({ title: 'Workflow deleted', severity: 'success' });
+      toast('Workflow deleted', { variant: 'success' });
     } catch (err) {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'workflow_list_delete_failed',
       });
-      addToast({
-        title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Delete failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     } finally {
       setPendingDeleteId(null);
     }
@@ -275,8 +272,8 @@ export function WorkflowListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
+
+                  isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >
                   Create

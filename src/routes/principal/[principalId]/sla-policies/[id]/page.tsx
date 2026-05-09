@@ -13,7 +13,8 @@ import {
   PageSpinner,
 } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+import { toast } from '@heroui/react';
+
 import {
   useNavigate,
   useOutletContext,
@@ -69,7 +70,7 @@ function PrincipalSlaPolicyEditPage() {
       },
       {
         onSuccess: () => {
-          addToast({ title: 'SLA policy updated', severity: 'success' });
+          toast('SLA policy updated', { variant: 'success' });
           navigate(`/principal/${principalId}/sla-policies`);
         },
       },
@@ -131,8 +132,8 @@ function PrincipalSlaPolicyEditPage() {
         <BaseButton
           color="primary"
           onPress={handleSave}
-          isLoading={updateMutation.isPending}
-          isDisabled={!name.trim()}
+
+          isDisabled={updateMutation.isPending || !name.trim()}
         >
           Save changes
         </BaseButton>

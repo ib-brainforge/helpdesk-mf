@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useCallback, useState } from 'react';
 import { Icon } from '@brainforgeau/components/base';
-import { Card, Progress } from '@heroui/react';
+import { Card, ProgressBar } from '@heroui/react';
 import type { FileUploadProgress } from '@/types';
 
 interface FileUploadZoneProps {
@@ -151,9 +151,9 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
                 <span className="text-sm font-medium truncate">{file.fileName}</span>
                 <span className="text-xs text-gray-500">{file.progress}%</span>
               </div>
-              <Progress
+              <ProgressBar
                 value={file.progress}
-                color={file.status === 'error' ? 'danger' : 'primary'}
+                color={file.status === 'error' ? 'danger' : 'accent'}
                 size="sm"
               />
               {file.error && (

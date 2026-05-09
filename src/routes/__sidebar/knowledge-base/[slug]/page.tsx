@@ -1,6 +1,6 @@
 import { useParams, Link } from '@modern-js/runtime/router';
 import { Helmet } from '@modern-js/runtime/head';
-import { Card, Divider } from '@heroui/react';
+import { Card, Separator } from '@heroui/react';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
@@ -102,7 +102,7 @@ function KnowledgeBaseArticlePage() {
                 </div>
               )}
 
-              <Divider className="my-6" />
+              <Separator className="my-6" />
 
               {/* Article Body - HTML rendered */}
               <div
@@ -110,7 +110,7 @@ function KnowledgeBaseArticlePage() {
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
               />
 
-              <Divider className="my-6" />
+              <Separator className="my-6" />
 
               {/* Rating Section */}
               <div className="rounded bg-gray-50 p-6 text-center">
@@ -120,7 +120,7 @@ function KnowledgeBaseArticlePage() {
                     color="success"
                     variant="bordered"
                     onPress={() => handleRating(true)}
-                    isLoading={rateArticle.isPending}
+                    isDisabled={rateArticle.isPending}
                     icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
                   >
                     Yes ({article.ratingCount || 0})
@@ -129,7 +129,7 @@ function KnowledgeBaseArticlePage() {
                     color="danger"
                     variant="bordered"
                     onPress={() => handleRating(false)}
-                    isLoading={rateArticle.isPending}
+                    isDisabled={rateArticle.isPending}
                     icon={<Icon name="hand-thumb-down" className="h-5 w-5" />}
                   >
                     No

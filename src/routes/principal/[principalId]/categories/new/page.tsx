@@ -3,6 +3,7 @@
  */
 
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
+import { toast } from '@heroui/react';
 import {
   BaseButton,
   BaseInput,
@@ -12,7 +13,7 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+
 import {
   useNavigate,
   useOutletContext,
@@ -57,7 +58,7 @@ function PrincipalCategoryNewPage() {
       },
       {
         onSuccess: () => {
-          addToast({ title: 'Category created', severity: 'success' });
+          toast('Category created', { variant: 'success' });
           navigate(`/principal/${principalId}/categories`);
         },
       },
@@ -92,9 +93,9 @@ function PrincipalCategoryNewPage() {
         />
         <BaseSelect
           label="Access level"
-          selectedKeys={[accessLevel]}
+          selectedKey={accessLevel}
           onSelectionChange={keys => {
-            const val = Array.from(keys)[0];
+            const val = keys;
             if (val) setAccessLevel(String(val));
           }}
         >
@@ -108,8 +109,8 @@ function PrincipalCategoryNewPage() {
         <BaseButton
           color="primary"
           onPress={handleCreate}
-          isLoading={createMutation.isPending}
-          isDisabled={!name.trim()}
+
+          isDisabled={createMutation.isPending || !name.trim()}
         >
           Create
         </BaseButton>

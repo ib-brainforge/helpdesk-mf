@@ -1,4 +1,5 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { toast } from '@heroui/react';
 import { CannedResponseEditorModal } from '@/components/canned-responses/components/CannedResponseEditorModal';
 import {
   useCannedResponses,
@@ -10,7 +11,7 @@ import { CannedResponseScope } from '@/types/canned-response';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { addToast } from '@heroui/react';
+
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
@@ -49,17 +50,9 @@ function CannedResponsesPage() {
     if (!pendingDelete) return;
     try {
       await deleteMutation.mutateAsync(pendingDelete.id);
-      addToast({
-        title: 'Deleted',
-        description: 'Canned response deleted successfully',
-        severity: 'success',
-      });
+      toast('Deleted', { description: 'Canned response deleted successfully', variant: 'success' });
     } catch {
-      addToast({
-        title: 'Error',
-        description: 'Failed to delete canned response',
-        severity: 'danger',
-      });
+      toast('Error', { description: 'Failed to delete canned response', variant: 'danger' });
     } finally {
       setPendingDelete(null);
     }
@@ -67,11 +60,7 @@ function CannedResponsesPage() {
 
   const handleExportCSV = () => {
     // REVIEW: Export functionality to be implemented
-    addToast({
-      title: 'Coming soon',
-      description: 'CSV export will be available soon',
-      severity: 'warning',
-    });
+    toast('Coming soon', { description: 'CSV export will be available soon', variant: 'warning' });
   };
 
   const getScopeBadge = (scope: CannedResponseScope) => {

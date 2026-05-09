@@ -8,7 +8,7 @@ import {
   BaseInput,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Switch, addToast } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
 import { useAddIntegration, useUpdateIntegration } from '../hooks/useIntegrations';
 import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type { IntegrationConfigDto, IntegrationProviderMeta } from '@/types/integration';
@@ -86,7 +86,7 @@ export function IntegrationEditorModal({
             configJson: buildConfigJson(),
           },
         });
-        addToast({ title: 'Saved', description: `${provider.label} integration updated.`, severity: 'success' });
+        toast('Saved', { description: `${provider.label} integration updated.`, variant: 'success' });
       } else {
         await addMutation.mutateAsync({
           type: provider.type,
@@ -94,7 +94,7 @@ export function IntegrationEditorModal({
           isEnabled,
           configJson: buildConfigJson(),
         });
-        addToast({ title: 'Added', description: `${provider.label} integration configured.`, severity: 'success' });
+        toast('Added', { description: `${provider.label} integration configured.`, variant: 'success' });
       }
       onClose();
     } catch (err: unknown) {
@@ -102,7 +102,7 @@ export function IntegrationEditorModal({
       if (message?.includes('INTEGRATION_NAME_DUPLICATE')) {
         setNameError('An integration with this name already exists.');
       } else {
-        addToast({ title: 'Error', description: 'Failed to save integration.', severity: 'danger' });
+        toast('Error', { description: 'Failed to save integration.', variant: 'danger' });
       }
     }
   };
@@ -140,7 +140,7 @@ export function IntegrationEditorModal({
               <p className="text-sm font-medium">Enabled</p>
               <p className="text-xs text-default-500">When off, this integration will be skipped by the routing layer.</p>
             </div>
-            <Switch isSelected={isEnabled} onValueChange={setIsEnabled} size="sm" />
+            <Switch isSelected={isEnabled} onChange={setIsEnabled} />
           </div>
 
           {/* Provider-specific config fields */}
@@ -163,10 +163,10 @@ export function IntegrationEditorModal({
         </BaseModalBody>
 
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting}>
+          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting || isSubmitting}>
             Cancel
           </BaseButton>
-          <BaseButton color="primary" onPress={handleSubmit} isLoading={isSubmitting}>
+          <BaseButton color="primary" onPress={handleSubmit}>
             {isEditing ? 'Save Changes' : 'Add Integration'}
           </BaseButton>
         </BaseModalFooter>

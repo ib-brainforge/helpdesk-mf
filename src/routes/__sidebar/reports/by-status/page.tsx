@@ -3,7 +3,7 @@ import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody, Spinner } from '@heroui/react';
+import { Card, CardContent, Spinner } from '@heroui/react';
 import {
   BarChart,
   Bar,
@@ -98,7 +98,7 @@ function TicketsByStatusPage() {
       ) : (
         <>
           <Card className="mb-6">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <h2 className="text-sm font-semibold mb-4">Status Distribution</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={statuses.map((s) => ({ name: s.status, total: s.total }))}>
@@ -110,7 +110,7 @@ function TicketsByStatusPage() {
                   <Bar dataKey="total" name="Tickets" fill="#0070f3" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardBody>
+            </CardContent>
           </Card>
           <BaseTable table={table} isLoading={false} fullHeight={false} />
         </>

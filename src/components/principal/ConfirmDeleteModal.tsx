@@ -50,7 +50,7 @@ export function ConfirmDeleteModal({
                   onConfirm();
                   onModalClose();
                 }}
-                isLoading={isPending}
+                isDisabled={isPending}
               >
                 Delete
               </BaseButton>

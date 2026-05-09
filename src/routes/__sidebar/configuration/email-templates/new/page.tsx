@@ -7,7 +7,8 @@ import { z } from 'zod';
 import { BaseButton, BaseInput, BaseSelect, BaseSelectItem,
   ValidationAlert,
 } from '@brainforgeau/components';
-import { addToast, Switch, Textarea } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
+import { BaseTextarea } from '@brainforgeau/components';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { VariablePicker, NOTIFICATION_TYPE_LABELS } from '@/components/email-templates';
@@ -66,7 +67,7 @@ function NewEmailTemplatePage() {
       } as any);
     },
     onSuccess: () => {
-      addToast({ title: 'Email template created successfully', severity: 'success' });
+      toast('Email template created successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['email-templates'] });
       navigate('/configuration/email-templates');
     },
@@ -117,7 +118,7 @@ function NewEmailTemplatePage() {
             </BaseButton>
             <BaseButton
               color="primary"
-              isLoading={isSubmitting}
+              isDisabled={isSubmitting}
               onPress={() => form.handleSubmit()}
             >
               Create Template
@@ -161,9 +162,9 @@ function NewEmailTemplatePage() {
                     <BaseSelect
                       label="Notification Type"
                       isRequired
-                      selectedKeys={[String(field.state.value)]}
+                      selectedKey={String(field.state.value)}
                       onSelectionChange={(keys) => {
-                        const value = Number(keys.currentKey);
+                        const value = Number(keys);
                         field.handleChange(value);
                       }}
                       errorMessage={formatFormErrors(field.state.meta.errors)}
@@ -195,7 +196,7 @@ function NewEmailTemplatePage() {
 
               <form.Field name="body">
                 {(field) => (
-                  <Textarea
+                  <BaseTextarea
                     label="Email Body"
                     isRequired
                     name={field.name}
@@ -217,7 +218,7 @@ function NewEmailTemplatePage() {
                 {(field) => (
                   <Switch
                     isSelected={field.state.value}
-                    onValueChange={field.handleChange}
+                    onChange={field.handleChange}
                   >
                     Template is Active
                   </Switch>

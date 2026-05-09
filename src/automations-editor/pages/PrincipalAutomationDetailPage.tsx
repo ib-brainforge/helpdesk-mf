@@ -6,7 +6,7 @@
  */
 import { BaseButton } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Card, Chip, Spinner, addToast } from '@heroui/react';
+import { Card, Chip, Spinner, toast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -34,11 +34,11 @@ function formatDate(iso: string): string {
 
 function versionStatusBadge(isPublished: boolean) {
   return isPublished ? (
-    <Chip size="sm" color="success" variant="flat">
+    <Chip size="sm" color="success">
       Published
     </Chip>
   ) : (
-    <Chip size="sm" color="warning" variant="flat">
+    <Chip size="sm" color="warning">
       Draft
     </Chip>
   );
@@ -104,18 +104,14 @@ export function PrincipalAutomationDetailPage() {
         content: editableContent,
       });
       setIsDirty(false);
-      addToast({ title: 'Draft saved', severity: 'success' });
+      toast('Draft saved', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'principal_automation_detail_save_failed' });
       } else {
         logger.error('principal_automation_detail_save_failed');
       }
-      addToast({
-        title: 'Save failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Save failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
       throw err;
     }
   }
@@ -134,18 +130,14 @@ export function PrincipalAutomationDetailPage() {
         versionId: version.id,
       });
       setIsDirty(false);
-      addToast({ title: 'Automation published', severity: 'success' });
+      toast('Automation published', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'principal_automation_detail_publish_failed' });
       } else {
         logger.error('principal_automation_detail_publish_failed');
       }
-      addToast({
-        title: 'Publish failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
       throw err;
     }
   }
@@ -158,16 +150,12 @@ export function PrincipalAutomationDetailPage() {
         ruleId,
         versionId: version.id,
       });
-      addToast({ title: 'Version published', severity: 'success' });
+      toast('Version published', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'principal_automation_detail_publish_version_failed' });
       }
-      addToast({
-        title: 'Publish failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     }
   }
 
@@ -182,7 +170,7 @@ export function PrincipalAutomationDetailPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Spinner label="Loading automation..." />
+        <Spinner />
       </div>
     );
   }
@@ -243,7 +231,7 @@ export function PrincipalAutomationDetailPage() {
             <BaseButton
               size="sm"
               variant="bordered"
-              isLoading={isSaving}
+              isDisabled={isSaving}
               onPress={handleSaveDraft}
             >
               Save Draft
@@ -252,7 +240,7 @@ export function PrincipalAutomationDetailPage() {
           <BaseButton
             size="sm"
             color="primary"
-            isLoading={isPublishing}
+            isDisabled={isPublishing}
             onPress={handlePublish}
           >
             Publish
@@ -299,7 +287,7 @@ export function PrincipalAutomationDetailPage() {
 
             <div className="flex-1 space-y-4 overflow-y-auto p-4">
               {rule.versions.length > 0 && (
-                <Card shadow="none" className="border border-default-200">
+                <Card className="border border-default-200">
                   <div className="px-4 pt-4 pb-2">
                     <h3 className="text-sm font-semibold text-default-700">
                       All Versions
@@ -328,7 +316,7 @@ export function PrincipalAutomationDetailPage() {
                           size="sm"
                           variant="light"
                           color="success"
-                          isLoading={publishMutation.isPending}
+                          isDisabled={publishMutation.isPending}
                           onPress={() => handlePublishVersion(v)}
                         >
                           Publish

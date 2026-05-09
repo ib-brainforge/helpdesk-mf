@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BaseInput, BaseModal } from '@brainforgeau/components';
+import { BaseInput, BaseModal, BaseModalContent, BaseModalHeader, BaseModalBody, BaseModalFooter } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
 import { StatusBadge } from '@/components/shared';
@@ -69,14 +69,18 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Insert Canned Response"
       size="3xl"
     >
+      <BaseModalContent>
+        {(modalOnClose) => (
+          <>
+            <BaseModalHeader>Insert Canned Response</BaseModalHeader>
+            <BaseModalBody>
       <div className="flex flex-col gap-4">
         <BaseInput
           placeholder="Search canned responses..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onValueChange={setSearchTerm}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-default-400" />}
         />
 
@@ -175,12 +179,16 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t">
-          <BaseButton variant="bordered" onPress={onClose}>
-            Cancel
-          </BaseButton>
-        </div>
       </div>
+            </BaseModalBody>
+            <BaseModalFooter>
+              <BaseButton variant="bordered" onPress={modalOnClose}>
+                Cancel
+              </BaseButton>
+            </BaseModalFooter>
+          </>
+        )}
+      </BaseModalContent>
     </BaseModal>
   );
 };

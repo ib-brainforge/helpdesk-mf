@@ -40,7 +40,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleBold().run()}
         isIconOnly
         className={buttonClass}
-        title="Bold"
+        aria-label="Bold"
       >
         <strong>B</strong>
       </BaseButton>
@@ -50,7 +50,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleItalic().run()}
         isIconOnly
         className={buttonClass}
-        title="Italic"
+        aria-label="Italic"
       >
         <em>I</em>
       </BaseButton>
@@ -60,7 +60,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleStrike().run()}
         isIconOnly
         className={buttonClass}
-        title="Strikethrough"
+        aria-label="Strikethrough"
       >
         <s>S</s>
       </BaseButton>
@@ -70,7 +70,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleCode().run()}
         isIconOnly
         className={buttonClass}
-        title="Inline Code"
+        aria-label="Inline Code"
       >
         <code>&lt;&gt;</code>
       </BaseButton>
@@ -80,7 +80,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleHighlight().run()}
         isIconOnly
         className={buttonClass}
-        title="Highlight"
+        aria-label="Highlight"
       >
         <Icon name="pencil" className="h-4 w-4" />
       </BaseButton>
@@ -94,7 +94,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isIconOnly
         className={buttonClass}
-        title="Heading 1"
+        aria-label="Heading 1"
       >
         <span className="text-xs font-bold">H1</span>
       </BaseButton>
@@ -104,7 +104,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isIconOnly
         className={buttonClass}
-        title="Heading 2"
+        aria-label="Heading 2"
       >
         <span className="text-xs font-bold">H2</span>
       </BaseButton>
@@ -114,7 +114,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isIconOnly
         className={buttonClass}
-        title="Heading 3"
+        aria-label="Heading 3"
       >
         <span className="text-xs font-bold">H3</span>
       </BaseButton>
@@ -128,7 +128,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleBulletList().run()}
         isIconOnly
         className={buttonClass}
-        title="Bullet List"
+        aria-label="Bullet List"
       >
         <Icon name="list-bullet" className="h-4 w-4" />
       </BaseButton>
@@ -138,7 +138,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleOrderedList().run()}
         isIconOnly
         className={buttonClass}
-        title="Numbered List"
+        aria-label="Numbered List"
       >
         <span className="text-xs font-bold">1.</span>
       </BaseButton>
@@ -152,7 +152,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleBlockquote().run()}
         isIconOnly
         className={buttonClass}
-        title="Quote"
+        aria-label="Quote"
       >
         <Icon name="chat-bubble-left-right" className="h-4 w-4" />
       </BaseButton>
@@ -162,7 +162,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().toggleCodeBlock().run()}
         isIconOnly
         className={buttonClass}
-        title="Code Block"
+        aria-label="Code Block"
       >
         <span className="text-xs font-mono">{'{}'}</span>
       </BaseButton>
@@ -172,7 +172,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         onPress={() => editor.chain().focus().setHorizontalRule().run()}
         isIconOnly
         className={buttonClass}
-        title="Horizontal Rule"
+        aria-label="Horizontal Rule"
       >
         <Icon name="minus" className="h-4 w-4" />
       </BaseButton>
@@ -188,7 +188,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         }
         isIconOnly
         className={buttonClass}
-        title="Insert Table"
+        aria-label="Insert Table"
       >
         <Icon name="table-cells" className="h-4 w-4" />
       </BaseButton>
@@ -207,7 +207,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         }}
         isIconOnly
         className={buttonClass}
-        title="Add Link"
+        aria-label="Add Link"
       >
         <Icon name="link" className="h-4 w-4" />
       </BaseButton>
@@ -222,7 +222,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         isDisabled={!editor.can().undo()}
         isIconOnly
         className={buttonClass}
-        title="Undo"
+        aria-label="Undo"
       >
         <Icon name="arrow-uturn-left" className="h-4 w-4" />
       </BaseButton>
@@ -233,7 +233,7 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         isDisabled={!editor.can().redo()}
         isIconOnly
         className={buttonClass}
-        title="Redo"
+        aria-label="Redo"
       >
         <Icon name="arrow-uturn-right" className="h-4 w-4" />
       </BaseButton>

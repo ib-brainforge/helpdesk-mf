@@ -1,6 +1,7 @@
 import { BaseButton } from '@brainforgeau/components';
+import { toast } from '@heroui/react';
 import { useLogger } from '@brainforgeau/observability';
-import { addToast } from '@heroui/react';
+
 import { useState } from 'react';
 import { useValidateVersion } from '../state/workflowQueries';
 
@@ -58,7 +59,7 @@ export function WorkflowActionButtons({
       });
       if (result.isValid) {
         setValidationErrors([]);
-        addToast({ title: 'Validation passed', severity: 'success' });
+        toast('Validation passed', { variant: 'success' });
       } else {
         const errors = result.errors.map(e => e.message);
         setValidationErrors(errors);
@@ -72,11 +73,7 @@ export function WorkflowActionButtons({
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'workflow_validate_failed',
       });
-      addToast({
-        title: 'Validation request failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Validation request failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     }
   }
 
@@ -95,7 +92,7 @@ export function WorkflowActionButtons({
         size="sm"
         variant="bordered"
         onPress={handleValidate}
-        isLoading={validateMutation.isPending}
+        isDisabled={validateMutation.isPending}
       >
         Validate
       </BaseButton>
@@ -104,8 +101,7 @@ export function WorkflowActionButtons({
         variant="bordered"
         color="primary"
         onPress={handleSave}
-        isDisabled={!dirty}
-        isLoading={isSaving}
+        isDisabled={!dirty || isSaving}
       >
         Save Draft
       </BaseButton>
@@ -113,8 +109,7 @@ export function WorkflowActionButtons({
         size="sm"
         color="primary"
         onPress={handlePublish}
-        isDisabled={dirty}
-        isLoading={isPublishing}
+        isDisabled={dirty || isPublishing}
       >
         Publish
       </BaseButton>

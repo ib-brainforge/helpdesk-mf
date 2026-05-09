@@ -3,7 +3,7 @@ import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody, Spinner } from '@heroui/react';
+import { Card, CardContent, Spinner } from '@heroui/react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -17,10 +17,10 @@ import type { SlaPolicyComplianceDto } from '@/types';
 function StatCard({ label, value, color }: { label: string; value: string | number; color?: string }) {
   return (
     <Card>
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <p className="text-xs text-default-500 mb-1">{label}</p>
         <p className={`text-2xl font-semibold ${color ?? ''}`}>{value}</p>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

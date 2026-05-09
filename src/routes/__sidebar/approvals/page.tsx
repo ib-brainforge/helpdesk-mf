@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Card, CardBody } from '@heroui/react';
+import { Card, CardContent } from '@heroui/react';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { StatusBadge } from '@/components/shared';
@@ -58,7 +58,7 @@ function PendingApprovalsPage() {
 
       {items.length === 0 ? (
         <Card>
-          <CardBody>
+          <CardContent>
             <div className="text-center py-12">
               <Icon name="check-circle" className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Pending Approvals</h3>
@@ -66,13 +66,13 @@ function PendingApprovalsPage() {
                 You don't have any approvals waiting for your decision.
               </p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
           {items.map((approval) => (
-            <Card key={approval.approvalId} shadow="sm" isPressable>
-              <CardBody className="p-6">
+            <Card key={approval.approvalId}>
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -110,7 +110,7 @@ function PendingApprovalsPage() {
                     </BaseButton>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>

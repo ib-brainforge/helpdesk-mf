@@ -5,11 +5,12 @@
  */
 
 import { useState } from 'react';
+import { toast } from '@heroui/react';
 import { PageSpinner, BaseButton, BaseInput, BaseTextarea } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
-import { addToast } from '@heroui/react';
+
 
 function NewPrincipalTicketPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -25,10 +26,10 @@ function NewPrincipalTicketPage() {
 
     try {
       await createMutation.mutateAsync({ subject, description });
-      addToast({ title: 'Ticket created', color: 'success' });
+      toast('Ticket created');
       navigate(`/principal/${principalId}/tickets`);
     } catch {
-      addToast({ title: 'Failed to create ticket', color: 'danger' });
+      toast('Failed to create ticket');
     }
   };
 
@@ -64,8 +65,8 @@ function NewPrincipalTicketPage() {
           <BaseButton
             type="submit"
             color="primary"
-            isDisabled={!subject.trim()}
-            isLoading={createMutation.isPending}
+            isDisabled={createMutation.isPending || !subject.trim()}
+
           >
             Create Ticket
           </BaseButton>

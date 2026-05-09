@@ -12,7 +12,8 @@ import {
   DEFAULT_DAY_CONFIG,
 } from '@/types/live-chat';
 import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
-import { Card, CardBody, Switch, Textarea, addToast } from '@heroui/react';
+import { Card, CardContent, Switch, toast } from '@heroui/react';
+import { BaseTextarea } from '@brainforgeau/components';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
@@ -136,17 +137,9 @@ function LiveChatForm({
           : null,
         allowedDomains,
       });
-      addToast({
-        title: 'Saved',
-        description: 'Live chat settings saved.',
-        severity: 'success',
-      });
+      toast('Saved', { description: 'Live chat settings saved.', variant: 'success' });
     } catch {
-      addToast({
-        title: 'Error',
-        description: 'Failed to save live chat settings.',
-        severity: 'danger',
-      });
+      toast('Error', { description: 'Failed to save live chat settings.', variant: 'danger' });
     } finally {
       setIsSaving(false);
     }
@@ -158,11 +151,7 @@ function LiveChatForm({
       setScriptCopied(true);
       setTimeout(() => setScriptCopied(false), 2000);
     } catch {
-      addToast({
-        title: 'Error',
-        description: 'Failed to copy to clipboard.',
-        severity: 'danger',
-      });
+      toast('Error', { description: 'Failed to copy to clipboard.', variant: 'danger' });
     }
   };
 
@@ -170,7 +159,7 @@ function LiveChatForm({
     <div className="max-w-3xl space-y-6">
       {/* General Settings */}
       <Card>
-        <CardBody className="p-6 space-y-6">
+        <CardContent className="p-6 space-y-6">
           <h2 className="text-base font-semibold">General</h2>
 
           {/* Enable toggle */}
@@ -184,7 +173,7 @@ function LiveChatForm({
             </div>
             <Switch
               isSelected={isEnabled}
-              onValueChange={setIsEnabled}
+              onChange={setIsEnabled}
               size="sm"
             />
           </div>
@@ -207,7 +196,7 @@ function LiveChatForm({
               />
               <BaseInput
                 value={primaryColor}
-                onChange={e => setPrimaryColor(e.target.value)}
+                onValueChange={setPrimaryColor}
                 placeholder="#6366f1"
                 isDisabled={!isEnabled}
                 className="flex-1"
@@ -223,7 +212,7 @@ function LiveChatForm({
             <p className="text-xs text-default-500 mb-3">
               Shown to visitors before they start a conversation.
             </p>
-            <Textarea
+            <BaseTextarea
               value={greetingMessage}
               onValueChange={setGreetingMessage}
               placeholder="Hi! How can we help you today?"
@@ -232,12 +221,12 @@ function LiveChatForm({
               isDisabled={!isEnabled}
             />
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Business Hours */}
       <Card>
-        <CardBody className="p-6 space-y-4">
+        <CardContent className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold">Business hours</h2>
@@ -248,7 +237,7 @@ function LiveChatForm({
             </div>
             <Switch
               isSelected={useBusinessHours}
-              onValueChange={setUseBusinessHours}
+              onChange={setUseBusinessHours}
               size="sm"
               isDisabled={!isEnabled}
             />
@@ -267,7 +256,7 @@ function LiveChatForm({
                     <div className="w-24 flex items-center gap-2">
                       <Switch
                         isSelected={dayConfig.enabled}
-                        onValueChange={val => handleDayToggle(day, val)}
+                        onChange={val => handleDayToggle(day, val)}
                         size="sm"
                         isDisabled={!isEnabled}
                       />
@@ -301,12 +290,12 @@ function LiveChatForm({
               })}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Allowed Domains */}
       <Card>
-        <CardBody className="p-6 space-y-4">
+        <CardContent className="p-6 space-y-4">
           <div>
             <h2 className="text-base font-semibold">Allowed domains</h2>
             <p className="text-xs text-default-500 mt-1">
@@ -318,7 +307,7 @@ function LiveChatForm({
           <div className="flex items-center gap-2">
             <BaseInput
               value={newDomain}
-              onChange={e => setNewDomain(e.target.value)}
+              onValueChange={setNewDomain}
               placeholder="example.com"
               isDisabled={!isEnabled}
               className="flex-1"
@@ -356,19 +345,19 @@ function LiveChatForm({
               ))}
             </ul>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Save */}
       <div className="flex justify-start">
-        <BaseButton color="primary" onPress={handleSave} isLoading={isSaving}>
+        <BaseButton color="primary" onPress={handleSave} isDisabled={isSaving}>
           Save Settings
         </BaseButton>
       </div>
 
       {/* Embed Script */}
       <Card>
-        <CardBody className="p-6 space-y-4">
+        <CardContent className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold">Embed script</h2>
@@ -399,7 +388,7 @@ function LiveChatForm({
               : embedScript ||
                 '<!-- Enable live chat and save settings to generate the embed script -->'}
           </pre>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

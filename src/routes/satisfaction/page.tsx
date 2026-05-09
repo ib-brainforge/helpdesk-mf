@@ -1,8 +1,8 @@
 import { useState, useEffect, type FC } from 'react';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { Helmet } from '@modern-js/runtime/head';
-import { Card, Textarea } from '@heroui/react';
-import { BaseButton, Icon } from '@brainforgeau/components';
+import { Card } from '@heroui/react';
+import { BaseButton, BaseTextarea, Icon } from '@brainforgeau/components';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSubmitSatisfactionRating } from '@/hooks/useSatisfaction';
 
@@ -140,7 +140,7 @@ function SatisfactionSurveyPage() {
             </div>
 
             <div>
-              <Textarea
+              <BaseTextarea
                 label="Additional Comments (Optional)"
                 placeholder="Tell us more about your experience..."
                 value={comment}
@@ -153,8 +153,7 @@ function SatisfactionSurveyPage() {
             <div className="flex justify-center pt-2">
               <BaseButton
                 onClick={handleSubmit}
-                disabled={rating === 0 || submitMutation.isPending}
-                isLoading={submitMutation.isPending}
+                isDisabled={rating === 0 || submitMutation.isPending}
                 className="px-8"
               >
                 Submit Feedback

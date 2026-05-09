@@ -90,7 +90,6 @@ export const createApprovalWorkflowsColumns = ({
             <DropdownItem
               key="delete"
               className="text-danger"
-              color="danger"
               onPress={() => onDelete(row.original.id)}
             >
               Delete

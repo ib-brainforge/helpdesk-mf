@@ -35,7 +35,7 @@ import { StatusBadge } from '@/components/shared';
 import { usePrincipalTickets, useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
 import type { PrincipalOutletContext } from '../layout';
 import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
-import { useDisclosure, addToast } from '@heroui/react';
+import { useOverlayState, toast } from '@heroui/react';
 
 const columnHelper = createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
 
@@ -43,7 +43,10 @@ function PrincipalTicketsPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const timezone = useTimezone();
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const disclosureState = useOverlayState();
+  const isOpen = disclosureState.isOpen;
+  const onOpen = disclosureState.open;
+  const onOpenChange = disclosureState.setOpen;
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -148,12 +151,12 @@ function PrincipalTicketsPage() {
     if (!newSubject.trim()) return;
     try {
       await createMutation.mutateAsync({ subject: newSubject, description: newDescription });
-      addToast({ title: 'Ticket created', color: 'success' });
+      toast('Ticket created');
       setNewSubject('');
       setNewDescription('');
       onClose();
     } catch {
-      addToast({ title: 'Failed to create ticket', color: 'danger' });
+      toast('Failed to create ticket');
     }
   };
 
@@ -218,8 +221,8 @@ function PrincipalTicketsPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isDisabled={!newSubject.trim()}
-                  isLoading={createMutation.isPending}
+                  isDisabled={createMutation.isPending || !newSubject.trim()}
+
                   onPress={() => handleCreate(onClose)}
                 >
                   Create

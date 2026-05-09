@@ -1,4 +1,5 @@
 import { type FC, useState, useCallback, useMemo, useEffect } from 'react';
+import { toast } from '@heroui/react';
 import {
   BaseModal,
   BaseModalContent,
@@ -14,7 +15,7 @@ import {
   BaseAutocompleteItem,
   BaseAvatar,
 } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
+
 import { useCreateTicket } from '../hooks/useTickets';
 import { TicketPriority, type CreateTicketDto } from '@/types/ticket';
 import { TagInput } from '@/components/tags/TagInput';
@@ -72,19 +73,11 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
 
   const handleCreate = useCallback(async () => {
     if (!subject.trim()) {
-      addToast({
-        title: 'Subject required',
-        description: 'Please enter a ticket subject',
-        severity: 'warning',
-      });
+      toast('Subject required', { description: 'Please enter a ticket subject', variant: 'warning' });
       return;
     }
     if (!description.trim()) {
-      addToast({
-        title: 'Description required',
-        description: 'Please enter a ticket description',
-        severity: 'warning',
-      });
+      toast('Description required', { description: 'Please enter a ticket description', variant: 'warning' });
       return;
     }
 
@@ -100,11 +93,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
 
       const result: any = await createTicketMutation.mutateAsync(dto);
 
-      addToast({
-        title: 'Ticket created',
-        description: `Ticket "${subject}" has been created`,
-        severity: 'success',
-      });
+      toast('Ticket created', { description: `Ticket "${subject}" has been created`, variant: 'success' });
 
       resetForm();
       onClose();
@@ -113,11 +102,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
         onCreated?.(result.id);
       }
     } catch (error) {
-      addToast({
-        title: 'Failed to create ticket',
-        description: error instanceof Error ? error.message : 'An error occurred',
-        severity: 'danger',
-      });
+      toast('Failed to create ticket', { description: error instanceof Error ? error.message : 'An error occurred', variant: 'danger' });
     }
   }, [subject, description, priority, categoryId, assigneeId, selectedTags, createTicketMutation, resetForm, onClose, onCreated]);
 
@@ -153,9 +138,9 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
               <BaseSelect
                 label="Priority"
                 isRequired
-                selectedKeys={new Set([priority])}
+                selectedKey={priority}
                 onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string;
+                  const value = keys as string;
                   setPriority(value as TicketPriority);
                 }}
               >
@@ -260,7 +245,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
           <BaseButton
             color="primary"
             onPress={handleCreate}
-            isLoading={createTicketMutation.isPending}
+            isDisabled={createTicketMutation.isPending}
           >
             Create Ticket
           </BaseButton>

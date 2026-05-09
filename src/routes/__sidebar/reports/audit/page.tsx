@@ -3,7 +3,7 @@ import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Pagination, Spinner } from '@heroui/react';
+import { Spinner } from '@heroui/react';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import {
@@ -174,7 +174,11 @@ function AuditLogPage() {
           <BaseTable table={table} isLoading={false} fullHeight={false} />
           {totalPages > 1 && (
             <div className="mt-4 flex justify-center">
-              <Pagination total={totalPages} page={page} onChange={setPage} showControls />
+              <div className="flex items-center gap-2">
+                <BaseButton size="sm" variant="bordered" isDisabled={page <= 1} onPress={() => setPage(p => p - 1)}>Prev</BaseButton>
+                <span className="text-sm">{page} / {totalPages}</span>
+                <BaseButton size="sm" variant="bordered" isDisabled={page >= totalPages} onPress={() => setPage(p => p + 1)}>Next</BaseButton>
+              </div>
             </div>
           )}
           {report && (

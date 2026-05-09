@@ -174,7 +174,7 @@ export function VersionDiffViewer({
                     <Chip
                       size="sm"
                       color={chipColor(d.type)}
-                      variant="flat"
+                     
                       className="flex-shrink-0 mt-0.5"
                     >
                       {chipLabel(d.type)}
@@ -211,7 +211,7 @@ export function VersionDiffViewer({
                     <Chip
                       size="sm"
                       color={chipColor(d.type)}
-                      variant="flat"
+                     
                       className="flex-shrink-0 mt-0.5"
                     >
                       {chipLabel(d.type)}

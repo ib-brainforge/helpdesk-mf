@@ -52,9 +52,9 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
           <div className="space-y-4">
             <BaseSelect
               label="Link Type"
-              selectedKeys={new Set([linkType])}
+              selectedKey={linkType}
               onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
+                const value = keys as string;
                 setLinkType(value);
               }}
             >

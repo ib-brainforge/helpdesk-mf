@@ -1,5 +1,5 @@
 import { Icon } from '@brainforgeau/components';
-import { Card, CardBody, Skeleton } from '@heroui/react';
+import { Card, CardContent, Skeleton } from '@heroui/react';
 import { memo } from 'react';
 
 export type SummaryCardVariant = 'default' | 'success' | 'danger' | 'warning' | 'info';
@@ -43,7 +43,7 @@ export const SummaryCard = memo<SummaryCardProps>(
     return (
       <Card className="relative overflow-hidden rounded-[4px] border border-default-200 bg-white shadow-[0_1px_0_rgba(9,30,66,0.08)] dark:border-default-100 dark:bg-default-50/60">
         <div className={`absolute inset-x-0 top-0 h-1 ${styles.accent}`} />
-        <CardBody className="flex flex-col gap-3">
+        <CardContent className="flex flex-col gap-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col">
               <span className="text-xs font-semibold uppercase tracking-wide text-default-600">
@@ -64,7 +64,7 @@ export const SummaryCard = memo<SummaryCardProps>(
               </div>
             )}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }

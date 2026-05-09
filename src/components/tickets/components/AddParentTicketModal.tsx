@@ -65,7 +65,7 @@ export const AddParentTicketModal: FC<AddParentTicketModalProps> = ({
           <BaseButton
             variant="bordered"
             onPress={onClose}
-            isDisabled={isLoading}
+            isDisabled={isLoading || isLoading}
           >
             Cancel
           </BaseButton>
@@ -73,7 +73,7 @@ export const AddParentTicketModal: FC<AddParentTicketModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!trimmed || isInvalid}
-            isLoading={isLoading}
+
           >
             Set Parent
           </BaseButton>

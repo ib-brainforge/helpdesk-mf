@@ -1,6 +1,6 @@
 import { type FC, useState, useCallback } from 'react';
 import { BaseButton, Icon, BaseInput, BaseSelect, BaseSelectItem, BaseTextarea } from '@brainforgeau/components';
-import { Switch, Card, CardBody } from '@heroui/react';
+import { Switch, Card, CardContent } from '@heroui/react';
 import { ApprovalMode, type ApprovalWorkflowStepDto } from '@/types/approval';
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
@@ -137,13 +137,13 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
 
           <BaseInput
             label="Workflow Name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onValueChange={setName}
             isRequired
             placeholder="Enter workflow name"
           />
@@ -151,14 +151,14 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
           <BaseTextarea
             label="Description"
             value={description}
-            onValueChange={(value) => setDescription(value || '')}
+            onValueChange={v => setDescription(v || '')}
             placeholder="Optional description"
             minRows={3}
           />
 
           <BaseSelect
             label="Category"
-            selectedKeys={categoryId ? [categoryId] : []}
+            selectedKey={categoryId ? categoryId : null}
             onSelectionChange={(keys) => {
               const selected = Array.from(keys as Set<string>)[0];
               setCategoryId(selected || '');
@@ -175,7 +175,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
           <BaseSelect
             label="Approval Mode"
-            selectedKeys={[approvalMode.toString()]}
+            selectedKey={approvalMode.toString()}
             onSelectionChange={(keys) => {
               const selected = Array.from(keys as Set<string>)[0];
               setApprovalMode(Number.parseInt(selected) as ApprovalMode);
@@ -195,7 +195,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
               <p className="font-medium">Active</p>
               <p className="text-xs text-gray-500">Enable this workflow</p>
             </div>
-            <Switch isSelected={isActive} onValueChange={setIsActive} />
+            <Switch isSelected={isActive} onChange={setIsActive} />
           </div>
 
           <div className="flex items-center justify-between">
@@ -205,13 +205,13 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                 Automatically trigger when ticket is created in this category
               </p>
             </div>
-            <Switch isSelected={triggerOnCreation} onValueChange={setTriggerOnCreation} />
+            <Switch isSelected={triggerOnCreation} onChange={setTriggerOnCreation} />
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Approval Steps</h3>
             <BaseButton
@@ -233,8 +233,8 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
           <div className="space-y-3">
             {steps.map((step, index) => (
-              <Card key={index} shadow="sm">
-                <CardBody className="space-y-3">
+              <Card key={index}>
+                <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">Step {index + 1}</span>
                     <div className="flex items-center gap-1">
@@ -265,7 +265,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                   <BaseInput
                     label="Step Name"
                     value={step.name}
-                    onChange={(e) => handleUpdateStep(index, { name: e.target.value })}
+                    onValueChange={(v) => handleUpdateStep(index, { name: v })}
                     isRequired
                     placeholder="e.g., Manager Approval"
                     size="sm"
@@ -273,7 +273,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
                   <BaseSelect
                     label="Approver"
-                    selectedKeys={step.approverUserId ? [step.approverUserId] : []}
+                    selectedKey={step.approverUserId ? step.approverUserId : null}
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys as Set<string>)[0];
                       handleUpdateStep(index, {
@@ -296,9 +296,9 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                       label="Timeout (hours)"
                       type="number"
                       value={step.timeoutHours?.toString() || ''}
-                      onChange={(e) =>
+                      onValueChange={(v) =>
                         handleUpdateStep(index, {
-                          timeoutHours: e.target.value ? Number.parseInt(e.target.value) : undefined,
+                          timeoutHours: v ? Number.parseInt(v) : undefined,
                         })
                       }
                       placeholder="Optional"
@@ -307,7 +307,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
                     <BaseSelect
                       label="Escalate To"
-                      selectedKeys={step.escalateToUserId ? [step.escalateToUserId] : []}
+                      selectedKey={step.escalateToUserId ? step.escalateToUserId : null}
                       onSelectionChange={(keys) => {
                         const selected = Array.from(keys as Set<string>)[0];
                         handleUpdateStep(index, {
@@ -336,23 +336,23 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     <Switch
                       size="sm"
                       isSelected={step.isRequired}
-                      onValueChange={(checked) =>
+                      onChange={(checked) =>
                         handleUpdateStep(index, { isRequired: checked })
                       }
                     />
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       <div className="flex items-center gap-3 justify-end">
-        <BaseButton variant="bordered" onPress={onCancel} isDisabled={isSubmitting}>
+        <BaseButton variant="bordered" onPress={onCancel} isDisabled={isSubmitting || isSubmitting}>
           Cancel
         </BaseButton>
-        <BaseButton type="submit" color="primary" isLoading={isSubmitting}>
+        <BaseButton type="submit" color="primary">
           {initialData ? 'Update Workflow' : 'Create Workflow'}
         </BaseButton>
       </div>

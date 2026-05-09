@@ -17,7 +17,7 @@ import {
   PageSpinner,
 } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast, useDisclosure } from '@heroui/react';
+import { useOverlayState, toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -50,7 +50,10 @@ function PrincipalApprovalsPage() {
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const isDeleteState = useOverlayState();
+  const isDeleteOpen = isDeleteState.isOpen;
+  const onDeleteOpen = isDeleteState.open;
+  const onDeleteClose = isDeleteState.close;
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
@@ -85,7 +88,7 @@ function PrincipalApprovalsPage() {
     if (!pendingDeleteId) return;
     deleteMutation.mutate(pendingDeleteId, {
       onSuccess: () => {
-        addToast({ title: 'Approval workflow deleted', severity: 'success' });
+        toast('Approval workflow deleted', { variant: 'success' });
         setPendingDeleteId(null);
       },
     });
@@ -141,7 +144,7 @@ function PrincipalApprovalsPage() {
             color="danger"
             variant="light"
             onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
+            isDisabled={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>

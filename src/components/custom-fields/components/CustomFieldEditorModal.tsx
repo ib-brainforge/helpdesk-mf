@@ -9,7 +9,7 @@ import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components'
 import { Icon } from '@brainforgeau/components/base';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import { addToast, Switch } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
@@ -93,10 +93,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
       }
     },
     onSuccess: () => {
-      addToast({
-        title: `Custom field ${isEdit ? 'updated' : 'created'} successfully`,
-        severity: 'success',
-      });
+      toast(`Custom field ${isEdit ? 'updated' : 'created'} successfully`, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-custom-fields'] });
       onClose();
     },
@@ -206,9 +203,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     label="Field Type"
                     placeholder="Select type"
                     isRequired
-                    selectedKeys={[String(field.state.value)]}
+                    selectedKey={String(field.state.value)}
                     onSelectionChange={(keys) => {
-                      const newValue = Number(keys.currentKey) as CustomFieldType;
+                      const newValue = Number(keys) as CustomFieldType;
                       field.handleChange(newValue);
                       setSelectedFieldType(newValue);
                     }}
@@ -228,9 +225,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     label="Usage Type"
                     placeholder="Select usage"
                     isRequired
-                    selectedKeys={[String(field.state.value)]}
+                    selectedKey={String(field.state.value)}
                     onSelectionChange={(keys) => {
-                      const newValue = Number(keys.currentKey) as CustomFieldUsageType;
+                      const newValue = Number(keys) as CustomFieldUsageType;
                       field.handleChange(newValue);
                     }}
                     errorMessage={formatFormErrors(field.state.meta.errors)}
@@ -250,9 +247,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                   label="Access Level"
                   placeholder="Select access level"
                   isRequired
-                  selectedKeys={[String(field.state.value)]}
+                  selectedKey={String(field.state.value)}
                   onSelectionChange={(keys) => {
-                    const newValue = Number(keys.currentKey) as AccessLevel;
+                    const newValue = Number(keys) as AccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
@@ -270,7 +267,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                 {(field) => (
                   <Switch
                     isSelected={field.state.value}
-                    onValueChange={(checked) => field.handleChange(checked)}
+                    onChange={(checked) => field.handleChange(checked)}
                   >
                     Required
                   </Switch>
@@ -281,7 +278,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                 {(field) => (
                   <Switch
                     isSelected={field.state.value}
-                    onValueChange={(checked) => field.handleChange(checked)}
+                    onChange={(checked) => field.handleChange(checked)}
                   >
                     Active
                   </Switch>
@@ -352,7 +349,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
               <BaseButton variant="bordered" onPress={handleClose} type="button">
                 Cancel
               </BaseButton>
-              <BaseButton type="submit" isLoading={mutation.isPending}>
+              <BaseButton type="submit" isDisabled={mutation.isPending}>
                 {isEdit ? 'Update' : 'Create'}
               </BaseButton>
             </div>

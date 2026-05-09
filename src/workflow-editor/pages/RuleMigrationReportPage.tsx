@@ -1,6 +1,6 @@
 import { BaseButton } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Card, Chip, Spinner, addToast } from '@heroui/react';
+import { Card, Chip, Spinner, toast } from '@heroui/react';
 import { useState } from 'react';
 import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import {
@@ -17,7 +17,7 @@ export function RuleMigrationReportPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Spinner label="Loading report..." />
+        <Spinner />
       </div>
     );
   }
@@ -25,42 +25,28 @@ export function RuleMigrationReportPage() {
   async function handleDryRun() {
     try {
       const r = await apply.mutateAsync(true);
-      addToast({
-        title: `Dry run complete: ${r.rulesScanned} rule(s) scanned, ${r.conditionsMigrated} condition(s) + ${r.actionsMigrated} action(s) would be migrated`,
-        severity: 'success',
-      });
+      toast(`Dry run complete: ${r.rulesScanned} rule(s) scanned, ${r.conditionsMigrated} condition(s) + ${r.actionsMigrated} action(s) would be migrated`, { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'rule_migration_dry_run_failed' });
       } else {
         logger.error('rule_migration_dry_run_failed');
       }
-      addToast({
-        title: 'Dry run failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Dry run failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     }
   }
 
   async function handleApply() {
     try {
       const r = await apply.mutateAsync(false);
-      addToast({
-        title: `Migration applied: ${r.conditionsMigrated} condition(s) and ${r.actionsMigrated} action(s) migrated`,
-        severity: 'success',
-      });
+      toast(`Migration applied: ${r.conditionsMigrated} condition(s) and ${r.actionsMigrated} action(s) migrated`, { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
         logger.captureError(err, { context: 'rule_migration_apply_failed' });
       } else {
         logger.error('rule_migration_apply_failed');
       }
-      addToast({
-        title: 'Migration failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Migration failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     }
   }
 
@@ -81,7 +67,7 @@ export function RuleMigrationReportPage() {
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
-            isDisabled={!hasRules || apply.isPending}
+            isDisabled={apply.isPending || !hasRules || apply.isPending}
             onPress={handleDryRun}
           >
             Dry Run
@@ -89,7 +75,7 @@ export function RuleMigrationReportPage() {
           <BaseButton
             color="primary"
             isDisabled={!hasRules || apply.isPending}
-            isLoading={apply.isPending}
+
             onPress={() => setApplyConfirmOpen(true)}
           >
             Apply Migration
@@ -147,13 +133,13 @@ export function RuleMigrationReportPage() {
                 )}
                 <div className="flex flex-wrap gap-1 mt-2">
                   {r.statusConditionCount > 0 && (
-                    <Chip size="sm" color="warning" variant="flat">
+                    <Chip size="sm" color="warning">
                       {r.statusConditionCount} status condition
                       {r.statusConditionCount !== 1 ? 's' : ''}
                     </Chip>
                   )}
                   {r.mutatingActionTypes.map(t => (
-                    <Chip key={t} size="sm" color="danger" variant="flat">
+                    <Chip key={t} size="sm" color="danger">
                       {t}
                     </Chip>
                   ))}
@@ -163,7 +149,7 @@ export function RuleMigrationReportPage() {
                 <Chip
                   size="sm"
                   color={r.isEnabled ? 'success' : 'default'}
-                  variant="flat"
+                 
                 >
                   {r.isEnabled ? 'Enabled' : 'Disabled'}
                 </Chip>

@@ -1,5 +1,5 @@
-import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Checkbox, Textarea } from '@heroui/react';
+import { BaseInput, BaseSelect, BaseSelectItem, BaseTextarea } from '@brainforgeau/components';
+import { Checkbox } from '@heroui/react';
 import { useMemo } from 'react';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 import { CustomFieldType } from '@/types/custom-field';
@@ -64,8 +64,8 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
         return (
           <BaseInput
             value={value?.stringValue ?? ''}
-            onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            onValueChange={(v) => onChange({ textValue: v })}
+            readOnly={readOnly}
             placeholder={`Enter ${field.name.toLowerCase()}`}
             isInvalid={!!error}
             errorMessage={error}
@@ -75,10 +75,10 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
 
       case CustomFieldType.MultilineText:
         return (
-          <Textarea
+          <BaseTextarea
             value={value?.stringValue ?? ''}
-            onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            onValueChange={(v) => onChange({ textValue: v })}
+            readOnly={readOnly}
             minRows={4}
             placeholder={`Enter ${field.name.toLowerCase()}`}
             isInvalid={!!error}
@@ -95,11 +95,10 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseInput
             type="number"
             value={value?.numericValue !== undefined ? String(value.numericValue) : ''}
-            onChange={(e) => {
-              const val = e.target.value;
-              onChange({ numericValue: val ? Number(val) : undefined });
+            onValueChange={(v) => {
+              onChange({ numericValue: v ? Number(v) : undefined });
             }}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             placeholder="0"
             isInvalid={!!error}
             errorMessage={error}
@@ -114,11 +113,10 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseInput
             type="date"
             value={value?.dateValue ? value.dateValue.split('T')[0] : ''}
-            onChange={(e) => {
-              const dateStr = e.target.value;
-              onChange({ dateValue: dateStr ? new Date(dateStr).toISOString() : undefined });
+            onValueChange={(v) => {
+              onChange({ dateValue: v ? new Date(v).toISOString() : undefined });
             }}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             isInvalid={!!error}
             errorMessage={error}
             isRequired={field.isRequired}
@@ -129,7 +127,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
         return (
           <Checkbox
             isSelected={value?.booleanValue ?? false}
-            onValueChange={(checked) => onChange({ booleanValue: checked })}
+            onChange={(checked) => onChange({ booleanValue: checked })}
             isDisabled={readOnly}
             isInvalid={!!error}
           >
@@ -144,7 +142,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
             placeholder="-- Select --"
             selectedKeys={value?.selectedOptionId ? [value.selectedOptionId] : []}
             onSelectionChange={(keys) => {
-              const selectedKey = keys.currentKey || null;
+              const selectedKey = keys || null;
               onChange({ selectedOptionId: selectedKey });
             }}
             isDisabled={readOnly}
@@ -204,7 +202,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
             type="url"
             value={value?.stringValue ?? ''}
             onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             placeholder="https://..."
             isInvalid={!!error}
             errorMessage={error}
@@ -218,7 +216,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
             type="email"
             value={value?.stringValue ?? ''}
             onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             placeholder="email@example.com"
             isInvalid={!!error}
             errorMessage={error}

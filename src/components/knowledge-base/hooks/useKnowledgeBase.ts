@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@heroui/react';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -10,7 +11,7 @@ import type {
   UpdateKnowledgeBaseArticleDto,
 } from '@/types';
 import { KnowledgeBaseStatus } from '@/types';
-import { addToast } from '@heroui/react';
+
 
 export const useKnowledgeBaseCategories = () => {
   return useQuery<KnowledgeBaseCategoryDto[]>({
@@ -84,7 +85,7 @@ export const useCreateKnowledgeBaseArticle = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'articles'] });
-      addToast({ title: 'Article created successfully', severity: 'success' });
+      toast('Article created successfully', { variant: 'success' });
     },
   });
 };
@@ -109,7 +110,7 @@ export const useUpdateKnowledgeBaseArticle = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'articles'] });
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', variables.id] });
-      addToast({ title: 'Article updated successfully', severity: 'success' });
+      toast('Article updated successfully', { variant: 'success' });
     },
   });
 };
@@ -128,7 +129,7 @@ export const usePublishKnowledgeBaseArticle = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'articles'] });
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', id] });
-      addToast({ title: 'Article published successfully', severity: 'success' });
+      toast('Article published successfully', { variant: 'success' });
     },
   });
 };
@@ -145,10 +146,10 @@ export const useRateKnowledgeBaseArticle = () => {
     onSuccess: (_, { articleId }) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article', articleId] });
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', articleId] });
-      addToast({ title: 'Thank you for your feedback!', severity: 'success' });
+      toast('Thank you for your feedback!', { variant: 'success' });
     },
     onError: () => {
-      addToast({ title: 'Failed to submit rating', severity: 'danger' });
+      toast('Failed to submit rating', { variant: 'danger' });
     },
   });
 };
@@ -187,10 +188,10 @@ export const useImportKb = () => {
       const message = result.isPartial
         ? `Imported ${result.articlesImported} articles, ${result.categoriesImported} categories (${result.errors.length} errors)`
         : `Imported ${result.articlesImported} articles and ${result.categoriesImported} categories successfully`;
-      addToast({ title: 'Import complete', description: message, severity: result.isPartial ? 'warning' : 'success' });
+      toast('Import complete', { description: message, variant: result.isPartial ? 'warning' : 'success' });
     },
     onError: () => {
-      addToast({ title: 'Import failed', description: 'Failed to import KB content', severity: 'danger' });
+      toast('Import failed', { description: 'Failed to import KB content', variant: 'danger' });
     },
   });
 };
@@ -215,10 +216,10 @@ export const useExportKb = () => {
       window.URL.revokeObjectURL(url);
     },
     onSuccess: () => {
-      addToast({ title: 'Export complete', description: 'KB content downloaded successfully', severity: 'success' });
+      toast('Export complete', { description: 'KB content downloaded successfully', variant: 'success' });
     },
     onError: () => {
-      addToast({ title: 'Export failed', description: 'Failed to export KB content', severity: 'danger' });
+      toast('Export failed', { description: 'Failed to export KB content', variant: 'danger' });
     },
   });
 };
@@ -234,10 +235,10 @@ export const useDuplicateKbCategory = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });
-      addToast({ title: 'Category duplicated', description: 'Category copied successfully', severity: 'success' });
+      toast('Category duplicated', { description: 'Category copied successfully', variant: 'success' });
     },
     onError: () => {
-      addToast({ title: 'Duplication failed', description: 'Failed to duplicate category', severity: 'danger' });
+      toast('Duplication failed', { description: 'Failed to duplicate category', variant: 'danger' });
     },
   });
 };

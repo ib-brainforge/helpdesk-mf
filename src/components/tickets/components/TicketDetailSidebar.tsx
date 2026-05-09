@@ -158,9 +158,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           fallback={<StatusBadge color={statusConfig.color}>{statusConfig.label}</StatusBadge>}
         >
           <BaseSelect
-            selectedKeys={new Set([ticket.status?.toString() ?? ''])}
+            selectedKey={ticket.status?.toString() ?? ''}
             onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
+              const value = keys as string;
               onUpdate?.({ status: value as any });
             }}
             isDisabled={isUpdating}
@@ -180,9 +180,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           fallback={<StatusBadge color={priorityConfig.color}>{priorityConfig.label}</StatusBadge>}
         >
           <BaseSelect
-            selectedKeys={new Set([ticket.priority?.toString() ?? ''])}
+            selectedKey={ticket.priority?.toString() ?? ''}
             onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
+              const value = keys as string;
               onUpdate?.({ priority: value as any });
             }}
             isDisabled={isUpdating}
@@ -440,7 +440,6 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               placeholder="Select tags..."
               selectionMode="multiple"
               isVirtualized={true}
-              maxListboxHeight={300}
               selectedKeys={new Set(ticketTags?.map(t => t.id) ?? [])}
               onSelectionChange={(keys) => handleTagsChange(Array.from(keys) as string[])}
               isDisabled={isUpdating}

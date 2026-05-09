@@ -10,7 +10,7 @@ import {
   BaseSelectItem,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Switch, addToast } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
 import { useCreateCustomStatus, useUpdateCustomStatus } from '../hooks/useCustomStatuses';
 import { TicketStatus } from '@/types/custom-status';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
@@ -93,14 +93,14 @@ export function CustomStatusEditorModal({
           id: status.id,
           payload: { name: name.trim(), color, sortOrder, mapsToStatus, isClosed, isDefault, isActive },
         });
-        addToast({ title: 'Updated', description: 'Custom status updated successfully', severity: 'success' });
+        toast('Updated', { description: 'Custom status updated successfully', variant: 'success' });
       } else {
         await createMutation.mutateAsync({ name: name.trim(), color, sortOrder, mapsToStatus, isClosed, isDefault });
-        addToast({ title: 'Created', description: 'Custom status created successfully', severity: 'success' });
+        toast('Created', { description: 'Custom status created successfully', variant: 'success' });
       }
       onClose();
     } catch {
-      addToast({ title: 'Error', description: 'Failed to save custom status', severity: 'danger' });
+      toast('Error', { description: 'Failed to save custom status', variant: 'danger' });
     }
   };
 
@@ -146,9 +146,9 @@ export function CustomStatusEditorModal({
 
           <BaseSelect
             label="Maps to system status"
-            selectedKeys={[String(mapsToStatus)]}
+            selectedKey={String(mapsToStatus)}
             onSelectionChange={(keys) => {
-              const key = Array.from(keys)[0] as string;
+              const key = keys as string;
               setMapsToStatus(Number(key) as TicketStatus);
             }}
           >
@@ -163,7 +163,7 @@ export function CustomStatusEditorModal({
                 <p className="text-sm font-medium">Counts as closed</p>
                 <p className="text-xs text-default-500">Tickets with this status are counted as resolved in reports</p>
               </div>
-              <Switch isSelected={isClosed} onValueChange={setIsClosed} size="sm" />
+              <Switch isSelected={isClosed} onChange={setIsClosed} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -171,7 +171,7 @@ export function CustomStatusEditorModal({
                 <p className="text-sm font-medium">Default for new tickets</p>
                 <p className="text-xs text-default-500">New tickets will start with this status</p>
               </div>
-              <Switch isSelected={isDefault} onValueChange={setIsDefault} size="sm" />
+              <Switch isSelected={isDefault} onChange={setIsDefault} />
             </div>
 
             {isEditing && (
@@ -180,16 +180,16 @@ export function CustomStatusEditorModal({
                   <p className="text-sm font-medium">Active</p>
                   <p className="text-xs text-default-500">Inactive statuses are hidden from selection</p>
                 </div>
-                <Switch isSelected={isActive} onValueChange={setIsActive} size="sm" />
+                <Switch isSelected={isActive} onChange={setIsActive} />
               </div>
             )}
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting}>
+          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting || isSubmitting}>
             Cancel
           </BaseButton>
-          <BaseButton color="primary" onPress={handleSubmit} isLoading={isSubmitting}>
+          <BaseButton color="primary" onPress={handleSubmit}>
             {isEditing ? 'Save Changes' : 'Create Status'}
           </BaseButton>
         </BaseModalFooter>

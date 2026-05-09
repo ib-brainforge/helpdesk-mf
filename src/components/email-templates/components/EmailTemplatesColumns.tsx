@@ -70,7 +70,7 @@ export const createEmailTemplatesColumns = ({
           size="sm"
           isIconOnly
           onPress={() => onEdit(info.row.original.id)}
-          title="Edit"
+          aria-label="Edit"
         >
           <Icon name="pencil" className="h-4 w-4" />
         </BaseButton>
@@ -79,7 +79,7 @@ export const createEmailTemplatesColumns = ({
           size="sm"
           isIconOnly
           onPress={() => onDelete(info.row.original.id)}
-          title="Delete"
+          aria-label="Delete"
           color="danger"
         >
           <Icon name="trash" className="h-4 w-4" />

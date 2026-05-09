@@ -1,11 +1,4 @@
-import { BaseButton } from '@brainforgeau/components';
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@heroui/react';
+import { BaseButton, BaseModal, BaseModalContent, BaseModalBody, BaseModalHeader, BaseModalFooter } from '@brainforgeau/components';
 
 interface MarkSpamModalProps {
   isOpen: boolean;
@@ -21,16 +14,16 @@ export const MarkSpamModal: React.FC<MarkSpamModalProps> = ({
   isLoading = false,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalContent>
-        <ModalHeader>Mark As Spam</ModalHeader>
-        <ModalBody>
+    <BaseModal isOpen={isOpen} onClose={onClose} size="sm">
+      <BaseModalContent>
+        <BaseModalHeader>Mark As Spam</BaseModalHeader>
+        <BaseModalBody>
           <p className="text-default-600">
             This ticket will be marked as spam and removed from normal ticket
             views. You can view and restore spam tickets from the spam filter.
           </p>
-        </ModalBody>
-        <ModalFooter>
+        </BaseModalBody>
+        <BaseModalFooter>
           <BaseButton
             variant="bordered"
             onPress={onClose}
@@ -38,11 +31,11 @@ export const MarkSpamModal: React.FC<MarkSpamModalProps> = ({
           >
             Cancel
           </BaseButton>
-          <BaseButton color="warning" onPress={onConfirm} isLoading={isLoading}>
+          <BaseButton color="warning" onPress={onConfirm} isDisabled={isLoading}>
             Mark As Spam
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 };

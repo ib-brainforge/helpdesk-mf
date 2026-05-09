@@ -3,6 +3,7 @@
  */
 
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
+import { toast } from '@heroui/react';
 import {
   usePrincipalCategory,
   useUpdatePrincipalCategory,
@@ -16,7 +17,7 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+
 import {
   useNavigate,
   useOutletContext,
@@ -77,7 +78,7 @@ function PrincipalCategoryEditPage() {
       },
       {
         onSuccess: () => {
-          addToast({ title: 'Category updated', severity: 'success' });
+          toast('Category updated', { variant: 'success' });
           navigate(`/principal/${principalId}/categories`);
         },
       },
@@ -140,9 +141,9 @@ function PrincipalCategoryEditPage() {
         />
         <BaseSelect
           label="Access level"
-          selectedKeys={[accessLevel]}
+          selectedKey={accessLevel}
           onSelectionChange={keys => {
-            const val = Array.from(keys)[0];
+            const val = keys;
             if (val) setAccessLevel(String(val));
           }}
         >
@@ -156,8 +157,8 @@ function PrincipalCategoryEditPage() {
         <BaseButton
           color="primary"
           onPress={handleSave}
-          isLoading={updateMutation.isPending}
-          isDisabled={!name.trim()}
+
+          isDisabled={updateMutation.isPending || !name.trim()}
         >
           Save changes
         </BaseButton>

@@ -7,8 +7,9 @@ import {
   BaseModalFooter,
   BaseModalHeader,
 } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
+
 import { type FC, useEffect, useState } from 'react';
+import { toast } from '@heroui/react';
 import { useUpdateTicket } from '../hooks/useTickets';
 
 interface EditTicketModalProps {
@@ -49,19 +50,11 @@ export const EditTicketModal: FC<EditTicketModalProps> = ({
       },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Ticket updated',
-            description: 'Subject and description saved.',
-            severity: 'success',
-          });
+          toast('Ticket updated', { description: 'Subject and description saved.', variant: 'success' });
           onClose();
         },
         onError: () => {
-          addToast({
-            title: 'Error',
-            description: 'Failed to update ticket. Please try again.',
-            severity: 'danger',
-          });
+          toast('Error', { description: 'Failed to update ticket. Please try again.', variant: 'danger' });
         },
       },
     );
@@ -90,7 +83,7 @@ export const EditTicketModal: FC<EditTicketModalProps> = ({
           <BaseButton
             variant="bordered"
             onPress={onClose}
-            isDisabled={updateMutation.isPending}
+            isDisabled={updateMutation.isPending || updateMutation.isPending}
           >
             Cancel
           </BaseButton>
@@ -98,7 +91,7 @@ export const EditTicketModal: FC<EditTicketModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!subject.trim()}
-            isLoading={updateMutation.isPending}
+
           >
             Save
           </BaseButton>

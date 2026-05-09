@@ -18,7 +18,7 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Chip, addToast } from '@heroui/react';
+import { Chip, toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -41,11 +41,11 @@ function formatDate(iso: string): string {
 
 function publishedBadge(isPublished: boolean) {
   return isPublished ? (
-    <Chip size="sm" color="success" variant="flat">
+    <Chip size="sm" color="success">
       Published
     </Chip>
   ) : (
-    <Chip size="sm" color="warning" variant="flat">
+    <Chip size="sm" color="warning">
       Draft
     </Chip>
   );
@@ -109,7 +109,7 @@ export function RuleGraphsListPage() {
         err instanceof Error ? err : new Error(String(err)),
         { context: 'rule_graphs_list_create_failed' },
       );
-      addToast({ title: 'Failed to create rule graph', severity: 'danger' });
+      toast('Failed to create rule graph', { variant: 'danger' });
     }
   }
 
@@ -117,17 +117,13 @@ export function RuleGraphsListPage() {
     if (!pendingDeleteId || !projectId) return;
     try {
       await deleteMutation.mutateAsync({ projectId, ruleId: pendingDeleteId });
-      addToast({ title: 'Rule graph deleted', severity: 'success' });
+      toast('Rule graph deleted', { variant: 'success' });
     } catch (err) {
       logger.captureError(
         err instanceof Error ? err : new Error(String(err)),
         { context: 'rule_graphs_list_delete_failed' },
       );
-      addToast({
-        title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
-      });
+      toast('Delete failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
     } finally {
       setPendingDeleteId(null);
     }
@@ -301,8 +297,8 @@ export function RuleGraphsListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
+
+                  isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >
                   Create

@@ -44,7 +44,7 @@ export function ConfirmActionModal({
               </BaseButton>
               <BaseButton
                 color={destructive ? 'danger' : 'primary'}
-                isLoading={isLoading}
+                isDisabled={isLoading}
                 onPress={async () => {
                   try {
                     await onConfirm();

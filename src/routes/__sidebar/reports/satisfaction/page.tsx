@@ -152,7 +152,7 @@ function CSATReportPage() {
               placeholder="Select grouping"
               selectedKeys={groupBy ? new Set([groupBy]) : new Set<string>()}
               onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as CSATGroupBy | undefined;
+                const key = keys as CSATGroupBy | undefined;
                 setGroupBy(key);
               }}
               className="max-w-xs"

@@ -3,13 +3,14 @@
  */
 
 import { PageSpinner, BaseButton, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { toast } from '@heroui/react';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams, useNavigate } from '@modern-js/runtime/router';
 import { usePrincipalTicket, useUpdatePrincipalTicketStatus } from '@/hooks/usePrincipalTicket';
 import { StatusBadge } from '@/components/shared';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+
 
 function PrincipalTicketDetailPage() {
   const { principalId, ticketId } = useParams<{ principalId: string; ticketId: string }>();
@@ -53,9 +54,9 @@ function PrincipalTicketDetailPage() {
         ticketId: ticketId!,
         command: { newStatus: status as any },
       });
-      addToast({ title: 'Status updated', color: 'success' });
+      toast('Status updated');
     } catch {
-      addToast({ title: 'Failed to update status', color: 'danger' });
+      toast('Failed to update status');
     }
   };
 
@@ -82,9 +83,9 @@ function PrincipalTicketDetailPage() {
           <span className="text-xs text-muted-foreground uppercase tracking-wide">Status</span>
           <BaseSelect
             size="sm"
-            selectedKeys={ticket.status ? [ticket.status] : []}
+            selectedKey={ticket.status ? ticket.status : null}
             onSelectionChange={keys => {
-              const val = Array.from(keys)[0]?.toString();
+              const val = keys?.toString();
               if (val) handleStatusChange(val);
             }}
             className="w-40"

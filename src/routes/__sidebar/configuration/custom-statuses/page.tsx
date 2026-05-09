@@ -9,7 +9,7 @@ import type { CustomTicketStatusDto } from '@/types/custom-status';
 import { TicketStatus } from '@/types/custom-status';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Chip, Spinner, addToast } from '@heroui/react';
+import { Chip, Spinner, toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
@@ -50,17 +50,9 @@ function CustomStatusesPage() {
     if (!pendingDelete) return;
     try {
       await deleteMutation.mutateAsync(pendingDelete.id);
-      addToast({
-        title: 'Deleted',
-        description: 'Custom status deleted',
-        severity: 'success',
-      });
+      toast('Deleted', { description: 'Custom status deleted', variant: 'success' });
     } catch {
-      addToast({
-        title: 'Error',
-        description: 'Failed to delete custom status',
-        severity: 'danger',
-      });
+      toast('Error', { description: 'Failed to delete custom status', variant: 'danger' });
     } finally {
       setPendingDelete(null);
     }
@@ -159,17 +151,17 @@ function CustomStatusesPage() {
                       <span className="font-medium text-sm">{status.name}</span>
 
                       {status.isDefault && (
-                        <Chip size="sm" color="primary" variant="flat">
+                        <Chip size="sm" color="accent">
                           Default
                         </Chip>
                       )}
                       {status.isClosed && (
-                        <Chip size="sm" color="success" variant="flat">
+                        <Chip size="sm" color="success">
                           Counts as Closed
                         </Chip>
                       )}
                       {!status.isActive && (
-                        <Chip size="sm" color="default" variant="flat">
+                        <Chip size="sm" color="default">
                           Inactive
                         </Chip>
                       )}

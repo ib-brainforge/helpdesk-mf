@@ -1,11 +1,4 @@
-import { BaseButton } from '@brainforgeau/components';
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@heroui/react';
+import { BaseButton, BaseModal, BaseModalContent, BaseModalBody, BaseModalHeader, BaseModalFooter } from '@brainforgeau/components';
 
 interface DeleteTicketModalProps {
   isOpen: boolean;
@@ -21,16 +14,16 @@ export const DeleteTicketModal: React.FC<DeleteTicketModalProps> = ({
   isLoading = false,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalContent>
-        <ModalHeader>Delete Ticket</ModalHeader>
-        <ModalBody>
+    <BaseModal isOpen={isOpen} onClose={onClose} size="sm">
+      <BaseModalContent>
+        <BaseModalHeader>Delete Ticket</BaseModalHeader>
+        <BaseModalBody>
           <p className="text-default-600">
             This ticket will be moved to trash and can be restored within 30
             days from the audit log.
           </p>
-        </ModalBody>
-        <ModalFooter>
+        </BaseModalBody>
+        <BaseModalFooter>
           <BaseButton
             variant="bordered"
             onPress={onClose}
@@ -38,11 +31,11 @@ export const DeleteTicketModal: React.FC<DeleteTicketModalProps> = ({
           >
             Cancel
           </BaseButton>
-          <BaseButton color="danger" onPress={onConfirm} isLoading={isLoading}>
+          <BaseButton color="danger" onPress={onConfirm} isDisabled={isLoading}>
             Delete
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 };

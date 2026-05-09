@@ -1,7 +1,7 @@
 import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
 import { useState, useCallback, useEffect } from 'react';
-import { Switch, addToast } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CommentType } from '@/types/comment';
 import { CannedResponsePicker } from '@components/canned-responses';
@@ -75,10 +75,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
       }
     },
     onSuccess: () => {
-      addToast({
-        title: isInternalNote ? 'Internal note added' : 'Reply posted',
-        severity: 'success',
-      });
+      toast(isInternalNote ? 'Internal note added' : 'Reply added', { variant: 'success' });
       editor?.commands.clearContent();
       setPendingAttachments([]);
       setShowFileUpload(false);
@@ -112,16 +109,10 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
         const uploadedFiles = await uploadFiles(files, ticketId, undefined);
         if (uploadedFiles && Array.isArray(uploadedFiles)) {
           setPendingAttachments(prev => [...prev, ...uploadedFiles as unknown as AttachmentDto[]]);
-          addToast({
-            title: `${files.length} file(s) uploaded successfully`,
-            severity: 'success',
-          });
+          toast(`${files.length} file(s) uploaded successfully`, { variant: 'success' });
         }
       } catch (error) {
-        addToast({
-          title: 'Upload failed',
-          severity: 'danger',
-        });
+        toast('Upload failed', { variant: 'danger' });
       }
     },
     [ticketId, uploadFiles]
@@ -165,7 +156,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
           </BaseButton>
           <Switch
             isSelected={isInternalNote}
-            onValueChange={setIsInternalNote}
+            onChange={setIsInternalNote}
             size="sm"
           >
             Internal Note
@@ -190,7 +181,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
               onPress={() => editor.chain().focus().toggleBold().run()}
               isIconOnly
               className={`font-bold ${editor.isActive('bold') ? 'bg-default-200' : ''}`}
-              title="Bold"
+              aria-label="Bold"
             >
               B
             </BaseButton>
@@ -200,7 +191,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
               onPress={() => editor.chain().focus().toggleItalic().run()}
               isIconOnly
               className={`italic ${editor.isActive('italic') ? 'bg-default-200' : ''}`}
-              title="Italic"
+              aria-label="Italic"
             >
               I
             </BaseButton>
@@ -210,7 +201,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
               onPress={() => editor.chain().focus().toggleBulletList().run()}
               isIconOnly
               className={editor.isActive('bulletList') ? 'bg-default-200' : ''}
-              title="Bullet List"
+              aria-label="Bullet List"
             >
               •
             </BaseButton>
@@ -220,7 +211,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
               onPress={() => editor.chain().focus().toggleOrderedList().run()}
               isIconOnly
               className={editor.isActive('orderedList') ? 'bg-default-200' : ''}
-              title="Numbered List"
+              aria-label="Numbered List"
             >
               1.
             </BaseButton>
@@ -236,7 +227,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
               }}
               isIconOnly
               className={editor.isActive('link') ? 'bg-default-200' : ''}
-              title="Insert Link"
+              aria-label="Insert Link"
             >
               🔗
             </BaseButton>
@@ -308,8 +299,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
           <BaseButton
             size="sm"
             onPress={handleSubmit}
-            isLoading={mutation.isPending || isUploading}
-            isDisabled={!editor || editor.isEmpty}
+            isDisabled={mutation.isPending || isUploading || !editor || editor.isEmpty}
           >
             {isInternalNote ? 'Add Internal Note' : 'Send Reply'}
           </BaseButton>

@@ -17,7 +17,7 @@ import {
 } from '@brainforgeau/components';
 import type { HelpdeskApplicationSlaDTOsSlaPolicyDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast, useDisclosure } from '@heroui/react';
+import { useOverlayState, toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -39,7 +39,10 @@ function PrincipalSlaPoliciesPage() {
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const isDeleteState = useOverlayState();
+  const isDeleteOpen = isDeleteState.isOpen;
+  const onDeleteOpen = isDeleteState.open;
+  const onDeleteClose = isDeleteState.close;
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
@@ -74,7 +77,7 @@ function PrincipalSlaPoliciesPage() {
     if (!pendingDeleteId) return;
     deleteMutation.mutate(pendingDeleteId, {
       onSuccess: () => {
-        addToast({ title: 'SLA policy deleted', severity: 'success' });
+        toast('SLA policy deleted', { variant: 'success' });
         setPendingDeleteId(null);
       },
     });
@@ -124,7 +127,7 @@ function PrincipalSlaPoliciesPage() {
             color="danger"
             variant="light"
             onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
+            isDisabled={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>

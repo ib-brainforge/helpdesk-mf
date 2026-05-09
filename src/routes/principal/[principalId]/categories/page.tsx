@@ -18,7 +18,7 @@ import {
 } from '@brainforgeau/components';
 import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast, useDisclosure } from '@heroui/react';
+import { useOverlayState, toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -40,7 +40,10 @@ function PrincipalCategoriesPage() {
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const isDeleteState = useOverlayState();
+  const isDeleteOpen = isDeleteState.isOpen;
+  const onDeleteOpen = isDeleteState.open;
+  const onDeleteClose = isDeleteState.close;
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
 
@@ -75,7 +78,7 @@ function PrincipalCategoriesPage() {
     if (!pendingDeleteId) return;
     deleteMutation.mutate(pendingDeleteId, {
       onSuccess: () => {
-        addToast({ title: 'Category deleted', severity: 'success' });
+        toast('Category deleted', { variant: 'success' });
         setPendingDeleteId(null);
       },
     });
@@ -131,7 +134,7 @@ function PrincipalCategoriesPage() {
             color="danger"
             variant="light"
             onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
+            isDisabled={deleteMutation.isPending && pendingDeleteId === row.original.id}
           >
             Delete
           </BaseButton>

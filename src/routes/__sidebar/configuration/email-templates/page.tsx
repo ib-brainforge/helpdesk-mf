@@ -4,6 +4,7 @@ import {
   useEmailTemplatesTable,
 } from '@/components/email-templates';
 import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { toast } from '@heroui/react';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   BaseButton,
@@ -12,7 +13,7 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
-import { addToast } from '@heroui/react';
+
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useMutation } from '@tanstack/react-query';
@@ -31,10 +32,7 @@ function EmailTemplatesPage() {
       await client.v1AppSettingsIdDelete(templateId);
     },
     onSuccess: () => {
-      addToast({
-        title: 'Email template deleted successfully',
-        severity: 'success',
-      });
+      toast('Email template deleted successfully', { variant: 'success' });
       refetch();
     },
     onError: () => {

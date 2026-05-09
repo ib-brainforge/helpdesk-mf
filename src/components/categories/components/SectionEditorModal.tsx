@@ -8,7 +8,7 @@ import { BaseButton } from '@brainforgeau/components/button';
 import { BaseInput } from '@brainforgeau/components';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import { addToast, Switch } from '@heroui/react';
+import { Switch, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -49,10 +49,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
       }
     },
     onSuccess: () => {
-      addToast({
-        title: `Section ${isEdit ? 'updated' : 'created'} successfully`,
-        severity: 'success',
-      });
+      toast(`Section ${isEdit ? 'updated' : 'created'} successfully`, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
       onClose();
     },
@@ -138,7 +135,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
               {(field) => (
                 <Switch
                   isSelected={field.state.value}
-                  onValueChange={(checked) => field.handleChange(checked)}
+                  onChange={(checked) => field.handleChange(checked)}
                 >
                   Active
                 </Switch>
@@ -149,7 +146,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
               <BaseButton variant="bordered" onPress={handleClose} type="button">
                 Cancel
               </BaseButton>
-              <BaseButton type="submit" isLoading={mutation.isPending}>
+              <BaseButton type="submit" isDisabled={mutation.isPending}>
                 {isEdit ? 'Update' : 'Create'}
               </BaseButton>
             </div>

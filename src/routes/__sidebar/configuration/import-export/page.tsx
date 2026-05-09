@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Helmet } from '@modern-js/runtime/head';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody, addToast } from '@heroui/react';
+import { Card, CardContent, toast } from '@heroui/react';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AdminImportExportApi } from '@brainforgeau/helpdesk-client';
 
@@ -26,7 +26,7 @@ function ImportExportPage() {
   const handleImport = async () => {
     const file = fileInputRef.current?.files?.[0];
     if (!file) {
-      addToast({ title: 'No file selected', description: 'Please select a .zip file to import.', severity: 'warning' });
+      toast('No file selected', { description: 'Please select a .zip file to import.', variant: 'warning' });
       return;
     }
 
@@ -36,30 +36,18 @@ function ImportExportPage() {
       await client.v1AdminImportPost(file);
 
       // Should not reach here — backend returns 501
-      addToast({ title: 'Unexpected response', description: 'Please contact support.', severity: 'warning' });
+      toast('Unexpected response', { description: 'Please contact support.', variant: 'warning' });
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number; data?: { detail?: string } } })?.response?.status;
       const detail = (err as { response?: { status?: number; data?: { detail?: string } } })?.response?.data?.detail;
 
       if (status === 501) {
         // Expected — endpoint is not yet implemented
-        addToast({
-          title: 'Coming in a future release',
-          description: detail ?? NOT_IMPLEMENTED_COPY,
-          severity: 'warning',
-        });
+        toast('Coming in a future release', { description: detail ?? NOT_IMPLEMENTED_COPY, variant: 'warning' });
       } else if (status === 400) {
-        addToast({
-          title: 'Invalid file',
-          description: detail ?? 'Please upload a valid .zip archive.',
-          severity: 'danger',
-        });
+        toast('Invalid file', { description: detail ?? 'Please upload a valid .zip archive.', variant: 'danger' });
       } else {
-        addToast({
-          title: 'Error',
-          description: 'Something went wrong. Please try again or contact support.',
-          severity: 'danger',
-        });
+        toast('Error', { description: 'Something went wrong. Please try again or contact support.', variant: 'danger' });
       }
     } finally {
       setIsImporting(false);
@@ -76,23 +64,15 @@ function ImportExportPage() {
       await client.v1AdminExportGet();
 
       // Should not reach here — backend returns 501
-      addToast({ title: 'Unexpected response', description: 'Please contact support.', severity: 'warning' });
+      toast('Unexpected response', { description: 'Please contact support.', variant: 'warning' });
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number; data?: { detail?: string } } })?.response?.status;
       const detail = (err as { response?: { status?: number; data?: { detail?: string } } })?.response?.data?.detail;
 
       if (status === 501) {
-        addToast({
-          title: 'Coming in a future release',
-          description: detail ?? NOT_IMPLEMENTED_COPY,
-          severity: 'warning',
-        });
+        toast('Coming in a future release', { description: detail ?? NOT_IMPLEMENTED_COPY, variant: 'warning' });
       } else {
-        addToast({
-          title: 'Error',
-          description: 'Something went wrong. Please try again or contact support.',
-          severity: 'danger',
-        });
+        toast('Error', { description: 'Something went wrong. Please try again or contact support.', variant: 'danger' });
       }
     } finally {
       setIsExporting(false);
@@ -152,7 +132,7 @@ function ImportExportPage() {
 
         {/* Export card */}
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
                 <Icon name="arrow-up-tray" className="w-5 h-5 text-primary-600" />
@@ -168,7 +148,7 @@ function ImportExportPage() {
                     color="primary"
                     variant="bordered"
                     onPress={handleExport}
-                    isLoading={isExporting}
+                    isDisabled={isExporting}
                     startContent={!isExporting ? <Icon name="arrow-down-tray" className="w-4 h-4" /> : undefined}
                   >
                     Request export
@@ -176,12 +156,12 @@ function ImportExportPage() {
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Import card */}
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-success-50 flex items-center justify-center flex-shrink-0">
                 <Icon name="arrow-down-tray" className="w-5 h-5 text-success-600" />
@@ -216,7 +196,7 @@ function ImportExportPage() {
                     <BaseButton
                       color="primary"
                       onPress={handleImport}
-                      isLoading={isImporting}
+                      isDisabled={isImporting}
                       startContent={!isImporting ? <Icon name="arrow-up-tray" className="w-4 h-4" /> : undefined}
                     >
                       Upload and import
@@ -231,7 +211,7 @@ function ImportExportPage() {
                 )}
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
       </div>
