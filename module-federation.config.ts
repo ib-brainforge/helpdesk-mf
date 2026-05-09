@@ -15,13 +15,13 @@ export default createModuleFederationConfig({
       singleton: true,
       requiredVersion: '^19.2.5',
       strictVersion: true,
-      eager: false,
+      eager: true,
     },
     'react-dom': {
       singleton: true,
       requiredVersion: '^19.2.5',
       strictVersion: true,
-      eager: false,
+      eager: true,
     },
     // Components is not shared because it requires webpack SVG transformations
     // The navbar remote will bundle its own copy of components
