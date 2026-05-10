@@ -26,5 +26,5 @@
 @plugin './hero.ts';
 
 @source '../../node_modules/@brainforgeau/components/**/*.{js,ts,jsx,tsx}';
-@import '../../node_modules/@brainforgeau/theme/theme.css';
+@import '@brainforgeau/theme/theme.css';
 @import '../styles/tiptap.css';
