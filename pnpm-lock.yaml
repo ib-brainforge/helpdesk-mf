@@ -53,9 +53,6 @@ importers:
       '@modern-js/runtime':
         specifier: ^2.70.8
         version: 2.70.8(react-dom@19.2.6(react@19.2.6))(react-server-dom-webpack@19.2.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(webpack@5.105.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(esbuild@0.25.5)))(react@19.2.6)
-      '@module-federation/dts-plugin':
-        specifier: ^0.21.6
-        version: 0.21.6(typescript@5.7.3)
       '@module-federation/enhanced':
         specifier: ^0.21.6
         version: 0.21.6(@rspack/core@1.7.6(@swc/helpers@0.5.18))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3)(webpack@5.105.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(esbuild@0.25.5))
@@ -965,6 +962,9 @@ packages:
       react: ^19.2.5
       react-dom: ^19.2.5
       react-oidc-context: 3.3.0
+    peerDependenciesMeta:
+      '@brainforgeau/observability':
+        optional: true
 
   '@brainforgeau/theme@0.2.56-develop.aa58b59':
     resolution: {integrity: sha512-NkTjrwqloWKaS6KFtgGjBA5NrHu+JVYFxqzAXh7k9r6anGY2E8Fgg2kXb/1GQFzmYmVbqYFHHv223lIORa5BNw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/theme/0.2.56-develop.aa58b59/c01442a50e5eee2aa82de4822d01d26fdd58ae0b}
@@ -8453,11 +8453,12 @@ snapshots:
 
   '@brainforgeau/security@0.4.298-develop.cd2bb18(@brainforgeau/observability@0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@brainforgeau/observability': 0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       axios: 1.13.5
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       react-oidc-context: 3.3.0(oidc-client-ts@3.4.1)(react@19.2.6)
+    optionalDependencies:
+      '@brainforgeau/observability': 0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     transitivePeerDependencies:
       - debug
 

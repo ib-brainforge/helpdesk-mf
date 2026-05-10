@@ -7,6 +7,7 @@ const mfNavbarUrl = process.env.NODE_ENV === 'production'
 
 export default createModuleFederationConfig({
   name: 'helpdesk_mf',
+  dts: false,
   remotes: {
     '@brainforgeau/navbar': `navbar@${mfNavbarUrl}/remoteEntry.js`
   },

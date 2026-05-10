@@ -52,7 +52,6 @@
     "@microsoft/signalr": "^8.0.0",
     "@modern-js/plugin-bff": "^2.70.8",
     "@modern-js/runtime": "^2.70.8",
-    "@module-federation/dts-plugin": "^0.21.6",
     "@module-federation/enhanced": "^0.21.6",
     "@module-federation/modern-js": "^0.21.6",
     "@tanstack/react-form": "^1.29.3",
