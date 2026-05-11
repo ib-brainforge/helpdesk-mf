@@ -10,14 +10,15 @@ import {
 } from '@components/categories';
 
 import { Helmet } from '@modern-js/runtime/head';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
 
 function CategoriesPage() {
-  const { categories, sections, isLoading, refetchAll } = useCategoriesData();
+  const queryClient = useQueryClient();
+  const { categories, sections, isLoading } = useCategoriesData();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | undefined>(undefined);
@@ -30,7 +31,10 @@ function CategoriesPage() {
     },
     onSuccess: () => {
       toast('Category deleted successfully', { variant: 'success' });
-      refetchAll();
+      // Invalidate both queries: a deleted category may have been unsectioned,
+      // and the section's category count should also reflect the change.
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
     },
     onError: () => {
       // Error handled by global axios interceptor
@@ -44,7 +48,9 @@ function CategoriesPage() {
     },
     onSuccess: () => {
       toast('Section deleted successfully', { variant: 'success' });
-      refetchAll();
+      // Deleting a section may move its categories to unsectioned — invalidate both.
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
     },
     onError: () => {
       // Error handled by global axios interceptor

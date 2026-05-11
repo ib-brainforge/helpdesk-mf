@@ -51,6 +51,9 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
     onSuccess: () => {
       toast(`Section ${isEdit ? 'updated' : 'created'} successfully`, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
+      // Invalidate categories too: the hierarchy response embeds sectionName on each category.
+      // A section rename would leave stale sectionName values in the categories query cache.
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       onClose();
     },
     onError: () => {

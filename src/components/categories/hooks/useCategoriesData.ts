@@ -18,28 +18,47 @@ export const useDuplicateCategory = () => {
   });
 };
 
-// REVIEW: Using generated client types directly, flattening hierarchy into flat array for UI
+// Local shape of the CategoriesHierarchyDto returned by GET /v1/categories.
+// The backend returns both sectioned and unsectioned categories; both must be parsed.
+type CategoryItemDto = {
+  id?: string;
+  name?: string;
+  sectionId?: string;
+  sectionName?: string;
+  accessLevel?: number;
+  defaultAssigneeId?: string;
+  emailRoutingAddress?: string;
+  emailRoutingProtocol?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  customFieldIds?: string[];
+};
+
 type CategoryHierarchyDto = {
   sections?: Array<{
     id?: string;
     name?: string;
     sortOrder?: number;
     isActive?: boolean;
-    categories?: Array<{
-      id?: string;
-      name?: string;
-      sectionId?: string;
-      sectionName?: string;
-      accessLevel?: number;
-      defaultAssigneeId?: string;
-      emailRoutingAddress?: string;
-      emailRoutingProtocol?: string;
-      isActive?: boolean;
-      sortOrder?: number;
-      customFieldIds?: string[];
-    }>;
+    categories?: CategoryItemDto[];
   }>;
+  // Categories that belong to no section — must be included in the flat list
+  unsectionedCategories?: CategoryItemDto[];
 };
+
+const mapCategoryItem = (cat: CategoryItemDto, sectionName?: string): CategoryDto => ({
+  id: cat.id!,
+  name: cat.name!,
+  sectionId: cat.sectionId,
+  sectionName,
+  accessLevel: cat.accessLevel ?? 0,
+  defaultAssigneeId: cat.defaultAssigneeId,
+  emailRoutingAddress: cat.emailRoutingAddress,
+  emailRoutingProtocol: cat.emailRoutingProtocol,
+  isActive: cat.isActive ?? true,
+  sortOrder: cat.sortOrder ?? 0,
+  customFieldIds: cat.customFieldIds,
+});
 
 export const useCategoriesData = () => {
   const { data: hierarchyData, isLoading: isLoadingCategories, refetch: refetchCategories } = useQuery<CategoryDto[]>({
@@ -47,26 +66,23 @@ export const useCategoriesData = () => {
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesGet();
-      // Flatten hierarchy into flat array of categories
+      // Flatten hierarchy into a single array: sectioned categories first, then unsectioned.
       const hierarchy = data as CategoryHierarchyDto;
       const flatCategories: CategoryDto[] = [];
+
       hierarchy.sections?.forEach((section) => {
         section.categories?.forEach((cat) => {
-          flatCategories.push({
-            id: cat.id!,
-            name: cat.name!,
-            sectionId: cat.sectionId,
-            sectionName: section.name,
-            accessLevel: cat.accessLevel ?? 0,
-            defaultAssigneeId: cat.defaultAssigneeId,
-            emailRoutingAddress: cat.emailRoutingAddress,
-            emailRoutingProtocol: cat.emailRoutingProtocol,
-            isActive: cat.isActive ?? true,
-            sortOrder: cat.sortOrder ?? 0,
-            customFieldIds: cat.customFieldIds,
-          });
+          flatCategories.push(mapCategoryItem(cat, section.name));
         });
       });
+
+      // D23 fix: unsectionedCategories was ignored — categories created without a section
+      // were never included in the list, causing them to be invisible until a hard refresh
+      // that happened to bust the browser cache rather than the React Query cache.
+      hierarchy.unsectionedCategories?.forEach((cat) => {
+        flatCategories.push(mapCategoryItem(cat, undefined));
+      });
+
       return flatCategories;
     },
   });
