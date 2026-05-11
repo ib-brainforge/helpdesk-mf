@@ -48,7 +48,7 @@
     "@heroicons/react": "2.2.0",
     "@heroui/react": "^3.0.4",
     "@heroui/styles": "^3.0.4",
-    "@internationalized/date": "3.10.0",
+    "@internationalized/date": "^3.12.1",
     "@microsoft/signalr": "^8.0.0",
     "@modern-js/plugin-bff": "^2.70.8",
     "@modern-js/runtime": "^2.70.8",
