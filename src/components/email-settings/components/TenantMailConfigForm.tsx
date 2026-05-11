@@ -1,26 +1,26 @@
-import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  BaseButton,
-  BaseInput,
-  BaseSelect,
-  BaseSelectItem,
-  ValidationAlert,
-  Icon,
-} from '@brainforgeau/components';
-import { Card, CardContent, Switch, Spinner, toast } from '@heroui/react';
 import {
   getTenantMailConfig,
-  upsertTenantMailConfig,
   testTenantMailConfig,
+  upsertTenantMailConfig,
 } from '@/state/notificationApiClient';
 import {
   OutboundMailProtocol,
   type TenantMailConfigDto,
   type TenantMailConfigTestResult,
 } from '@/types/email';
+import {
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  Icon,
+  ValidationAlert,
+} from '@brainforgeau/components';
+import { Card, CardContent, Spinner, Switch, toast } from '@heroui/react';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { z } from 'zod';
 
 const QUERY_KEY = ['tenant-mail-config'] as const;
 
@@ -34,7 +34,11 @@ const tenantMailConfigSchema = z.object({
   /** Plaintext — null means "keep existing password" on update */
   password: z.string().nullable(),
   useSsl: z.boolean(),
-  fromEmail: z.string().email('Must be a valid email').nullable().or(z.literal('')),
+  fromEmail: z
+    .string()
+    .email('Must be a valid email')
+    .nullable()
+    .or(z.literal('')),
   fromName: z.string().nullable(),
 });
 
@@ -56,13 +60,16 @@ function buildDefaultValues(dto: TenantMailConfigDto | undefined): FormValues {
 
 function formatFormErrors(errors: any[]): string | undefined {
   if (!errors || errors.length === 0) return undefined;
-  return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+  return errors
+    .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+    .join(', ');
 }
 
 export function TenantMailConfigForm() {
   const queryClient = useQueryClient();
   const [submitErrors, setSubmitErrors] = useState<string[]>([]);
-  const [testResult, setTestResult] = useState<TenantMailConfigTestResult | null>(null);
+  const [testResult, setTestResult] =
+    useState<TenantMailConfigTestResult | null>(null);
   const [isTesting, setIsTesting] = useState(false);
 
   const { data: dto, isLoading } = useQuery<TenantMailConfigDto>({
@@ -72,14 +79,17 @@ export function TenantMailConfigForm() {
 
   const saveMutation = useMutation({
     mutationFn: upsertTenantMailConfig,
-    onSuccess: (updated) => {
+    onSuccess: updated => {
       queryClient.setQueryData(QUERY_KEY, updated);
       toast('Email settings saved', { variant: 'success' });
       form.reset(buildDefaultValues(updated));
       setSubmitErrors([]);
     },
     onError: (error: any) => {
-      const msg = error?.response?.data?.detail || error?.message || 'Failed to save settings';
+      const msg =
+        error?.response?.data?.detail ||
+        error?.message ||
+        'Failed to save settings';
       setSubmitErrors([msg]);
     },
   });
@@ -127,12 +137,19 @@ export function TenantMailConfigForm() {
       });
       setTestResult(result);
       if (result.success) {
-        toast(`Connection successful${result.latencyMs != null ? ` — ${result.latencyMs}ms` : ''}`, { variant: 'success' });
+        toast(
+          `Connection successful${result.latencyMs != null ? ` — ${result.latencyMs}ms` : ''}`,
+          { variant: 'success' },
+        );
       } else {
-        toast('Connection failed', { description: result.error ?? 'Unknown error', variant: 'danger' });
+        toast('Connection failed', {
+          description: result.error ?? 'Unknown error',
+          variant: 'danger',
+        });
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.detail || error?.message || 'Test failed';
+      const msg =
+        error?.response?.data?.detail || error?.message || 'Test failed';
       toast('Test failed', { description: msg, variant: 'danger' });
     } finally {
       setIsTesting(false);
@@ -150,14 +167,17 @@ export function TenantMailConfigForm() {
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={e => {
         e.preventDefault();
         e.stopPropagation();
         form.handleSubmit();
       }}
       className="max-w-2xl space-y-6"
     >
-      <ValidationAlert errors={submitErrors} onClose={() => setSubmitErrors([])} />
+      <ValidationAlert
+        errors={submitErrors}
+        onClose={() => setSubmitErrors([])}
+      />
 
       {/* Enable / Protocol */}
       <Card>
@@ -166,7 +186,7 @@ export function TenantMailConfigForm() {
 
           <div className="flex items-center gap-6">
             <form.Field name="isEnabled">
-              {(field) => (
+              {field => (
                 <Switch
                   isSelected={field.state.value}
                   onChange={field.handleChange}
@@ -178,19 +198,23 @@ export function TenantMailConfigForm() {
           </div>
 
           <form.Field name="outboundProtocol">
-            {(field) => (
+            {field => (
               <BaseSelect
                 label="Protocol"
                 className="max-w-xs"
                 selectedKey={String(field.state.value)}
-                onSelectionChange={(keys) =>
+                onSelectionChange={keys =>
                   field.handleChange(Number(keys) as OutboundMailProtocol)
                 }
                 errorMessage={formatFormErrors(field.state.meta.errors)}
                 isInvalid={field.state.meta.errors.length > 0}
               >
-                <BaseSelectItem key={String(OutboundMailProtocol.Smtp)}>SMTP</BaseSelectItem>
-                <BaseSelectItem key={String(OutboundMailProtocol.SendGrid)}>SendGrid</BaseSelectItem>
+                <BaseSelectItem key={String(OutboundMailProtocol.Smtp)}>
+                  SMTP
+                </BaseSelectItem>
+                <BaseSelectItem key={String(OutboundMailProtocol.SendGrid)}>
+                  SendGrid
+                </BaseSelectItem>
               </BaseSelect>
             )}
           </form.Field>
@@ -204,14 +228,14 @@ export function TenantMailConfigForm() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <form.Field name="outboundHost">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="Host"
                   className="md:col-span-2"
                   name={field.name}
                   value={field.state.value ?? ''}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
+                  onChange={e => field.handleChange(e.target.value || null)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                   placeholder="smtp.example.com"
@@ -220,15 +244,19 @@ export function TenantMailConfigForm() {
             </form.Field>
 
             <form.Field name="outboundPort">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="Port"
                   type="number"
                   name={field.name}
-                  value={field.state.value != null ? String(field.state.value) : ''}
+                  value={
+                    field.state.value != null ? String(field.state.value) : ''
+                  }
                   onBlur={field.handleBlur}
-                  onChange={(e) =>
-                    field.handleChange(e.target.value ? Number(e.target.value) : null)
+                  onChange={e =>
+                    field.handleChange(
+                      e.target.value ? Number(e.target.value) : null,
+                    )
                   }
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
@@ -239,8 +267,11 @@ export function TenantMailConfigForm() {
           </div>
 
           <form.Field name="useSsl">
-            {(field) => (
-              <Switch isSelected={field.state.value} onChange={field.handleChange}>
+            {field => (
+              <Switch
+                isSelected={field.state.value}
+                onChange={field.handleChange}
+              >
                 Use SSL / TLS
               </Switch>
             )}
@@ -255,13 +286,13 @@ export function TenantMailConfigForm() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <form.Field name="username">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="Username"
                   name={field.name}
                   value={field.state.value ?? ''}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
+                  onChange={e => field.handleChange(e.target.value || null)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                   placeholder="support@example.com"
@@ -270,7 +301,7 @@ export function TenantMailConfigForm() {
             </form.Field>
 
             <form.Field name="password">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label={
                     dto?.hasPassword
@@ -281,11 +312,15 @@ export function TenantMailConfigForm() {
                   name={field.name}
                   value={field.state.value ?? ''}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
+                  onChange={e => field.handleChange(e.target.value || null)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                   placeholder="••••••••"
-                  description={dto?.hasPassword ? 'A password is currently stored.' : undefined}
+                  description={
+                    dto?.hasPassword
+                      ? 'A password is currently stored.'
+                      : undefined
+                  }
                 />
               )}
             </form.Field>
@@ -300,14 +335,14 @@ export function TenantMailConfigForm() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <form.Field name="fromEmail">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="From email"
                   type="email"
                   name={field.name}
                   value={field.state.value ?? ''}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
+                  onChange={e => field.handleChange(e.target.value || null)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                   placeholder="helpdesk@example.com"
@@ -316,13 +351,13 @@ export function TenantMailConfigForm() {
             </form.Field>
 
             <form.Field name="fromName">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="From name"
                   name={field.name}
                   value={field.state.value ?? ''}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
+                  onChange={e => field.handleChange(e.target.value || null)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                   placeholder="Helpdesk Support"
@@ -367,7 +402,6 @@ export function TenantMailConfigForm() {
         <BaseButton
           variant="bordered"
           type="button"
-
           isDisabled={isTesting || saveMutation.isPending}
           onPress={handleTest}
           icon={<Icon name="signal" className="h-4 w-4" />}

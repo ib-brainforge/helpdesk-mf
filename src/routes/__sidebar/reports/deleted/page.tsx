@@ -1,64 +1,77 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Spinner } from '@heroui/react';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  type ColumnDef,
-  type SortingState,
-} from '@tanstack/react-table';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useDeletedTicketsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { DeletedTicketDto } from '@/types';
+import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
+import { Spinner } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import {
+  type ColumnDef,
+  type SortingState,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
 function DeletedTicketsPage() {
   const timezone = useTimezone();
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const { data: tickets = [], isLoading } = useDeletedTicketsReport(startDate, endDate);
+  const { data: tickets = [], isLoading } = useDeletedTicketsReport(
+    startDate,
+    endDate,
+  );
 
   const columns: ColumnDef<DeletedTicketDto, any>[] = useMemo(
     () => [
       {
         accessorKey: 'subject',
         header: 'Subject',
-        cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
+        cell: info => (
+          <span className="font-medium">{info.getValue() as string}</span>
+        ),
       },
       {
         accessorKey: 'entityDescription',
         header: 'Description',
-        cell: (info) => (
-          <span className="text-default-500 text-sm">{(info.getValue() as string | null) ?? '—'}</span>
+        cell: info => (
+          <span className="text-default-500 text-sm">
+            {(info.getValue() as string | null) ?? '—'}
+          </span>
         ),
       },
       {
         accessorKey: 'deletedAt',
         header: 'Deleted At',
-        cell: (info) => formatDateTime(info.getValue() as string, { timezone }),
+        cell: info => formatDateTime(info.getValue() as string, { timezone }),
       },
       {
         accessorKey: 'deletedByUserId',
         header: 'Deleted By',
-        cell: (info) => (
-          <span className="font-mono text-xs">{(info.getValue() as string).slice(0, 8)}…</span>
+        cell: info => (
+          <span className="font-mono text-xs">
+            {(info.getValue() as string).slice(0, 8)}…
+          </span>
         ),
       },
       {
         accessorKey: 'reason',
         header: 'Reason',
-        cell: (info) => (
-          <span className="text-default-500 text-sm">{(info.getValue() as string | null) ?? '—'}</span>
+        cell: info => (
+          <span className="text-default-500 text-sm">
+            {(info.getValue() as string | null) ?? '—'}
+          </span>
         ),
       },
     ],
@@ -76,7 +89,7 @@ function DeletedTicketsPage() {
 
   const handleExport = () => {
     exportToXlsx(
-      tickets.map((t) => ({
+      tickets.map(t => ({
         Subject: t.subject,
         Description: t.entityDescription ?? '',
         'Deleted At': t.deletedAt,
@@ -98,7 +111,11 @@ function DeletedTicketsPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Reports', href: '/reports-hub' },
-            { label: 'Deleted Tickets', href: '/reports/deleted', isCurrent: true },
+            {
+              label: 'Deleted Tickets',
+              href: '/reports/deleted',
+              isCurrent: true,
+            },
           ]}
         />
       </div>
@@ -106,7 +123,9 @@ function DeletedTicketsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Deleted Tickets</h1>
-          <p className="text-default-500 mt-1">Audit trail of soft-deleted tickets</p>
+          <p className="text-default-500 mt-1">
+            Audit trail of soft-deleted tickets
+          </p>
         </div>
         <BaseButton
           variant="bordered"

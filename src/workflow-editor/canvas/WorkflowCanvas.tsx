@@ -18,7 +18,7 @@ import { useLogger } from '@brainforgeau/observability';
 import { useCallback, useEffect, useRef } from 'react';
 import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
-import { StateCategory, StateType, TriggerType } from '../types/enums';
+import { type StateCategory, StateType, TriggerType } from '../types/enums';
 import { CANVAS_TOKENS } from './canvasTheme';
 import { ParallelStateNode } from './nodes/ParallelStateNode';
 import { TerminalStateNode } from './nodes/TerminalStateNode';
@@ -227,9 +227,7 @@ function WorkflowCanvasInner({
     (_event: unknown, _node: Node, draggedNodes: Node[]) => {
       if (readOnlyRef.current) return;
       const currStates = statesRef.current;
-      const byId = new Map(
-        draggedNodes.map(n => [n.id, n.position] as const),
-      );
+      const byId = new Map(draggedNodes.map(n => [n.id, n.position] as const));
       const nextStates = currStates.map(s => {
         const p = byId.get(s.id);
         return p

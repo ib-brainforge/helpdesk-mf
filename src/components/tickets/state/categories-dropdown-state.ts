@@ -1,6 +1,6 @@
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { atomWithMutation } from 'jotai-tanstack-query';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 
 export interface CategoryOption {
   id: string;
@@ -21,7 +21,10 @@ type CategoryHierarchyDto = {
   }>;
 };
 
-export const categoriesMutationAtom = atomWithMutation<CategoryOption[], { query: string }>(() => ({
+export const categoriesMutationAtom = atomWithMutation<
+  CategoryOption[],
+  { query: string }
+>(() => ({
   mutationKey: ['categories-search'],
   mutationFn: async ({ query }: { query: string }) => {
     const client = await createHelpdeskApiClient(CategoriesApi);
@@ -31,16 +34,18 @@ export const categoriesMutationAtom = atomWithMutation<CategoryOption[], { query
     const hierarchy = data as CategoryHierarchyDto;
     const flatCategories: CategoryOption[] = [];
 
-    hierarchy.sections?.forEach((section) => {
-      section.categories?.forEach((cat) => {
+    hierarchy.sections?.forEach(section => {
+      section.categories?.forEach(cat => {
         if (cat.isActive !== false) {
           const categoryName = cat.name ?? 'Unnamed Category';
           const sectionName = section.name;
 
           // Filter by query if provided
-          const matchesQuery = !query ||
+          const matchesQuery =
+            !query ||
             categoryName.toLowerCase().includes(query.toLowerCase()) ||
-            (sectionName && sectionName.toLowerCase().includes(query.toLowerCase()));
+            (sectionName &&
+              sectionName.toLowerCase().includes(query.toLowerCase()));
 
           if (matchesQuery) {
             flatCategories.push({
@@ -57,4 +62,5 @@ export const categoriesMutationAtom = atomWithMutation<CategoryOption[], { query
   },
 }));
 
-export const mapCategoryToOption = (category: CategoryOption): CategoryOption => category;
+export const mapCategoryToOption = (category: CategoryOption): CategoryOption =>
+  category;

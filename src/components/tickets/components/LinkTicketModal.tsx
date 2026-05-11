@@ -1,15 +1,15 @@
-import { type FC, useState } from 'react';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseButton,
   BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
+import { type FC, useState } from 'react';
 
 interface LinkTicketModalProps {
   isOpen: boolean;
@@ -53,12 +53,12 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
             <BaseSelect
               label="Link Type"
               selectedKey={linkType}
-              onSelectionChange={(keys) => {
+              onSelectionChange={keys => {
                 const value = keys as string;
                 setLinkType(value);
               }}
             >
-              {LINK_TYPES.map((type) => (
+              {LINK_TYPES.map(type => (
                 <BaseSelectItem key={type.value}>{type.label}</BaseSelectItem>
               ))}
             </BaseSelect>
@@ -66,7 +66,7 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
               label="Target Ticket ID"
               placeholder="Enter the ID of the ticket to link"
               value={targetTicketId}
-              onChange={(e) => setTargetTicketId(e.target.value)}
+              onChange={e => setTargetTicketId(e.target.value)}
             />
           </div>
         </BaseModalBody>

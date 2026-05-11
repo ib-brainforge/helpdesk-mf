@@ -17,10 +17,7 @@ import {
   useUpdateDraft,
   useWorkflowDefinition,
 } from '../state/workflowQueries';
-import type {
-  WorkflowStateDto,
-  WorkflowTransitionDto,
-} from '../types';
+import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 import { isTenantOwned } from '../types/workflow';
 
 function formatDate(iso: string): string {
@@ -79,7 +76,10 @@ export function WorkflowDetailPage() {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'workflow_detail_create_draft_failed',
       });
-      toast('Failed to create draft', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Failed to create draft', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     }
   }
 
@@ -101,7 +101,10 @@ export function WorkflowDetailPage() {
       } else {
         logger.error('workflow_detail_save_failed');
       }
-      toast('Save failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Save failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
       throw err;
     }
   }
@@ -120,7 +123,10 @@ export function WorkflowDetailPage() {
       } else {
         logger.error('workflow_detail_publish_failed');
       }
-      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Publish failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
       throw err;
     }
   }

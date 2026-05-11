@@ -1,15 +1,15 @@
-import { useState } from 'react';
 import {
   type ColumnDef,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
   type VisibilityState,
-  type RowSelectionState,
   getCoreRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
+  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { useState } from 'react';
 import type { TicketRow } from '../types';
 
 interface UseTicketsTableProps {
@@ -43,7 +43,7 @@ export const useTicketsTable = ({
       globalFilter: searchTerm,
       rowSelection,
     },
-    getRowId: (row) => row.id ?? '',
+    getRowId: row => row.id ?? '',
     manualPagination: true,
     pageCount: Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     rowCount: totalCount,
@@ -54,7 +54,7 @@ export const useTicketsTable = ({
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: (updater) => {
+    onPaginationChange: updater => {
       if (onPaginationChange) {
         const newPagination =
           typeof updater === 'function' ? updater(pagination) : updater;

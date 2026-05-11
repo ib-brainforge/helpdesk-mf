@@ -4,13 +4,17 @@
  * Create-on-behalf-of form for principal admins/agents.
  */
 
-import { useState } from 'react';
-import { toast } from '@heroui/react';
-import { PageSpinner, BaseButton, BaseInput, BaseTextarea } from '@brainforgeau/components';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
-
+import {
+  BaseButton,
+  BaseInput,
+  BaseTextarea,
+  PageSpinner,
+} from '@brainforgeau/components';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
+import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useState } from 'react';
 
 function NewPrincipalTicketPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -66,7 +70,6 @@ function NewPrincipalTicketPage() {
             type="submit"
             color="primary"
             isDisabled={createMutation.isPending || !subject.trim()}
-
           >
             Create Ticket
           </BaseButton>

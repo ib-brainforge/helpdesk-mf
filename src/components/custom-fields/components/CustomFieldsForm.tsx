@@ -1,15 +1,13 @@
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CustomFieldUsageType } from '@/types/custom-field';
+import type { CustomFieldDefinitionDto } from '@/types/custom-field';
+import { toApiCustomFieldUsageType } from '@/utils/typeMappers';
+import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import {
-  CustomFieldsApi,
-} from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { CustomFieldUsageType } from '@/types/custom-field';
-import type { CustomFieldDefinitionDto } from '@/types/custom-field';
-import { toApiCustomFieldUsageType } from '@/utils/typeMappers';
-import {
-  CustomFieldRenderer,
   type CustomFieldChangePayload,
+  CustomFieldRenderer,
   type CustomFieldValueDto,
 } from './CustomFieldRenderer';
 
@@ -41,14 +39,20 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
   errors,
 }) => {
   // REVIEW: Fetch custom field definitions for the category
-  const { data: fieldDefinitions, isLoading: fieldsLoading } = useQuery<CustomFieldDefinitionDto[]>({
+  const { data: fieldDefinitions, isLoading: fieldsLoading } = useQuery<
+    CustomFieldDefinitionDto[]
+  >({
     queryKey: ['helpdesk-custom-fields-for-category', categoryId, entityType],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CustomFieldsApi);
       // REVIEW: Convert local enum to API type using type mapper
       const apiUsageType = toApiCustomFieldUsageType(entityType);
       // REVIEW: Fetch fields filtered by usage type and category
-      const response = await client.v1CustomFieldsGet(apiUsageType, false, categoryId);
+      const response = await client.v1CustomFieldsGet(
+        apiUsageType,
+        false,
+        categoryId,
+      );
       // Map generated types to local types
       return (response.data || []).map((field: any) => ({
         id: field.id!,
@@ -70,7 +74,9 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
   });
 
   // REVIEW: Fetch existing custom field values for edit mode
-  const { data: fieldValues, isLoading: valuesLoading } = useQuery<CustomFieldValueDto[]>({
+  const { data: fieldValues, isLoading: valuesLoading } = useQuery<
+    CustomFieldValueDto[]
+  >({
     queryKey: ['helpdesk-custom-field-values', entityId, entityType],
     queryFn: async () => {
       if (!entityId) return [];
@@ -81,7 +87,9 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
     enabled: !!entityId,
   });
 
-  const [localValues, setLocalValues] = useState<Record<string, CustomFieldChangePayload>>({});
+  const [localValues, setLocalValues] = useState<
+    Record<string, CustomFieldChangePayload>
+  >({});
 
   // REVIEW: Initialize local values from fetched data
   useEffect(() => {
@@ -94,7 +102,7 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
           dateValue: fieldValue.dateValue,
           booleanValue: fieldValue.booleanValue,
           selectedOptionId: fieldValue.selectedOptionId,
-          selectedOptionIds: fieldValue.selectedOptions?.map((o) => o.id),
+          selectedOptionIds: fieldValue.selectedOptions?.map(o => o.id),
         };
       }
       setLocalValues(initialValues);
@@ -106,15 +114,20 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
     onChange(localValues);
   }, [localValues, onChange]);
 
-  const handleFieldChange = (fieldId: string, payload: CustomFieldChangePayload) => {
-    setLocalValues((prev) => ({
+  const handleFieldChange = (
+    fieldId: string,
+    payload: CustomFieldChangePayload,
+  ) => {
+    setLocalValues(prev => ({
       ...prev,
       [fieldId]: payload,
     }));
   };
 
   if (fieldsLoading || valuesLoading) {
-    return <div className="text-default-500 py-4">Loading custom fields...</div>;
+    return (
+      <div className="text-default-500 py-4">Loading custom fields...</div>
+    );
   }
 
   if (!fieldDefinitions || fieldDefinitions.length === 0) {
@@ -123,27 +136,33 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-foreground mb-2">Custom Fields</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-2">
+        Custom Fields
+      </h3>
       <div className="space-y-4">
         {fieldDefinitions.map((field: CustomFieldDefinitionDto) => {
           const existingValue = fieldValues?.find(
-            (v) => v.customFieldDefinitionId === field.id
+            v => v.customFieldDefinitionId === field.id,
           );
 
           // REVIEW: Convert local payload back to CustomFieldValueDto for renderer
-          const currentValue: CustomFieldValueDto | undefined = localValues[field.id]
+          const currentValue: CustomFieldValueDto | undefined = localValues[
+            field.id
+          ]
             ? {
                 customFieldDefinitionId: field.id,
                 stringValue: localValues[field.id].textValue,
                 numericValue: localValues[field.id].numericValue,
                 dateValue: localValues[field.id].dateValue,
                 booleanValue: localValues[field.id].booleanValue,
-                selectedOptionId: localValues[field.id].selectedOptionId ?? undefined,
-                selectedOptions: localValues[field.id].selectedOptionIds?.map((id: string) => ({
-                  id,
-                  value:
-                    field.options?.find((o) => o.id === id)?.value || id,
-                })),
+                selectedOptionId:
+                  localValues[field.id].selectedOptionId ?? undefined,
+                selectedOptions: localValues[field.id].selectedOptionIds?.map(
+                  (id: string) => ({
+                    id,
+                    value: field.options?.find(o => o.id === id)?.value || id,
+                  }),
+                ),
               }
             : existingValue;
 
@@ -152,7 +171,7 @@ export const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
               key={field.id}
               field={field}
               value={currentValue}
-              onChange={(payload) => handleFieldChange(field.id, payload)}
+              onChange={payload => handleFieldChange(field.id, payload)}
               error={errors?.[field.id]}
             />
           );

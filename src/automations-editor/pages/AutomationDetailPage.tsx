@@ -13,24 +13,24 @@
  */
 import { BaseButton } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Card, Chip, Spinner, toast } from '@heroui/react';
-import { NavLink, useParams } from '@modern-js/runtime/router';
-import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   GraphEditor,
   NodePalette,
   type RuleGraphContent,
   type RuleGraphVersionDto,
 } from '@brainforgeau/rules-ui';
-import {
-  useRuleGraphs,
-  useRuleGraph,
-  useCreateRuleGraphVersion,
-  usePublishRuleGraphVersion,
-} from '../state/ruleProjectQueries';
+import { Card, Chip, Spinner, toast } from '@heroui/react';
+import { NavLink, useParams } from '@modern-js/runtime/router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { HELPDESK_ACTION_TYPES } from '../catalogs/helpdeskActionTypeCatalog';
 import { HELPDESK_INPUT_FIELDS } from '../catalogs/helpdeskInputFieldCatalog';
 import { HELPDESK_OUTPUT_FIELDS } from '../catalogs/helpdeskOutputFieldCatalog';
+import {
+  useCreateRuleGraphVersion,
+  usePublishRuleGraphVersion,
+  useRuleGraph,
+  useRuleGraphs,
+} from '../state/ruleProjectQueries';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -60,17 +60,19 @@ export function AutomationDetailPage() {
     ruleId: string;
   }>();
 
-  const { data: rule, isLoading, error } = useRuleGraph(
-    projectId ?? null,
-    ruleId ?? null,
-  );
+  const {
+    data: rule,
+    isLoading,
+    error,
+  } = useRuleGraph(projectId ?? null, ruleId ?? null);
   const createVersionMutation = useCreateRuleGraphVersion();
   const publishMutation = usePublishRuleGraphVersion();
   const logger = useLogger('AutomationDetailPage');
 
   const [showVersionsSidebar, setShowVersionsSidebar] = useState(false);
   const [showPalette, setShowPalette] = useState(true);
-  const [editableContent, setEditableContent] = useState<RuleGraphContent | null>(null);
+  const [editableContent, setEditableContent] =
+    useState<RuleGraphContent | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [loadedVersionId, setLoadedVersionId] = useState<string | null>(null);
 
@@ -78,7 +80,9 @@ export function AutomationDetailPage() {
   const activeVersion = useMemo(() => {
     if (!rule) return null;
     if (rule.versions.length > 0) {
-      return [...rule.versions].sort((a, b) => b.versionNumber - a.versionNumber)[0];
+      return [...rule.versions].sort(
+        (a, b) => b.versionNumber - a.versionNumber,
+      )[0];
     }
     return rule.publishedVersion ?? null;
   }, [rule]);
@@ -91,7 +95,10 @@ export function AutomationDetailPage() {
       return;
     }
     if (loadedVersionId !== activeVersion.id) {
-      const snapshot = activeVersion.contentSnapshot ?? { nodes: [], edges: [] };
+      const snapshot = activeVersion.contentSnapshot ?? {
+        nodes: [],
+        edges: [],
+      };
       setEditableContent(JSON.parse(JSON.stringify(snapshot)));
       setIsDirty(false);
       setLoadedVersionId(activeVersion.id);
@@ -119,7 +126,10 @@ export function AutomationDetailPage() {
       } else {
         logger.error('automation_detail_save_failed');
       }
-      toast('Save failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Save failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
       throw err;
     }
   }
@@ -142,11 +152,16 @@ export function AutomationDetailPage() {
       toast('Automation published', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
-        logger.captureError(err, { context: 'automation_detail_publish_failed' });
+        logger.captureError(err, {
+          context: 'automation_detail_publish_failed',
+        });
       } else {
         logger.error('automation_detail_publish_failed');
       }
-      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Publish failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
       throw err;
     }
   }
@@ -162,9 +177,14 @@ export function AutomationDetailPage() {
       toast('Version published', { variant: 'success' });
     } catch (err) {
       if (err instanceof Error) {
-        logger.captureError(err, { context: 'automation_detail_publish_version_failed' });
+        logger.captureError(err, {
+          context: 'automation_detail_publish_version_failed',
+        });
       }
-      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Publish failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     }
   }
 
@@ -307,10 +327,7 @@ export function AutomationDetailPage() {
                   </div>
                   <ul className="divide-y divide-default-100 px-2 pb-2">
                     {reversedVersions.map(v => (
-                      <li
-                        key={v.id}
-                        className="flex items-center gap-3 py-2.5"
-                      >
+                      <li key={v.id} className="flex items-center gap-3 py-2.5">
                         <div className="flex-1">
                           <span className="text-sm font-medium">
                             v{v.versionNumber}

@@ -5,19 +5,15 @@
  * Create navigates to /sla-policies/new. Delete uses ConfirmDeleteModal.
  */
 
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import {
   useDeletePrincipalSlaPolicy,
   usePrincipalSlaPolicies,
 } from '@/hooks/usePrincipalSlaPolicies';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import {
-  BaseButton,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
 import type { HelpdeskApplicationSlaDTOsSlaPolicyDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { useOverlayState, toast } from '@heroui/react';
+import { toast, useOverlayState } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -126,8 +122,12 @@ function PrincipalSlaPoliciesPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isDisabled={deleteMutation.isPending && pendingDeleteId === row.original.id}
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isDisabled={
+              deleteMutation.isPending && pendingDeleteId === row.original.id
+            }
           >
             Delete
           </BaseButton>
@@ -146,7 +146,9 @@ function PrincipalSlaPoliciesPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">SLA Policies</h1>
-        <BaseButton onPress={() => navigate(`/principal/${principalId}/sla-policies/new`)}>
+        <BaseButton
+          onPress={() => navigate(`/principal/${principalId}/sla-policies/new`)}
+        >
           New SLA Policy
         </BaseButton>
       </div>

@@ -1,8 +1,8 @@
-import type { FC } from 'react';
-import { useCallback, useState } from 'react';
+import type { FileUploadProgress } from '@/types';
 import { Icon } from '@brainforgeau/components/base';
 import { Card, ProgressBar } from '@heroui/react';
-import type { FileUploadProgress } from '@/types';
+import type { FC } from 'react';
+import { useCallback, useState } from 'react';
 
 interface FileUploadZoneProps {
   onFilesSelected: (files: File[]) => void;
@@ -22,17 +22,24 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const validateFiles = (files: File[]): { valid: File[]; errors: string[] } => {
+  const validateFiles = (
+    files: File[],
+  ): { valid: File[]; errors: string[] } => {
     const valid: File[] = [];
     const errors: string[] = [];
 
     for (const file of files) {
       if (file.size > maxFileSize) {
-        errors.push(`${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`);
+        errors.push(
+          `${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`,
+        );
         continue;
       }
 
-      if (acceptedTypes.length > 0 && !acceptedTypes.some(type => file.type.includes(type))) {
+      if (
+        acceptedTypes.length > 0 &&
+        !acceptedTypes.some(type => file.type.includes(type))
+      ) {
         errors.push(`${file.name} has an unsupported file type`);
         continue;
       }
@@ -145,10 +152,12 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
 
       {progress.length > 0 && (
         <div className="space-y-2">
-          {progress.map((file) => (
+          {progress.map(file => (
             <div key={file.fileName} className="rounded border p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium truncate">{file.fileName}</span>
+                <span className="text-sm font-medium truncate">
+                  {file.fileName}
+                </span>
                 <span className="text-xs text-gray-500">{file.progress}%</span>
               </div>
               <ProgressBar

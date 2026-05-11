@@ -3,14 +3,23 @@
 // to keep the hook layer decoupled from the generated long type names.
 
 export interface BusinessHoursDayConfig {
-  open: string;   // HH:mm
-  close: string;  // HH:mm
+  open: string; // HH:mm
+  close: string; // HH:mm
   enabled: boolean;
 }
 
-export type BusinessHoursDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+export type BusinessHoursDay =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
 
-export type BusinessHoursJson = Partial<Record<BusinessHoursDay, BusinessHoursDayConfig>>;
+export type BusinessHoursJson = Partial<
+  Record<BusinessHoursDay, BusinessHoursDayConfig>
+>;
 
 export interface LiveChatWidgetConfigDto {
   id: string;
@@ -32,7 +41,13 @@ export interface UpdateLiveChatConfigRequest {
 }
 
 export const DAYS_OF_WEEK: BusinessHoursDay[] = [
-  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
 ];
 
 export const DEFAULT_DAY_CONFIG: BusinessHoursDayConfig = {

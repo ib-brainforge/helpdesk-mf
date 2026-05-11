@@ -1,8 +1,8 @@
-import { Helmet } from '@modern-js/runtime/head';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { KnowledgeBaseArticleEditorForm } from '@/components/knowledge-base';
 import { PageSpinner } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { KnowledgeBaseArticleEditorForm } from '@/components/knowledge-base';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { Helmet } from '@modern-js/runtime/head';
 
 function NewKnowledgeBaseArticlePage() {
   return (
@@ -16,7 +16,11 @@ function NewKnowledgeBaseArticlePage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Knowledge Base', href: '/knowledge-base' },
-            { label: 'Create New Article', href: '/knowledge-base/new', isCurrent: true },
+            {
+              label: 'Create New Article',
+              href: '/knowledge-base/new',
+              isCurrent: true,
+            },
           ]}
         />
 

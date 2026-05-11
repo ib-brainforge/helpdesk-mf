@@ -1,7 +1,7 @@
-import React from 'react';
-import { Navigate } from '@modern-js/runtime/router';
 import { PageSpinner } from '@brainforgeau/components/base';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { Navigate } from '@modern-js/runtime/router';
+import React from 'react';
 
 function Page() {
   return <Navigate to="/dashboard" replace />;

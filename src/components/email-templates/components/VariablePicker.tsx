@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, toast } from '@heroui/react';
+import {
+  TEMPLATE_VARIABLES,
+  type TemplateVariableCategory,
+} from '@/types/email-template';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { TEMPLATE_VARIABLES, type TemplateVariableCategory } from '@/types/email-template';
-
+import { Card, CardContent, CardHeader, toast } from '@heroui/react';
+import { useState } from 'react';
 
 interface VariablePickerProps {
   onVariableSelect?: (placeholder: string) => void;
@@ -15,16 +17,19 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
   ]);
 
   const toggleCategory = (categoryName: string) => {
-    setExpandedCategories((prev) =>
+    setExpandedCategories(prev =>
       prev.includes(categoryName)
-        ? prev.filter((name) => name !== categoryName)
+        ? prev.filter(name => name !== categoryName)
         : [...prev, categoryName],
     );
   };
 
   const handleCopyVariable = (placeholder: string) => {
     navigator.clipboard.writeText(placeholder);
-    toast('Variable copied', { description: `${placeholder} copied to clipboard`, variant: 'success' });
+    toast('Variable copied', {
+      description: `${placeholder} copied to clipboard`,
+      variant: 'success',
+    });
     if (onVariableSelect) {
       onVariableSelect(placeholder);
     }
@@ -38,7 +43,10 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
       <CardContent className="overflow-y-auto">
         <div className="flex flex-col gap-2">
           {TEMPLATE_VARIABLES.map((category: TemplateVariableCategory) => (
-            <div key={category.name} className="border-b border-gray-200 pb-2 last:border-b-0 dark:border-gray-700">
+            <div
+              key={category.name}
+              className="border-b border-gray-200 pb-2 last:border-b-0 dark:border-gray-700"
+            >
               <button
                 type="button"
                 onClick={() => toggleCategory(category.name)}
@@ -46,14 +54,18 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
               >
                 <span className="text-sm font-medium">{category.name}</span>
                 <Icon
-                  name={expandedCategories.includes(category.name) ? 'chevron-up' : 'chevron-down'}
+                  name={
+                    expandedCategories.includes(category.name)
+                      ? 'chevron-up'
+                      : 'chevron-down'
+                  }
                   className="h-4 w-4"
                 />
               </button>
 
               {expandedCategories.includes(category.name) && (
                 <div className="mt-1 flex flex-col gap-1">
-                  {category.variables.map((variable) => (
+                  {category.variables.map(variable => (
                     <button
                       key={variable.placeholder}
                       type="button"

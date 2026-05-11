@@ -9,8 +9,8 @@ import {
   BaseModalHeader,
 } from '@brainforgeau/components';
 
-import { type FC, useEffect, useState } from 'react';
 import { toast } from '@heroui/react';
+import { type FC, useEffect, useState } from 'react';
 import { useForwardTicket } from '../hooks/useTickets';
 
 interface ForwardTicketModalProps {
@@ -73,15 +73,25 @@ export const ForwardTicketModal: FC<ForwardTicketModalProps> = ({
       },
       {
         onSuccess: () => {
-          toast('Ticket forwarded', { description: `Sent to ${toEmails.join(', ')}`, variant: 'success' });
+          toast('Ticket forwarded', {
+            description: `Sent to ${toEmails.join(', ')}`,
+            variant: 'success',
+          });
           onClose();
         },
         onError: (error: any) => {
           const errorCode = error?.response?.data?.errors?.[0]?.code;
           if (errorCode === 'EMAIL_SEND_FAILED') {
-            toast('Email not configured', { description: 'Configure email settings first before forwarding tickets.', variant: 'danger' });
+            toast('Email not configured', {
+              description:
+                'Configure email settings first before forwarding tickets.',
+              variant: 'danger',
+            });
           } else {
-            toast('Error', { description: 'Failed to forward ticket. Please try again.', variant: 'danger' });
+            toast('Error', {
+              description: 'Failed to forward ticket. Please try again.',
+              variant: 'danger',
+            });
           }
         },
       },
@@ -106,7 +116,9 @@ export const ForwardTicketModal: FC<ForwardTicketModalProps> = ({
               onValueChange={setTo}
               description="Separate multiple addresses with commas or spaces"
               isInvalid={!!to && !toValid}
-              errorMessage={!!to && !toValid ? 'Enter valid email addresses' : undefined}
+              errorMessage={
+                !!to && !toValid ? 'Enter valid email addresses' : undefined
+              }
               isRequired
             />
             <BaseInput
@@ -115,7 +127,9 @@ export const ForwardTicketModal: FC<ForwardTicketModalProps> = ({
               value={cc}
               onValueChange={setCc}
               isInvalid={!!cc && !ccValid}
-              errorMessage={!!cc && !ccValid ? 'Enter valid email addresses' : undefined}
+              errorMessage={
+                !!cc && !ccValid ? 'Enter valid email addresses' : undefined
+              }
             />
             <BaseInput
               label="Subject"
@@ -149,7 +163,6 @@ export const ForwardTicketModal: FC<ForwardTicketModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!toValid || !subject.trim() || !ccValid}
-
           >
             Send
           </BaseButton>

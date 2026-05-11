@@ -1,5 +1,5 @@
-import { useState, type FC } from 'react';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { type FC, useState } from 'react';
 
 // REVIEW: Custom date range picker removed — HeroUI 3 DateRangePicker uses compound API.
 // Custom range can be added back when the component library exposes a simple wrapper.
@@ -74,14 +74,14 @@ export const DateRangeSelector: FC<DateRangeSelectorProps> = ({
     <div className="flex gap-4">
       <BaseSelect
         selectedKey={selectedPreset}
-        onSelectionChange={(keys) => {
+        onSelectionChange={keys => {
           const key = keys as string;
           handlePresetChange(key);
         }}
         placeholder="Select date range"
         className="w-48"
       >
-        {PRESET_RANGES.map((range) => (
+        {PRESET_RANGES.map(range => (
           <BaseSelectItem key={range.value}>{range.label}</BaseSelectItem>
         ))}
       </BaseSelect>

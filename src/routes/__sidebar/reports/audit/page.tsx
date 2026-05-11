@@ -1,20 +1,20 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Spinner } from '@heroui/react';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
-import {
-  useReactTable,
-  getCoreRowModel,
-  type ColumnDef,
-} from '@tanstack/react-table';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useAuditLogReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { AuditLogEntryDto } from '@/types';
+import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
+import { Spinner } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
 const PAGE_SIZE = 50;
 
@@ -23,7 +23,9 @@ function AuditLogPage() {
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState('');
   const [eventType, setEventType] = useState('');
@@ -45,36 +47,46 @@ function AuditLogPage() {
       {
         accessorKey: 'occurredAt',
         header: 'Time',
-        cell: (info) => (
-          <span className="text-xs">{formatDateTime(info.getValue() as string, { timezone })}</span>
+        cell: info => (
+          <span className="text-xs">
+            {formatDateTime(info.getValue() as string, { timezone })}
+          </span>
         ),
       },
       {
         accessorKey: 'entityDescription',
         header: 'Ticket',
-        cell: (info) => (
-          <span className="text-sm">{(info.getValue() as string | null) ?? '—'}</span>
+        cell: info => (
+          <span className="text-sm">
+            {(info.getValue() as string | null) ?? '—'}
+          </span>
         ),
       },
       {
         accessorKey: 'entityType',
         header: 'Entity Type',
-        cell: (info) => (
-          <span className="text-xs text-default-500">{info.getValue() as string}</span>
+        cell: info => (
+          <span className="text-xs text-default-500">
+            {info.getValue() as string}
+          </span>
         ),
       },
       {
         accessorKey: 'actorUserId',
         header: 'Actor',
-        cell: (info) => (
-          <span className="font-mono text-xs">{(info.getValue() as string).slice(0, 8)}…</span>
+        cell: info => (
+          <span className="font-mono text-xs">
+            {(info.getValue() as string).slice(0, 8)}…
+          </span>
         ),
       },
       {
         accessorKey: 'reason',
         header: 'Reason',
-        cell: (info) => (
-          <span className="text-default-500 text-sm">{(info.getValue() as string | null) ?? '—'}</span>
+        cell: info => (
+          <span className="text-default-500 text-sm">
+            {(info.getValue() as string | null) ?? '—'}
+          </span>
         ),
       },
     ],
@@ -90,7 +102,7 @@ function AuditLogPage() {
 
   const handleExport = () => {
     exportToXlsx(
-      entries.map((e) => ({
+      entries.map(e => ({
         Time: e.occurredAt,
         Ticket: e.entityDescription ?? '',
         'Entity Type': e.entityType,
@@ -121,7 +133,9 @@ function AuditLogPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Audit Log</h1>
-          <p className="text-default-500 mt-1">Complete activity and change history for tickets</p>
+          <p className="text-default-500 mt-1">
+            Complete activity and change history for tickets
+          </p>
         </div>
         <BaseButton
           variant="bordered"
@@ -147,7 +161,7 @@ function AuditLogPage() {
           type="text"
           placeholder="Filter by user ID..."
           value={userId}
-          onChange={(ev) => {
+          onChange={ev => {
             setUserId(ev.target.value);
             setPage(1);
           }}
@@ -157,7 +171,7 @@ function AuditLogPage() {
           type="text"
           placeholder="Filter by event type..."
           value={eventType}
-          onChange={(ev) => {
+          onChange={ev => {
             setEventType(ev.target.value);
             setPage(1);
           }}
@@ -175,9 +189,25 @@ function AuditLogPage() {
           {totalPages > 1 && (
             <div className="mt-4 flex justify-center">
               <div className="flex items-center gap-2">
-                <BaseButton size="sm" variant="bordered" isDisabled={page <= 1} onPress={() => setPage(p => p - 1)}>Prev</BaseButton>
-                <span className="text-sm">{page} / {totalPages}</span>
-                <BaseButton size="sm" variant="bordered" isDisabled={page >= totalPages} onPress={() => setPage(p => p + 1)}>Next</BaseButton>
+                <BaseButton
+                  size="sm"
+                  variant="bordered"
+                  isDisabled={page <= 1}
+                  onPress={() => setPage(p => p - 1)}
+                >
+                  Prev
+                </BaseButton>
+                <span className="text-sm">
+                  {page} / {totalPages}
+                </span>
+                <BaseButton
+                  size="sm"
+                  variant="bordered"
+                  isDisabled={page >= totalPages}
+                  onPress={() => setPage(p => p + 1)}
+                >
+                  Next
+                </BaseButton>
               </div>
             </div>
           )}

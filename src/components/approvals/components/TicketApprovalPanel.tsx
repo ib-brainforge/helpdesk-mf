@@ -206,8 +206,9 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               <BaseButton
                 color="primary"
                 onPress={handleRequestApproval}
-                isDisabled={requestApprovalMutation.isPending || !selectedWorkflowId}
-
+                isDisabled={
+                  requestApprovalMutation.isPending || !selectedWorkflowId
+                }
               >
                 Request
               </BaseButton>

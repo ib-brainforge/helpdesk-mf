@@ -5,14 +5,14 @@
  * Admin-only:     SLA policies, Categories, Automation, Approvals, Settings
  */
 
-import { useState } from 'react';
+import type { PrincipalAccessLevel } from '@/hooks/usePrincipalAccess';
 import {
   SideNav,
-  SideNavDesktopMode,
-  SideNavLinkRenderProps,
+  type SideNavDesktopMode,
+  type SideNavLinkRenderProps,
 } from '@brainforgeau/components';
 import { NavLink } from '@modern-js/runtime/router';
-import type { PrincipalAccessLevel } from '@/hooks/usePrincipalAccess';
+import { useState } from 'react';
 
 interface NavItem {
   label: string;
@@ -26,8 +26,12 @@ export interface PrincipalSidenavProps {
   level: PrincipalAccessLevel;
 }
 
-export function PrincipalSidenav({ principalId, level }: PrincipalSidenavProps) {
-  const [desktopMode, setDesktopMode] = useState<SideNavDesktopMode>('extended');
+export function PrincipalSidenav({
+  principalId,
+  level,
+}: PrincipalSidenavProps) {
+  const [desktopMode, setDesktopMode] =
+    useState<SideNavDesktopMode>('extended');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const base = `/principal/${principalId}`;
@@ -80,9 +84,10 @@ export function PrincipalSidenav({ principalId, level }: PrincipalSidenavProps) 
     },
   ];
 
-  const items: NavItem[] = level === 'admin'
-    ? [...alwaysVisibleItems, ...adminOnlyItems]
-    : alwaysVisibleItems;
+  const items: NavItem[] =
+    level === 'admin'
+      ? [...alwaysVisibleItems, ...adminOnlyItems]
+      : alwaysVisibleItems;
 
   const navSections = [
     {

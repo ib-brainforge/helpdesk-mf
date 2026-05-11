@@ -1,12 +1,12 @@
-import { type FC } from 'react';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseButton,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
+import type { FC } from 'react';
 interface BulkDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,7 +32,10 @@ export const BulkDeleteModal: FC<BulkDeleteModalProps> = ({
         <BaseModalBody>
           <div className="mb-4 p-3 bg-warning-50 border border-warning-200 rounded text-warning-800">
             <p className="font-semibold">Warning</p>
-            <p>This action will permanently delete {ticketCount} ticket{ticketCount !== 1 ? 's' : ''}.</p>
+            <p>
+              This action will permanently delete {ticketCount} ticket
+              {ticketCount !== 1 ? 's' : ''}.
+            </p>
           </div>
           <p>Are you sure you want to continue?</p>
         </BaseModalBody>

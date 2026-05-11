@@ -132,7 +132,6 @@ function PrincipalSlaPolicyEditPage() {
         <BaseButton
           color="primary"
           onPress={handleSave}
-
           isDisabled={updateMutation.isPending || !name.trim()}
         >
           Save changes

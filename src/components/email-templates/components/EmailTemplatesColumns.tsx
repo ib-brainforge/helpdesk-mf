@@ -1,8 +1,8 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
-import { BaseButton, Icon } from '@brainforgeau/components';
 import { StatusBadge } from '@/components/shared';
-import type { EmailTemplateRow } from '../types';
 import { NotificationType } from '@/types/email-template';
+import { BaseButton, Icon } from '@brainforgeau/components';
+import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import type { EmailTemplateRow } from '../types';
 
 const columnHelper = createColumnHelper<EmailTemplateRow>();
 
@@ -31,11 +31,11 @@ export const createEmailTemplatesColumns = ({
 }: CreateEmailTemplatesColumnsProps): ColumnDef<EmailTemplateRow, any>[] => [
   columnHelper.accessor('name', {
     header: 'Name',
-    cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+    cell: info => <span className="font-medium">{info.getValue()}</span>,
   }),
   columnHelper.accessor('notificationType', {
     header: 'Notification Type',
-    cell: (info) => {
+    cell: info => {
       const type = info.getValue() as NotificationType;
       return (
         <StatusBadge color="primary">
@@ -46,7 +46,7 @@ export const createEmailTemplatesColumns = ({
   }),
   columnHelper.accessor('subject', {
     header: 'Subject',
-    cell: (info) => (
+    cell: info => (
       <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
         {info.getValue()}
       </span>
@@ -54,7 +54,7 @@ export const createEmailTemplatesColumns = ({
   }),
   columnHelper.accessor('isActive', {
     header: 'Status',
-    cell: (info) => (
+    cell: info => (
       <StatusBadge color={info.getValue() ? 'success' : 'default'}>
         {info.getValue() ? 'Active' : 'Inactive'}
       </StatusBadge>
@@ -63,7 +63,7 @@ export const createEmailTemplatesColumns = ({
   columnHelper.display({
     id: 'actions',
     header: 'Actions',
-    cell: (info) => (
+    cell: info => (
       <div className="flex items-center gap-1">
         <BaseButton
           variant="light"

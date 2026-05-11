@@ -3,7 +3,6 @@
  */
 
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
-import { toast } from '@heroui/react';
 import {
   usePrincipalCategory,
   useUpdatePrincipalCategory,
@@ -17,6 +16,7 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 
 import {
   useNavigate,
@@ -157,7 +157,6 @@ function PrincipalCategoryEditPage() {
         <BaseButton
           color="primary"
           onPress={handleSave}
-
           isDisabled={updateMutation.isPending || !name.trim()}
         >
           Save changes

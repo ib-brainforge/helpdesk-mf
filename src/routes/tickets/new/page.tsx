@@ -1,7 +1,7 @@
-import React from 'react';
+import { NewTicketForm } from '@/components/tickets';
 import { PageSpinner } from '@brainforgeau/components/base';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { NewTicketForm } from '@/components/tickets';
+import React from 'react';
 
 function NewTicketPage() {
   return <NewTicketForm />;

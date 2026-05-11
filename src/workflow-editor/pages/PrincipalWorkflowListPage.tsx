@@ -90,7 +90,10 @@ export function PrincipalWorkflowListPage() {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'principal_workflow_list_delete_failed',
       });
-      toast('Delete failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Delete failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     } finally {
       setPendingDeleteId(null);
     }
@@ -280,7 +283,6 @@ export function PrincipalWorkflowListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-
                   isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >

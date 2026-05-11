@@ -6,7 +6,7 @@ import {
   BaseModalFooter,
   BaseModalHeader,
 } from '@brainforgeau/components';
-import { type FC } from 'react';
+import type { FC } from 'react';
 
 interface DuplicateTicketModalProps {
   isOpen: boolean;
@@ -42,11 +42,7 @@ export const DuplicateTicketModal: FC<DuplicateTicketModalProps> = ({
           >
             Cancel
           </BaseButton>
-          <BaseButton
-            color="primary"
-            onPress={onConfirm}
-
-          >
+          <BaseButton color="primary" onPress={onConfirm}>
             Duplicate
           </BaseButton>
         </BaseModalFooter>

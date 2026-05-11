@@ -1,5 +1,5 @@
-import type { FC } from 'react';
 import { Icon } from '@brainforgeau/components/base';
+import type { FC } from 'react';
 
 interface TagChipProps {
   name: string;

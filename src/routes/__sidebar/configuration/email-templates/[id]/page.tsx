@@ -1,19 +1,26 @@
-import { useState, useEffect } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useParams, useNavigate } from '@modern-js/runtime/router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem,
-  ValidationAlert,
-} from '@brainforgeau/components';
-import { Switch, toast } from '@heroui/react';
-import { BaseTextarea } from '@brainforgeau/components';
-import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import {
+  NOTIFICATION_TYPE_LABELS,
+  VariablePicker,
+} from '@/components/email-templates';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { VariablePicker, NOTIFICATION_TYPE_LABELS } from '@/components/email-templates';
 import { NotificationType } from '@/types/email-template';
 import type { EmailTemplateDto } from '@/types/email-template';
+import {
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  ValidationAlert,
+} from '@brainforgeau/components';
+import { BaseTextarea } from '@brainforgeau/components';
+import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import { Switch, toast } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { z } from 'zod';
 
 const templateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -37,16 +44,20 @@ function EditEmailTemplatePage() {
     queryKey: ['email-template', id],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(AppSettingsApi);
-      const { data: settings } = await client.v1AppSettingsGet(true, 'EmailTemplate');
+      const { data: settings } = await client.v1AppSettingsGet(
+        true,
+        'EmailTemplate',
+      );
       const setting = (settings || []).find((s: any) => s.id === id);
 
       if (!setting) {
         throw new Error('Template not found');
       }
 
-      const templateData = typeof setting.value === 'string'
-        ? JSON.parse(setting.value)
-        : setting.value;
+      const templateData =
+        typeof setting.value === 'string'
+          ? JSON.parse(setting.value)
+          : setting.value;
 
       return {
         id: setting.id!,
@@ -63,7 +74,8 @@ function EditEmailTemplatePage() {
   const form = useForm({
     defaultValues: {
       name: template?.name ?? '',
-      notificationType: template?.notificationType ?? NotificationType.TicketCreated,
+      notificationType:
+        template?.notificationType ?? NotificationType.TicketCreated,
       subject: template?.subject ?? '',
       body: template?.body ?? '',
       isActive: template?.isActive ?? true,
@@ -112,7 +124,9 @@ function EditEmailTemplatePage() {
     },
     onError: (error: any) => {
       const errorMessage =
-        error?.response?.data?.detail || error?.message || 'Failed to update email template';
+        error?.response?.data?.detail ||
+        error?.message ||
+        'Failed to update email template';
       setErrors([errorMessage]);
     },
   });
@@ -134,7 +148,9 @@ function EditEmailTemplatePage() {
 
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
-    return errors.map((e) => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+    return errors
+      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+      .join(', ');
   };
 
   if (isLoading) {
@@ -176,7 +192,7 @@ function EditEmailTemplatePage() {
 
       <form
         className="flex h-full flex-col gap-4"
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
@@ -189,14 +205,14 @@ function EditEmailTemplatePage() {
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <form.Field name="name">
-                  {(field) => (
+                  {field => (
                     <BaseInput
                       label="Template Name"
                       isRequired
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={e => field.handleChange(e.target.value)}
                       errorMessage={formatFormErrors(field.state.meta.errors)}
                       isInvalid={field.state.meta.errors.length > 0}
                       placeholder="Ticket Created Notification"
@@ -205,34 +221,36 @@ function EditEmailTemplatePage() {
                 </form.Field>
 
                 <form.Field name="notificationType">
-                  {(field) => (
+                  {field => (
                     <BaseSelect
                       label="Notification Type"
                       isRequired
                       selectedKey={String(field.state.value)}
-                      onSelectionChange={(keys) => {
+                      onSelectionChange={keys => {
                         const value = Number(keys);
                         field.handleChange(value);
                       }}
                       errorMessage={formatFormErrors(field.state.meta.errors)}
                       isInvalid={field.state.meta.errors.length > 0}
                     >
-                      {Object.entries(NOTIFICATION_TYPE_LABELS).map(([key, label]) => (
-                        <BaseSelectItem key={key}>{label}</BaseSelectItem>
-                      ))}
+                      {Object.entries(NOTIFICATION_TYPE_LABELS).map(
+                        ([key, label]) => (
+                          <BaseSelectItem key={key}>{label}</BaseSelectItem>
+                        ),
+                      )}
                     </BaseSelect>
                   )}
                 </form.Field>
               </div>
 
               <form.Field name="subject">
-                {(field) => (
+                {field => (
                   <BaseInput
                     label="Subject Line"
                     isRequired
                     name={field.name}
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={e => field.handleChange(e.target.value)}
                     errorMessage={formatFormErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
                     placeholder="New Ticket Created: {{ticket.subject}}"
@@ -242,7 +260,7 @@ function EditEmailTemplatePage() {
               </form.Field>
 
               <form.Field name="body">
-                {(field) => (
+                {field => (
                   <BaseTextarea
                     label="Email Body"
                     isRequired
@@ -262,7 +280,7 @@ function EditEmailTemplatePage() {
               </form.Field>
 
               <form.Field name="isActive">
-                {(field) => (
+                {field => (
                   <Switch
                     isSelected={field.state.value}
                     onChange={field.handleChange}

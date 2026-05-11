@@ -1,34 +1,48 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate } from '@modern-js/runtime/router';
-import { useTimezone } from '@brainforgeau/security';
-import { BaseTabs, BaseTab } from '@brainforgeau/components';
-import { Box, Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { BaseTable, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
+import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import {
-  useReactTable,
-  getCoreRowModel,
-  type ColumnDef,
-} from '@tanstack/react-table';
+  ResolutionTimeChart,
+  TrendLineChart,
+} from '@/components/reports/components/charts';
 import {
   useDynamicsReport,
   useTechPerformanceReport,
 } from '@/components/reports/hooks/useReports';
 import {
-  TrendLineChart,
-  ResolutionTimeChart,
-} from '@/components/reports/components/charts';
-import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
-import { exportToCSV, exportToExcel, formatReportData } from '@/components/reports/utils/exportReport';
-import { ReportGranularity, type TechPerformanceDto, type CustomReportResultDto } from '@/types';
+  exportToCSV,
+  exportToExcel,
+  formatReportData,
+} from '@/components/reports/utils/exportReport';
+import {
+  type CustomReportResultDto,
+  ReportGranularity,
+  type TechPerformanceDto,
+} from '@/types';
+import { BaseTab, BaseTabs } from '@brainforgeau/components';
+import {
+  BaseSelect,
+  BaseSelectItem,
+  BaseTable,
+} from '@brainforgeau/components';
+import { Box, Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { useTimezone } from '@brainforgeau/security';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
 function ReportsPage() {
   const navigate = useNavigate();
   const timezone = useTimezone();
   const [selectedTab, setSelectedTab] = useState('dynamics');
-  const [granularity, setGranularity] = useState<ReportGranularity>(ReportGranularity.Daily);
+  const [granularity, setGranularity] = useState<ReportGranularity>(
+    ReportGranularity.Daily,
+  );
 
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -45,10 +59,8 @@ function ReportsPage() {
     endDate,
     granularity,
   );
-  const { data: techPerformance, isLoading: loadingTechPerf } = useTechPerformanceReport(
-    startDate,
-    endDate,
-  );
+  const { data: techPerformance, isLoading: loadingTechPerf } =
+    useTechPerformanceReport(startDate, endDate);
 
   // Tech Performance Table
   const techColumns: ColumnDef<TechPerformanceDto, any>[] = useMemo(
@@ -56,37 +68,41 @@ function ReportsPage() {
       {
         accessorKey: 'technicianId',
         header: 'Technician',
-        cell: (info) => (info.getValue() as string)?.slice(0, 8) ?? '-',
+        cell: info => (info.getValue() as string)?.slice(0, 8) ?? '-',
       },
       {
         accessorKey: 'ticketsAssigned',
         header: 'Assigned',
-        cell: (info) => info.getValue() as number,
+        cell: info => info.getValue() as number,
       },
       {
         accessorKey: 'ticketsResolved',
         header: 'Resolved',
-        cell: (info) => info.getValue() as number,
+        cell: info => info.getValue() as number,
       },
       {
         accessorKey: 'avgResolutionMinutes',
         header: 'Avg Resolution',
-        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        cell: info =>
+          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
       {
         accessorKey: 'avgFirstResponseMinutes',
         header: 'First Response',
-        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        cell: info =>
+          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
       {
         accessorKey: 'p50ResolutionMinutes',
         header: 'P50',
-        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        cell: info =>
+          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
       {
         accessorKey: 'p90ResolutionMinutes',
         header: 'P90',
-        cell: (info) => `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        cell: info =>
+          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
     ],
     [],
@@ -98,7 +114,10 @@ function ReportsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const handleExportCustom = (data: CustomReportResultDto, format: 'csv' | 'excel') => {
+  const handleExportCustom = (
+    data: CustomReportResultDto,
+    format: 'csv' | 'excel',
+  ) => {
     const formattedData = formatReportData(data.rows, timezone);
     const filename = `custom-report-${new Date().toISOString().split('T')[0]}`;
 
@@ -136,7 +155,7 @@ function ReportsPage() {
 
         <BaseTabs
           selectedKey={selectedTab}
-          onSelectionChange={(key) => setSelectedTab(key as string)}
+          onSelectionChange={key => setSelectedTab(key as string)}
         >
           {/* Dynamics Tab */}
           <BaseTab key="dynamics" title="Dynamics">
@@ -145,7 +164,7 @@ function ReportsPage() {
                 <BaseSelect
                   label="Granularity"
                   selectedKey={granularity}
-                  onSelectionChange={(keys) => {
+                  onSelectionChange={keys => {
                     const key = keys as ReportGranularity;
                     setGranularity(key);
                   }}
@@ -164,7 +183,9 @@ function ReportsPage() {
               </div>
 
               <Box title="Ticket Trends">
-                {dynamicsData?.dataPoints && <TrendLineChart data={dynamicsData.dataPoints} />}
+                {dynamicsData?.dataPoints && (
+                  <TrendLineChart data={dynamicsData.dataPoints} />
+                )}
               </Box>
 
               <Box title="Average Resolution Time">

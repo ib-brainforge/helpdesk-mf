@@ -73,7 +73,6 @@ export const AddParentTicketModal: FC<AddParentTicketModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!trimmed || isInvalid}
-
           >
             Set Parent
           </BaseButton>

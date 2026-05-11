@@ -30,7 +30,11 @@ export { ObservabilityProvider } from './ObservabilityProvider';
 export { observabilityConfig } from './config';
 
 // Hooks
-export { usePageTracking, useActionTracking, type UserActionType } from './hooks';
+export {
+  usePageTracking,
+  useActionTracking,
+  type UserActionType,
+} from './hooks';
 
 // Components
 export { PageTracker } from './PageTracker';

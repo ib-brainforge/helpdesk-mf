@@ -1,28 +1,32 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { toast } from '@heroui/react';
-import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
 import {
   CategoryEditorModal,
-  SectionEditorModal,
   CategoryList,
+  SectionEditorModal,
   useCategoriesData,
 } from '@components/categories';
+import { toast } from '@heroui/react';
 
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CategoryDto, SectionDto } from '@/types/category';
+import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { Helmet } from '@modern-js/runtime/head';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CategoryDto, SectionDto } from '@/types/category';
 
 function CategoriesPage() {
   const queryClient = useQueryClient();
   const { categories, sections, isLoading } = useCategoriesData();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategoryDto | undefined>(undefined);
-  const [editingSection, setEditingSection] = useState<SectionDto | undefined>(undefined);
+  const [editingCategory, setEditingCategory] = useState<
+    CategoryDto | undefined
+  >(undefined);
+  const [editingSection, setEditingSection] = useState<SectionDto | undefined>(
+    undefined,
+  );
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: string) => {
@@ -97,7 +101,11 @@ function CategoriesPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Configuration', href: '/configuration' },
-            { label: 'Categories', href: '/configuration/categories', isCurrent: true },
+            {
+              label: 'Categories',
+              href: '/configuration/categories',
+              isCurrent: true,
+            },
           ]}
         />
 
@@ -106,7 +114,9 @@ function CategoriesPage() {
             <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
               Ticket Categories and Permissions
             </h1>
-            <p className="text-default-500 mt-1">Organize tickets into categories and subcategories</p>
+            <p className="text-default-500 mt-1">
+              Organize tickets into categories and subcategories
+            </p>
           </div>
           <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
             <BaseButton
@@ -131,9 +141,9 @@ function CategoriesPage() {
           sections={sections}
           isLoading={isLoading}
           onEditCategory={handleEditCategory}
-          onDeleteCategory={(id) => deleteCategoryMutation.mutate(id)}
+          onDeleteCategory={id => deleteCategoryMutation.mutate(id)}
           onEditSection={handleEditSection}
-          onDeleteSection={(id) => deleteSectionMutation.mutate(id)}
+          onDeleteSection={id => deleteSectionMutation.mutate(id)}
         />
       </div>
 

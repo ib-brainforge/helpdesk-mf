@@ -1,23 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from '@heroui/react';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type {
+  CreateKnowledgeBaseArticleDto,
+  KnowledgeBaseArticleDto,
+  KnowledgeBaseArticleListDto,
+  KnowledgeBaseCategoryDto,
+  PagedResult,
+  UpdateKnowledgeBaseArticleDto,
+} from '@/types';
+import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
-  KnowledgeBaseApi,
   type HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
   type HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
   type HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto,
-  type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
+  type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
+  KnowledgeBaseApi,
 } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type {
-  KnowledgeBaseArticleListDto,
-  KnowledgeBaseCategoryDto,
-  KnowledgeBaseArticleDto,
-  PagedResult,
-  CreateKnowledgeBaseArticleDto,
-  UpdateKnowledgeBaseArticleDto,
-} from '@/types';
-import { KnowledgeBaseStatus, KnowledgeBaseAccessLevel } from '@/types';
+import { toast } from '@heroui/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Map a generated KbArticleStatus string to the local KnowledgeBaseStatus string enum.
 // The generated type and the local enum share the same string values, so this is a
@@ -52,34 +52,44 @@ function mapAccessLevel(
   }
 }
 
-
 export const useKnowledgeBaseCategories = () => {
   return useQuery<KnowledgeBaseCategoryDto[]>({
     queryKey: ['knowledge-base', 'categories'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbCategoriesGet();
-      const categories = response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto[];
-      return categories.map((cat): KnowledgeBaseCategoryDto => ({
-        id: cat.id ?? '',
-        name: cat.name ?? '',
-        description: cat.description ?? undefined,
-        parentId: undefined,
-        articleCount: 0, // KbCategoryDto does not expose article count — backend does not return this field
-        order: cat.sortOrder ?? 0,
-      }));
+      const categories =
+        response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto[];
+      return categories.map(
+        (cat): KnowledgeBaseCategoryDto => ({
+          id: cat.id ?? '',
+          name: cat.name ?? '',
+          description: cat.description ?? undefined,
+          parentId: undefined,
+          articleCount: 0, // KbCategoryDto does not expose article count — backend does not return this field
+          order: cat.sortOrder ?? 0,
+        }),
+      );
     },
   });
 };
 
-export const useKnowledgeBaseArticles = (categoryId?: string, searchTerm?: string) => {
+export const useKnowledgeBaseArticles = (
+  categoryId?: string,
+  searchTerm?: string,
+) => {
   return useQuery<PagedResult<KnowledgeBaseArticleListDto>>({
     queryKey: ['knowledge-base', 'articles', categoryId, searchTerm],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       if (searchTerm) {
         const response = await client.v1KbArticlesSearchGet(searchTerm);
-        const pagedData = response.data as { items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[]; totalCount?: number; page?: number; pageSize?: number };
+        const pagedData = response.data as {
+          items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[];
+          totalCount?: number;
+          page?: number;
+          pageSize?: number;
+        };
         return {
           items: (pagedData.items ?? []).map(mapKbArticleListToDto),
           totalCount: pagedData.totalCount ?? 0,
@@ -88,7 +98,12 @@ export const useKnowledgeBaseArticles = (categoryId?: string, searchTerm?: strin
         };
       }
       const response = await client.v1KbArticlesGet(categoryId);
-      const pagedData = response.data as { items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[]; totalCount?: number; page?: number; pageSize?: number };
+      const pagedData = response.data as {
+        items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[];
+        totalCount?: number;
+        page?: number;
+        pageSize?: number;
+      };
       return {
         items: (pagedData.items ?? []).map(mapKbArticleListToDto),
         totalCount: pagedData.totalCount ?? 0,
@@ -136,11 +151,16 @@ function mapKbArticleDetailToDto(
     status: mapStatus(dto.status),
     accessLevel: mapAccessLevel(dto.accessLevel),
     views: dto.viewCount ?? 0,
-    averageRating: dto.helpfulCount !== undefined && dto.notHelpfulCount !== undefined
-      ? dto.helpfulCount + dto.notHelpfulCount > 0
-        ? Math.round((dto.helpfulCount / (dto.helpfulCount + dto.notHelpfulCount)) * 5 * 10) / 10
-        : undefined
-      : undefined,
+    averageRating:
+      dto.helpfulCount !== undefined && dto.notHelpfulCount !== undefined
+        ? dto.helpfulCount + dto.notHelpfulCount > 0
+          ? Math.round(
+              (dto.helpfulCount / (dto.helpfulCount + dto.notHelpfulCount)) *
+                5 *
+                10,
+            ) / 10
+          : undefined
+        : undefined,
     ratingCount: (dto.helpfulCount ?? 0) + (dto.notHelpfulCount ?? 0),
     tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
     // authorName is not returned by KbArticleDetailDto — only authorId would be available
@@ -204,12 +224,15 @@ export const useCreateKnowledgeBaseArticle = () => {
         body: article.body,
         categoryId: article.categoryId,
         tags: article.tags,
-        accessLevel: article.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
+        accessLevel:
+          article.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
       });
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'articles'] });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
       toast('Article created successfully', { variant: 'success' });
     },
   });
@@ -219,7 +242,10 @@ export const useUpdateKnowledgeBaseArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: UpdateKnowledgeBaseArticleDto }) => {
+    mutationFn: async ({
+      id,
+      updates,
+    }: { id: string; updates: UpdateKnowledgeBaseArticleDto }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       // Note: the update command does not accept a status field — use the publish endpoint for status changes.
       const response = await client.v1KbArticlesIdPut(id, {
@@ -228,13 +254,19 @@ export const useUpdateKnowledgeBaseArticle = () => {
         body: updates.body,
         categoryId: updates.categoryId,
         tags: updates.tags,
-        accessLevel: updates.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel | undefined,
+        accessLevel: updates.accessLevel as
+          | HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel
+          | undefined,
       });
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'articles'] });
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', variables.id] });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', variables.id],
+      });
       toast('Article updated successfully', { variant: 'success' });
     },
   });
@@ -252,8 +284,12 @@ export const usePublishKnowledgeBaseArticle = () => {
       return response.data;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'articles'] });
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', id] });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', id],
+      });
       toast('Article published successfully', { variant: 'success' });
     },
   });
@@ -263,14 +299,23 @@ export const useRateKnowledgeBaseArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ articleId, isHelpful }: { articleId: string; isHelpful: boolean }) => {
+    mutationFn: async ({
+      articleId,
+      isHelpful,
+    }: { articleId: string; isHelpful: boolean }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbArticlesIdRatePost(articleId, { isHelpful });
+      const response = await client.v1KbArticlesIdRatePost(articleId, {
+        isHelpful,
+      });
       return response.data;
     },
     onSuccess: (_, { articleId }) => {
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article', articleId] });
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'article-by-id', articleId] });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article', articleId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', articleId],
+      });
       toast('Thank you for your feedback!', { variant: 'success' });
     },
     onError: () => {
@@ -308,15 +353,21 @@ export const useImportKb = () => {
       const response = await client.v1KbImportPost(file);
       return response.data as unknown as KbImportResult;
     },
-    onSuccess: (result) => {
+    onSuccess: result => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base'] });
       const message = result.isPartial
         ? `Imported ${result.articlesImported} articles, ${result.categoriesImported} categories (${result.errors.length} errors)`
         : `Imported ${result.articlesImported} articles and ${result.categoriesImported} categories successfully`;
-      toast('Import complete', { description: message, variant: result.isPartial ? 'warning' : 'success' });
+      toast('Import complete', {
+        description: message,
+        variant: result.isPartial ? 'warning' : 'success',
+      });
     },
     onError: () => {
-      toast('Import failed', { description: 'Failed to import KB content', variant: 'danger' });
+      toast('Import failed', {
+        description: 'Failed to import KB content',
+        variant: 'danger',
+      });
     },
   });
 };
@@ -327,11 +378,17 @@ export const useExportKb = () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbExportGet({ responseType: 'blob' });
       // Trigger browser download
-      const contentDisposition = response.headers['content-disposition'] as string | undefined;
+      const contentDisposition = response.headers['content-disposition'] as
+        | string
+        | undefined;
       const fileNameMatch = contentDisposition?.match(/filename="?([^"]+)"?/);
-      const fileName = fileNameMatch?.[1] ?? `kb-export-${new Date().toISOString().slice(0, 10)}.zip`;
+      const fileName =
+        fileNameMatch?.[1] ??
+        `kb-export-${new Date().toISOString().slice(0, 10)}.zip`;
 
-      const url = window.URL.createObjectURL(new Blob([response.data as unknown as BlobPart]));
+      const url = window.URL.createObjectURL(
+        new Blob([response.data as unknown as BlobPart]),
+      );
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', fileName);
@@ -341,10 +398,16 @@ export const useExportKb = () => {
       window.URL.revokeObjectURL(url);
     },
     onSuccess: () => {
-      toast('Export complete', { description: 'KB content downloaded successfully', variant: 'success' });
+      toast('Export complete', {
+        description: 'KB content downloaded successfully',
+        variant: 'success',
+      });
     },
     onError: () => {
-      toast('Export failed', { description: 'Failed to export KB content', variant: 'danger' });
+      toast('Export failed', {
+        description: 'Failed to export KB content',
+        variant: 'danger',
+      });
     },
   });
 };
@@ -352,11 +415,19 @@ export const useExportKb = () => {
 export const useDuplicateKbCategory = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<KnowledgeBaseCategoryDto, Error, { id: string; includeArticles: boolean }>({
+  return useMutation<
+    KnowledgeBaseCategoryDto,
+    Error,
+    { id: string; includeArticles: boolean }
+  >({
     mutationFn: async ({ id, includeArticles }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbCategoriesIdDuplicatePost(id, includeArticles);
-      const cat = response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto;
+      const response = await client.v1KbCategoriesIdDuplicatePost(
+        id,
+        includeArticles,
+      );
+      const cat =
+        response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto;
       return {
         id: cat.id ?? '',
         name: cat.name ?? '',
@@ -367,11 +438,19 @@ export const useDuplicateKbCategory = () => {
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });
-      toast('Category duplicated', { description: 'Category copied successfully', variant: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'categories'],
+      });
+      toast('Category duplicated', {
+        description: 'Category copied successfully',
+        variant: 'success',
+      });
     },
     onError: () => {
-      toast('Duplication failed', { description: 'Failed to duplicate category', variant: 'danger' });
+      toast('Duplication failed', {
+        description: 'Failed to duplicate category',
+        variant: 'danger',
+      });
     },
   });
 };

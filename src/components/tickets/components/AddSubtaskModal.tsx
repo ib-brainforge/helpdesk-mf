@@ -85,11 +85,7 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
           >
             Cancel
           </BaseButton>
-          <BaseButton
-            color="primary"
-            onPress={handleSubmit}
-
-          >
+          <BaseButton color="primary" onPress={handleSubmit}>
             Create Subtask
           </BaseButton>
         </BaseModalFooter>

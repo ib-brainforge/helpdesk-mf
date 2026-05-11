@@ -1,3 +1,13 @@
+import { authorizedAxios } from '@/state/authorizedAxios';
+import { configAtom } from '@/state/config';
+import type {
+  ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
+  ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
+  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
+} from '@brainforgeau/helpdesk-client';
+import { Configuration } from '@brainforgeau/helpdesk-client';
+import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
+import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
 /**
  * Adapter that exposes helpdesk-mf's rule API functions as the structural
  * `RulesApiClient` interface expected by `@brainforgeau/rules-ui`.
@@ -9,26 +19,20 @@
  * quirk). We coerce them to the required shapes expected by rules-ui, falling
  * back to safe defaults for any missing fields.
  */
-import type { RulesApiClient, UpdateRuleGraphRequest, UpdateRuleProjectRequest } from '@brainforgeau/rules-ui';
 import type {
-  RuleProjectDto,
+  RulesApiClient,
+  UpdateRuleGraphRequest,
+  UpdateRuleProjectRequest,
+} from '@brainforgeau/rules-ui';
+import type {
+  RuleGraphContent,
   RuleGraphDto,
   RuleGraphVersionDto,
-  RuleGraphContent,
+  RuleProjectDto,
   ScheduleConfigDto,
 } from '@brainforgeau/rules-ui';
-import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
-import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
-import type {
-  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
-  ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
-  ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
-} from '@brainforgeau/helpdesk-client';
-import { Configuration } from '@brainforgeau/helpdesk-client';
-import { configAtom } from '@/state/config';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { getDefaultStore } from 'jotai';
 import type { RuntimeConfig } from '@brainforgeau/security';
+import { getDefaultStore } from 'jotai';
 
 // ── DTO mappers ────────────────────────────────────────────────────────────────
 
@@ -37,7 +41,8 @@ function toRuleGraphVersionDto(v: GenRuleGraphVersionDto): RuleGraphVersionDto {
     id: v.id ?? '',
     versionNumber: v.versionNumber ?? 0,
     name: v.name ?? null,
-    contentSnapshot: (v.contentSnapshot as RuleGraphContent | null | undefined) ?? null,
+    contentSnapshot:
+      (v.contentSnapshot as RuleGraphContent | null | undefined) ?? null,
     createdAt: v.createdAt ?? '',
   };
 }
@@ -58,7 +63,9 @@ function toRuleProjectDto(p: GenRuleProjectDto): RuleProjectDto {
 
 function toRuleGraphDto(g: GenRuleGraphDto): RuleGraphDto {
   const versions = (g.versions ?? []).map(toRuleGraphVersionDto);
-  const publishedVersion = g.publishedVersion ? toRuleGraphVersionDto(g.publishedVersion) : null;
+  const publishedVersion = g.publishedVersion
+    ? toRuleGraphVersionDto(g.publishedVersion)
+    : null;
 
   return {
     id: g.id ?? '',
@@ -103,7 +110,11 @@ function buildApiInstances() {
   const basePath = config?.api?.baseUrl ?? '';
   const configuration = new Configuration({ basePath });
   return {
-    ruleProjects: new RuleProjectsApi(configuration, undefined, authorizedAxios),
+    ruleProjects: new RuleProjectsApi(
+      configuration,
+      undefined,
+      authorizedAxios,
+    ),
     ruleGraphs: new RuleGraphsApi(configuration, undefined, authorizedAxios),
   };
 }
@@ -126,7 +137,11 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
       key: string,
       description?: string,
     ): Promise<RuleProjectDto> {
-      const res = await ruleProjects.v1RuleProjectsPost({ name, key, description });
+      const res = await ruleProjects.v1RuleProjectsPost({
+        name,
+        key,
+        description,
+      });
       return toRuleProjectDto(res.data);
     },
 
@@ -155,8 +170,14 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
       return (res.data ?? []).map(toRuleGraphDto);
     },
 
-    async getRuleGraph(projectId: string, ruleId: string): Promise<RuleGraphDto> {
-      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdGet(projectId, ruleId);
+    async getRuleGraph(
+      projectId: string,
+      ruleId: string,
+    ): Promise<RuleGraphDto> {
+      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdGet(
+        projectId,
+        ruleId,
+      );
       return toRuleGraphDto(res.data);
     },
 
@@ -181,19 +202,23 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
       ruleId: string,
       request: UpdateRuleGraphRequest,
     ): Promise<RuleGraphDto> {
-      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdPut(projectId, ruleId, {
-        id: ruleId,
+      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdPut(
         projectId,
-        name: request.name,
-        description: request.description,
-        category: request.category,
-        isEnabled: request.isEnabled,
-        cooldownMinutes: request.cooldownMinutes,
-        consecutivePacketsRequired: request.consecutivePacketsRequired,
-        // ScheduleConfigDto shape is structurally compatible with the generated
-        // ServicesCoreRulesApplicationModelsScheduleConfigDto
-        schedule: request.schedule as never,
-      });
+        ruleId,
+        {
+          id: ruleId,
+          projectId,
+          name: request.name,
+          description: request.description,
+          category: request.category,
+          isEnabled: request.isEnabled,
+          cooldownMinutes: request.cooldownMinutes,
+          consecutivePacketsRequired: request.consecutivePacketsRequired,
+          // ScheduleConfigDto shape is structurally compatible with the generated
+          // ServicesCoreRulesApplicationModelsScheduleConfigDto
+          schedule: request.schedule as never,
+        },
+      );
       return toRuleGraphDto(res.data);
     },
 
@@ -209,10 +234,14 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
       content: RuleGraphContent,
       versionName?: string,
     ): Promise<RuleGraphVersionDto> {
-      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdVersionsPost(projectId, ruleId, {
-        name: versionName ?? null,
-        contentSnapshot: content,
-      });
+      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdVersionsPost(
+        projectId,
+        ruleId,
+        {
+          name: versionName ?? null,
+          contentSnapshot: content,
+        },
+      );
       return toRuleGraphVersionDto(res.data);
     },
 
@@ -221,11 +250,12 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
       ruleId: string,
       versionId: string,
     ): Promise<RuleGraphDto> {
-      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesIdVersionsVersionIdPublishPost(
-        projectId,
-        ruleId,
-        versionId,
-      );
+      const res =
+        await ruleGraphs.v1RuleProjectsProjectIdRulesIdVersionsVersionIdPublishPost(
+          projectId,
+          ruleId,
+          versionId,
+        );
       return toRuleGraphDto(res.data);
     },
   };

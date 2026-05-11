@@ -1,9 +1,9 @@
-import React from 'react';
 import { PageSpinner } from '@brainforgeau/components';
+import type React from 'react';
 
 import { configAtom, getAppConfig } from '@/state/config';
-import { useAtomValue } from 'jotai';
 import { FlexibleAuthProvider } from '@brainforgeau/security';
+import { useAtomValue } from 'jotai';
 
 declare const __HELPDESK_STANDALONE__: boolean;
 

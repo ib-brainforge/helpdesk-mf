@@ -1,3 +1,4 @@
+import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Principal-scoped automation rule-projects list page.
  *
@@ -22,19 +23,18 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
+import type { RuleProjectDto } from '@brainforgeau/rules-ui';
 import { Chip, Switch, toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
-import type { RuleProjectDto } from '@brainforgeau/rules-ui';
 import {
-  useRuleProjects,
   useCreateRuleProject,
   useDeleteRuleProject,
+  useRuleProjects,
   useUpdateRuleProject,
 } from '../state/ruleProjectQueries';
-import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -116,10 +116,9 @@ export function PrincipalAutomationProjectsListPage() {
       setIsCreateOpen(false);
       navigate(`/principal/${principalId}/automations/${result.id}`);
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'principal_automation_list_create_failed' },
-      );
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'principal_automation_list_create_failed',
+      });
       toast('Failed to create automation project', { variant: 'danger' });
     }
   }
@@ -130,11 +129,13 @@ export function PrincipalAutomationProjectsListPage() {
       await deleteMutation.mutateAsync(pendingDeleteId);
       toast('Automation project deleted', { variant: 'success' });
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'principal_automation_list_delete_failed' },
-      );
-      toast('Delete failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'principal_automation_list_delete_failed',
+      });
+      toast('Delete failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     } finally {
       setPendingDeleteId(null);
     }
@@ -327,7 +328,6 @@ export function PrincipalAutomationProjectsListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-
                   isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >

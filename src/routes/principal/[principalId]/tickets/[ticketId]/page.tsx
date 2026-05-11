@@ -2,21 +2,35 @@
  * Principal ticket detail page — /principal/[principalId]/tickets/[ticketId]
  */
 
-import { PageSpinner, BaseButton, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { toast } from '@heroui/react';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { useParams, useNavigate } from '@modern-js/runtime/router';
-import { usePrincipalTicket, useUpdatePrincipalTicketStatus } from '@/hooks/usePrincipalTicket';
 import { StatusBadge } from '@/components/shared';
+import {
+  usePrincipalTicket,
+  useUpdatePrincipalTicketStatus,
+} from '@/hooks/usePrincipalTicket';
+import {
+  BaseButton,
+  BaseSelect,
+  BaseSelectItem,
+  PageSpinner,
+} from '@brainforgeau/components';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
-
+import { toast } from '@heroui/react';
+import { useNavigate, useParams } from '@modern-js/runtime/router';
 
 function PrincipalTicketDetailPage() {
-  const { principalId, ticketId } = useParams<{ principalId: string; ticketId: string }>();
+  const { principalId, ticketId } = useParams<{
+    principalId: string;
+    ticketId: string;
+  }>();
   const navigate = useNavigate();
   const timezone = useTimezone();
-  const { data: ticket, isLoading, error } = usePrincipalTicket(principalId!, ticketId!);
+  const {
+    data: ticket,
+    isLoading,
+    error,
+  } = usePrincipalTicket(principalId!, ticketId!);
   const updateStatusMutation = useUpdatePrincipalTicketStatus(principalId!);
 
   if (isLoading) {
@@ -42,7 +56,10 @@ function PrincipalTicketDetailPage() {
     );
   }
 
-  const statusColorMap: Record<string, 'primary' | 'warning' | 'success' | 'default'> = {
+  const statusColorMap: Record<
+    string,
+    'primary' | 'warning' | 'success' | 'default'
+  > = {
     New: 'primary',
     InProgress: 'warning',
     Closed: 'success',
@@ -64,7 +81,9 @@ function PrincipalTicketDetailPage() {
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">{ticket.subject ?? 'Untitled Ticket'}</h1>
+          <h1 className="text-2xl font-semibold">
+            {ticket.subject ?? 'Untitled Ticket'}
+          </h1>
           <p className="text-sm text-muted-foreground font-mono">
             {ticket.id?.substring(0, 8)}
           </p>
@@ -80,7 +99,9 @@ function PrincipalTicketDetailPage() {
 
       <div className="flex flex-wrap gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Status</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Status
+          </span>
           <BaseSelect
             size="sm"
             selectedKey={ticket.status ? ticket.status : null}
@@ -97,7 +118,9 @@ function PrincipalTicketDetailPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Priority</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Priority
+          </span>
           <StatusBadge
             color={
               ticket.priority === 'Critical'
@@ -115,14 +138,22 @@ function PrincipalTicketDetailPage() {
 
         {ticket.categoryId && (
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">Category ID</span>
-            <span className="font-mono text-xs">{ticket.categoryId.substring(0, 8)}</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">
+              Category ID
+            </span>
+            <span className="font-mono text-xs">
+              {ticket.categoryId.substring(0, 8)}
+            </span>
           </div>
         )}
 
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Created</span>
-          <span className="text-sm">{formatDateTime(ticket.createdAt, { timezone })}</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Created
+          </span>
+          <span className="text-sm">
+            {formatDateTime(ticket.createdAt, { timezone })}
+          </span>
         </div>
       </div>
 
@@ -131,7 +162,9 @@ function PrincipalTicketDetailPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Description
           </h2>
-          <div className="border rounded p-4 text-sm whitespace-pre-wrap">{ticket.description}</div>
+          <div className="border rounded p-4 text-sm whitespace-pre-wrap">
+            {ticket.description}
+          </div>
         </div>
       )}
     </div>

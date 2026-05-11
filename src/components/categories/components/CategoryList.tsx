@@ -1,18 +1,18 @@
-import { useMemo, useState } from 'react';
-import { toast } from '@heroui/react';
-import { Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput, BaseTable } from '@brainforgeau/components';
 import { StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
+import { BaseInput, BaseTable } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { toast } from '@heroui/react';
+import { useMemo, useState } from 'react';
 
 import { useDuplicateCategory } from '@/components/categories/hooks/useCategoriesData';
 import {
+  type ColumnDef,
   createColumnHelper,
   getCoreRowModel,
   useReactTable,
-  type ColumnDef,
 } from '@tanstack/react-table';
 
 interface CategoryListProps {
@@ -62,10 +62,16 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   const handleDuplicate = (category: CategoryDto) => {
     duplicateCategoryMutation.mutate(category.id, {
       onSuccess: () => {
-        toast('Category duplicated', { description: `"${category.name} (copy)" has been created.`, variant: 'success' });
+        toast('Category duplicated', {
+          description: `"${category.name} (copy)" has been created.`,
+          variant: 'success',
+        });
       },
       onError: () => {
-        toast('Duplication failed', { description: 'Could not duplicate the category. Please try again.', variant: 'danger' });
+        toast('Duplication failed', {
+          description: 'Could not duplicate the category. Please try again.',
+          variant: 'danger',
+        });
       },
     });
   };
@@ -90,7 +96,9 @@ export const CategoryList: React.FC<CategoryListProps> = ({
         id: 'accessLevel',
         header: 'Access Type',
         cell: ({ row }) => (
-          <StatusBadge color={getAccessLevelColor(row.original.accessLevel as AccessLevel)}>
+          <StatusBadge
+            color={getAccessLevelColor(row.original.accessLevel as AccessLevel)}
+          >
             {getAccessLevelName(row.original.accessLevel as AccessLevel)}
           </StatusBadge>
         ),
@@ -107,7 +115,10 @@ export const CategoryList: React.FC<CategoryListProps> = ({
               className="p-1 hover:bg-default-100 rounded"
               title="Duplicate"
             >
-              <Icon name="document-duplicate" className="h-4 w-4 text-default-600" />
+              <Icon
+                name="document-duplicate"
+                className="h-4 w-4 text-default-600"
+              />
             </button>
             <button
               type="button"
@@ -130,7 +141,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
     const result: CategoryRow[] = [];
     const categoriesBySection = new Map<string | undefined, CategoryDto[]>();
 
-    categories.forEach((cat) => {
+    categories.forEach(cat => {
       const sectionId = cat.sectionId;
       if (!categoriesBySection.has(sectionId)) {
         categoriesBySection.set(sectionId, []);
@@ -139,16 +150,16 @@ export const CategoryList: React.FC<CategoryListProps> = ({
     });
 
     // Sectioned categories
-    sections.forEach((section) => {
+    sections.forEach(section => {
       const sectionCats = categoriesBySection.get(section.id) || [];
-      sectionCats.forEach((cat) => {
+      sectionCats.forEach(cat => {
         result.push({ ...cat, sectionName: section.name });
       });
     });
 
     // Unsectioned categories
     const unsectioned = categoriesBySection.get(undefined) || [];
-    unsectioned.forEach((cat) => {
+    unsectioned.forEach(cat => {
       result.push({ ...cat, sectionName: undefined });
     });
 
@@ -158,7 +169,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   // Filter by search
   const filteredRows = useMemo(() => {
     if (!searchTerm) return rows;
-    return rows.filter((row) =>
+    return rows.filter(row =>
       row.name?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [rows, searchTerm]);
@@ -166,7 +177,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   const table = useReactTable({
     data: filteredRows,
     columns,
-    getRowId: (row) => row.id,
+    getRowId: row => row.id,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });
@@ -186,8 +197,13 @@ export const CategoryList: React.FC<CategoryListProps> = ({
         <BaseInput
           placeholder="Search categories..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-default-400" />}
+          onChange={e => setSearchTerm(e.target.value)}
+          startContent={
+            <Icon
+              name="magnifying-glass"
+              className="h-4 w-4 text-default-400"
+            />
+          }
           className="max-w-md"
         />
       </div>

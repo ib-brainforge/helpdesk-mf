@@ -1,14 +1,14 @@
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Helmet } from '@modern-js/runtime/head';
-import {
-  Box,
-  DonutChart,
-  PageSpinner,
-} from '@brainforgeau/components';
+import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
 import { SummaryCard } from '@/components/shared';
 import { TEST_IDS } from '@/constants/testIds';
-import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
-import type { StatusBreakdownDto, PriorityBreakdownDto, CategoryBreakdownDto } from '@/types';
+import type {
+  CategoryBreakdownDto,
+  PriorityBreakdownDto,
+  StatusBreakdownDto,
+} from '@/types';
+import { Box, DonutChart, PageSpinner } from '@brainforgeau/components';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { Helmet } from '@modern-js/runtime/head';
 
 const STATUS_COLORS: Record<string, string> = {
   New: '#3b82f6',
@@ -28,11 +28,21 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS = [
-  '#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e',
-  '#0ea5e9', '#ec4899', '#6b7280', '#14b8a6', '#f97316',
+  '#6366f1',
+  '#10b981',
+  '#f59e0b',
+  '#8b5cf6',
+  '#f43f5e',
+  '#0ea5e9',
+  '#ec4899',
+  '#6b7280',
+  '#14b8a6',
+  '#f97316',
 ];
 
-function toStatusDonut(data: StatusBreakdownDto[]): { label: string; value: number; color: string }[] {
+function toStatusDonut(
+  data: StatusBreakdownDto[],
+): { label: string; value: number; color: string }[] {
   return data
     .filter(item => item.count > 0)
     .map(item => ({
@@ -42,7 +52,9 @@ function toStatusDonut(data: StatusBreakdownDto[]): { label: string; value: numb
     }));
 }
 
-function toPriorityDonut(data: PriorityBreakdownDto[]): { label: string; value: number; color: string }[] {
+function toPriorityDonut(
+  data: PriorityBreakdownDto[],
+): { label: string; value: number; color: string }[] {
   return data
     .filter(item => item.count > 0)
     .map(item => ({
@@ -52,7 +64,9 @@ function toPriorityDonut(data: PriorityBreakdownDto[]): { label: string; value: 
     }));
 }
 
-function toCategoryDonut(data: CategoryBreakdownDto[]): { label: string; value: number; color: string }[] {
+function toCategoryDonut(
+  data: CategoryBreakdownDto[],
+): { label: string; value: number; color: string }[] {
   return [...data]
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
@@ -115,9 +129,7 @@ function DashboardPage() {
             value={summaryData?.totalOpen ?? 0}
             subtitle="Awaiting resolution"
             icon="exclamation-triangle"
-            variant={
-              (summaryData?.totalOpen ?? 0) > 0 ? 'warning' : 'default'
-            }
+            variant={(summaryData?.totalOpen ?? 0) > 0 ? 'warning' : 'default'}
           />
           <SummaryCard
             title="Avg Resolution"

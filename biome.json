@@ -19,11 +19,64 @@
     }
   },
   "linter": {
-    "enabled": false,
+    "enabled": true,
     "rules": {
       "recommended": true,
+
       "suspicious": {
-        "noDuplicateFontNames": "off"
+        "noDuplicateFontNames": "off",
+        "noExplicitAny": "warn",
+        "noAssignInExpressions": "warn",
+        "noArrayIndexKey": "warn",
+        "noGlobalIsNan": "warn",
+        "noConfusingVoidType": "warn"
+      },
+
+      "style": {
+        "noNonNullAssertion": "warn",
+        "useImportType": "warn",
+        "useNodejsImportProtocol": "warn",
+        "noUnusedTemplateLiteral": "warn",
+        "noUselessElse": "warn",
+        "useTemplate": "warn"
+      },
+
+      "correctness": {
+        "useExhaustiveDependencies": "warn",
+        "noInvalidPositionAtImportRule": "warn"
+      },
+
+      "complexity": {
+        "noForEach": "warn",
+        "useLiteralKeys": "warn",
+        "noUselessSwitchCase": "warn",
+        "noUselessTernary": "warn",
+        "useOptionalChain": "warn"
+      },
+
+      "a11y": {
+        "noLabelWithoutControl": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useButtonType": "warn",
+        "useAltText": "warn",
+        "noRedundantAlt": "warn",
+        "useValidAriaProps": "warn",
+        "noSvgWithoutTitle": "warn",
+        "noAriaHiddenOnFocusable": "warn",
+        "useAriaPropsForRole": "warn",
+        "noNoninteractiveElementToInteractiveRole": "warn",
+        "noAccessKey": "warn",
+        "noAutofocus": "warn",
+        "noInteractiveElementToNoninteractiveRole": "warn",
+        "noNoninteractiveTabindex": "warn",
+        "useAnchorContent": "warn",
+        "useFocusableInteractive": "warn",
+        "useSemanticElements": "warn",
+        "noDistractingElements": "warn"
+      },
+
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
       }
     }
   },

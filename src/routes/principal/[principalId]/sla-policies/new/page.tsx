@@ -3,7 +3,6 @@
  */
 
 import { useCreatePrincipalSlaPolicy } from '@/hooks/usePrincipalSlaPolicies';
-import { toast } from '@heroui/react';
 import {
   BaseButton,
   BaseCheckbox,
@@ -11,6 +10,7 @@ import {
   PageSpinner,
 } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 
 import {
   useNavigate,
@@ -90,7 +90,6 @@ function PrincipalSlaPolicyNewPage() {
         <BaseButton
           color="primary"
           onPress={handleCreate}
-
           isDisabled={createMutation.isPending || !name.trim()}
         >
           Create

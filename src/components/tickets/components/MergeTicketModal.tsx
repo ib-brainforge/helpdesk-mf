@@ -1,14 +1,14 @@
-import { type FC, useState, useCallback } from 'react';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseButton,
   BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
   Icon,
 } from '@brainforgeau/components';
+import { type FC, useCallback, useState } from 'react';
 interface MergeTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,14 +39,17 @@ export const MergeTicketModal: FC<MergeTicketModalProps> = ({
         <BaseModalBody>
           <div className="mb-4 p-3 bg-warning-50 border border-warning-200 rounded text-warning-800">
             <p className="font-semibold">Warning</p>
-            <p>This will merge the current ticket into another primary ticket. The current ticket will be closed
-            and its subscribers copied to the primary ticket.</p>
+            <p>
+              This will merge the current ticket into another primary ticket.
+              The current ticket will be closed and its subscribers copied to
+              the primary ticket.
+            </p>
           </div>
           <BaseInput
             label="Target Ticket ID"
             placeholder="Enter the ID of the ticket to merge into"
             value={targetTicketId}
-            onChange={(e) => setTargetTicketId(e.target.value)}
+            onChange={e => setTargetTicketId(e.target.value)}
             description="The ticket that will remain active after merge"
           />
         </BaseModalBody>

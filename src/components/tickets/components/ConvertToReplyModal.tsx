@@ -77,7 +77,6 @@ export const ConvertToReplyModal: FC<ConvertToReplyModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!trimmed || isInvalid}
-
           >
             Convert
           </BaseButton>

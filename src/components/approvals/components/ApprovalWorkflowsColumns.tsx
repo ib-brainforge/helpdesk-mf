@@ -1,8 +1,13 @@
-import { type ColumnDef } from '@tanstack/react-table';
-import { BaseButton, Icon } from '@brainforgeau/components';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
 import { ApprovalMode, type ApprovalWorkflowListDto } from '@/types/approval';
+import { BaseButton, Icon } from '@brainforgeau/components';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from '@heroui/react';
+import type { ColumnDef } from '@tanstack/react-table';
 
 // REVIEW: Following existing pattern from AutomationRulesColumns
 
@@ -28,7 +33,9 @@ export const createApprovalWorkflowsColumns = ({
       <div>
         <div className="font-medium">{row.original.name}</div>
         {row.original.description && (
-          <div className="text-xs text-gray-500 mt-0.5">{row.original.description}</div>
+          <div className="text-xs text-gray-500 mt-0.5">
+            {row.original.description}
+          </div>
         )}
       </div>
     ),

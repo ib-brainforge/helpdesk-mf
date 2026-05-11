@@ -1,8 +1,11 @@
-import type { FC } from 'react';
-import { useState, useCallback } from 'react';
-import { BaseAutocomplete, BaseAutocompleteItem } from '@brainforgeau/components/autocomplete';
-import { TagChip } from './TagChip';
 import type { TagDto } from '@/types';
+import {
+  BaseAutocomplete,
+  BaseAutocompleteItem,
+} from '@brainforgeau/components/autocomplete';
+import type { FC } from 'react';
+import { useCallback, useState } from 'react';
+import { TagChip } from './TagChip';
 
 interface TagInputProps {
   selectedTags: string[];
@@ -58,7 +61,7 @@ export const TagInput: FC<TagInputProps> = ({
         label="Tags"
         placeholder={placeholder}
         onValueChange={setInputValue}
-        onSelectionChange={(key) => {
+        onSelectionChange={key => {
           if (key) {
             const tag = availableTags.find(t => t.id === String(key));
             if (tag) {
@@ -68,7 +71,7 @@ export const TagInput: FC<TagInputProps> = ({
         }}
         allowsCustomValue
       >
-        {filteredTags.map((tag) => (
+        {filteredTags.map(tag => (
           <BaseAutocompleteItem key={tag.id} value={tag.id}>
             {tag.name}
           </BaseAutocompleteItem>
@@ -77,7 +80,7 @@ export const TagInput: FC<TagInputProps> = ({
 
       {selectedTags.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedTags.map((tag) => {
+          {selectedTags.map(tag => {
             const tagData = availableTags.find(t => t.name === tag);
             return (
               <TagChip

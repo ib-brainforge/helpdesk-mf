@@ -19,10 +19,7 @@ import {
   usePublishPrincipalDraft,
   useUpdatePrincipalDraft,
 } from '../state/workflowQueries';
-import type {
-  WorkflowStateDto,
-  WorkflowTransitionDto,
-} from '../types';
+import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 import { isPrincipalOwned, isTenantOwned } from '../types/workflow';
 
 function formatDate(iso: string): string {
@@ -111,7 +108,10 @@ export function PrincipalWorkflowDetailPage() {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'principal_workflow_detail_create_draft_failed',
       });
-      toast('Failed to create draft', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Failed to create draft', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     }
   }
 
@@ -136,7 +136,10 @@ export function PrincipalWorkflowDetailPage() {
       } else {
         logger.error('principal_workflow_detail_save_failed');
       }
-      toast('Save failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Save failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
       throw err;
     }
   }
@@ -158,7 +161,10 @@ export function PrincipalWorkflowDetailPage() {
       } else {
         logger.error('principal_workflow_detail_publish_failed');
       }
-      toast('Publish failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Publish failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
       throw err;
     }
   }
@@ -425,9 +431,7 @@ export function PrincipalWorkflowDetailPage() {
           sourceDefinitionId={id}
           sourceDefinitionName={data.name}
           principalId={principalId}
-          getDetailUrl={newId =>
-            `/principal/${principalId}/workflows/${newId}`
-          }
+          getDetailUrl={newId => `/principal/${principalId}/workflows/${newId}`}
         />
       )}
     </div>

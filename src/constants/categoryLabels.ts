@@ -3,7 +3,7 @@
  * Import from here; do not re-define locally in pages.
  */
 
-import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
+import type { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 
 export const ACCESS_LEVEL_LABELS: Record<
   HelpdeskDomainCategoriesEnumsAccessLevel,

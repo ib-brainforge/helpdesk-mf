@@ -1,8 +1,8 @@
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { Icon } from '@brainforgeau/components/base';
+import { Card, CardContent } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { NavLink } from '@modern-js/runtime/router';
-import { Icon } from '@brainforgeau/components/base';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardContent } from '@heroui/react';
 
 type ReportCardProps = {
   title: string;
@@ -12,7 +12,13 @@ type ReportCardProps = {
   isComingSoon?: boolean;
 };
 
-function ReportCard({ title, description, icon, href, isComingSoon }: ReportCardProps) {
+function ReportCard({
+  title,
+  description,
+  icon,
+  href,
+  isComingSoon,
+}: ReportCardProps) {
   const content = (
     <Card
       className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
@@ -26,7 +32,9 @@ function ReportCard({ title, description, icon, href, isComingSoon }: ReportCard
             <h3 className="text-base font-semibold mb-1">{title}</h3>
             <p className="text-sm text-default-500">{description}</p>
             {isComingSoon && (
-              <span className="inline-block mt-2 text-xs text-warning">Coming soon</span>
+              <span className="inline-block mt-2 text-xs text-warning">
+                Coming soon
+              </span>
             )}
           </div>
         </div>
@@ -193,11 +201,13 @@ function ReportsHubPage() {
       </div>
 
       <div className="space-y-8">
-        {sections.map((section) => (
+        {sections.map(section => (
           <div key={section.title}>
-            <h2 className="text-lg font-semibold mb-4 text-default-700">{section.title}</h2>
+            <h2 className="text-lg font-semibold mb-4 text-default-700">
+              {section.title}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {section.items.map((item) => (
+              {section.items.map(item => (
                 <ReportCard key={item.title} {...item} />
               ))}
             </div>

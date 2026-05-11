@@ -2,22 +2,38 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 
 import './index.css';
 
-import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
+import { breadcrumbs } from '@/breadcrumbs';
 import { Providers } from '@/providers';
-import { useAuth, usePermissions, type GuardedItem } from '@brainforgeau/security';
-import { ErrorBoundary, SideNav, SideNavDesktopMode, PageSpinner, useNavbarAction } from '@brainforgeau/components';
+import {
+  ErrorBoundary,
+  PageSpinner,
+  SideNav,
+  type SideNavDesktopMode,
+  useNavbarAction,
+} from '@brainforgeau/components';
+import {
+  BreadcrumbRegistryProvider,
+  PageTemplateProvider,
+} from '@brainforgeau/components/page';
+import {
+  type GuardedItem,
+  useAuth,
+  usePermissions,
+  useWhitelabel,
+} from '@brainforgeau/security';
+import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 
 const TopNavbar = React.lazy(() =>
   import('@brainforgeau/navbar/Navbar').then(m => ({ default: m.TopNavbar })),
 );
+import { Logo } from '@/components/Logo';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
-import { HelpdeskPermissions } from '@/constants/permissions';
-import { useAtomValue } from 'jotai';
 import { hubConnectedAtom } from '@/state/config';
-import { SignalIcon } from '@heroicons/react/24/solid';
-import { Logo } from '@/components/Logo';
 import { getAppConfig } from '@/state/config';
+import { SignalIcon } from '@heroicons/react/24/solid';
+import { useAtomValue } from 'jotai';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -151,7 +167,10 @@ const HelpdeskAction = () => {
   return (
     <div className="flex items-center gap-1.5">
       {hubConnected && (
-        <span className="flex items-center gap-1 text-green-500" title="Live connection active">
+        <span
+          className="flex items-center gap-1 text-green-500"
+          title="Live connection active"
+        >
           <SignalIcon className="h-3.5 w-3.5" />
         </span>
       )}
@@ -161,12 +180,13 @@ const HelpdeskAction = () => {
 
 export default function Layout() {
   // Desktop sidebar: extended (full) or collapsed (icons only)
-  const [desktopMode, setDesktopMode] = useState<SideNavDesktopMode>('extended');
+  const [desktopMode, setDesktopMode] =
+    useState<SideNavDesktopMode>('extended');
   // Mobile drawer: closed by default
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleDesktopMode = () => {
-    setDesktopMode(prev => prev === 'extended' ? 'collapsed' : 'extended');
+    setDesktopMode(prev => (prev === 'extended' ? 'collapsed' : 'extended'));
   };
 
   // Handle hamburger menu click - toggle desktop mode on desktop, open drawer on mobile
@@ -184,6 +204,10 @@ export default function Layout() {
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
   const { setAction } = useNavbarAction();
+
+  const { config: whitelabelConfig, isLoading: whitelabelLoading } =
+    useWhitelabel();
+  const brandName = whitelabelConfig?.branding?.appTitle ?? 'BrainForge';
 
   // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
   const isPrincipalRoute = useMemo(
@@ -208,59 +232,75 @@ export default function Layout() {
 
   return (
     <Providers>
-      <PageTracker category="helpdesk" />
-      <ErrorBoundary>
-        <Suspense fallback={<PageSpinner title="Loading..." />}>
-          {isAuthenticated && (
-            <TopNavbar
-              data-testid={TEST_IDS.navbar.top}
-              config={{
-                identityBaseUrl: appConfig?.identityBaseUrl || '',
-                notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
-                notificationApiUrl: appConfig?.api?.notificationUrl || '',
-                app: 'helpdesk',
-              }}
-              onExtend={handleNavExtend}
-              logoComponent={<Logo hideOnMobile />}
-            />
-          )}
-        </Suspense>
-      </ErrorBoundary>
-      <div className="flex flex-1">
-        {isAuthenticated && !isPrincipalRoute && (
-          <SideNav
-            data-testid={TEST_IDS.navbar.side}
-            sections={navSections}
-            desktopMode={desktopMode}
-            onDesktopModeChange={setDesktopMode}
-            isMobileOpen={isMobileOpen}
-            onMobileOpenChange={setIsMobileOpen}
-            mobileHeader={<Logo />}
-            renderLink={({ item, className, activeClassName, children }: { item: any, className: string, activeClassName: string, children: React.ReactNode }) => (
-              <NavLink
-                to={item.href}
-                data-testid={item.testId}
-                className={({ isActive }: { isActive: boolean }) => (isActive ? activeClassName : className)}
-              >
-                {children}
-              </NavLink>
-            )}
-          />
-        )}
-        {isPrincipalRoute ? (
+      <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
+        <BreadcrumbRegistryProvider registry={breadcrumbs}>
+          <PageTracker category="helpdesk" />
           <ErrorBoundary>
-            <Outlet />
+            <Suspense fallback={<PageSpinner title="Loading..." />}>
+              {isAuthenticated && (
+                <TopNavbar
+                  data-testid={TEST_IDS.navbar.top}
+                  config={{
+                    identityBaseUrl: appConfig?.identityBaseUrl || '',
+                    notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+                    notificationApiUrl: appConfig?.api?.notificationUrl || '',
+                    app: 'helpdesk',
+                  }}
+                  onExtend={handleNavExtend}
+                  logoComponent={<Logo hideOnMobile />}
+                />
+              )}
+            </Suspense>
           </ErrorBoundary>
-        ) : (
           <div className="flex flex-1">
-            <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
+            {isAuthenticated && !isPrincipalRoute && (
+              <SideNav
+                data-testid={TEST_IDS.navbar.side}
+                sections={navSections}
+                desktopMode={desktopMode}
+                onDesktopModeChange={setDesktopMode}
+                isMobileOpen={isMobileOpen}
+                onMobileOpenChange={setIsMobileOpen}
+                mobileHeader={<Logo />}
+                renderLink={({
+                  item,
+                  className,
+                  activeClassName,
+                  children,
+                }: {
+                  item: any;
+                  className: string;
+                  activeClassName: string;
+                  children: React.ReactNode;
+                }) => (
+                  <NavLink
+                    to={item.href}
+                    data-testid={item.testId}
+                    className={({ isActive }: { isActive: boolean }) =>
+                      isActive ? activeClassName : className
+                    }
+                  >
+                    {children}
+                  </NavLink>
+                )}
+              />
+            )}
+            {isPrincipalRoute ? (
               <ErrorBoundary>
                 <Outlet />
               </ErrorBoundary>
-            </div>
+            ) : (
+              <div className="flex flex-1">
+                <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
+                  <ErrorBoundary>
+                    <Outlet />
+                  </ErrorBoundary>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </BreadcrumbRegistryProvider>
+      </PageTemplateProvider>
     </Providers>
   );
 }

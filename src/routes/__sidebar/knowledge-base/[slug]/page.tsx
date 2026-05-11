@@ -1,19 +1,26 @@
-import { useParams, Link } from '@modern-js/runtime/router';
-import { Helmet } from '@modern-js/runtime/head';
-import { Card, Separator } from '@heroui/react';
+import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
+import {
+  useKnowledgeBaseArticle,
+  useRateKnowledgeBaseArticle,
+} from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { TagChip } from '@/components/tags';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { useKnowledgeBaseArticle, useRateKnowledgeBaseArticle } from '@/components/knowledge-base/hooks/useKnowledgeBase';
-import { TagChip } from '@/components/tags';
+import { Card, Separator } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { Link, useParams } from '@modern-js/runtime/router';
 import DOMPurify from 'dompurify';
-import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
 
 function KnowledgeBaseArticlePage() {
   const { slug } = useParams();
   const timezone = useTimezone();
-  const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug ?? '');
+  const {
+    data: article,
+    isLoading,
+    error,
+  } = useKnowledgeBaseArticle(slug ?? '');
   const rateArticle = useRateKnowledgeBaseArticle();
 
   const handleRating = (isHelpful: boolean) => {
@@ -33,7 +40,10 @@ function KnowledgeBaseArticlePage() {
   if (!slug) {
     return (
       <div className="py-12 text-center">
-        <Icon name="document-text" className="mx-auto h-12 w-12 text-gray-400" />
+        <Icon
+          name="document-text"
+          className="mx-auto h-12 w-12 text-gray-400"
+        />
         <p className="mt-4 text-gray-500">No article slug provided</p>
       </div>
     );
@@ -42,7 +52,10 @@ function KnowledgeBaseArticlePage() {
   if (error || !article) {
     return (
       <div className="py-12 text-center">
-        <Icon name="document-text" className="mx-auto h-12 w-12 text-gray-400" />
+        <Icon
+          name="document-text"
+          className="mx-auto h-12 w-12 text-gray-400"
+        />
         <p className="mt-4 text-gray-500">Article not found</p>
       </div>
     );
@@ -98,14 +111,15 @@ function KnowledgeBaseArticlePage() {
                 {article.averageRating !== undefined && (
                   <span className="flex items-center gap-1">
                     <Icon name="star" className="h-4 w-4" />
-                    {article.averageRating.toFixed(1)} ({article.ratingCount} ratings)
+                    {article.averageRating.toFixed(1)} ({article.ratingCount}{' '}
+                    ratings)
                   </span>
                 )}
               </div>
 
               {article.tags.length > 0 && (
                 <div className="mb-6 flex flex-wrap gap-2">
-                  {article.tags.map((tag) => (
+                  {article.tags.map(tag => (
                     <TagChip key={tag} name={tag} />
                   ))}
                 </div>
@@ -116,14 +130,18 @@ function KnowledgeBaseArticlePage() {
               {/* Article Body - HTML rendered */}
               <div
                 className="prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(article.body),
+                }}
               />
 
               <Separator className="my-6" />
 
               {/* Rating Section */}
               <div className="rounded bg-gray-50 p-6 text-center">
-                <h3 className="mb-4 text-lg font-semibold">Was this article helpful?</h3>
+                <h3 className="mb-4 text-lg font-semibold">
+                  Was this article helpful?
+                </h3>
                 <div className="flex justify-center gap-4">
                   <BaseButton
                     color="success"
@@ -156,7 +174,9 @@ function KnowledgeBaseArticlePage() {
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="font-medium">Category:</span>{' '}
-                  <span className="text-gray-600">{article.categoryName || 'Uncategorized'}</span>
+                  <span className="text-gray-600">
+                    {article.categoryName || 'Uncategorized'}
+                  </span>
                 </div>
                 <div>
                   <span className="font-medium">Status:</span>{' '}
@@ -180,12 +200,13 @@ function KnowledgeBaseArticlePage() {
             </Card>
 
             {/* Related Articles */}
-            {article.relatedArticleIds && article.relatedArticleIds.length > 0 && (
-              <RelatedArticles
-                articleIds={article.relatedArticleIds}
-                currentArticleId={article.id}
-              />
-            )}
+            {article.relatedArticleIds &&
+              article.relatedArticleIds.length > 0 && (
+                <RelatedArticles
+                  articleIds={article.relatedArticleIds}
+                  currentArticleId={article.id}
+                />
+              )}
           </div>
         </div>
       </div>

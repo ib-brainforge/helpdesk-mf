@@ -1,15 +1,16 @@
 import { createModuleFederationConfig } from '@module-federation/modern-js';
 
 const mfPackagesUrl = process.env.MF_PACKAGES_URL || 'http://localhost';
-const mfNavbarUrl = process.env.NODE_ENV === 'production'
-  ? '/mfs/packages/navbar'
-  : (process.env.MF_NAVBAR_URL || `${mfPackagesUrl}:3001`);
+const mfNavbarUrl =
+  process.env.NODE_ENV === 'production'
+    ? '/mfs/packages/navbar'
+    : process.env.MF_NAVBAR_URL || `${mfPackagesUrl}:3001`;
 
 export default createModuleFederationConfig({
   name: 'helpdesk_mf',
   dts: false,
   remotes: {
-    '@brainforgeau/navbar': `navbar@${mfNavbarUrl}/remoteEntry.js`
+    '@brainforgeau/navbar': `navbar@${mfNavbarUrl}/remoteEntry.js`,
   },
   shared: {
     react: {
@@ -36,7 +37,7 @@ export default createModuleFederationConfig({
       requiredVersion: false,
       eager: true, // Load eagerly since auth is needed immediately
     },
-    'jotai': {
+    jotai: {
       singleton: true,
       requiredVersion: false,
     },
@@ -51,6 +52,6 @@ export default createModuleFederationConfig({
     'framer-motion': {
       singleton: true,
       requiredVersion: false,
-    }
+    },
   },
 });

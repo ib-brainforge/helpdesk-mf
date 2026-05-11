@@ -1,7 +1,3 @@
-import { type FC, useCallback, useState } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { useNavigate } from '@modern-js/runtime/router';
 import {
   BaseButton,
   BaseInput,
@@ -9,20 +5,24 @@ import {
   BaseSelectItem,
   Icon,
 } from '@brainforgeau/components';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useForm } from '@tanstack/react-form';
+import { type FC, useCallback, useState } from 'react';
+import { z } from 'zod';
 
 import {
-  useCreateKnowledgeBaseArticle,
-  useUpdateKnowledgeBaseArticle,
-  usePublishKnowledgeBaseArticle,
-  useKnowledgeBaseCategories,
-} from '../hooks/useKnowledgeBase';
-import {
-  KnowledgeBaseStatus,
+  type CreateKnowledgeBaseArticleDto,
   KnowledgeBaseAccessLevel,
   type KnowledgeBaseArticleDto,
-  type CreateKnowledgeBaseArticleDto,
+  KnowledgeBaseStatus,
   type UpdateKnowledgeBaseArticleDto,
 } from '@/types';
+import {
+  useCreateKnowledgeBaseArticle,
+  useKnowledgeBaseCategories,
+  usePublishKnowledgeBaseArticle,
+  useUpdateKnowledgeBaseArticle,
+} from '../hooks/useKnowledgeBase';
 import { TipTapEditor } from './TipTapEditor';
 
 const articleFormSchema = z.object({
@@ -43,26 +43,58 @@ interface KnowledgeBaseArticleEditorFormProps {
 
 // Access level options use string enum values that match the backend directly.
 const ACCESS_LEVEL_OPTIONS = [
-  { id: KnowledgeBaseAccessLevel.Public, name: 'Public', description: 'Visible to everyone' },
-  { id: KnowledgeBaseAccessLevel.Authenticated, name: 'Authenticated', description: 'Visible to authenticated users' },
-  { id: KnowledgeBaseAccessLevel.TechOnly, name: 'Tech Only', description: 'Visible to technicians only' },
-  { id: KnowledgeBaseAccessLevel.AdminOnly, name: 'Admin Only', description: 'Visible to admins only' },
+  {
+    id: KnowledgeBaseAccessLevel.Public,
+    name: 'Public',
+    description: 'Visible to everyone',
+  },
+  {
+    id: KnowledgeBaseAccessLevel.Authenticated,
+    name: 'Authenticated',
+    description: 'Visible to authenticated users',
+  },
+  {
+    id: KnowledgeBaseAccessLevel.TechOnly,
+    name: 'Tech Only',
+    description: 'Visible to technicians only',
+  },
+  {
+    id: KnowledgeBaseAccessLevel.AdminOnly,
+    name: 'Admin Only',
+    description: 'Visible to admins only',
+  },
 ];
 
 const STATUS_OPTIONS = [
-  { id: KnowledgeBaseStatus.Draft, name: 'Draft', description: 'Not published yet' },
-  { id: KnowledgeBaseStatus.Published, name: 'Published', description: 'Publicly available' },
-  { id: KnowledgeBaseStatus.Archived, name: 'Archived', description: 'No longer active' },
+  {
+    id: KnowledgeBaseStatus.Draft,
+    name: 'Draft',
+    description: 'Not published yet',
+  },
+  {
+    id: KnowledgeBaseStatus.Published,
+    name: 'Published',
+    description: 'Publicly available',
+  },
+  {
+    id: KnowledgeBaseStatus.Archived,
+    name: 'Archived',
+    description: 'No longer active',
+  },
 ];
 
-export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormProps> = ({ article, mode }) => {
+export const KnowledgeBaseArticleEditorForm: FC<
+  KnowledgeBaseArticleEditorFormProps
+> = ({ article, mode }) => {
   const navigate = useNavigate();
   const createArticleMutation = useCreateKnowledgeBaseArticle();
   const updateArticleMutation = useUpdateKnowledgeBaseArticle();
   const publishArticleMutation = usePublishKnowledgeBaseArticle();
   const { data: categories } = useKnowledgeBaseCategories();
 
-  const [currentStatus, setCurrentStatus] = useState(article?.status ?? KnowledgeBaseStatus.Draft);
+  const [currentStatus, setCurrentStatus] = useState(
+    article?.status ?? KnowledgeBaseStatus.Draft,
+  );
 
   const form = useForm({
     defaultValues: {
@@ -89,7 +121,8 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
             status: value.status,
           };
 
-          const result: any = await createArticleMutation.mutateAsync(createDto);
+          const result: any =
+            await createArticleMutation.mutateAsync(createDto);
 
           if (result?.slug) {
             navigate(`/knowledge-base/${result.slug}/edit`);
@@ -108,7 +141,10 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
             status: value.status,
           };
 
-          await updateArticleMutation.mutateAsync({ id: article.id, updates: updateDto });
+          await updateArticleMutation.mutateAsync({
+            id: article.id,
+            updates: updateDto,
+          });
           setCurrentStatus(value.status);
         }
       } catch (error) {
@@ -143,10 +179,15 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
 
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
-    return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+    return errors
+      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+      .join(', ');
   };
 
-  const isLoading = createArticleMutation.isPending || updateArticleMutation.isPending || publishArticleMutation.isPending;
+  const isLoading =
+    createArticleMutation.isPending ||
+    updateArticleMutation.isPending ||
+    publishArticleMutation.isPending;
   const isDraft = currentStatus === KnowledgeBaseStatus.Draft;
 
   return (
@@ -154,7 +195,9 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">
-          {mode === 'create' ? 'Create New Article' : `Edit Article: ${article?.title}`}
+          {mode === 'create'
+            ? 'Create New Article'
+            : `Edit Article: ${article?.title}`}
         </h1>
         {mode === 'edit' && article?.slug && (
           <BaseButton
@@ -170,7 +213,7 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
 
       {/* Form */}
       <form
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
@@ -180,13 +223,13 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
         {/* Title & Category */}
         <div className="rounded-lg border p-6 space-y-4">
           <form.Field name="title">
-            {(field) => (
+            {field => (
               <BaseInput
                 label="Article Title"
                 isRequired
                 placeholder="Enter article title"
                 value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={e => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
                 errorMessage={formatFormErrors(field.state.meta.errors)}
                 isInvalid={field.state.meta.errors.length > 0}
@@ -195,18 +238,20 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
           </form.Field>
 
           <form.Field name="categoryId">
-            {(field) => (
+            {field => (
               <BaseSelect
                 label="Category"
                 placeholder="Select a category (optional)"
                 selectedKey={field.state.value ? field.state.value : null}
-                onSelectionChange={(keys) => {
+                onSelectionChange={keys => {
                   const value = keys as string | undefined;
                   field.handleChange(value);
                 }}
               >
-                {categories?.map((category) => (
-                  <BaseSelectItem key={category.id}>{category.name}</BaseSelectItem>
+                {categories?.map(category => (
+                  <BaseSelectItem key={category.id}>
+                    {category.name}
+                  </BaseSelectItem>
                 )) || []}
               </BaseSelect>
             )}
@@ -217,14 +262,14 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
         <div className="rounded-lg border p-6 space-y-4">
           <h2 className="text-lg font-semibold mb-4">Article Content</h2>
           <form.Field name="body">
-            {(field) => (
+            {field => (
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Body <span className="text-danger">*</span>
                 </label>
                 <TipTapEditor
                   content={field.state.value}
-                  onChange={(html) => field.handleChange(html)}
+                  onChange={html => field.handleChange(html)}
                   placeholder="Write your article content here..."
                 />
                 {field.state.meta.errors.length > 0 && (
@@ -241,16 +286,16 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
         <div className="rounded-lg border p-6 space-y-4">
           <h2 className="text-lg font-semibold mb-4">Tags</h2>
           <form.Field name="tags">
-            {(field) => (
+            {field => (
               <BaseInput
                 label="Tags"
                 placeholder="Add tags (comma-separated)"
                 value={field.state.value?.join(', ') ?? ''}
-                onChange={(e) => {
+                onChange={e => {
                   const tags = e.target.value
                     .split(',')
-                    .map((t) => t.trim())
-                    .filter((t) => t.length > 0);
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
                   field.handleChange(tags);
                 }}
                 description="Tags help users find this article"
@@ -265,24 +310,26 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <form.Field name="accessLevel">
-              {(field) => (
+              {field => (
                 <BaseSelect
                   label="Access Level"
                   isRequired
                   // Since KnowledgeBaseAccessLevel is now a string enum, the value IS the key.
                   selectedKey={field.state.value}
-                  onSelectionChange={(keys) => {
+                  onSelectionChange={keys => {
                     const newValue = keys as KnowledgeBaseAccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 >
-                  {ACCESS_LEVEL_OPTIONS.map((level) => (
+                  {ACCESS_LEVEL_OPTIONS.map(level => (
                     <BaseSelectItem key={level.id} textValue={level.name}>
                       <div className="flex flex-col">
                         <span className="font-medium">{level.name}</span>
-                        <span className="text-xs text-default-400">{level.description}</span>
+                        <span className="text-xs text-default-400">
+                          {level.description}
+                        </span>
                       </div>
                     </BaseSelectItem>
                   ))}
@@ -291,13 +338,13 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
             </form.Field>
 
             <form.Field name="status">
-              {(field) => (
+              {field => (
                 <BaseSelect
                   label="Status"
                   isRequired
                   // Since KnowledgeBaseStatus is now a string enum, the value IS the key.
                   selectedKey={field.state.value}
-                  onSelectionChange={(keys) => {
+                  onSelectionChange={keys => {
                     const newValue = keys as KnowledgeBaseStatus;
                     field.handleChange(newValue);
                     setCurrentStatus(newValue);
@@ -305,11 +352,13 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 >
-                  {STATUS_OPTIONS.map((status) => (
+                  {STATUS_OPTIONS.map(status => (
                     <BaseSelectItem key={status.id} textValue={status.name}>
                       <div className="flex flex-col">
                         <span className="font-medium">{status.name}</span>
-                        <span className="text-xs text-default-400">{status.description}</span>
+                        <span className="text-xs text-default-400">
+                          {status.description}
+                        </span>
                       </div>
                     </BaseSelectItem>
                   ))}
@@ -321,7 +370,11 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-6 border-t">
-          <BaseButton variant="bordered" onPress={handleCancel} isDisabled={publishArticleMutation.isPending || isLoading}>
+          <BaseButton
+            variant="bordered"
+            onPress={handleCancel}
+            isDisabled={publishArticleMutation.isPending || isLoading}
+          >
             Cancel
           </BaseButton>
 
@@ -330,7 +383,6 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
               <BaseButton
                 color="success"
                 onPress={handlePublish}
-
                 icon={<Icon name="check-circle" className="h-4 w-4" />}
               >
                 Publish
@@ -339,7 +391,10 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
             <BaseButton
               type="submit"
               color="primary"
-              isDisabled={createArticleMutation.isPending || updateArticleMutation.isPending}
+              isDisabled={
+                createArticleMutation.isPending ||
+                updateArticleMutation.isPending
+              }
               icon={<Icon name="check" className="h-4 w-4" />}
             >
               {mode === 'create' ? 'Create Article' : 'Save Changes'}

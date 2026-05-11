@@ -200,9 +200,12 @@ function toDefinitionDto(
   // Derive split: latest published (highest versionNumber with Published status)
   // and draft (should be at most one per definition per backend invariant).
   const publishedVersions = versions.filter(v => v.status === 'Published');
-  const latestVersion = publishedVersions.length > 0
-    ? publishedVersions.reduce((a, b) => (a.versionNumber > b.versionNumber ? a : b))
-    : null;
+  const latestVersion =
+    publishedVersions.length > 0
+      ? publishedVersions.reduce((a, b) =>
+          a.versionNumber > b.versionNumber ? a : b,
+        )
+      : null;
   const draftVersion = versions.find(v => v.status === 'Draft') ?? null;
   return {
     id: d.id,

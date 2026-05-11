@@ -6,24 +6,17 @@
  */
 
 import {
-  HelpdeskDomainTicketsEnumsTicketStatus,
-  HelpdeskDomainTicketsEnumsTicketPriority,
-  HelpdeskDomainCommentsEnumsCommentType,
   HelpdeskDomainCategoriesEnumsCustomFieldUsageType,
+  type HelpdeskDomainCommentsEnumsCommentType,
+  type HelpdeskDomainTicketsEnumsTicketPriority,
+  type HelpdeskDomainTicketsEnumsTicketStatus,
 } from '@brainforgeau/helpdesk-client';
 
-import {
-  TicketStatus,
-  TicketPriority,
-} from '@/types/ticket';
+import type { TicketPriority, TicketStatus } from '@/types/ticket';
 
-import {
-  CommentType,
-} from '@/types/comment';
+import type { CommentType } from '@/types/comment';
 
-import {
-  CustomFieldUsageType,
-} from '@/types/custom-field';
+import { CustomFieldUsageType } from '@/types/custom-field';
 
 // ============================================================================
 // Ticket Status Mapping
@@ -33,7 +26,7 @@ import {
  * Convert local TicketStatus enum to generated client type
  */
 export function toApiTicketStatus(
-  status: TicketStatus | string
+  status: TicketStatus | string,
 ): HelpdeskDomainTicketsEnumsTicketStatus {
   return status as HelpdeskDomainTicketsEnumsTicketStatus;
 }
@@ -42,7 +35,7 @@ export function toApiTicketStatus(
  * Convert generated client TicketStatus to local enum
  */
 export function fromApiTicketStatus(
-  status: HelpdeskDomainTicketsEnumsTicketStatus | undefined
+  status: HelpdeskDomainTicketsEnumsTicketStatus | undefined,
 ): TicketStatus | undefined {
   if (!status) return undefined;
   return status as unknown as TicketStatus;
@@ -56,7 +49,7 @@ export function fromApiTicketStatus(
  * Convert local TicketPriority enum to generated client type
  */
 export function toApiTicketPriority(
-  priority: TicketPriority | string
+  priority: TicketPriority | string,
 ): HelpdeskDomainTicketsEnumsTicketPriority {
   return priority as HelpdeskDomainTicketsEnumsTicketPriority;
 }
@@ -65,7 +58,7 @@ export function toApiTicketPriority(
  * Convert generated client TicketPriority to local enum
  */
 export function fromApiTicketPriority(
-  priority: HelpdeskDomainTicketsEnumsTicketPriority | undefined
+  priority: HelpdeskDomainTicketsEnumsTicketPriority | undefined,
 ): TicketPriority | undefined {
   if (!priority) return undefined;
   return priority as unknown as TicketPriority;
@@ -79,7 +72,7 @@ export function fromApiTicketPriority(
  * Convert local CommentType enum to generated client type
  */
 export function toApiCommentType(
-  type: CommentType
+  type: CommentType,
 ): HelpdeskDomainCommentsEnumsCommentType {
   return type as unknown as HelpdeskDomainCommentsEnumsCommentType;
 }
@@ -88,7 +81,7 @@ export function toApiCommentType(
  * Convert generated client CommentType to local enum
  */
 export function fromApiCommentType(
-  type: HelpdeskDomainCommentsEnumsCommentType | undefined
+  type: HelpdeskDomainCommentsEnumsCommentType | undefined,
 ): CommentType | undefined {
   if (!type) return undefined;
   return type as unknown as CommentType;
@@ -102,9 +95,7 @@ export function fromApiCommentType(
  * Convert local AutomationTriggerType to API type.
  * Both are numeric enums with matching values, so direct cast is safe.
  */
-export function toApiAutomationTriggerType(
-  type: number
-): any {
+export function toApiAutomationTriggerType(type: number): any {
   return type;
 }
 
@@ -112,9 +103,7 @@ export function toApiAutomationTriggerType(
  * Convert local ConditionMatchType to API type.
  * Both are numeric enums with matching values, so direct cast is safe.
  */
-export function toApiConditionMatchType(
-  type: number
-): any {
+export function toApiConditionMatchType(type: number): any {
   return type;
 }
 
@@ -127,7 +116,7 @@ export function toApiConditionMatchType(
  * Local enum uses numeric value (0), API uses string literal ('Ticket').
  */
 export function toApiCustomFieldUsageType(
-  usageType: CustomFieldUsageType
+  usageType: CustomFieldUsageType,
 ): HelpdeskDomainCategoriesEnumsCustomFieldUsageType {
   return HelpdeskDomainCategoriesEnumsCustomFieldUsageType.Ticket;
 }
@@ -137,7 +126,7 @@ export function toApiCustomFieldUsageType(
  * API uses string literal ('Ticket'), local enum uses numeric value (0).
  */
 export function fromApiCustomFieldUsageType(
-  usageType: HelpdeskDomainCategoriesEnumsCustomFieldUsageType | undefined
+  usageType: HelpdeskDomainCategoriesEnumsCustomFieldUsageType | undefined,
 ): CustomFieldUsageType | undefined {
   if (!usageType) return undefined;
   return CustomFieldUsageType.Ticket;
@@ -151,7 +140,7 @@ export function fromApiCustomFieldUsageType(
  * Convert array of local TicketStatus to API format (for filters)
  */
 export function toApiTicketStatusArray(
-  statuses: string[] | undefined
+  statuses: string[] | undefined,
 ): HelpdeskDomainTicketsEnumsTicketStatus[] | undefined {
   if (!statuses || statuses.length === 0) return undefined;
   return statuses.map(s => toApiTicketStatus(s));
@@ -161,7 +150,7 @@ export function toApiTicketStatusArray(
  * Convert array of local TicketPriority to API format (for filters)
  */
 export function toApiTicketPriorityArray(
-  priorities: string[] | undefined
+  priorities: string[] | undefined,
 ): HelpdeskDomainTicketsEnumsTicketPriority[] | undefined {
   if (!priorities || priorities.length === 0) return undefined;
   return priorities.map(p => toApiTicketPriority(p));

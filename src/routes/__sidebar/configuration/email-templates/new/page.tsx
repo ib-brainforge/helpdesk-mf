@@ -1,19 +1,26 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate } from '@modern-js/runtime/router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem,
-  ValidationAlert,
-} from '@brainforgeau/components';
-import { Switch, toast } from '@heroui/react';
-import { BaseTextarea } from '@brainforgeau/components';
-import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import {
+  NOTIFICATION_TYPE_LABELS,
+  VariablePicker,
+} from '@/components/email-templates';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { VariablePicker, NOTIFICATION_TYPE_LABELS } from '@/components/email-templates';
 import { NotificationType } from '@/types/email-template';
 import type { CreateEmailTemplateDto } from '@/types/email-template';
+import {
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  ValidationAlert,
+} from '@brainforgeau/components';
+import { BaseTextarea } from '@brainforgeau/components';
+import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import { Switch, toast } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { z } from 'zod';
 
 const templateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -73,7 +80,9 @@ function NewEmailTemplatePage() {
     },
     onError: (error: any) => {
       const errorMessage =
-        error?.response?.data?.detail || error?.message || 'Failed to create email template';
+        error?.response?.data?.detail ||
+        error?.message ||
+        'Failed to create email template';
       setErrors([errorMessage]);
     },
   });
@@ -95,7 +104,9 @@ function NewEmailTemplatePage() {
 
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
-    return errors.map((e) => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+    return errors
+      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+      .join(', ');
   };
 
   return (
@@ -129,7 +140,7 @@ function NewEmailTemplatePage() {
 
       <form
         className="flex h-full flex-col gap-4"
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
@@ -142,14 +153,14 @@ function NewEmailTemplatePage() {
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <form.Field name="name">
-                  {(field) => (
+                  {field => (
                     <BaseInput
                       label="Template Name"
                       isRequired
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={e => field.handleChange(e.target.value)}
                       errorMessage={formatFormErrors(field.state.meta.errors)}
                       isInvalid={field.state.meta.errors.length > 0}
                       placeholder="Ticket Created Notification"
@@ -158,34 +169,36 @@ function NewEmailTemplatePage() {
                 </form.Field>
 
                 <form.Field name="notificationType">
-                  {(field) => (
+                  {field => (
                     <BaseSelect
                       label="Notification Type"
                       isRequired
                       selectedKey={String(field.state.value)}
-                      onSelectionChange={(keys) => {
+                      onSelectionChange={keys => {
                         const value = Number(keys);
                         field.handleChange(value);
                       }}
                       errorMessage={formatFormErrors(field.state.meta.errors)}
                       isInvalid={field.state.meta.errors.length > 0}
                     >
-                      {Object.entries(NOTIFICATION_TYPE_LABELS).map(([key, label]) => (
-                        <BaseSelectItem key={key}>{label}</BaseSelectItem>
-                      ))}
+                      {Object.entries(NOTIFICATION_TYPE_LABELS).map(
+                        ([key, label]) => (
+                          <BaseSelectItem key={key}>{label}</BaseSelectItem>
+                        ),
+                      )}
                     </BaseSelect>
                   )}
                 </form.Field>
               </div>
 
               <form.Field name="subject">
-                {(field) => (
+                {field => (
                   <BaseInput
                     label="Subject Line"
                     isRequired
                     name={field.name}
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={e => field.handleChange(e.target.value)}
                     errorMessage={formatFormErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
                     placeholder="New Ticket Created: {{ticket.subject}}"
@@ -195,7 +208,7 @@ function NewEmailTemplatePage() {
               </form.Field>
 
               <form.Field name="body">
-                {(field) => (
+                {field => (
                   <BaseTextarea
                     label="Email Body"
                     isRequired
@@ -215,7 +228,7 @@ function NewEmailTemplatePage() {
               </form.Field>
 
               <form.Field name="isActive">
-                {(field) => (
+                {field => (
                   <Switch
                     isSelected={field.state.value}
                     onChange={field.handleChange}

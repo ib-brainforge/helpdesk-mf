@@ -1,9 +1,9 @@
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { getAppConfig } from '@/state/config';
+import { Icon } from '@brainforgeau/components/base';
+import { Card, CardContent } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { NavLink } from '@modern-js/runtime/router';
-import { Icon } from '@brainforgeau/components/base';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardContent } from '@heroui/react';
-import { getAppConfig } from '@/state/config';
 
 type SettingCardProps = {
   title: string;
@@ -14,7 +14,14 @@ type SettingCardProps = {
   isExternal?: boolean;
 };
 
-function SettingCard({ title, description, icon, href, isComingSoon, isExternal }: SettingCardProps) {
+function SettingCard({
+  title,
+  description,
+  icon,
+  href,
+  isComingSoon,
+  isExternal,
+}: SettingCardProps) {
   const content = (
     <Card
       className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
@@ -28,12 +35,17 @@ function SettingCard({ title, description, icon, href, isComingSoon, isExternal 
             <div className="flex items-center gap-1.5 mb-1">
               <h3 className="text-base font-semibold">{title}</h3>
               {isExternal && (
-                <Icon name="arrow-top-right-on-square" className="h-3.5 w-3.5 text-default-400" />
+                <Icon
+                  name="arrow-top-right-on-square"
+                  className="h-3.5 w-3.5 text-default-400"
+                />
               )}
             </div>
             <p className="text-sm text-default-500">{description}</p>
             {isComingSoon && (
-              <span className="inline-block mt-2 text-xs text-warning">Coming soon</span>
+              <span className="inline-block mt-2 text-xs text-warning">
+                Coming soon
+              </span>
             )}
           </div>
         </div>
@@ -47,7 +59,12 @@ function SettingCard({ title, description, icon, href, isComingSoon, isExternal 
 
   if (isExternal) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
         {content}
       </a>
     );
@@ -166,14 +183,16 @@ function AdministrationPage() {
       items: [
         {
           title: 'User manual',
-          description: 'Comprehensive documentation and guides — opens in a new tab',
+          description:
+            'Comprehensive documentation and guides — opens in a new tab',
           icon: 'book-open',
           href: userManualUrl,
           isExternal: true,
         },
         {
           title: 'API documentation',
-          description: 'Developer documentation and OpenAPI reference — opens in a new tab',
+          description:
+            'Developer documentation and OpenAPI reference — opens in a new tab',
           icon: 'code-bracket',
           href: apiDocsUrl,
           isExternal: true,
@@ -192,22 +211,30 @@ function AdministrationPage() {
         <Breadcrumbs
           items={[
             { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings', isCurrent: true },
+            {
+              label: 'Administration',
+              href: '/admin/settings',
+              isCurrent: true,
+            },
           ]}
         />
       </div>
 
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Administration</h1>
-        <p className="text-default-500 mt-1">Manage your helpdesk configuration and settings</p>
+        <p className="text-default-500 mt-1">
+          Manage your helpdesk configuration and settings
+        </p>
       </div>
 
       <div className="space-y-8">
-        {sections.map((section) => (
+        {sections.map(section => (
           <div key={section.title}>
-            <h2 className="text-lg font-semibold mb-4 text-default-700">{section.title}</h2>
+            <h2 className="text-lg font-semibold mb-4 text-default-700">
+              {section.title}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {section.items.map((item) => (
+              {section.items.map(item => (
                 <SettingCard key={item.title} {...item} />
               ))}
             </div>

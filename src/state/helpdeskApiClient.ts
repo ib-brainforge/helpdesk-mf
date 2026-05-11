@@ -1,5 +1,5 @@
-import { configAtom } from '@/state/config';
 import { authorizedAxios } from '@/state/authorizedAxios';
+import { configAtom } from '@/state/config';
 import { Configuration } from '@brainforgeau/helpdesk-client';
 import type { RuntimeConfig } from '@brainforgeau/security';
 import { getDefaultStore } from 'jotai';

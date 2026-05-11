@@ -1,16 +1,20 @@
-import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
-} from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { Chip, Spinner, toast } from '@heroui/react';
-import { Icon } from '@brainforgeau/components/base';
-import { useUserRoles, useAssignUserRole, useUnassignUserRole } from '../hooks/useAdminUsers';
 import { HELPDESK_ROLES } from '@/types/admin-user';
 import type { HelpdeskRole } from '@/types/admin-user';
+import {
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+} from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { Chip, Spinner, toast } from '@heroui/react';
+import {
+  useAssignUserRole,
+  useUnassignUserRole,
+  useUserRoles,
+} from '../hooks/useAdminUsers';
 
 interface UserRolesModalProps {
   isOpen: boolean;
@@ -31,24 +35,38 @@ const ROLE_COLORS: Record<HelpdeskRole, 'accent' | 'warning' | 'default'> = {
   customer: 'default',
 };
 
-export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesModalProps) {
+export function UserRolesModal({
+  isOpen,
+  onClose,
+  userId,
+  userName,
+}: UserRolesModalProps) {
   const { data: roles, isLoading } = useUserRoles(isOpen ? userId : null);
   const assignMutation = useAssignUserRole();
   const unassignMutation = useUnassignUserRole();
 
-  const currentRoles = new Set((roles ?? []).map((r) => r.roleName));
+  const currentRoles = new Set((roles ?? []).map(r => r.roleName));
 
   const handleToggle = async (role: HelpdeskRole) => {
     try {
       if (currentRoles.has(role)) {
         await unassignMutation.mutateAsync({ userId, roleName: role });
-        toast('Role removed', { description: `Removed "${role}" from ${userName}`, variant: 'success' });
+        toast('Role removed', {
+          description: `Removed "${role}" from ${userName}`,
+          variant: 'success',
+        });
       } else {
         await assignMutation.mutateAsync({ userId, roleName: role });
-        toast('Role assigned', { description: `Assigned "${role}" to ${userName}`, variant: 'success' });
+        toast('Role assigned', {
+          description: `Assigned "${role}" to ${userName}`,
+          variant: 'success',
+        });
       }
     } catch {
-      toast('Error', { description: 'Failed to update role', variant: 'danger' });
+      toast('Error', {
+        description: 'Failed to update role',
+        variant: 'danger',
+      });
     }
   };
 
@@ -60,9 +78,12 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
         <BaseModalHeader>Manage Helpdesk Roles — {userName}</BaseModalHeader>
         <BaseModalBody className="space-y-3">
           <p className="text-sm text-default-500">
-            These are helpdesk-specific roles. To manage Keycloak identity roles (login, SSO,
-            application access), use the{' '}
-            <span className="text-primary font-medium">Identity Administration</span> panel.
+            These are helpdesk-specific roles. To manage Keycloak identity roles
+            (login, SSO, application access), use the{' '}
+            <span className="text-primary font-medium">
+              Identity Administration
+            </span>{' '}
+            panel.
           </p>
 
           {isLoading ? (
@@ -71,7 +92,7 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
             </div>
           ) : (
             <div className="space-y-2">
-              {HELPDESK_ROLES.map((role) => {
+              {HELPDESK_ROLES.map(role => {
                 const isAssigned = currentRoles.has(role);
                 return (
                   <div
@@ -86,7 +107,9 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
                       >
                         {role}
                       </Chip>
-                      <p className="text-sm text-default-600">{ROLE_DESCRIPTIONS[role]}</p>
+                      <p className="text-sm text-default-600">
+                        {ROLE_DESCRIPTIONS[role]}
+                      </p>
                     </div>
                     <BaseButton
                       size="sm"

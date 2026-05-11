@@ -1,6 +1,6 @@
 import { BaseButton } from '@brainforgeau/components';
-import { toast } from '@heroui/react';
 import { useLogger } from '@brainforgeau/observability';
+import { toast } from '@heroui/react';
 
 import { useState } from 'react';
 import { useValidateVersion } from '../state/workflowQueries';
@@ -73,7 +73,10 @@ export function WorkflowActionButtons({
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'workflow_validate_failed',
       });
-      toast('Validation request failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Validation request failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     }
   }
 

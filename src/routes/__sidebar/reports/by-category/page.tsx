@@ -1,38 +1,46 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardContent, Spinner } from '@heroui/react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  useReactTable,
-  getCoreRowModel,
-  type ColumnDef,
-} from '@tanstack/react-table';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useTicketsByCategoryReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { TicketByCategoryDto } from '@/types';
+import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { Card, CardContent, Spinner } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 function TicketsByCategoryPage() {
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
 
-  const { data: categories = [], isLoading } = useTicketsByCategoryReport(startDate, endDate);
+  const { data: categories = [], isLoading } = useTicketsByCategoryReport(
+    startDate,
+    endDate,
+  );
 
-  const chartData = categories.slice(0, 10).map((c) => ({
-    name: c.categoryName.length > 20 ? c.categoryName.slice(0, 20) + '…' : c.categoryName,
+  const chartData = categories.slice(0, 10).map(c => ({
+    name:
+      c.categoryName.length > 20
+        ? c.categoryName.slice(0, 20) + '…'
+        : c.categoryName,
     total: c.total,
   }));
 
@@ -44,7 +52,9 @@ function TicketsByCategoryPage() {
     {
       accessorKey: 'total',
       header: 'Total Tickets',
-      cell: (info) => <span className="font-semibold">{info.getValue() as number}</span>,
+      cell: info => (
+        <span className="font-semibold">{info.getValue() as number}</span>
+      ),
     },
   ];
 
@@ -56,10 +66,12 @@ function TicketsByCategoryPage() {
 
   const handleExport = () => {
     exportToXlsx(
-      categories.map((c) => ({
+      categories.map(c => ({
         Category: c.categoryName,
         Total: c.total,
-        ...Object.fromEntries(Object.entries(c.byStatus).map(([k, v]) => [`Status: ${k}`, v])),
+        ...Object.fromEntries(
+          Object.entries(c.byStatus).map(([k, v]) => [`Status: ${k}`, v]),
+        ),
       })),
       'tickets-by-category',
     );
@@ -76,7 +88,11 @@ function TicketsByCategoryPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Reports', href: '/reports-hub' },
-            { label: 'Tickets by Category', href: '/reports/by-category', isCurrent: true },
+            {
+              label: 'Tickets by Category',
+              href: '/reports/by-category',
+              isCurrent: true,
+            },
           ]}
         />
       </div>
@@ -84,7 +100,9 @@ function TicketsByCategoryPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Tickets by Category</h1>
-          <p className="text-default-500 mt-1">Distribution of tickets across categories</p>
+          <p className="text-default-500 mt-1">
+            Distribution of tickets across categories
+          </p>
         </div>
         <BaseButton
           variant="bordered"
@@ -97,11 +115,20 @@ function TicketsByCategoryPage() {
       </div>
 
       <div className="mb-6">
-        <DateRangeSelector startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} />
+        <DateRangeSelector
+          startDate={startDate}
+          endDate={endDate}
+          onChange={(s, e) => {
+            setStartDate(s);
+            setEndDate(e);
+          }}
+        />
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Spinner size="lg" /></div>
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
       ) : (
         <>
           <Card className="mb-6">
@@ -111,7 +138,12 @@ function TicketsByCategoryPage() {
                 <BarChart data={chartData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={160} tick={{ fontSize: 12 }} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={160}
+                    tick={{ fontSize: 12 }}
+                  />
                   <Tooltip formatter={(v: number) => `${v} tickets`} />
                   <Bar dataKey="total" fill="#8b5cf6" name="Tickets" />
                 </BarChart>

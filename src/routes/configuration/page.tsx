@@ -1,9 +1,9 @@
-import React from 'react';
-import { PageSpinner } from '@brainforgeau/components';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { TEST_IDS } from '@/constants/testIds';
+import { PageSpinner } from '@brainforgeau/components';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
+import React from 'react';
 
 function ConfigurationPage() {
   return (
@@ -22,14 +22,18 @@ function ConfigurationPage() {
             className="p-4 border rounded-lg hover:bg-default-100 transition-colors"
           >
             <h2 className="text-lg font-semibold">App Settings</h2>
-            <p className="text-default-500 text-sm">Manage application settings and configuration</p>
+            <p className="text-default-500 text-sm">
+              Manage application settings and configuration
+            </p>
           </Link>
           <Link
             to="/configuration/workflows"
             className="p-4 border rounded-lg hover:bg-default-100 transition-colors"
           >
             <h2 className="text-lg font-semibold">Workflows</h2>
-            <p className="text-default-500 text-sm">Design and manage ticket workflow definitions</p>
+            <p className="text-default-500 text-sm">
+              Design and manage ticket workflow definitions
+            </p>
           </Link>
         </div>
       </div>

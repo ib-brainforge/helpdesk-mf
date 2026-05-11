@@ -4,7 +4,6 @@ import {
   useEmailTemplatesTable,
 } from '@/components/email-templates';
 import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import { toast } from '@heroui/react';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   BaseButton,
@@ -13,6 +12,7 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import { toast } from '@heroui/react';
 
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';

@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { AdminUsersApi } from '@brainforgeau/helpdesk-client';
 import type { TenantUserDto, UserRoleDto } from '@/types/admin-user';
+import { AdminUsersApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const TENANT_USERS_KEY = 'helpdesk-admin-tenant-users';
 
@@ -39,13 +39,20 @@ export const useAssignUserRole = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, roleName }: { userId: string; roleName: string }) => {
+    mutationFn: async ({
+      userId,
+      roleName,
+    }: { userId: string; roleName: string }) => {
       const client = await createHelpdeskApiClient(AdminUsersApi);
-      const response = await client.v1AdminUsersUserIdRolesPost(userId, { roleName } as never);
+      const response = await client.v1AdminUsersUserIdRolesPost(userId, {
+        roleName,
+      } as never);
       return response.data as string;
     },
     onSuccess: (_data, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-user-roles', userId] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-user-roles', userId],
+      });
       queryClient.invalidateQueries({ queryKey: [TENANT_USERS_KEY] });
     },
   });
@@ -55,12 +62,17 @@ export const useUnassignUserRole = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, roleName }: { userId: string; roleName: string }) => {
+    mutationFn: async ({
+      userId,
+      roleName,
+    }: { userId: string; roleName: string }) => {
       const client = await createHelpdeskApiClient(AdminUsersApi);
       await client.v1AdminUsersUserIdRolesRoleNameDelete(userId, roleName);
     },
     onSuccess: (_data, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-user-roles', userId] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-user-roles', userId],
+      });
       queryClient.invalidateQueries({ queryKey: [TENANT_USERS_KEY] });
     },
   });

@@ -1,6 +1,6 @@
-import { I18nProvider, RouterProvider, ToastProvider } from "@heroui/react";
-import { useHref, useNavigate } from "@modern-js/runtime/router";
-import React from "react";
+import { I18nProvider, RouterProvider, ToastProvider } from '@heroui/react';
+import { useHref, useNavigate } from '@modern-js/runtime/router';
+import type React from 'react';
 
 /**
  * HeroUI 3 migration: HeroUIProvider was removed in v3.

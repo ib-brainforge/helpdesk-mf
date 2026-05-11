@@ -1,5 +1,5 @@
-import { atom } from 'jotai';
 import { buildContextId } from '@brainforgeau/security';
+import { atom } from 'jotai';
 import { selectedContextAtom } from './auth-atoms';
 
 /**
@@ -16,7 +16,7 @@ import { selectedContextAtom } from './auth-atoms';
  * });
  * ```
  */
-export const contextQueryKeyAtom = atom((get) => {
+export const contextQueryKeyAtom = atom(get => {
   const selectedContext = get(selectedContextAtom);
   return selectedContext ? buildContextId(selectedContext) : 'no-context';
 });

@@ -1,14 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CannedResponsesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CannedResponseDto } from '@/types/canned-response';
+import { CannedResponsesApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export const useCannedResponses = (categoryId?: string, searchTerm?: string) => {
+export const useCannedResponses = (
+  categoryId?: string,
+  searchTerm?: string,
+) => {
   const { data, isLoading, refetch } = useQuery<CannedResponseDto[]>({
     queryKey: ['helpdesk-canned-responses', categoryId, searchTerm],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CannedResponsesApi);
-      const response = await client.v1CannedResponsesGet(categoryId, searchTerm);
+      const response = await client.v1CannedResponsesGet(
+        categoryId,
+        searchTerm,
+      );
       return (response.data ?? []) as CannedResponseDto[];
     },
   });
@@ -40,7 +46,9 @@ export const useCreateCannedResponse = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-canned-responses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-canned-responses'],
+      });
     },
   });
 };
@@ -71,7 +79,9 @@ export const useUpdateCannedResponse = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-canned-responses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-canned-responses'],
+      });
     },
   });
 };
@@ -85,7 +95,9 @@ export const useDeleteCannedResponse = () => {
       await client.v1CannedResponsesIdDelete(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-canned-responses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-canned-responses'],
+      });
     },
   });
 };

@@ -7,9 +7,13 @@
  * from the security atoms using lazy-evaluated functions.
  */
 
-import type { ObservabilityConfig, LokiConfig, TracingConfig } from '@brainforgeau/observability';
-import { getAuthState, getAccessToken } from '@brainforgeau/security';
 import { getAppConfig } from '@/state/config';
+import type {
+  LokiConfig,
+  ObservabilityConfig,
+  TracingConfig,
+} from '@brainforgeau/observability';
+import { getAccessToken, getAuthState } from '@brainforgeau/security';
 
 // Extended config types with headers support
 // TODO: Remove after @brainforgeau/observability is updated with headers support
@@ -125,28 +129,28 @@ export const observabilityConfig: ObservabilityConfig = {
   // Loki logging - URL from config (BFF proxy)
   // Authentication is required for the BFF proxy endpoints
   loki: appConfig?.observability?.loki?.url
-    ? {
-      url: appConfig.observability.loki.url,
-      batchSize: 10,
-      flushInterval: 5000,
-      headers: getAuthHeaders,
-    } as LokiConfigWithHeaders
+    ? ({
+        url: appConfig.observability.loki.url,
+        batchSize: 10,
+        flushInterval: 5000,
+        headers: getAuthHeaders,
+      } as LokiConfigWithHeaders)
     : undefined,
 
   // Tracing (Tempo) - endpoint from config (BFF proxy)
   // Authentication is required for the BFF proxy endpoints
   tracing: appConfig?.observability?.tracing?.enabled
-    ? {
-      enabled: true,
-      endpoint: appConfig.observability.tracing.endpoint,
-      serviceName: 'helpdesk-mf',
-      headers: getAuthHeaders,
-      // Exclude URLs matching this pattern from trace header propagation to avoid CORS issues
-      // Pattern comes from TRACING_IGNORE_URLS_PATTERN env var (e.g., "auth\\.brainforge\\.com\\.au")
-      ignoreUrls: appConfig.observability.tracing.ignoreUrlsPattern
-        ? [new RegExp(appConfig.observability.tracing.ignoreUrlsPattern)]
-        : [],
-    } as TracingConfigWithHeaders
+    ? ({
+        enabled: true,
+        endpoint: appConfig.observability.tracing.endpoint,
+        serviceName: 'helpdesk-mf',
+        headers: getAuthHeaders,
+        // Exclude URLs matching this pattern from trace header propagation to avoid CORS issues
+        // Pattern comes from TRACING_IGNORE_URLS_PATTERN env var (e.g., "auth\\.brainforge\\.com\\.au")
+        ignoreUrls: appConfig.observability.tracing.ignoreUrlsPattern
+          ? [new RegExp(appConfig.observability.tracing.ignoreUrlsPattern)]
+          : [],
+      } as TracingConfigWithHeaders)
     : undefined,
 
   // Metrics - logged to Loki as structured data

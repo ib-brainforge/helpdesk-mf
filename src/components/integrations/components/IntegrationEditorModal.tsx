@@ -1,17 +1,23 @@
-import { useEffect, useState } from 'react';
+import { INTEGRATION_PROVIDERS } from '@/types/integration';
+import type {
+  IntegrationConfigDto,
+  IntegrationProviderMeta,
+} from '@/types/integration';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Switch, toast } from '@heroui/react';
-import { useAddIntegration, useUpdateIntegration } from '../hooks/useIntegrations';
-import { INTEGRATION_PROVIDERS } from '@/types/integration';
-import type { IntegrationConfigDto, IntegrationProviderMeta } from '@/types/integration';
+import { useEffect, useState } from 'react';
+import {
+  useAddIntegration,
+  useUpdateIntegration,
+} from '../hooks/useIntegrations';
 
 interface IntegrationEditorModalProps {
   isOpen: boolean;
@@ -86,7 +92,10 @@ export function IntegrationEditorModal({
             configJson: buildConfigJson(),
           },
         });
-        toast('Saved', { description: `${provider.label} integration updated.`, variant: 'success' });
+        toast('Saved', {
+          description: `${provider.label} integration updated.`,
+          variant: 'success',
+        });
       } else {
         await addMutation.mutateAsync({
           type: provider.type,
@@ -94,15 +103,22 @@ export function IntegrationEditorModal({
           isEnabled,
           configJson: buildConfigJson(),
         });
-        toast('Added', { description: `${provider.label} integration configured.`, variant: 'success' });
+        toast('Added', {
+          description: `${provider.label} integration configured.`,
+          variant: 'success',
+        });
       }
       onClose();
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      const message = (err as { response?: { data?: { detail?: string } } })
+        ?.response?.data?.detail;
       if (message?.includes('INTEGRATION_NAME_DUPLICATE')) {
         setNameError('An integration with this name already exists.');
       } else {
-        toast('Error', { description: 'Failed to save integration.', variant: 'danger' });
+        toast('Error', {
+          description: 'Failed to save integration.',
+          variant: 'danger',
+        });
       }
     }
   };
@@ -111,15 +127,18 @@ export function IntegrationEditorModal({
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
         <BaseModalHeader>
-          {isEditing ? `Edit ${provider.label} integration` : `Configure ${provider.label}`}
+          {isEditing
+            ? `Edit ${provider.label} integration`
+            : `Configure ${provider.label}`}
         </BaseModalHeader>
 
         <BaseModalBody className="space-y-4">
           {/* Routing disclaimer */}
           <div className="rounded-lg bg-warning-50 border border-warning-200 px-4 py-3">
             <p className="text-xs text-warning-700">
-              <strong>Configuration only.</strong> Storing credentials here enables the routing
-              infrastructure when it ships. Event delivery to {provider.label} is not yet active.
+              <strong>Configuration only.</strong> Storing credentials here
+              enables the routing infrastructure when it ships. Event delivery
+              to {provider.label} is not yet active.
             </p>
           </div>
 
@@ -138,7 +157,9 @@ export function IntegrationEditorModal({
           <div className="flex items-center justify-between py-2">
             <div>
               <p className="text-sm font-medium">Enabled</p>
-              <p className="text-xs text-default-500">When off, this integration will be skipped by the routing layer.</p>
+              <p className="text-xs text-default-500">
+                When off, this integration will be skipped by the routing layer.
+              </p>
             </div>
             <Switch isSelected={isEnabled} onChange={setIsEnabled} />
           </div>
@@ -163,7 +184,11 @@ export function IntegrationEditorModal({
         </BaseModalBody>
 
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting || isSubmitting}>
+          <BaseButton
+            variant="bordered"
+            onPress={onClose}
+            isDisabled={isSubmitting || isSubmitting}
+          >
             Cancel
           </BaseButton>
           <BaseButton color="primary" onPress={handleSubmit}>

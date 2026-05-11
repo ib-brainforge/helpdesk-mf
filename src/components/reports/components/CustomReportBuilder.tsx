@@ -1,20 +1,20 @@
-import { useState, useMemo, type FC } from 'react';
-import { Checkbox, CheckboxGroup } from '@heroui/react';
-import { Box } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
+import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
+import { TicketPriority, TicketStatus } from '@/types';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { BaseTable } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
 import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
+import { Checkbox, CheckboxGroup } from '@heroui/react';
 import {
-  useReactTable,
-  getCoreRowModel,
   type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
 } from '@tanstack/react-table';
+import { type FC, useMemo, useState } from 'react';
 import { useCustomReport } from '../hooks/useReports';
-import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
-import { TicketStatus, TicketPriority } from '@/types';
 
 // REVIEW: Using local state for filters - can be lifted to parent if needed
 interface CustomReportBuilderProps {
@@ -53,7 +53,9 @@ const PRIORITY_OPTIONS = [
   { value: TicketPriority.Critical, label: 'Critical' },
 ];
 
-export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) => {
+export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
+  onExport,
+}) => {
   const timezone = useTimezone();
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     'id',
@@ -64,7 +66,9 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
   ]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
-  const [reportData, setReportData] = useState<CustomReportResultDto | null>(null);
+  const [reportData, setReportData] = useState<CustomReportResultDto | null>(
+    null,
+  );
 
   const { mutate: generateReport, isPending: isGenerating } = useCustomReport();
 
@@ -76,7 +80,7 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
     };
 
     generateReport(request, {
-      onSuccess: (data) => {
+      onSuccess: data => {
         setReportData(data);
       },
     });
@@ -91,12 +95,12 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
   // Dynamic columns based on selected fields
   const tableColumns: ColumnDef<Record<string, unknown>, unknown>[] = useMemo(
     () =>
-      selectedColumns.map((colKey) => {
-        const columnDef = AVAILABLE_COLUMNS.find((c) => c.key === colKey);
+      selectedColumns.map(colKey => {
+        const columnDef = AVAILABLE_COLUMNS.find(c => c.key === colKey);
         return {
           accessorKey: colKey,
           header: columnDef?.label || colKey,
-          cell: (info) => {
+          cell: info => {
             const value = info.getValue();
             // Format dates
             if (colKey.includes('Date') || colKey.includes('At')) {
@@ -126,13 +130,15 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
         <div className="space-y-6">
           {/* Column Selection */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Select Columns</label>
+            <label className="mb-2 block text-sm font-medium">
+              Select Columns
+            </label>
             <CheckboxGroup
               value={selectedColumns}
-              onChange={(values) => setSelectedColumns(values as string[])}
+              onChange={values => setSelectedColumns(values as string[])}
               className="flex flex-row flex-wrap gap-4"
             >
-              {AVAILABLE_COLUMNS.map((col) => (
+              {AVAILABLE_COLUMNS.map(col => (
                 <Checkbox key={col.key} value={col.key}>
                   {col.label}
                 </Checkbox>
@@ -142,15 +148,19 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
 
           {/* Status Filter */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Filter by Status</label>
+            <label className="mb-2 block text-sm font-medium">
+              Filter by Status
+            </label>
             <BaseSelect
               selectionMode="multiple"
               selectedKeys={new Set(selectedStatuses)}
-              onSelectionChange={(keys) => setSelectedStatuses(Array.from(keys) as string[])}
+              onSelectionChange={keys =>
+                setSelectedStatuses(Array.from(keys) as string[])
+              }
               placeholder="All statuses"
               className="w-full"
             >
-              {STATUS_OPTIONS.map((opt) => (
+              {STATUS_OPTIONS.map(opt => (
                 <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
               ))}
             </BaseSelect>
@@ -158,15 +168,19 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
 
           {/* Priority Filter */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Filter by Priority</label>
+            <label className="mb-2 block text-sm font-medium">
+              Filter by Priority
+            </label>
             <BaseSelect
               selectionMode="multiple"
               selectedKeys={new Set(selectedPriorities)}
-              onSelectionChange={(keys) => setSelectedPriorities(Array.from(keys) as string[])}
+              onSelectionChange={keys =>
+                setSelectedPriorities(Array.from(keys) as string[])
+              }
               placeholder="All priorities"
               className="w-full"
             >
-              {PRIORITY_OPTIONS.map((opt) => (
+              {PRIORITY_OPTIONS.map(opt => (
                 <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
               ))}
             </BaseSelect>

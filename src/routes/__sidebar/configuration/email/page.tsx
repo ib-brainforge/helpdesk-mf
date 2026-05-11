@@ -1,6 +1,6 @@
-import { Helmet } from '@modern-js/runtime/head';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { TenantMailConfigForm } from '@/components/email-settings';
+import { Helmet } from '@modern-js/runtime/head';
 
 /**
  * Email Settings page — thin proxy to notification-backend /v1/tenant-mail-config.
@@ -21,7 +21,11 @@ function EmailSettingsPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Administration', href: '/admin/settings' },
-            { label: 'Email Settings', href: '/configuration/email', isCurrent: true },
+            {
+              label: 'Email Settings',
+              href: '/configuration/email',
+              isCurrent: true,
+            },
           ]}
         />
       </div>
@@ -29,7 +33,8 @@ function EmailSettingsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Email Settings</h1>
         <p className="text-default-500 mt-1">
-          Configure the outbound mail server used to send notifications and ticket emails.
+          Configure the outbound mail server used to send notifications and
+          ticket emails.
         </p>
       </div>
 

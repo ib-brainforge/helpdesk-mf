@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { configAtom } from '@/state/config';
-import { getDefaultStore } from 'jotai';
 import type { TenantTicketFilters } from '@/types/admin';
-import type { TicketListDto, PagedResult } from '@/types/ticket';
+import type { PagedResult, TicketListDto } from '@/types/ticket';
+import { useQuery } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { getDefaultStore } from 'jotai';
+import { useCallback, useState } from 'react';
 
 const store = getDefaultStore();
 
@@ -20,7 +20,13 @@ export const useTenantTicketsData = (tenantId: string | null) => {
   const [filters, setFilters] = useState<TenantTicketFilters>({});
 
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
-    queryKey: ['tenant-tickets', tenantId, pagination.pageIndex, pagination.pageSize, filters],
+    queryKey: [
+      'tenant-tickets',
+      tenantId,
+      pagination.pageIndex,
+      pagination.pageSize,
+      filters,
+    ],
     queryFn: async () => {
       if (!tenantId) {
         return {
@@ -53,7 +59,7 @@ export const useTenantTicketsData = (tenantId: string | null) => {
       params.append('sortDirection', 'desc');
 
       const response = await authorizedAxios.get(
-        `${baseUrl}/v1/admin/tenants/${tenantId}/tickets?${params.toString()}`
+        `${baseUrl}/v1/admin/tenants/${tenantId}/tickets?${params.toString()}`,
       );
 
       return response.data;

@@ -1,12 +1,12 @@
-import { useCallback } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate } from '@modern-js/runtime/router';
+import { usePendingApprovals } from '@/components/approvals';
+import { StatusBadge } from '@/components/shared';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Card, CardContent } from '@heroui/react';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { StatusBadge } from '@/components/shared';
-import { usePendingApprovals } from '@/components/approvals';
+import { Card, CardContent } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useCallback } from 'react';
 
 // REVIEW: Dashboard showing pending approvals for current user
 
@@ -19,7 +19,7 @@ function PendingApprovalsPage() {
     (ticketId: string) => {
       navigate(`/tickets/${ticketId}`);
     },
-    [navigate]
+    [navigate],
   );
 
   if (isLoading) {
@@ -60,8 +60,13 @@ function PendingApprovalsPage() {
         <Card>
           <CardContent>
             <div className="text-center py-12">
-              <Icon name="check-circle" className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Pending Approvals</h3>
+              <Icon
+                name="check-circle"
+                className="h-16 w-16 text-gray-300 mx-auto mb-4"
+              />
+              <h3 className="text-lg font-semibold mb-2">
+                No Pending Approvals
+              </h3>
               <p className="text-gray-600">
                 You don't have any approvals waiting for your decision.
               </p>
@@ -70,21 +75,24 @@ function PendingApprovalsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {items.map((approval) => (
+          {items.map(approval => (
             <Card key={approval.approvalId}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-lg">{approval.ticketSubject}</h3>
-                      <StatusBadge color="warning">
-                        Pending
-                      </StatusBadge>
+                      <h3 className="font-semibold text-lg">
+                        {approval.ticketSubject}
+                      </h3>
+                      <StatusBadge color="warning">Pending</StatusBadge>
                     </div>
 
                     <div className="space-y-1 text-sm text-gray-600 mb-4">
                       <div className="flex items-center gap-2">
-                        <Icon name="clipboard-document-check" className="h-4 w-4" />
+                        <Icon
+                          name="clipboard-document-check"
+                          className="h-4 w-4"
+                        />
                         <span>Workflow: {approval.workflowName}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -94,8 +102,9 @@ function PendingApprovalsPage() {
                       <div className="flex items-center gap-2">
                         <Icon name="clock" className="h-4 w-4" />
                         <span>
-                          Requested {formatDateTime(approval.requestedAt, { timezone })} by{' '}
-                          {approval.requestedByUserName}
+                          Requested{' '}
+                          {formatDateTime(approval.requestedAt, { timezone })}{' '}
+                          by {approval.requestedByUserName}
                         </span>
                       </div>
                     </div>

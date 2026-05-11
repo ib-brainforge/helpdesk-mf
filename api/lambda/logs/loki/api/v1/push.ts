@@ -25,7 +25,10 @@ interface BffInput {
 function getAllowedOrigins(): string[] {
   const origins = process.env.ALLOWED_ORIGINS;
   if (!origins) return [];
-  return origins.split(',').map(o => o.trim()).filter(Boolean);
+  return origins
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
 }
 
 /**
@@ -97,7 +100,9 @@ export const post = async (input: BffInput): Promise<Response> => {
     const lokiPassword = process.env.LOKI_PASSWORD;
 
     if (lokiUsername && lokiPassword) {
-      const credentials = Buffer.from(`${lokiUsername}:${lokiPassword}`).toString('base64');
+      const credentials = Buffer.from(
+        `${lokiUsername}:${lokiPassword}`,
+      ).toString('base64');
       headers['Authorization'] = `Basic ${credentials}`;
     }
 
@@ -110,10 +115,13 @@ export const post = async (input: BffInput): Promise<Response> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[BFF] Loki push failed:', response.status, errorText);
-      return new Response(JSON.stringify({ error: 'Loki push failed', status: response.status }), {
-        status: response.status,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Loki push failed', status: response.status }),
+        {
+          status: response.status,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     return new Response(null, { status: 204 });

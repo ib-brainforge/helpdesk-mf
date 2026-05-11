@@ -1,3 +1,4 @@
+import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Rule graphs list page for a given automation project.
  *
@@ -18,18 +19,17 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
+import type { RuleGraphDto } from '@brainforgeau/rules-ui';
 import { Chip, toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
-import type { RuleGraphDto } from '@brainforgeau/rules-ui';
 import {
-  useRuleGraphs,
   useCreateRuleGraph,
   useDeleteRuleGraph,
+  useRuleGraphs,
 } from '../state/ruleProjectQueries';
-import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -105,10 +105,9 @@ export function RuleGraphsListPage() {
       setIsCreateOpen(false);
       navigate(`/configuration/automations/${projectId}/rules/${result.id}`);
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'rule_graphs_list_create_failed' },
-      );
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'rule_graphs_list_create_failed',
+      });
       toast('Failed to create rule graph', { variant: 'danger' });
     }
   }
@@ -119,11 +118,13 @@ export function RuleGraphsListPage() {
       await deleteMutation.mutateAsync({ projectId, ruleId: pendingDeleteId });
       toast('Rule graph deleted', { variant: 'success' });
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'rule_graphs_list_delete_failed' },
-      );
-      toast('Delete failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'rule_graphs_list_delete_failed',
+      });
+      toast('Delete failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     } finally {
       setPendingDeleteId(null);
     }
@@ -297,7 +298,6 @@ export function RuleGraphsListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-
                   isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >

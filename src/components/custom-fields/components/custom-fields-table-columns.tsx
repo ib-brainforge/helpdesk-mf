@@ -1,9 +1,9 @@
+import { StatusBadge } from '@/components/shared';
+import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
 import type { CustomFieldsRow } from '../types';
-import { StatusBadge } from '@/components/shared';
-import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
 
 const columnHelper = createColumnHelper<CustomFieldsRow>();
 
@@ -36,7 +36,9 @@ const getUsageTypeDisplayName = (type: CustomFieldUsageType): string => {
   return typeMap[type] || 'Unknown';
 };
 
-export const createCustomFieldsColumns = (options: CreateColumnsOptions): ColumnDef<CustomFieldsRow, any>[] => [
+export const createCustomFieldsColumns = (
+  options: CreateColumnsOptions,
+): ColumnDef<CustomFieldsRow, any>[] => [
   columnHelper.accessor('name', {
     header: 'Name',
     cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
@@ -60,7 +62,8 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
       const type = getValue();
       return (
         <StatusBadge
-          color={type === CustomFieldUsageType.Ticket ? 'secondary' : 'default'}        >
+          color={type === CustomFieldUsageType.Ticket ? 'secondary' : 'default'}
+        >
           {getUsageTypeDisplayName(type)}
         </StatusBadge>
       );
@@ -72,8 +75,7 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
     cell: ({ getValue }) => {
       const isRequired = getValue();
       return (
-        <StatusBadge
-          color={isRequired ? 'warning' : 'default'}        >
+        <StatusBadge color={isRequired ? 'warning' : 'default'}>
           {isRequired ? 'Yes' : 'No'}
         </StatusBadge>
       );
@@ -85,8 +87,7 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
     cell: ({ getValue }) => {
       const isActive = getValue();
       return (
-        <StatusBadge
-          color={isActive ? 'success' : 'default'}        >
+        <StatusBadge color={isActive ? 'success' : 'default'}>
           {isActive ? 'Active' : 'Inactive'}
         </StatusBadge>
       );
@@ -100,7 +101,9 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
       const field = row.original;
       const hasOptions = field.options && field.options.length > 0;
       return hasOptions ? (
-        <span className="text-sm text-default-500">{field.options?.length} options</span>
+        <span className="text-sm text-default-500">
+          {field.options?.length} options
+        </span>
       ) : (
         <span className="text-default-400">—</span>
       );
@@ -125,7 +128,9 @@ export const createCustomFieldsColumns = (options: CreateColumnsOptions): Column
           size="none"
           className="text-danger hover:text-danger-600"
           aria-label="Delete field"
-          onPress={() => row.original.id && options?.onDelete?.(row.original.id)}
+          onPress={() =>
+            row.original.id && options?.onDelete?.(row.original.id)
+          }
           icon={<Icon name="trash" className="h-4 w-4" />}
         />
       </div>

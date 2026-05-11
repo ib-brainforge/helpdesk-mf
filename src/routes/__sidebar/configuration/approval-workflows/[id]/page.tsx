@@ -1,12 +1,12 @@
-import { useCallback } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate, useParams } from '@modern-js/runtime/router';
-import { BaseButton, Icon } from '@brainforgeau/components';
 import {
   ApprovalWorkflowForm,
   useApprovalWorkflow,
   useUpdateApprovalWorkflow,
 } from '@/components/approvals';
+import { BaseButton, Icon } from '@brainforgeau/components';
+import { Helmet } from '@modern-js/runtime/head';
+import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useCallback } from 'react';
 
 // REVIEW: Following existing pattern from automation rule editing
 
@@ -25,10 +25,10 @@ function EditApprovalWorkflowPage() {
           onSuccess: () => {
             navigate('/configuration/approval-workflows');
           },
-        }
+        },
       );
     },
-    [id, updateMutation, navigate]
+    [id, updateMutation, navigate],
   );
 
   const handleCancel = useCallback(() => {
@@ -50,10 +50,17 @@ function EditApprovalWorkflowPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <Icon name="exclamation-triangle" className="h-12 w-12 text-danger mx-auto mb-4" />
+          <Icon
+            name="exclamation-triangle"
+            className="h-12 w-12 text-danger mx-auto mb-4"
+          />
           <h2 className="text-xl font-semibold mb-2">Workflow Not Found</h2>
-          <p className="text-gray-600 mb-4">The workflow you are looking for does not exist.</p>
-          <BaseButton onPress={() => navigate('/configuration/approval-workflows')}>
+          <p className="text-gray-600 mb-4">
+            The workflow you are looking for does not exist.
+          </p>
+          <BaseButton
+            onPress={() => navigate('/configuration/approval-workflows')}
+          >
             Back to Workflows
           </BaseButton>
         </div>

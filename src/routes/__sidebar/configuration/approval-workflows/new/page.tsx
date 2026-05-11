@@ -1,8 +1,11 @@
-import { useCallback } from 'react';
+import {
+  ApprovalWorkflowForm,
+  useCreateApprovalWorkflow,
+} from '@/components/approvals';
+import { BaseButton, Icon } from '@brainforgeau/components';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
-import { BaseButton, Icon } from '@brainforgeau/components';
-import { ApprovalWorkflowForm, useCreateApprovalWorkflow } from '@/components/approvals';
+import { useCallback } from 'react';
 
 // REVIEW: Following existing pattern from automation rule creation
 
@@ -18,7 +21,7 @@ function NewApprovalWorkflowPage() {
         },
       });
     },
-    [createMutation, navigate]
+    [createMutation, navigate],
   );
 
   const handleCancel = useCallback(() => {
@@ -42,7 +45,9 @@ function NewApprovalWorkflowPage() {
       </div>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Create Approval Workflow</h1>
+        <h1 className="text-2xl font-semibold mb-2">
+          Create Approval Workflow
+        </h1>
         <p className="text-sm text-gray-600">
           Configure a new approval workflow for tickets requiring approval.
         </p>

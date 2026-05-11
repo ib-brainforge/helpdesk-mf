@@ -1,4 +1,11 @@
-import { BaseButton, BaseModal, BaseModalContent, BaseModalBody, BaseModalHeader, BaseModalFooter } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+} from '@brainforgeau/components';
 
 interface MarkSpamModalProps {
   isOpen: boolean;
@@ -31,7 +38,11 @@ export const MarkSpamModal: React.FC<MarkSpamModalProps> = ({
           >
             Cancel
           </BaseButton>
-          <BaseButton color="warning" onPress={onConfirm} isDisabled={isLoading}>
+          <BaseButton
+            color="warning"
+            onPress={onConfirm}
+            isDisabled={isLoading}
+          >
             Mark As Spam
           </BaseButton>
         </BaseModalFooter>

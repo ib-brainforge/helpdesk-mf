@@ -1,29 +1,32 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { toast } from '@heroui/react';
 import { BaseTable, TablePagination } from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
 import {
   CustomFieldEditorModal,
   createCustomFieldsColumns,
   useCustomFieldsData,
   useCustomFieldsTable,
 } from '@components/custom-fields';
+import { toast } from '@heroui/react';
 
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CustomFieldDefinitionDto } from '@/types/custom-field';
+import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { Helmet } from '@modern-js/runtime/head';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 
 type CustomFieldTabType = 'tickets' | 'users' | 'companies' | 'assets';
 
 function CustomFieldsPage() {
   const [selectedTab, setSelectedTab] = useState<CustomFieldTabType>('tickets');
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } = useCustomFieldsData();
+  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
+    useCustomFieldsData();
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
-  const [editingField, setEditingField] = useState<CustomFieldDefinitionDto | undefined>(undefined);
+  const [editingField, setEditingField] = useState<
+    CustomFieldDefinitionDto | undefined
+  >(undefined);
 
   const deleteMutation = useMutation({
     mutationFn: async (fieldId: string) => {
@@ -47,14 +50,14 @@ function CustomFieldsPage() {
         setIsEditorModalOpen(true);
       }
     },
-    [items]
+    [items],
   );
 
   const handleDelete = useCallback(
     (fieldId: string) => {
       deleteMutation.mutate(fieldId);
     },
-    [deleteMutation]
+    [deleteMutation],
   );
 
   const handleCreate = () => {
@@ -68,8 +71,9 @@ function CustomFieldsPage() {
   };
 
   const columns = useMemo(
-    () => createCustomFieldsColumns({ onEdit: handleEdit, onDelete: handleDelete }),
-    [handleEdit, handleDelete]
+    () =>
+      createCustomFieldsColumns({ onEdit: handleEdit, onDelete: handleDelete }),
+    [handleEdit, handleDelete],
   );
 
   const { table } = useCustomFieldsTable({
@@ -103,7 +107,11 @@ function CustomFieldsPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Configuration', href: '/configuration' },
-            { label: 'Custom Fields', href: '/configuration/custom-fields', isCurrent: true },
+            {
+              label: 'Custom Fields',
+              href: '/configuration/custom-fields',
+              isCurrent: true,
+            },
           ]}
         />
 

@@ -1,17 +1,33 @@
-import { type FC, useState, useCallback } from 'react';
-import { toast } from '@heroui/react';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem, BaseModal, BaseModalContent, BaseModalHeader, BaseModalBody, BaseModalFooter } from '@brainforgeau/components';
-import { Switch } from '@heroui/react';
-import { TipTapEditor } from './TipTapEditor';
-import { useCreateKnowledgeBaseArticle, useKnowledgeBaseCategories } from '../hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
+import {
+  BaseButton,
+  BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+  BaseSelect,
+  BaseSelectItem,
+} from '@brainforgeau/components';
+import { toast } from '@heroui/react';
+import { Switch } from '@heroui/react';
+import { type FC, useCallback, useState } from 'react';
+import {
+  useCreateKnowledgeBaseArticle,
+  useKnowledgeBaseCategories,
+} from '../hooks/useKnowledgeBase';
+import { TipTapEditor } from './TipTapEditor';
 
 interface NewArticleModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) => {
+export const NewArticleModal: FC<NewArticleModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const [subject, setSubject] = useState('');
   const [details, setDetails] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -23,7 +39,10 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
 
   const handleCreate = useCallback(async () => {
     if (!subject.trim()) {
-      toast('Subject required', { description: 'Please enter an article subject', variant: 'warning' });
+      toast('Subject required', {
+        description: 'Please enter an article subject',
+        variant: 'warning',
+      });
       return;
     }
 
@@ -32,8 +51,15 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
         title: subject,
         body: details,
         categoryId: categoryId ?? undefined,
-        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        accessLevel: forTechniciansOnly ? KnowledgeBaseAccessLevel.Authenticated : KnowledgeBaseAccessLevel.Public,
+        tags: tags
+          ? tags
+              .split(',')
+              .map(t => t.trim())
+              .filter(Boolean)
+          : [],
+        accessLevel: forTechniciansOnly
+          ? KnowledgeBaseAccessLevel.Authenticated
+          : KnowledgeBaseAccessLevel.Public,
         status: KnowledgeBaseStatus.Draft,
       });
 
@@ -47,7 +73,15 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
     } catch (error) {
       // Error handled by mutation
     }
-  }, [subject, details, categoryId, tags, forTechniciansOnly, createMutation, onClose]);
+  }, [
+    subject,
+    details,
+    categoryId,
+    tags,
+    forTechniciansOnly,
+    createMutation,
+    onClose,
+  ]);
 
   const handleCancel = useCallback(() => {
     setSubject('');
@@ -70,7 +104,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
               label="Subject"
               isRequired
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={e => setSubject(e.target.value)}
               placeholder="Enter article subject"
             />
 
@@ -86,13 +120,13 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
             <BaseSelect
               label="Category"
               selectedKey={categoryId ? categoryId : null}
-              onSelectionChange={(keys) => {
+              onSelectionChange={keys => {
                 const selected = keys as string;
                 setCategoryId(selected || null);
               }}
               placeholder="Select a category"
             >
-              {(categories || []).map((category) => (
+              {(categories || []).map(category => (
                 <BaseSelectItem key={category.id ?? ''}>
                   {category.name}
                 </BaseSelectItem>
@@ -102,7 +136,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
             <BaseInput
               label="Tags"
               value={tags}
-              onChange={(e) => setTags(e.target.value)}
+              onChange={e => setTags(e.target.value)}
               placeholder="tag1, tag2, tag3"
               description="Comma-separated tags"
             />

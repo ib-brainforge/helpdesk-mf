@@ -45,7 +45,10 @@ function topPct(i: number, total: number): string {
   return `${20 + step * (i + 1)}%`;
 }
 
-export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>) {
+export function ParallelStateNode({
+  id,
+  data,
+}: NodeProps<ParallelStateNodeType>) {
   const { state, allStates, onChange, onDelete } = data;
   const c = CATEGORY_COLORS[state.category];
   const [expanded, setExpanded] = useState(false);
@@ -75,17 +78,24 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
 
   function commitName() {
     const trimmed = nameValue.trim();
-    if (!trimmed) { setNameValue(state.name); return; }
+    if (!trimmed) {
+      setNameValue(state.name);
+      return;
+    }
     if (trimmed === state.name) return;
     const currentAutoSlug = slugify(state.name);
-    const newSlug = state.slug === currentAutoSlug ? slugify(trimmed) : state.slug;
+    const newSlug =
+      state.slug === currentAutoSlug ? slugify(trimmed) : state.slug;
     setSlugValue(newSlug);
     onChange?.(id, { ...state, name: trimmed, slug: newSlug });
   }
 
   function commitSlug() {
     const trimmed = slugValue.trim();
-    if (!trimmed) { setSlugValue(state.slug); return; }
+    if (!trimmed) {
+      setSlugValue(state.slug);
+      return;
+    }
     if (trimmed === state.slug) return;
     onChange?.(id, { ...state, slug: trimmed });
   }
@@ -96,7 +106,11 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
 
   function handleTypeChange(type: StateType) {
     if (type === StateType.Parallel) {
-      onChange?.(id, { ...state, type, parallelSpec: state.parallelSpec ?? spec });
+      onChange?.(id, {
+        ...state,
+        type,
+        parallelSpec: state.parallelSpec ?? spec,
+      });
     } else {
       onChange?.(id, { ...state, type, parallelSpec: null });
     }
@@ -115,7 +129,10 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
   }
 
   function handleDelete() {
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     onDelete?.(id);
   }
 
@@ -154,18 +171,46 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          borderBottom: expanded ? `1px solid ${PARALLEL_COLORS.border}` : undefined,
+          borderBottom: expanded
+            ? `1px solid ${PARALLEL_COLORS.border}`
+            : undefined,
           borderRadius: expanded ? '12px 12px 0 0' : 12,
         }}
       >
         {/* Fork indicator */}
         <div
-          style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            flexShrink: 0,
+          }}
           aria-hidden="true"
         >
-          <div style={{ width: 12, height: 1.5, background: PARALLEL_COLORS.border, borderRadius: 1 }} />
-          <div style={{ width: 12, height: 1.5, background: PARALLEL_COLORS.border, borderRadius: 1 }} />
-          <div style={{ width: 12, height: 1.5, background: PARALLEL_COLORS.border, borderRadius: 1 }} />
+          <div
+            style={{
+              width: 12,
+              height: 1.5,
+              background: PARALLEL_COLORS.border,
+              borderRadius: 1,
+            }}
+          />
+          <div
+            style={{
+              width: 12,
+              height: 1.5,
+              background: PARALLEL_COLORS.border,
+              borderRadius: 1,
+            }}
+          />
+          <div
+            style={{
+              width: 12,
+              height: 1.5,
+              background: PARALLEL_COLORS.border,
+              borderRadius: 1,
+            }}
+          />
         </div>
 
         <span
@@ -201,7 +246,10 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
 
         <button
           className="nodrag nopan"
-          onClick={() => { setExpanded(e => !e); setConfirmDelete(false); }}
+          onClick={() => {
+            setExpanded(e => !e);
+            setConfirmDelete(false);
+          }}
           aria-label={expanded ? 'Collapse node' : 'Expand node'}
           style={{
             background: 'none',
@@ -257,7 +305,12 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
                 if (e.key === 'Enter') commitSlug();
                 if (e.key === 'Escape') setSlugValue(state.slug);
               }}
-              style={{ ...inputStyle, fontFamily: "'SF Mono', 'Fira Code', monospace", fontSize: 11, background: T.surfaceAlt }}
+              style={{
+                ...inputStyle,
+                fontFamily: "'SF Mono', 'Fira Code', monospace",
+                fontSize: 11,
+                background: T.surfaceAlt,
+              }}
             />
           </div>
 
@@ -267,11 +320,15 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
             <select
               className="nodrag nopan"
               value={state.category}
-              onChange={e => handleCategoryChange(e.target.value as StateCategory)}
+              onChange={e =>
+                handleCategoryChange(e.target.value as StateCategory)
+              }
               style={selectStyle}
             >
               {CATEGORY_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -286,7 +343,9 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
               style={selectStyle}
             >
               {TYPE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -317,11 +376,24 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
 
               {/* Branch start states — checkbox list */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: T.textMuted, marginBottom: 4 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: T.textMuted,
+                    marginBottom: 4,
+                  }}
+                >
                   Branch Start States
                 </div>
                 {availableForSpec.length === 0 ? (
-                  <p style={{ fontSize: 10, color: T.textDim, fontStyle: 'italic' }}>
+                  <p
+                    style={{
+                      fontSize: 10,
+                      color: T.textDim,
+                      fontStyle: 'italic',
+                    }}
+                  >
                     Add more states to select branch starts.
                   </p>
                 ) : (
@@ -357,8 +429,13 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
                             className="nodrag nopan"
                             type="checkbox"
                             checked={spec.branchStartStateIds.includes(s.id)}
-                            onChange={e => toggleBranchState(s.id, e.target.checked)}
-                            style={{ cursor: 'pointer', accentColor: PARALLEL_COLORS.border }}
+                            onChange={e =>
+                              toggleBranchState(s.id, e.target.checked)
+                            }
+                            style={{
+                              cursor: 'pointer',
+                              accentColor: PARALLEL_COLORS.border,
+                            }}
                           />
                           <div
                             style={{
@@ -388,14 +465,25 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
                 >
                   <option value="">— Select join state —</option>
                   {availableForSpec.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
               {/* Join mode */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: T.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: T.textMuted,
+                    marginBottom: 4,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
                   Join Mode
                 </div>
                 <div
@@ -406,7 +494,14 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
                     <label
                       key={mode}
                       className="nodrag nopan"
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 11, color: T.text }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                        fontSize: 11,
+                        color: T.text,
+                      }}
                     >
                       <input
                         className="nodrag nopan"
@@ -415,9 +510,14 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
                         value={mode}
                         checked={spec.joinMode === mode}
                         onChange={() => updateSpec({ joinMode: mode })}
-                        style={{ cursor: 'pointer', accentColor: PARALLEL_COLORS.border }}
+                        style={{
+                          cursor: 'pointer',
+                          accentColor: PARALLEL_COLORS.border,
+                        }}
                       />
-                      {mode === 'AllMustComplete' ? 'All must complete' : 'Any branch'}
+                      {mode === 'AllMustComplete'
+                        ? 'All must complete'
+                        : 'Any branch'}
                     </label>
                   ))}
                 </div>
@@ -438,18 +538,37 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
           >
             {confirmDelete ? (
               <>
-                <span style={{ fontSize: 11, color: T.red, flex: 1 }}>Delete this state?</span>
+                <span style={{ fontSize: 11, color: T.red, flex: 1 }}>
+                  Delete this state?
+                </span>
                 <button
                   className="nodrag nopan"
                   onClick={handleDelete}
-                  style={{ fontSize: 11, fontWeight: 600, color: '#fff', background: T.red, border: 'none', borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#fff',
+                    background: T.red,
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '3px 8px',
+                    cursor: 'pointer',
+                  }}
                 >
                   Yes
                 </button>
                 <button
                   className="nodrag nopan"
                   onClick={() => setConfirmDelete(false)}
-                  style={{ fontSize: 11, color: T.textMuted, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
+                  style={{
+                    fontSize: 11,
+                    color: T.textMuted,
+                    background: T.surfaceAlt,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 4,
+                    padding: '3px 8px',
+                    cursor: 'pointer',
+                  }}
                 >
                   No
                 </button>
@@ -460,11 +579,31 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
                 onClick={handleDelete}
                 aria-label="Delete state"
                 title="Delete state"
-                style={{ fontSize: 11, color: T.textDim, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{
+                  fontSize: 11,
+                  color: T.textDim,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
                 onMouseEnter={e => (e.currentTarget.style.color = T.red)}
                 onMouseLeave={e => (e.currentTarget.style.color = T.textDim)}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <polyline points="3 6 5 6 21 6" />
                   <path d="M19 6l-1 14H6L5 6" />
                   <path d="M10 11v6M14 11v6" />
@@ -480,7 +619,9 @@ export function ParallelStateNode({ id, data }: NodeProps<ParallelStateNodeType>
       {/* Branch source handles — one per branch, dynamically positioned on the right */}
       {Array.from({ length: branchCount }, (_, i) => {
         const branchId = state.parallelSpec?.branchStartStateIds[i];
-        const branchState = branchId ? (allStates ?? []).find(s => s.id === branchId) : undefined;
+        const branchState = branchId
+          ? (allStates ?? []).find(s => s.id === branchId)
+          : undefined;
         return (
           <Handle
             key={`branch-${i}`}

@@ -1,13 +1,13 @@
-import { useParams } from '@modern-js/runtime/router';
-import { Helmet } from '@modern-js/runtime/head';
-import { Suspense } from 'react';
-import { PageSpinner } from '@brainforgeau/components';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { KnowledgeBaseArticleEditorForm } from '@/components/knowledge-base';
 import { useKnowledgeBaseArticle } from '@/components/knowledge-base/hooks/useKnowledgeBase';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { PageSpinner } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { Helmet } from '@modern-js/runtime/head';
+import { useParams } from '@modern-js/runtime/router';
+import { Suspense } from 'react';
 
 function EditKnowledgeBaseArticlePageContent({ slug }: { slug: string }) {
   const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug);
@@ -45,7 +45,11 @@ function EditKnowledgeBaseArticlePageContent({ slug }: { slug: string }) {
             { label: 'Home', href: '/' },
             { label: 'Knowledge Base', href: '/knowledge-base' },
             { label: article.title, href: `/knowledge-base/${slug}` },
-            { label: 'Edit', href: `/knowledge-base/${slug}/edit`, isCurrent: true },
+            {
+              label: 'Edit',
+              href: `/knowledge-base/${slug}/edit`,
+              isCurrent: true,
+            },
           ]}
         />
 

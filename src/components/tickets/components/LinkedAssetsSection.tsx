@@ -9,9 +9,13 @@ import {
   Icon,
 } from '@brainforgeau/components';
 
-import { type FC, useState } from 'react';
 import { toast } from '@heroui/react';
-import { useLinkedAssets, useLinkAsset, useUnlinkAsset } from '../hooks/useTickets';
+import { type FC, useState } from 'react';
+import {
+  useLinkAsset,
+  useLinkedAssets,
+  useUnlinkAsset,
+} from '../hooks/useTickets';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -67,7 +71,6 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!assetId.trim() || isInvalid}
-
           >
             Link
           </BaseButton>
@@ -94,11 +97,17 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
       { ticketId, assetId },
       {
         onSuccess: () => {
-          toast('Asset linked', { description: `Asset ${assetId.substring(0, 8)}... linked to ticket.`, variant: 'success' });
+          toast('Asset linked', {
+            description: `Asset ${assetId.substring(0, 8)}... linked to ticket.`,
+            variant: 'success',
+          });
           setIsAddModalOpen(false);
         },
         onError: () => {
-          toast('Error', { description: 'Failed to link asset. Please try again.', variant: 'danger' });
+          toast('Error', {
+            description: 'Failed to link asset. Please try again.',
+            variant: 'danger',
+          });
         },
       },
     );
@@ -109,10 +118,16 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
       { ticketId, assetId },
       {
         onSuccess: () => {
-          toast('Asset unlinked', { description: 'Asset removed from ticket.', variant: 'success' });
+          toast('Asset unlinked', {
+            description: 'Asset removed from ticket.',
+            variant: 'success',
+          });
         },
         onError: () => {
-          toast('Error', { description: 'Failed to unlink asset. Please try again.', variant: 'danger' });
+          toast('Error', {
+            description: 'Failed to unlink asset. Please try again.',
+            variant: 'danger',
+          });
         },
       },
     );

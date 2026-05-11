@@ -3,7 +3,6 @@
  */
 
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
-import { toast } from '@heroui/react';
 import {
   BaseButton,
   BaseInput,
@@ -13,7 +12,9 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import {
   useNavigate,
   useOutletContext,
@@ -21,7 +22,6 @@ import {
 } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 
 function PrincipalCategoryNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -109,7 +109,6 @@ function PrincipalCategoryNewPage() {
         <BaseButton
           color="primary"
           onPress={handleCreate}
-
           isDisabled={createMutation.isPending || !name.trim()}
         >
           Create

@@ -119,7 +119,9 @@ export function StateInspector({
         isDisabled={readOnly}
         size="sm"
       >
-        {CATEGORY_ITEMS.map(item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>)}
+        {CATEGORY_ITEMS.map(item => (
+          <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>
+        ))}
       </BaseSelect>
 
       <BaseSelect
@@ -132,7 +134,9 @@ export function StateInspector({
         isDisabled={readOnly}
         size="sm"
       >
-        {TYPE_ITEMS.map(item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>)}
+        {TYPE_ITEMS.map(item => (
+          <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>
+        ))}
       </BaseSelect>
 
       {/* Parallel spec editor — shown only when type is Parallel */}

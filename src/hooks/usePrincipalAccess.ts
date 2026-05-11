@@ -10,8 +10,8 @@
  * No backend call is needed — the backend validates the role on each request.
  */
 
-import { useMemo } from 'react';
 import { useAuth } from '@brainforgeau/security';
+import { useMemo } from 'react';
 
 export type PrincipalAccessLevel = 'admin' | 'agent' | null;
 
@@ -20,7 +20,11 @@ export interface UsePrincipalAccessResult {
   level: PrincipalAccessLevel;
 }
 
-const ADMIN_ROLES = ['multitenant.admin', 'multitenant.identity', 'principal.admin'] as const;
+const ADMIN_ROLES = [
+  'multitenant.admin',
+  'multitenant.identity',
+  'principal.admin',
+] as const;
 const AGENT_ROLES = ['helpdesk.principal.agent'] as const;
 
 function extractRoles(profile: Record<string, unknown>): Set<string> {
@@ -38,7 +42,9 @@ function extractRoles(profile: Record<string, unknown>): Set<string> {
   return roles;
 }
 
-export function usePrincipalAccess(_principalId: string): UsePrincipalAccessResult {
+export function usePrincipalAccess(
+  _principalId: string,
+): UsePrincipalAccessResult {
   const { user, isLoading: authLoading } = useAuth();
 
   const level = useMemo((): PrincipalAccessLevel => {

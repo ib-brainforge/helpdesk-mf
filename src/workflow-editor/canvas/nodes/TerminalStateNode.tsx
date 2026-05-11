@@ -36,7 +36,10 @@ const TYPE_OPTIONS: { value: StateType; label: string }[] = [
   { value: StateType.Terminal, label: 'Terminal' },
 ];
 
-export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>) {
+export function TerminalStateNode({
+  id,
+  data,
+}: NodeProps<TerminalStateNodeType>) {
   const { state, onChange, onDelete } = data;
   const c = CATEGORY_COLORS[state.category];
   const [expanded, setExpanded] = useState(false);
@@ -53,17 +56,24 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
 
   function commitName() {
     const trimmed = nameValue.trim();
-    if (!trimmed) { setNameValue(state.name); return; }
+    if (!trimmed) {
+      setNameValue(state.name);
+      return;
+    }
     if (trimmed === state.name) return;
     const currentAutoSlug = slugify(state.name);
-    const newSlug = state.slug === currentAutoSlug ? slugify(trimmed) : state.slug;
+    const newSlug =
+      state.slug === currentAutoSlug ? slugify(trimmed) : state.slug;
     setSlugValue(newSlug);
     onChange?.(id, { ...state, name: trimmed, slug: newSlug });
   }
 
   function commitSlug() {
     const trimmed = slugValue.trim();
-    if (!trimmed) { setSlugValue(state.slug); return; }
+    if (!trimmed) {
+      setSlugValue(state.slug);
+      return;
+    }
     if (trimmed === state.slug) return;
     onChange?.(id, { ...state, slug: trimmed });
   }
@@ -77,7 +87,10 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
   }
 
   function handleDelete() {
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     onDelete?.(id);
   }
 
@@ -165,7 +178,10 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
 
         <button
           className="nodrag nopan"
-          onClick={() => { setExpanded(e => !e); setConfirmDelete(false); }}
+          onClick={() => {
+            setExpanded(e => !e);
+            setConfirmDelete(false);
+          }}
           aria-label={expanded ? 'Collapse node' : 'Expand node'}
           style={{
             background: 'none',
@@ -221,7 +237,12 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
                 if (e.key === 'Enter') commitSlug();
                 if (e.key === 'Escape') setSlugValue(state.slug);
               }}
-              style={{ ...inputStyle, fontFamily: "'SF Mono', 'Fira Code', monospace", fontSize: 11, background: T.surfaceAlt }}
+              style={{
+                ...inputStyle,
+                fontFamily: "'SF Mono', 'Fira Code', monospace",
+                fontSize: 11,
+                background: T.surfaceAlt,
+              }}
             />
           </div>
 
@@ -231,11 +252,15 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
             <select
               className="nodrag nopan"
               value={state.category}
-              onChange={e => handleCategoryChange(e.target.value as StateCategory)}
+              onChange={e =>
+                handleCategoryChange(e.target.value as StateCategory)
+              }
               style={selectStyle}
             >
               {CATEGORY_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -250,7 +275,9 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
               style={selectStyle}
             >
               {TYPE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -268,18 +295,37 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
           >
             {confirmDelete ? (
               <>
-                <span style={{ fontSize: 11, color: T.red, flex: 1 }}>Delete this state?</span>
+                <span style={{ fontSize: 11, color: T.red, flex: 1 }}>
+                  Delete this state?
+                </span>
                 <button
                   className="nodrag nopan"
                   onClick={handleDelete}
-                  style={{ fontSize: 11, fontWeight: 600, color: '#fff', background: T.red, border: 'none', borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#fff',
+                    background: T.red,
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '3px 8px',
+                    cursor: 'pointer',
+                  }}
                 >
                   Yes
                 </button>
                 <button
                   className="nodrag nopan"
                   onClick={() => setConfirmDelete(false)}
-                  style={{ fontSize: 11, color: T.textMuted, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
+                  style={{
+                    fontSize: 11,
+                    color: T.textMuted,
+                    background: T.surfaceAlt,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 4,
+                    padding: '3px 8px',
+                    cursor: 'pointer',
+                  }}
                 >
                   No
                 </button>
@@ -290,11 +336,31 @@ export function TerminalStateNode({ id, data }: NodeProps<TerminalStateNodeType>
                 onClick={handleDelete}
                 aria-label="Delete state"
                 title="Delete state"
-                style={{ fontSize: 11, color: T.textDim, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{
+                  fontSize: 11,
+                  color: T.textDim,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
                 onMouseEnter={e => (e.currentTarget.style.color = T.red)}
                 onMouseLeave={e => (e.currentTarget.style.color = T.textDim)}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <polyline points="3 6 5 6 21 6" />
                   <path d="M19 6l-1 14H6L5 6" />
                   <path d="M10 11v6M14 11v6" />

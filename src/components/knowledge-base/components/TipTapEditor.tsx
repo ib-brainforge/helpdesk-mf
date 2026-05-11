@@ -1,17 +1,17 @@
-import { type FC } from 'react';
-import { useEditor, EditorContent, type Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Image from '@tiptap/extension-image';
-import Placeholder from '@tiptap/extension-placeholder';
-import CodeBlock from '@tiptap/extension-code-block';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { TableCell } from '@tiptap/extension-table-cell';
-import Highlight from '@tiptap/extension-highlight';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import CodeBlock from '@tiptap/extension-code-block';
+import Highlight from '@tiptap/extension-highlight';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import Placeholder from '@tiptap/extension-placeholder';
+import { Table } from '@tiptap/extension-table';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableRow } from '@tiptap/extension-table-row';
+import { type Editor, EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import type { FC } from 'react';
 
 interface TipTapEditorProps {
   content?: string;
@@ -90,7 +90,9 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       {/* Headings */}
       <BaseButton
         size="sm"
-        variant={editor.isActive('heading', { level: 1 }) ? 'bordered' : 'light'}
+        variant={
+          editor.isActive('heading', { level: 1 }) ? 'bordered' : 'light'
+        }
         onPress={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isIconOnly
         className={buttonClass}
@@ -100,7 +102,9 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       </BaseButton>
       <BaseButton
         size="sm"
-        variant={editor.isActive('heading', { level: 2 }) ? 'bordered' : 'light'}
+        variant={
+          editor.isActive('heading', { level: 2 }) ? 'bordered' : 'light'
+        }
         onPress={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isIconOnly
         className={buttonClass}
@@ -110,7 +114,9 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       </BaseButton>
       <BaseButton
         size="sm"
-        variant={editor.isActive('heading', { level: 3 }) ? 'bordered' : 'light'}
+        variant={
+          editor.isActive('heading', { level: 3 }) ? 'bordered' : 'light'
+        }
         onPress={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isIconOnly
         className={buttonClass}
@@ -184,7 +190,11 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         size="sm"
         variant={editor.isActive('table') ? 'bordered' : 'light'}
         onPress={() =>
-          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+          editor
+            .chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run()
         }
         isIconOnly
         className={buttonClass}
@@ -282,7 +292,8 @@ export const TipTapEditor: FC<TipTapEditorProps> = ({
       }),
       TableHeader.configure({
         HTMLAttributes: {
-          class: 'border border-divider bg-default-100 px-4 py-2 text-left font-semibold',
+          class:
+            'border border-divider bg-default-100 px-4 py-2 text-left font-semibold',
         },
       }),
       TableCell.configure({

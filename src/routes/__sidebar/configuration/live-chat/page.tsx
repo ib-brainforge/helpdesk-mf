@@ -12,8 +12,8 @@ import {
   DEFAULT_DAY_CONFIG,
 } from '@/types/live-chat';
 import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
-import { Card, CardContent, Switch, toast } from '@heroui/react';
 import { BaseTextarea } from '@brainforgeau/components';
+import { Card, CardContent, Switch, toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
@@ -137,9 +137,15 @@ function LiveChatForm({
           : null,
         allowedDomains,
       });
-      toast('Saved', { description: 'Live chat settings saved.', variant: 'success' });
+      toast('Saved', {
+        description: 'Live chat settings saved.',
+        variant: 'success',
+      });
     } catch {
-      toast('Error', { description: 'Failed to save live chat settings.', variant: 'danger' });
+      toast('Error', {
+        description: 'Failed to save live chat settings.',
+        variant: 'danger',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -151,7 +157,10 @@ function LiveChatForm({
       setScriptCopied(true);
       setTimeout(() => setScriptCopied(false), 2000);
     } catch {
-      toast('Error', { description: 'Failed to copy to clipboard.', variant: 'danger' });
+      toast('Error', {
+        description: 'Failed to copy to clipboard.',
+        variant: 'danger',
+      });
     }
   };
 
@@ -171,11 +180,7 @@ function LiveChatForm({
                 website.
               </p>
             </div>
-            <Switch
-              isSelected={isEnabled}
-              onChange={setIsEnabled}
-              size="sm"
-            />
+            <Switch isSelected={isEnabled} onChange={setIsEnabled} size="sm" />
           </div>
 
           {/* Primary color */}

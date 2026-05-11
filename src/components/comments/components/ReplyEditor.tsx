@@ -1,21 +1,25 @@
-import { BaseButton } from '@brainforgeau/components/button';
+import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
+import {
+  AttachmentList,
+  FileUploadZone,
+  InlineImageButton,
+} from '@/components/file-upload';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { AttachmentDto } from '@/types';
+import type { CannedResponseDto } from '@/types/canned-response';
+import { CommentType } from '@/types/comment';
 import { Icon } from '@brainforgeau/components/base';
-import { useState, useCallback, useEffect } from 'react';
+import { BaseButton } from '@brainforgeau/components/button';
+import { CommentsApi } from '@brainforgeau/helpdesk-client';
+import { CannedResponsePicker } from '@components/canned-responses';
 import { Switch, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CommentType } from '@/types/comment';
-import { CannedResponsePicker } from '@components/canned-responses';
-import type { CannedResponseDto } from '@/types/canned-response';
-import { FileUploadZone, AttachmentList, InlineImageButton } from '@/components/file-upload';
-import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
-import type { AttachmentDto } from '@/types';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import { CommentsApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { useCallback, useEffect, useState } from 'react';
 
 interface ReplyEditorProps {
   ticketId: string;
@@ -23,11 +27,17 @@ interface ReplyEditorProps {
   onCommentAdded?: () => void;
 }
 
-export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, onCommentAdded }) => {
+export const ReplyEditor: React.FC<ReplyEditorProps> = ({
+  ticketId,
+  categoryId,
+  onCommentAdded,
+}) => {
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
-  const [pendingAttachments, setPendingAttachments] = useState<AttachmentDto[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<AttachmentDto[]>(
+    [],
+  );
   const queryClient = useQueryClient();
   const { uploadFiles, uploadProgress, isUploading } = useUploadAttachment();
 
@@ -49,7 +59,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
   // Update placeholder when internal note toggle changes
   useEffect(() => {
     if (editor) {
-      editor.extensionManager.extensions.forEach((ext) => {
+      editor.extensionManager.extensions.forEach(ext => {
         if (ext.name === 'placeholder') {
           editor.commands.focus();
         }
@@ -63,10 +73,13 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
 
       // REVIEW: attachmentIds not yet supported in API command - will be added in backend implementation
       if (isInternalNote) {
-        return await client.v1TicketsTicketIdCommentsInternalNotesPost(ticketId, {
-          body,
-          idempotencyKey: `comment-${Date.now()}`,
-        });
+        return await client.v1TicketsTicketIdCommentsInternalNotesPost(
+          ticketId,
+          {
+            body,
+            idempotencyKey: `comment-${Date.now()}`,
+          },
+        );
       } else {
         return await client.v1TicketsTicketIdCommentsPost(ticketId, {
           body,
@@ -75,11 +88,15 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
       }
     },
     onSuccess: () => {
-      toast(isInternalNote ? 'Internal note added' : 'Reply added', { variant: 'success' });
+      toast(isInternalNote ? 'Internal note added' : 'Reply added', {
+        variant: 'success',
+      });
       editor?.commands.clearContent();
       setPendingAttachments([]);
       setShowFileUpload(false);
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-comments', ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-comments', ticketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['attachments', ticketId] });
       onCommentAdded?.();
     },
@@ -95,12 +112,15 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
     mutation.mutate(html);
   }, [editor, mutation]);
 
-  const handleCannedResponseSelect = useCallback((response: CannedResponseDto) => {
-    // Insert canned response into TipTap editor
-    if (editor && response.body) {
-      editor.commands.setContent(response.body);
-    }
-  }, [editor]);
+  const handleCannedResponseSelect = useCallback(
+    (response: CannedResponseDto) => {
+      // Insert canned response into TipTap editor
+      if (editor && response.body) {
+        editor.commands.setContent(response.body);
+      }
+    },
+    [editor],
+  );
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
@@ -108,14 +128,19 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
         // REVIEW: Upload files and track them for comment association
         const uploadedFiles = await uploadFiles(files, ticketId, undefined);
         if (uploadedFiles && Array.isArray(uploadedFiles)) {
-          setPendingAttachments(prev => [...prev, ...uploadedFiles as unknown as AttachmentDto[]]);
-          toast(`${files.length} file(s) uploaded successfully`, { variant: 'success' });
+          setPendingAttachments(prev => [
+            ...prev,
+            ...(uploadedFiles as unknown as AttachmentDto[]),
+          ]);
+          toast(`${files.length} file(s) uploaded successfully`, {
+            variant: 'success',
+          });
         }
       } catch (error) {
         toast('Upload failed', { variant: 'danger' });
       }
     },
-    [ticketId, uploadFiles]
+    [ticketId, uploadFiles],
   );
 
   const handleRemovePendingAttachment = useCallback((attachmentId: string) => {
@@ -251,7 +276,10 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
         >
           {showFileUpload ? 'Hide' : 'Attach Files'}
         </BaseButton>
-        <InlineImageButton onInsertImage={handleInsertImage} disabled={isUploading} />
+        <InlineImageButton
+          onInsertImage={handleInsertImage}
+          disabled={isUploading}
+        />
         {pendingAttachments.length > 0 && (
           <span className="text-xs text-default-500">
             {pendingAttachments.length} file(s) attached
@@ -269,7 +297,9 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
           />
           {pendingAttachments.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-default-600">Pending Attachments:</p>
+              <p className="text-xs font-medium text-default-600">
+                Pending Attachments:
+              </p>
               <AttachmentList
                 attachments={pendingAttachments}
                 onDelete={handleRemovePendingAttachment}
@@ -282,7 +312,11 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-default-400">
-          Press <kbd className="px-1 py-0.5 text-xs rounded bg-default-100">Cmd+Enter</kbd> to send
+          Press{' '}
+          <kbd className="px-1 py-0.5 text-xs rounded bg-default-100">
+            Cmd+Enter
+          </kbd>{' '}
+          to send
         </span>
         <div className="flex gap-2">
           <BaseButton
@@ -292,14 +326,19 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({ ticketId, categoryId, 
               editor?.commands.clearContent();
               setPendingAttachments([]);
             }}
-            isDisabled={(editor?.isEmpty && pendingAttachments.length === 0) || mutation.isPending}
+            isDisabled={
+              (editor?.isEmpty && pendingAttachments.length === 0) ||
+              mutation.isPending
+            }
           >
             Clear
           </BaseButton>
           <BaseButton
             size="sm"
             onPress={handleSubmit}
-            isDisabled={mutation.isPending || isUploading || !editor || editor.isEmpty}
+            isDisabled={
+              mutation.isPending || isUploading || !editor || editor.isEmpty
+            }
           >
             {isInternalNote ? 'Add Internal Note' : 'Send Reply'}
           </BaseButton>

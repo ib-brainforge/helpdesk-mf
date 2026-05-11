@@ -13,7 +13,9 @@ export function Logo({ hideOnMobile }: { hideOnMobile?: boolean }) {
       <span className="flex h-6 w-6 items-center justify-center rounded bg-[#6366F1] text-white">
         <IconHeadphones className="h-4 w-4" fill="currentColor" />
       </span>
-      <strong className={`${titleClassName} text-dark dark:text-white`}>Helpdesk</strong>
+      <strong className={`${titleClassName} text-dark dark:text-white`}>
+        Helpdesk
+      </strong>
     </NavLink>
   );
 }

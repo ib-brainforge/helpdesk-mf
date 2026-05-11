@@ -76,7 +76,9 @@ export function ComponentsPalette() {
     >
       <div className="border-b border-default-200 px-4 py-3">
         <div className="text-sm font-semibold text-default-900">Components</div>
-        <div className="text-xs text-default-400">Drag and drop onto the canvas</div>
+        <div className="text-xs text-default-400">
+          Drag and drop onto the canvas
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {ITEMS.map(item => {

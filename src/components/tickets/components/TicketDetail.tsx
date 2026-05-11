@@ -29,7 +29,14 @@ import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box, PageSpinner } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
-import { Dropdown, DropdownItem, DropdownMenu, DropdownSection, DropdownTrigger, toast } from '@heroui/react';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownSection,
+  DropdownTrigger,
+  toast,
+} from '@heroui/react';
 
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useRef, useState } from 'react';
@@ -223,7 +230,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     : detail
                       ? `Status change failed: ${detail}`
                       : 'Failed to update ticket status. Please try again.';
-                toast('Status change failed', { description, variant: 'danger' });
+                toast('Status change failed', {
+                  description,
+                  variant: 'danger',
+                });
               },
             }
           : undefined,
@@ -249,7 +259,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   }, []);
 
   const handleComingSoon = useCallback((feature: string) => {
-    toast('Coming soon', { description: `${feature} will be available soon`, variant: 'warning' });
+    toast('Coming soon', {
+      description: `${feature} will be available soon`,
+      variant: 'warning',
+    });
   }, []);
 
   // Subscribe / Unsubscribe
@@ -258,19 +271,33 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (isSubscribed) {
       unsubscribeMutation.mutate(undefined, {
         onSuccess: () => {
-          toast('Unsubscribed', { description: 'You will no longer receive notifications for this ticket.', variant: 'success' });
+          toast('Unsubscribed', {
+            description:
+              'You will no longer receive notifications for this ticket.',
+            variant: 'success',
+          });
         },
         onError: () => {
-          toast('Error', { description: 'Failed to unsubscribe. Please try again.', variant: 'danger' });
+          toast('Error', {
+            description: 'Failed to unsubscribe. Please try again.',
+            variant: 'danger',
+          });
         },
       });
     } else {
       subscribeMutation.mutate(undefined, {
         onSuccess: () => {
-          toast('Subscribed', { description: 'You will receive notifications for updates to this ticket.', variant: 'success' });
+          toast('Subscribed', {
+            description:
+              'You will receive notifications for updates to this ticket.',
+            variant: 'success',
+          });
         },
         onError: () => {
-          toast('Error', { description: 'Failed to subscribe. Please try again.', variant: 'danger' });
+          toast('Error', {
+            description: 'Failed to subscribe. Please try again.',
+            variant: 'danger',
+          });
         },
       });
     }
@@ -281,11 +308,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     deleteTicketMutation.mutate(id, {
       onSuccess: () => {
-        toast('Ticket deleted', { description: 'The ticket has been moved to trash.', variant: 'success' });
+        toast('Ticket deleted', {
+          description: 'The ticket has been moved to trash.',
+          variant: 'success',
+        });
         navigate('/tickets');
       },
       onError: () => {
-        toast('Error', { description: 'Failed to delete ticket. Please try again.', variant: 'danger' });
+        toast('Error', {
+          description: 'Failed to delete ticket. Please try again.',
+          variant: 'danger',
+        });
         setIsDeleteModalOpen(false);
       },
     });
@@ -301,12 +334,18 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     markSpamMutation.mutate(id, {
       onSuccess: () => {
-        toast('Marked as spam', { description: 'The ticket has been marked as spam.', variant: 'success' });
+        toast('Marked as spam', {
+          description: 'The ticket has been marked as spam.',
+          variant: 'success',
+        });
         setIsMarkSpamModalOpen(false);
         navigate('/tickets');
       },
       onError: () => {
-        toast('Error', { description: 'Failed to mark ticket as spam. Please try again.', variant: 'danger' });
+        toast('Error', {
+          description: 'Failed to mark ticket as spam. Please try again.',
+          variant: 'danger',
+        });
         setIsMarkSpamModalOpen(false);
       },
     });
@@ -316,10 +355,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     unmarkSpamMutation.mutate(id, {
       onSuccess: () => {
-        toast('Spam flag removed', { description: 'The ticket has been returned to normal ticket views.', variant: 'success' });
+        toast('Spam flag removed', {
+          description: 'The ticket has been returned to normal ticket views.',
+          variant: 'success',
+        });
       },
       onError: () => {
-        toast('Error', { description: 'Failed to unmark spam. Please try again.', variant: 'danger' });
+        toast('Error', {
+          description: 'Failed to unmark spam. Please try again.',
+          variant: 'danger',
+        });
       },
     });
   }, [id, unmarkSpamMutation]);
@@ -331,7 +376,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { primaryTicketId: targetTicketId, ticketIdToMerge: id },
         {
           onSuccess: () => {
-            toast('Tickets merged', { description: `Ticket merged into ${targetTicketId.substring(0, 8)}`, variant: 'success' });
+            toast('Tickets merged', {
+              description: `Ticket merged into ${targetTicketId.substring(0, 8)}`,
+              variant: 'success',
+            });
             navigate(`/tickets/${targetTicketId}`);
           },
         },
@@ -347,7 +395,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { sourceTicketId: id, targetTicketId, linkType },
         {
           onSuccess: () => {
-            toast('Tickets linked', { description: `Linked to ticket ${targetTicketId.substring(0, 8)}`, variant: 'success' });
+            toast('Tickets linked', {
+              description: `Linked to ticket ${targetTicketId.substring(0, 8)}`,
+              variant: 'success',
+            });
           },
         },
       );
@@ -410,12 +461,18 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     duplicateTicketMutation.mutate(id, {
       onSuccess: newTicketId => {
-        toast('Ticket duplicated', { description: 'Navigating to the new ticket.', variant: 'success' });
+        toast('Ticket duplicated', {
+          description: 'Navigating to the new ticket.',
+          variant: 'success',
+        });
         setIsDuplicateModalOpen(false);
         navigate(`/tickets/${newTicketId}`);
       },
       onError: () => {
-        toast('Error', { description: 'Failed to duplicate ticket. Please try again.', variant: 'danger' });
+        toast('Error', {
+          description: 'Failed to duplicate ticket. Please try again.',
+          variant: 'danger',
+        });
       },
     });
   }, [id, duplicateTicketMutation, navigate]);
@@ -427,12 +484,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { ticketId: id, parentTicketId },
         {
           onSuccess: () => {
-            toast('Ticket converted', { description: 'Content moved to parent ticket as an internal note.', variant: 'success' });
+            toast('Ticket converted', {
+              description:
+                'Content moved to parent ticket as an internal note.',
+              variant: 'success',
+            });
             setIsConvertToReplyModalOpen(false);
             navigate(`/tickets/${parentTicketId}`);
           },
           onError: () => {
-            toast('Error', { description: 'Failed to convert ticket. Please try again.', variant: 'danger' });
+            toast('Error', {
+              description: 'Failed to convert ticket. Please try again.',
+              variant: 'danger',
+            });
           },
         },
       );
@@ -447,15 +511,25 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { ticketId: id, parentTicketId },
         {
           onSuccess: () => {
-            toast('Parent set', { description: 'Parent ticket linked successfully.', variant: 'success' });
+            toast('Parent set', {
+              description: 'Parent ticket linked successfully.',
+              variant: 'success',
+            });
             setIsAddParentModalOpen(false);
           },
           onError: (error: any) => {
             const errorCode = error?.response?.data?.errors?.[0]?.code;
             if (errorCode === 'CIRCULAR_HIERARCHY') {
-              toast('Circular hierarchy', { description: 'Setting this parent would create a circular hierarchy.', variant: 'danger' });
+              toast('Circular hierarchy', {
+                description:
+                  'Setting this parent would create a circular hierarchy.',
+                variant: 'danger',
+              });
             } else {
-              toast('Error', { description: 'Failed to set parent ticket. Please try again.', variant: 'danger' });
+              toast('Error', {
+                description: 'Failed to set parent ticket. Please try again.',
+                variant: 'danger',
+              });
             }
           },
         },
@@ -472,11 +546,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { parentTicketId: id, data },
         {
           onSuccess: newTicketId => {
-            toast('Subtask created', { description: 'The subtask has been created successfully.', variant: 'success' });
+            toast('Subtask created', {
+              description: 'The subtask has been created successfully.',
+              variant: 'success',
+            });
             setIsAddSubtaskModalOpen(false);
           },
           onError: () => {
-            toast('Error', { description: 'Failed to create subtask. Please try again.', variant: 'danger' });
+            toast('Error', {
+              description: 'Failed to create subtask. Please try again.',
+              variant: 'danger',
+            });
           },
         },
       );
@@ -488,17 +568,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id || !ticket) return;
     if (ticket.isProblem) {
       unmarkAsProblemMutation.mutate(id, {
-        onSuccess: () =>
-          toast('Problem flag removed', { variant: 'success' }),
+        onSuccess: () => toast('Problem flag removed', { variant: 'success' }),
         onError: () =>
           toast('Error removing problem flag', { variant: 'danger' }),
       });
     } else {
       markAsProblemMutation.mutate(id, {
-        onSuccess: () =>
-          toast('Marked as Problem', { variant: 'success' }),
-        onError: () =>
-          toast('Error marking as problem', { variant: 'danger' }),
+        onSuccess: () => toast('Marked as Problem', { variant: 'success' }),
+        onError: () => toast('Error marking as problem', { variant: 'danger' }),
       });
     }
   }, [id, ticket, markAsProblemMutation, unmarkAsProblemMutation]);
@@ -544,7 +621,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       { id, updates: { assigneeId: currentUserId } },
       {
         onSuccess: () => {
-          toast('Ticket assigned', { description: 'Ticket has been assigned to you', variant: 'success' });
+          toast('Ticket assigned', {
+            description: 'Ticket has been assigned to you',
+            variant: 'success',
+          });
         },
       },
     );
@@ -556,7 +636,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       { id, updates: { status: TicketStatus.Closed } },
       {
         onSuccess: () => {
-          toast('Ticket closed', { description: 'Ticket status updated to Closed', variant: 'success' });
+          toast('Ticket closed', {
+            description: 'Ticket status updated to Closed',
+            variant: 'success',
+          });
         },
         onError: (error: any) => {
           const errorCode = error?.response?.data?.errors?.[0]?.code;

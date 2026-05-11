@@ -5,39 +5,43 @@
  * Available to both admin and agent roles.
  */
 
-import { useState, useMemo } from 'react';
-import { withAuthenticationRequired } from '@brainforgeau/security';
+import { StatusBadge } from '@/components/shared';
 import {
-  PageSpinner,
-  BaseTable,
-  TablePagination,
+  useCreatePrincipalTicket,
+  usePrincipalTickets,
+} from '@/hooks/usePrincipalTickets';
+import {
   BaseButton,
   BaseInput,
-  BaseTextarea,
   BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
   BaseModalBody,
+  BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
+  BaseTable,
+  BaseTextarea,
+  PageSpinner,
+  TablePagination,
 } from '@brainforgeau/components';
-import { useOutletContext, useParams } from '@modern-js/runtime/router';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
+import { toast, useOverlayState } from '@heroui/react';
+import { useOutletContext, useParams } from '@modern-js/runtime/router';
+import { NavLink } from '@modern-js/runtime/router';
 import {
+  type SortingState,
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
-  type SortingState,
 } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
-import { NavLink } from '@modern-js/runtime/router';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { StatusBadge } from '@/components/shared';
-import { usePrincipalTickets, useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
+import { useMemo, useState } from 'react';
 import type { PrincipalOutletContext } from '../layout';
-import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
-import { useOverlayState, toast } from '@heroui/react';
 
-const columnHelper = createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
+const columnHelper =
+  createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
 
 function PrincipalTicketsPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -51,10 +55,10 @@ function PrincipalTicketsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { items, totalCount, pagination, setPagination, isLoading } = usePrincipalTickets(
-    principalId ?? context?.principalId ?? '',
-    { searchTerm: searchTerm || undefined },
-  );
+  const { items, totalCount, pagination, setPagination, isLoading } =
+    usePrincipalTickets(principalId ?? context?.principalId ?? '', {
+      searchTerm: searchTerm || undefined,
+    });
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -62,7 +66,9 @@ function PrincipalTicketsPage() {
     setPagination(prev => ({ ...prev, pageIndex: 0 }));
   };
 
-  const createMutation = useCreatePrincipalTicket(principalId ?? context?.principalId ?? '');
+  const createMutation = useCreatePrincipalTicket(
+    principalId ?? context?.principalId ?? '',
+  );
   const [newSubject, setNewSubject] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
@@ -73,7 +79,9 @@ function PrincipalTicketsPage() {
       columnHelper.accessor('id', {
         header: 'ID',
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs">{getValue()?.substring(0, 8) ?? '—'}</span>
+          <span className="font-mono text-xs">
+            {getValue()?.substring(0, 8) ?? '—'}
+          </span>
         ),
         size: 100,
       }),
@@ -93,12 +101,19 @@ function PrincipalTicketsPage() {
         header: 'Status',
         cell: ({ getValue }) => {
           const s = getValue();
-          const colorMap: Record<string, 'primary' | 'warning' | 'success' | 'default'> = {
+          const colorMap: Record<
+            string,
+            'primary' | 'warning' | 'success' | 'default'
+          > = {
             New: 'primary',
             InProgress: 'warning',
             Closed: 'success',
           };
-          return <StatusBadge color={colorMap[s ?? ''] ?? 'default'}>{s ?? '—'}</StatusBadge>;
+          return (
+            <StatusBadge color={colorMap[s ?? ''] ?? 'default'}>
+              {s ?? '—'}
+            </StatusBadge>
+          );
         },
         size: 120,
       }),
@@ -106,28 +121,39 @@ function PrincipalTicketsPage() {
         header: 'Priority',
         cell: ({ getValue }) => {
           const p = getValue();
-          const colorMap: Record<string, 'danger' | 'warning' | 'primary' | 'default'> = {
+          const colorMap: Record<
+            string,
+            'danger' | 'warning' | 'primary' | 'default'
+          > = {
             Critical: 'danger',
             High: 'warning',
             Normal: 'primary',
             Low: 'default',
             None: 'default',
           };
-          return <StatusBadge color={colorMap[p ?? ''] ?? 'default'}>{p ?? '—'}</StatusBadge>;
+          return (
+            <StatusBadge color={colorMap[p ?? ''] ?? 'default'}>
+              {p ?? '—'}
+            </StatusBadge>
+          );
         },
         size: 120,
       }),
       columnHelper.accessor('categoryId', {
         header: 'Category',
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs">{getValue()?.substring(0, 8) ?? '—'}</span>
+          <span className="font-mono text-xs">
+            {getValue()?.substring(0, 8) ?? '—'}
+          </span>
         ),
         size: 150,
       }),
       columnHelper.accessor('createdAt', {
         header: 'Created',
         cell: ({ getValue }) => (
-          <span className="text-sm">{formatDateTime(getValue(), { timezone })}</span>
+          <span className="text-sm">
+            {formatDateTime(getValue(), { timezone })}
+          </span>
         ),
         size: 150,
       }),
@@ -150,7 +176,10 @@ function PrincipalTicketsPage() {
   const handleCreate = async (onClose: () => void) => {
     if (!newSubject.trim()) return;
     try {
-      await createMutation.mutateAsync({ subject: newSubject, description: newDescription });
+      await createMutation.mutateAsync({
+        subject: newSubject,
+        description: newDescription,
+      });
       toast('Ticket created');
       setNewSubject('');
       setNewDescription('');
@@ -164,10 +193,7 @@ function PrincipalTicketsPage() {
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Tickets</h1>
-        <BaseButton
-          color="primary"
-          onPress={onOpen}
-        >
+        <BaseButton color="primary" onPress={onOpen}>
           New Ticket
         </BaseButton>
       </div>
@@ -189,9 +215,14 @@ function PrincipalTicketsPage() {
         <>
           <BaseTable table={table} />
           <TablePagination
-            totalPages={Math.max(1, Math.ceil(totalCount / pagination.pageSize))}
+            totalPages={Math.max(
+              1,
+              Math.ceil(totalCount / pagination.pageSize),
+            )}
             currentPage={pagination.pageIndex + 1}
-            onPageChange={(page: number) => setPagination({ ...pagination, pageIndex: page - 1 })}
+            onPageChange={(page: number) =>
+              setPagination({ ...pagination, pageIndex: page - 1 })
+            }
           />
         </>
       )}
@@ -222,7 +253,6 @@ function PrincipalTicketsPage() {
                 <BaseButton
                   color="primary"
                   isDisabled={createMutation.isPending || !newSubject.trim()}
-
                   onPress={() => handleCreate(onClose)}
                 >
                   Create

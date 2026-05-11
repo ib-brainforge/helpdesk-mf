@@ -1,28 +1,32 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { Link } from '@modern-js/runtime/router';
-import { Icon, BaseInput } from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { KbArticleListView } from '@/components/knowledge-base/components/KbArticleListView';
+import { KbImportModal } from '@/components/knowledge-base/components/KbImportModal';
+import { NewArticleModal } from '@/components/knowledge-base/components/NewArticleModal';
 import {
+  useExportKb,
   useKnowledgeBaseArticles,
   useKnowledgeBaseCategories,
-  useExportKb,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
-import { KbArticleListView } from '@/components/knowledge-base/components/KbArticleListView';
-import { NewArticleModal } from '@/components/knowledge-base/components/NewArticleModal';
-import { KbImportModal } from '@/components/knowledge-base/components/KbImportModal';
+import { BaseInput, Icon } from '@brainforgeau/components';
+import { BaseButton } from '@brainforgeau/components/button';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { Link } from '@modern-js/runtime/router';
+import { useState } from 'react';
 
 function KnowledgeBasePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
-  const { data: categories, isLoading: loadingCategories } = useKnowledgeBaseCategories();
-  const { data: articles, isLoading: loadingArticles } = useKnowledgeBaseArticles(
-    '',
-    searchTerm,
-  );
+  const { data: categories, isLoading: loadingCategories } =
+    useKnowledgeBaseCategories();
+  const { data: articles, isLoading: loadingArticles } =
+    useKnowledgeBaseArticles('', searchTerm);
   const exportMutation = useExportKb();
 
   return (
@@ -52,15 +56,15 @@ function KnowledgeBasePage() {
             </Link>
             <Dropdown>
               <DropdownTrigger>
-                <BaseButton
-                  variant="bordered"
-                  isIconOnly
-                >
+                <BaseButton variant="bordered" isIconOnly>
                   <Icon name="dotsV" className="h-4 w-4" />
                 </BaseButton>
               </DropdownTrigger>
               <DropdownMenu aria-label="Knowledge base actions">
-                <DropdownItem key="import" onPress={() => setIsImportOpen(true)}>
+                <DropdownItem
+                  key="import"
+                  onPress={() => setIsImportOpen(true)}
+                >
                   Import
                 </DropdownItem>
                 <DropdownItem
@@ -82,7 +86,7 @@ function KnowledgeBasePage() {
           <BaseInput
             placeholder="Search articles..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
             className="max-w-md"
           />

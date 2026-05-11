@@ -1,27 +1,31 @@
-import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-} from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { Switch, toast } from '@heroui/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { AccessLevel } from '@/types/category';
 import type {
-  CustomFieldDefinitionDto,
   CreateCustomFieldCommand,
-  UpdateCustomFieldCommand,
+  CustomFieldDefinitionDto,
   CustomFieldOptionDto,
+  UpdateCustomFieldCommand,
 } from '@/types/custom-field';
 import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
-import { AccessLevel } from '@/types/category';
+import {
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalHeader,
+} from '@brainforgeau/components';
+import {
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+} from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
+import { Switch, toast } from '@heroui/react';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { z } from 'zod';
 
 const customFieldFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -71,7 +75,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   const isEdit = Boolean(field);
 
   // State for managing options (for Dropdown/MultiSelect fields)
-  const [options, setOptions] = useState<CustomFieldOptionDto[]>(field?.options || []);
+  const [options, setOptions] = useState<CustomFieldOptionDto[]>(
+    field?.options || [],
+  );
   const [newOptionValue, setNewOptionValue] = useState('');
 
   const mutation = useMutation({
@@ -87,13 +93,18 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
       } else {
         const createDto: CreateCustomFieldCommand = {
           ...data,
-          options: options.length > 0 ? options.map(o => ({ value: o.value, sortOrder: o.sortOrder })) : undefined,
+          options:
+            options.length > 0
+              ? options.map(o => ({ value: o.value, sortOrder: o.sortOrder }))
+              : undefined,
         };
         await client.v1CustomFieldsPost(createDto as any);
       }
     },
     onSuccess: () => {
-      toast(`Custom field ${isEdit ? 'updated' : 'created'} successfully`, { variant: 'success' });
+      toast(`Custom field ${isEdit ? 'updated' : 'created'} successfully`, {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-custom-fields'] });
       onClose();
     },
@@ -122,11 +133,17 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
 
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
-    return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+    return errors
+      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+      .join(', ');
   };
 
-  const [selectedFieldType, setSelectedFieldType] = useState(field?.fieldType ?? CustomFieldType.Text);
-  const needsOptions = selectedFieldType === CustomFieldType.Dropdown || selectedFieldType === CustomFieldType.MultiSelect;
+  const [selectedFieldType, setSelectedFieldType] = useState(
+    field?.fieldType ?? CustomFieldType.Text,
+  );
+  const needsOptions =
+    selectedFieldType === CustomFieldType.Dropdown ||
+    selectedFieldType === CustomFieldType.MultiSelect;
 
   const handleClose = () => {
     form.reset();
@@ -157,17 +174,18 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newOptions.length) return;
 
-    [newOptions[index], newOptions[targetIndex]] = [newOptions[targetIndex], newOptions[index]];
-    newOptions.forEach((opt, idx) => { opt.sortOrder = idx; });
+    [newOptions[index], newOptions[targetIndex]] = [
+      newOptions[targetIndex],
+      newOptions[index],
+    ];
+    newOptions.forEach((opt, idx) => {
+      opt.sortOrder = idx;
+    });
     setOptions(newOptions);
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      size="2xl"
-    >
+    <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
       <BaseModalContent>
         <BaseModalHeader
           title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
@@ -175,7 +193,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
         />
         <BaseModalBody>
           <form
-            onSubmit={async (e) => {
+            onSubmit={async e => {
               e.preventDefault();
               e.stopPropagation();
               await form.handleSubmit();
@@ -183,13 +201,13 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             className="flex flex-col gap-4 pb-4"
           >
             <form.Field name="name">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="Name"
                   isRequired
                   name={field.name}
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 />
@@ -198,13 +216,13 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <form.Field name="fieldType">
-                {(field) => (
+                {field => (
                   <BaseSelect
                     label="Field Type"
                     placeholder="Select type"
                     isRequired
                     selectedKey={String(field.state.value)}
-                    onSelectionChange={(keys) => {
+                    onSelectionChange={keys => {
                       const newValue = Number(keys) as CustomFieldType;
                       field.handleChange(newValue);
                       setSelectedFieldType(newValue);
@@ -212,29 +230,33 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     errorMessage={formatFormErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
                   >
-                    {FIELD_TYPE_OPTIONS.map((option) => (
-                      <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                    {FIELD_TYPE_OPTIONS.map(option => (
+                      <BaseSelectItem key={String(option.id)}>
+                        {option.name}
+                      </BaseSelectItem>
                     ))}
                   </BaseSelect>
                 )}
               </form.Field>
 
               <form.Field name="usageType">
-                {(field) => (
+                {field => (
                   <BaseSelect
                     label="Usage Type"
                     placeholder="Select usage"
                     isRequired
                     selectedKey={String(field.state.value)}
-                    onSelectionChange={(keys) => {
+                    onSelectionChange={keys => {
                       const newValue = Number(keys) as CustomFieldUsageType;
                       field.handleChange(newValue);
                     }}
                     errorMessage={formatFormErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
                   >
-                    {USAGE_TYPE_OPTIONS.map((option) => (
-                      <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                    {USAGE_TYPE_OPTIONS.map(option => (
+                      <BaseSelectItem key={String(option.id)}>
+                        {option.name}
+                      </BaseSelectItem>
                     ))}
                   </BaseSelect>
                 )}
@@ -242,21 +264,23 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             </div>
 
             <form.Field name="accessLevel">
-              {(field) => (
+              {field => (
                 <BaseSelect
                   label="Access Level"
                   placeholder="Select access level"
                   isRequired
                   selectedKey={String(field.state.value)}
-                  onSelectionChange={(keys) => {
+                  onSelectionChange={keys => {
                     const newValue = Number(keys) as AccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 >
-                  {ACCESS_LEVEL_OPTIONS.map((option) => (
-                    <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                  {ACCESS_LEVEL_OPTIONS.map(option => (
+                    <BaseSelectItem key={String(option.id)}>
+                      {option.name}
+                    </BaseSelectItem>
                   ))}
                 </BaseSelect>
               )}
@@ -264,10 +288,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
 
             <div className="flex gap-4">
               <form.Field name="isRequired">
-                {(field) => (
+                {field => (
                   <Switch
                     isSelected={field.state.value}
-                    onChange={(checked) => field.handleChange(checked)}
+                    onChange={checked => field.handleChange(checked)}
                   >
                     Required
                   </Switch>
@@ -275,10 +299,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
               </form.Field>
 
               <form.Field name="isActive">
-                {(field) => (
+                {field => (
                   <Switch
                     isSelected={field.state.value}
-                    onChange={(checked) => field.handleChange(checked)}
+                    onChange={checked => field.handleChange(checked)}
                   >
                     Active
                   </Switch>
@@ -293,8 +317,8 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                   <BaseInput
                     placeholder="Add option..."
                     value={newOptionValue}
-                    onChange={(e) => setNewOptionValue(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={e => setNewOptionValue(e.target.value)}
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         handleAddOption();
@@ -311,7 +335,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {options.map((option, index) => (
-                    <div key={option.id} className="flex items-center gap-2 p-2 bg-content1 rounded border">
+                    <div
+                      key={option.id}
+                      className="flex items-center gap-2 p-2 bg-content1 rounded border"
+                    >
                       <div className="flex flex-col gap-1">
                         <BaseButton
                           type="button"
@@ -327,7 +354,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                           size="none"
                           isDisabled={index === options.length - 1}
                           onPress={() => handleMoveOption(index, 'down')}
-                          icon={<Icon name="chevron-down" className="h-3 w-3" />}
+                          icon={
+                            <Icon name="chevron-down" className="h-3 w-3" />
+                          }
                         />
                       </div>
                       <span className="flex-1 text-sm">{option.value}</span>
@@ -346,7 +375,11 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             )}
 
             <div className="flex justify-end gap-2 mt-4">
-              <BaseButton variant="bordered" onPress={handleClose} type="button">
+              <BaseButton
+                variant="bordered"
+                onPress={handleClose}
+                type="button"
+              >
                 Cancel
               </BaseButton>
               <BaseButton type="submit" isDisabled={mutation.isPending}>

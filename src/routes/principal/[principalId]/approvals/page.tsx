@@ -5,19 +5,15 @@
  * Create navigates to /approvals/new. Delete uses ConfirmDeleteModal.
  */
 
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
 } from '@/hooks/usePrincipalApprovalWorkflows';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
-import {
-  BaseButton,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { useOverlayState, toast } from '@heroui/react';
+import { toast, useOverlayState } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -102,8 +98,9 @@ function PrincipalApprovalsPage() {
     columnHelper.accessor('approvalMode', {
       header: 'Mode',
       cell: info =>
-        APPROVAL_MODE_LABELS[info.getValue() as keyof typeof APPROVAL_MODE_LABELS] ??
-        info.getValue(),
+        APPROVAL_MODE_LABELS[
+          info.getValue() as keyof typeof APPROVAL_MODE_LABELS
+        ] ?? info.getValue(),
     }),
     columnHelper.accessor('stepCount', {
       header: 'Steps',
@@ -143,8 +140,12 @@ function PrincipalApprovalsPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isDisabled={deleteMutation.isPending && pendingDeleteId === row.original.id}
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isDisabled={
+              deleteMutation.isPending && pendingDeleteId === row.original.id
+            }
           >
             Delete
           </BaseButton>
@@ -163,7 +164,9 @@ function PrincipalApprovalsPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Approval Workflows</h1>
-        <BaseButton onPress={() => navigate(`/principal/${principalId}/approvals/new`)}>
+        <BaseButton
+          onPress={() => navigate(`/principal/${principalId}/approvals/new`)}
+        >
           New Workflow
         </BaseButton>
       </div>

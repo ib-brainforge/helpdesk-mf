@@ -1,11 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { CustomStatusesApi } from '@brainforgeau/helpdesk-client';
 import type {
-  CustomTicketStatusDto,
   CreateCustomStatusRequest,
+  CustomTicketStatusDto,
   UpdateCustomStatusRequest,
 } from '@/types/custom-status';
+import { CustomStatusesApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const QUERY_KEY = 'helpdesk-custom-statuses';
 
@@ -45,7 +45,10 @@ export const useUpdateCustomStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: UpdateCustomStatusRequest }) => {
+    mutationFn: async ({
+      id,
+      payload,
+    }: { id: string; payload: UpdateCustomStatusRequest }) => {
       const client = await createHelpdeskApiClient(CustomStatusesApi);
       await client.v1CustomStatusesIdPut(id, payload as never);
     },

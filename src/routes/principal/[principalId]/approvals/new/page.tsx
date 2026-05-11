@@ -3,7 +3,6 @@
  */
 
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
-import { toast } from '@heroui/react';
 import {
   BaseButton,
   BaseCheckbox,
@@ -14,7 +13,9 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   useNavigate,
   useOutletContext,
@@ -22,7 +23,6 @@ import {
 } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import type { PrincipalOutletContext } from '../../layout';
-import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 
 function PrincipalApprovalWorkflowNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -135,7 +135,6 @@ function PrincipalApprovalWorkflowNewPage() {
         <BaseButton
           color="primary"
           onPress={handleCreate}
-
           isDisabled={createMutation.isPending || !name.trim()}
         >
           Create

@@ -1,7 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type {
+  AddIntegrationRequest,
+  IntegrationConfigDto,
+  UpdateIntegrationRequest,
+} from '@/types/integration';
 import { IntegrationsApi } from '@brainforgeau/helpdesk-client';
-import type { IntegrationConfigDto, AddIntegrationRequest, UpdateIntegrationRequest } from '@/types/integration';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const INTEGRATIONS_KEY = 'helpdesk-integrations';
 
@@ -37,7 +41,10 @@ export const useUpdateIntegration = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: UpdateIntegrationRequest }) => {
+    mutationFn: async ({
+      id,
+      payload,
+    }: { id: string; payload: UpdateIntegrationRequest }) => {
       const client = await createHelpdeskApiClient(IntegrationsApi);
       await client.v1IntegrationsIdPut(id, payload as never);
     },

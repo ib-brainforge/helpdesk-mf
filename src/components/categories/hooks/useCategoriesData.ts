@@ -1,12 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CategoryDto, SectionDto } from '@/types/category';
+import { AccessLevel } from '@/types/category';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import type {
   HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto,
   HelpdeskApplicationCategoriesModelsCategoryDto,
 } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CategoryDto, SectionDto } from '@/types/category';
-import { AccessLevel } from '@/types/category';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useDuplicateCategory = () => {
   const queryClient = useQueryClient();
@@ -37,7 +37,8 @@ function mapGeneratedCategory(
     AgentsOnly: AccessLevel.AgentsOnly,
     AdminsOnly: AccessLevel.AdminsOnly,
   };
-  const accessLevel = accessLevelMap[cat.accessLevel as string] ?? AccessLevel.Everyone;
+  const accessLevel =
+    accessLevelMap[cat.accessLevel as string] ?? AccessLevel.Everyone;
 
   return {
     id: cat.id ?? '',
@@ -56,17 +57,22 @@ function mapGeneratedCategory(
 }
 
 export const useCategoriesData = () => {
-  const { data: hierarchyData, isLoading: isLoadingCategories, refetch: refetchCategories } = useQuery<CategoryDto[]>({
+  const {
+    data: hierarchyData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useQuery<CategoryDto[]>({
     queryKey: ['helpdesk-categories'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesGet();
       // Use the generated hierarchy type directly — no local CategoryItemDto / CategoryHierarchyDto needed.
-      const hierarchy = data as HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto;
+      const hierarchy =
+        data as HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto;
       const flatCategories: CategoryDto[] = [];
 
-      hierarchy.sections?.forEach((section) => {
-        section.categories?.forEach((cat) => {
+      hierarchy.sections?.forEach(section => {
+        section.categories?.forEach(cat => {
           flatCategories.push(mapGeneratedCategory(cat, section.name));
         });
       });
@@ -74,7 +80,7 @@ export const useCategoriesData = () => {
       // D23 fix: unsectionedCategories was ignored — categories created without a section
       // were never included in the list, causing them to be invisible until a hard refresh
       // that happened to bust the browser cache rather than the React Query cache.
-      hierarchy.unsectionedCategories?.forEach((cat) => {
+      hierarchy.unsectionedCategories?.forEach(cat => {
         flatCategories.push(mapGeneratedCategory(cat, undefined));
       });
 
@@ -82,7 +88,11 @@ export const useCategoriesData = () => {
     },
   });
 
-  const { data: sectionsData, isLoading: isLoadingSections, refetch: refetchSections } = useQuery<SectionDto[]>({
+  const {
+    data: sectionsData,
+    isLoading: isLoadingSections,
+    refetch: refetchSections,
+  } = useQuery<SectionDto[]>({
     queryKey: ['helpdesk-sections'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);

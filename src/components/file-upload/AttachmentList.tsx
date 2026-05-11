@@ -1,9 +1,9 @@
-import type { FC } from 'react';
+import type { AttachmentDto } from '@/types';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import type { AttachmentDto } from '@/types';
+import type { FC } from 'react';
 
 interface AttachmentListProps {
   attachments: AttachmentDto[];
@@ -27,8 +27,10 @@ export const AttachmentList: FC<AttachmentListProps> = ({
     if (contentType.startsWith('image/')) return 'photo';
     if (contentType.includes('pdf')) return 'document-text';
     if (contentType.includes('word')) return 'document';
-    if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'table-cells';
-    if (contentType.includes('zip') || contentType.includes('archive')) return 'archive-box';
+    if (contentType.includes('excel') || contentType.includes('spreadsheet'))
+      return 'table-cells';
+    if (contentType.includes('zip') || contentType.includes('archive'))
+      return 'archive-box';
     return 'document';
   };
 
@@ -46,7 +48,7 @@ export const AttachmentList: FC<AttachmentListProps> = ({
 
   return (
     <div className="space-y-2">
-      {attachments.map((attachment) => (
+      {attachments.map(attachment => (
         <div
           key={attachment.id}
           className="flex items-center gap-3 rounded border p-3 hover:bg-gray-50"
@@ -59,7 +61,10 @@ export const AttachmentList: FC<AttachmentListProps> = ({
             />
           ) : (
             <div className="flex h-12 w-12 items-center justify-center rounded bg-gray-100">
-              <Icon name={getFileIcon(attachment.contentType)} className="h-6 w-6 text-gray-600" />
+              <Icon
+                name={getFileIcon(attachment.contentType)}
+                className="h-6 w-6 text-gray-600"
+              />
             </div>
           )}
 

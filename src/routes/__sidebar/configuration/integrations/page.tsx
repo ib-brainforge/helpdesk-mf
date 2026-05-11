@@ -49,9 +49,15 @@ function IntegrationsPage() {
     if (!pendingDelete) return;
     try {
       await deleteMutation.mutateAsync(pendingDelete.id);
-      toast('Removed', { description: `"${pendingDelete.name}" removed.`, variant: 'success' });
+      toast('Removed', {
+        description: `"${pendingDelete.name}" removed.`,
+        variant: 'success',
+      });
     } catch {
-      toast('Error', { description: 'Failed to remove integration.', variant: 'danger' });
+      toast('Error', {
+        description: 'Failed to remove integration.',
+        variant: 'danger',
+      });
     } finally {
       setPendingDelete(null);
     }
@@ -158,7 +164,6 @@ function IntegrationsPage() {
                             <Chip
                               size="sm"
                               color={instance.isEnabled ? 'success' : 'default'}
-                             
                             >
                               {instance.isEnabled ? 'Active' : 'Disabled'}
                             </Chip>

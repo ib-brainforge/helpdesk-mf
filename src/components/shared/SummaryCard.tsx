@@ -2,7 +2,12 @@ import { Icon } from '@brainforgeau/components';
 import { Card, CardContent, Skeleton } from '@heroui/react';
 import { memo } from 'react';
 
-export type SummaryCardVariant = 'default' | 'success' | 'danger' | 'warning' | 'info';
+export type SummaryCardVariant =
+  | 'default'
+  | 'success'
+  | 'danger'
+  | 'warning'
+  | 'info';
 
 interface SummaryCardProps {
   title: string;
@@ -13,14 +18,19 @@ interface SummaryCardProps {
   isLoading?: boolean;
 }
 
-const variantStyles: Record<SummaryCardVariant, { accent: string; iconBg: string }> = {
+const variantStyles: Record<
+  SummaryCardVariant,
+  { accent: string; iconBg: string }
+> = {
   default: {
     accent: 'bg-indigo-500',
-    iconBg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+    iconBg:
+      'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
   },
   success: {
     accent: 'bg-emerald-500',
-    iconBg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    iconBg:
+      'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
   },
   danger: {
     accent: 'bg-rose-500',
@@ -28,7 +38,8 @@ const variantStyles: Record<SummaryCardVariant, { accent: string; iconBg: string
   },
   warning: {
     accent: 'bg-amber-500',
-    iconBg: 'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+    iconBg:
+      'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   },
   info: {
     accent: 'bg-sky-500',
@@ -52,7 +63,9 @@ export const SummaryCard = memo<SummaryCardProps>(
               {isLoading ? (
                 <Skeleton className="mt-1 h-7 w-16 rounded-md" />
               ) : (
-                <span className="text-2xl font-semibold text-foreground">{value}</span>
+                <span className="text-2xl font-semibold text-foreground">
+                  {value}
+                </span>
               )}
               {subtitle && (
                 <span className="text-xs text-default-600">{subtitle}</span>
@@ -67,7 +80,7 @@ export const SummaryCard = memo<SummaryCardProps>(
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 SummaryCard.displayName = 'SummaryCard';

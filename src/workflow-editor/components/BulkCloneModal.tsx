@@ -9,8 +9,8 @@ import {
   BaseTextarea,
 } from '@brainforgeau/components';
 
-import { useNavigate } from '@modern-js/runtime/router';
 import { toast } from '@heroui/react';
+import { useNavigate } from '@modern-js/runtime/router';
 import { useState } from 'react';
 import { useCloneDefinition } from '../state/workflowQueries';
 
@@ -51,7 +51,10 @@ export function BulkCloneModal({
       onClose();
       navigate(getDetailUrl(result.id));
     } catch (err) {
-      toast('Clone failed', { description: err instanceof Error ? err.message : 'Unknown error', variant: 'danger' });
+      toast('Clone failed', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'danger',
+      });
     }
   }
 
@@ -101,7 +104,6 @@ export function BulkCloneModal({
               </BaseButton>
               <BaseButton
                 color="primary"
-
                 isDisabled={cloneMutation.isPending || !newName.trim()}
                 onPress={() => handleClone(onClose)}
               >

@@ -5,20 +5,16 @@
  * Create navigates to /categories/new. Delete uses ConfirmDeleteModal.
  */
 
+import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import {
   useDeletePrincipalCategory,
   usePrincipalCategories,
 } from '@/hooks/usePrincipalCategories';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
-import {
-  BaseButton,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
 import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { useOverlayState, toast } from '@heroui/react';
+import { toast, useOverlayState } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -98,8 +94,9 @@ function PrincipalCategoriesPage() {
     columnHelper.accessor('accessLevel', {
       header: 'Access',
       cell: info =>
-        ACCESS_LEVEL_LABELS[info.getValue() as keyof typeof ACCESS_LEVEL_LABELS] ??
-        info.getValue(),
+        ACCESS_LEVEL_LABELS[
+          info.getValue() as keyof typeof ACCESS_LEVEL_LABELS
+        ] ?? info.getValue(),
     }),
     columnHelper.accessor('isActive', {
       header: 'Active',
@@ -133,8 +130,12 @@ function PrincipalCategoriesPage() {
             size="sm"
             color="danger"
             variant="light"
-            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isDisabled={deleteMutation.isPending && pendingDeleteId === row.original.id}
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isDisabled={
+              deleteMutation.isPending && pendingDeleteId === row.original.id
+            }
           >
             Delete
           </BaseButton>
@@ -153,7 +154,9 @@ function PrincipalCategoriesPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Categories</h1>
-        <BaseButton onPress={() => navigate(`/principal/${principalId}/categories/new`)}>
+        <BaseButton
+          onPress={() => navigate(`/principal/${principalId}/categories/new`)}
+        >
           New Category
         </BaseButton>
       </div>

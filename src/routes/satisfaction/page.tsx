@@ -1,10 +1,10 @@
-import { useState, useEffect, type FC } from 'react';
-import { useSearchParams } from '@modern-js/runtime/router';
-import { Helmet } from '@modern-js/runtime/head';
-import { Card } from '@heroui/react';
-import { BaseButton, BaseTextarea, Icon } from '@brainforgeau/components';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSubmitSatisfactionRating } from '@/hooks/useSatisfaction';
+import { BaseButton, BaseTextarea, Icon } from '@brainforgeau/components';
+import { Card } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useSearchParams } from '@modern-js/runtime/router';
+import { type FC, useEffect, useState } from 'react';
 
 // REVIEW: Public page - no authentication required (uses token from URL)
 function SatisfactionSurveyPage() {
@@ -50,10 +50,16 @@ function SatisfactionSurveyPage() {
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
           <Card className="max-w-md w-full p-8">
             <div className="text-center">
-              <Icon name="exclamation-circle" className="h-16 w-16 text-danger mx-auto mb-4" />
-              <h1 className="text-2xl font-semibold mb-2">Invalid Survey Link</h1>
+              <Icon
+                name="exclamation-circle"
+                className="h-16 w-16 text-danger mx-auto mb-4"
+              />
+              <h1 className="text-2xl font-semibold mb-2">
+                Invalid Survey Link
+              </h1>
               <p className="text-gray-600">
-                This satisfaction survey link is invalid or missing the required token.
+                This satisfaction survey link is invalid or missing the required
+                token.
               </p>
             </div>
           </Card>
@@ -71,10 +77,14 @@ function SatisfactionSurveyPage() {
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
           <Card className="max-w-md w-full p-8">
             <div className="text-center">
-              <Icon name="check-circle" className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <Icon
+                name="check-circle"
+                className="h-16 w-16 text-green-500 mx-auto mb-4"
+              />
               <h1 className="text-2xl font-semibold mb-2">Thank You!</h1>
               <p className="text-gray-600">
-                Your feedback has been submitted successfully. We appreciate your time and input.
+                Your feedback has been submitted successfully. We appreciate
+                your time and input.
               </p>
             </div>
           </Card>
@@ -96,10 +106,16 @@ function SatisfactionSurveyPage() {
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
           <Card className="max-w-md w-full p-8">
             <div className="text-center">
-              <Icon name="exclamation-triangle" className="h-16 w-16 text-orange-500 mx-auto mb-4" />
+              <Icon
+                name="exclamation-triangle"
+                className="h-16 w-16 text-orange-500 mx-auto mb-4"
+              />
               <h1 className="text-2xl font-semibold mb-2">Survey Error</h1>
               <p className="text-gray-600 mb-4">{errorMessage}</p>
-              <BaseButton variant="light" onClick={() => submitMutation.reset()}>
+              <BaseButton
+                variant="light"
+                onClick={() => submitMutation.reset()}
+              >
                 Try Again
               </BaseButton>
             </div>
@@ -117,10 +133,12 @@ function SatisfactionSurveyPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
         <Card className="max-w-lg w-full p-8">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-semibold mb-2">How was your support experience?</h1>
+            <h1 className="text-2xl font-semibold mb-2">
+              How was your support experience?
+            </h1>
             <p className="text-gray-600">
-              We would love to hear your feedback. Please rate your experience and share any
-              comments.
+              We would love to hear your feedback. Please rate your experience
+              and share any comments.
             </p>
           </div>
 
@@ -144,7 +162,7 @@ function SatisfactionSurveyPage() {
                 label="Additional Comments (Optional)"
                 placeholder="Tell us more about your experience..."
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={e => setComment(e.target.value)}
                 minRows={4}
                 maxRows={8}
               />

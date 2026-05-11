@@ -6,11 +6,15 @@ import {
   getBezierPath,
 } from '@xyflow/react';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
-import type { ApprovalSpecDto, TimerTriggerSpecDto, WorkflowTransitionDto } from '../types';
-import { TriggerType } from '../types/enums';
+import { CANVAS_TOKENS, T } from '../canvas/canvasTheme';
 import { ApprovalStepEditor } from '../components/ApprovalStepEditor';
 import { TimerTriggerEditor } from '../components/TimerTriggerEditor';
-import { CANVAS_TOKENS, T } from '../canvas/canvasTheme';
+import type {
+  ApprovalSpecDto,
+  TimerTriggerSpecDto,
+  WorkflowTransitionDto,
+} from '../types';
+import { TriggerType } from '../types/enums';
 
 export type WorkflowTransitionEdgeType = Edge<
   {
@@ -116,7 +120,10 @@ export function WorkflowTransitionEdge({
   }
 
   function handleDelete() {
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     onDelete?.(id);
   }
 
@@ -240,7 +247,10 @@ export function WorkflowTransitionEdge({
                 </span>
                 <button
                   className="nodrag nopan"
-                  onClick={() => { setExpanded(false); setConfirmDelete(false); }}
+                  onClick={() => {
+                    setExpanded(false);
+                    setConfirmDelete(false);
+                  }}
                   aria-label="Collapse transition editor"
                   style={{
                     background: 'none',
@@ -262,7 +272,9 @@ export function WorkflowTransitionEdge({
                 <select
                   className="nodrag nopan"
                   value={t.triggerType}
-                  onChange={e => handleTriggerTypeChange(e.target.value as TriggerType)}
+                  onChange={e =>
+                    handleTriggerTypeChange(e.target.value as TriggerType)
+                  }
                   style={selectStyle}
                 >
                   <option value={TriggerType.Manual}>Manual</option>
@@ -282,7 +294,10 @@ export function WorkflowTransitionEdge({
                     onBlur={commitEventName}
                     onKeyDown={e => {
                       if (e.key === 'Enter') commitEventName();
-                      if (e.key === 'Escape') setEventName((t.triggerSpec?.eventName as string) ?? '');
+                      if (e.key === 'Escape')
+                        setEventName(
+                          (t.triggerSpec?.eventName as string) ?? '',
+                        );
                     }}
                     placeholder="e.g. approval.granted"
                     style={inputStyle}
@@ -295,7 +310,12 @@ export function WorkflowTransitionEdge({
                 <TimerTriggerEditor
                   value={t.triggerSpec as unknown as TimerTriggerSpecDto | null}
                   onChange={spec =>
-                    update({ triggerSpec: spec as unknown as Record<string, unknown> | null })
+                    update({
+                      triggerSpec: spec as unknown as Record<
+                        string,
+                        unknown
+                      > | null,
+                    })
                   }
                 />
               )}
@@ -309,7 +329,8 @@ export function WorkflowTransitionEdge({
                   onChange={e => setGuardValue(e.target.value)}
                   onBlur={commitGuard}
                   onKeyDown={e => {
-                    if (e.key === 'Escape') setGuardValue(t.guardExpression ?? '');
+                    if (e.key === 'Escape')
+                      setGuardValue(t.guardExpression ?? '');
                   }}
                   placeholder="Leave empty for no guard"
                   rows={2}
@@ -326,7 +347,9 @@ export function WorkflowTransitionEdge({
               {/* Approval editor */}
               <InlineApprovalEditor
                 value={t.approvalSpec}
-                onChange={approvalSpec => update({ approvalSpec: approvalSpec ?? undefined })}
+                onChange={approvalSpec =>
+                  update({ approvalSpec: approvalSpec ?? undefined })
+                }
               />
 
               {/* Delete row */}
@@ -342,18 +365,37 @@ export function WorkflowTransitionEdge({
               >
                 {confirmDelete ? (
                   <>
-                    <span style={{ fontSize: 11, color: T.red, flex: 1 }}>Delete transition?</span>
+                    <span style={{ fontSize: 11, color: T.red, flex: 1 }}>
+                      Delete transition?
+                    </span>
                     <button
                       className="nodrag nopan"
                       onClick={handleDelete}
-                      style={{ fontSize: 11, fontWeight: 600, color: '#fff', background: T.red, border: 'none', borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: '#fff',
+                        background: T.red,
+                        border: 'none',
+                        borderRadius: 4,
+                        padding: '3px 8px',
+                        cursor: 'pointer',
+                      }}
                     >
                       Yes
                     </button>
                     <button
                       className="nodrag nopan"
                       onClick={() => setConfirmDelete(false)}
-                      style={{ fontSize: 11, color: T.textMuted, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
+                      style={{
+                        fontSize: 11,
+                        color: T.textMuted,
+                        background: T.surfaceAlt,
+                        border: `1px solid ${T.border}`,
+                        borderRadius: 4,
+                        padding: '3px 8px',
+                        cursor: 'pointer',
+                      }}
                     >
                       No
                     </button>
@@ -363,11 +405,33 @@ export function WorkflowTransitionEdge({
                     className="nodrag nopan"
                     onClick={handleDelete}
                     aria-label="Delete transition"
-                    style={{ fontSize: 11, color: T.textDim, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', gap: 4 }}
+                    style={{
+                      fontSize: 11,
+                      color: T.textDim,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
                     onMouseEnter={e => (e.currentTarget.style.color = T.red)}
-                    onMouseLeave={e => (e.currentTarget.style.color = T.textDim)}
+                    onMouseLeave={e =>
+                      (e.currentTarget.style.color = T.textDim)
+                    }
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6l-1 14H6L5 6" />
                       <path d="M10 11v6M14 11v6" />
@@ -413,11 +477,21 @@ function InlineApprovalEditor({
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
-    onChange({ ...(value ?? { required: true }), required: true, approverRoles: roles });
+    onChange({
+      ...(value ?? { required: true }),
+      required: true,
+      approverRoles: roles,
+    });
   }
 
   return (
-    <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 8, marginTop: 2 }}>
+    <div
+      style={{
+        borderTop: `1px solid ${T.border}`,
+        paddingTop: 8,
+        marginTop: 2,
+      }}
+    >
       <div
         style={{
           fontSize: 10,
@@ -433,7 +507,14 @@ function InlineApprovalEditor({
 
       <label
         className="nodrag nopan"
-        style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 11, color: T.text }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          cursor: 'pointer',
+          fontSize: 11,
+          color: T.text,
+        }}
       >
         <input
           className="nodrag nopan"
@@ -460,7 +541,9 @@ function InlineApprovalEditor({
             value={rolesInput}
             onChange={e => setRolesInput(e.target.value)}
             onBlur={commitRoles}
-            onKeyDown={e => { if (e.key === 'Enter') commitRoles(); }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitRoles();
+            }}
             placeholder="manager, supervisor"
             style={inputStyle}
           />

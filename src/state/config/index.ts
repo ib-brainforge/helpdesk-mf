@@ -1,4 +1,4 @@
-import { RuntimeConfig, defaultConfig } from '@brainforgeau/security';
+import { type RuntimeConfig, defaultConfig } from '@brainforgeau/security';
 import { atom } from 'jotai';
 
 declare const __HELPDESK_CONFIG__: string;

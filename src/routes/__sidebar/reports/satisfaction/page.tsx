@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { Box, PageSpinner } from '@brainforgeau/components/base';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Icon, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
-import { StarRating } from '@/components/satisfaction/StarRating';
 import { CSATRatingDistributionChart } from '@/components/satisfaction/CSATRatingDistributionChart';
+import { StarRating } from '@/components/satisfaction/StarRating';
 import { useCSATReport } from '@/hooks/useSatisfaction';
 import { CSATGroupBy } from '@/types';
+import { BaseSelect, BaseSelectItem, Icon } from '@brainforgeau/components';
+import { Box, PageSpinner } from '@brainforgeau/components/base';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { Helmet } from '@modern-js/runtime/head';
+import { useMemo, useState } from 'react';
 
 // REVIEW: Following existing reports page pattern with date range filtering
 function CSATReportPage() {
@@ -47,7 +47,9 @@ function CSATReportPage() {
 
       <div className="mb-5">
         <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Customer Satisfaction (CSAT)</h1>
+          <h1 className="text-2xl font-semibold">
+            Customer Satisfaction (CSAT)
+          </h1>
           <DateRangeSelector
             startDate={startDate}
             endDate={endDate}
@@ -60,26 +62,41 @@ function CSATReportPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <Box title="Average Rating">
               <div className="flex items-center gap-3">
-                <Icon name="star" className="h-8 w-8 text-yellow-400 fill-current" />
+                <Icon
+                  name="star"
+                  className="h-8 w-8 text-yellow-400 fill-current"
+                />
                 <div className="flex items-center gap-2">
                   <p className="text-3xl font-bold">
                     {reportData?.averageRating?.toFixed(1) || '0.0'}
                   </p>
-                  <StarRating value={Math.round(reportData?.averageRating || 0)} readonly size="sm" />
+                  <StarRating
+                    value={Math.round(reportData?.averageRating || 0)}
+                    readonly
+                    size="sm"
+                  />
                 </div>
               </div>
             </Box>
 
             <Box title="Total Ratings">
               <div className="flex items-center gap-3">
-                <Icon name="chat-bubble-left-right" className="h-8 w-8 text-blue-500" />
-                <p className="text-3xl font-bold">{reportData?.totalRatings || 0}</p>
+                <Icon
+                  name="chat-bubble-left-right"
+                  className="h-8 w-8 text-blue-500"
+                />
+                <p className="text-3xl font-bold">
+                  {reportData?.totalRatings || 0}
+                </p>
               </div>
             </Box>
 
             <Box title="Satisfaction Rate">
               <div className="flex items-center gap-3">
-                <Icon name="face-smile" className={`h-8 w-8 ${satisfactionColor}`} />
+                <Icon
+                  name="face-smile"
+                  className={`h-8 w-8 ${satisfactionColor}`}
+                />
                 <div>
                   <p className={`text-3xl font-bold ${satisfactionColor}`}>
                     {reportData?.satisfactionPercentage?.toFixed(1) || '0.0'}%
@@ -118,32 +135,46 @@ function CSATReportPage() {
           {/* Rating Distribution Chart */}
           <Box title="Rating Distribution">
             {reportData?.ratingDistribution && (
-              <CSATRatingDistributionChart distribution={reportData.ratingDistribution} />
+              <CSATRatingDistributionChart
+                distribution={reportData.ratingDistribution}
+              />
             )}
           </Box>
 
           {/* Grouped Data */}
-          {groupBy && reportData?.groupedData && reportData.groupedData.length > 0 && (
-            <Box title={`Breakdown by ${groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}`}>
-              <div className="space-y-3">
-                {reportData.groupedData.map((item) => (
-                  <div
-                    key={item.groupKey}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{item.groupName}</p>
-                      <p className="text-sm text-gray-600">{item.count} ratings</p>
+          {groupBy &&
+            reportData?.groupedData &&
+            reportData.groupedData.length > 0 && (
+              <Box
+                title={`Breakdown by ${groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}`}
+              >
+                <div className="space-y-3">
+                  {reportData.groupedData.map(item => (
+                    <div
+                      key={item.groupKey}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{item.groupName}</p>
+                        <p className="text-sm text-gray-600">
+                          {item.count} ratings
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xl font-bold">
+                          {item.averageRating.toFixed(1)}
+                        </p>
+                        <StarRating
+                          value={Math.round(item.averageRating)}
+                          readonly
+                          size="sm"
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xl font-bold">{item.averageRating.toFixed(1)}</p>
-                      <StarRating value={Math.round(item.averageRating)} readonly size="sm" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Box>
-          )}
+                  ))}
+                </div>
+              </Box>
+            )}
 
           {/* Filters */}
           <Box title="Group By">
@@ -151,15 +182,21 @@ function CSATReportPage() {
               label="Group by"
               placeholder="Select grouping"
               selectedKeys={groupBy ? new Set([groupBy]) : new Set<string>()}
-              onSelectionChange={(keys) => {
+              onSelectionChange={keys => {
                 const key = keys as CSATGroupBy | undefined;
                 setGroupBy(key);
               }}
               className="max-w-xs"
             >
-              <BaseSelectItem key={CSATGroupBy.Technician}>Technician</BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Category}>Category</BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Priority}>Priority</BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Technician}>
+                Technician
+              </BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Category}>
+                Category
+              </BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Priority}>
+                Priority
+              </BaseSelectItem>
               <BaseSelectItem key={CSATGroupBy.Month}>Month</BaseSelectItem>
             </BaseSelect>
           </Box>

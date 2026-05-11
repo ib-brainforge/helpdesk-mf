@@ -1,9 +1,16 @@
-import { type FC, useState, useCallback } from 'react';
-import { BaseButton, Icon, BaseInput, BaseSelect, BaseSelectItem, BaseTextarea } from '@brainforgeau/components';
-import { Switch, Card, CardContent } from '@heroui/react';
-import { ApprovalMode, type ApprovalWorkflowStepDto } from '@/types/approval';
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
+import { ApprovalMode, type ApprovalWorkflowStepDto } from '@/types/approval';
+import {
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTextarea,
+  Icon,
+} from '@brainforgeau/components';
+import { Card, CardContent, Switch } from '@heroui/react';
+import { type FC, useCallback, useState } from 'react';
 
 // REVIEW: Controlled form component following existing patterns
 
@@ -37,24 +44,26 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
   isSubmitting = false,
 }) => {
   const [name, setName] = useState(initialData?.name || '');
-  const [description, setDescription] = useState(initialData?.description || '');
+  const [description, setDescription] = useState(
+    initialData?.description || '',
+  );
   const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
   const [approvalMode, setApprovalMode] = useState<ApprovalMode>(
-    initialData?.approvalMode ?? ApprovalMode.Sequential
+    initialData?.approvalMode ?? ApprovalMode.Sequential,
   );
   const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
   const [triggerOnCreation, setTriggerOnCreation] = useState(
-    initialData?.triggerOnCreation ?? false
+    initialData?.triggerOnCreation ?? false,
   );
   const [steps, setSteps] = useState<ApprovalWorkflowStepDto[]>(
-    initialData?.steps || []
+    initialData?.steps || [],
   );
 
   const { categories } = useCategoriesData();
   const { items: users } = useUsersData();
 
   const handleAddStep = useCallback(() => {
-    setSteps((prev) => [
+    setSteps(prev => [
       ...prev,
       {
         stepOrder: prev.length,
@@ -68,7 +77,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
   }, []);
 
   const handleRemoveStep = useCallback((index: number) => {
-    setSteps((prev) => {
+    setSteps(prev => {
       const newSteps = prev.filter((_, i) => i !== index);
       // Reorder steps
       return newSteps.map((step, i) => ({ ...step, stepOrder: i }));
@@ -77,27 +86,33 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
   const handleUpdateStep = useCallback(
     (index: number, updates: Partial<ApprovalWorkflowStepDto>) => {
-      setSteps((prev) =>
-        prev.map((step, i) => (i === index ? { ...step, ...updates } : step))
+      setSteps(prev =>
+        prev.map((step, i) => (i === index ? { ...step, ...updates } : step)),
       );
     },
-    []
+    [],
   );
 
   const handleMoveStepUp = useCallback((index: number) => {
     if (index === 0) return;
-    setSteps((prev) => {
+    setSteps(prev => {
       const newSteps = [...prev];
-      [newSteps[index - 1], newSteps[index]] = [newSteps[index], newSteps[index - 1]];
+      [newSteps[index - 1], newSteps[index]] = [
+        newSteps[index],
+        newSteps[index - 1],
+      ];
       return newSteps.map((step, i) => ({ ...step, stepOrder: i }));
     });
   }, []);
 
   const handleMoveStepDown = useCallback((index: number) => {
-    setSteps((prev) => {
+    setSteps(prev => {
       if (index === prev.length - 1) return prev;
       const newSteps = [...prev];
-      [newSteps[index], newSteps[index + 1]] = [newSteps[index + 1], newSteps[index]];
+      [newSteps[index], newSteps[index + 1]] = [
+        newSteps[index + 1],
+        newSteps[index],
+      ];
       return newSteps.map((step, i) => ({ ...step, stepOrder: i }));
     });
   }, []);
@@ -115,12 +130,21 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
         steps,
       });
     },
-    [name, description, categoryId, approvalMode, isActive, triggerOnCreation, steps, onSubmit]
+    [
+      name,
+      description,
+      categoryId,
+      approvalMode,
+      isActive,
+      triggerOnCreation,
+      steps,
+      onSubmit,
+    ],
   );
 
   const categoryOptions = [
     { label: 'Global (All Categories)', value: '' },
-    ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
+    ...categories.map(cat => ({ label: cat.name, value: cat.id })),
   ];
 
   const approvalModeOptions = [
@@ -159,7 +183,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
           <BaseSelect
             label="Category"
             selectedKey={categoryId ? categoryId : null}
-            onSelectionChange={(keys) => {
+            onSelectionChange={keys => {
               const selected = Array.from(keys as Set<string>)[0];
               setCategoryId(selected || '');
             }}
@@ -176,7 +200,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
           <BaseSelect
             label="Approval Mode"
             selectedKey={approvalMode.toString()}
-            onSelectionChange={(keys) => {
+            onSelectionChange={keys => {
               const selected = Array.from(keys as Set<string>)[0];
               setApprovalMode(Number.parseInt(selected) as ApprovalMode);
             }}
@@ -184,9 +208,15 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
             aria-label="Approval Mode"
           >
             {[
-              <BaseSelectItem key={ApprovalMode.Sequential.toString()}>Sequential</BaseSelectItem>,
-              <BaseSelectItem key={ApprovalMode.Parallel.toString()}>Parallel</BaseSelectItem>,
-              <BaseSelectItem key={ApprovalMode.AnyOne.toString()}>Any One</BaseSelectItem>,
+              <BaseSelectItem key={ApprovalMode.Sequential.toString()}>
+                Sequential
+              </BaseSelectItem>,
+              <BaseSelectItem key={ApprovalMode.Parallel.toString()}>
+                Parallel
+              </BaseSelectItem>,
+              <BaseSelectItem key={ApprovalMode.AnyOne.toString()}>
+                Any One
+              </BaseSelectItem>,
             ]}
           </BaseSelect>
 
@@ -205,7 +235,10 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                 Automatically trigger when ticket is created in this category
               </p>
             </div>
-            <Switch isSelected={triggerOnCreation} onChange={setTriggerOnCreation} />
+            <Switch
+              isSelected={triggerOnCreation}
+              onChange={setTriggerOnCreation}
+            />
           </div>
         </CardContent>
       </Card>
@@ -226,8 +259,13 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
           {steps.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              <Icon name="clipboard-document-list" className="h-12 w-12 mx-auto mb-2" />
-              <p>No steps added yet. Click "Add Step" to create approval steps.</p>
+              <Icon
+                name="clipboard-document-list"
+                className="h-12 w-12 mx-auto mb-2"
+              />
+              <p>
+                No steps added yet. Click "Add Step" to create approval steps.
+              </p>
             </div>
           )}
 
@@ -236,21 +274,27 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
               <Card key={index}>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">Step {index + 1}</span>
+                    <span className="font-medium text-sm">
+                      Step {index + 1}
+                    </span>
                     <div className="flex items-center gap-1">
                       <BaseButton
                         size="sm"
                         variant="light"
                         onPress={() => handleMoveStepUp(index)}
                         isDisabled={index === 0}
-                        icon={<Icon name="chevron-up" className="h-3.5 w-3.5" />}
+                        icon={
+                          <Icon name="chevron-up" className="h-3.5 w-3.5" />
+                        }
                       />
                       <BaseButton
                         size="sm"
                         variant="light"
                         onPress={() => handleMoveStepDown(index)}
                         isDisabled={index === steps.length - 1}
-                        icon={<Icon name="chevron-down" className="h-3.5 w-3.5" />}
+                        icon={
+                          <Icon name="chevron-down" className="h-3.5 w-3.5" />
+                        }
                       />
                       <BaseButton
                         size="sm"
@@ -265,7 +309,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                   <BaseInput
                     label="Step Name"
                     value={step.name}
-                    onValueChange={(v) => handleUpdateStep(index, { name: v })}
+                    onValueChange={v => handleUpdateStep(index, { name: v })}
                     isRequired
                     placeholder="e.g., Manager Approval"
                     size="sm"
@@ -273,8 +317,10 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
                   <BaseSelect
                     label="Approver"
-                    selectedKey={step.approverUserId ? step.approverUserId : null}
-                    onSelectionChange={(keys) => {
+                    selectedKey={
+                      step.approverUserId ? step.approverUserId : null
+                    }
+                    onSelectionChange={keys => {
                       const selected = Array.from(keys as Set<string>)[0];
                       handleUpdateStep(index, {
                         approverUserId: selected || undefined,
@@ -284,9 +330,13 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     aria-label="Approver"
                   >
                     {[
-                      <BaseSelectItem key="">Select approver...</BaseSelectItem>,
-                      ...userOptions.map((opt) => (
-                        <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+                      <BaseSelectItem key="">
+                        Select approver...
+                      </BaseSelectItem>,
+                      ...userOptions.map(opt => (
+                        <BaseSelectItem key={opt.value}>
+                          {opt.label}
+                        </BaseSelectItem>
                       )),
                     ]}
                   </BaseSelect>
@@ -296,7 +346,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                       label="Timeout (hours)"
                       type="number"
                       value={step.timeoutHours?.toString() || ''}
-                      onValueChange={(v) =>
+                      onValueChange={v =>
                         handleUpdateStep(index, {
                           timeoutHours: v ? Number.parseInt(v) : undefined,
                         })
@@ -307,8 +357,10 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
                     <BaseSelect
                       label="Escalate To"
-                      selectedKey={step.escalateToUserId ? step.escalateToUserId : null}
-                      onSelectionChange={(keys) => {
+                      selectedKey={
+                        step.escalateToUserId ? step.escalateToUserId : null
+                      }
+                      onSelectionChange={keys => {
                         const selected = Array.from(keys as Set<string>)[0];
                         handleUpdateStep(index, {
                           escalateToUserId: selected || undefined,
@@ -319,8 +371,10 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     >
                       {[
                         <BaseSelectItem key="">No escalation</BaseSelectItem>,
-                        ...userOptions.map((opt) => (
-                          <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+                        ...userOptions.map(opt => (
+                          <BaseSelectItem key={opt.value}>
+                            {opt.label}
+                          </BaseSelectItem>
                         )),
                       ]}
                     </BaseSelect>
@@ -336,7 +390,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     <Switch
                       size="sm"
                       isSelected={step.isRequired}
-                      onChange={(checked) =>
+                      onChange={checked =>
                         handleUpdateStep(index, { isRequired: checked })
                       }
                     />
@@ -349,7 +403,11 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
       </Card>
 
       <div className="flex items-center gap-3 justify-end">
-        <BaseButton variant="bordered" onPress={onCancel} isDisabled={isSubmitting || isSubmitting}>
+        <BaseButton
+          variant="bordered"
+          onPress={onCancel}
+          isDisabled={isSubmitting || isSubmitting}
+        >
           Cancel
         </BaseButton>
         <BaseButton type="submit" color="primary">

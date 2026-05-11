@@ -1,9 +1,9 @@
-import { CommentType, type CommentDto } from '@/types/comment';
 import { StatusBadge } from '@/components/shared';
-import DOMPurify from 'dompurify';
+import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
+import DOMPurify from 'dompurify';
 
 interface CommentThreadProps {
   comments: CommentDto[];
@@ -45,7 +45,10 @@ const getCommentTextClass = (type: CommentType): string => {
   return 'text-foreground';
 };
 
-export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoading }) => {
+export const CommentThread: React.FC<CommentThreadProps> = ({
+  comments,
+  isLoading,
+}) => {
   const timezone = useTimezone();
   if (isLoading) {
     return (
@@ -59,15 +62,18 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <p className="text-default-500 text-sm">No comments yet.</p>
-        <p className="text-default-400 text-xs mt-1">Be the first to add a comment.</p>
+        <p className="text-default-400 text-xs mt-1">
+          Be the first to add a comment.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {comments.map((comment) => {
-        const commentType = fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
+      {comments.map(comment => {
+        const commentType =
+          fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
         return (
           <div
             key={comment.id}
@@ -76,11 +82,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm">
-                  {comment.createdByUserName || comment.authorId || 'Unknown User'}
+                  {comment.createdByUserName ||
+                    comment.authorId ||
+                    'Unknown User'}
                 </span>
-                <StatusBadge
-                  color={getCommentTypeColor(commentType)}
-                >
+                <StatusBadge color={getCommentTypeColor(commentType)}>
                   {getCommentTypeName(commentType)}
                 </StatusBadge>
               </div>
@@ -90,7 +96,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
             </div>
             <div
               className={`text-sm ${getCommentTextClass(commentType)}`}
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.body ?? '') }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(comment.body ?? ''),
+              }}
             />
           </div>
         );

@@ -462,7 +462,9 @@ export const useSetTicketParent = () => {
       await client.v1TicketsIdParentPut(ticketId, { parentTicketId });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ticket', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.ticketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
@@ -573,8 +575,12 @@ export const useCreateSubtask = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ticket', variables.parentTicketId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-children', variables.parentTicketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.parentTicketId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-children', variables.parentTicketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
@@ -589,7 +595,7 @@ export const useMarkTicketAsProblem = () => {
       await client.v1TicketsIdMarkProblemPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
     },
   });
@@ -604,7 +610,7 @@ export const useUnmarkTicketAsProblem = () => {
       await client.v1TicketsIdUnmarkProblemPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
     },
   });
@@ -619,7 +625,7 @@ export const usePublishTicketAsIdea = () => {
       await client.v1TicketsIdPublishAsIdeaPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
     },
@@ -635,7 +641,7 @@ export const useUnpublishTicketAsIdea = () => {
       await client.v1TicketsIdUnpublishAsIdeaPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
     },
@@ -654,12 +660,22 @@ export type IdeaListItem = {
 };
 
 export const useIdeasForum = (page = 1, pageSize = 20) => {
-  return useQuery<{ items: IdeaListItem[]; totalCount: number; page: number; pageSize: number }>({
+  return useQuery<{
+    items: IdeaListItem[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+  }>({
     queryKey: ['ideas', page, pageSize],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(IdeasApi);
       const response = await client.v1IdeasGet(page, pageSize);
-      return response.data as { items: IdeaListItem[]; totalCount: number; page: number; pageSize: number };
+      return response.data as {
+        items: IdeaListItem[];
+        totalCount: number;
+        page: number;
+        pageSize: number;
+      };
     },
   });
 };

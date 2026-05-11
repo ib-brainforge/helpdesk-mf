@@ -3,7 +3,6 @@
  */
 
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
-import { toast } from '@heroui/react';
 import {
   usePrincipalApprovalWorkflow,
   useUpdatePrincipalApprovalWorkflow,
@@ -18,6 +17,7 @@ import {
 } from '@brainforgeau/components';
 import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 
 import {
   useNavigate,
@@ -196,7 +196,6 @@ function PrincipalApprovalWorkflowEditPage() {
         <BaseButton
           color="primary"
           onPress={handleSave}
-
           isDisabled={updateMutation.isPending || !name.trim()}
         >
           Save changes

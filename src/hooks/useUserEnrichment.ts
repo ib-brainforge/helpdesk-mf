@@ -1,9 +1,12 @@
-import { useMemo } from 'react';
-import { UsersApi, type UserDto } from '@brainforgeau/identity-management-client';
-import { useQuery } from '@tanstack/react-query';
-import { useAtomValue } from 'jotai';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
+import {
+  type UserDto,
+  UsersApi,
+} from '@brainforgeau/identity-management-client';
+import { useQuery } from '@tanstack/react-query';
+import { useAtomValue } from 'jotai';
+import { useMemo } from 'react';
 
 export interface UserInfo {
   id: string;
@@ -17,14 +20,16 @@ const getUserName = (user: UserDto): string => {
   return fullName || user.email || 'Unknown';
 };
 
-export const useUserEnrichment = (userIds: Array<string | undefined | null>) => {
+export const useUserEnrichment = (
+  userIds: Array<string | undefined | null>,
+) => {
   const contextKey = useAtomValue(contextQueryKeyAtom);
   const uniqueIds = useMemo(
     () =>
       Array.from(
-        new Set(userIds.filter((id): id is string => Boolean(id && id.trim())))
+        new Set(userIds.filter((id): id is string => Boolean(id && id.trim()))),
       ),
-    [userIds]
+    [userIds],
   );
 
   const query = useQuery({
@@ -36,7 +41,7 @@ export const useUserEnrichment = (userIds: Array<string | undefined | null>) => 
 
       // Fetch users one by one (like useAssetEnrichment)
       const results = await Promise.all(
-        uniqueIds.map(async (id) => {
+        uniqueIds.map(async id => {
           try {
             const { data } = await client.v1UsersIdGet(id);
             const user = data as UserDto | null;
@@ -54,7 +59,7 @@ export const useUserEnrichment = (userIds: Array<string | undefined | null>) => 
             console.warn('Failed to fetch user detail', id, error);
             return [id, null] as const;
           }
-        })
+        }),
       );
 
       return Object.fromEntries(results) as Record<string, UserInfo | null>;

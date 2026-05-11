@@ -12,16 +12,20 @@ import { authorizedAxios } from '@/state/authorizedAxios';
 import { getAppConfig } from '@/state/config';
 import type {
   TenantMailConfigDto,
-  UpsertTenantMailConfigRequest,
-  TestTenantMailConfigRequest,
   TenantMailConfigTestResult,
+  TestTenantMailConfigRequest,
+  UpsertTenantMailConfigRequest,
 } from '@/types/email';
 
 function getNotificationBaseUrl(): string {
   const config = getAppConfig();
-  const url: string | undefined = config?.api?.notificationUrl as string | undefined;
+  const url: string | undefined = config?.api?.notificationUrl as
+    | string
+    | undefined;
   if (!url) {
-    throw new Error('Notification API base URL (api.notificationUrl) is not configured');
+    throw new Error(
+      'Notification API base URL (api.notificationUrl) is not configured',
+    );
   }
   return url.replace(/\/$/, '');
 }

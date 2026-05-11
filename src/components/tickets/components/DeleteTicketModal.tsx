@@ -1,4 +1,11 @@
-import { BaseButton, BaseModal, BaseModalContent, BaseModalBody, BaseModalHeader, BaseModalFooter } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+} from '@brainforgeau/components';
 
 interface DeleteTicketModalProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
-import { type FC, useState } from 'react';
 import { Icon } from '@brainforgeau/components';
+import { type FC, useState } from 'react';
 
 // REVIEW: Using controlled component pattern for star rating
 interface StarRatingProps {
@@ -45,7 +45,7 @@ export const StarRating: FC<StarRatingProps> = ({
 
   return (
     <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((rating) => (
+      {[1, 2, 3, 4, 5].map(rating => (
         <button
           key={rating}
           type="button"
@@ -61,7 +61,9 @@ export const StarRating: FC<StarRatingProps> = ({
           <Icon
             name="star"
             className={`${sizeClasses[size]} ${
-              rating <= displayRating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+              rating <= displayRating
+                ? 'text-yellow-400 fill-current'
+                : 'text-gray-300'
             }`}
           />
         </button>

@@ -69,7 +69,9 @@ export function TransitionInspector({
         isDisabled={readOnly}
         size="sm"
       >
-        {TRIGGER_ITEMS.map(item => <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>)}
+        {TRIGGER_ITEMS.map(item => (
+          <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>
+        ))}
       </BaseSelect>
 
       {/* Event name input — shown for Event trigger */}

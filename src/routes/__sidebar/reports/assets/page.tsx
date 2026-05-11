@@ -1,22 +1,22 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Spinner } from '@heroui/react';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  type ColumnDef,
-  type SortingState,
-} from '@tanstack/react-table';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useAssetsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { AssetTicketDto } from '@/types';
+import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
+import { Spinner } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import {
+  type ColumnDef,
+  type SortingState,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
 type FlatRow = AssetTicketDto & { assetId: string };
 
@@ -25,16 +25,16 @@ function AssetsReportPage() {
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { data: assets = [], isLoading } = useAssetsReport(startDate, endDate);
 
   const flatRows: FlatRow[] = useMemo(
     () =>
-      assets.flatMap((a) =>
-        a.tickets.map((t) => ({ ...t, assetId: a.assetId })),
-      ),
+      assets.flatMap(a => a.tickets.map(t => ({ ...t, assetId: a.assetId }))),
     [assets],
   );
 
@@ -43,22 +43,28 @@ function AssetsReportPage() {
       {
         accessorKey: 'assetId',
         header: 'Asset ID',
-        cell: (info) => (
-          <span className="font-mono text-xs">{(info.getValue() as string).slice(0, 8)}…</span>
+        cell: info => (
+          <span className="font-mono text-xs">
+            {(info.getValue() as string).slice(0, 8)}…
+          </span>
         ),
       },
       {
         accessorKey: 'subject',
         header: 'Subject',
-        cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
+        cell: info => (
+          <span className="font-medium">{info.getValue() as string}</span>
+        ),
       },
       { accessorKey: 'status', header: 'Status' },
       { accessorKey: 'priority', header: 'Priority' },
       {
         accessorKey: 'createdAt',
         header: 'Created',
-        cell: (info) => (
-          <span className="text-xs">{formatDateTime(info.getValue() as string, { timezone })}</span>
+        cell: info => (
+          <span className="text-xs">
+            {formatDateTime(info.getValue() as string, { timezone })}
+          </span>
         ),
       },
     ],
@@ -76,7 +82,7 @@ function AssetsReportPage() {
 
   const handleExport = () => {
     exportToXlsx(
-      flatRows.map((r) => ({
+      flatRows.map(r => ({
         'Asset ID': r.assetId,
         Subject: r.subject,
         Status: r.status,
@@ -106,7 +112,9 @@ function AssetsReportPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Assets Report</h1>
-          <p className="text-default-500 mt-1">Tickets linked to assets grouped by asset</p>
+          <p className="text-default-500 mt-1">
+            Tickets linked to assets grouped by asset
+          </p>
         </div>
         <BaseButton
           variant="bordered"
@@ -137,7 +145,8 @@ function AssetsReportPage() {
         <>
           {assets.length > 0 && (
             <p className="mb-3 text-sm text-default-500">
-              {assets.length} asset{assets.length !== 1 ? 's' : ''} with {flatRows.length} linked ticket{flatRows.length !== 1 ? 's' : ''}
+              {assets.length} asset{assets.length !== 1 ? 's' : ''} with{' '}
+              {flatRows.length} linked ticket{flatRows.length !== 1 ? 's' : ''}
             </p>
           )}
           <BaseTable table={table} isLoading={false} fullHeight={false} />

@@ -1,24 +1,36 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, Icon, BaseSelect, BaseSelectItem, BaseTable } from '@brainforgeau/components';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardContent, Spinner } from '@heroui/react';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
-import { AdvancedFiltersModal, type AdvancedFilterValues } from '@/components/reports/components/AdvancedFiltersModal';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  type ColumnDef,
-  type SortingState,
-} from '@tanstack/react-table';
+  type AdvancedFilterValues,
+  AdvancedFiltersModal,
+} from '@/components/reports/components/AdvancedFiltersModal';
+import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
 import { useTicketsData } from '@/components/tickets/hooks/useTickets';
-import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import {
+  BaseButton,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTable,
+  Icon,
+} from '@brainforgeau/components';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
+import { Card, CardContent, Spinner } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import {
+  type ColumnDef,
+  type SortingState,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
-function PieChart({ data, title }: { data: { name: string; value: number }[]; title: string }) {
+function PieChart({
+  data,
+  title,
+}: { data: { name: string; value: number }[]; title: string }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const colors = ['#0070f3', '#7928ca', '#ff0080', '#00dfd8'];
 
@@ -29,18 +41,29 @@ function PieChart({ data, title }: { data: { name: string; value: number }[]; ti
         <div className="flex items-center justify-center">
           <div className="relative w-32 h-32">
             {/* REVIEW: Simple CSS pie chart - replace with proper chart library if needed */}
-            <div className="w-full h-full rounded-full" style={{
-              background: `conic-gradient(${data.map((item, i) => {
-                const prevPercentage = data.slice(0, i).reduce((sum, d) => sum + d.value, 0) / total * 100;
-                const percentage = item.value / total * 100;
-                return `${colors[i % colors.length]} ${prevPercentage}% ${prevPercentage + percentage}%`;
-              }).join(', ')})`,
-            }} />
+            <div
+              className="w-full h-full rounded-full"
+              style={{
+                background: `conic-gradient(${data
+                  .map((item, i) => {
+                    const prevPercentage =
+                      (data.slice(0, i).reduce((sum, d) => sum + d.value, 0) /
+                        total) *
+                      100;
+                    const percentage = (item.value / total) * 100;
+                    return `${colors[i % colors.length]} ${prevPercentage}% ${prevPercentage + percentage}%`;
+                  })
+                  .join(', ')})`,
+              }}
+            />
           </div>
         </div>
         <div className="mt-4 space-y-2">
           {data.map((item, i) => (
-            <div key={item.name} className="flex items-center justify-between text-xs">
+            <div
+              key={item.name}
+              className="flex items-center justify-between text-xs"
+            >
               <div className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-sm"
@@ -57,7 +80,11 @@ function PieChart({ data, title }: { data: { name: string; value: number }[]; ti
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
+function StatCard({
+  label,
+  value,
+  icon,
+}: { label: string; value: string | number; icon: string }) {
   return (
     <Card>
       <CardContent className="p-4">
@@ -80,12 +107,16 @@ function ReportsSummaryPage() {
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilterValues>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
     statuses: [],
     priorities: [],
@@ -94,16 +125,14 @@ function ReportsSummaryPage() {
   });
 
   // Fetch report summary data
-  const { data: summaryData, isLoading: isLoadingSummary } = useTicketSummaryReport(startDate, endDate);
+  const { data: summaryData, isLoading: isLoadingSummary } =
+    useTicketSummaryReport(startDate, endDate);
 
   // Fetch categories for filter dropdown
   const { categories } = useCategoriesData();
 
   // Fetch tickets for table with category filter
-  const {
-    items: tickets,
-    isLoading: isLoadingTickets,
-  } = useTicketsData();
+  const { items: tickets, isLoading: isLoadingTickets } = useTicketsData();
 
   const handleDateRangeChange = (start: string, end: string) => {
     setStartDate(start);
@@ -148,46 +177,60 @@ function ReportsSummaryPage() {
     let result = tickets;
 
     if (selectedCategory !== 'all') {
-      result = result.filter((ticket) => ticket.categoryId === selectedCategory);
+      result = result.filter(ticket => ticket.categoryId === selectedCategory);
     }
 
     // Apply advanced filters if active
     if (advancedFilters.statuses.length > 0) {
-      result = result.filter((ticket) => ticket.status != null && advancedFilters.statuses.includes(ticket.status));
+      result = result.filter(
+        ticket =>
+          ticket.status != null &&
+          advancedFilters.statuses.includes(ticket.status),
+      );
     }
     if (advancedFilters.priorities.length > 0) {
-      result = result.filter((ticket) => ticket.priority != null && advancedFilters.priorities.includes(ticket.priority));
+      result = result.filter(
+        ticket =>
+          ticket.priority != null &&
+          advancedFilters.priorities.includes(ticket.priority),
+      );
     }
     if (advancedFilters.categoryIds.length > 0) {
-      result = result.filter((ticket) => ticket.categoryId != null && advancedFilters.categoryIds.includes(ticket.categoryId));
+      result = result.filter(
+        ticket =>
+          ticket.categoryId != null &&
+          advancedFilters.categoryIds.includes(ticket.categoryId),
+      );
     }
 
     return result;
   }, [tickets, selectedCategory, advancedFilters]);
 
-  const columns: ColumnDef<typeof tickets[0], any>[] = useMemo(
+  const columns: ColumnDef<(typeof tickets)[0], any>[] = useMemo(
     () => [
       {
         accessorKey: 'ticketNumber',
         header: 'Ticket ID',
-        cell: (info) => (
-          <span className="text-primary font-medium">#{info.getValue() as string}</span>
+        cell: info => (
+          <span className="text-primary font-medium">
+            #{info.getValue() as string}
+          </span>
         ),
       },
       {
         accessorKey: 'subject',
         header: 'Subject',
-        cell: (info) => info.getValue() as string,
+        cell: info => info.getValue() as string,
       },
       {
         accessorKey: 'categoryName',
         header: 'Category',
-        cell: (info) => info.getValue() as string,
+        cell: info => info.getValue() as string,
       },
       {
         accessorKey: 'status',
         header: 'Status',
-        cell: (info) => {
+        cell: info => {
           const status = info.getValue() as string;
           const colors: Record<string, string> = {
             New: 'bg-primary-100 text-primary-800',
@@ -195,7 +238,9 @@ function ReportsSummaryPage() {
             Closed: 'bg-success-100 text-success-800',
           };
           return (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${colors[status] || 'bg-default-100'}`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs ${colors[status] || 'bg-default-100'}`}
+            >
               {status}
             </span>
           );
@@ -204,7 +249,7 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'priority',
         header: 'Priority',
-        cell: (info) => {
+        cell: info => {
           const priority = info.getValue() as string;
           const colors: Record<string, string> = {
             Critical: 'bg-danger-100 text-danger-800',
@@ -214,7 +259,9 @@ function ReportsSummaryPage() {
             None: 'bg-default-50 text-default-600',
           };
           return (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${colors[priority] || 'bg-default-100'}`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs ${colors[priority] || 'bg-default-100'}`}
+            >
               {priority}
             </span>
           );
@@ -223,12 +270,12 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'requesterName',
         header: 'Requester',
-        cell: (info) => info.getValue() as string,
+        cell: info => info.getValue() as string,
       },
       {
         accessorKey: 'createdAt',
         header: 'Created',
-        cell: (info) => {
+        cell: info => {
           const date = info.getValue() as string;
           return formatDateTime(date, { timezone });
         },
@@ -267,7 +314,9 @@ function ReportsSummaryPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Reports Summary</h1>
-          <p className="text-default-500 mt-1">Overview of ticket metrics with charts and trends</p>
+          <p className="text-default-500 mt-1">
+            Overview of ticket metrics with charts and trends
+          </p>
         </div>
       </div>
 
@@ -277,7 +326,7 @@ function ReportsSummaryPage() {
           label="Category"
           placeholder="All categories"
           selectedKey={selectedCategory}
-          onSelectionChange={(keys) => {
+          onSelectionChange={keys => {
             const key = keys as string;
             setSelectedCategory(key);
           }}
@@ -285,7 +334,7 @@ function ReportsSummaryPage() {
         >
           {[
             <BaseSelectItem key="all">All categories</BaseSelectItem>,
-            ...categories.map((cat) => (
+            ...categories.map(cat => (
               <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
             )),
           ]}
@@ -336,7 +385,10 @@ function ReportsSummaryPage() {
             />
             <StatCard
               label="Tickets Open"
-              value={(summaryData?.totalCreated ?? 0) - (summaryData?.totalClosed ?? 0)}
+              value={
+                (summaryData?.totalCreated ?? 0) -
+                (summaryData?.totalClosed ?? 0)
+              }
               icon="clock"
             />
             <StatCard

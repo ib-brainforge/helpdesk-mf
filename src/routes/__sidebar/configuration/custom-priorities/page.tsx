@@ -1,20 +1,25 @@
-import { useState } from 'react';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
 import { toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, Icon, BaseInput } from '@brainforgeau/components';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-
+import { useState } from 'react';
 
 function CustomPrioritiesPage() {
   const [priorityName, setPriorityName] = useState('');
 
   const handleAdd = () => {
     if (!priorityName.trim()) {
-      toast('Validation error', { description: 'Please enter a priority name', variant: 'warning' });
+      toast('Validation error', {
+        description: 'Please enter a priority name',
+        variant: 'warning',
+      });
       return;
     }
 
-    toast('Backend not available', { description: 'Custom priorities API is not yet implemented', variant: 'warning' });
+    toast('Backend not available', {
+      description: 'Custom priorities API is not yet implemented',
+      variant: 'warning',
+    });
     setPriorityName('');
   };
 
@@ -29,7 +34,11 @@ function CustomPrioritiesPage() {
           items={[
             { label: 'Home', href: '/' },
             { label: 'Configuration', href: '/configuration' },
-            { label: 'Custom Priorities', href: '/configuration/custom-priorities', isCurrent: true },
+            {
+              label: 'Custom Priorities',
+              href: '/configuration/custom-priorities',
+              isCurrent: true,
+            },
           ]}
         />
       </div>
@@ -44,16 +53,17 @@ function CustomPrioritiesPage() {
       <div className="max-w-2xl">
         <div className="mb-6 p-4 bg-default-50 rounded-lg border border-default-200">
           <p className="text-sm text-default-700 mb-4">
-            Custom priorities allow you to define specific priority levels beyond the default
-            options (Critical, High, Normal, Low). Use this to match your organization's workflow.
+            Custom priorities allow you to define specific priority levels
+            beyond the default options (Critical, High, Normal, Low). Use this
+            to match your organization's workflow.
           </p>
           <div className="flex items-end gap-3">
             <BaseInput
               label="Priority Name"
               placeholder="Enter priority name..."
               value={priorityName}
-              onChange={(e) => setPriorityName(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setPriorityName(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === 'Enter') {
                   handleAdd();
                 }
@@ -76,7 +86,10 @@ function CustomPrioritiesPage() {
             <h3 className="font-semibold text-sm">Existing Priorities</h3>
           </div>
           <div className="p-8 text-center">
-            <Icon name="inbox" className="h-12 w-12 text-default-300 mx-auto mb-3" />
+            <Icon
+              name="inbox"
+              className="h-12 w-12 text-default-300 mx-auto mb-3"
+            />
             <p className="text-default-500 mb-1">No custom priorities yet</p>
             <p className="text-default-400 text-sm">
               Add your first custom priority using the form above

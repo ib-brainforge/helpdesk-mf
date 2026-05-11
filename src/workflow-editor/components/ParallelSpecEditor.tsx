@@ -90,7 +90,9 @@ export function ParallelSpecEditor({
         size="sm"
         placeholder="Select join state"
       >
-        {availableStates.map(s => <BaseSelectItem key={s.id}>{s.name}</BaseSelectItem>)}
+        {availableStates.map(s => (
+          <BaseSelectItem key={s.id}>{s.name}</BaseSelectItem>
+        ))}
       </BaseSelect>
 
       {/* Join Mode — BaseRadioGroup */}

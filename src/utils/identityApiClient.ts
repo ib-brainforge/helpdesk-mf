@@ -1,6 +1,6 @@
-import { Configuration } from '@brainforgeau/identity-management-client';
 import { createAuthorizedAxios } from '@/state/authorizedAxios';
 import { getAppConfig } from '@/state/config';
+import { Configuration } from '@brainforgeau/identity-management-client';
 
 type IdentityApiConstructor<TClient> = new (
   configuration?: Configuration,

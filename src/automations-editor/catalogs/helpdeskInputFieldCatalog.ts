@@ -39,8 +39,6 @@ export const HELPDESK_INPUT_FIELDS: InputFieldGroup[] = [
   },
   {
     group: 'Custom Fields',
-    fields: [
-      'customFields.{key}',
-    ],
+    fields: ['customFields.{key}'],
   },
 ];

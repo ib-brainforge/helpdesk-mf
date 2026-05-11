@@ -6,16 +6,19 @@
  * REVIEW: Add voting + commenting in a future wave when the backend endpoints exist.
  */
 
-import { PageSpinner } from '@brainforgeau/components';
-import { Box } from '@brainforgeau/components/base';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { withAuthenticationRequired, useTimezone } from '@brainforgeau/security';
-import { Button } from '@heroui/react';
-import { BaseButton } from '@brainforgeau/components';
-import { useState } from 'react';
-import { useNavigate } from '@modern-js/runtime/router';
 import type { IdeaListItem } from '@/components/tickets/hooks/useTickets';
 import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
+import { PageSpinner } from '@brainforgeau/components';
+import { BaseButton } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import {
+  useTimezone,
+  withAuthenticationRequired,
+} from '@brainforgeau/security';
+import { Button } from '@heroui/react';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useState } from 'react';
 
 const PAGE_SIZE = 20;
 
@@ -48,13 +51,14 @@ function IdeasForumPage() {
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-center text-default-500">
             <p className="text-lg font-medium">No ideas yet</p>
             <p className="text-sm">
-              Agents can publish tickets to the Ideas Forum from the ticket detail page.
+              Agents can publish tickets to the Ideas Forum from the ticket
+              detail page.
             </p>
           </div>
         </Box>
       ) : (
         <div className="flex flex-col gap-4">
-          {ideas.map((idea) => (
+          {ideas.map(idea => (
             <Box key={idea.id}>
               <div className="flex flex-col gap-2 p-1">
                 <div className="flex items-start justify-between gap-4">
@@ -82,7 +86,9 @@ function IdeasForumPage() {
                 <div className="flex items-center gap-3 text-xs text-default-400">
                   <span>By {idea.submitterEmail}</span>
                   <span>•</span>
-                  <span>Published {formatDateTime(idea.publishedAt, { timezone })}</span>
+                  <span>
+                    Published {formatDateTime(idea.publishedAt, { timezone })}
+                  </span>
                 </div>
               </div>
             </Box>
@@ -90,9 +96,25 @@ function IdeasForumPage() {
 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-4">
-              <BaseButton size="sm" variant="bordered" isDisabled={page <= 1} onPress={() => setPage(p => p - 1)}>Prev</BaseButton>
-              <span className="text-sm">{page} / {totalPages}</span>
-              <BaseButton size="sm" variant="bordered" isDisabled={page >= totalPages} onPress={() => setPage(p => p + 1)}>Next</BaseButton>
+              <BaseButton
+                size="sm"
+                variant="bordered"
+                isDisabled={page <= 1}
+                onPress={() => setPage(p => p - 1)}
+              >
+                Prev
+              </BaseButton>
+              <span className="text-sm">
+                {page} / {totalPages}
+              </span>
+              <BaseButton
+                size="sm"
+                variant="bordered"
+                isDisabled={page >= totalPages}
+                onPress={() => setPage(p => p + 1)}
+              >
+                Next
+              </BaseButton>
             </div>
           )}
         </div>

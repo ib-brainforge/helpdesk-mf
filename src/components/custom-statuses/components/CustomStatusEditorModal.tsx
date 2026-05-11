@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react';
+import { TicketStatus } from '@/types/custom-status';
+import type { CustomTicketStatusDto } from '@/types/custom-status';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Switch, toast } from '@heroui/react';
-import { useCreateCustomStatus, useUpdateCustomStatus } from '../hooks/useCustomStatuses';
-import { TicketStatus } from '@/types/custom-status';
-import type { CustomTicketStatusDto } from '@/types/custom-status';
+import { useEffect, useState } from 'react';
+import {
+  useCreateCustomStatus,
+  useUpdateCustomStatus,
+} from '../hooks/useCustomStatuses';
 
 interface CustomStatusEditorModalProps {
   isOpen: boolean;
@@ -35,7 +38,9 @@ export function CustomStatusEditorModal({
   const [name, setName] = useState('');
   const [color, setColor] = useState('#6366f1');
   const [sortOrder, setSortOrder] = useState(0);
-  const [mapsToStatus, setMapsToStatus] = useState<TicketStatus>(TicketStatus.InProgress);
+  const [mapsToStatus, setMapsToStatus] = useState<TicketStatus>(
+    TicketStatus.InProgress,
+  );
   const [isClosed, setIsClosed] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -91,29 +96,55 @@ export function CustomStatusEditorModal({
       if (isEditing) {
         await updateMutation.mutateAsync({
           id: status.id,
-          payload: { name: name.trim(), color, sortOrder, mapsToStatus, isClosed, isDefault, isActive },
+          payload: {
+            name: name.trim(),
+            color,
+            sortOrder,
+            mapsToStatus,
+            isClosed,
+            isDefault,
+            isActive,
+          },
         });
-        toast('Updated', { description: 'Custom status updated successfully', variant: 'success' });
+        toast('Updated', {
+          description: 'Custom status updated successfully',
+          variant: 'success',
+        });
       } else {
-        await createMutation.mutateAsync({ name: name.trim(), color, sortOrder, mapsToStatus, isClosed, isDefault });
-        toast('Created', { description: 'Custom status created successfully', variant: 'success' });
+        await createMutation.mutateAsync({
+          name: name.trim(),
+          color,
+          sortOrder,
+          mapsToStatus,
+          isClosed,
+          isDefault,
+        });
+        toast('Created', {
+          description: 'Custom status created successfully',
+          variant: 'success',
+        });
       }
       onClose();
     } catch {
-      toast('Error', { description: 'Failed to save custom status', variant: 'danger' });
+      toast('Error', {
+        description: 'Failed to save custom status',
+        variant: 'danger',
+      });
     }
   };
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader>{isEditing ? 'Edit Custom Status' : 'Create Custom Status'}</BaseModalHeader>
+        <BaseModalHeader>
+          {isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
+        </BaseModalHeader>
         <BaseModalBody className="space-y-4">
           <BaseInput
             label="Name"
             placeholder="e.g. Awaiting Customer Reply"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={e => setName(e.target.value)}
             isInvalid={!!nameError}
             errorMessage={nameError}
             maxLength={100}
@@ -126,17 +157,19 @@ export function CustomStatusEditorModal({
                 label="Sort Order"
                 type="number"
                 value={String(sortOrder)}
-                onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
+                onChange={e => setSortOrder(Number(e.target.value) || 0)}
                 min={0}
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1.5 text-foreground">Color</label>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                Color
+              </label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={e => setColor(e.target.value)}
                   className="h-10 w-10 rounded border border-default-200 cursor-pointer"
                 />
                 <span className="text-sm text-default-500">{color}</span>
@@ -147,13 +180,15 @@ export function CustomStatusEditorModal({
           <BaseSelect
             label="Maps to system status"
             selectedKey={String(mapsToStatus)}
-            onSelectionChange={(keys) => {
+            onSelectionChange={keys => {
               const key = keys as string;
               setMapsToStatus(Number(key) as TicketStatus);
             }}
           >
-            {MAPS_TO_OPTIONS.map((opt) => (
-              <BaseSelectItem key={String(opt.value)}>{opt.label}</BaseSelectItem>
+            {MAPS_TO_OPTIONS.map(opt => (
+              <BaseSelectItem key={String(opt.value)}>
+                {opt.label}
+              </BaseSelectItem>
             ))}
           </BaseSelect>
 
@@ -161,7 +196,9 @@ export function CustomStatusEditorModal({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Counts as closed</p>
-                <p className="text-xs text-default-500">Tickets with this status are counted as resolved in reports</p>
+                <p className="text-xs text-default-500">
+                  Tickets with this status are counted as resolved in reports
+                </p>
               </div>
               <Switch isSelected={isClosed} onChange={setIsClosed} />
             </div>
@@ -169,7 +206,9 @@ export function CustomStatusEditorModal({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Default for new tickets</p>
-                <p className="text-xs text-default-500">New tickets will start with this status</p>
+                <p className="text-xs text-default-500">
+                  New tickets will start with this status
+                </p>
               </div>
               <Switch isSelected={isDefault} onChange={setIsDefault} />
             </div>
@@ -178,7 +217,9 @@ export function CustomStatusEditorModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Active</p>
-                  <p className="text-xs text-default-500">Inactive statuses are hidden from selection</p>
+                  <p className="text-xs text-default-500">
+                    Inactive statuses are hidden from selection
+                  </p>
                 </div>
                 <Switch isSelected={isActive} onChange={setIsActive} />
               </div>
@@ -186,7 +227,11 @@ export function CustomStatusEditorModal({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting || isSubmitting}>
+          <BaseButton
+            variant="bordered"
+            onPress={onClose}
+            isDisabled={isSubmitting || isSubmitting}
+          >
             Cancel
           </BaseButton>
           <BaseButton color="primary" onPress={handleSubmit}>

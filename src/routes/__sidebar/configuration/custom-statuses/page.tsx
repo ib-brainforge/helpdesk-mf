@@ -50,9 +50,15 @@ function CustomStatusesPage() {
     if (!pendingDelete) return;
     try {
       await deleteMutation.mutateAsync(pendingDelete.id);
-      toast('Deleted', { description: 'Custom status deleted', variant: 'success' });
+      toast('Deleted', {
+        description: 'Custom status deleted',
+        variant: 'success',
+      });
     } catch {
-      toast('Error', { description: 'Failed to delete custom status', variant: 'danger' });
+      toast('Error', {
+        description: 'Failed to delete custom status',
+        variant: 'danger',
+      });
     } finally {
       setPendingDelete(null);
     }

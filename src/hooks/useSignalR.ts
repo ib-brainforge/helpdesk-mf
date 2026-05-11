@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { type AppConfig, configAtom, hubConnectedAtom } from '@/state/config';
+import { getAccessToken, getContextToken } from '@brainforgeau/security';
 import {
-  HubConnection,
+  type HubConnection,
   HubConnectionBuilder,
   HubConnectionState,
   LogLevel,
 } from '@microsoft/signalr';
-import { getAccessToken, getContextToken } from '@brainforgeau/security';
-import { configAtom, hubConnectedAtom, type AppConfig } from '@/state/config';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useEffect, useRef, useState } from 'react';
 
-export type SignalRConnectionState = 'connected' | 'disconnected' | 'reconnecting' | 'error';
+export type SignalRConnectionState =
+  | 'connected'
+  | 'disconnected'
+  | 'reconnecting'
+  | 'error';
 
 // Auto-reconnect delays (milliseconds)
 const RECONNECT_DELAYS = [0, 2000, 5000, 10000, 30000];
@@ -39,19 +43,31 @@ export interface UseSignalRReturn {
  * after the initial handshake.
  */
 export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
-  const { hubPath, autoConnect = true, onConnected, onDisconnected, onReconnecting, onReconnected, onError } = options;
+  const {
+    hubPath,
+    autoConnect = true,
+    onConnected,
+    onDisconnected,
+    onReconnecting,
+    onReconnected,
+    onError,
+  } = options;
 
   const config = useAtomValue(configAtom) as AppConfig;
   const setHubConnected = useSetAtom(hubConnectedAtom);
   const connectionRef = useRef<HubConnection | null>(null);
-  const [connectionState, setConnectionState] = useState<SignalRConnectionState>('disconnected');
+  const [connectionState, setConnectionState] =
+    useState<SignalRConnectionState>('disconnected');
 
   useEffect(() => {
     let cancelled = false;
-    const hubBaseUrl = config?.api?.signalRHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
+    const hubBaseUrl =
+      config?.api?.signalRHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
 
     if (!hubBaseUrl) {
-      console.warn('[useSignalR] SignalR hub URL not configured, connection will not be established');
+      console.warn(
+        '[useSignalR] SignalR hub URL not configured, connection will not be established',
+      );
       return;
     }
 
@@ -70,14 +86,16 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
         params.set('context_token', contextToken);
       }
 
-      const hubUrl = params.toString() ? `${hubBaseUrl}?${params.toString()}` : hubBaseUrl;
+      const hubUrl = params.toString()
+        ? `${hubBaseUrl}?${params.toString()}`
+        : hubBaseUrl;
 
       if (cancelled) return;
 
       const connection = new HubConnectionBuilder()
         .withUrl(hubUrl)
         .withAutomaticReconnect({
-          nextRetryDelayInMilliseconds: (retryContext) => {
+          nextRetryDelayInMilliseconds: retryContext => {
             if (retryContext.previousRetryCount >= RECONNECT_DELAYS.length) {
               return null;
             }
@@ -90,7 +108,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
       connectionRef.current = connection;
 
       // Connection lifecycle handlers
-      connection.onclose((error) => {
+      connection.onclose(error => {
         setConnectionState('disconnected');
         setHubConnected(false);
         onDisconnected?.();
@@ -100,7 +118,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
         }
       });
 
-      connection.onreconnecting((error) => {
+      connection.onreconnecting(error => {
         setConnectionState('reconnecting');
         setHubConnected(false);
         onReconnecting?.();
@@ -143,7 +161,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
       setHubConnected(false);
       const connection = connectionRef.current;
       if (connection && connection.state !== HubConnectionState.Disconnected) {
-        connection.stop().catch((err) => {
+        connection.stop().catch(err => {
           console.error('[useSignalR] Error disconnecting:', err);
         });
       }

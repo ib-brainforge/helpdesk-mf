@@ -8,12 +8,12 @@
  * - Hides the tenant sidenav (top-level layout handles this via isPrincipalRoute).
  */
 
-import { useMemo } from 'react';
+import { PrincipalSidenav } from '@/components/principal/PrincipalSidenav';
+import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
 import { ErrorBoundary, PageSpinner } from '@brainforgeau/components';
 import { useAuth } from '@brainforgeau/security';
 import { Navigate, Outlet, useParams } from '@modern-js/runtime/router';
-import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
-import { PrincipalSidenav } from '@/components/principal/PrincipalSidenav';
+import { useMemo } from 'react';
 
 export interface PrincipalOutletContext {
   principalId: string;

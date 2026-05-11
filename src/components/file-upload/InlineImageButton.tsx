@@ -1,6 +1,6 @@
-import type { FC } from 'react';
-import { BaseButton } from '@brainforgeau/components/button';
 import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import type { FC } from 'react';
 
 interface InlineImageButtonProps {
   onInsertImage: () => void;
