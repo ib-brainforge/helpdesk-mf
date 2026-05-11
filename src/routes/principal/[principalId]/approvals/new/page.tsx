@@ -1,43 +1,81 @@
 /**
  * Principal approval workflow create page — /principal/[principalId]/approvals/new
+ *
+ * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
-  BaseButton,
   BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
   PageSpinner,
 } from '@brainforgeau/components';
+import {
+  FormPage,
+  PendingCrumb,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
-
-import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   useNavigate,
   useOutletContext,
   useParams,
 } from '@modern-js/runtime/router';
-import { useCallback, useState } from 'react';
+import { z } from 'zod';
 import type { PrincipalOutletContext } from '../../layout';
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+const approvalWorkflowSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string(),
+  approvalMode: z.nativeEnum(HelpdeskDomainApprovalsEnumsApprovalMode),
+  isActive: z.boolean(),
+  triggerOnCreation: z.boolean(),
+});
+
+type ApprovalWorkflowFormData = z.infer<typeof approvalWorkflowSchema>;
+
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
 
 function PrincipalApprovalWorkflowNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [approvalMode, setApprovalMode] = useState<string>(
-    HelpdeskDomainApprovalsEnumsApprovalMode.Sequential,
-  );
-  const [isActive, setIsActive] = useState(true);
-  const [triggerOnCreation, setTriggerOnCreation] = useState(false);
-
   const createMutation = useCreatePrincipalApprovalWorkflow(principalId ?? '');
+
+  const form = useEntityForm<typeof approvalWorkflowSchema>({
+    schema: approvalWorkflowSchema,
+    defaultValues: {
+      name: '',
+      description: '',
+      approvalMode: HelpdeskDomainApprovalsEnumsApprovalMode.Sequential,
+      isActive: true,
+      triggerOnCreation: false,
+    },
+    onSubmit: async (values: ApprovalWorkflowFormData) => {
+      await createMutation.mutateAsync({
+        name: values.name.trim(),
+        description: values.description.trim() || null,
+        approvalMode: values.approvalMode,
+        isActive: values.isActive,
+        triggerOnCreation: values.triggerOnCreation,
+        triggerOnStatusChange: false,
+        steps: [],
+      });
+      navigate(`/principal/${principalId}/approvals`);
+    },
+    invalidateQueryKeys: [['principal-approval-workflows', principalId]],
+    toast: { success: 'Approval workflow created', error: 'Create failed' },
+  });
 
   if (context?.level !== 'admin') {
     return (
@@ -50,103 +88,94 @@ function PrincipalApprovalWorkflowNewPage() {
     );
   }
 
-  const handleCreate = useCallback(() => {
-    if (!name.trim()) return;
-    createMutation.mutate(
-      {
-        name: name.trim(),
-        description: description.trim() || null,
-        approvalMode: approvalMode as HelpdeskDomainApprovalsEnumsApprovalMode,
-        isActive,
-        triggerOnCreation,
-        triggerOnStatusChange: false,
-        steps: [],
-      },
-      {
-        onSuccess: () => {
-          toast('Approval workflow created', { variant: 'success' });
-          navigate(`/principal/${principalId}/approvals`);
-        },
-      },
-    );
-  }, [
-    name,
-    description,
-    approvalMode,
-    isActive,
-    triggerOnCreation,
-    createMutation,
-    navigate,
-    principalId,
-  ]);
+  const f = form.form;
 
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
-      <div className="flex items-center gap-3">
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/approvals`)}
-        >
-          Back
-        </BaseButton>
-        <h1 className="text-2xl font-semibold">New Approval Workflow</h1>
-      </div>
+    <FormPage
+      title="New Approval Workflow"
+      breadcrumbsKey="principal.approvals.new"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: PendingCrumb,
+      }}
+      form={form}
+      onCancel={() => navigate(`/principal/${principalId}/approvals`)}
+    >
+      <FormPage.Section title="Workflow Details" columns={2}>
+        <f.Field name="name">
+          {field => (
+            <BaseInput
+              label="Name"
+              isRequired
+              placeholder="e.g. Manager Approval"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            />
+          )}
+        </f.Field>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          placeholder="e.g. Manager Approval"
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-          placeholder="Optional description"
-        />
-        <BaseSelect
-          label="Approval mode"
-          selectedKey={approvalMode}
-          onSelectionChange={keys => {
-            const val = keys;
-            if (val) setApprovalMode(String(val));
-          }}
-        >
-          {Object.entries(APPROVAL_MODE_LABELS).map(([value, label]) => (
-            <BaseSelectItem key={value}>{label}</BaseSelectItem>
-          ))}
-        </BaseSelect>
-        <div className="flex flex-col gap-2">
-          <BaseCheckbox isSelected={isActive} onValueChange={setIsActive}>
-            Active
-          </BaseCheckbox>
-          <BaseCheckbox
-            isSelected={triggerOnCreation}
-            onValueChange={setTriggerOnCreation}
-          >
-            Trigger on ticket creation
-          </BaseCheckbox>
-        </div>
-      </div>
+        <f.Field name="approvalMode">
+          {field => (
+            <BaseSelect
+              label="Approval Mode"
+              selectedKey={field.state.value}
+              onSelectionChange={key => {
+                if (key)
+                  field.handleChange(
+                    String(key) as HelpdeskDomainApprovalsEnumsApprovalMode,
+                  );
+              }}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            >
+              {Object.entries(APPROVAL_MODE_LABELS).map(([value, label]) => (
+                <BaseSelectItem key={value}>{label}</BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
 
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleCreate}
-          isDisabled={createMutation.isPending || !name.trim()}
-        >
-          Create
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/approvals`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
-    </div>
+        <f.Field name="description">
+          {field => (
+            <BaseInput
+              label="Description"
+              placeholder="Optional description"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              className="md:col-span-2"
+            />
+          )}
+        </f.Field>
+      </FormPage.Section>
+
+      <FormPage.Section title="Trigger Settings" columns={2}>
+        <f.Field name="isActive">
+          {field => (
+            <BaseCheckbox
+              isSelected={field.state.value}
+              onValueChange={field.handleChange}
+            >
+              Active
+            </BaseCheckbox>
+          )}
+        </f.Field>
+
+        <f.Field name="triggerOnCreation">
+          {field => (
+            <BaseCheckbox
+              isSelected={field.state.value}
+              onValueChange={field.handleChange}
+            >
+              Trigger on ticket creation
+            </BaseCheckbox>
+          )}
+        </f.Field>
+      </FormPage.Section>
+    </FormPage>
   );
 }
 

@@ -1,35 +1,65 @@
 /**
  * Principal SLA policy create page — /principal/[principalId]/sla-policies/new
+ *
+ * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
 import { useCreatePrincipalSlaPolicy } from '@/hooks/usePrincipalSlaPolicies';
+import { BaseCheckbox, BaseInput, PageSpinner } from '@brainforgeau/components';
 import {
-  BaseButton,
-  BaseCheckbox,
-  BaseInput,
-  PageSpinner,
-} from '@brainforgeau/components';
+  FormPage,
+  PendingCrumb,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
-
 import {
   useNavigate,
   useOutletContext,
   useParams,
 } from '@modern-js/runtime/router';
-import { useCallback, useState } from 'react';
+import { z } from 'zod';
 import type { PrincipalOutletContext } from '../../layout';
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+const slaPolicySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string(),
+  isDefault: z.boolean(),
+});
+
+type SlaPolicyFormData = z.infer<typeof slaPolicySchema>;
+
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
 
 function PrincipalSlaPolicyNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isDefault, setIsDefault] = useState(false);
-
   const createMutation = useCreatePrincipalSlaPolicy(principalId ?? '');
+
+  const form = useEntityForm<typeof slaPolicySchema>({
+    schema: slaPolicySchema,
+    defaultValues: {
+      name: '',
+      description: '',
+      isDefault: false,
+    },
+    onSubmit: async (values: SlaPolicyFormData) => {
+      await createMutation.mutateAsync({
+        name: values.name.trim(),
+        description: values.description.trim() || null,
+        isDefault: values.isDefault,
+      });
+      navigate(`/principal/${principalId}/sla-policies`);
+    },
+    invalidateQueryKeys: [['principal-sla-policies', principalId]],
+    toast: { success: 'SLA policy created', error: 'Create failed' },
+  });
 
   if (context?.level !== 'admin') {
     return (
@@ -42,66 +72,59 @@ function PrincipalSlaPolicyNewPage() {
     );
   }
 
-  const handleCreate = useCallback(() => {
-    if (!name.trim()) return;
-    createMutation.mutate(
-      { name: name.trim(), description: description.trim() || null, isDefault },
-      {
-        onSuccess: () => {
-          toast('SLA policy created', { variant: 'success' });
-          navigate(`/principal/${principalId}/sla-policies`);
-        },
-      },
-    );
-  }, [name, description, isDefault, createMutation, navigate, principalId]);
+  const f = form.form;
 
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
-      <div className="flex items-center gap-3">
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/sla-policies`)}
-        >
-          Back
-        </BaseButton>
-        <h1 className="text-2xl font-semibold">New SLA Policy</h1>
-      </div>
+    <FormPage
+      title="New SLA Policy"
+      breadcrumbsKey="principal.sla-policies.new"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: PendingCrumb,
+      }}
+      form={form}
+      onCancel={() => navigate(`/principal/${principalId}/sla-policies`)}
+    >
+      <FormPage.Section title="Policy Details" columns={2}>
+        <f.Field name="name">
+          {field => (
+            <BaseInput
+              label="Name"
+              isRequired
+              placeholder="e.g. Standard SLA"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            />
+          )}
+        </f.Field>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          placeholder="e.g. Standard SLA"
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-          placeholder="Optional description"
-        />
-        <BaseCheckbox isSelected={isDefault} onValueChange={setIsDefault}>
-          Set as default policy
-        </BaseCheckbox>
-      </div>
+        <f.Field name="description">
+          {field => (
+            <BaseInput
+              label="Description"
+              placeholder="Optional description"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+            />
+          )}
+        </f.Field>
 
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleCreate}
-          isDisabled={createMutation.isPending || !name.trim()}
-        >
-          Create
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/sla-policies`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
-    </div>
+        <f.Field name="isDefault">
+          {field => (
+            <BaseCheckbox
+              isSelected={field.state.value}
+              onValueChange={field.handleChange}
+            >
+              Set as default policy
+            </BaseCheckbox>
+          )}
+        </f.Field>
+      </FormPage.Section>
+    </FormPage>
   );
 }
 

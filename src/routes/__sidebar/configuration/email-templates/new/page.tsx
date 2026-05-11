@@ -1,3 +1,11 @@
+/**
+ * Create email template page — /__sidebar/configuration/email-templates/new
+ *
+ * W1-P8: Migrated to <FormPage> with useEntityForm.
+ * Uses the `aside` slot for the VariablePicker (flagged in W0 review as the
+ * one page that needs FormPage's right-column aside panel).
+ */
+
 import {
   NOTIFICATION_TYPE_LABELS,
   VariablePicker,
@@ -6,21 +14,21 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { NotificationType } from '@/types/email-template';
 import type { CreateEmailTemplateDto } from '@/types/email-template';
 import {
-  BaseButton,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  ValidationAlert,
+  BaseTextarea,
 } from '@brainforgeau/components';
-import { BaseTextarea } from '@brainforgeau/components';
+import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
-import { Switch, toast } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
+import { Switch } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
 
 const templateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -32,30 +40,13 @@ const templateSchema = z.object({
 
 type TemplateFormData = z.infer<typeof templateSchema>;
 
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
+
 function NewEmailTemplatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const defaultValues: TemplateFormData = {
-    name: '',
-    notificationType: NotificationType.TicketCreated,
-    subject: '',
-    body: '',
-    isActive: true,
-  };
-
-  const form = useForm({
-    defaultValues,
-    validators: {
-      onChange: templateSchema,
-      onSubmit: templateSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await handleSubmit(value);
-    },
-  });
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateEmailTemplateDto) => {
@@ -74,178 +65,125 @@ function NewEmailTemplatePage() {
       } as any);
     },
     onSuccess: () => {
-      toast('Email template created successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['email-templates'] });
       navigate('/configuration/email-templates');
     },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.detail ||
-        error?.message ||
-        'Failed to create email template';
-      setErrors([errorMessage]);
-    },
   });
 
-  const handleSubmit = async (data: TemplateFormData) => {
-    setErrors([]);
-    setIsSubmitting(true);
+  const form = useEntityForm<typeof templateSchema>({
+    schema: templateSchema,
+    defaultValues: {
+      name: '',
+      notificationType: NotificationType.TicketCreated,
+      subject: '',
+      body: '',
+      isActive: true,
+    },
+    onSubmit: async (values: TemplateFormData) => {
+      await createMutation.mutateAsync(values);
+    },
+    invalidateQueryKeys: [['email-templates']],
+    toast: { success: 'Email template created', error: 'Create failed' },
+  });
 
-    try {
-      await createMutation.mutateAsync(data);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVariableSelect = (placeholder: string) => {
-    // REVIEW: Could enhance this to insert at cursor position in the future
-  };
-
-  const formatFormErrors = (errors: any[]): string | undefined => {
-    if (!errors || errors.length === 0) return undefined;
-    return errors
-      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
-      .join(', ');
-  };
+  const f = form.form;
 
   return (
-    <>
-      <Helmet>
-        <title>Create Email Template - Configuration</title>
-      </Helmet>
+    <FormPage
+      title="Create Email Template"
+      breadcrumbsKey="configuration.email-templates.new"
+      form={form}
+      onCancel={() => navigate('/configuration/email-templates')}
+      aside={<VariablePicker />}
+    >
+      <FormPage.Section title="Template Details" columns={2}>
+        <f.Field name="name">
+          {field => (
+            <BaseInput
+              label="Template Name"
+              isRequired
+              placeholder="Ticket Created Notification"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            />
+          )}
+        </f.Field>
 
-      <div className="mb-5">
-        <div className="mb-5 items-start gap-5 lg:flex">
-          <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-            Create Email Template
-          </h1>
-          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
-            <BaseButton
-              variant="light"
-              onPress={() => navigate('/configuration/email-templates')}
+        <f.Field name="notificationType">
+          {field => (
+            <BaseSelect
+              label="Notification Type"
+              isRequired
+              selectedKey={String(field.state.value)}
+              onSelectionChange={key => {
+                field.handleChange(Number(key) as NotificationType);
+              }}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
-              Cancel
-            </BaseButton>
-            <BaseButton
-              color="primary"
-              isDisabled={isSubmitting}
-              onPress={() => form.handleSubmit()}
-            >
-              Create Template
-            </BaseButton>
-          </div>
-        </div>
-      </div>
+              {Object.entries(NOTIFICATION_TYPE_LABELS).map(([key, label]) => (
+                <BaseSelectItem key={key}>{label}</BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
 
-      <form
-        className="flex h-full flex-col gap-4"
-        onSubmit={e => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-      >
-        <ValidationAlert errors={errors} onClose={() => setErrors([])} />
+        <f.Field name="subject">
+          {field => (
+            <BaseInput
+              label="Subject Line"
+              isRequired
+              placeholder="New Ticket Created: {{ticket.subject}}"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+              description="Use Scriban syntax for variables (e.g., {{ticket.subject}})"
+              className="md:col-span-2"
+            />
+          )}
+        </f.Field>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <form.Field name="name">
-                  {field => (
-                    <BaseInput
-                      label="Template Name"
-                      isRequired
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={e => field.handleChange(e.target.value)}
-                      errorMessage={formatFormErrors(field.state.meta.errors)}
-                      isInvalid={field.state.meta.errors.length > 0}
-                      placeholder="Ticket Created Notification"
-                    />
-                  )}
-                </form.Field>
-
-                <form.Field name="notificationType">
-                  {field => (
-                    <BaseSelect
-                      label="Notification Type"
-                      isRequired
-                      selectedKey={String(field.state.value)}
-                      onSelectionChange={keys => {
-                        const value = Number(keys);
-                        field.handleChange(value);
-                      }}
-                      errorMessage={formatFormErrors(field.state.meta.errors)}
-                      isInvalid={field.state.meta.errors.length > 0}
-                    >
-                      {Object.entries(NOTIFICATION_TYPE_LABELS).map(
-                        ([key, label]) => (
-                          <BaseSelectItem key={key}>{label}</BaseSelectItem>
-                        ),
-                      )}
-                    </BaseSelect>
-                  )}
-                </form.Field>
-              </div>
-
-              <form.Field name="subject">
-                {field => (
-                  <BaseInput
-                    label="Subject Line"
-                    isRequired
-                    name={field.name}
-                    value={field.state.value}
-                    onChange={e => field.handleChange(e.target.value)}
-                    errorMessage={formatFormErrors(field.state.meta.errors)}
-                    isInvalid={field.state.meta.errors.length > 0}
-                    placeholder="New Ticket Created: {{ticket.subject}}"
-                    description="Use Scriban syntax for variables (e.g., {{ticket.subject}})"
-                  />
-                )}
-              </form.Field>
-
-              <form.Field name="body">
-                {field => (
-                  <BaseTextarea
-                    label="Email Body"
-                    isRequired
-                    name={field.name}
-                    value={field.state.value}
-                    onValueChange={field.handleChange}
-                    errorMessage={formatFormErrors(field.state.meta.errors)}
-                    isInvalid={field.state.meta.errors.length > 0}
-                    placeholder="Hello {{user.requesterName}},&#10;&#10;Your ticket has been created..."
-                    description="Use Scriban syntax for variables"
-                    minRows={15}
-                    classNames={{
-                      input: 'font-mono text-sm',
-                    }}
-                  />
-                )}
-              </form.Field>
-
-              <form.Field name="isActive">
-                {field => (
-                  <Switch
-                    isSelected={field.state.value}
-                    onChange={field.handleChange}
-                  >
-                    Template is Active
-                  </Switch>
-                )}
-              </form.Field>
+        <f.Field name="isActive">
+          {field => (
+            <div className="flex items-center gap-2 md:col-span-2">
+              <Switch
+                isSelected={field.state.value}
+                onChange={field.handleChange}
+              >
+                Template is Active
+              </Switch>
             </div>
-          </div>
+          )}
+        </f.Field>
+      </FormPage.Section>
 
-          <div className="lg:col-span-1">
-            <VariablePicker onVariableSelect={handleVariableSelect} />
-          </div>
-        </div>
-      </form>
-    </>
+      <FormPage.Section title="Email Body">
+        <f.Field name="body">
+          {field => (
+            <BaseTextarea
+              label="Email Body"
+              isRequired
+              placeholder="Hello {{user.requesterName}},&#10;&#10;Your ticket has been created..."
+              value={field.state.value}
+              onValueChange={field.handleChange}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+              description="Use Scriban syntax for variables"
+              minRows={15}
+              classNames={{
+                input: 'font-mono text-sm',
+              }}
+            />
+          )}
+        </f.Field>
+      </FormPage.Section>
+    </FormPage>
   );
 }
 

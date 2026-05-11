@@ -1,40 +1,73 @@
 /**
  * Principal category create page — /principal/[principalId]/categories/new
+ *
+ * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
 import {
-  BaseButton,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
   PageSpinner,
 } from '@brainforgeau/components';
+import {
+  FormPage,
+  PendingCrumb,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
-
-import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import {
   useNavigate,
   useOutletContext,
   useParams,
 } from '@modern-js/runtime/router';
-import { useCallback, useState } from 'react';
+import { z } from 'zod';
 import type { PrincipalOutletContext } from '../../layout';
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+const categorySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string(),
+  accessLevel: z.nativeEnum(HelpdeskDomainCategoriesEnumsAccessLevel),
+});
+
+type CategoryFormData = z.infer<typeof categorySchema>;
+
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
 
 function PrincipalCategoryNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [accessLevel, setAccessLevel] = useState<string>(
-    HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
-  );
-
   const createMutation = useCreatePrincipalCategory(principalId ?? '');
+
+  const form = useEntityForm<typeof categorySchema>({
+    schema: categorySchema,
+    defaultValues: {
+      name: '',
+      description: '',
+      accessLevel: HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
+    },
+    onSubmit: async (values: CategoryFormData) => {
+      await createMutation.mutateAsync({
+        name: values.name.trim(),
+        description: values.description.trim() || null,
+        accessLevel: values.accessLevel,
+        sortOrder: 0,
+      });
+      navigate(`/principal/${principalId}/categories`);
+    },
+    invalidateQueryKeys: [['principal-categories', principalId]],
+    toast: { success: 'Category created', error: 'Create failed' },
+  });
 
   if (context?.level !== 'admin') {
     return (
@@ -47,80 +80,70 @@ function PrincipalCategoryNewPage() {
     );
   }
 
-  const handleCreate = useCallback(() => {
-    if (!name.trim()) return;
-    createMutation.mutate(
-      {
-        name: name.trim(),
-        description: description.trim() || null,
-        accessLevel: accessLevel as HelpdeskDomainCategoriesEnumsAccessLevel,
-        sortOrder: 0,
-      },
-      {
-        onSuccess: () => {
-          toast('Category created', { variant: 'success' });
-          navigate(`/principal/${principalId}/categories`);
-        },
-      },
-    );
-  }, [name, description, accessLevel, createMutation, navigate, principalId]);
+  const f = form.form;
 
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
-      <div className="flex items-center gap-3">
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/categories`)}
-        >
-          Back
-        </BaseButton>
-        <h1 className="text-2xl font-semibold">New Category</h1>
-      </div>
+    <FormPage
+      title="New Category"
+      breadcrumbsKey="principal.categories.new"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: PendingCrumb,
+      }}
+      form={form}
+      onCancel={() => navigate(`/principal/${principalId}/categories`)}
+    >
+      <FormPage.Section title="Category Details" columns={2}>
+        <f.Field name="name">
+          {field => (
+            <BaseInput
+              label="Name"
+              isRequired
+              placeholder="e.g. Technical Support"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            />
+          )}
+        </f.Field>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          placeholder="e.g. Technical Support"
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-          placeholder="Optional description"
-        />
-        <BaseSelect
-          label="Access level"
-          selectedKey={accessLevel}
-          onSelectionChange={keys => {
-            const val = keys;
-            if (val) setAccessLevel(String(val));
-          }}
-        >
-          {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
-            <BaseSelectItem key={value}>{label}</BaseSelectItem>
-          ))}
-        </BaseSelect>
-      </div>
+        <f.Field name="accessLevel">
+          {field => (
+            <BaseSelect
+              label="Access Level"
+              selectedKey={field.state.value}
+              onSelectionChange={key => {
+                if (key)
+                  field.handleChange(
+                    String(key) as HelpdeskDomainCategoriesEnumsAccessLevel,
+                  );
+              }}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            >
+              {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
+                <BaseSelectItem key={value}>{label}</BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
 
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleCreate}
-          isDisabled={createMutation.isPending || !name.trim()}
-        >
-          Create
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/categories`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
-    </div>
+        <f.Field name="description">
+          {field => (
+            <BaseInput
+              label="Description"
+              placeholder="Optional description"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              className="md:col-span-2"
+            />
+          )}
+        </f.Field>
+      </FormPage.Section>
+    </FormPage>
   );
 }
 
