@@ -35,7 +35,7 @@
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.4.370-develop.a641aba",
+    "@brainforgeau/components": "0.4.372-develop.743065c",
     "@brainforgeau/helpdesk-client": "0.1.132-develop.7f17d52",
     "@brainforgeau/identity-management-client": "0.1.501-develop.6624384",
     "@brainforgeau/observability": "0.4.44-develop.a423be9",
@@ -112,5 +112,8 @@
   },
   "overrides": {
     "@internationalized/date": "3.10.0"
+  },
+  "//pendingDevDependencies": {
+    "@brainforgeau/eslint-plugin-page-templates": "TODO: add once publish workflow is set up in mf-packages (package not yet in GitHub Packages registry as of W1-P11)"
   }
 }

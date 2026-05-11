@@ -1,0 +1,9 @@
+warn
+# next-phase: strict on 2026-08-01 (legacy editor-canvas pages must migrate or be re-deferred)
+#
+# Lint enforcement note (W1-P11):
+# Page-template-specific bans (raw <h1>, text-2xl class string, manual Math.ceil pagination)
+# are NOT enforced by Biome — Biome 1.9.4 has no noRestrictedSyntax equivalent.
+# These bans are deferred to @brainforgeau/eslint-plugin-page-templates (pending publish
+# workflow setup in mf-packages). Until then, enforcement is via code review + this checklist.
+# Track in .claude/knowledge/validation/frontend-patterns.md (Page-Template Compliance section).
