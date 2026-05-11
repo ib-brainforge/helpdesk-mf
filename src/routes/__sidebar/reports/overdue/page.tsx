@@ -1,14 +1,13 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+// Template: ListPage — table is the dominant content with no summary cards/charts.
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useOverdueTicketsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { OverdueTicketDto } from '@/types';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { ListPage } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { Spinner } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import {
   type ColumnDef,
   type SortingState,
@@ -40,11 +39,6 @@ function OverdueTicketsPage() {
     startDate,
     endDate,
   );
-
-  const handleDateRangeChange = (start: string, end: string) => {
-    setStartDate(start);
-    setEndDate(end);
-  };
 
   const columns: ColumnDef<OverdueTicketDto, any>[] = useMemo(
     () => [
@@ -121,58 +115,32 @@ function OverdueTicketsPage() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Overdue Tickets - Helpdesk Reports</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub' },
-            {
-              label: 'Overdue Tickets',
-              href: '/reports/overdue',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Overdue Tickets</h1>
-          <p className="text-default-500 mt-1">
-            Tickets past their due date that are not yet resolved
-          </p>
-        </div>
-        <BaseButton
-          variant="bordered"
-          onPress={handleExport}
-          isDisabled={tickets.length === 0}
-          icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
-        >
-          Export XLSX
-        </BaseButton>
-      </div>
-
-      <div className="mb-6">
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onChange={handleDateRangeChange}
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : (
-        <BaseTable table={table} isLoading={false} fullHeight={false} />
-      )}
-    </>
+    <ListPage
+      title="Overdue Tickets"
+      breadcrumbsKey="reports.overdue"
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(s, e) => {
+              setStartDate(s);
+              setEndDate(e);
+            }}
+          />
+          <BaseButton
+            variant="bordered"
+            onPress={handleExport}
+            isDisabled={tickets.length === 0}
+            icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
+          >
+            Export XLSX
+          </BaseButton>
+        </>
+      }
+    />
   );
 }
 

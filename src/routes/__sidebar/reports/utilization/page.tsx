@@ -1,12 +1,11 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+// Template: ListPage — table is the dominant content with no summary cards/charts.
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useAgentUtilizationReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { AgentUtilizationDto } from '@/types';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { Spinner } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
+import { ListPage } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
   type SortingState,
@@ -88,61 +87,32 @@ function AgentUtilizationPage() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Agent Utilization - Helpdesk Reports</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub' },
-            {
-              label: 'Agent Utilization',
-              href: '/reports/utilization',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Agent Utilization</h1>
-          <p className="text-default-500 mt-1">
-            Workload distribution and capacity per agent
-          </p>
-        </div>
-        <BaseButton
-          variant="bordered"
-          onPress={handleExport}
-          isDisabled={agents.length === 0}
-          icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
-        >
-          Export XLSX
-        </BaseButton>
-      </div>
-
-      <div className="mb-6">
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onChange={(s, e) => {
-            setStartDate(s);
-            setEndDate(e);
-          }}
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : (
-        <BaseTable table={table} isLoading={false} fullHeight={false} />
-      )}
-    </>
+    <ListPage
+      title="Agent Utilization"
+      breadcrumbsKey="reports.utilization"
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(s, e) => {
+              setStartDate(s);
+              setEndDate(e);
+            }}
+          />
+          <BaseButton
+            variant="bordered"
+            onPress={handleExport}
+            isDisabled={agents.length === 0}
+            icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
+          >
+            Export XLSX
+          </BaseButton>
+        </>
+      }
+    />
   );
 }
 

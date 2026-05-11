@@ -1,14 +1,14 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+// Template: ListPage — table with server-side pagination and filters is table-primary;
+// no summary cards or charts, so ListPage is the correct framing.
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useAuditLogReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { AuditLogEntryDto } from '@/types';
-import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { BaseButton, BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { ListPage } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { Spinner } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -98,6 +98,17 @@ function AuditLogPage() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
+    pageCount: totalPages,
+    state: {
+      pagination: { pageIndex: page - 1, pageSize: PAGE_SIZE },
+    },
+    onPaginationChange: updater => {
+      const next =
+        typeof updater === 'function'
+          ? updater({ pageIndex: page - 1, pageSize: PAGE_SIZE })
+          : updater;
+      setPage(next.pageIndex + 1);
+    },
   });
 
   const handleExport = () => {
@@ -114,29 +125,15 @@ function AuditLogPage() {
     );
   };
 
+  const hasActiveFilters = !!userId || !!eventType;
+
   return (
-    <>
-      <Helmet>
-        <title>Audit Log - Helpdesk Reports</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub' },
-            { label: 'Audit Log', href: '/reports/audit', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Audit Log</h1>
-          <p className="text-default-500 mt-1">
-            Complete activity and change history for tickets
-          </p>
-        </div>
+    <ListPage
+      title="Audit Log"
+      breadcrumbsKey="reports.audit"
+      table={table}
+      isLoading={isLoading}
+      actions={
         <BaseButton
           variant="bordered"
           onPress={handleExport}
@@ -145,80 +142,45 @@ function AuditLogPage() {
         >
           Export XLSX
         </BaseButton>
-      </div>
-
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onChange={(s, e) => {
-            setStartDate(s);
-            setEndDate(e);
-            setPage(1);
-          }}
-        />
-        <input
-          type="text"
-          placeholder="Filter by user ID..."
-          value={userId}
-          onChange={ev => {
-            setUserId(ev.target.value);
-            setPage(1);
-          }}
-          className="px-3 py-2 text-sm border border-default-200 rounded-lg w-48 focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-        <input
-          type="text"
-          placeholder="Filter by event type..."
-          value={eventType}
-          onChange={ev => {
-            setEventType(ev.target.value);
-            setPage(1);
-          }}
-          className="px-3 py-2 text-sm border border-default-200 rounded-lg w-48 focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : (
+      }
+      filters={
         <>
-          <BaseTable table={table} isLoading={false} fullHeight={false} />
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <div className="flex items-center gap-2">
-                <BaseButton
-                  size="sm"
-                  variant="bordered"
-                  isDisabled={page <= 1}
-                  onPress={() => setPage(p => p - 1)}
-                >
-                  Prev
-                </BaseButton>
-                <span className="text-sm">
-                  {page} / {totalPages}
-                </span>
-                <BaseButton
-                  size="sm"
-                  variant="bordered"
-                  isDisabled={page >= totalPages}
-                  onPress={() => setPage(p => p + 1)}
-                >
-                  Next
-                </BaseButton>
-              </div>
-            </div>
-          )}
-          {report && (
-            <p className="mt-2 text-xs text-default-400 text-center">
-              Showing {entries.length} of {report.totalCount} entries
-            </p>
-          )}
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(s, e) => {
+              setStartDate(s);
+              setEndDate(e);
+              setPage(1);
+            }}
+          />
+          <BaseInput
+            placeholder="Filter by user ID..."
+            value={userId}
+            onChange={ev => {
+              setUserId(ev.target.value);
+              setPage(1);
+            }}
+            className="w-48"
+          />
+          <BaseInput
+            placeholder="Filter by event type..."
+            value={eventType}
+            onChange={ev => {
+              setEventType(ev.target.value);
+              setPage(1);
+            }}
+            className="w-48"
+          />
         </>
-      )}
-    </>
+      }
+      hasActiveFilters={hasActiveFilters}
+      onClearFilters={() => {
+        setUserId('');
+        setEventType('');
+        setPage(1);
+      }}
+    />
   );
 }
 

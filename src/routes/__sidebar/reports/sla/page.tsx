@@ -1,34 +1,20 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+// Template: DashboardPage — summary cards + table in children (no chart section).
+// DashboardPage is chosen over ListPage because summary KPI cards + table both
+// appear on the page; ListPage is table-primary only.
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useSlaComplianceReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
+import { SummaryCard } from '@/components/shared';
 import type { SlaPolicyComplianceDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
-import { EmptyState } from '@brainforgeau/components/page';
-import { Card, CardContent, Spinner } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
+import { Icon, PageSpinner } from '@brainforgeau/components/base';
+import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-
-function StatCard({
-  label,
-  value,
-  color,
-}: { label: string; value: string | number; color?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-default-500 mb-1">{label}</p>
-        <p className={`text-2xl font-semibold ${color ?? ''}`}>{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function SlaCompliancePage() {
   const [startDate, setStartDate] = useState(
@@ -80,85 +66,87 @@ function SlaCompliancePage() {
     );
   };
 
-  return (
-    <>
-      <Helmet>
-        <title>SLA Compliance - Helpdesk Reports</title>
-      </Helmet>
+  if (isLoading) return <PageSpinner title="Loading SLA report..." />;
 
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub' },
-            { label: 'SLA Compliance', href: '/reports/sla', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">SLA Compliance</h1>
-          <p className="text-default-500 mt-1">
-            Track SLA adherence and breaches by policy
-          </p>
-        </div>
-        <BaseButton
-          variant="bordered"
-          onPress={handleExport}
-          isDisabled={!compliance || compliance.byPolicy.length === 0}
-          icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
-        >
-          Export XLSX
-        </BaseButton>
-      </div>
-
-      <div className="mb-6">
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onChange={(s, e) => {
-            setStartDate(s);
-            setEndDate(e);
-          }}
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : compliance ? (
-        <>
-          <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Total Tickets" value={compliance.totalTickets} />
-            <StatCard
-              label="Within SLA"
-              value={compliance.withinSla}
-              color="text-success"
-            />
-            <StatCard
-              label="SLA Breached"
-              value={compliance.breachedSla}
-              color="text-danger"
-            />
-            <StatCard
-              label="Compliance Rate"
-              value={`${compliance.compliancePercentage.toFixed(1)}%`}
-              color={
-                compliance.compliancePercentage >= 90
-                  ? 'text-success'
-                  : 'text-warning'
-              }
-            />
-          </div>
-          <h2 className="text-lg font-semibold mb-4">Breaches by Policy</h2>
-          <BaseTable table={table} isLoading={false} fullHeight={false} />
-        </>
-      ) : (
+  if (!compliance) {
+    return (
+      <DashboardPage
+        title="SLA Compliance"
+        breadcrumbsKey="reports.sla"
+        actions={
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(s, e) => {
+              setStartDate(s);
+              setEndDate(e);
+            }}
+          />
+        }
+      >
         <EmptyState title="No SLA data available" live />
-      )}
-    </>
+      </DashboardPage>
+    );
+  }
+
+  return (
+    <DashboardPage
+      title="SLA Compliance"
+      breadcrumbsKey="reports.sla"
+      actions={
+        <>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(s, e) => {
+              setStartDate(s);
+              setEndDate(e);
+            }}
+          />
+          <BaseButton
+            variant="bordered"
+            onPress={handleExport}
+            isDisabled={!compliance || compliance.byPolicy.length === 0}
+            icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
+          >
+            Export XLSX
+          </BaseButton>
+        </>
+      }
+      summary={
+        <>
+          <SummaryCard
+            title="Total Tickets"
+            value={compliance.totalTickets}
+            icon="ticket"
+            variant="default"
+          />
+          <SummaryCard
+            title="Within SLA"
+            value={compliance.withinSla}
+            icon="check-circle"
+            variant="success"
+          />
+          <SummaryCard
+            title="SLA Breached"
+            value={compliance.breachedSla}
+            icon="x-circle"
+            variant="danger"
+          />
+          <SummaryCard
+            title="Compliance Rate"
+            value={`${compliance.compliancePercentage.toFixed(1)}%`}
+            icon="chart-bar"
+            variant={
+              compliance.compliancePercentage >= 90 ? 'success' : 'warning'
+            }
+          />
+        </>
+      }
+    >
+      <p className="mb-4 text-lg font-semibold">Breaches by Policy</p>
+      <BaseTable table={table} isLoading={false} fullHeight={false} />
+    </DashboardPage>
   );
 }
 

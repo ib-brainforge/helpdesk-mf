@@ -26,8 +26,8 @@ import {
 } from '@brainforgeau/components';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
-import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import {
   type ColumnDef,
@@ -62,7 +62,6 @@ function ReportsPage() {
   const { data: techPerformance, isLoading: loadingTechPerf } =
     useTechPerformanceReport(startDate, endDate);
 
-  // Tech Performance Table
   const techColumns: ColumnDef<TechPerformanceDto, any>[] = useMemo(
     () => [
       {
@@ -129,94 +128,89 @@ function ReportsPage() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Reports</title>
-      </Helmet>
+    <DashboardPage
+      title="Reports"
+      breadcrumbsKey="reports.list"
+      actions={
+        <>
+          <BaseButton
+            variant="light"
+            onClick={() => navigate('/reports/satisfaction')}
+            icon={<Icon name="star" className="h-4 w-4" />}
+          >
+            CSAT Report
+          </BaseButton>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateRangeChange}
+          />
+        </>
+      }
+    >
+      <BaseTabs
+        selectedKey={selectedTab}
+        onSelectionChange={key => setSelectedTab(key as string)}
+      >
+        {/* Dynamics Tab */}
+        <BaseTab key="dynamics" title="Dynamics">
+          <div className="mt-4 space-y-6">
+            <div className="flex gap-4">
+              <BaseSelect
+                label="Granularity"
+                selectedKey={granularity}
+                onSelectionChange={keys => {
+                  const key = keys as ReportGranularity;
+                  setGranularity(key);
+                }}
+                className="w-48"
+              >
+                <BaseSelectItem key={ReportGranularity.Daily}>
+                  Daily
+                </BaseSelectItem>
+                <BaseSelectItem key={ReportGranularity.Weekly}>
+                  Weekly
+                </BaseSelectItem>
+                <BaseSelectItem key={ReportGranularity.Monthly}>
+                  Monthly
+                </BaseSelectItem>
+              </BaseSelect>
+            </div>
 
-      <div className="mb-5">
-        <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Reports</h1>
-          <div className="flex gap-3">
-            <BaseButton
-              variant="light"
-              onClick={() => navigate('/reports/satisfaction')}
-              icon={<Icon name="star" className="h-4 w-4" />}
-            >
-              CSAT Report
-            </BaseButton>
-            <DateRangeSelector
-              startDate={startDate}
-              endDate={endDate}
-              onChange={handleDateRangeChange}
+            <Box title="Ticket Trends">
+              {dynamicsData?.dataPoints && (
+                <TrendLineChart data={dynamicsData.dataPoints} />
+              )}
+            </Box>
+
+            <Box title="Average Resolution Time">
+              {dynamicsData?.dataPoints && (
+                <ResolutionTimeChart data={dynamicsData.dataPoints} />
+              )}
+            </Box>
+          </div>
+        </BaseTab>
+
+        {/* Tech Performance Tab */}
+        <BaseTab key="tech-performance" title="Tech Performance">
+          <div className="mt-4">
+            <BaseTable
+              table={techTable}
+              isLoading={loadingTechPerf}
+              loading={{ title: 'Loading technician performance...' }}
+              fullHeight
             />
           </div>
-        </div>
+        </BaseTab>
 
-        <BaseTabs
-          selectedKey={selectedTab}
-          onSelectionChange={key => setSelectedTab(key as string)}
-        >
-          {/* Dynamics Tab */}
-          <BaseTab key="dynamics" title="Dynamics">
-            <div className="mt-4 space-y-6">
-              <div className="flex gap-4">
-                <BaseSelect
-                  label="Granularity"
-                  selectedKey={granularity}
-                  onSelectionChange={keys => {
-                    const key = keys as ReportGranularity;
-                    setGranularity(key);
-                  }}
-                  className="w-48"
-                >
-                  <BaseSelectItem key={ReportGranularity.Daily}>
-                    Daily
-                  </BaseSelectItem>
-                  <BaseSelectItem key={ReportGranularity.Weekly}>
-                    Weekly
-                  </BaseSelectItem>
-                  <BaseSelectItem key={ReportGranularity.Monthly}>
-                    Monthly
-                  </BaseSelectItem>
-                </BaseSelect>
-              </div>
-
-              <Box title="Ticket Trends">
-                {dynamicsData?.dataPoints && (
-                  <TrendLineChart data={dynamicsData.dataPoints} />
-                )}
-              </Box>
-
-              <Box title="Average Resolution Time">
-                {dynamicsData?.dataPoints && (
-                  <ResolutionTimeChart data={dynamicsData.dataPoints} />
-                )}
-              </Box>
-            </div>
-          </BaseTab>
-
-          {/* Tech Performance Tab */}
-          <BaseTab key="tech-performance" title="Tech Performance">
-            <div className="mt-4">
-              <BaseTable
-                table={techTable}
-                isLoading={loadingTechPerf}
-                loading={{ title: 'Loading technician performance...' }}
-                fullHeight
-              />
-            </div>
-          </BaseTab>
-
-          {/* Custom Tab */}
-          <BaseTab key="custom" title="Custom">
-            <div className="mt-4">
-              <CustomReportBuilder onExport={handleExportCustom} />
-            </div>
-          </BaseTab>
-        </BaseTabs>
-      </div>
-    </>
+        {/* Custom Tab */}
+        <BaseTab key="custom" title="Custom">
+          <div className="mt-4">
+            <CustomReportBuilder onExport={handleExportCustom} />
+          </div>
+        </BaseTab>
+      </BaseTabs>
+    </DashboardPage>
   );
 }
 
