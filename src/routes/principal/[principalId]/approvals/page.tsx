@@ -1,8 +1,8 @@
 /**
  * Principal approval workflows list page — /principal/[principalId]/approvals
  *
- * Admin-only. Lists principal-scoped approval workflows.
- * Create navigates to /approvals/new. Delete uses useConfirm.
+ * W1-P6: Migrated to <ListPage>. Admin-only (enforced by layout context check).
+ * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
@@ -10,8 +10,14 @@ import {
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
 } from '@/hooks/usePrincipalApprovalWorkflows';
-import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
-import { useConfirm } from '@brainforgeau/components/page';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import {
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
@@ -47,23 +53,10 @@ function PrincipalApprovalsPage() {
   const navigate = useNavigate();
   const { confirm, dialog } = useConfirm();
 
-  const {
-    data: workflows,
-    isLoading,
-    error,
-  } = usePrincipalApprovalWorkflows(principalId ?? '');
+  const { data: workflows, isLoading } = usePrincipalApprovalWorkflows(
+    principalId ?? '',
+  );
   const deleteMutation = useDeletePrincipalApprovalWorkflow(principalId ?? '');
-
-  if (context?.level !== 'admin') {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Access Denied</p>
-        <p className="text-default-500 text-sm">
-          Approval workflow management requires admin access.
-        </p>
-      </div>
-    );
-  }
 
   const handleDeleteRequest = useCallback(
     async (id: string, name: string) => {
@@ -151,42 +144,59 @@ function PrincipalApprovalsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Admin guard: layout enforces auth; this check handles the agent role case.
+  if (context?.level !== 'admin') {
+    return (
+      <EmptyState
+        title="Access Denied"
+        description="Approval workflow management requires admin access."
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Approval Workflows</h1>
+    <ListPage
+      title="Approval Workflows"
+      breadcrumbsKey="principal.approvals.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
+        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
+        principalName: PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
         <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
           onPress={() => navigate(`/principal/${principalId}/approvals/new`)}
         >
           New Workflow
         </BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading approval workflows..." />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-          Failed to load approval workflows. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <BaseTable
-          table={table}
-          isLoading={isLoading}
-          loading={{ title: 'Loading...' }}
+      }
+      empty={
+        <EmptyState
+          title="No approval workflows yet"
+          description="Create an approval workflow to define multi-step sign-off processes."
+          action={
+            <BaseButton
+              color="primary"
+              onPress={() =>
+                navigate(`/principal/${principalId}/approvals/new`)
+              }
+            >
+              New Workflow
+            </BaseButton>
+          }
+          live
         />
-      )}
-
-      {dialog}
-    </div>
+      }
+      modals={dialog}
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalApprovalsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

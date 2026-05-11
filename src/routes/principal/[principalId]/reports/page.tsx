@@ -1,18 +1,19 @@
 /**
  * Principal reports page — /principal/[principalId]/reports
  *
- * Available to both admin and agent roles.
- * Shows ticket-volume report with a date range picker and recharts BarChart.
- * Wired to PrincipalReportsApi from @brainforgeau/helpdesk-client.
+ * W1-P6: Migrated to <DashboardPage>. Shows ticket-volume chart + data table
+ * for the principal-scoped date range. Date filters rendered in the actions
+ * slot (colocated controls per design doc).
  */
 
+import { SummaryCard } from '@/components/shared';
 import { usePrincipalTicketVolume } from '@/hooks/usePrincipalReports';
+import { BaseButton, BaseInput, BaseTable } from '@brainforgeau/components';
 import {
-  BaseButton,
-  BaseInput,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+  DashboardPage,
+  EmptyState,
+  PendingCrumb,
+} from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 import {
@@ -107,99 +108,97 @@ function PrincipalReportsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Reports</h1>
-
-      {/* Date range picker */}
-      <div className="flex flex-wrap items-end gap-3">
-        <BaseInput
-          label="From"
-          type="date"
-          value={from}
-          onValueChange={setFrom}
-          className="w-40"
-        />
-        <BaseInput
-          label="To"
-          type="date"
-          value={to}
-          onValueChange={setTo}
-          className="w-40"
-        />
-        <BaseButton onPress={handleApply}>Apply</BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading report..." />
+    <DashboardPage
+      title="Reports"
+      breadcrumbsKey="principal.reports"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
+        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
+        principalName: PendingCrumb,
+      }}
+      actions={
+        <div className="flex flex-wrap items-end gap-3">
+          <BaseInput
+            label="From"
+            type="date"
+            value={from}
+            onValueChange={setFrom}
+            className="w-40"
+          />
+          <BaseInput
+            label="To"
+            type="date"
+            value={to}
+            onValueChange={setTo}
+            className="w-40"
+          />
+          <BaseButton onPress={handleApply}>Apply</BaseButton>
         </div>
-      )}
-
+      }
+      summary={
+        !isLoading && !error && data ? (
+          <SummaryCard
+            title="Total Tickets"
+            value={totalCount}
+            subtitle={`${appliedFrom} to ${appliedTo}`}
+          />
+        ) : undefined
+      }
+      charts={
+        !isLoading && !error && chartData.length > 0 ? (
+          <div className="rounded-lg border p-5 md:col-span-2 xl:col-span-2">
+            <h2 className="mb-4 text-sm font-medium">Ticket Volume by Day</h2>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip />
+                <Bar
+                  dataKey="count"
+                  name="Tickets"
+                  fill={CHART_BAR_COLOR}
+                  radius={[2, 2, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : undefined
+      }
+    >
       {error && (
         <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
           Failed to load report data. Please try again.
         </div>
       )}
 
-      {!isLoading && !error && data && (
-        <>
-          {/* Summary card */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="flex flex-col gap-1 rounded-lg border p-5">
-              <span className="text-sm text-default-500">Total Tickets</span>
-              <span className="text-3xl font-bold">{totalCount}</span>
-              <span className="text-xs text-default-400">
-                {appliedFrom} to {appliedTo}
-              </span>
-            </div>
-          </div>
-
-          {/* Chart */}
-          {chartData.length > 0 ? (
-            <div className="rounded-lg border p-5">
-              <h2 className="mb-4 text-sm font-medium">Ticket Volume by Day</h2>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="count"
-                    name="Tickets"
-                    fill={CHART_BAR_COLOR}
-                    radius={[2, 2, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="flex h-32 items-center justify-center rounded-lg border border-dashed text-default-400 text-sm">
-              No ticket data for the selected date range.
-            </div>
-          )}
-
-          {/* Bucket table */}
-          {chartData.length > 0 && (
-            <BaseTable
-              table={table}
-              isLoading={false}
-              loading={{ title: 'Loading...' }}
-            />
-          )}
-        </>
+      {!isLoading && !error && chartData.length === 0 && (
+        <EmptyState
+          title="No data for selected range"
+          description="Try a different date range."
+          live
+        />
       )}
-    </div>
+
+      {!isLoading && !error && chartData.length > 0 && (
+        <BaseTable
+          table={table}
+          isLoading={false}
+          loading={{ title: 'Loading...' }}
+        />
+      )}
+    </DashboardPage>
   );
 }
 
 export default withAuthenticationRequired(PrincipalReportsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

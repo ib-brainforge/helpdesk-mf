@@ -1,8 +1,9 @@
 /**
  * Principal ticket list page — /principal/[principalId]/tickets
  *
- * Lists all tickets scoped to this principal.
- * Available to both admin and agent roles.
+ * W1-P6: Migrated to <ListPage>. Async breadcrumb param principalName uses
+ * PendingCrumb permanently (no usePrincipal hook available — see PrincipalLookup.tsx
+ * TODO(plan-7) comment).
  */
 
 import { StatusBadge } from '@/components/shared';
@@ -18,17 +19,20 @@ import {
   BaseModalContent,
   BaseModalFooter,
   BaseModalHeader,
-  BaseTable,
   BaseTextarea,
-  PageSpinner,
-  TablePagination,
 } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import {
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+} from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
-import { toast, useOverlayState } from '@heroui/react';
-import { useOutletContext, useParams } from '@modern-js/runtime/router';
+import { useOverlayState } from '@heroui/react';
+import { useParams } from '@modern-js/runtime/router';
 import { NavLink } from '@modern-js/runtime/router';
 import {
   type SortingState,
@@ -38,14 +42,12 @@ import {
 } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import type { PrincipalOutletContext } from '../layout';
 
 const columnHelper =
   createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
 
 function PrincipalTicketsPage() {
   const { principalId } = useParams<{ principalId: string }>();
-  const context = useOutletContext<PrincipalOutletContext>();
   const timezone = useTimezone();
   const disclosureState = useOverlayState();
   const isOpen = disclosureState.isOpen;
@@ -56,23 +58,20 @@ function PrincipalTicketsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { items, totalCount, pagination, setPagination, isLoading } =
-    usePrincipalTickets(principalId ?? context?.principalId ?? '', {
+    usePrincipalTickets(principalId ?? '', {
       searchTerm: searchTerm || undefined,
     });
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    // Reset to first page when search changes
     setPagination(prev => ({ ...prev, pageIndex: 0 }));
   };
 
-  const createMutation = useCreatePrincipalTicket(
-    principalId ?? context?.principalId ?? '',
-  );
+  const createMutation = useCreatePrincipalTicket(principalId ?? '');
   const [newSubject, setNewSubject] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
-  const pid = principalId ?? context?.principalId ?? '';
+  const pid = principalId ?? '';
 
   const columns = useMemo(
     () => [
@@ -180,92 +179,113 @@ function PrincipalTicketsPage() {
         subject: newSubject,
         description: newDescription,
       });
-      toast('Ticket created');
       setNewSubject('');
       setNewDescription('');
       onClose();
     } catch {
-      toast('Failed to create ticket');
+      // Error handled by global axios interceptor
     }
   };
 
   return (
-    <div className="flex flex-col h-full gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Tickets</h1>
-        <BaseButton color="primary" onPress={onOpen}>
+    <ListPage
+      title="Tickets"
+      breadcrumbsKey="principal.tickets.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
+        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
+        principalName: PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+          onPress={onOpen}
+        >
           New Ticket
         </BaseButton>
-      </div>
-
-      <div className="flex items-center gap-2">
+      }
+      filters={
         <BaseInput
           placeholder="Search tickets..."
           value={searchTerm}
           onValueChange={handleSearchChange}
-          className="w-64"
+          startContent={
+            <Icon
+              name="magnifying-glass"
+              className="h-4 w-4 text-default-400"
+            />
+          }
+          className="max-w-md"
         />
-      </div>
-
-      {isLoading ? (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading tickets..." />
-        </div>
-      ) : (
-        <>
-          <BaseTable table={table} />
-          <TablePagination
-            totalPages={Math.max(
-              1,
-              Math.ceil(totalCount / pagination.pageSize),
+      }
+      hasActiveFilters={searchTerm.length > 0}
+      onClearFilters={() => {
+        setSearchTerm('');
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      }}
+      empty={
+        <EmptyState
+          title={searchTerm ? 'No tickets match your search' : 'No tickets yet'}
+          description={
+            searchTerm
+              ? 'Try a different search term or clear the filter.'
+              : 'Create the first ticket for this principal.'
+          }
+          action={
+            !searchTerm ? (
+              <BaseButton color="primary" onPress={onOpen}>
+                New Ticket
+              </BaseButton>
+            ) : undefined
+          }
+          live
+        />
+      }
+      modals={
+        <BaseModal isOpen={isOpen} onOpenChange={onOpenChange}>
+          <BaseModalContent>
+            {onClose => (
+              <>
+                <BaseModalHeader>New Ticket</BaseModalHeader>
+                <BaseModalBody>
+                  <BaseInput
+                    label="Subject"
+                    value={newSubject}
+                    onValueChange={setNewSubject}
+                    isRequired
+                  />
+                  <BaseTextarea
+                    label="Description"
+                    value={newDescription}
+                    onValueChange={setNewDescription}
+                    minRows={3}
+                  />
+                </BaseModalBody>
+                <BaseModalFooter>
+                  <BaseButton variant="light" onPress={onClose}>
+                    Cancel
+                  </BaseButton>
+                  <BaseButton
+                    color="primary"
+                    isDisabled={createMutation.isPending || !newSubject.trim()}
+                    onPress={() => handleCreate(onClose)}
+                  >
+                    Create
+                  </BaseButton>
+                </BaseModalFooter>
+              </>
             )}
-            currentPage={pagination.pageIndex + 1}
-            onPageChange={(page: number) =>
-              setPagination({ ...pagination, pageIndex: page - 1 })
-            }
-          />
-        </>
-      )}
-
-      <BaseModal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <BaseModalContent>
-          {onClose => (
-            <>
-              <BaseModalHeader>New Ticket</BaseModalHeader>
-              <BaseModalBody>
-                <BaseInput
-                  label="Subject"
-                  value={newSubject}
-                  onValueChange={setNewSubject}
-                  isRequired
-                />
-                <BaseTextarea
-                  label="Description"
-                  value={newDescription}
-                  onValueChange={setNewDescription}
-                  minRows={3}
-                />
-              </BaseModalBody>
-              <BaseModalFooter>
-                <BaseButton variant="light" onPress={onClose}>
-                  Cancel
-                </BaseButton>
-                <BaseButton
-                  color="primary"
-                  isDisabled={createMutation.isPending || !newSubject.trim()}
-                  onPress={() => handleCreate(onClose)}
-                >
-                  Create
-                </BaseButton>
-              </BaseModalFooter>
-            </>
-          )}
-        </BaseModalContent>
-      </BaseModal>
-    </div>
+          </BaseModalContent>
+        </BaseModal>
+      }
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalTicketsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

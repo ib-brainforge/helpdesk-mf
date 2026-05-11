@@ -1,16 +1,22 @@
 /**
  * Principal SLA policies list page — /principal/[principalId]/sla-policies
  *
- * Admin-only. Lists all principal-scoped SLA policies.
- * Create navigates to /sla-policies/new. Delete uses useConfirm.
+ * W1-P6: Migrated to <ListPage>. Admin-only (enforced by layout context check).
+ * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
 import {
   useDeletePrincipalSlaPolicy,
   usePrincipalSlaPolicies,
 } from '@/hooks/usePrincipalSlaPolicies';
-import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
-import { useConfirm } from '@brainforgeau/components/page';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import {
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import type { HelpdeskApplicationSlaDTOsSlaPolicyDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
@@ -36,23 +42,10 @@ function PrincipalSlaPoliciesPage() {
   const navigate = useNavigate();
   const { confirm, dialog } = useConfirm();
 
-  const {
-    data: policies,
-    isLoading,
-    error,
-  } = usePrincipalSlaPolicies(principalId ?? '');
+  const { data: policies, isLoading } = usePrincipalSlaPolicies(
+    principalId ?? '',
+  );
   const deleteMutation = useDeletePrincipalSlaPolicy(principalId ?? '');
-
-  if (context?.level !== 'admin') {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Access Denied</p>
-        <p className="text-default-500 text-sm">
-          SLA policy management requires admin access.
-        </p>
-      </div>
-    );
-  }
 
   const handleDeleteRequest = useCallback(
     async (id: string, name: string) => {
@@ -133,42 +126,59 @@ function PrincipalSlaPoliciesPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Admin guard: layout enforces auth; this check handles the agent role case.
+  if (context?.level !== 'admin') {
+    return (
+      <EmptyState
+        title="Access Denied"
+        description="SLA policy management requires admin access."
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">SLA Policies</h1>
+    <ListPage
+      title="SLA Policies"
+      breadcrumbsKey="principal.sla-policies.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
+        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
+        principalName: PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
         <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
           onPress={() => navigate(`/principal/${principalId}/sla-policies/new`)}
         >
           New SLA Policy
         </BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading SLA policies..." />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-          Failed to load SLA policies. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <BaseTable
-          table={table}
-          isLoading={isLoading}
-          loading={{ title: 'Loading...' }}
+      }
+      empty={
+        <EmptyState
+          title="No SLA policies yet"
+          description="Create an SLA policy to define response and resolution time targets."
+          action={
+            <BaseButton
+              color="primary"
+              onPress={() =>
+                navigate(`/principal/${principalId}/sla-policies/new`)
+              }
+            >
+              New SLA Policy
+            </BaseButton>
+          }
+          live
         />
-      )}
-
-      {dialog}
-    </div>
+      }
+      modals={dialog}
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalSlaPoliciesPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

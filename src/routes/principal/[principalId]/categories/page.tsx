@@ -1,8 +1,8 @@
 /**
  * Principal categories list page — /principal/[principalId]/categories
  *
- * Admin-only. Lists all principal-scoped categories.
- * Create navigates to /categories/new. Delete uses useConfirm.
+ * W1-P6: Migrated to <ListPage>. Admin-only (enforced by layout context check).
+ * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
@@ -10,8 +10,14 @@ import {
   useDeletePrincipalCategory,
   usePrincipalCategories,
 } from '@/hooks/usePrincipalCategories';
-import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
-import { useConfirm } from '@brainforgeau/components/page';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import {
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
@@ -37,23 +43,10 @@ function PrincipalCategoriesPage() {
   const navigate = useNavigate();
   const { confirm, dialog } = useConfirm();
 
-  const {
-    data: categories,
-    isLoading,
-    error,
-  } = usePrincipalCategories(principalId ?? '');
+  const { data: categories, isLoading } = usePrincipalCategories(
+    principalId ?? '',
+  );
   const deleteMutation = useDeletePrincipalCategory(principalId ?? '');
-
-  if (context?.level !== 'admin') {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Access Denied</p>
-        <p className="text-default-500 text-sm">
-          Category management requires admin access.
-        </p>
-      </div>
-    );
-  }
 
   const handleDeleteRequest = useCallback(
     async (id: string, name: string) => {
@@ -141,42 +134,59 @@ function PrincipalCategoriesPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Admin guard: layout enforces auth; this check handles the agent role case.
+  if (context?.level !== 'admin') {
+    return (
+      <EmptyState
+        title="Access Denied"
+        description="Category management requires admin access."
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Categories</h1>
+    <ListPage
+      title="Categories"
+      breadcrumbsKey="principal.categories.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
+        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
+        principalName: PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
         <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
           onPress={() => navigate(`/principal/${principalId}/categories/new`)}
         >
           New Category
         </BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading categories..." />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-          Failed to load categories. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <BaseTable
-          table={table}
-          isLoading={isLoading}
-          loading={{ title: 'Loading...' }}
+      }
+      empty={
+        <EmptyState
+          title="No categories yet"
+          description="Add the first category to start organising tickets for this principal."
+          action={
+            <BaseButton
+              color="primary"
+              onPress={() =>
+                navigate(`/principal/${principalId}/categories/new`)
+              }
+            >
+              New Category
+            </BaseButton>
+          }
+          live
         />
-      )}
-
-      {dialog}
-    </div>
+      }
+      modals={dialog}
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalCategoriesPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });
