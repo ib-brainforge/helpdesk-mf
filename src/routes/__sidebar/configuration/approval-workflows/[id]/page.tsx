@@ -1,111 +1,92 @@
+/**
+ * Configuration approval workflow detail page —
+ * /__sidebar/configuration/approval-workflows/[id]
+ *
+ * W1-P7: Migrated to <DetailPage> for breadcrumbs + ?tab= URL sync.
+ *
+ * REVIEW: ApprovalWorkflowForm is a self-contained useState-based component
+ * that owns its own Save/Cancel buttons. In a follow-up PR, refactor
+ * ApprovalWorkflowForm to expose a form ref + submit handler so it can be
+ * wired to useEntityForm and formActions in the DetailPage.Tab header slot.
+ * For now, Save/Cancel remain inside the component (not in PageHeader.Actions).
+ */
+
 import {
   ApprovalWorkflowForm,
   useApprovalWorkflow,
   useUpdateApprovalWorkflow,
 } from '@/components/approvals';
-import { BaseButton, Icon } from '@brainforgeau/components';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useTabSearchParam } from '@/hooks/useTabSearchParam';
+import { PageSpinner } from '@brainforgeau/components';
+import {
+  DetailPage,
+  PendingCrumb,
+  useDetailTabState,
+} from '@brainforgeau/components/page';
+import { useParams } from '@modern-js/runtime/router';
 import { useCallback } from 'react';
-
-// REVIEW: Following existing pattern from automation rule editing
 
 function EditApprovalWorkflowPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: workflow, isLoading } = useApprovalWorkflow(id);
   const updateMutation = useUpdateApprovalWorkflow();
 
+  const { getParam, setParam } = useTabSearchParam();
+  const { activeTab, setActiveTab } = useDetailTabState({
+    defaultTab: 'details',
+    getParam,
+    setParam,
+  });
+
+  // REVIEW: navigate-on-success is handled inside ApprovalWorkflowForm
   const handleSubmit = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (data: any) => {
       if (!id) return;
-      updateMutation.mutate(
-        { id, command: data },
-        {
-          onSuccess: () => {
-            navigate('/configuration/approval-workflows');
-          },
-        },
-      );
+      updateMutation.mutate({ id, command: data });
     },
-    [id, updateMutation, navigate],
+    [id, updateMutation],
   );
 
-  const handleCancel = useCallback(() => {
-    navigate('/configuration/approval-workflows');
-  }, [navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading workflow...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!workflow) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Icon
-            name="exclamation-triangle"
-            className="h-12 w-12 text-danger mx-auto mb-4"
-          />
-          <h2 className="text-xl font-semibold mb-2">Workflow Not Found</h2>
-          <p className="text-gray-600 mb-4">
-            The workflow you are looking for does not exist.
-          </p>
-          <BaseButton
-            onPress={() => navigate('/configuration/approval-workflows')}
-          >
-            Back to Workflows
-          </BaseButton>
-        </div>
-      </div>
-    );
+  if (isLoading || !workflow) {
+    return <PageSpinner title="Loading approval workflow..." />;
   }
 
   return (
-    <>
-      <Helmet>
-        <title>Edit Approval Workflow - Configuration</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <BaseButton
-          variant="link"
-          onPress={() => navigate('/configuration/approval-workflows')}
-          icon={<Icon name="arrow-left" className="h-4 w-4" />}
-        >
-          Back to Workflows
-        </BaseButton>
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Edit Approval Workflow</h1>
-        <p className="text-sm text-gray-600">
-          Modify the approval workflow configuration.
-        </p>
-      </div>
-
-      <ApprovalWorkflowForm
-        initialData={{
-          name: workflow.name,
-          description: workflow.description,
-          categoryId: workflow.categoryId,
-          approvalMode: workflow.approvalMode,
-          isActive: workflow.isActive,
-          triggerOnCreation: workflow.triggerOnCreation,
-          steps: workflow.steps,
-        }}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isSubmitting={updateMutation.isPending}
-      />
-    </>
+    <DetailPage
+      title={workflow.name || 'Approval Workflow'}
+      breadcrumbsKey="configuration.approval-workflows.detail"
+      breadcrumbsParams={{
+        id: id!,
+        name: workflow.name ?? PendingCrumb,
+      }}
+      documentTitle={
+        workflow.name ? `Approval Workflow: ${workflow.name}` : undefined
+      }
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      {/*
+       * REVIEW: No formActions here — ApprovalWorkflowForm owns Save/Cancel.
+       * Pending refactor to useEntityForm (see file-level REVIEW above).
+       */}
+      <DetailPage.Tab id="details" title="Details">
+        <ApprovalWorkflowForm
+          initialData={{
+            name: workflow.name,
+            description: workflow.description,
+            categoryId: workflow.categoryId,
+            approvalMode: workflow.approvalMode,
+            isActive: workflow.isActive,
+            triggerOnCreation: workflow.triggerOnCreation,
+            steps: workflow.steps,
+          }}
+          onSubmit={handleSubmit}
+          onCancel={() => undefined}
+          isSubmitting={updateMutation.isPending}
+        />
+      </DetailPage.Tab>
+    </DetailPage>
   );
 }
 

@@ -1,25 +1,39 @@
+/**
+ * Email template detail page — /__sidebar/configuration/email-templates/[id]
+ *
+ * W1-P7: Migrated to <DetailPage> with useDetailTabState for ?tab= URL sync.
+ * Single "details" tab is form-bearing; formActions (Save/Reset) in PageHeader.
+ *
+ * REVIEW: Email templates are stored in AppSettings with category 'EmailTemplate'.
+ * Once backend grows a dedicated /email-templates endpoint and client is regenerated,
+ * update the queryFn + mutationFn accordingly.
+ */
+
 import {
   NOTIFICATION_TYPE_LABELS,
   VariablePicker,
 } from '@/components/email-templates';
+import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { NotificationType } from '@/types/email-template';
 import type { EmailTemplateDto } from '@/types/email-template';
 import {
-  BaseButton,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  ValidationAlert,
+  PageSpinner,
 } from '@brainforgeau/components';
 import { BaseTextarea } from '@brainforgeau/components';
+import {
+  DetailPage,
+  PendingCrumb,
+  useDetailTabState,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
-import { Switch, toast } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate, useParams } from '@modern-js/runtime/router';
-import { useForm } from '@tanstack/react-form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { Switch } from '@heroui/react';
+import { useParams } from '@modern-js/runtime/router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 const templateSchema = z.object({
@@ -32,12 +46,20 @@ const templateSchema = z.object({
 
 type TemplateFormData = z.infer<typeof templateSchema>;
 
+function formatFieldErrors(errors: unknown[]): string | undefined {
+  if (!errors || errors.length === 0) return undefined;
+  return errors
+    .map(e =>
+      typeof e === 'string'
+        ? e
+        : ((e as { message?: string }).message ?? String(e)),
+    )
+    .join(', ');
+}
+
 function EditEmailTemplatePage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [errors, setErrors] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // REVIEW: Email templates are stored in AppSettings with category 'EmailTemplate'
   const { data: template, isLoading } = useQuery<EmailTemplateDto>({
@@ -48,6 +70,7 @@ function EditEmailTemplatePage() {
         true,
         'EmailTemplate',
       );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const setting = (settings || []).find((s: any) => s.id === id);
 
       if (!setting) {
@@ -71,138 +94,80 @@ function EditEmailTemplatePage() {
     enabled: !!id,
   });
 
-  const form = useForm({
-    defaultValues: {
-      name: template?.name ?? '',
-      notificationType:
-        template?.notificationType ?? NotificationType.TicketCreated,
-      subject: template?.subject ?? '',
-      body: template?.body ?? '',
-      isActive: template?.isActive ?? true,
-    } as TemplateFormData,
-    validators: {
-      onChange: templateSchema,
-      onSubmit: templateSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await handleSubmit(value);
-    },
+  const { getParam, setParam } = useTabSearchParam();
+  const { activeTab, setActiveTab } = useDetailTabState({
+    defaultTab: 'details',
+    getParam,
+    setParam,
   });
 
-  // Update form when template loads
-  useEffect(() => {
-    if (template) {
-      form.setFieldValue('name', template.name);
-      form.setFieldValue('notificationType', template.notificationType);
-      form.setFieldValue('subject', template.subject);
-      form.setFieldValue('body', template.body);
-      form.setFieldValue('isActive', template.isActive);
-    }
-  }, [template]);
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: TemplateFormData) => {
-      // REVIEW: Email templates are stored in AppSettings with category 'EmailTemplate'
+  const detailsForm = useEntityForm<typeof templateSchema>({
+    schema: templateSchema,
+    defaultValues: {
+      name: '',
+      notificationType: NotificationType.TicketCreated,
+      subject: '',
+      body: '',
+      isActive: true,
+    },
+    values: template
+      ? {
+          name: template.name,
+          notificationType: template.notificationType,
+          subject: template.subject,
+          body: template.body,
+          isActive: template.isActive,
+        }
+      : undefined,
+    onSubmit: async (values: TemplateFormData) => {
+      if (!id) return;
       const client = await createHelpdeskApiClient(AppSettingsApi);
       const templateData = {
-        notificationType: data.notificationType,
-        subject: data.subject,
-        body: data.body,
+        notificationType: values.notificationType,
+        subject: values.subject,
+        body: values.body,
       };
-      await client.v1AppSettingsIdPut(id!, {
-        key: data.name,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await client.v1AppSettingsIdPut(id, {
+        key: values.name,
         value: JSON.stringify(templateData),
         category: 'EmailTemplate',
-        isActive: data.isActive,
+        isActive: values.isActive,
       } as any);
-    },
-    onSuccess: () => {
-      toast('Email template updated successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['email-templates'] });
-      queryClient.invalidateQueries({ queryKey: ['email-template', id] });
-      navigate('/configuration/email-templates');
     },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.detail ||
-        error?.message ||
-        'Failed to update email template';
-      setErrors([errorMessage]);
-    },
+    invalidateQueryKeys: [['email-template', id]],
+    toast: { success: 'Email template saved', error: 'Save failed' },
   });
 
-  const handleSubmit = async (data: TemplateFormData) => {
-    setErrors([]);
-    setIsSubmitting(true);
-
-    try {
-      await updateMutation.mutateAsync(data);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVariableSelect = (placeholder: string) => {
-    // REVIEW: Could enhance this to insert at cursor position in the future
-  };
-
-  const formatFormErrors = (errors: any[]): string | undefined => {
-    if (!errors || errors.length === 0) return undefined;
-    return errors
-      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
-      .join(', ');
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-gray-500">Loading template...</div>
-      </div>
-    );
+  if (isLoading || !template) {
+    return <PageSpinner title="Loading email template..." />;
   }
 
+  const form = detailsForm.form;
+
   return (
-    <>
-      <Helmet>
-        <title>Edit Email Template - Configuration</title>
-      </Helmet>
-
-      <div className="mb-5">
-        <div className="mb-5 items-start gap-5 lg:flex">
-          <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-            Edit Email Template
-          </h1>
-          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
-            <BaseButton
-              variant="light"
-              onPress={() => navigate('/configuration/email-templates')}
-            >
-              Cancel
-            </BaseButton>
-            <BaseButton
-              color="primary"
-              isDisabled={isSubmitting}
-              onPress={() => form.handleSubmit()}
-            >
-              Save Changes
-            </BaseButton>
-          </div>
-        </div>
-      </div>
-
-      <form
-        className="flex h-full flex-col gap-4"
-        onSubmit={e => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
+    <DetailPage
+      title={template.name || 'Email Template'}
+      breadcrumbsKey="configuration.email-templates.detail"
+      breadcrumbsParams={{
+        id: id!,
+        name: template.name ?? PendingCrumb,
+      }}
+      documentTitle={
+        template.name ? `Email Template: ${template.name}` : undefined
+      }
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <DetailPage.Tab
+        id="details"
+        title="Details"
+        formActions={detailsForm.formActions}
       >
-        <ValidationAlert errors={errors} onClose={() => setErrors([])} />
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <div className="flex flex-col gap-4">
+        <form className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="flex flex-col gap-4 lg:col-span-2">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <form.Field name="name">
                   {field => (
@@ -213,7 +178,7 @@ function EditEmailTemplatePage() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={e => field.handleChange(e.target.value)}
-                      errorMessage={formatFormErrors(field.state.meta.errors)}
+                      errorMessage={formatFieldErrors(field.state.meta.errors)}
                       isInvalid={field.state.meta.errors.length > 0}
                       placeholder="Ticket Created Notification"
                     />
@@ -226,11 +191,10 @@ function EditEmailTemplatePage() {
                       label="Notification Type"
                       isRequired
                       selectedKey={String(field.state.value)}
-                      onSelectionChange={keys => {
-                        const value = Number(keys);
-                        field.handleChange(value);
+                      onSelectionChange={key => {
+                        field.handleChange(Number(key) as NotificationType);
                       }}
-                      errorMessage={formatFormErrors(field.state.meta.errors)}
+                      errorMessage={formatFieldErrors(field.state.meta.errors)}
                       isInvalid={field.state.meta.errors.length > 0}
                     >
                       {Object.entries(NOTIFICATION_TYPE_LABELS).map(
@@ -251,7 +215,8 @@ function EditEmailTemplatePage() {
                     name={field.name}
                     value={field.state.value}
                     onChange={e => field.handleChange(e.target.value)}
-                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    onBlur={field.handleBlur}
+                    errorMessage={formatFieldErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
                     placeholder="New Ticket Created: {{ticket.subject}}"
                     description="Use Scriban syntax for variables (e.g., {{ticket.subject}})"
@@ -267,9 +232,11 @@ function EditEmailTemplatePage() {
                     name={field.name}
                     value={field.state.value}
                     onValueChange={field.handleChange}
-                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    errorMessage={formatFieldErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
-                    placeholder="Hello {{user.requesterName}},&#10;&#10;Your ticket has been created..."
+                    placeholder={
+                      'Hello {{user.requesterName}},\n\nYour ticket has been created...'
+                    }
                     description="Use Scriban syntax for variables"
                     minRows={15}
                     classNames={{
@@ -290,14 +257,15 @@ function EditEmailTemplatePage() {
                 )}
               </form.Field>
             </div>
-          </div>
 
-          <div className="lg:col-span-1">
-            <VariablePicker onVariableSelect={handleVariableSelect} />
+            <div className="lg:col-span-1">
+              {/* REVIEW: Could enhance VariablePicker to insert at cursor position */}
+              <VariablePicker onVariableSelect={() => undefined} />
+            </div>
           </div>
-        </div>
-      </form>
-    </>
+        </form>
+      </DetailPage.Tab>
+    </DetailPage>
   );
 }
 

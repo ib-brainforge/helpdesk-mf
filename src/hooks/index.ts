@@ -1,3 +1,6 @@
+export { useTabSearchParam } from './useTabSearchParam';
+export type { TabSearchParamResult } from './useTabSearchParam';
+
 export { useSignalR } from './useSignalR';
 export { useRealtimeTickets } from './useRealtimeTickets';
 export { useRealtimeComments } from './useRealtimeComments';

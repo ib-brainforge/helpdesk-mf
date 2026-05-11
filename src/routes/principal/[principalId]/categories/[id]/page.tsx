@@ -1,5 +1,8 @@
 /**
- * Principal category edit page — /principal/[principalId]/categories/[id]
+ * Principal category detail page — /principal/[principalId]/categories/[id]
+ *
+ * W1-P7: Migrated to <DetailPage> with useDetailTabState for ?tab= URL sync.
+ * Single "details" tab is form-bearing; formActions wired to that tab only.
  */
 
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
@@ -7,52 +10,87 @@ import {
   usePrincipalCategory,
   useUpdatePrincipalCategory,
 } from '@/hooks/usePrincipalCategories';
+import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import {
-  BaseButton,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
   PageSpinner,
 } from '@brainforgeau/components';
+import {
+  DetailPage,
+  PendingCrumb,
+  useDetailTabState,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
-
-import {
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from '@modern-js/runtime/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useOutletContext, useParams } from '@modern-js/runtime/router';
+import { z } from 'zod';
 import type { PrincipalOutletContext } from '../../layout';
 
-function PrincipalCategoryEditPage() {
+const categorySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().nullish(),
+  accessLevel: z.nativeEnum(HelpdeskDomainCategoriesEnumsAccessLevel),
+});
+
+type CategoryFormData = z.infer<typeof categorySchema>;
+
+function PrincipalCategoryDetailPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
-  const navigate = useNavigate();
 
   const { data: category, isLoading } = usePrincipalCategory(
     principalId ?? '',
     id ?? '',
   );
-  const updateMutation = useUpdatePrincipalCategory(principalId ?? '');
+  const updateCategory = useUpdatePrincipalCategory(principalId ?? '');
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [accessLevel, setAccessLevel] = useState<string>(
-    HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
-  );
+  const { getParam, setParam } = useTabSearchParam();
+  const { activeTab, setActiveTab } = useDetailTabState({
+    defaultTab: 'details',
+    getParam,
+    setParam,
+  });
 
-  useEffect(() => {
-    if (category) {
-      setName(category.name ?? '');
-      setDescription(category.description ?? '');
-      setAccessLevel(
-        category.accessLevel ??
-          HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
-      );
-    }
-  }, [category]);
+  const detailsForm = useEntityForm<typeof categorySchema>({
+    schema: categorySchema,
+    defaultValues: {
+      name: '',
+      description: null,
+      accessLevel: HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
+    },
+    values: category
+      ? {
+          name: category.name ?? '',
+          description: category.description ?? null,
+          accessLevel:
+            category.accessLevel ??
+            HelpdeskDomainCategoriesEnumsAccessLevel.Everyone,
+        }
+      : undefined,
+    onSubmit: async (values: CategoryFormData) => {
+      if (!id) return;
+      await updateCategory.mutateAsync({
+        id,
+        command: {
+          name: values.name.trim(),
+          description: values.description?.trim() || null,
+          accessLevel: values.accessLevel,
+        },
+      });
+    },
+    invalidateQueryKeys: [
+      ['principal-categories', principalId],
+      ['principal-categories', principalId, id],
+    ],
+    toast: { success: 'Category saved', error: 'Save failed' },
+  });
+
+  if (isLoading || !category) {
+    return <PageSpinner title="Loading category..." />;
+  }
 
   if (context?.level !== 'admin') {
     return (
@@ -65,113 +103,81 @@ function PrincipalCategoryEditPage() {
     );
   }
 
-  const handleSave = useCallback(() => {
-    if (!id || !name.trim()) return;
-    updateMutation.mutate(
-      {
-        id,
-        command: {
-          name: name.trim(),
-          description: description.trim() || null,
-          accessLevel: accessLevel as HelpdeskDomainCategoriesEnumsAccessLevel,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast('Category updated', { variant: 'success' });
-          navigate(`/principal/${principalId}/categories`);
-        },
-      },
-    );
-  }, [
-    id,
-    name,
-    description,
-    accessLevel,
-    updateMutation,
-    navigate,
-    principalId,
-  ]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-32 items-center justify-center">
-        <PageSpinner title="Loading category..." />
-      </div>
-    );
-  }
-
-  if (!category) {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Not Found</p>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/categories`)}
-        >
-          Back to Categories
-        </BaseButton>
-      </div>
-    );
-  }
+  const form = detailsForm.form;
 
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
-      <div className="flex items-center gap-3">
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/categories`)}
-        >
-          Back
-        </BaseButton>
-        <h1 className="text-2xl font-semibold">Edit Category</h1>
-      </div>
+    <DetailPage
+      title={category.name ?? 'Untitled Category'}
+      breadcrumbsKey="principal.categories.detail"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: PendingCrumb,
+        id: id!,
+        name: category.name ?? PendingCrumb,
+      }}
+      documentTitle={category.name ? `Category: ${category.name}` : undefined}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <DetailPage.Tab
+        id="details"
+        title="Details"
+        formActions={detailsForm.formActions}
+      >
+        <div className="max-w-lg">
+          <form className="flex flex-col gap-4">
+            <form.Field name="name">
+              {field => (
+                <BaseInput
+                  label="Name"
+                  isRequired
+                  value={field.state.value}
+                  onValueChange={field.handleChange}
+                  onBlur={field.handleBlur}
+                  isInvalid={field.state.meta.errors.length > 0}
+                  errorMessage={field.state.meta.errors
+                    .map(e => String(e))
+                    .join(', ')}
+                />
+              )}
+            </form.Field>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-        />
-        <BaseSelect
-          label="Access level"
-          selectedKey={accessLevel}
-          onSelectionChange={keys => {
-            const val = keys;
-            if (val) setAccessLevel(String(val));
-          }}
-        >
-          {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
-            <BaseSelectItem key={value}>{label}</BaseSelectItem>
-          ))}
-        </BaseSelect>
-      </div>
+            <form.Field name="description">
+              {field => (
+                <BaseInput
+                  label="Description"
+                  value={field.state.value ?? ''}
+                  onValueChange={field.handleChange}
+                  onBlur={field.handleBlur}
+                />
+              )}
+            </form.Field>
 
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleSave}
-          isDisabled={updateMutation.isPending || !name.trim()}
-        >
-          Save changes
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/categories`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
-    </div>
+            <form.Field name="accessLevel">
+              {field => (
+                <BaseSelect
+                  label="Access level"
+                  selectedKey={field.state.value}
+                  onSelectionChange={key => {
+                    if (key)
+                      field.handleChange(
+                        String(key) as HelpdeskDomainCategoriesEnumsAccessLevel,
+                      );
+                  }}
+                >
+                  {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
+                    <BaseSelectItem key={value}>{label}</BaseSelectItem>
+                  ))}
+                </BaseSelect>
+              )}
+            </form.Field>
+          </form>
+        </div>
+      </DetailPage.Tab>
+    </DetailPage>
   );
 }
 
-export default withAuthenticationRequired(PrincipalCategoryEditPage, {
+export default withAuthenticationRequired(PrincipalCategoryDetailPage, {
   OnRedirecting: () => <PageSpinner title="Loading..." />,
 });

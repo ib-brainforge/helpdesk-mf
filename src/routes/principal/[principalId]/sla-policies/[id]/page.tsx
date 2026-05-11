@@ -1,50 +1,87 @@
 /**
- * Principal SLA policy edit page — /principal/[principalId]/sla-policies/[id]
+ * Principal SLA policy detail page — /principal/[principalId]/sla-policies/[id]
+ *
+ * W1-P7: Migrated to <DetailPage> with useDetailTabState for ?tab= URL sync.
+ * Single "details" tab is form-bearing; formActions wired to that tab only.
  */
 
 import {
   usePrincipalSlaPolicy,
   useUpdatePrincipalSlaPolicy,
 } from '@/hooks/usePrincipalSlaPolicies';
+import { useTabSearchParam } from '@/hooks/useTabSearchParam';
+import { BaseCheckbox, BaseInput, PageSpinner } from '@brainforgeau/components';
 import {
-  BaseButton,
-  BaseCheckbox,
-  BaseInput,
-  PageSpinner,
-} from '@brainforgeau/components';
+  DetailPage,
+  PendingCrumb,
+  useDetailTabState,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
-
-import {
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from '@modern-js/runtime/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useOutletContext, useParams } from '@modern-js/runtime/router';
+import { z } from 'zod';
 import type { PrincipalOutletContext } from '../../layout';
 
-function PrincipalSlaPolicyEditPage() {
+const slaPolicySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().nullish(),
+  isDefault: z.boolean(),
+});
+
+type SlaPolicyFormData = z.infer<typeof slaPolicySchema>;
+
+function PrincipalSlaPolicyDetailPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
-  const navigate = useNavigate();
 
   const { data: policy, isLoading } = usePrincipalSlaPolicy(
     principalId ?? '',
     id ?? '',
   );
-  const updateMutation = useUpdatePrincipalSlaPolicy(principalId ?? '');
+  const updatePolicy = useUpdatePrincipalSlaPolicy(principalId ?? '');
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isDefault, setIsDefault] = useState(false);
+  const { getParam, setParam } = useTabSearchParam();
+  const { activeTab, setActiveTab } = useDetailTabState({
+    defaultTab: 'details',
+    getParam,
+    setParam,
+  });
 
-  useEffect(() => {
-    if (policy) {
-      setName(policy.name ?? '');
-      setDescription(policy.description ?? '');
-      setIsDefault(policy.isDefault ?? false);
-    }
-  }, [policy]);
+  const detailsForm = useEntityForm<typeof slaPolicySchema>({
+    schema: slaPolicySchema,
+    defaultValues: {
+      name: '',
+      description: null,
+      isDefault: false,
+    },
+    values: policy
+      ? {
+          name: policy.name ?? '',
+          description: policy.description ?? null,
+          isDefault: policy.isDefault ?? false,
+        }
+      : undefined,
+    onSubmit: async (values: SlaPolicyFormData) => {
+      if (!id) return;
+      await updatePolicy.mutateAsync({
+        id,
+        command: {
+          name: values.name.trim(),
+          description: values.description?.trim() || null,
+          isDefault: values.isDefault,
+        },
+      });
+    },
+    invalidateQueryKeys: [
+      ['principal-sla-policies', principalId],
+      ['principal-sla-policies', principalId, id],
+    ],
+    toast: { success: 'SLA policy saved', error: 'Save failed' },
+  });
+
+  if (isLoading || !policy) {
+    return <PageSpinner title="Loading SLA policy..." />;
+  }
 
   if (context?.level !== 'admin') {
     return (
@@ -57,96 +94,73 @@ function PrincipalSlaPolicyEditPage() {
     );
   }
 
-  const handleSave = useCallback(() => {
-    if (!id || !name.trim()) return;
-    updateMutation.mutate(
-      {
-        id,
-        command: {
-          name: name.trim(),
-          description: description.trim() || null,
-          isDefault,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast('SLA policy updated', { variant: 'success' });
-          navigate(`/principal/${principalId}/sla-policies`);
-        },
-      },
-    );
-  }, [id, name, description, isDefault, updateMutation, navigate, principalId]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-32 items-center justify-center">
-        <PageSpinner title="Loading SLA policy..." />
-      </div>
-    );
-  }
-
-  if (!policy) {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Not Found</p>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/sla-policies`)}
-        >
-          Back to SLA Policies
-        </BaseButton>
-      </div>
-    );
-  }
+  const form = detailsForm.form;
 
   return (
-    <div className="flex flex-col gap-5 max-w-lg">
-      <div className="flex items-center gap-3">
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/sla-policies`)}
-        >
-          Back
-        </BaseButton>
-        <h1 className="text-2xl font-semibold">Edit SLA Policy</h1>
-      </div>
+    <DetailPage
+      title={policy.name ?? 'Untitled SLA Policy'}
+      breadcrumbsKey="principal.sla-policies.detail"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: PendingCrumb,
+        id: id!,
+        name: policy.name ?? PendingCrumb,
+      }}
+      documentTitle={policy.name ? `SLA Policy: ${policy.name}` : undefined}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <DetailPage.Tab
+        id="details"
+        title="Details"
+        formActions={detailsForm.formActions}
+      >
+        <div className="max-w-lg">
+          <form className="flex flex-col gap-4">
+            <form.Field name="name">
+              {field => (
+                <BaseInput
+                  label="Name"
+                  isRequired
+                  value={field.state.value}
+                  onValueChange={field.handleChange}
+                  onBlur={field.handleBlur}
+                  isInvalid={field.state.meta.errors.length > 0}
+                  errorMessage={field.state.meta.errors
+                    .map(e => String(e))
+                    .join(', ')}
+                />
+              )}
+            </form.Field>
 
-      <div className="flex flex-col gap-4">
-        <BaseInput
-          label="Name"
-          value={name}
-          onValueChange={setName}
-          isRequired
-        />
-        <BaseInput
-          label="Description"
-          value={description}
-          onValueChange={setDescription}
-        />
-        <BaseCheckbox isSelected={isDefault} onValueChange={setIsDefault}>
-          Set as default policy
-        </BaseCheckbox>
-      </div>
+            <form.Field name="description">
+              {field => (
+                <BaseInput
+                  label="Description"
+                  value={field.state.value ?? ''}
+                  onValueChange={field.handleChange}
+                  onBlur={field.handleBlur}
+                />
+              )}
+            </form.Field>
 
-      <div className="flex gap-3">
-        <BaseButton
-          color="primary"
-          onPress={handleSave}
-          isDisabled={updateMutation.isPending || !name.trim()}
-        >
-          Save changes
-        </BaseButton>
-        <BaseButton
-          variant="light"
-          onPress={() => navigate(`/principal/${principalId}/sla-policies`)}
-        >
-          Cancel
-        </BaseButton>
-      </div>
-    </div>
+            <form.Field name="isDefault">
+              {field => (
+                <BaseCheckbox
+                  isSelected={field.state.value}
+                  onValueChange={field.handleChange}
+                >
+                  Set as default policy
+                </BaseCheckbox>
+              )}
+            </form.Field>
+          </form>
+        </div>
+      </DetailPage.Tab>
+    </DetailPage>
   );
 }
 
-export default withAuthenticationRequired(PrincipalSlaPolicyEditPage, {
+export default withAuthenticationRequired(PrincipalSlaPolicyDetailPage, {
   OnRedirecting: () => <PageSpinner title="Loading..." />,
 });
