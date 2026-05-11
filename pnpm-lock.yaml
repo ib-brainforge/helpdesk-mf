@@ -27,8 +27,8 @@ importers:
         specifier: 0.4.298-develop.cd2bb18
         version: 0.4.298-develop.cd2bb18(@brainforgeau/observability@0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
-        specifier: 0.2.58-develop.8c2a8f7
-        version: 0.2.58-develop.8c2a8f7(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
+        specifier: 0.2.60-develop.3901f61
+        version: 0.2.60-develop.3901f61(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
       '@fontsource/inter':
         specifier: ^5.2.6
         version: 5.2.8
@@ -969,8 +969,8 @@ packages:
       '@brainforgeau/observability':
         optional: true
 
-  '@brainforgeau/theme@0.2.58-develop.8c2a8f7':
-    resolution: {integrity: sha512-CsImZ13KdjAbMD9lWQmT8/6tcLdm3Rk6qHiKK7odtHI5LzO4blKJBGSyGP3kNoFIHIbwT3ADoHKuiRdr/XQdLw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/theme/0.2.58-develop.8c2a8f7/30952b81a4f22b5c96420e8782911f0ab70e1d1e}
+  '@brainforgeau/theme@0.2.60-develop.3901f61':
+    resolution: {integrity: sha512-CACTSOGfGs9NkHm7QPVy20rGtG0EUXKpyCEg+TpepfTVDg16XDDslx3cY8oPCTe8Ywt0o4GH08NVP+ZtRWPokA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/theme/0.2.60-develop.3901f61/9139c77f5b01d6d6d9e5bfe6a3e416a237504ce1}
     peerDependencies:
       '@heroui/react': ^3.0.4
       '@heroui/styles': ^3.0.4
@@ -8465,7 +8465,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/theme@0.2.58-develop.8c2a8f7(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)':
+  '@brainforgeau/theme@0.2.60-develop.3901f61(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)':
     dependencies:
       '@heroui/react': 3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
       '@heroui/styles': 3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0)
