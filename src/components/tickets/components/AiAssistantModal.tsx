@@ -113,7 +113,7 @@ export function AiAssistantModal({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
       <BaseModalContent>
-        <BaseModalHeader>
+        <BaseModalHeader onClose={handleClose}>
           <div className="flex items-center gap-2">
             <Icon name="flash" className="h-5 w-5 text-primary" />
             <span>Jitbit AI Assistant</span>

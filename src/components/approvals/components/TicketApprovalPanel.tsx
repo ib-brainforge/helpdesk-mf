@@ -29,8 +29,6 @@ import {
   useTicketApproval,
 } from '../hooks';
 
-// REVIEW: Component integrates into existing ticket detail view
-
 interface TicketApprovalPanelProps {
   ticketId: string;
 }

@@ -14,6 +14,7 @@ import {
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
+  ValidationAlert,
 } from '@brainforgeau/components';
 
 import { useCreateTicket } from '../hooks/useTickets';
@@ -39,6 +40,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [assigneeId, setAssigneeId] = useState<string | undefined>(undefined);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { tags: availableTags } = useTags();
 
@@ -69,6 +71,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
     setCategoryId(undefined);
     setAssigneeId(undefined);
     setSelectedTags([]);
+    setSubmitError(null);
   }, []);
 
   const handleCreate = useCallback(async () => {
@@ -102,7 +105,9 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
         onCreated?.(result.id);
       }
     } catch (error) {
-      toast('Failed to create ticket', { description: error instanceof Error ? error.message : 'An error occurred', variant: 'danger' });
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
+      setSubmitError(errorMessage);
+      toast('Failed to create ticket', { description: errorMessage, variant: 'danger' });
     }
   }, [subject, description, priority, categoryId, assigneeId, selectedTags, createTicketMutation, resetForm, onClose, onCreated]);
 
@@ -116,6 +121,12 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
       <BaseModalContent>
         <BaseModalHeader title="New Ticket" onClose={handleCancel} />
         <BaseModalBody>
+          {submitError && (
+            <ValidationAlert
+              errors={[submitError]}
+              onClose={() => setSubmitError(null)}
+            />
+          )}
           <div className="space-y-4">
             <BaseInput
               label="Subject"

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
+import type { HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   KnowledgeBaseArticleListDto,
@@ -42,14 +43,48 @@ export const useKnowledgeBaseArticles = (categoryId?: string, searchTerm?: strin
   });
 };
 
+function mapKbArticleDetailToDto(
+  dto: HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
+): KnowledgeBaseArticleDto {
+  return {
+    id: dto.id ?? '',
+    slug: dto.slug ?? '',
+    title: dto.title ?? '',
+    body: dto.body ?? '',
+    excerpt: dto.excerpt ?? '',
+    categoryId: dto.categoryId,
+    categoryName: dto.categoryName,
+    status: (dto.status as unknown as number) ?? 0,
+    accessLevel: (dto.accessLevel as unknown as number) ?? 0,
+    views: dto.viewCount ?? 0,
+    averageRating: dto.helpfulCount !== undefined && dto.notHelpfulCount !== undefined
+      ? dto.helpfulCount + dto.notHelpfulCount > 0
+        ? Math.round((dto.helpfulCount / (dto.helpfulCount + dto.notHelpfulCount)) * 5 * 10) / 10
+        : undefined
+      : undefined,
+    ratingCount: (dto.helpfulCount ?? 0) + (dto.notHelpfulCount ?? 0),
+    tags: (dto.tags ?? []).map(t => t.name ?? '').filter(Boolean),
+    authorId: '',
+    createdAt: dto.createdAt ?? new Date().toISOString(),
+    updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
+    publishedAt: dto.publishedAt ?? undefined,
+    relatedArticleIds: [],
+  };
+}
+
 export const useKnowledgeBaseArticle = (slug: string) => {
   return useQuery<KnowledgeBaseArticleDto>({
     queryKey: ['knowledge-base', 'article', slug],
     queryFn: async () => {
+      if (!slug) {
+        throw new Error('Article slug is required');
+      }
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbArticlesBySlugSlugGet(slug);
-      // REVIEW: Using slug endpoint for article lookup
-      return (response.data as unknown) as KnowledgeBaseArticleDto;
+      if (!response.data) {
+        throw new Error('Article not found');
+      }
+      return mapKbArticleDetailToDto(response.data);
     },
     enabled: !!slug,
   });
@@ -59,9 +94,15 @@ export const useKnowledgeBaseArticleById = (id: string) => {
   return useQuery<KnowledgeBaseArticleDto>({
     queryKey: ['knowledge-base', 'article-by-id', id],
     queryFn: async () => {
+      if (!id) {
+        throw new Error('Article id is required');
+      }
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbArticlesIdGet(id);
-      return (response.data as unknown) as KnowledgeBaseArticleDto;
+      if (!response.data) {
+        throw new Error('Article not found');
+      }
+      return mapKbArticleDetailToDto(response.data);
     },
     enabled: !!id,
   });

@@ -13,7 +13,7 @@ import { RelatedArticles } from '@/components/knowledge-base/components/RelatedA
 function KnowledgeBaseArticlePage() {
   const { slug } = useParams();
   const timezone = useTimezone();
-  const { data: article, isLoading } = useKnowledgeBaseArticle(slug || '');
+  const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug ?? '');
   const rateArticle = useRateKnowledgeBaseArticle();
 
   const handleRating = (isHelpful: boolean) => {
@@ -30,7 +30,16 @@ function KnowledgeBaseArticlePage() {
     );
   }
 
-  if (!article) {
+  if (!slug) {
+    return (
+      <div className="py-12 text-center">
+        <Icon name="document-text" className="mx-auto h-12 w-12 text-gray-400" />
+        <p className="mt-4 text-gray-500">No article slug provided</p>
+      </div>
+    );
+  }
+
+  if (error || !article) {
     return (
       <div className="py-12 text-center">
         <Icon name="document-text" className="mx-auto h-12 w-12 text-gray-400" />

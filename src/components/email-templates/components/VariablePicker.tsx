@@ -67,7 +67,7 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
                         </span>
                         <Icon
                           name="clipboard"
-                          className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100"
+                          className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
                         />
                       </div>
                       <code className="text-xs text-gray-500 dark:text-gray-400">
