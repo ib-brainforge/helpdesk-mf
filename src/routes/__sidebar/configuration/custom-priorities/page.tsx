@@ -1,9 +1,29 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
-import { EmptyState } from '@brainforgeau/components/page';
+import { EmptyState, ListPage } from '@brainforgeau/components/page';
+import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useState } from 'react';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
+
+// REVIEW: Custom priorities API is not yet implemented. This page is a placeholder
+// that will be wired to a real endpoint when the backend is ready.
+
+interface CustomPriority {
+  id: string;
+  name: string;
+}
+
+const EMPTY_COLUMNS: ColumnDef<CustomPriority, any>[] = [
+  {
+    id: 'name',
+    header: 'Name',
+    cell: ({ row }) => <span>{row.original.name}</span>,
+  },
+];
 
 function CustomPrioritiesPage() {
   const [priorityName, setPriorityName] = useState('');
@@ -24,35 +44,23 @@ function CustomPrioritiesPage() {
     setPriorityName('');
   };
 
+  const columns = useMemo(() => EMPTY_COLUMNS, []);
+
+  // REVIEW: Replace with real data hook when backend is ready
+  const table = useReactTable<CustomPriority>({
+    data: [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
   return (
-    <>
-      <Helmet>
-        <title>Custom Priorities - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Configuration', href: '/configuration' },
-            {
-              label: 'Custom Priorities',
-              href: '/configuration/custom-priorities',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Custom Priorities</h1>
-        <p className="text-default-500 mt-1">
-          Create and manage custom priority levels for your helpdesk tickets
-        </p>
-      </div>
-
-      <div className="max-w-2xl">
-        <div className="mb-6 p-4 bg-default-50 rounded-lg border border-default-200">
+    <ListPage
+      title="Custom Priorities"
+      breadcrumbsKey="configuration.custom-priorities.list"
+      table={table}
+      isLoading={false}
+      subheader={
+        <div className="max-w-2xl p-4 bg-default-50 rounded-lg border border-default-200">
           <p className="text-sm text-default-700 mb-4">
             Custom priorities allow you to define specific priority levels
             beyond the default options (Critical, High, Normal, Low). Use this
@@ -80,21 +88,18 @@ function CustomPrioritiesPage() {
             </BaseButton>
           </div>
         </div>
-
-        {/* REVIEW: Mock data placeholder - replace when backend is ready */}
-        <div className="border rounded-lg overflow-hidden">
-          <div className="bg-default-100 px-4 py-3 border-b">
-            <h3 className="font-semibold text-sm">Existing Priorities</h3>
-          </div>
-          <EmptyState
-            title="No custom priorities yet"
-            description="Add your first custom priority using the form above."
-            size="sm"
-          />
-        </div>
-      </div>
-    </>
+      }
+      empty={
+        <EmptyState
+          title="No custom priorities yet"
+          description="Add your first custom priority using the form above."
+          size="sm"
+        />
+      }
+    />
   );
 }
 
-export default CustomPrioritiesPage;
+export default withAuthorizationRequired(CustomPrioritiesPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});

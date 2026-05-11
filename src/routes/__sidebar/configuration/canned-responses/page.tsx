@@ -1,4 +1,3 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CannedResponseEditorModal } from '@/components/canned-responses/components/CannedResponseEditorModal';
 import {
   useCannedResponses,
@@ -9,11 +8,42 @@ import { CannedResponseScope } from '@/types/canned-response';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { EmptyState, useConfirm } from '@brainforgeau/components/page';
+import {
+  EmptyState,
+  ListPage,
+  useConfirm,
+} from '@brainforgeau/components/page';
+import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
+import {
+  type ColumnDef,
+  createColumnHelper,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useCallback, useMemo, useState } from 'react';
 
-import { Helmet } from '@modern-js/runtime/head';
-import { useState } from 'react';
+const columnHelper = createColumnHelper<CannedResponseDto>();
+
+const SCOPE_COLORS: Record<CannedResponseScope, string> = {
+  [CannedResponseScope.Personal]: 'bg-default-100 text-default-800',
+  [CannedResponseScope.Team]: 'bg-primary-100 text-primary-800',
+  [CannedResponseScope.Global]: 'bg-secondary-100 text-secondary-800',
+};
+
+const SCOPE_LABELS: Record<CannedResponseScope, string> = {
+  [CannedResponseScope.Personal]: 'Personal',
+  [CannedResponseScope.Team]: 'Team',
+  [CannedResponseScope.Global]: 'Global',
+};
+
+function getScopeBadge(scope: CannedResponseScope) {
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs ${SCOPE_COLORS[scope]}`}>
+      {SCOPE_LABELS[scope]}
+    </span>
+  );
+}
 
 function CannedResponsesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,32 +64,35 @@ function CannedResponsesPage() {
     setIsEditorOpen(true);
   };
 
-  const handleEdit = (response: CannedResponseDto) => {
+  const handleEdit = useCallback((response: CannedResponseDto) => {
     setEditingResponse(response);
     setIsEditorOpen(true);
-  };
+  }, []);
 
-  const handleDeleteRequest = async (id: string, title: string) => {
-    const ok = await confirm({
-      title: 'Delete Canned Response',
-      body: `Are you sure you want to delete "${title}"? This cannot be undone.`,
-      confirmLabel: 'Delete',
-      destructive: true,
-    });
-    if (!ok) return;
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast('Deleted', {
-        description: 'Canned response deleted successfully',
-        variant: 'success',
+  const handleDeleteRequest = useCallback(
+    async (id: string, title: string) => {
+      const ok = await confirm({
+        title: 'Delete Canned Response',
+        body: `Are you sure you want to delete "${title}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
       });
-    } catch {
-      toast('Error', {
-        description: 'Failed to delete canned response',
-        variant: 'danger',
-      });
-    }
-  };
+      if (!ok) return;
+      try {
+        await deleteMutation.mutateAsync(id);
+        toast('Deleted', {
+          description: 'Canned response deleted successfully',
+          variant: 'success',
+        });
+      } catch {
+        toast('Error', {
+          description: 'Failed to delete canned response',
+          variant: 'danger',
+        });
+      }
+    },
+    [confirm, deleteMutation],
+  );
 
   const handleExportCSV = () => {
     // REVIEW: Export functionality to be implemented
@@ -69,51 +102,90 @@ function CannedResponsesPage() {
     });
   };
 
-  const getScopeBadge = (scope: CannedResponseScope) => {
-    const colors: Record<CannedResponseScope, string> = {
-      [CannedResponseScope.Personal]: 'bg-default-100 text-default-800',
-      [CannedResponseScope.Team]: 'bg-primary-100 text-primary-800',
-      [CannedResponseScope.Global]: 'bg-secondary-100 text-secondary-800',
-    };
-    const labels: Record<CannedResponseScope, string> = {
-      [CannedResponseScope.Personal]: 'Personal',
-      [CannedResponseScope.Team]: 'Team',
-      [CannedResponseScope.Global]: 'Global',
-    };
-    return (
-      <span className={`px-2 py-0.5 rounded-full text-xs ${colors[scope]}`}>
-        {labels[scope]}
-      </span>
-    );
-  };
+  const columns = useMemo(
+    (): ColumnDef<CannedResponseDto, any>[] => [
+      columnHelper.display({
+        id: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => handleEdit(row.original)}
+            className="text-primary hover:underline font-medium"
+          >
+            {row.original.title}
+          </button>
+        ),
+      }),
+      columnHelper.display({
+        id: 'scope',
+        header: 'Scope',
+        cell: ({ row }) =>
+          getScopeBadge(row.original.scope as unknown as CannedResponseScope),
+        size: 120,
+      }),
+      columnHelper.display({
+        id: 'category',
+        header: 'Category',
+        cell: ({ row }) => (
+          <span className="text-sm text-default-600">
+            {row.original.categoryName || '—'}
+          </span>
+        ),
+        size: 160,
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <BaseButton
+              size="sm"
+              variant="light"
+              isIconOnly
+              onPress={() => handleEdit(row.original)}
+              aria-label="Edit canned response"
+            >
+              <Icon name="pencil" className="h-4 w-4" />
+            </BaseButton>
+            <BaseButton
+              size="sm"
+              variant="light"
+              color="danger"
+              isIconOnly
+              onPress={() =>
+                handleDeleteRequest(
+                  row.original.id ?? '',
+                  row.original.title ?? '',
+                )
+              }
+              aria-label="Delete canned response"
+            >
+              <Icon name="trash" className="h-4 w-4" />
+            </BaseButton>
+          </div>
+        ),
+        size: 80,
+      }),
+    ],
+    [handleEdit, handleDeleteRequest],
+  );
+
+  const table = useReactTable<CannedResponseDto>({
+    data: cannedResponses,
+    columns,
+    getRowId: row => row.id ?? '',
+    getCoreRowModel: getCoreRowModel(),
+    enableSorting: false,
+  });
 
   return (
-    <>
-      <Helmet>
-        <title>Canned Responses - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Configuration', href: '/configuration' },
-            {
-              label: 'Canned Responses',
-              href: '/configuration/canned-responses',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Canned Responses</h1>
-          <p className="text-default-500 mt-1">
-            Manage pre-written responses for common questions
-          </p>
-        </div>
+    <ListPage
+      title="Canned Responses"
+      breadcrumbsKey="configuration.canned-responses.list"
+      table={table}
+      isLoading={isLoading}
+      actions={
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
@@ -130,9 +202,8 @@ function CannedResponsesPage() {
             Create
           </BaseButton>
         </div>
-      </div>
-
-      <div className="mb-4">
+      }
+      filters={
         <BaseInput
           placeholder="Search canned responses..."
           value={searchTerm}
@@ -145,13 +216,10 @@ function CannedResponsesPage() {
           }
           className="max-w-md"
         />
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <span className="text-default-500">Loading...</span>
-        </div>
-      ) : cannedResponses.length === 0 ? (
+      }
+      hasActiveFilters={searchTerm.length > 0}
+      onClearFilters={() => setSearchTerm('')}
+      empty={
         <EmptyState
           title="No canned responses yet"
           description="Create your first canned response to get started."
@@ -162,92 +230,24 @@ function CannedResponsesPage() {
           }
           live
         />
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-default-100 border-b">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold">
-                  Name
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-semibold">
-                  Scope
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-semibold">
-                  Category
-                </th>
-                <th className="text-right px-4 py-3 text-sm font-semibold">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {cannedResponses.map(response => (
-                <tr
-                  key={response.id}
-                  className="border-b hover:bg-default-50 transition-colors"
-                >
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(response)}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      {response.title}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    {getScopeBadge(
-                      response.scope as unknown as CannedResponseScope,
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-default-600">
-                    {response.categoryName || '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(response)}
-                        className="p-1 hover:bg-default-100 rounded"
-                        title="Edit"
-                      >
-                        <Icon
-                          name="pencil"
-                          className="h-4 w-4 text-default-600"
-                        />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDeleteRequest(response.id!, response.title!)
-                        }
-                        className="p-1 hover:bg-danger-50 rounded"
-                        title="Delete"
-                      >
-                        <Icon name="trash" className="h-4 w-4 text-danger" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <CannedResponseEditorModal
-        isOpen={isEditorOpen}
-        onClose={() => {
-          setIsEditorOpen(false);
-          setEditingResponse(undefined);
-        }}
-        cannedResponse={editingResponse}
-      />
-
-      {dialog}
-    </>
+      }
+      modals={
+        <>
+          <CannedResponseEditorModal
+            isOpen={isEditorOpen}
+            onClose={() => {
+              setIsEditorOpen(false);
+              setEditingResponse(undefined);
+            }}
+            cannedResponse={editingResponse}
+          />
+          {dialog}
+        </>
+      }
+    />
   );
 }
 
-export default CannedResponsesPage;
+export default withAuthorizationRequired(CannedResponsesPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});

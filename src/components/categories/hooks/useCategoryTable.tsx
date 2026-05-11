@@ -1,0 +1,207 @@
+import { useDuplicateCategory } from '@/components/categories/hooks/useCategoriesData';
+/**
+ * useCategoryTable — lifts the TanStack table instance out of CategoryList so
+ * the categories page can pass it directly to <ListPage>.
+ *
+ * The table owns search-filtered rows. The page owns searchTerm state and passes
+ * it in, allowing <ListPage filters={...}> to wire the search input.
+ */
+import { StatusBadge } from '@/components/shared';
+import type { CategoryDto, SectionDto } from '@/types/category';
+import { AccessLevel } from '@/types/category';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { toast } from '@heroui/react';
+import {
+  type ColumnDef,
+  createColumnHelper,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useCallback, useMemo } from 'react';
+
+export type CategoryRow = CategoryDto & { sectionName?: string };
+
+const columnHelper = createColumnHelper<CategoryRow>();
+
+const getAccessLevelColor = (level: AccessLevel) => {
+  const colors: Record<AccessLevel, 'default' | 'primary' | 'warning'> = {
+    [AccessLevel.Everyone]: 'default',
+    [AccessLevel.AgentsOnly]: 'primary',
+    [AccessLevel.AdminsOnly]: 'warning',
+  };
+  return colors[level] ?? 'default';
+};
+
+const getAccessLevelName = (level: AccessLevel): string => {
+  const names: Record<AccessLevel, string> = {
+    [AccessLevel.Everyone]: 'Everyone',
+    [AccessLevel.AgentsOnly]: 'Agents Only',
+    [AccessLevel.AdminsOnly]: 'Admins Only',
+  };
+  return names[level] ?? 'Unknown';
+};
+
+interface UseCategoryTableOptions {
+  categories: CategoryDto[];
+  sections: SectionDto[];
+  searchTerm: string;
+  isLoading?: boolean;
+  onEditCategory: (category: CategoryDto) => void;
+  onDeleteCategory: (categoryId: string) => void;
+}
+
+export function useCategoryTable({
+  categories,
+  sections,
+  searchTerm,
+  onEditCategory,
+  onDeleteCategory,
+}: UseCategoryTableOptions) {
+  const duplicateCategoryMutation = useDuplicateCategory();
+
+  const handleDuplicate = useCallback(
+    (category: CategoryDto) => {
+      duplicateCategoryMutation.mutate(category.id, {
+        onSuccess: () => {
+          toast('Category duplicated', {
+            description: `"${category.name} (copy)" has been created.`,
+            variant: 'success',
+          });
+        },
+        onError: () => {
+          toast('Duplication failed', {
+            description: 'Could not duplicate the category. Please try again.',
+            variant: 'danger',
+          });
+        },
+      });
+    },
+    [duplicateCategoryMutation],
+  );
+
+  const columns = useMemo(
+    (): ColumnDef<CategoryRow, any>[] => [
+      columnHelper.display({
+        id: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => onEditCategory(row.original)}
+            className="text-primary hover:underline font-medium"
+          >
+            {row.original.name}
+          </button>
+        ),
+        size: 300,
+      }),
+      columnHelper.display({
+        id: 'section',
+        header: 'Section',
+        cell: ({ row }) => (
+          <span className="text-sm text-default-600">
+            {row.original.sectionName ?? '—'}
+          </span>
+        ),
+        size: 200,
+      }),
+      columnHelper.display({
+        id: 'accessLevel',
+        header: 'Access Type',
+        cell: ({ row }) => (
+          <StatusBadge
+            color={getAccessLevelColor(row.original.accessLevel as AccessLevel)}
+          >
+            {getAccessLevelName(row.original.accessLevel as AccessLevel)}
+          </StatusBadge>
+        ),
+        size: 150,
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <BaseButton
+              size="sm"
+              variant="light"
+              isIconOnly
+              onPress={() => handleDuplicate(row.original)}
+              aria-label="Duplicate category"
+            >
+              <Icon name="document-duplicate" className="h-4 w-4" />
+            </BaseButton>
+            <BaseButton
+              size="sm"
+              variant="light"
+              isIconOnly
+              onPress={() => onEditCategory(row.original)}
+              aria-label="Edit category"
+            >
+              <Icon name="pencil-square" className="h-4 w-4" />
+            </BaseButton>
+            <BaseButton
+              size="sm"
+              variant="light"
+              color="danger"
+              isIconOnly
+              onPress={() => onDeleteCategory(row.original.id)}
+              aria-label="Delete category"
+            >
+              <Icon name="trash" className="h-4 w-4" />
+            </BaseButton>
+          </div>
+        ),
+        size: 120,
+      }),
+    ],
+    [onEditCategory, onDeleteCategory, handleDuplicate],
+  );
+
+  // Build flat rows with section grouping info
+  const rows = useMemo(() => {
+    const result: CategoryRow[] = [];
+    const categoriesBySection = new Map<string | undefined, CategoryDto[]>();
+
+    for (const cat of categories) {
+      const key = cat.sectionId;
+      if (!categoriesBySection.has(key)) {
+        categoriesBySection.set(key, []);
+      }
+      categoriesBySection.get(key)?.push(cat);
+    }
+
+    // Sectioned categories first
+    for (const section of sections) {
+      const sectionCats = categoriesBySection.get(section.id) ?? [];
+      for (const cat of sectionCats) {
+        result.push({ ...cat, sectionName: section.name });
+      }
+    }
+
+    // Unsectioned categories last
+    const unsectioned = categoriesBySection.get(undefined) ?? [];
+    for (const cat of unsectioned) {
+      result.push({ ...cat, sectionName: undefined });
+    }
+
+    return result;
+  }, [categories, sections]);
+
+  const filteredRows = useMemo(() => {
+    if (!searchTerm) return rows;
+    const lower = searchTerm.toLowerCase();
+    return rows.filter(row => row.name?.toLowerCase().includes(lower));
+  }, [rows, searchTerm]);
+
+  const table = useReactTable<CategoryRow>({
+    data: filteredRows,
+    columns,
+    getRowId: row => row.id,
+    getCoreRowModel: getCoreRowModel(),
+    enableSorting: false,
+  });
+
+  return { table };
+}

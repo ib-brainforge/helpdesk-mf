@@ -1,18 +1,23 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import {
   CategoryEditorModal,
-  CategoryList,
   SectionEditorModal,
   useCategoriesData,
+  useCategoryTable,
 } from '@components/categories';
-import { toast } from '@heroui/react';
 
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
+import {
+  EmptyState,
+  ListPage,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
-import { Helmet } from '@modern-js/runtime/head';
+import { withAuthorizationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -27,6 +32,8 @@ function CategoriesPage() {
   const [editingSection, setEditingSection] = useState<SectionDto | undefined>(
     undefined,
   );
+  const [searchTerm, setSearchTerm] = useState('');
+  const { confirm, dialog } = useConfirm();
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: string) => {
@@ -91,76 +98,106 @@ function CategoriesPage() {
     setEditingSection(undefined);
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    const cat = categories.find(c => c.id === categoryId);
+    const ok = await confirm({
+      title: 'Delete category?',
+      body: `Delete "${cat?.name ?? 'this category'}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (ok) deleteCategoryMutation.mutate(categoryId);
+  };
+
+  const { table } = useCategoryTable({
+    categories,
+    sections,
+    searchTerm,
+    isLoading,
+    onEditCategory: handleEditCategory,
+    onDeleteCategory: handleDeleteCategory,
+  });
+
   return (
-    <>
-      <Helmet>
-        <title>Category Management</title>
-      </Helmet>
-      <div className="mb-5">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Configuration', href: '/configuration' },
-            {
-              label: 'Categories',
-              href: '/configuration/categories',
-              isCurrent: true,
-            },
-          ]}
-        />
-
-        <div className="mb-5 items-start gap-5 lg:flex">
-          <div className="flex-1">
-            <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-              Ticket Categories and Permissions
-            </h1>
-            <p className="text-default-500 mt-1">
-              Organize tickets into categories and subcategories
-            </p>
-          </div>
-          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
-            <BaseButton
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-              onPress={handleCreateSection}
-              variant="bordered"
-            >
-              Add Section
-            </BaseButton>
-            <BaseButton
-              color="primary"
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-              onPress={handleCreateCategory}
-            >
-              Add New Category
-            </BaseButton>
-          </div>
+    <ListPage
+      title="Ticket Categories and Permissions"
+      breadcrumbsKey="configuration.categories.list"
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <div className="flex gap-2.5">
+          <BaseButton
+            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            onPress={handleCreateSection}
+            variant="bordered"
+          >
+            Add Section
+          </BaseButton>
+          <BaseButton
+            color="primary"
+            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            onPress={handleCreateCategory}
+          >
+            Add New Category
+          </BaseButton>
         </div>
-
-        <CategoryList
-          categories={categories}
-          sections={sections}
-          isLoading={isLoading}
-          onEditCategory={handleEditCategory}
-          onDeleteCategory={id => deleteCategoryMutation.mutate(id)}
-          onEditSection={handleEditSection}
-          onDeleteSection={id => deleteSectionMutation.mutate(id)}
+      }
+      filters={
+        <BaseInput
+          placeholder="Search categories..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          startContent={
+            <Icon
+              name="magnifying-glass"
+              className="h-4 w-4 text-default-400"
+            />
+          }
+          className="max-w-md"
         />
-      </div>
-
-      <CategoryEditorModal
-        isOpen={isCategoryModalOpen}
-        onClose={handleCloseCategoryModal}
-        category={editingCategory}
-        sections={sections}
-      />
-
-      <SectionEditorModal
-        isOpen={isSectionModalOpen}
-        onClose={handleCloseSectionModal}
-        section={editingSection}
-      />
-    </>
+      }
+      hasActiveFilters={searchTerm.length > 0}
+      onClearFilters={() => setSearchTerm('')}
+      empty={
+        <EmptyState
+          title={
+            searchTerm ? 'No categories match your search' : 'No categories yet'
+          }
+          description={
+            searchTerm
+              ? 'Try a different search term or clear the filter.'
+              : 'Add your first category to start organizing tickets.'
+          }
+          action={
+            !searchTerm ? (
+              <BaseButton color="primary" onPress={handleCreateCategory}>
+                Add First Category
+              </BaseButton>
+            ) : undefined
+          }
+          live
+        />
+      }
+      modals={
+        <>
+          <CategoryEditorModal
+            isOpen={isCategoryModalOpen}
+            onClose={handleCloseCategoryModal}
+            category={editingCategory}
+            sections={sections}
+          />
+          <SectionEditorModal
+            isOpen={isSectionModalOpen}
+            onClose={handleCloseSectionModal}
+            section={editingSection}
+          />
+          {dialog}
+        </>
+      }
+    />
   );
 }
 
-export default CategoriesPage;
+export default withAuthorizationRequired(CategoriesPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});
