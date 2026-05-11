@@ -1,4 +1,3 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { DuplicateCategoryModal } from '@/components/knowledge-base/components/DuplicateCategoryModal';
 import {
   useDuplicateKbCategory,
@@ -18,6 +17,11 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import {
+  PageBody,
+  PageHeader,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import {
   Dropdown,
@@ -27,7 +31,6 @@ import {
   Spinner,
   toast,
 } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -167,27 +170,28 @@ function CategoryFormModal({
   );
 }
 
-function DeleteCategoryModal({
-  category,
-  onClose,
-}: {
-  category: KnowledgeBaseCategoryDto | null;
-  onClose: () => void;
-}) {
+function KbCategoriesPage() {
+  const { data: categories = [], isLoading } = useKnowledgeBaseCategories();
+  const [search, setSearch] = useState('');
+  const [formMode, setFormMode] = useState<ModalMode>(null);
+  const [editingCategory, setEditingCategory] =
+    useState<KnowledgeBaseCategoryDto | null>(null);
+  const [duplicatingCategory, setDuplicatingCategory] =
+    useState<KnowledgeBaseCategoryDto | null>(null);
+
+  const { confirm, dialog } = useConfirm();
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
-    mutationFn: async () => {
-      if (!category) return;
+    mutationFn: async (categoryId: string) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      await client.v1KbCategoriesIdDelete(category.id);
+      await client.v1KbCategoriesIdDelete(categoryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'categories'],
       });
       toast('Category deleted', { variant: 'success' });
-      onClose();
     },
     onError: () => {
       toast('Cannot delete category', {
@@ -196,47 +200,6 @@ function DeleteCategoryModal({
       });
     },
   });
-
-  return (
-    <BaseModal isOpen={!!category} onClose={onClose} size="sm">
-      <BaseModalContent>
-        <BaseModalHeader>
-          <h2 className="text-xl font-semibold">Delete Category</h2>
-        </BaseModalHeader>
-        <BaseModalBody>
-          <p className="text-sm text-default-600">
-            Are you sure you want to delete <strong>{category?.name}</strong>?
-            This action cannot be undone. Categories containing articles cannot
-            be deleted.
-          </p>
-        </BaseModalBody>
-        <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose}>
-            Cancel
-          </BaseButton>
-          <BaseButton
-            color="danger"
-            onPress={() => deleteMutation.mutate()}
-            isDisabled={deleteMutation.isPending}
-          >
-            Delete
-          </BaseButton>
-        </BaseModalFooter>
-      </BaseModalContent>
-    </BaseModal>
-  );
-}
-
-function KbCategoriesPage() {
-  const { data: categories = [], isLoading } = useKnowledgeBaseCategories();
-  const [search, setSearch] = useState('');
-  const [formMode, setFormMode] = useState<ModalMode>(null);
-  const [editingCategory, setEditingCategory] =
-    useState<KnowledgeBaseCategoryDto | null>(null);
-  const [deletingCategory, setDeletingCategory] =
-    useState<KnowledgeBaseCategoryDto | null>(null);
-  const [duplicatingCategory, setDuplicatingCategory] =
-    useState<KnowledgeBaseCategoryDto | null>(null);
 
   const allCategories = categories as unknown as KnowledgeBaseCategoryDto[];
 
@@ -259,41 +222,36 @@ function KbCategoriesPage() {
     setEditingCategory(null);
   };
 
+  const handleDeleteRequest = async (cat: KnowledgeBaseCategoryDto) => {
+    const ok = await confirm({
+      title: 'Delete Category',
+      body: `Are you sure you want to delete "${cat.name}"? This action cannot be undone. Categories containing articles cannot be deleted.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    deleteMutation.mutate(cat.id);
+  };
+
   return (
-    <>
-      <Helmet>
-        <title>Manage KB Categories - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Knowledge Base', href: '/knowledge-base' },
-            {
-              label: 'Manage Categories',
-              href: '/knowledge-base/settings',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Manage Categories</h1>
-          <p className="text-default-500 mt-1">
-            Create, edit, delete and organise KB categories
-          </p>
-        </div>
-        <BaseButton
-          color="primary"
-          icon={<Icon name="plus" className="h-4 w-4" />}
-          onPress={openCreate}
-        >
-          New Category
-        </BaseButton>
-      </div>
+    <PageBody>
+      <PageHeader
+        title="Manage Categories"
+        breadcrumbsKey="knowledge-base.settings"
+      >
+        <PageHeader.Meta>
+          Create, edit, delete and organise KB categories
+        </PageHeader.Meta>
+        <PageHeader.Actions>
+          <BaseButton
+            color="primary"
+            icon={<Icon name="plus" className="h-4 w-4" />}
+            onPress={openCreate}
+          >
+            New Category
+          </BaseButton>
+        </PageHeader.Actions>
+      </PageHeader>
 
       <div className="mb-4 max-w-md">
         <BaseInput
@@ -362,7 +320,7 @@ function KbCategoriesPage() {
                   <DropdownItem
                     key="delete"
                     className="text-danger"
-                    onPress={() => setDeletingCategory(cat)}
+                    onPress={() => handleDeleteRequest(cat)}
                   >
                     Delete
                   </DropdownItem>
@@ -380,17 +338,14 @@ function KbCategoriesPage() {
         onClose={closeForm}
       />
 
-      <DeleteCategoryModal
-        category={deletingCategory}
-        onClose={() => setDeletingCategory(null)}
-      />
-
       <DuplicateCategoryModal
         isOpen={!!duplicatingCategory}
         category={duplicatingCategory}
         onClose={() => setDuplicatingCategory(null)}
       />
-    </>
+
+      {dialog}
+    </PageBody>
   );
 }
 

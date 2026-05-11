@@ -1,4 +1,3 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { UserRolesModal } from '@/components/admin-users/components/UserRolesModal';
 import { useTenantUsers } from '@/components/admin-users/hooks/useAdminUsers';
 import { useUsersData } from '@/components/users';
@@ -6,9 +5,12 @@ import { getAppConfig } from '@/state/config';
 import type { HelpdeskRole, TenantUserDto } from '@/types/admin-user';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { EmptyState } from '@brainforgeau/components/page';
+import {
+  EmptyState,
+  PageBody,
+  PageHeader,
+} from '@brainforgeau/components/page';
 import { Chip, Link, Spinner } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
 const ACTIVITY_ROLE_COLOR: Record<string, 'warning' | 'accent' | 'default'> = {
@@ -41,45 +43,30 @@ function AdminUsersPage() {
     : null;
 
   return (
-    <>
-      <Helmet>
-        <title>Users — Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings' },
-            { label: 'Users', href: '/admin/users', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Users</h1>
-          <p className="text-default-500 mt-1">
-            Manage helpdesk roles for users known to this tenant
-          </p>
-        </div>
+    <PageBody>
+      <PageHeader title="Users" breadcrumbsKey="admin.users">
+        <PageHeader.Meta>
+          Manage helpdesk roles for users known to this tenant
+        </PageHeader.Meta>
         {keycloakAdminUrl && (
-          <Link
-            href={keycloakAdminUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <BaseButton
-              variant="bordered"
-              icon={
-                <Icon name="arrow-top-right-on-square" className="h-4 w-4" />
-              }
+          <PageHeader.Actions>
+            <Link
+              href={keycloakAdminUrl}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Identity Administration
-            </BaseButton>
-          </Link>
+              <BaseButton
+                variant="bordered"
+                icon={
+                  <Icon name="arrow-top-right-on-square" className="h-4 w-4" />
+                }
+              >
+                Identity Administration
+              </BaseButton>
+            </Link>
+          </PageHeader.Actions>
         )}
-      </div>
+      </PageHeader>
 
       <div className="mb-4 p-4 bg-warning-50 border border-warning-200 rounded-lg">
         <div className="flex gap-2">
@@ -207,7 +194,7 @@ function AdminUsersPage() {
           }
         />
       )}
-    </>
+    </PageBody>
   );
 }
 

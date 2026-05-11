@@ -1,8 +1,7 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { getAppConfig } from '@/state/config';
 import { Icon } from '@brainforgeau/components/base';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { Card, CardContent } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { NavLink } from '@modern-js/runtime/router';
 
 type SettingCardProps = {
@@ -202,30 +201,12 @@ function AdministrationPage() {
   ];
 
   return (
-    <>
-      <Helmet>
-        <title>Administration - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            {
-              label: 'Administration',
-              href: '/admin/settings',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Administration</h1>
-        <p className="text-default-500 mt-1">
+    <PageBody>
+      <PageHeader title="Administration" breadcrumbsKey="admin.settings">
+        <PageHeader.Meta>
           Manage your helpdesk configuration and settings
-        </p>
-      </div>
+        </PageHeader.Meta>
+      </PageHeader>
 
       <div className="space-y-8">
         {sections.map(section => (
@@ -241,7 +222,7 @@ function AdministrationPage() {
           </div>
         ))}
       </div>
-    </>
+    </PageBody>
   );
 }
 

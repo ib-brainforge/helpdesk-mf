@@ -7,12 +7,15 @@ import {
   BaseSelectItem,
   Icon,
 } from '@brainforgeau/components';
-import { EmptyState } from '@brainforgeau/components/page';
+import {
+  EmptyState,
+  PageBody,
+  PageHeader,
+} from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { useTimezone } from '@brainforgeau/security';
 import { Card } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { Link, useSearchParams } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
@@ -51,157 +54,157 @@ function KnowledgeBaseSearchPage() {
   });
 
   return (
-    <>
-      <Helmet>
-        <title>Search Knowledge Base - {searchTerm}</title>
-      </Helmet>
+    <PageBody>
+      <PageHeader
+        title="Search Knowledge Base"
+        breadcrumbsKey="knowledge-base.search"
+        documentTitle={
+          searchTerm
+            ? `Search: ${searchTerm} – Knowledge Base`
+            : 'Search Knowledge Base'
+        }
+      >
+        {searchTerm && (
+          <PageHeader.Meta>
+            Results for: <span className="font-medium">{searchTerm}</span>
+          </PageHeader.Meta>
+        )}
+      </PageHeader>
 
-      <div className="mb-5">
-        <div className="mb-5">
-          <h1 className="text-2xl font-semibold">Search Knowledge Base</h1>
-          {searchTerm && (
-            <p className="text-gray-600 mt-1">
-              Results for: <span className="font-medium">{searchTerm}</span>
-            </p>
-          )}
-        </div>
+      {/* Search and Filters */}
+      <div className="mb-6 flex flex-wrap gap-4">
+        <BaseInput
+          placeholder="Search articles..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
+          className="flex-1"
+          autoFocus
+        />
+        <BaseSelect
+          placeholder="All Categories"
+          selectedKey={selectedCategory ? selectedCategory : null}
+          onSelectionChange={keys => {
+            const key = keys as string;
+            setSelectedCategory(key || '');
+          }}
+          className="w-64"
+        >
+          {categories?.map(cat => (
+            <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+          )) || []}
+        </BaseSelect>
+      </div>
 
-        {/* Search and Filters */}
-        <div className="mb-6 flex flex-wrap gap-4">
-          <BaseInput
-            placeholder="Search articles..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
-            className="flex-1"
-            autoFocus
+      {/* Search Results */}
+      {searchTerm.length < 3 ? (
+        <div className="py-12 text-center">
+          <Icon
+            name="magnifying-glass"
+            className="mx-auto h-12 w-12 text-gray-400"
           />
-          <BaseSelect
-            placeholder="All Categories"
-            selectedKey={selectedCategory ? selectedCategory : null}
-            onSelectionChange={keys => {
-              const key = keys as string;
-              setSelectedCategory(key || '');
-            }}
-            className="w-64"
-          >
-            {categories?.map(cat => (
-              <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
-            )) || []}
-          </BaseSelect>
+          <p className="mt-4 text-gray-500">
+            Enter at least 3 characters to search
+          </p>
         </div>
-
-        {/* Search Results */}
-        {searchTerm.length < 3 ? (
-          <div className="py-12 text-center">
-            <Icon
-              name="magnifying-glass"
-              className="mx-auto h-12 w-12 text-gray-400"
-            />
-            <p className="mt-4 text-gray-500">
-              Enter at least 3 characters to search
-            </p>
+      ) : isLoading ? (
+        <div className="py-12 text-center">
+          <p className="text-gray-500">Searching...</p>
+        </div>
+      ) : !searchResults || searchResults.items?.length === 0 ? (
+        <EmptyState
+          title="No articles found"
+          description="Try different keywords or categories."
+          live
+        />
+      ) : (
+        <div>
+          <div className="mb-4 text-sm text-gray-600">
+            Found {searchResults.totalCount || searchResults.items?.length || 0}{' '}
+            article(s)
           </div>
-        ) : isLoading ? (
-          <div className="py-12 text-center">
-            <p className="text-gray-500">Searching...</p>
-          </div>
-        ) : !searchResults || searchResults.items?.length === 0 ? (
-          <EmptyState
-            title="No articles found"
-            description="Try different keywords or categories."
-            live
-          />
-        ) : (
-          <div>
-            <div className="mb-4 text-sm text-gray-600">
-              Found{' '}
-              {searchResults.totalCount || searchResults.items?.length || 0}{' '}
-              article(s)
-            </div>
-            <div className="space-y-4">
-              {searchResults.items?.map((article: any) => (
-                <Link
-                  key={article.id}
-                  to={`/knowledge-base/${article.slug}`}
-                  className="block"
-                >
-                  <Card className="p-5 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold mb-2 line-clamp-2">
-                          {article.title}
-                        </h3>
+          <div className="space-y-4">
+            {searchResults.items?.map((article: any) => (
+              <Link
+                key={article.id}
+                to={`/knowledge-base/${article.slug}`}
+                className="block"
+              >
+                <Card className="p-5 hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+                        {article.title}
+                      </h3>
 
-                        {/* Highlighted snippet from search */}
-                        {article.highlight && (
-                          <div
-                            className="text-sm text-gray-700 mb-3 line-clamp-3"
-                            dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(article.highlight),
-                            }}
-                          />
-                        )}
+                      {/* Highlighted snippet from search */}
+                      {article.highlight && (
+                        <div
+                          className="text-sm text-gray-700 mb-3 line-clamp-3"
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(article.highlight),
+                          }}
+                        />
+                      )}
 
-                        {/* Excerpt fallback */}
-                        {!article.highlight && article.excerpt && (
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-3">
-                            {article.excerpt}
-                          </p>
-                        )}
+                      {/* Excerpt fallback */}
+                      {!article.highlight && article.excerpt && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                          {article.excerpt}
+                        </p>
+                      )}
 
-                        {/* Tags */}
-                        {article.tags && article.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {article.tags.slice(0, 5).map((tag: string) => (
-                              <TagChip key={tag} name={tag} size="sm" />
-                            ))}
-                            {article.tags.length > 5 && (
-                              <span className="text-xs text-gray-500">
-                                +{article.tags.length - 5} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Metadata */}
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          {article.categoryName && (
-                            <span className="flex items-center gap-1">
-                              <Icon name="folder" className="h-3 w-3" />
-                              {article.categoryName}
-                            </span>
-                          )}
-                          {article.publishedAt && (
-                            <span className="flex items-center gap-1">
-                              <Icon name="calendar" className="h-3 w-3" />
-                              {formatDateTime(article.publishedAt, {
-                                timezone,
-                              })}
-                            </span>
-                          )}
-                          {article.relevance && (
-                            <span className="flex items-center gap-1 text-primary">
-                              <Icon name="star" className="h-3 w-3" />
-                              {Math.round(article.relevance * 100)}% match
+                      {/* Tags */}
+                      {article.tags && article.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {article.tags.slice(0, 5).map((tag: string) => (
+                            <TagChip key={tag} name={tag} size="sm" />
+                          ))}
+                          {article.tags.length > 5 && (
+                            <span className="text-xs text-gray-500">
+                              +{article.tags.length - 5} more
                             </span>
                           )}
                         </div>
-                      </div>
+                      )}
 
-                      <Icon
-                        name="arrow-right"
-                        className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1"
-                      />
+                      {/* Metadata */}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        {article.categoryName && (
+                          <span className="flex items-center gap-1">
+                            <Icon name="folder" className="h-3 w-3" />
+                            {article.categoryName}
+                          </span>
+                        )}
+                        {article.publishedAt && (
+                          <span className="flex items-center gap-1">
+                            <Icon name="calendar" className="h-3 w-3" />
+                            {formatDateTime(article.publishedAt, {
+                              timezone,
+                            })}
+                          </span>
+                        )}
+                        {article.relevance && (
+                          <span className="flex items-center gap-1 text-primary">
+                            <Icon name="star" className="h-3 w-3" />
+                            {Math.round(article.relevance * 100)}% match
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+
+                    <Icon
+                      name="arrow-right"
+                      className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1"
+                    />
+                  </div>
+                </Card>
+              </Link>
+            ))}
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </PageBody>
   );
 }
 
