@@ -32,13 +32,19 @@ export const useTicketsData = () => {
           ? toApiTicketPriority(filters.priority[0])
           : undefined,
         filters.categoryId?.[0],
-        filters.assigneeId?.[0],
+        // When unassignedOnly is active, clear assigneeId so the backend filter is not confused.
+        filters.unassignedOnly ? undefined : filters.assigneeId?.[0],
         undefined, // requesterId
         filters.searchTerm,
         undefined, // unreadOnly
         undefined, // spamOnly — default view excludes spam
         pagination.pageIndex + 1,
         pagination.pageSize,
+        undefined, // sortBy
+        undefined, // sortDirection
+        // Pass unassignedOnly as an extra query param until the helpdesk-client is regenerated
+        // post backend PR merge (feature/tickets-unassigned-filter).
+        filters.unassignedOnly ? { params: { unassignedOnly: true } } : {},
       );
 
       const result = response.data;

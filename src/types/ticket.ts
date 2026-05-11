@@ -87,6 +87,7 @@ export interface TicketFilters {
   assigneeId?: string[];
   searchTerm?: string;
   tagIds?: string[]; // Filter by tag IDs
+  unassignedOnly?: boolean;
 }
 
 export interface CreateTicketDto {

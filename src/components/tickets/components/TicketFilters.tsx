@@ -69,8 +69,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         }
         break;
       case 'unassigned':
-        // REVIEW: Backend doesn't support unassigned filter directly - would need to be implemented
-        onFiltersChange({});
+        onFiltersChange({ unassignedOnly: true });
         break;
       case 'overdue':
         // REVIEW: Backend doesn't support overdue filter yet - would need to be implemented
