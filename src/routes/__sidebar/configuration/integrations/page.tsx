@@ -1,18 +1,21 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { IntegrationEditorModal } from '@/components/integrations/components/IntegrationEditorModal';
 import {
   useDeleteIntegration,
   useIntegrations,
 } from '@/components/integrations/hooks/useIntegrations';
-import { INTEGRATION_PROVIDERS, IntegrationType } from '@/types/integration';
+import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type {
   IntegrationConfigDto,
   IntegrationProviderMeta,
 } from '@/types/integration';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { useConfirm } from '@brainforgeau/components/page';
+import {
+  PageBody,
+  PageHeader,
+  useConfirm,
+} from '@brainforgeau/components/page';
+import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, Chip, Spinner, toast } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
 function IntegrationsPage() {
@@ -65,39 +68,19 @@ function IntegrationsPage() {
   // Group configured integrations by type for inline display under each tile
   const byType = integrations.reduce<Record<number, IntegrationConfigDto[]>>(
     (acc, i) => {
-      (acc[i.type] ??= []).push(i);
+      if (!acc[i.type]) acc[i.type] = [];
+      acc[i.type].push(i);
       return acc;
     },
     {},
   );
 
   return (
-    <>
-      <Helmet>
-        <title>Integrations - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings' },
-            {
-              label: 'Integrations',
-              href: '/configuration/integrations',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Integrations</h1>
-        <p className="text-default-500 mt-1">
-          Connect Helpdesk with third-party tools. Configuration is stored ready
-          for when routing ships.
-        </p>
-      </div>
+    <PageBody>
+      <PageHeader
+        title="Integrations"
+        breadcrumbsKey="configuration.integrations.list"
+      />
 
       {/* Routing disclaimer banner */}
       <div className="mb-6 rounded-lg bg-warning-50 border border-warning-200 px-4 py-3 max-w-3xl">
@@ -176,6 +159,7 @@ function IntegrationsPage() {
                               size="sm"
                               variant="light"
                               onPress={() => openEdit(instance)}
+                              aria-label="Edit integration"
                             >
                               <Icon name="pencil" className="w-4 h-4" />
                             </BaseButton>
@@ -186,6 +170,7 @@ function IntegrationsPage() {
                               color="danger"
                               onPress={() => handleDeleteRequest(instance)}
                               isDisabled={deleteMutation.isPending}
+                              aria-label="Remove integration"
                             >
                               <Icon name="trash" className="w-4 h-4" />
                             </BaseButton>
@@ -221,8 +206,10 @@ function IntegrationsPage() {
       )}
 
       {dialog}
-    </>
+    </PageBody>
   );
 }
 
-export default IntegrationsPage;
+export default withAuthorizationRequired(IntegrationsPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});

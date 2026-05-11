@@ -1,4 +1,3 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import {
   useGetLiveChatConfig,
   useGetLiveChatEmbedScript,
@@ -11,10 +10,15 @@ import {
   DAYS_OF_WEEK,
   DEFAULT_DAY_CONFIG,
 } from '@/types/live-chat';
-import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
-import { BaseTextarea } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseInput,
+  BaseTextarea,
+  Icon,
+} from '@brainforgeau/components';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, Switch, toast } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
 
 const DAY_LABELS: Record<BusinessHoursDay, string> = {
@@ -49,6 +53,11 @@ function serializeBusinessHours(hours: BusinessHoursJson): string | null {
 // Inner form — receives server config as initial values.
 // Mounted with key={config.id} so it remounts when config loads, ensuring
 // all useState atoms start from server values without a useEffect mirror.
+//
+// REVIEW: Uses useState atoms instead of TanStack Form + Zod. The
+// multi-section form (general / business hours / allowed domains) interacts
+// heavily with structured JSON fields that don't map cleanly to a flat Zod
+// schema. Migrating to useEntityForm is tracked as a separate refactor.
 // -----------------------------------------------------------------------
 interface LiveChatFormProps {
   initialIsEnabled: boolean;
@@ -185,7 +194,10 @@ function LiveChatForm({
 
           {/* Primary color */}
           <div className="py-3 border-b border-default-200">
-            <label className="block text-sm font-semibold mb-2">
+            <label
+              htmlFor="live-chat-primary-color"
+              className="block text-sm font-semibold mb-2"
+            >
               Primary colour
             </label>
             <p className="text-xs text-default-500 mb-3">
@@ -193,6 +205,7 @@ function LiveChatForm({
             </p>
             <div className="flex items-center gap-3 max-w-xs">
               <input
+                id="live-chat-primary-color"
                 type="color"
                 value={primaryColor}
                 onChange={e => setPrimaryColor(e.target.value)}
@@ -205,19 +218,24 @@ function LiveChatForm({
                 placeholder="#6366f1"
                 isDisabled={!isEnabled}
                 className="flex-1"
+                aria-label="Primary colour hex value"
               />
             </div>
           </div>
 
           {/* Greeting message */}
           <div className="py-3">
-            <label className="block text-sm font-semibold mb-2">
+            <label
+              htmlFor="live-chat-greeting"
+              className="block text-sm font-semibold mb-2"
+            >
               Greeting message
             </label>
             <p className="text-xs text-default-500 mb-3">
               Shown to visitors before they start a conversation.
             </p>
             <BaseTextarea
+              id="live-chat-greeting"
               value={greetingMessage}
               onValueChange={setGreetingMessage}
               placeholder="Hi! How can we help you today?"
@@ -343,6 +361,7 @@ function LiveChatForm({
                     color="danger"
                     onPress={() => handleRemoveDomain(domain)}
                     isDisabled={!isEnabled}
+                    aria-label={`Remove ${domain}`}
                   >
                     <Icon name="x-mark" className="w-4 h-4" />
                   </BaseButton>
@@ -410,32 +429,11 @@ function LiveChatPage() {
     useGetLiveChatEmbedScript();
 
   return (
-    <>
-      <Helmet>
-        <title>Live Chat Widget - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings' },
-            {
-              label: 'Live Chat Widget',
-              href: '/configuration/live-chat',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Live Chat Widget</h1>
-        <p className="text-default-500 mt-1">
-          Configure your customer-facing live chat widget and embed it on your
-          website.
-        </p>
-      </div>
+    <PageBody>
+      <PageHeader
+        title="Live Chat Widget"
+        breadcrumbsKey="configuration.live-chat"
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
@@ -456,8 +454,10 @@ function LiveChatPage() {
           isLoadingScript={isLoadingScript}
         />
       )}
-    </>
+    </PageBody>
   );
 }
 
-export default LiveChatPage;
+export default withAuthorizationRequired(LiveChatPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});

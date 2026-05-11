@@ -1,9 +1,9 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { BaseButton, Icon } from '@brainforgeau/components';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { AdminImportExportApi } from '@brainforgeau/helpdesk-client';
+import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, toast } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useRef, useState } from 'react';
 
 const NOT_IMPLEMENTED_COPY =
@@ -114,31 +114,11 @@ function ImportExportPage() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Import and Export - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings' },
-            {
-              label: 'Import and Export',
-              href: '/configuration/import-export',
-              isCurrent: true,
-            },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Import and Export</h1>
-        <p className="text-default-500 mt-1">
-          Bulk import or export your helpdesk ticket data and configuration.
-        </p>
-      </div>
+    <PageBody>
+      <PageHeader
+        title="Import and Export"
+        breadcrumbsKey="configuration.import-export"
+      />
 
       {/* Honest deferral notice — not a "coming soon" stub, but an admission with a path forward */}
       <div className="mb-6 rounded-lg bg-warning-50 border border-warning-200 px-4 py-4 max-w-2xl">
@@ -276,8 +256,10 @@ function ImportExportPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </PageBody>
   );
 }
 
-export default ImportExportPage;
+export default withAuthorizationRequired(ImportExportPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});
