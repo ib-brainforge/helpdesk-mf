@@ -210,7 +210,24 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const handleUpdate = useCallback(
     (updates: any) => {
       if (!id) return;
-      updateTicketMutation.mutate({ id, updates });
+      updateTicketMutation.mutate(
+        { id, updates },
+        updates.status
+          ? {
+              onError: (error: any) => {
+                const errorCode = error?.response?.data?.errors?.[0]?.code;
+                const detail = error?.response?.data?.detail;
+                const description =
+                  errorCode === 'TRANSITION_NOT_AVAILABLE'
+                    ? 'No workflow transition available for this status change. Check your workflow configuration.'
+                    : detail
+                      ? `Status change failed: ${detail}`
+                      : 'Failed to update ticket status. Please try again.';
+                toast('Status change failed', { description, variant: 'danger' });
+              },
+            }
+          : undefined,
+      );
     },
     [id, updateTicketMutation],
   );
@@ -540,6 +557,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       {
         onSuccess: () => {
           toast('Ticket closed', { description: 'Ticket status updated to Closed', variant: 'success' });
+        },
+        onError: (error: any) => {
+          const errorCode = error?.response?.data?.errors?.[0]?.code;
+          const detail = error?.response?.data?.detail;
+          const description =
+            errorCode === 'TRANSITION_NOT_AVAILABLE'
+              ? 'No workflow transition available to close this ticket. Check your workflow configuration.'
+              : detail
+                ? `Status change failed: ${detail}`
+                : 'Failed to close ticket. Please try again.';
+          toast('Close ticket failed', { description, variant: 'danger' });
         },
       },
     );
