@@ -25,6 +25,6 @@
 @import "tailwindcss";
 @plugin './hero.ts';
 
-@source '../../node_modules/@brainforgeau/components/**/*.{js,ts,jsx,tsx}';
+@source '../../node_modules/@brainforgeau/components';
 @import "@brainforgeau/theme/theme.css";
 @import "../styles/tiptap.css";
