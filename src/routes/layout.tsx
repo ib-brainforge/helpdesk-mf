@@ -261,7 +261,12 @@ export default function Layout() {
   return (
     <Providers>
       <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
-        <BreadcrumbRegistryProvider registry={breadcrumbs}>
+        <BreadcrumbRegistryProvider
+          registry={breadcrumbs}
+          renderLink={({ item, className, children }) => (
+            <NavLink to={item.href} className={className}>{children}</NavLink>
+          )}
+        >
           <PageTracker category="helpdesk" />
           <ErrorBoundary>
             <Suspense fallback={<PageSpinner title="Loading..." />}>
