@@ -1,7 +1,18 @@
+/**
+ * TenantMailConfigForm — presentational form component for outbound mail config.
+ *
+ * W1-review-fixes: Refactored from a self-contained form to a controlled presentational
+ * component. The form instance is owned by the parent page (EmailSettingsPage) via
+ * useEntityForm. This component receives `form` and `dto` as props.
+ *
+ * The "Test connection" button reads form values directly and is kept here because
+ * it is a panel-specific action (not a save), tied to the SMTP config UI.
+ *
+ * Exports `tenantMailConfigSchema` for use by the page-level useEntityForm call.
+ */
+
 import {
-  getTenantMailConfig,
   testTenantMailConfig,
-  upsertTenantMailConfig,
 } from '@/state/notificationApiClient';
 import {
   OutboundMailProtocol,
@@ -14,18 +25,17 @@ import {
   BaseSelect,
   BaseSelectItem,
   Icon,
-  ValidationAlert,
 } from '@brainforgeau/components';
-import { Card, CardContent, Spinner, Switch, toast } from '@heroui/react';
-import { useForm } from '@tanstack/react-form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { EntityFormInstance } from '@brainforgeau/components/page';
+import { Card, CardContent, Switch, toast } from '@heroui/react';
 import { useState } from 'react';
 import { z } from 'zod';
 
-const QUERY_KEY = ['tenant-mail-config'] as const;
+// ---------------------------------------------------------------------------
+// Schema — exported so the page can create a useEntityForm from it
+// ---------------------------------------------------------------------------
 
-// Validation — only enforce host/port/username when SMTP + enabled
-const tenantMailConfigSchema = z.object({
+export const tenantMailConfigSchema = z.object({
   isEnabled: z.boolean(),
   outboundProtocol: z.nativeEnum(OutboundMailProtocol),
   outboundHost: z.string().nullable(),
@@ -44,80 +54,37 @@ const tenantMailConfigSchema = z.object({
 
 type FormValues = z.infer<typeof tenantMailConfigSchema>;
 
-function buildDefaultValues(dto: TenantMailConfigDto | undefined): FormValues {
-  return {
-    isEnabled: dto?.isEnabled ?? false,
-    outboundProtocol: dto?.outboundProtocol ?? OutboundMailProtocol.Smtp,
-    outboundHost: dto?.outboundHost ?? null,
-    outboundPort: dto?.outboundPort ?? 587,
-    username: dto?.username ?? null,
-    password: null, // never pre-fill password
-    useSsl: dto?.useSsl ?? true,
-    fromEmail: dto?.fromEmail ?? null,
-    fromName: dto?.fromName ?? null,
-  };
-}
+// ---------------------------------------------------------------------------
+// Helper
+// ---------------------------------------------------------------------------
 
-function formatFormErrors(errors: any[]): string | undefined {
+function formatFormErrors(errors: unknown[]): string | undefined {
   if (!errors || errors.length === 0) return undefined;
   return errors
-    .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+    .map(e => (typeof e === 'string' ? e : (e as { message?: string }).message || String(e)))
     .join(', ');
 }
 
-export function TenantMailConfigForm() {
-  const queryClient = useQueryClient();
-  const [submitErrors, setSubmitErrors] = useState<string[]>([]);
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export interface TenantMailConfigFormProps {
+  /** The entity form instance owned by the parent page via useEntityForm. */
+  form: EntityFormInstance<typeof tenantMailConfigSchema>;
+  /** Current persisted DTO — used to show "password already set" hint. */
+  dto: TenantMailConfigDto | undefined;
+}
+
+export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
   const [testResult, setTestResult] =
     useState<TenantMailConfigTestResult | null>(null);
   const [isTesting, setIsTesting] = useState(false);
 
-  const { data: dto, isLoading } = useQuery<TenantMailConfigDto>({
-    queryKey: QUERY_KEY,
-    queryFn: getTenantMailConfig,
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: upsertTenantMailConfig,
-    onSuccess: updated => {
-      queryClient.setQueryData(QUERY_KEY, updated);
-      toast('Email settings saved', { variant: 'success' });
-      form.reset(buildDefaultValues(updated));
-      setSubmitErrors([]);
-    },
-    onError: (error: any) => {
-      const msg =
-        error?.response?.data?.detail ||
-        error?.message ||
-        'Failed to save settings';
-      setSubmitErrors([msg]);
-    },
-  });
-
-  const form = useForm({
-    defaultValues: buildDefaultValues(dto),
-    validators: {
-      onChange: tenantMailConfigSchema,
-      onSubmit: tenantMailConfigSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await saveMutation.mutateAsync({
-        isEnabled: value.isEnabled,
-        outboundProtocol: value.outboundProtocol,
-        outboundHost: value.outboundHost || null,
-        outboundPort: value.outboundPort,
-        username: value.username || null,
-        // null = keep existing password; empty string = clear (send null)
-        password: value.password || null,
-        useSsl: value.useSsl,
-        fromEmail: value.fromEmail || null,
-        fromName: value.fromName || null,
-      });
-    },
-  });
+  const f = form.form;
 
   const handleTest = async () => {
-    const values = form.state.values;
+    const values = f.state.values as FormValues;
     if (!values.outboundHost || !values.outboundPort) {
       toast('Enter host and port before testing', { variant: 'warning' });
       return;
@@ -131,7 +98,6 @@ export function TenantMailConfigForm() {
         outboundHost: values.outboundHost,
         outboundPort: values.outboundPort,
         username: values.username || null,
-        // Use form password if filled, otherwise indicate existing (backend uses stored)
         password: values.password || null,
         useSsl: values.useSsl,
       });
@@ -147,45 +113,24 @@ export function TenantMailConfigForm() {
           variant: 'danger',
         });
       }
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.detail || error?.message || 'Test failed';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } }; message?: string };
+      const msg = err?.response?.data?.detail || err?.message || 'Test failed';
       toast('Test failed', { description: msg, variant: 'danger' });
     } finally {
       setIsTesting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 text-default-500">
-        <Spinner size="sm" />
-        <span>Loading email settings...</span>
-      </div>
-    );
-  }
-
   return (
-    <form
-      onSubmit={e => {
-        e.preventDefault();
-        e.stopPropagation();
-        form.handleSubmit();
-      }}
-      className="max-w-2xl space-y-6"
-    >
-      <ValidationAlert
-        errors={submitErrors}
-        onClose={() => setSubmitErrors([])}
-      />
-
+    <div className="max-w-2xl space-y-6">
       {/* Enable / Protocol */}
       <Card>
         <CardContent className="p-5 space-y-4">
           <h2 className="text-base font-semibold">Outbound mail server</h2>
 
           <div className="flex items-center gap-6">
-            <form.Field name="isEnabled">
+            <f.Field name="isEnabled">
               {field => (
                 <Switch
                   isSelected={field.state.value}
@@ -194,10 +139,10 @@ export function TenantMailConfigForm() {
                   Enable custom outbound mail
                 </Switch>
               )}
-            </form.Field>
+            </f.Field>
           </div>
 
-          <form.Field name="outboundProtocol">
+          <f.Field name="outboundProtocol">
             {field => (
               <BaseSelect
                 label="Protocol"
@@ -217,7 +162,7 @@ export function TenantMailConfigForm() {
                 </BaseSelectItem>
               </BaseSelect>
             )}
-          </form.Field>
+          </f.Field>
         </CardContent>
       </Card>
 
@@ -227,7 +172,7 @@ export function TenantMailConfigForm() {
           <h2 className="text-base font-semibold">Server settings</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <form.Field name="outboundHost">
+            <f.Field name="outboundHost">
               {field => (
                 <BaseInput
                   label="Host"
@@ -241,9 +186,9 @@ export function TenantMailConfigForm() {
                   placeholder="smtp.example.com"
                 />
               )}
-            </form.Field>
+            </f.Field>
 
-            <form.Field name="outboundPort">
+            <f.Field name="outboundPort">
               {field => (
                 <BaseInput
                   label="Port"
@@ -263,10 +208,10 @@ export function TenantMailConfigForm() {
                   placeholder="587"
                 />
               )}
-            </form.Field>
+            </f.Field>
           </div>
 
-          <form.Field name="useSsl">
+          <f.Field name="useSsl">
             {field => (
               <Switch
                 isSelected={field.state.value}
@@ -275,7 +220,7 @@ export function TenantMailConfigForm() {
                 Use SSL / TLS
               </Switch>
             )}
-          </form.Field>
+          </f.Field>
         </CardContent>
       </Card>
 
@@ -285,7 +230,7 @@ export function TenantMailConfigForm() {
           <h2 className="text-base font-semibold">Credentials</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <form.Field name="username">
+            <f.Field name="username">
               {field => (
                 <BaseInput
                   label="Username"
@@ -298,9 +243,9 @@ export function TenantMailConfigForm() {
                   placeholder="support@example.com"
                 />
               )}
-            </form.Field>
+            </f.Field>
 
-            <form.Field name="password">
+            <f.Field name="password">
               {field => (
                 <BaseInput
                   label={
@@ -323,7 +268,7 @@ export function TenantMailConfigForm() {
                   }
                 />
               )}
-            </form.Field>
+            </f.Field>
           </div>
         </CardContent>
       </Card>
@@ -334,7 +279,7 @@ export function TenantMailConfigForm() {
           <h2 className="text-base font-semibold">Sender identity</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <form.Field name="fromEmail">
+            <f.Field name="fromEmail">
               {field => (
                 <BaseInput
                   label="From email"
@@ -348,9 +293,9 @@ export function TenantMailConfigForm() {
                   placeholder="helpdesk@example.com"
                 />
               )}
-            </form.Field>
+            </f.Field>
 
-            <form.Field name="fromName">
+            <f.Field name="fromName">
               {field => (
                 <BaseInput
                   label="From name"
@@ -363,7 +308,7 @@ export function TenantMailConfigForm() {
                   placeholder="Helpdesk Support"
                 />
               )}
-            </form.Field>
+            </f.Field>
           </div>
         </CardContent>
       </Card>
@@ -389,26 +334,18 @@ export function TenantMailConfigForm() {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Test connection — standalone action, not part of Save/Reset flow */}
       <div className="flex items-center gap-3">
-        <BaseButton
-          color="primary"
-          type="submit"
-          isDisabled={saveMutation.isPending}
-        >
-          Save settings
-        </BaseButton>
-
         <BaseButton
           variant="bordered"
           type="button"
-          isDisabled={isTesting || saveMutation.isPending}
+          isDisabled={isTesting || form.isSubmitting}
           onPress={handleTest}
           icon={<Icon name="signal" className="h-4 w-4" />}
         >
           Test connection
         </BaseButton>
       </div>
-    </form>
+    </div>
   );
 }

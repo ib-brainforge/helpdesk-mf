@@ -5,6 +5,7 @@
  */
 
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
   BaseCheckbox,
@@ -50,6 +51,7 @@ function PrincipalApprovalWorkflowNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
+  const { data: principal } = usePrincipal(principalId);
   const createMutation = useCreatePrincipalApprovalWorkflow(principalId ?? '');
 
   const form = useEntityForm<typeof approvalWorkflowSchema>({
@@ -96,7 +98,7 @@ function PrincipalApprovalWorkflowNewPage() {
       breadcrumbsKey="principal.approvals.new"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       form={form}
       onCancel={() => navigate(`/principal/${principalId}/approvals`)}

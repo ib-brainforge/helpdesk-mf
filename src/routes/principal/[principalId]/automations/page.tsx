@@ -2,22 +2,23 @@
  * Principal automation projects list route — /principal/[principalId]/automations
  *
  * W1-P6: Adds breadcrumbs via PageHeader wrapper around the editor-owned
- * PrincipalAutomationProjectsListPage. The editor component owns its own h1
- * and table; full ListPage migration is deferred to W1-P10 (workflow/automation
- * editor wrappers).
+ * PrincipalAutomationProjectsListPage.
  *
- * REVIEW: PrincipalAutomationProjectsListPage renders its own <h1>. W1-P10
- * should suppress the internal h1 and let PageHeader own it, eliminating the
- * duplicate heading.
+ * W1-review-fixes:
+ *   - usePrincipal() wired; principalName resolves from identity-management.
+ *   - PrincipalAutomationProjectsListPage receives showTitle={false} to suppress
+ *     its internal <h1>, eliminating the duplicate heading.
  */
 
 import { PrincipalAutomationProjectsListPage } from '@/automations-editor';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { PageHeader, PendingCrumb } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 
 function PrincipalAutomationListRoute() {
   const { principalId } = useParams<{ principalId: string }>();
+  const { data: principal } = usePrincipal(principalId);
 
   return (
     <>
@@ -26,13 +27,11 @@ function PrincipalAutomationListRoute() {
         breadcrumbsKey="principal.automations.list"
         breadcrumbsParams={{
           principalId: principalId!,
-          // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
-          // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
-          principalName: PendingCrumb,
+          principalName: principal?.name ?? PendingCrumb,
         }}
         documentTitle={false}
       />
-      <PrincipalAutomationProjectsListPage />
+      <PrincipalAutomationProjectsListPage showTitle={false} />
     </>
   );
 }

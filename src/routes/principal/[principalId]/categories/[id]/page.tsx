@@ -6,6 +6,7 @@
  */
 
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   usePrincipalCategory,
   useUpdatePrincipalCategory,
@@ -40,6 +41,7 @@ type CategoryFormData = z.infer<typeof categorySchema>;
 function PrincipalCategoryDetailPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
+  const { data: principal } = usePrincipal(principalId);
 
   const { data: category, isLoading } = usePrincipalCategory(
     principalId ?? '',
@@ -111,7 +113,7 @@ function PrincipalCategoryDetailPage() {
       breadcrumbsKey="principal.categories.detail"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
         id: id!,
         name: category.name ?? PendingCrumb,
       }}

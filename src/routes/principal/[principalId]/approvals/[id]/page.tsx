@@ -7,6 +7,7 @@
  */
 
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   usePrincipalApprovalWorkflow,
   useUpdatePrincipalApprovalWorkflow,
@@ -45,6 +46,7 @@ type ApprovalWorkflowFormData = z.infer<typeof approvalWorkflowSchema>;
 function PrincipalApprovalWorkflowDetailPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
+  const { data: principal } = usePrincipal(principalId);
 
   const { data: workflow, isLoading } = usePrincipalApprovalWorkflow(
     principalId ?? '',
@@ -126,7 +128,7 @@ function PrincipalApprovalWorkflowDetailPage() {
       breadcrumbsKey="principal.approvals.detail"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
         id: id!,
         name: workflow.name ?? PendingCrumb,
       }}

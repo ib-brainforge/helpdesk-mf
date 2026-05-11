@@ -1,12 +1,12 @@
 /**
  * Principal ticket list page — /principal/[principalId]/tickets
  *
- * W1-P6: Migrated to <ListPage>. Async breadcrumb param principalName uses
- * PendingCrumb permanently (no usePrincipal hook available — see PrincipalLookup.tsx
- * TODO(plan-7) comment).
+ * W1-P6: Migrated to <ListPage>.
+ * W1-review-fixes: usePrincipal() wired; principalName resolves from identity-management.
  */
 
 import { StatusBadge } from '@/components/shared';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useCreatePrincipalTicket,
   usePrincipalTickets,
@@ -48,6 +48,7 @@ const columnHelper =
 
 function PrincipalTicketsPage() {
   const { principalId } = useParams<{ principalId: string }>();
+  const { data: principal } = usePrincipal(principalId);
   const timezone = useTimezone();
   const disclosureState = useOverlayState();
   const isOpen = disclosureState.isOpen;
@@ -193,9 +194,7 @@ function PrincipalTicketsPage() {
       breadcrumbsKey="principal.tickets.list"
       breadcrumbsParams={{
         principalId: principalId!,
-        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
-        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       table={table}
       isLoading={isLoading}

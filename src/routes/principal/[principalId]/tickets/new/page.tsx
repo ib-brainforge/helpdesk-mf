@@ -5,6 +5,7 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
 import { BaseInput, BaseTextarea, PageSpinner } from '@brainforgeau/components';
 import {
@@ -34,6 +35,7 @@ type PrincipalTicketFormData = z.infer<typeof principalTicketSchema>;
 function NewPrincipalTicketPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const navigate = useNavigate();
+  const { data: principal } = usePrincipal(principalId);
   const createMutation = useCreatePrincipalTicket(principalId!);
 
   const form = useEntityForm<typeof principalTicketSchema>({
@@ -61,7 +63,7 @@ function NewPrincipalTicketPage() {
       breadcrumbsKey="principal.tickets.new"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       form={form}
       onCancel={() => navigate(`/principal/${principalId}/tickets`)}

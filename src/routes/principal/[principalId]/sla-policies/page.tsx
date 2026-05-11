@@ -5,6 +5,7 @@
  * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useDeletePrincipalSlaPolicy,
   usePrincipalSlaPolicies,
@@ -41,6 +42,7 @@ function PrincipalSlaPoliciesPage() {
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
   const { confirm, dialog } = useConfirm();
+  const { data: principal } = usePrincipal(principalId);
 
   const { data: policies, isLoading } = usePrincipalSlaPolicies(
     principalId ?? '',
@@ -142,9 +144,7 @@ function PrincipalSlaPoliciesPage() {
       breadcrumbsKey="principal.sla-policies.list"
       breadcrumbsParams={{
         principalId: principalId!,
-        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
-        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       table={table}
       isLoading={isLoading}

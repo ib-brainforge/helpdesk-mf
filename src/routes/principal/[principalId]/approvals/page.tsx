@@ -6,6 +6,7 @@
  */
 
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
@@ -52,6 +53,7 @@ function PrincipalApprovalsPage() {
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
   const { confirm, dialog } = useConfirm();
+  const { data: principal } = usePrincipal(principalId);
 
   const { data: workflows, isLoading } = usePrincipalApprovalWorkflows(
     principalId ?? '',
@@ -160,9 +162,7 @@ function PrincipalApprovalsPage() {
       breadcrumbsKey="principal.approvals.list"
       breadcrumbsParams={{
         principalId: principalId!,
-        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
-        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       table={table}
       isLoading={isLoading}

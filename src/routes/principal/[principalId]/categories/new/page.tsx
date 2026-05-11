@@ -5,6 +5,7 @@
  */
 
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
 import {
   BaseInput,
@@ -47,6 +48,7 @@ function PrincipalCategoryNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
+  const { data: principal } = usePrincipal(principalId);
   const createMutation = useCreatePrincipalCategory(principalId ?? '');
 
   const form = useEntityForm<typeof categorySchema>({
@@ -88,7 +90,7 @@ function PrincipalCategoryNewPage() {
       breadcrumbsKey="principal.categories.new"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       form={form}
       onCancel={() => navigate(`/principal/${principalId}/categories`)}

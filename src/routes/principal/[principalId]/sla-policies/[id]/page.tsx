@@ -5,6 +5,7 @@
  * Single "details" tab is form-bearing; formActions wired to that tab only.
  */
 
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   usePrincipalSlaPolicy,
   useUpdatePrincipalSlaPolicy,
@@ -33,6 +34,7 @@ type SlaPolicyFormData = z.infer<typeof slaPolicySchema>;
 function PrincipalSlaPolicyDetailPage() {
   const { principalId, id } = useParams<{ principalId: string; id: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
+  const { data: principal } = usePrincipal(principalId);
 
   const { data: policy, isLoading } = usePrincipalSlaPolicy(
     principalId ?? '',
@@ -102,7 +104,7 @@ function PrincipalSlaPolicyDetailPage() {
       breadcrumbsKey="principal.sla-policies.detail"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
         id: id!,
         name: policy.name ?? PendingCrumb,
       }}

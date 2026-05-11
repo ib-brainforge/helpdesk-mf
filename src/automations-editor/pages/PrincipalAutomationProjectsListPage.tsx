@@ -24,7 +24,8 @@ import {
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import type { RuleProjectDto } from '@brainforgeau/rules-ui';
-import { Chip, Switch, toast } from '@heroui/react';
+import { StatusBadge } from '@brainforgeau/components/page';
+import { Switch, toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -45,25 +46,7 @@ function formatDate(iso: string): string {
 }
 
 function statusBadge(status: string) {
-  if (status === 'Active') {
-    return (
-      <Chip size="sm" color="success">
-        Active
-      </Chip>
-    );
-  }
-  if (status === 'Archived') {
-    return (
-      <Chip size="sm" color="default">
-        Archived
-      </Chip>
-    );
-  }
-  return (
-    <Chip size="sm" color="warning">
-      Draft
-    </Chip>
-  );
+  return <StatusBadge domain="automation.status" status={status} size="sm" />;
 }
 
 function toSlug(name: string): string {
@@ -76,7 +59,16 @@ function toSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export function PrincipalAutomationProjectsListPage() {
+interface PrincipalAutomationProjectsListPageProps {
+  /**
+   * When false, suppresses the internal <h1>. Set to false when the parent
+   * route wraps this component in a <PageHeader> to avoid a duplicate heading.
+   * @default true
+   */
+  showTitle?: boolean;
+}
+
+export function PrincipalAutomationProjectsListPage({ showTitle = true }: PrincipalAutomationProjectsListPageProps) {
   const { principalId } = useParams<{ principalId: string }>();
   const { data, isLoading } = useRuleProjects();
   const createMutation = useCreateRuleProject();
@@ -253,9 +245,11 @@ export function PrincipalAutomationProjectsListPage() {
     <>
       <div className="mb-5">
         <div className="mb-5 flex items-start gap-5 lg:flex">
-          <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-            Automations
-          </h1>
+          {showTitle && (
+            <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
+              Automations
+            </h1>
+          )}
           <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
             <BaseButton
               icon={<Icon name="plus" className="h-3.5 w-3.5" />}

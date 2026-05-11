@@ -7,6 +7,7 @@
  */
 
 import { SummaryCard } from '@/components/shared';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { usePrincipalTicketVolume } from '@/hooks/usePrincipalReports';
 import { BaseButton, BaseInput, BaseTable } from '@brainforgeau/components';
 import {
@@ -70,6 +71,7 @@ function defaultTo(): string {
 
 function PrincipalReportsPage() {
   const { principalId } = useParams<{ principalId: string }>();
+  const { data: principal } = usePrincipal(principalId);
 
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
@@ -113,9 +115,7 @@ function PrincipalReportsPage() {
       breadcrumbsKey="principal.reports"
       breadcrumbsParams={{
         principalId: principalId!,
-        // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
-        // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       actions={
         <div className="flex flex-wrap items-end gap-3">

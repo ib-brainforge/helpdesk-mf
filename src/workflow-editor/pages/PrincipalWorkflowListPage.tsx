@@ -38,7 +38,16 @@ function formatDate(iso: string): string {
   });
 }
 
-export function PrincipalWorkflowListPage() {
+interface PrincipalWorkflowListPageProps {
+  /**
+   * When false, suppresses the internal <h1>. Set to false when the parent
+   * route wraps this component in a <PageHeader> to avoid a duplicate heading.
+   * @default true
+   */
+  showTitle?: boolean;
+}
+
+export function PrincipalWorkflowListPage({ showTitle = true }: PrincipalWorkflowListPageProps) {
   const { principalId } = useParams<{ principalId: string }>();
   const { data, isLoading } = usePrincipalWorkflowList(principalId ?? '');
   const createMutation = useCreatePrincipalDefinition();
@@ -204,9 +213,11 @@ export function PrincipalWorkflowListPage() {
       <div className="mb-5">
         <div className="mb-5 flex items-start gap-5 lg:flex">
           <div>
-            <h1 className="text-gray mb-1 text-2xl font-semibold dark:text-white">
-              Principal Workflows
-            </h1>
+            {showTitle && (
+              <h1 className="text-gray mb-1 text-2xl font-semibold dark:text-white">
+                Principal Workflows
+              </h1>
+            )}
             <p className="text-sm text-default-500">
               <PrincipalLookup principalId={principalId ?? ''} />
             </p>

@@ -17,6 +17,7 @@ import { BaseButton, Icon, PageSpinner } from '@brainforgeau/components';
 import {
   DetailPage,
   PendingCrumb,
+  StatusBadge,
   useDetailTabState,
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
@@ -181,9 +182,13 @@ function KnowledgeBaseArticlePage() {
                   {article.categoryName || 'Uncategorized'}
                 </span>
               </div>
-              <div>
+              <div className="flex items-center gap-2">
                 <span className="font-medium">Status:</span>{' '}
-                <span className="text-gray-600">{article.status}</span>
+                <StatusBadge
+                  domain="knowledge-base.status"
+                  status={article.status}
+                  size="sm"
+                />
               </div>
               <div>
                 <span className="font-medium">Last Updated:</span>{' '}

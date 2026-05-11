@@ -23,7 +23,8 @@ import {
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import type { RuleProjectDto } from '@brainforgeau/rules-ui';
-import { Chip, Switch, toast } from '@heroui/react';
+import { StatusBadge } from '@brainforgeau/components/page';
+import { Switch, toast } from '@heroui/react';
 import { NavLink, useNavigate } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -44,25 +45,7 @@ function formatDate(iso: string): string {
 }
 
 function statusBadge(status: string) {
-  if (status === 'Active') {
-    return (
-      <Chip size="sm" color="success">
-        Active
-      </Chip>
-    );
-  }
-  if (status === 'Archived') {
-    return (
-      <Chip size="sm" color="default">
-        Archived
-      </Chip>
-    );
-  }
-  return (
-    <Chip size="sm" color="warning">
-      Draft
-    </Chip>
-  );
+  return <StatusBadge domain="automation.status" status={status} size="sm" />;
 }
 
 function toSlug(name: string): string {

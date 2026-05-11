@@ -12,6 +12,7 @@
 
 import { CommentThread, ReplyEditor, useComments } from '@/components/comments';
 import { StatusBadge } from '@/components/shared';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   usePrincipalTicket,
   useUpdatePrincipalTicketPriority,
@@ -63,6 +64,7 @@ function PrincipalTicketDetailPage() {
   }>();
   const navigate = useNavigate();
   const timezone = useTimezone();
+  const { data: principal } = usePrincipal(principalId);
 
   const {
     data: ticket,
@@ -149,7 +151,7 @@ function PrincipalTicketDetailPage() {
       breadcrumbsKey="principal.tickets.detail"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
         ticketId: ticketId!,
         subject: ticket.subject ?? PendingCrumb,
       }}

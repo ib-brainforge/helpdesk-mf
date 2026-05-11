@@ -2,22 +2,23 @@
  * Principal workflow list route — /principal/[principalId]/workflows
  *
  * W1-P6: Adds breadcrumbs via PageHeader wrapper around the editor-owned
- * PrincipalWorkflowListPage. The editor component owns its own h1 and table;
- * full ListPage migration is deferred to W1-P10 (workflow/automation editor
- * wrappers).
+ * PrincipalWorkflowListPage.
  *
- * REVIEW: PrincipalWorkflowListPage renders its own <h1>. W1-P10 should
- * suppress the internal h1 and let PageHeader own it, eliminating the
- * duplicate heading.
+ * W1-review-fixes:
+ *   - usePrincipal() wired; principalName resolves from identity-management.
+ *   - PrincipalWorkflowListPage receives showTitle={false} to suppress its
+ *     internal <h1>, eliminating the duplicate heading.
  */
 
 import { PrincipalWorkflowListPage } from '@/workflow-editor';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { PageHeader, PendingCrumb } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 
 function PrincipalWorkflowListRoute() {
   const { principalId } = useParams<{ principalId: string }>();
+  const { data: principal } = usePrincipal(principalId);
 
   return (
     <>
@@ -26,13 +27,11 @@ function PrincipalWorkflowListRoute() {
         breadcrumbsKey="principal.workflows.list"
         breadcrumbsParams={{
           principalId: principalId!,
-          // REVIEW: principalName requires a lookup API (no usePrincipal hook yet).
-          // Permanently uses PendingCrumb skeleton until plan-7 wires the hook.
-          principalName: PendingCrumb,
+          principalName: principal?.name ?? PendingCrumb,
         }}
         documentTitle={false}
       />
-      <PrincipalWorkflowListPage />
+      <PrincipalWorkflowListPage showTitle={false} />
     </>
   );
 }

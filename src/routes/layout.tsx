@@ -4,6 +4,34 @@ import './index.css';
 
 import { breadcrumbs } from '@/breadcrumbs';
 import { Providers } from '@/providers';
+import { registerStatusColors } from '@brainforgeau/components/page';
+
+// Register helpdesk status color domains once at module load time.
+// StatusBadge components anywhere in this MF resolve colors via this registry.
+registerStatusColors({
+  'knowledge-base.status': {
+    Draft: 'default',
+    Published: 'success',
+    Archived: 'warning',
+  },
+  'ticket.status': {
+    New: 'primary',
+    InProgress: 'warning',
+    Closed: 'default',
+  },
+  'ticket.priority': {
+    None: 'default',
+    Low: 'default',
+    Normal: 'primary',
+    High: 'warning',
+    Critical: 'danger',
+  },
+  'automation.status': {
+    Active: 'success',
+    Draft: 'warning',
+    Archived: 'default',
+  },
+});
 import {
   ErrorBoundary,
   PageSpinner,

@@ -4,6 +4,7 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalSlaPolicy } from '@/hooks/usePrincipalSlaPolicies';
 import { BaseCheckbox, BaseInput, PageSpinner } from '@brainforgeau/components';
 import {
@@ -40,6 +41,7 @@ function PrincipalSlaPolicyNewPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
+  const { data: principal } = usePrincipal(principalId);
   const createMutation = useCreatePrincipalSlaPolicy(principalId ?? '');
 
   const form = useEntityForm<typeof slaPolicySchema>({
@@ -80,7 +82,7 @@ function PrincipalSlaPolicyNewPage() {
       breadcrumbsKey="principal.sla-policies.new"
       breadcrumbsParams={{
         principalId: principalId!,
-        principalName: PendingCrumb,
+        principalName: principal?.name ?? PendingCrumb,
       }}
       form={form}
       onCancel={() => navigate(`/principal/${principalId}/sla-policies`)}
