@@ -4,6 +4,7 @@ import { useCompanyStatisticsReport } from '@/components/reports/hooks/useReport
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { EmptyState } from '@brainforgeau/components/page';
 import { Card, CardContent, Spinner } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
@@ -180,7 +181,7 @@ function CompanyStatisticsPage() {
           </div>
         </>
       ) : (
-        <p className="text-default-500">No data available.</p>
+        <EmptyState title="No data available" live />
       )}
     </>
   );

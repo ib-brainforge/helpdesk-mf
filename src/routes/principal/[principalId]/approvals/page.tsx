@@ -2,18 +2,18 @@
  * Principal approval workflows list page — /principal/[principalId]/approvals
  *
  * Admin-only. Lists principal-scoped approval workflows.
- * Create navigates to /approvals/new. Delete uses ConfirmDeleteModal.
+ * Create navigates to /approvals/new. Delete uses useConfirm.
  */
 
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
 } from '@/hooks/usePrincipalApprovalWorkflows';
 import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
+import { useConfirm } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast, useOverlayState } from '@heroui/react';
+import { toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -24,7 +24,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
 // REVIEW: HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto not yet in published client.
@@ -45,13 +45,7 @@ function PrincipalApprovalsPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-
-  const isDeleteState = useOverlayState();
-  const isDeleteOpen = isDeleteState.isOpen;
-  const onDeleteOpen = isDeleteState.open;
-  const onDeleteClose = isDeleteState.close;
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
+  const { confirm, dialog } = useConfirm();
 
   const {
     data: workflows,
@@ -72,23 +66,22 @@ function PrincipalApprovalsPage() {
   }
 
   const handleDeleteRequest = useCallback(
-    (id: string, name: string) => {
-      setPendingDeleteId(id);
-      setPendingDeleteName(name);
-      onDeleteOpen();
+    async (id: string, name: string) => {
+      const ok = await confirm({
+        title: 'Delete Approval Workflow',
+        body: `Delete approval workflow "${name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          toast('Approval workflow deleted', { variant: 'success' });
+        },
+      });
     },
-    [onDeleteOpen],
+    [confirm, deleteMutation],
   );
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => {
-        toast('Approval workflow deleted', { variant: 'success' });
-        setPendingDeleteId(null);
-      },
-    });
-  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -143,9 +136,7 @@ function PrincipalApprovalsPage() {
             onPress={() =>
               handleDeleteRequest(row.original.id!, row.original.name!)
             }
-            isDisabled={
-              deleteMutation.isPending && pendingDeleteId === row.original.id
-            }
+            isDisabled={deleteMutation.isPending}
           >
             Delete
           </BaseButton>
@@ -191,14 +182,7 @@ function PrincipalApprovalsPage() {
         />
       )}
 
-      <ConfirmDeleteModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Approval Workflow"
-        message={`Delete approval workflow "${pendingDeleteName}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
+      {dialog}
     </div>
   );
 }

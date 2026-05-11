@@ -4,12 +4,12 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import type { CannedResponseDto } from '@/types/canned-response';
 import { CannedResponseScope } from '@/types/canned-response';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { toast } from '@heroui/react';
 
 import { Helmet } from '@modern-js/runtime/head';
@@ -21,16 +21,13 @@ function CannedResponsesPage() {
   const [editingResponse, setEditingResponse] = useState<
     CannedResponseDto | undefined
   >();
-  const [pendingDelete, setPendingDelete] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
 
   const { cannedResponses, isLoading } = useCannedResponses(
     undefined,
     searchTerm,
   );
   const deleteMutation = useDeleteCannedResponse();
+  const { confirm, dialog } = useConfirm();
 
   const handleCreate = () => {
     setEditingResponse(undefined);
@@ -42,14 +39,16 @@ function CannedResponsesPage() {
     setIsEditorOpen(true);
   };
 
-  const handleDeleteRequest = (id: string, title: string) => {
-    setPendingDelete({ id, title });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!pendingDelete) return;
+  const handleDeleteRequest = async (id: string, title: string) => {
+    const ok = await confirm({
+      title: 'Delete Canned Response',
+      body: `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
     try {
-      await deleteMutation.mutateAsync(pendingDelete.id);
+      await deleteMutation.mutateAsync(id);
       toast('Deleted', {
         description: 'Canned response deleted successfully',
         variant: 'success',
@@ -59,8 +58,6 @@ function CannedResponsesPage() {
         description: 'Failed to delete canned response',
         variant: 'danger',
       });
-    } finally {
-      setPendingDelete(null);
     }
   };
 
@@ -155,19 +152,16 @@ function CannedResponsesPage() {
           <span className="text-default-500">Loading...</span>
         </div>
       ) : cannedResponses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
-          <Icon
-            name="document-text"
-            className="h-12 w-12 text-default-300 mb-3"
-          />
-          <p className="text-default-500 mb-1">No canned responses yet</p>
-          <p className="text-default-400 text-sm mb-4">
-            Create your first canned response to get started
-          </p>
-          <BaseButton color="primary" onPress={handleCreate}>
-            Create Canned Response
-          </BaseButton>
-        </div>
+        <EmptyState
+          title="No canned responses yet"
+          description="Create your first canned response to get started."
+          action={
+            <BaseButton color="primary" onPress={handleCreate}>
+              Create Canned Response
+            </BaseButton>
+          }
+          live
+        />
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full">
@@ -251,14 +245,7 @@ function CannedResponsesPage() {
         cannedResponse={editingResponse}
       />
 
-      <ConfirmDeleteModal
-        isOpen={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Canned Response"
-        message={`Are you sure you want to delete "${pendingDelete?.title}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
+      {dialog}
     </>
   );
 }

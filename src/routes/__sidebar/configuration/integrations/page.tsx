@@ -4,13 +4,13 @@ import {
   useDeleteIntegration,
   useIntegrations,
 } from '@/components/integrations/hooks/useIntegrations';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import { INTEGRATION_PROVIDERS, IntegrationType } from '@/types/integration';
 import type {
   IntegrationConfigDto,
   IntegrationProviderMeta,
 } from '@/types/integration';
 import { BaseButton, Icon } from '@brainforgeau/components';
+import { useConfirm } from '@brainforgeau/components/page';
 import { Card, CardContent, Chip, Spinner, toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
@@ -18,14 +18,13 @@ import { useState } from 'react';
 function IntegrationsPage() {
   const { integrations, isLoading } = useIntegrations();
   const deleteMutation = useDeleteIntegration();
+  const { confirm, dialog } = useConfirm();
 
   const [modalProvider, setModalProvider] =
     useState<IntegrationProviderMeta | null>(null);
   const [editingIntegration, setEditingIntegration] = useState<
     IntegrationConfigDto | undefined
   >();
-  const [pendingDelete, setPendingDelete] =
-    useState<IntegrationConfigDto | null>(null);
 
   const openAdd = (provider: IntegrationProviderMeta) => {
     setEditingIntegration(undefined);
@@ -41,16 +40,18 @@ function IntegrationsPage() {
     setModalProvider(provider);
   };
 
-  const handleDeleteRequest = (integration: IntegrationConfigDto) => {
-    setPendingDelete(integration);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!pendingDelete) return;
+  const handleDeleteRequest = async (integration: IntegrationConfigDto) => {
+    const ok = await confirm({
+      title: 'Remove Integration',
+      body: `Remove "${integration.name}"? This cannot be undone.`,
+      confirmLabel: 'Remove',
+      destructive: true,
+    });
+    if (!ok) return;
     try {
-      await deleteMutation.mutateAsync(pendingDelete.id);
+      await deleteMutation.mutateAsync(integration.id);
       toast('Removed', {
-        description: `"${pendingDelete.name}" removed.`,
+        description: `"${integration.name}" removed.`,
         variant: 'success',
       });
     } catch {
@@ -58,8 +59,6 @@ function IntegrationsPage() {
         description: 'Failed to remove integration.',
         variant: 'danger',
       });
-    } finally {
-      setPendingDelete(null);
     }
   };
 
@@ -221,14 +220,7 @@ function IntegrationsPage() {
         />
       )}
 
-      <ConfirmDeleteModal
-        isOpen={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Remove Integration"
-        message={`Remove "${pendingDelete?.name}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
+      {dialog}
     </>
   );
 }

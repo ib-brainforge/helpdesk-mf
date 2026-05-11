@@ -3,7 +3,6 @@ import {
   useEmailTemplatesData,
   useEmailTemplatesTable,
 } from '@/components/email-templates';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   BaseButton,
@@ -11,19 +10,20 @@ import {
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
+import { useConfirm } from '@brainforgeau/components/page';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 function EmailTemplatesPage() {
   const navigate = useNavigate();
   const { items, totalCount, pagination, setPagination, isLoading, refetch } =
     useEmailTemplatesData();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   // REVIEW: Email templates are stored in AppSettings with category 'EmailTemplate'
   const deleteMutation = useMutation({
@@ -47,16 +47,19 @@ function EmailTemplatesPage() {
     [navigate],
   );
 
-  const handleDelete = useCallback((templateId: string) => {
-    setPendingDeleteId(templateId);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSettled: () => setPendingDeleteId(null),
-    });
-  }, [pendingDeleteId, deleteMutation]);
+  const handleDelete = useCallback(
+    async (templateId: string) => {
+      const ok = await confirm({
+        title: 'Delete Email Template',
+        body: 'Are you sure you want to delete this email template? This cannot be undone.',
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(templateId);
+    },
+    [confirm, deleteMutation],
+  );
 
   const columns = useMemo(
     () =>
@@ -118,14 +121,7 @@ function EmailTemplatesPage() {
         loading={{ title: 'Loading...' }}
       />
 
-      <ConfirmDeleteModal
-        isOpen={pendingDeleteId !== null}
-        onClose={() => setPendingDeleteId(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Email Template"
-        message="Are you sure you want to delete this email template? This cannot be undone."
-        isPending={deleteMutation.isPending}
-      />
+      {dialog}
     </>
   );
 }

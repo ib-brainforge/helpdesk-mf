@@ -5,6 +5,7 @@ import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { SlaPolicyComplianceDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { EmptyState } from '@brainforgeau/components/page';
 import { Card, CardContent, Spinner } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import {
@@ -155,7 +156,7 @@ function SlaCompliancePage() {
           <BaseTable table={table} isLoading={false} fullHeight={false} />
         </>
       ) : (
-        <p className="text-default-500">No SLA data available.</p>
+        <EmptyState title="No SLA data available" live />
       )}
     </>
   );

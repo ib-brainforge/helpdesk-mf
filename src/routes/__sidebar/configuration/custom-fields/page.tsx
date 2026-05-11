@@ -2,6 +2,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BaseTable, TablePagination } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { EmptyState } from '@brainforgeau/components/page';
 import {
   CustomFieldEditorModal,
   createCustomFieldsColumns,
@@ -193,13 +194,11 @@ function CustomFieldsPage() {
               loading={{ title: 'Loading...' }}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
-              <Icon name="inbox" className="h-12 w-12 text-default-300 mb-3" />
-              <p className="text-default-500 mb-1">No custom fields yet</p>
-              <p className="text-default-400 text-sm mb-4">
-                Custom fields for {selectedTab} are not yet available
-              </p>
-            </div>
+            <EmptyState
+              title="No custom fields yet"
+              description={`Custom fields for ${selectedTab} are not yet available.`}
+              live
+            />
           )}
         </div>
       </div>

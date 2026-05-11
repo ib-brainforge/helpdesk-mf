@@ -2,6 +2,7 @@ import { StatusBadge } from '@/components/shared';
 import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { EmptyState } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
 import DOMPurify from 'dompurify';
 
@@ -60,12 +61,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
   if (comments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <p className="text-default-500 text-sm">No comments yet.</p>
-        <p className="text-default-400 text-xs mt-1">
-          Be the first to add a comment.
-        </p>
-      </div>
+      <EmptyState
+        title="No comments yet"
+        description="Be the first to add a comment."
+        size="sm"
+        live
+      />
     );
   }
 

@@ -7,6 +7,7 @@ import {
   BaseSelectItem,
   Icon,
 } from '@brainforgeau/components';
+import { EmptyState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { useTimezone } from '@brainforgeau/security';
@@ -106,16 +107,11 @@ function KnowledgeBaseSearchPage() {
             <p className="text-gray-500">Searching...</p>
           </div>
         ) : !searchResults || searchResults.items?.length === 0 ? (
-          <div className="py-12 text-center">
-            <Icon
-              name="document-text"
-              className="mx-auto h-12 w-12 text-gray-400"
-            />
-            <p className="mt-4 text-gray-500">No articles found</p>
-            <p className="mt-2 text-sm text-gray-400">
-              Try different keywords or categories
-            </p>
-          </div>
+          <EmptyState
+            title="No articles found"
+            description="Try different keywords or categories."
+            live
+          />
         ) : (
           <div>
             <div className="mb-4 text-sm text-gray-600">

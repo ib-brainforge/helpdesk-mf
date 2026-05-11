@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
+import { EmptyState } from '@brainforgeau/components/page';
 import { toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
@@ -85,16 +86,11 @@ function CustomPrioritiesPage() {
           <div className="bg-default-100 px-4 py-3 border-b">
             <h3 className="font-semibold text-sm">Existing Priorities</h3>
           </div>
-          <div className="p-8 text-center">
-            <Icon
-              name="inbox"
-              className="h-12 w-12 text-default-300 mx-auto mb-3"
-            />
-            <p className="text-default-500 mb-1">No custom priorities yet</p>
-            <p className="text-default-400 text-sm">
-              Add your first custom priority using the form above
-            </p>
-          </div>
+          <EmptyState
+            title="No custom priorities yet"
+            description="Add your first custom priority using the form above."
+            size="sm"
+          />
         </div>
       </div>
     </>

@@ -2,19 +2,19 @@
  * Principal categories list page — /principal/[principalId]/categories
  *
  * Admin-only. Lists all principal-scoped categories.
- * Create navigates to /categories/new. Delete uses ConfirmDeleteModal.
+ * Create navigates to /categories/new. Delete uses useConfirm.
  */
 
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import {
   useDeletePrincipalCategory,
   usePrincipalCategories,
 } from '@/hooks/usePrincipalCategories';
 import { BaseButton, BaseTable, PageSpinner } from '@brainforgeau/components';
+import { useConfirm } from '@brainforgeau/components/page';
 import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { toast, useOverlayState } from '@heroui/react';
+import { toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -25,7 +25,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
 const columnHelper =
@@ -35,13 +35,7 @@ function PrincipalCategoriesPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
-
-  const isDeleteState = useOverlayState();
-  const isDeleteOpen = isDeleteState.isOpen;
-  const onDeleteOpen = isDeleteState.open;
-  const onDeleteClose = isDeleteState.close;
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
+  const { confirm, dialog } = useConfirm();
 
   const {
     data: categories,
@@ -62,23 +56,22 @@ function PrincipalCategoriesPage() {
   }
 
   const handleDeleteRequest = useCallback(
-    (id: string, name: string) => {
-      setPendingDeleteId(id);
-      setPendingDeleteName(name);
-      onDeleteOpen();
+    async (id: string, name: string) => {
+      const ok = await confirm({
+        title: 'Delete Category',
+        body: `Delete category "${name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          toast('Category deleted', { variant: 'success' });
+        },
+      });
     },
-    [onDeleteOpen],
+    [confirm, deleteMutation],
   );
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => {
-        toast('Category deleted', { variant: 'success' });
-        setPendingDeleteId(null);
-      },
-    });
-  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -133,9 +126,7 @@ function PrincipalCategoriesPage() {
             onPress={() =>
               handleDeleteRequest(row.original.id!, row.original.name!)
             }
-            isDisabled={
-              deleteMutation.isPending && pendingDeleteId === row.original.id
-            }
+            isDisabled={deleteMutation.isPending}
           >
             Delete
           </BaseButton>
@@ -181,14 +172,7 @@ function PrincipalCategoriesPage() {
         />
       )}
 
-      <ConfirmDeleteModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Category"
-        message={`Delete category "${pendingDeleteName}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
+      {dialog}
     </div>
   );
 }

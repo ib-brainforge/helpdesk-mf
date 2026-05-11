@@ -1,14 +1,13 @@
 import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
 import { SummaryCard } from '@/components/shared';
-import { TEST_IDS } from '@/constants/testIds';
 import type {
   CategoryBreakdownDto,
   PriorityBreakdownDto,
   StatusBreakdownDto,
 } from '@/types';
 import { Box, DonutChart, PageSpinner } from '@brainforgeau/components';
+import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Helmet } from '@modern-js/runtime/head';
 
 const STATUS_COLORS: Record<string, string> = {
   New: '#3b82f6',
@@ -78,7 +77,7 @@ function toCategoryDonut(
     }));
 }
 
-function DashboardPage() {
+function HelpdeskDashboardPage() {
   const { data: summaryData, isLoading } = useTicketSummaryReport();
 
   if (isLoading) {
@@ -96,21 +95,11 @@ function DashboardPage() {
     : [];
 
   return (
-    <>
-      <Helmet>
-        <title>Dashboard</title>
-      </Helmet>
-      <div className="mb-5" data-testid={TEST_IDS.dashboard.page}>
-        <div className="mb-5 items-center justify-between lg:flex">
-          <h1 className="text-2xl font-semibold dark:text-white mb-2.5 lg:mb-0">
-            Helpdesk Dashboard
-          </h1>
-        </div>
-      </div>
-
-      <div className="mb-7.5 flex flex-col gap-6">
-        {/* Key Metrics */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <DashboardPage
+      title="Helpdesk Dashboard"
+      breadcrumbsKey="dashboard"
+      summary={
+        <>
           <SummaryCard
             title="Total Created"
             value={summaryData?.totalCreated ?? 0}
@@ -138,15 +127,15 @@ function DashboardPage() {
             icon="clock"
             variant="default"
           />
-        </div>
-
-        {/* Charts Row */}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        </>
+      }
+      charts={
+        <>
           <Box title="Tickets by Status">
             {statusDonut.length > 0 ? (
               <DonutChart data={statusDonut} />
             ) : (
-              <EmptyChartState message="No ticket data" />
+              <EmptyState title="No ticket data" size="sm" />
             )}
           </Box>
 
@@ -154,7 +143,7 @@ function DashboardPage() {
             {priorityDonut.length > 0 ? (
               <DonutChart data={priorityDonut} />
             ) : (
-              <EmptyChartState message="No priority data" />
+              <EmptyState title="No priority data" size="sm" />
             )}
           </Box>
 
@@ -162,23 +151,15 @@ function DashboardPage() {
             {categoryDonut.length > 0 ? (
               <DonutChart data={categoryDonut} />
             ) : (
-              <EmptyChartState message="No category data" />
+              <EmptyState title="No category data" size="sm" />
             )}
           </Box>
-        </div>
-      </div>
-    </>
+        </>
+      }
+    />
   );
 }
 
-function EmptyChartState({ message }: { message: string }) {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <span className="text-default-400 text-sm">{message}</span>
-    </div>
-  );
-}
-
-export default withAuthenticationRequired(DashboardPage, {
+export default withAuthenticationRequired(HelpdeskDashboardPage, {
   OnRedirecting: () => <PageSpinner title="Loading..." />,
 });

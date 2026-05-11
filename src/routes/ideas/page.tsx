@@ -11,6 +11,7 @@ import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
 import { PageSpinner } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { EmptyState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import {
   useTimezone,
@@ -48,13 +49,10 @@ function IdeasForumPage() {
         </div>
       ) : ideas.length === 0 ? (
         <Box>
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center text-default-500">
-            <p className="text-lg font-medium">No ideas yet</p>
-            <p className="text-sm">
-              Agents can publish tickets to the Ideas Forum from the ticket
-              detail page.
-            </p>
-          </div>
+          <EmptyState
+            title="No ideas yet"
+            description="Agents can publish tickets to the Ideas Forum from the ticket detail page."
+          />
         </Box>
       ) : (
         <div className="flex flex-col gap-4">

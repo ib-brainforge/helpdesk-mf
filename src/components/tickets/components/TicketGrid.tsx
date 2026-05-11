@@ -29,13 +29,13 @@ import {
 } from '../hooks/useTickets';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { BulkAssignModal } from './BulkAssignModal';
-import { BulkDeleteModal } from './BulkDeleteModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { NewTicketModal } from './NewTicketModal';
 import { TicketFilters } from './TicketFilters';
 import { createTicketColumns } from './ticket-grid-columns';
 
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
 import { TicketSidebar } from '../TicketSidebar';
 import type { TicketRow } from '../types';
@@ -88,10 +88,10 @@ export const TicketGrid: FC = () => {
   const bulkUpdateMutation = useBulkUpdateTickets();
   const bulkDeleteMutation = useBulkDeleteTickets();
 
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
-  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
 
   const handleAssign = useCallback(
     (ticketId: string, assigneeId: string) => {
@@ -158,10 +158,6 @@ export const TicketGrid: FC = () => {
     setIsBulkStatusModalOpen(true);
   }, []);
 
-  const handleBulkDelete = useCallback(() => {
-    setIsBulkDeleteModalOpen(true);
-  }, []);
-
   const handleBulkAssignConfirm = useCallback(
     (assigneeId: string | undefined) => {
       const ids = selectedRows
@@ -204,10 +200,17 @@ export const TicketGrid: FC = () => {
     [selectedRows, bulkUpdateMutation, table],
   );
 
-  const handleBulkDeleteConfirm = useCallback(() => {
+  const handleBulkDelete = useCallback(async () => {
     const ids = selectedRows
       .map(row => row.original.id)
       .filter((id): id is string => !!id);
+    const ok = await confirm({
+      title: 'Delete Tickets',
+      body: `This action will permanently delete ${ids.length} ticket${ids.length !== 1 ? 's' : ''}. Are you sure you want to continue?`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
     bulkDeleteMutation.mutate(ids, {
       onSuccess: () => {
         toast('Tickets deleted', {
@@ -217,7 +220,7 @@ export const TicketGrid: FC = () => {
         table.resetRowSelection();
       },
     });
-  }, [selectedRows, bulkDeleteMutation, table]);
+  }, [selectedRows, confirm, bulkDeleteMutation, table]);
 
   const handleSearch = useCallback(
     (term: string) => {
@@ -521,17 +524,12 @@ export const TicketGrid: FC = () => {
           onConfirm={handleBulkStatusConfirm}
           ticketCount={selectedRows.length}
         />
-        <BulkDeleteModal
-          isOpen={isBulkDeleteModalOpen}
-          onClose={() => setIsBulkDeleteModalOpen(false)}
-          onConfirm={handleBulkDeleteConfirm}
-          ticketCount={selectedRows.length}
-        />
         <NewTicketModal
           isOpen={isNewTicketModalOpen}
           onClose={() => setIsNewTicketModalOpen(false)}
           onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
         />
+        {confirmDialog}
       </div>
     </div>
   );

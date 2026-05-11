@@ -4,11 +4,11 @@ import {
   useCustomStatuses,
   useDeleteCustomStatus,
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
 import { TicketStatus } from '@/types/custom-status';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { Chip, Spinner, toast } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
@@ -24,13 +24,10 @@ function CustomStatusesPage() {
   const [editingStatus, setEditingStatus] = useState<
     CustomTicketStatusDto | undefined
   >();
-  const [pendingDelete, setPendingDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
 
   const { customStatuses, isLoading } = useCustomStatuses();
   const deleteMutation = useDeleteCustomStatus();
+  const { confirm, dialog } = useConfirm();
 
   const handleCreate = () => {
     setEditingStatus(undefined);
@@ -42,14 +39,16 @@ function CustomStatusesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteRequest = (id: string, name: string) => {
-    setPendingDelete({ id, name });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!pendingDelete) return;
+  const handleDeleteRequest = async (id: string, name: string) => {
+    const ok = await confirm({
+      title: 'Delete Custom Status',
+      body: `Are you sure you want to delete "${name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
     try {
-      await deleteMutation.mutateAsync(pendingDelete.id);
+      await deleteMutation.mutateAsync(id);
       toast('Deleted', {
         description: 'Custom status deleted',
         variant: 'success',
@@ -59,8 +58,6 @@ function CustomStatusesPage() {
         description: 'Failed to delete custom status',
         variant: 'danger',
       });
-    } finally {
-      setPendingDelete(null);
     }
   };
 
@@ -115,24 +112,16 @@ function CustomStatusesPage() {
             <Spinner size="lg" />
           </div>
         ) : customStatuses.length === 0 ? (
-          <div className="border rounded-lg overflow-hidden">
-            <div className="p-12 text-center">
-              <Icon
-                name="flag"
-                className="h-12 w-12 text-default-300 mx-auto mb-3"
-              />
-              <p className="text-default-500 mb-1 font-medium">
-                No custom statuses yet
-              </p>
-              <p className="text-default-400 text-sm mb-4">
-                Add your first custom status to extend the built-in ticket
-                lifecycle
-              </p>
+          <EmptyState
+            title="No custom statuses yet"
+            description="Add your first custom status to extend the built-in ticket lifecycle."
+            action={
               <BaseButton color="primary" size="sm" onPress={handleCreate}>
                 Create First Status
               </BaseButton>
-            </div>
-          </div>
+            }
+            live
+          />
         ) : (
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-default-100 px-4 py-3 border-b flex items-center justify-between">
@@ -218,14 +207,7 @@ function CustomStatusesPage() {
         status={editingStatus}
       />
 
-      <ConfirmDeleteModal
-        isOpen={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Custom Status"
-        message={`Are you sure you want to delete "${pendingDelete?.name}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
+      {dialog}
     </>
   );
 }

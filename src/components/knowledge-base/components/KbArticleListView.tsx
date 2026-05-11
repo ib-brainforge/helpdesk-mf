@@ -2,6 +2,7 @@ import type { KnowledgeBaseArticleListDto } from '@/types';
 import { KnowledgeBaseStatus } from '@/types';
 import { BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { EmptyState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { Chip } from '@heroui/react';
@@ -124,13 +125,7 @@ export function KbArticleListView({
 
   if (articles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
-        <Icon
-          name="document-text"
-          className="h-12 w-12 text-default-300 mb-3"
-        />
-        <p className="text-default-500 mb-1">No articles found</p>
-      </div>
+      <EmptyState title="No articles found" live />
     );
   }
 

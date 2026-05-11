@@ -6,6 +6,7 @@ import { getAppConfig } from '@/state/config';
 import type { HelpdeskRole, TenantUserDto } from '@/types/admin-user';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { EmptyState } from '@brainforgeau/components/page';
 import { Chip, Link, Spinner } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useState } from 'react';
@@ -117,16 +118,11 @@ function AdminUsersPage() {
           <Spinner size="lg" />
         </div>
       ) : tenantUsers.length === 0 ? (
-        <div className="border rounded-lg p-12 text-center">
-          <Icon
-            name="users"
-            className="h-12 w-12 text-default-300 mx-auto mb-3"
-          />
-          <p className="text-default-500 font-medium mb-1">No users yet</p>
-          <p className="text-default-400 text-sm">
-            Users appear here once they submit or are assigned to tickets
-          </p>
-        </div>
+        <EmptyState
+          title="No users yet"
+          description="Users appear here once they submit or are assigned to tickets."
+          live
+        />
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-default-100 px-4 py-3 border-b">

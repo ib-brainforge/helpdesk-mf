@@ -27,6 +27,7 @@ import { CommentType } from '@/types/comment';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box, PageSpinner } from '@brainforgeau/components/base';
+import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
 import {
@@ -66,7 +67,6 @@ import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { CSATWidget } from './CSATWidget';
 import { ConvertToReplyModal } from './ConvertToReplyModal';
-import { DeleteTicketModal } from './DeleteTicketModal';
 import { DuplicateTicketModal } from './DuplicateTicketModal';
 import { EditTicketModal } from './EditTicketModal';
 import { ForwardTicketModal } from './ForwardTicketModal';
@@ -167,12 +167,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const publishAsIdeaMutation = usePublishTicketAsIdea();
   const unpublishAsIdeaMutation = useUnpublishTicketAsIdea();
 
+  const { confirm: confirmAction, dialog: confirmDialog } = useConfirm();
   const [showAttachments, setShowAttachments] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMarkSpamModalOpen, setIsMarkSpamModalOpen] = useState(false);
 
   // Wave 3 modal state
@@ -304,8 +304,15 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   }, [id, isSubscribed, subscribeMutation, unsubscribeMutation]);
 
   // Delete
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteTicket = useCallback(async () => {
     if (!id) return;
+    const ok = await confirmAction({
+      title: 'Delete Ticket',
+      body: 'This ticket will be moved to trash and can be restored within 30 days from the audit log.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
     deleteTicketMutation.mutate(id, {
       onSuccess: () => {
         toast('Ticket deleted', {
@@ -319,10 +326,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           description: 'Failed to delete ticket. Please try again.',
           variant: 'danger',
         });
-        setIsDeleteModalOpen(false);
       },
     });
-  }, [id, deleteTicketMutation, navigate]);
+  }, [id, confirmAction, deleteTicketMutation, navigate]);
 
   // Print
   const handlePrint = useCallback(() => {
@@ -925,7 +931,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           <DropdownItem
                             key="delete"
                             className="text-danger"
-                            onPress={() => setIsDeleteModalOpen(true)}
+                            onPress={handleDeleteTicket}
                           >
                             Delete
                           </DropdownItem>
@@ -1240,12 +1246,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onClose={() => setIsNewTicketModalOpen(false)}
           onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
         />
-        <DeleteTicketModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onConfirm={handleDeleteConfirm}
-          isLoading={deleteTicketMutation.isPending}
-        />
+        {confirmDialog}
         <MarkSpamModal
           isOpen={isMarkSpamModalOpen}
           onClose={() => setIsMarkSpamModalOpen(false)}
