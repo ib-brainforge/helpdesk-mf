@@ -41,10 +41,12 @@ interface KnowledgeBaseArticleEditorFormProps {
   mode: 'create' | 'edit';
 }
 
+// Access level options use string enum values that match the backend directly.
 const ACCESS_LEVEL_OPTIONS = [
   { id: KnowledgeBaseAccessLevel.Public, name: 'Public', description: 'Visible to everyone' },
-  { id: KnowledgeBaseAccessLevel.Internal, name: 'Internal', description: 'Visible to authenticated users' },
-  { id: KnowledgeBaseAccessLevel.Private, name: 'Private', description: 'Visible to admins only' },
+  { id: KnowledgeBaseAccessLevel.Authenticated, name: 'Authenticated', description: 'Visible to authenticated users' },
+  { id: KnowledgeBaseAccessLevel.TechOnly, name: 'Tech Only', description: 'Visible to technicians only' },
+  { id: KnowledgeBaseAccessLevel.AdminOnly, name: 'Admin Only', description: 'Visible to admins only' },
 ];
 
 const STATUS_OPTIONS = [
@@ -267,16 +269,17 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
                 <BaseSelect
                   label="Access Level"
                   isRequired
-                  selectedKey={String(field.state.value)}
+                  // Since KnowledgeBaseAccessLevel is now a string enum, the value IS the key.
+                  selectedKey={field.state.value}
                   onSelectionChange={(keys) => {
-                    const newValue = Number(keys) as KnowledgeBaseAccessLevel;
+                    const newValue = keys as KnowledgeBaseAccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {ACCESS_LEVEL_OPTIONS.map((level) => (
-                    <BaseSelectItem key={String(level.id)} textValue={level.name}>
+                    <BaseSelectItem key={level.id} textValue={level.name}>
                       <div className="flex flex-col">
                         <span className="font-medium">{level.name}</span>
                         <span className="text-xs text-default-400">{level.description}</span>
@@ -292,9 +295,10 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
                 <BaseSelect
                   label="Status"
                   isRequired
-                  selectedKey={String(field.state.value)}
+                  // Since KnowledgeBaseStatus is now a string enum, the value IS the key.
+                  selectedKey={field.state.value}
                   onSelectionChange={(keys) => {
-                    const newValue = Number(keys) as KnowledgeBaseStatus;
+                    const newValue = keys as KnowledgeBaseStatus;
                     field.handleChange(newValue);
                     setCurrentStatus(newValue);
                   }}
@@ -302,7 +306,7 @@ export const KnowledgeBaseArticleEditorForm: FC<KnowledgeBaseArticleEditorFormPr
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {STATUS_OPTIONS.map((status) => (
-                    <BaseSelectItem key={String(status.id)} textValue={status.name}>
+                    <BaseSelectItem key={status.id} textValue={status.name}>
                       <div className="flex flex-col">
                         <span className="font-medium">{status.name}</span>
                         <span className="text-xs text-default-400">{status.description}</span>

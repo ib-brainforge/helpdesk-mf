@@ -11,8 +11,13 @@ import { z } from 'zod';
 import { Switch, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
+import type {
+  HelpdeskDomainCategoriesEnumsAccessLevel,
+  HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand,
+  HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand,
+} from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CategoryDto, SectionDto, CreateCategoryCommand, UpdateCategoryCommand } from '@/types/category';
+import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 
 const categoryFormSchema = z.object({
@@ -20,8 +25,9 @@ const categoryFormSchema = z.object({
   sectionId: z.string().nullable().optional(),
   accessLevel: z.nativeEnum(AccessLevel),
   defaultAssigneeId: z.string().nullable().optional(),
-  emailRoutingAddress: z.string().email().nullable().optional(),
-  emailRoutingProtocol: z.string().nullable().optional(),
+  fromEmailAddress: z.string().email().nullable().optional(),
+  fromEmailName: z.string().nullable().optional(),
+  useFromAddressAsReplyTo: z.boolean().optional(),
   isActive: z.boolean(),
   sortOrder: z.number().min(0),
   customFieldIds: z.array(z.string()).optional(),
@@ -42,10 +48,12 @@ const ACCESS_LEVEL_OPTIONS = [
   { id: AccessLevel.AdminsOnly, name: 'Admins Only' },
 ];
 
-const EMAIL_PROTOCOL_OPTIONS = [
-  { id: 'IMAP', name: 'IMAP' },
-  { id: 'POP3', name: 'POP3' },
-];
+// Map local numeric AccessLevel enum to the generated string enum expected by the API.
+const ACCESS_LEVEL_TO_API: Record<AccessLevel, HelpdeskDomainCategoriesEnumsAccessLevel> = {
+  [AccessLevel.Everyone]: 'Everyone',
+  [AccessLevel.AgentsOnly]: 'AgentsOnly',
+  [AccessLevel.AdminsOnly]: 'AdminsOnly',
+};
 
 export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
   isOpen,
@@ -61,31 +69,29 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
       const client = await createHelpdeskApiClient(CategoriesApi);
 
       if (isEdit && category) {
-        const updateDto: UpdateCategoryCommand = {
+        const updateDto: HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand = {
           name: data.name,
-          sectionId: data.sectionId || undefined,
-          accessLevel: data.accessLevel,
-          defaultAssigneeId: data.defaultAssigneeId || undefined,
-          emailRoutingAddress: data.emailRoutingAddress || undefined,
-          emailRoutingProtocol: data.emailRoutingProtocol || undefined,
-          isActive: data.isActive,
+          sectionId: data.sectionId || null,
+          accessLevel: ACCESS_LEVEL_TO_API[data.accessLevel],
+          fromEmailAddress: data.fromEmailAddress || null,
+          fromEmailName: data.fromEmailName || null,
+          useFromAddressAsReplyTo: data.useFromAddressAsReplyTo ?? false,
           sortOrder: data.sortOrder,
-          customFieldIds: data.customFieldIds,
+          customFieldIds: data.customFieldIds ?? null,
         };
-        await client.v1CategoriesIdPut(category.id, updateDto as any);
+        await client.v1CategoriesIdPut(category.id, updateDto);
       } else {
-        const createDto: CreateCategoryCommand = {
+        const createDto: HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand = {
           name: data.name,
-          sectionId: data.sectionId || undefined,
-          accessLevel: data.accessLevel,
-          defaultAssigneeId: data.defaultAssigneeId || undefined,
-          emailRoutingAddress: data.emailRoutingAddress || undefined,
-          emailRoutingProtocol: data.emailRoutingProtocol || undefined,
-          isActive: data.isActive,
+          sectionId: data.sectionId || null,
+          accessLevel: ACCESS_LEVEL_TO_API[data.accessLevel],
+          fromEmailAddress: data.fromEmailAddress || null,
+          fromEmailName: data.fromEmailName || null,
+          useFromAddressAsReplyTo: data.useFromAddressAsReplyTo ?? false,
           sortOrder: data.sortOrder,
-          customFieldIds: data.customFieldIds,
+          customFieldIds: data.customFieldIds ?? null,
         };
-        await client.v1CategoriesPost(createDto as any);
+        await client.v1CategoriesPost(createDto);
       }
     },
     onSuccess: () => {
@@ -104,8 +110,9 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
       sectionId: category?.sectionId || null,
       accessLevel: category?.accessLevel ?? AccessLevel.Everyone,
       defaultAssigneeId: category?.defaultAssigneeId || null,
-      emailRoutingAddress: category?.emailRoutingAddress || null,
-      emailRoutingProtocol: category?.emailRoutingProtocol || null,
+      fromEmailAddress: category?.fromEmailAddress || null,
+      fromEmailName: category?.fromEmailName || null,
+      useFromAddressAsReplyTo: category?.useFromAddressAsReplyTo ?? false,
       isActive: category?.isActive ?? true,
       sortOrder: category?.sortOrder ?? 0,
       customFieldIds: category?.customFieldIds || [],
@@ -203,10 +210,10 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
             </form.Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <form.Field name="emailRoutingAddress">
+              <form.Field name="fromEmailAddress">
                 {(field) => (
                   <BaseInput
-                    label="Email Routing Address"
+                    label="From Email Address"
                     type="email"
                     name={field.name}
                     value={field.state.value ?? ''}
@@ -218,24 +225,31 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                 )}
               </form.Field>
 
-              <form.Field name="emailRoutingProtocol">
+              <form.Field name="fromEmailName">
                 {(field) => (
-                  <BaseSelect
-                    label="Email Protocol"
-                    placeholder="Select protocol"
-                    selectedKey={field.state.value ? field.state.value : null}
-                    onSelectionChange={(keys) => {
-                      const newValue = keys || null;
-                      field.handleChange(newValue);
-                    }}
-                  >
-                    {EMAIL_PROTOCOL_OPTIONS.map((protocol) => (
-                      <BaseSelectItem key={protocol.id}>{protocol.name}</BaseSelectItem>
-                    ))}
-                  </BaseSelect>
+                  <BaseInput
+                    label="From Name"
+                    name={field.name}
+                    value={field.state.value ?? ''}
+                    onChange={(e) => field.handleChange(e.target.value || null)}
+                    placeholder="Support Team"
+                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    isInvalid={field.state.meta.errors.length > 0}
+                  />
                 )}
               </form.Field>
             </div>
+
+            <form.Field name="useFromAddressAsReplyTo">
+              {(field) => (
+                <Switch
+                  isSelected={field.state.value ?? false}
+                  onChange={(checked) => field.handleChange(checked)}
+                >
+                  Use from address as reply-to
+                </Switch>
+              )}
+            </form.Field>
 
             <form.Field name="sortOrder">
               {(field) => (

@@ -33,7 +33,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
         body: details,
         categoryId: categoryId ?? undefined,
         tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        accessLevel: forTechniciansOnly ? KnowledgeBaseAccessLevel.Internal : KnowledgeBaseAccessLevel.Public,
+        accessLevel: forTechniciansOnly ? KnowledgeBaseAccessLevel.Authenticated : KnowledgeBaseAccessLevel.Public,
         status: KnowledgeBaseStatus.Draft,
       });
 

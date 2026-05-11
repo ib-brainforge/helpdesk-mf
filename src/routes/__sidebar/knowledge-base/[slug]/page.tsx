@@ -85,7 +85,7 @@ function KnowledgeBaseArticlePage() {
               <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
                 <span className="flex items-center gap-1">
                   <Icon name="user" className="h-4 w-4" />
-                  {article.authorName || 'Unknown'}
+                  {article.authorName || 'Author unavailable'}
                 </span>
                 <span className="flex items-center gap-1">
                   <Icon name="calendar" className="h-4 w-4" />

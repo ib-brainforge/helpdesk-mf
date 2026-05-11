@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
-import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
-import type { HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto } from '@brainforgeau/helpdesk-client';
+import {
+  KnowledgeBaseApi,
+  type HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
+  type HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
+  type HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto,
+  type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
+  type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
+} from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   KnowledgeBaseArticleListDto,
@@ -11,7 +17,40 @@ import type {
   CreateKnowledgeBaseArticleDto,
   UpdateKnowledgeBaseArticleDto,
 } from '@/types';
-import { KnowledgeBaseStatus } from '@/types';
+import { KnowledgeBaseStatus, KnowledgeBaseAccessLevel } from '@/types';
+
+// Map a generated KbArticleStatus string to the local KnowledgeBaseStatus string enum.
+// The generated type and the local enum share the same string values, so this is a
+// safe identity mapping that provides compile-time checking.
+function mapStatus(
+  status: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus | undefined,
+): KnowledgeBaseStatus {
+  switch (status) {
+    case 'Published':
+      return KnowledgeBaseStatus.Published;
+    case 'Archived':
+      return KnowledgeBaseStatus.Archived;
+    case 'Draft':
+    default:
+      return KnowledgeBaseStatus.Draft;
+  }
+}
+
+function mapAccessLevel(
+  accessLevel: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel | undefined,
+): KnowledgeBaseAccessLevel {
+  switch (accessLevel) {
+    case 'Authenticated':
+      return KnowledgeBaseAccessLevel.Authenticated;
+    case 'TechOnly':
+      return KnowledgeBaseAccessLevel.TechOnly;
+    case 'AdminOnly':
+      return KnowledgeBaseAccessLevel.AdminOnly;
+    case 'Public':
+    default:
+      return KnowledgeBaseAccessLevel.Public;
+  }
+}
 
 
 export const useKnowledgeBaseCategories = () => {
@@ -20,8 +59,15 @@ export const useKnowledgeBaseCategories = () => {
     queryFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbCategoriesGet();
-      // REVIEW: Type mapping from generated types to local types may be needed
-      return (response.data as unknown) as KnowledgeBaseCategoryDto[];
+      const categories = response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto[];
+      return categories.map((cat): KnowledgeBaseCategoryDto => ({
+        id: cat.id ?? '',
+        name: cat.name ?? '',
+        description: cat.description ?? undefined,
+        parentId: undefined,
+        articleCount: 0, // KbCategoryDto does not expose article count — backend does not return this field
+        order: cat.sortOrder ?? 0,
+      }));
     },
   });
 };
@@ -33,15 +79,48 @@ export const useKnowledgeBaseArticles = (categoryId?: string, searchTerm?: strin
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       if (searchTerm) {
         const response = await client.v1KbArticlesSearchGet(searchTerm);
-        // REVIEW: Generated client returns PagedResult, mapping may be needed
-        return (response.data as unknown) as PagedResult<KnowledgeBaseArticleListDto>;
+        const pagedData = response.data as { items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[]; totalCount?: number; page?: number; pageSize?: number };
+        return {
+          items: (pagedData.items ?? []).map(mapKbArticleListToDto),
+          totalCount: pagedData.totalCount ?? 0,
+          page: pagedData.page ?? 1,
+          pageSize: pagedData.pageSize ?? 25,
+        };
       }
       const response = await client.v1KbArticlesGet(categoryId);
-      // REVIEW: Generated client returns PagedResult, mapping may be needed
-      return (response.data as unknown) as PagedResult<KnowledgeBaseArticleListDto>;
+      const pagedData = response.data as { items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[]; totalCount?: number; page?: number; pageSize?: number };
+      return {
+        items: (pagedData.items ?? []).map(mapKbArticleListToDto),
+        totalCount: pagedData.totalCount ?? 0,
+        page: pagedData.page ?? 1,
+        pageSize: pagedData.pageSize ?? 25,
+      };
     },
   });
 };
+
+function mapKbArticleListToDto(
+  dto: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
+): KnowledgeBaseArticleListDto {
+  return {
+    id: dto.id ?? '',
+    slug: dto.slug ?? '',
+    title: dto.title ?? '',
+    excerpt: dto.excerpt ?? '',
+    categoryId: dto.categoryId,
+    categoryName: dto.categoryName,
+    status: mapStatus(dto.status),
+    accessLevel: mapAccessLevel(dto.accessLevel),
+    views: dto.viewCount ?? 0,
+    averageRating: undefined,
+    ratingCount: 0,
+    tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
+    authorId: '',
+    createdAt: dto.createdAt ?? new Date().toISOString(),
+    updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
+    publishedAt: dto.publishedAt ?? undefined,
+  };
+}
 
 function mapKbArticleDetailToDto(
   dto: HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
@@ -54,8 +133,8 @@ function mapKbArticleDetailToDto(
     excerpt: dto.excerpt ?? '',
     categoryId: dto.categoryId,
     categoryName: dto.categoryName,
-    status: (dto.status as unknown as number) ?? 0,
-    accessLevel: (dto.accessLevel as unknown as number) ?? 0,
+    status: mapStatus(dto.status),
+    accessLevel: mapAccessLevel(dto.accessLevel),
     views: dto.viewCount ?? 0,
     averageRating: dto.helpfulCount !== undefined && dto.notHelpfulCount !== undefined
       ? dto.helpfulCount + dto.notHelpfulCount > 0
@@ -63,7 +142,12 @@ function mapKbArticleDetailToDto(
         : undefined
       : undefined,
     ratingCount: (dto.helpfulCount ?? 0) + (dto.notHelpfulCount ?? 0),
-    tags: (dto.tags ?? []).map(t => t.name ?? '').filter(Boolean),
+    tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
+    // authorName is not returned by KbArticleDetailDto — only authorId would be available
+    // if the backend exposed it. For now we omit the field so the UI can show a graceful
+    // fallback (e.g. "Author unavailable") rather than a misleading "Unknown".
+    // TODO(D25-follow-up): once the backend exposes authorId on KbArticleDetailDto,
+    // look up the user display name from the identity service.
     authorId: '',
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
@@ -114,13 +198,13 @@ export const useCreateKnowledgeBaseArticle = () => {
   return useMutation({
     mutationFn: async (article: CreateKnowledgeBaseArticleDto) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      // REVIEW: API schema doesn't include status in create command - articles start as Draft
+      // Note: the create command does not accept a status field — articles always start as Draft.
       const response = await client.v1KbArticlesPost({
         title: article.title,
         body: article.body,
         categoryId: article.categoryId,
         tags: article.tags,
-        accessLevel: article.accessLevel as any,
+        accessLevel: article.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
       });
       return response.data;
     },
@@ -137,14 +221,14 @@ export const useUpdateKnowledgeBaseArticle = () => {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: UpdateKnowledgeBaseArticleDto }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      // REVIEW: API schema doesn't include status in update command - use publish endpoint for that
+      // Note: the update command does not accept a status field — use the publish endpoint for status changes.
       const response = await client.v1KbArticlesIdPut(id, {
         id: id,
         title: updates.title,
         body: updates.body,
         categoryId: updates.categoryId,
         tags: updates.tags,
-        accessLevel: updates.accessLevel as any,
+        accessLevel: updates.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel | undefined,
       });
       return response.data;
     },
@@ -272,7 +356,15 @@ export const useDuplicateKbCategory = () => {
     mutationFn: async ({ id, includeArticles }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbCategoriesIdDuplicatePost(id, includeArticles);
-      return response.data as unknown as KnowledgeBaseCategoryDto;
+      const cat = response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto;
+      return {
+        id: cat.id ?? '',
+        name: cat.name ?? '',
+        description: cat.description ?? undefined,
+        parentId: undefined,
+        articleCount: 0, // KbCategoryDto does not expose article count — backend does not return this field
+        order: cat.sortOrder ?? 0,
+      };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base', 'categories'] });

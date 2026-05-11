@@ -42,8 +42,8 @@ export const useTicketsData = () => {
         pagination.pageSize,
         undefined, // sortBy
         undefined, // sortDirection
-        // Pass unassignedOnly as an extra query param until the helpdesk-client is regenerated
-        // post backend PR merge (feature/tickets-unassigned-filter).
+        // TODO(D18): remove this options.params bridge once @brainforgeau/helpdesk-client regenerates with typed unassignedOnly param (post backend PR #86 merge + CI client regen)
+
         filters.unassignedOnly ? { params: { unassignedOnly: true } } : {},
       );
 

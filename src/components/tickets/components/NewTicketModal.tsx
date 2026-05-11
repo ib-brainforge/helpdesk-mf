@@ -31,6 +31,29 @@ interface NewTicketModalProps {
   onCreated?: (ticketId: string) => void;
 }
 
+/** Extract a human-readable error message from a ProblemDetails-style axios error. */
+function extractErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const axiosError = error as { response?: { data?: { errors?: Record<string, string[]> | string[]; detail?: string; title?: string } }; message?: string };
+    const data = axiosError.response?.data;
+    if (data?.errors) {
+      // ProblemDetails validation errors: map of field→messages or flat array
+      if (Array.isArray(data.errors)) {
+        return data.errors.slice(0, 3).join(', ');
+      }
+      const fieldErrors = Object.values(data.errors).flat().slice(0, 3);
+      if (fieldErrors.length > 0) {
+        return fieldErrors.join(', ');
+      }
+    }
+    if (data?.detail) return data.detail;
+    if (data?.title) return data.title;
+    if (axiosError.message) return axiosError.message;
+  }
+  if (error instanceof Error) return error.message;
+  return 'An unexpected error occurred. Please try again.';
+}
+
 export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCreated }) => {
   const createTicketMutation = useCreateTicket();
 
@@ -75,6 +98,9 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
   }, []);
 
   const handleCreate = useCallback(async () => {
+    // Clear any previous submission error before attempting again.
+    setSubmitError(null);
+
     if (!subject.trim()) {
       toast('Subject required', { description: 'Please enter a ticket subject', variant: 'warning' });
       return;
@@ -105,7 +131,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
         onCreated?.(result.id);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
+      const errorMessage = extractErrorMessage(error);
       setSubmitError(errorMessage);
       toast('Failed to create ticket', { description: errorMessage, variant: 'danger' });
     }

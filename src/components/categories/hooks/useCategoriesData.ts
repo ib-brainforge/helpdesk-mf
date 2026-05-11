@@ -1,7 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
+import type {
+  HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto,
+  HelpdeskApplicationCategoriesModelsCategoryDto,
+} from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
+import { AccessLevel } from '@/types/category';
 
 export const useDuplicateCategory = () => {
   const queryClient = useQueryClient();
@@ -18,47 +23,37 @@ export const useDuplicateCategory = () => {
   });
 };
 
-// Local shape of the CategoriesHierarchyDto returned by GET /v1/categories.
-// The backend returns both sectioned and unsectioned categories; both must be parsed.
-type CategoryItemDto = {
-  id?: string;
-  name?: string;
-  sectionId?: string;
-  sectionName?: string;
-  accessLevel?: number;
-  defaultAssigneeId?: string;
-  emailRoutingAddress?: string;
-  emailRoutingProtocol?: string;
-  isActive?: boolean;
-  sortOrder?: number;
-  customFieldIds?: string[];
-};
+// Map a generated CategoryDto to the local CategoryDto shape.
+// Fields fromEmailAddress / fromEmailName / useFromAddressAsReplyTo replace the old
+// emailRoutingAddress / emailRoutingProtocol fields that did not exist on the backend DTO.
+function mapGeneratedCategory(
+  cat: HelpdeskApplicationCategoriesModelsCategoryDto,
+  sectionName?: string,
+): CategoryDto {
+  // HelpdeskDomainCategoriesEnumsAccessLevel uses string values ('Everyone'|'AgentsOnly'|'AdminsOnly')
+  // that are identical to the local AccessLevel enum keys — cast via lookup map for safety.
+  const accessLevelMap: Record<string, AccessLevel> = {
+    Everyone: AccessLevel.Everyone,
+    AgentsOnly: AccessLevel.AgentsOnly,
+    AdminsOnly: AccessLevel.AdminsOnly,
+  };
+  const accessLevel = accessLevelMap[cat.accessLevel as string] ?? AccessLevel.Everyone;
 
-type CategoryHierarchyDto = {
-  sections?: Array<{
-    id?: string;
-    name?: string;
-    sortOrder?: number;
-    isActive?: boolean;
-    categories?: CategoryItemDto[];
-  }>;
-  // Categories that belong to no section — must be included in the flat list
-  unsectionedCategories?: CategoryItemDto[];
-};
-
-const mapCategoryItem = (cat: CategoryItemDto, sectionName?: string): CategoryDto => ({
-  id: cat.id!,
-  name: cat.name!,
-  sectionId: cat.sectionId,
-  sectionName,
-  accessLevel: cat.accessLevel ?? 0,
-  defaultAssigneeId: cat.defaultAssigneeId,
-  emailRoutingAddress: cat.emailRoutingAddress,
-  emailRoutingProtocol: cat.emailRoutingProtocol,
-  isActive: cat.isActive ?? true,
-  sortOrder: cat.sortOrder ?? 0,
-  customFieldIds: cat.customFieldIds,
-});
+  return {
+    id: cat.id ?? '',
+    name: cat.name ?? '',
+    sectionId: cat.sectionId ?? undefined,
+    sectionName,
+    accessLevel,
+    defaultAssigneeId: undefined,
+    fromEmailAddress: cat.fromEmailAddress ?? undefined,
+    fromEmailName: cat.fromEmailName ?? undefined,
+    useFromAddressAsReplyTo: cat.useFromAddressAsReplyTo ?? false,
+    isActive: cat.isActive ?? true,
+    sortOrder: cat.sortOrder ?? 0,
+    customFieldIds: cat.customFieldIds ?? undefined,
+  };
+}
 
 export const useCategoriesData = () => {
   const { data: hierarchyData, isLoading: isLoadingCategories, refetch: refetchCategories } = useQuery<CategoryDto[]>({
@@ -66,13 +61,13 @@ export const useCategoriesData = () => {
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesGet();
-      // Flatten hierarchy into a single array: sectioned categories first, then unsectioned.
-      const hierarchy = data as CategoryHierarchyDto;
+      // Use the generated hierarchy type directly — no local CategoryItemDto / CategoryHierarchyDto needed.
+      const hierarchy = data as HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto;
       const flatCategories: CategoryDto[] = [];
 
       hierarchy.sections?.forEach((section) => {
         section.categories?.forEach((cat) => {
-          flatCategories.push(mapCategoryItem(cat, section.name));
+          flatCategories.push(mapGeneratedCategory(cat, section.name));
         });
       });
 
@@ -80,7 +75,7 @@ export const useCategoriesData = () => {
       // were never included in the list, causing them to be invisible until a hard refresh
       // that happened to bust the browser cache rather than the React Query cache.
       hierarchy.unsectionedCategories?.forEach((cat) => {
-        flatCategories.push(mapCategoryItem(cat, undefined));
+        flatCategories.push(mapGeneratedCategory(cat, undefined));
       });
 
       return flatCategories;

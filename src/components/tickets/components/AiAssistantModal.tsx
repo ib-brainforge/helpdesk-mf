@@ -6,7 +6,7 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Card, CardContent, Spinner, toast } from '@heroui/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useGetTicketSummary, useSuggestReply } from '../hooks/useAiAssist';
 
 type AiAssistantModalProps = {
@@ -56,9 +56,16 @@ export function AiAssistantModal({
   const summaryMutation = useGetTicketSummary();
   const suggestReplyMutation = useSuggestReply();
 
+  // AbortController ref — a new controller is created per request; cancelled on modal close.
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const isLoading = summaryMutation.isPending || suggestReplyMutation.isPending;
 
   const handleClose = () => {
+    // Cancel any in-flight AI request before resetting state.
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+
     setActiveFeature(null);
     setAiResult(null);
     summaryMutation.reset();
@@ -69,8 +76,12 @@ export function AiAssistantModal({
   const handleTicketSummary = async () => {
     setActiveFeature('ticket-summary');
     setAiResult(null);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const result = await summaryMutation.mutateAsync(ticketId);
+      const result = await summaryMutation.mutateAsync({ ticketId, signal: controller.signal });
       setAiResult(result.result);
     } catch (error) {
       if (isAiNotConfiguredError(error)) {
@@ -85,8 +96,12 @@ export function AiAssistantModal({
   const handleSuggestReply = async () => {
     setActiveFeature('generate-response');
     setAiResult(null);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const result = await suggestReplyMutation.mutateAsync(ticketId);
+      const result = await suggestReplyMutation.mutateAsync({ ticketId, signal: controller.signal });
       setAiResult(result.result);
     } catch (error) {
       if (isAiNotConfiguredError(error)) {
