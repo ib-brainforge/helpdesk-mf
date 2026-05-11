@@ -176,8 +176,7 @@ export function WorkflowDetailPage() {
   }
 
   return (
-    // REVIEW: -m-5 override matches tracking-mf rules page pattern for full-height canvas
-    <div className="-m-5 flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
+    <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
       {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-default-200 bg-white px-4 py-2 dark:bg-default-50">
         <div className="flex min-w-0 items-center gap-3">

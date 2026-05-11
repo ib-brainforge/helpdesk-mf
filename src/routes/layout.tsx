@@ -319,11 +319,9 @@ export default function Layout() {
               </ErrorBoundary>
             ) : (
               <div className="flex flex-1">
-                <div className="flex w-0 min-w-full flex-col p-5 md:py-5">
-                  <ErrorBoundary>
-                    <Outlet />
-                  </ErrorBoundary>
-                </div>
+                <ErrorBoundary>
+                  <Outlet />
+                </ErrorBoundary>
               </div>
             )}
           </div>

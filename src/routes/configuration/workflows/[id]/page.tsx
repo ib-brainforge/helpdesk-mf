@@ -1,9 +1,9 @@
 /**
  * Workflow editor route — wraps WorkflowDetailPage with auth.
  *
- * NOTE: WorkflowDetailPage owns its own full-bleed canvas layout (-m-5 override)
+ * NOTE: WorkflowDetailPage owns its own full-bleed canvas layout
  * and internal breadcrumb nav. PageBody is intentionally omitted here because
- * the editor needs to escape the outer padding — it is out of scope for the
+ * the editor is a full-height canvas — it is out of scope for the
  * page-template migration (editor internals).
  *
  * bf-template-migration: legacy / deadline: 2026-08-01
