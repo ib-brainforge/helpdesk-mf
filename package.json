@@ -29,21 +29,19 @@
   },
   "packageManager": "pnpm@9.15.0",
   "lint-staged": {
-    "*.{jsonc}": [
-      "biome check --files-ignore-unknown=true"
-    ]
+    "*.{jsonc}": ["biome check --files-ignore-unknown=true"]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.4.380-develop.0ca5635",
-    "@brainforgeau/helpdesk-client": "0.1.132-develop.7f17d52",
-    "@brainforgeau/identity-management-client": "0.1.501-develop.6624384",
+    "@brainforgeau/components": "0.4.387-develop.48b4db6",
+    "@brainforgeau/helpdesk-client": "0.1.164-develop.f6417ba",
+    "@brainforgeau/identity-management-client": "0.1.571-develop.1c8d656",
     "@brainforgeau/observability": "0.4.44-develop.a423be9",
-    "@brainforgeau/rules-ui": "0.4.111-develop.9acd27f",
-    "@brainforgeau/security": "0.4.298-develop.cd2bb18",
-    "@brainforgeau/theme": "0.2.60-develop.3901f61",
+    "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
+    "@brainforgeau/security": "0.4.304-develop.7aa9445",
+    "@brainforgeau/theme": "0.2.62-develop.d82efe1",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
     "@heroui/react": "^3.0.4",

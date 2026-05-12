@@ -41,6 +41,7 @@ export function usePrincipalTickets(
         filters?.requesterId,
         filters?.searchTerm,
         filters?.unreadOnly,
+        undefined, // unassignedOnly — not used for principal tickets view
         pagination.pageIndex + 1,
         pagination.pageSize,
         'createdAt',

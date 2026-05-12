@@ -17,6 +17,7 @@ import {
 import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
+import { useSearchParams } from '@modern-js/runtime/router';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -29,8 +30,33 @@ const TAB_LABELS: Record<CustomFieldTabType, string> = {
   assets: 'Custom fields (Assets)',
 };
 
+const CUSTOM_FIELD_VALID_TABS = new Set<string>([
+  'tickets',
+  'users',
+  'companies',
+  'assets',
+]);
+const CUSTOM_FIELD_DEFAULT_TAB: CustomFieldTabType = 'tickets';
+
 function CustomFieldsPage() {
-  const [selectedTab, setSelectedTab] = useState<CustomFieldTabType>('tickets');
+  // URL query-param tab persistence: ?tab=<key> synced to selected tab.
+  // Falls back to the first tab (CUSTOM_FIELD_DEFAULT_TAB) when the param is absent or unknown.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab: CustomFieldTabType = (() => {
+    const param = searchParams.get('tab');
+    return param && CUSTOM_FIELD_VALID_TABS.has(param)
+      ? (param as CustomFieldTabType)
+      : CUSTOM_FIELD_DEFAULT_TAB;
+  })();
+  const setSelectedTab = (key: CustomFieldTabType) => {
+    setSearchParams(
+      prev => {
+        prev.set('tab', key);
+        return prev;
+      },
+      { replace: true },
+    );
+  };
   const { items, totalCount, pagination, setPagination, isLoading, refetch } =
     useCustomFieldsData();
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);

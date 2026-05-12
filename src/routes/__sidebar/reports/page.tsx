@@ -28,7 +28,7 @@ import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
-import { useNavigate } from '@modern-js/runtime/router';
+import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -36,10 +36,29 @@ import {
 } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 
+// URL query-param tab persistence: ?tab=<key> synced to selected tab.
+const REPORT_VALID_TABS = new Set(['dynamics', 'tech-performance', 'custom']);
+const REPORT_DEFAULT_TAB = 'dynamics';
+
 function ReportsPage() {
   const navigate = useNavigate();
   const timezone = useTimezone();
-  const [selectedTab, setSelectedTab] = useState('dynamics');
+
+  // Falls back to the first tab (REPORT_DEFAULT_TAB) when the param is absent or unknown.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab = (() => {
+    const param = searchParams.get('tab');
+    return param && REPORT_VALID_TABS.has(param) ? param : REPORT_DEFAULT_TAB;
+  })();
+  const setSelectedTab = (key: string) => {
+    setSearchParams(
+      prev => {
+        prev.set('tab', key);
+        return prev;
+      },
+      { replace: true },
+    );
+  };
   const [granularity, setGranularity] = useState<ReportGranularity>(
     ReportGranularity.Daily,
   );

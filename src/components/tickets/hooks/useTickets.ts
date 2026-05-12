@@ -38,13 +38,11 @@ export const useTicketsData = () => {
         filters.searchTerm,
         undefined, // unreadOnly
         undefined, // spamOnly — default view excludes spam
+        filters.unassignedOnly ? true : undefined, // unassignedOnly — now a typed param
         pagination.pageIndex + 1,
         pagination.pageSize,
         undefined, // sortBy
         undefined, // sortDirection
-        // TODO(D18): remove this options.params bridge once @brainforgeau/helpdesk-client regenerates with typed unassignedOnly param (post backend PR #86 merge + CI client regen)
-
-        filters.unassignedOnly ? { params: { unassignedOnly: true } } : {},
       );
 
       const result = response.data;

@@ -19,7 +19,7 @@ import {
   toast,
   useOverlayState,
 } from '@heroui/react';
-import { useNavigate } from '@modern-js/runtime/router';
+import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useMemo, useState } from 'react';
 import { useTicketsData } from '../hooks/useTickets';
 import {
@@ -40,6 +40,17 @@ import { useAuth } from '@brainforgeau/security';
 import { TicketSidebar } from '../TicketSidebar';
 import type { TicketRow } from '../types';
 
+// URL query-param tab persistence: ?tab=<key> synced to selected tab.
+// Falls back to the first tab (TICKET_DEFAULT_TAB) when the param is absent or unknown.
+const TICKET_VALID_TABS = new Set([
+  'unanswered',
+  'unclosed',
+  'unassigned',
+  'assigned-to-you',
+  'all',
+]);
+const TICKET_DEFAULT_TAB = 'unanswered';
+
 export const TicketGrid: FC = () => {
   const navigate = useNavigate();
   const timezone = useTimezone();
@@ -50,8 +61,25 @@ export const TicketGrid: FC = () => {
     null,
   );
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedTab, setSelectedTab] = useState<string>('all');
   const mobileSidebarState = useOverlayState();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab = (() => {
+    const param = searchParams.get('tab');
+    return param && TICKET_VALID_TABS.has(param) ? param : TICKET_DEFAULT_TAB;
+  })();
+  const setSelectedTab = useCallback(
+    (key: string) => {
+      setSearchParams(
+        prev => {
+          prev.set('tab', key);
+          return prev;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
   const {
     items,
     totalCount,
@@ -304,7 +332,7 @@ export const TicketGrid: FC = () => {
 
       setFilters(newFilters);
     },
-    [filters, setFilters, currentUserId],
+    [filters, setFilters, currentUserId, setSelectedTab],
   );
 
   // Calculate badge counts for each tab
