@@ -12,6 +12,8 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseTagSelect,
+  BaseTagSelectItem,
   Icon,
 } from '@brainforgeau/components';
 import { useAtom } from 'jotai';
@@ -180,43 +182,37 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       </div>
 
       <div className="min-w-40">
-        <BaseSelect
+        <BaseTagSelect
           label="Status"
           placeholder="Filter by status"
-          className="w-full"
-          selectionMode="multiple"
-          selectedKeys={new Set(filters.status?.map(s => s.toString()) ?? [])}
-          onSelectionChange={keys =>
-            handleStatusChange(Array.from(keys) as string[])
-          }
+          classNames={{ base: "w-full" }}
+          value={filters.status?.map(s => s.toString()) ?? []}
+          onValueChange={handleStatusChange}
         >
-          <BaseSelectItem key={TicketStatus.New}>New</BaseSelectItem>
-          <BaseSelectItem key={TicketStatus.InProgress}>
+          <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>New</BaseTagSelectItem>
+          <BaseTagSelectItem key={TicketStatus.InProgress} value={TicketStatus.InProgress}>
             In Progress
-          </BaseSelectItem>
-          <BaseSelectItem key={TicketStatus.Closed}>Closed</BaseSelectItem>
-        </BaseSelect>
+          </BaseTagSelectItem>
+          <BaseTagSelectItem key={TicketStatus.Closed} value={TicketStatus.Closed}>Closed</BaseTagSelectItem>
+        </BaseTagSelect>
       </div>
 
       <div className="min-w-40">
-        <BaseSelect
+        <BaseTagSelect
           label="Priority"
           placeholder="Filter by priority"
-          className="w-full"
-          selectionMode="multiple"
-          selectedKeys={new Set(filters.priority?.map(p => p.toString()) ?? [])}
-          onSelectionChange={keys =>
-            handlePriorityChange(Array.from(keys) as string[])
-          }
+          classNames={{ base: "w-full" }}
+          value={filters.priority?.map(p => p.toString()) ?? []}
+          onValueChange={handlePriorityChange}
         >
-          <BaseSelectItem key={TicketPriority.Critical}>
+          <BaseTagSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
             Critical
-          </BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.Normal}>Normal</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
-        </BaseSelect>
+          </BaseTagSelectItem>
+          <BaseTagSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseTagSelectItem>
+          <BaseTagSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>Normal</BaseTagSelectItem>
+          <BaseTagSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseTagSelectItem>
+          <BaseTagSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseTagSelectItem>
+        </BaseTagSelect>
       </div>
 
       <div className="min-w-40">

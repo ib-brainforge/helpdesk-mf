@@ -14,6 +14,8 @@ import {
   BaseButton,
   BaseSelect,
   BaseSelectItem,
+  BaseTagSelect,
+  BaseTagSelectItem,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
@@ -525,21 +527,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               ) : null
             }
           >
-            <BaseSelect
+            <div className={isUpdating ? 'pointer-events-none opacity-50' : ''}>
+            <BaseTagSelect
               label="Tags"
               placeholder="Select tags..."
-              selectionMode="multiple"
-              isVirtualized={true}
-              selectedKeys={new Set(ticketTags?.map(t => t.id) ?? [])}
-              onSelectionChange={keys =>
-                handleTagsChange(Array.from(keys) as string[])
-              }
-              isDisabled={isUpdating}
+              value={ticketTags?.map(t => t.id) ?? []}
+              onValueChange={handleTagsChange}
             >
               {availableTags.map(tag => (
-                <BaseSelectItem key={tag.id}>{tag.name}</BaseSelectItem>
+                <BaseTagSelectItem key={tag.id} value={tag.id}>{tag.name}</BaseTagSelectItem>
               ))}
-            </BaseSelect>
+            </BaseTagSelect>
+            </div>
           </PermissionGuard>
         </div>
       </div>

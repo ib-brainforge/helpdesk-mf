@@ -6,8 +6,8 @@ import {
   BaseModalContent,
   BaseModalFooter,
   BaseModalHeader,
-  BaseSelect,
-  BaseSelectItem,
+  BaseTagSelect,
+  BaseTagSelectItem,
 } from '@brainforgeau/components';
 import { type FC, useState } from 'react';
 import { DateRangeSelector } from './DateRangeSelector';
@@ -112,67 +112,49 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
             {/* Status */}
             <div>
               <p className="text-sm font-medium mb-2">Status</p>
-              <BaseSelect
+              <BaseTagSelect
                 label="Filter by status"
                 placeholder="All statuses"
-                selectionMode="multiple"
-                selectedKeys={new Set(values.statuses)}
-                onSelectionChange={keys =>
-                  setValues(v => ({
-                    ...v,
-                    statuses: Array.from(keys) as string[],
-                  }))
-                }
-                className="w-full"
+                value={values.statuses}
+                onValueChange={statuses => setValues(v => ({ ...v, statuses }))}
+                classNames={{ base: "w-full" }}
               >
                 {STATUS_OPTIONS.map(opt => (
-                  <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+                  <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
                 ))}
-              </BaseSelect>
+              </BaseTagSelect>
             </div>
 
             {/* Priority */}
             <div>
               <p className="text-sm font-medium mb-2">Priority</p>
-              <BaseSelect
+              <BaseTagSelect
                 label="Filter by priority"
                 placeholder="All priorities"
-                selectionMode="multiple"
-                selectedKeys={new Set(values.priorities)}
-                onSelectionChange={keys =>
-                  setValues(v => ({
-                    ...v,
-                    priorities: Array.from(keys) as string[],
-                  }))
-                }
-                className="w-full"
+                value={values.priorities}
+                onValueChange={priorities => setValues(v => ({ ...v, priorities }))}
+                classNames={{ base: "w-full" }}
               >
                 {PRIORITY_OPTIONS.map(opt => (
-                  <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+                  <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
                 ))}
-              </BaseSelect>
+              </BaseTagSelect>
             </div>
 
             {/* Category */}
             <div>
               <p className="text-sm font-medium mb-2">Category</p>
-              <BaseSelect
+              <BaseTagSelect
                 label="Filter by category"
                 placeholder="All categories"
-                selectionMode="multiple"
-                selectedKeys={new Set(values.categoryIds)}
-                onSelectionChange={keys =>
-                  setValues(v => ({
-                    ...v,
-                    categoryIds: Array.from(keys) as string[],
-                  }))
-                }
-                className="w-full"
+                value={values.categoryIds}
+                onValueChange={categoryIds => setValues(v => ({ ...v, categoryIds }))}
+                classNames={{ base: "w-full" }}
               >
                 {categories.map(cat => (
-                  <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+                  <BaseTagSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseTagSelectItem>
                 ))}
-              </BaseSelect>
+              </BaseTagSelect>
             </div>
           </div>
         </BaseModalBody>

@@ -1,6 +1,6 @@
 import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
 import { TicketPriority, TicketStatus } from '@/types';
-import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { BaseTagSelect, BaseTagSelectItem } from '@brainforgeau/components';
 import { BaseTable } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { Icon } from '@brainforgeau/components/base';
@@ -151,19 +151,16 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
             <label className="mb-2 block text-sm font-medium">
               Filter by Status
             </label>
-            <BaseSelect
-              selectionMode="multiple"
-              selectedKeys={new Set(selectedStatuses)}
-              onSelectionChange={keys =>
-                setSelectedStatuses(Array.from(keys) as string[])
-              }
+            <BaseTagSelect
+              value={selectedStatuses}
+              onValueChange={setSelectedStatuses}
               placeholder="All statuses"
-              className="w-full"
+              classNames={{ base: "w-full" }}
             >
               {STATUS_OPTIONS.map(opt => (
-                <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+                <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
               ))}
-            </BaseSelect>
+            </BaseTagSelect>
           </div>
 
           {/* Priority Filter */}
@@ -171,19 +168,16 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
             <label className="mb-2 block text-sm font-medium">
               Filter by Priority
             </label>
-            <BaseSelect
-              selectionMode="multiple"
-              selectedKeys={new Set(selectedPriorities)}
-              onSelectionChange={keys =>
-                setSelectedPriorities(Array.from(keys) as string[])
-              }
+            <BaseTagSelect
+              value={selectedPriorities}
+              onValueChange={setSelectedPriorities}
               placeholder="All priorities"
-              className="w-full"
+              classNames={{ base: "w-full" }}
             >
               {PRIORITY_OPTIONS.map(opt => (
-                <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+                <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
               ))}
-            </BaseSelect>
+            </BaseTagSelect>
           </div>
 
           {/* Action Buttons */}

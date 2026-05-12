@@ -4,6 +4,8 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseTagSelect,
+  BaseTagSelectItem,
   BaseTextarea,
 } from '@brainforgeau/components';
 import { Checkbox } from '@heroui/react';
@@ -174,16 +176,14 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
 
       case CustomFieldType.MultiSelect:
         return (
-          <BaseSelect
+          <div className={readOnly ? 'pointer-events-none opacity-50' : ''}>
+          <BaseTagSelect
             label={field.name}
             placeholder="Select options..."
-            selectionMode="multiple"
-            selectedKeys={value?.selectedOptions?.map(o => o.id) ?? []}
-            onSelectionChange={keys => {
-              const selectedIds = Array.from(keys as Set<string>);
+            value={value?.selectedOptions?.map(o => o.id) ?? []}
+            onValueChange={(selectedIds: string[]) => {
               onChange({ selectedOptionIds: selectedIds });
             }}
-            isDisabled={readOnly}
             isInvalid={!!error}
             errorMessage={error}
             isRequired={field.isRequired}
@@ -192,9 +192,10 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
               .filter(o => !o.isDisabled)
               .sort((a, b) => a.sortOrder - b.sortOrder)
               .map(option => (
-                <BaseSelectItem key={option.id}>{option.value}</BaseSelectItem>
+                <BaseTagSelectItem key={option.id} value={option.id}>{option.value}</BaseTagSelectItem>
               ))}
-          </BaseSelect>
+          </BaseTagSelect>
+        </div>
         );
 
       case CustomFieldType.Url:
@@ -252,7 +253,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
     );
   }
 
-  // REVIEW: For Dropdown and MultiSelect, BaseSelect includes label
+  // REVIEW: For Dropdown and MultiSelect, BaseSelect/BaseTagSelect includes label
   if (
     field.fieldType === CustomFieldType.Dropdown ||
     field.fieldType === CustomFieldType.MultiSelect
