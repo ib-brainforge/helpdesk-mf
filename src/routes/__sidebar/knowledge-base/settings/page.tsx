@@ -27,6 +27,7 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownPopover,
   DropdownTrigger,
   Spinner,
   toast,
@@ -307,24 +308,26 @@ function KbCategoriesPage() {
                     <Icon name="dotsV" className="h-4 w-4" />
                   </BaseButton>
                 </DropdownTrigger>
-                <DropdownMenu aria-label="Category actions">
-                  <DropdownItem key="edit" onPress={() => openEdit(cat)}>
-                    Edit
-                  </DropdownItem>
-                  <DropdownItem
-                    key="duplicate"
-                    onPress={() => setDuplicatingCategory(cat)}
-                  >
-                    Duplicate
-                  </DropdownItem>
-                  <DropdownItem
-                    key="delete"
-                    className="text-danger"
-                    onPress={() => handleDeleteRequest(cat)}
-                  >
-                    Delete
-                  </DropdownItem>
-                </DropdownMenu>
+                <DropdownPopover>
+                  <DropdownMenu aria-label="Category actions">
+                    <DropdownItem key="edit" onPress={() => openEdit(cat)}>
+                      Edit
+                    </DropdownItem>
+                    <DropdownItem
+                      key="duplicate"
+                      onPress={() => setDuplicatingCategory(cat)}
+                    >
+                      Duplicate
+                    </DropdownItem>
+                    <DropdownItem
+                      key="delete"
+                      className="text-danger"
+                      onPress={() => handleDeleteRequest(cat)}
+                    >
+                      Delete
+                    </DropdownItem>
+                  </DropdownMenu>
+                </DropdownPopover>
               </Dropdown>
             </div>
           ))}

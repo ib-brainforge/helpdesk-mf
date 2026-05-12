@@ -9,6 +9,7 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownPopover,
   DropdownTrigger,
 } from '@heroui/react';
 import { NavLink } from '@modern-js/runtime/router';
@@ -217,85 +218,87 @@ export const createTicketColumns = (
               icon={<Icon name="dotsV" className="h-4 w-4" />}
             />
           </DropdownTrigger>
-          <DropdownMenu aria-label="Ticket actions">
-            <DropdownItem
-              key="assign"
-              onPress={() => {
-                // REVIEW: Using inline prompt for quick assign - proper modal would be better UX
-                const assigneeId = prompt(
-                  'Enter user ID to assign (or leave empty to unassign):',
-                );
-                if (
-                  assigneeId !== null &&
-                  options.onAssign &&
-                  row.original.id
-                ) {
-                  options.onAssign(row.original.id, assigneeId);
-                }
-              }}
-            >
-              Assign
-            </DropdownItem>
-            <DropdownItem
-              key="status-new"
-              onPress={() => {
-                if (options.onChangeStatus && row.original.id) {
-                  options.onChangeStatus(row.original.id, TicketStatus.New);
-                }
-              }}
-            >
-              Mark as New
-            </DropdownItem>
-            <DropdownItem
-              key="status-inprogress"
-              onPress={() => {
-                if (options.onChangeStatus && row.original.id) {
-                  options.onChangeStatus(
-                    row.original.id,
-                    TicketStatus.InProgress,
+          <DropdownPopover>
+            <DropdownMenu aria-label="Ticket actions">
+              <DropdownItem
+                key="assign"
+                onPress={() => {
+                  // REVIEW: Using inline prompt for quick assign - proper modal would be better UX
+                  const assigneeId = prompt(
+                    'Enter user ID to assign (or leave empty to unassign):',
                   );
-                }
-              }}
-            >
-              Mark as In Progress
-            </DropdownItem>
-            <DropdownItem
-              key="status-closed"
-              onPress={() => {
-                if (options.onChangeStatus && row.original.id) {
-                  options.onChangeStatus(row.original.id, TicketStatus.Closed);
-                }
-              }}
-            >
-              Close Ticket
-            </DropdownItem>
-            <DropdownItem
-              key="priority-critical"
-              onPress={() => {
-                if (options.onChangePriority && row.original.id) {
-                  options.onChangePriority(
-                    row.original.id,
-                    TicketPriority.Critical,
-                  );
-                }
-              }}
-            >
-              Set Priority: Critical
-            </DropdownItem>
-            <DropdownItem
-              key="priority-high"
-              onPress={() => {
-                if (options.onChangePriority && row.original.id) {
-                  options.onChangePriority(
-                    row.original.id,
-                    TicketPriority.High,
-                  );
-                }
-              }}
-            >
-              Set Priority: High
-            </DropdownItem>
-          </DropdownMenu>
+                  if (
+                    assigneeId !== null &&
+                    options.onAssign &&
+                    row.original.id
+                  ) {
+                    options.onAssign(row.original.id, assigneeId);
+                  }
+                }}
+              >
+                Assign
+              </DropdownItem>
+              <DropdownItem
+                key="status-new"
+                onPress={() => {
+                  if (options.onChangeStatus && row.original.id) {
+                    options.onChangeStatus(row.original.id, TicketStatus.New);
+                  }
+                }}
+              >
+                Mark as New
+              </DropdownItem>
+              <DropdownItem
+                key="status-inprogress"
+                onPress={() => {
+                  if (options.onChangeStatus && row.original.id) {
+                    options.onChangeStatus(
+                      row.original.id,
+                      TicketStatus.InProgress,
+                    );
+                  }
+                }}
+              >
+                Mark as In Progress
+              </DropdownItem>
+              <DropdownItem
+                key="status-closed"
+                onPress={() => {
+                  if (options.onChangeStatus && row.original.id) {
+                    options.onChangeStatus(row.original.id, TicketStatus.Closed);
+                  }
+                }}
+              >
+                Close Ticket
+              </DropdownItem>
+              <DropdownItem
+                key="priority-critical"
+                onPress={() => {
+                  if (options.onChangePriority && row.original.id) {
+                    options.onChangePriority(
+                      row.original.id,
+                      TicketPriority.Critical,
+                    );
+                  }
+                }}
+              >
+                Set Priority: Critical
+              </DropdownItem>
+              <DropdownItem
+                key="priority-high"
+                onPress={() => {
+                  if (options.onChangePriority && row.original.id) {
+                    options.onChangePriority(
+                      row.original.id,
+                      TicketPriority.High,
+                    );
+                  }
+                }}
+              >
+                Set Priority: High
+              </DropdownItem>
+            </DropdownMenu>
+          </DropdownPopover>
         </Dropdown>
       </PermissionGuard>
     ),

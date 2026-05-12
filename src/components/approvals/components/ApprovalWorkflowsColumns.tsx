@@ -5,6 +5,7 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownPopover,
   DropdownTrigger,
 } from '@heroui/react';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -93,15 +94,17 @@ export const createApprovalWorkflowsColumns = ({
               icon={<Icon name="dotsV" className="h-3.5 w-3.5" />}
             />
           </DropdownTrigger>
-          <DropdownMenu aria-label="Workflow actions">
-            <DropdownItem
-              key="delete"
-              className="text-danger"
-              onPress={() => onDelete(row.original.id)}
-            >
-              Delete
-            </DropdownItem>
-          </DropdownMenu>
+          <DropdownPopover>
+            <DropdownMenu aria-label="Workflow actions">
+              <DropdownItem
+                key="delete"
+                className="text-danger"
+                onPress={() => onDelete(row.original.id)}
+              >
+                Delete
+              </DropdownItem>
+            </DropdownMenu>
+          </DropdownPopover>
         </Dropdown>
       </div>
     ),

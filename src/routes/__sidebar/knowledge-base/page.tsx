@@ -13,6 +13,7 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownPopover,
   DropdownTrigger,
 } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
@@ -54,20 +55,22 @@ function KnowledgeBasePage() {
                 <Icon name="dotsV" className="h-4 w-4" />
               </BaseButton>
             </DropdownTrigger>
-            <DropdownMenu aria-label="Knowledge base actions">
-              <DropdownItem key="import" onPress={() => setIsImportOpen(true)}>
-                Import
-              </DropdownItem>
-              <DropdownItem
-                key="export"
-                onPress={() => exportMutation.mutate()}
-              >
-                {exportMutation.isPending ? 'Exporting...' : 'Export'}
-              </DropdownItem>
-              <DropdownItem key="categories" href="/knowledge-base/settings">
-                Manage Categories
-              </DropdownItem>
-            </DropdownMenu>
+            <DropdownPopover>
+              <DropdownMenu aria-label="Knowledge base actions">
+                <DropdownItem key="import" onPress={() => setIsImportOpen(true)}>
+                  Import
+                </DropdownItem>
+                <DropdownItem
+                  key="export"
+                  onPress={() => exportMutation.mutate()}
+                >
+                  {exportMutation.isPending ? 'Exporting...' : 'Export'}
+                </DropdownItem>
+                <DropdownItem key="categories" href="/knowledge-base/settings">
+                  Manage Categories
+                </DropdownItem>
+              </DropdownMenu>
+            </DropdownPopover>
           </Dropdown>
         </PageHeader.Actions>
       </PageHeader>

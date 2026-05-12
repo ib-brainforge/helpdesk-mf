@@ -34,6 +34,7 @@ import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownPopover,
   DropdownSection,
   DropdownTrigger,
   toast,
@@ -783,160 +784,162 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           icon={<Icon name="dotsV" className="h-4 w-4" />}
                         />
                       </DropdownTrigger>
-                      <DropdownMenu
-                        aria-label="Ticket actions"
-                        disabledKeys={
-                          actionsDisabled
-                            ? [
-                                'edit',
-                                'print',
-                                'summary',
-                                'subtask',
-                                'parent',
-                                'convert',
-                                'link-asset',
-                                'duplicate',
-                                'forward',
-                                'spam',
-                                'unspam',
-                                'problem',
-                                'publish',
-                              ]
-                            : []
-                        }
-                      >
-                        {/* Edit & View */}
-                        <DropdownSection>
-                          <DropdownItem
-                            key="edit"
-                            onPress={() => setIsEditModalOpen(true)}
-                          >
-                            Edit
-                          </DropdownItem>
-                          <DropdownItem key="print" onPress={handlePrint}>
-                            Print
-                          </DropdownItem>
-                          <DropdownItem
-                            key="systemlog"
-                            onPress={handleToggleSystemLog}
-                          >
-                            {showSystemLog
-                              ? 'Hide System Log'
-                              : 'Show System Log'}
-                          </DropdownItem>
-                          <DropdownItem
-                            key="summary"
-                            onPress={() => handleComingSoon('Ticket Summary')}
-                          >
-                            Ticket Summary
-                          </DropdownItem>
-                        </DropdownSection>
-
-                        {/* Relate */}
-                        <DropdownSection>
-                          <DropdownItem
-                            key="subtask"
-                            onPress={() => setIsAddSubtaskModalOpen(true)}
-                          >
-                            Add Subtask
-                          </DropdownItem>
-                          <DropdownItem
-                            key="parent"
-                            onPress={() => setIsAddParentModalOpen(true)}
-                          >
-                            Add Parent
-                          </DropdownItem>
-                          <DropdownItem
-                            key="convert"
-                            onPress={() => setIsConvertToReplyModalOpen(true)}
-                          >
-                            Convert to Reply
-                          </DropdownItem>
-                          <DropdownItem
-                            key="link-asset"
-                            onPress={() => handleComingSoon('Link Asset')}
-                          >
-                            Link Asset
-                          </DropdownItem>
-                          <DropdownItem
-                            key="duplicate"
-                            onPress={() => setIsDuplicateModalOpen(true)}
-                          >
-                            Duplicate
-                          </DropdownItem>
-                        </DropdownSection>
-
-                        {/* Lifecycle */}
-                        <DropdownSection>
-                          <DropdownItem
-                            key="forward"
-                            onPress={() => setIsForwardModalOpen(true)}
-                          >
-                            Forward by Email
-                          </DropdownItem>
-                          {canModerate ? (
+                      <DropdownPopover>
+                        <DropdownMenu
+                          aria-label="Ticket actions"
+                          disabledKeys={
+                            actionsDisabled
+                              ? [
+                                  'edit',
+                                  'print',
+                                  'summary',
+                                  'subtask',
+                                  'parent',
+                                  'convert',
+                                  'link-asset',
+                                  'duplicate',
+                                  'forward',
+                                  'spam',
+                                  'unspam',
+                                  'problem',
+                                  'publish',
+                                ]
+                              : []
+                          }
+                        >
+                          {/* Edit & View */}
+                          <DropdownSection>
                             <DropdownItem
-                              key="problem"
-                              onPress={handleToggleProblem}
-                              isDisabled={
-                                markAsProblemMutation.isPending ||
-                                unmarkAsProblemMutation.isPending
+                              key="edit"
+                              onPress={() => setIsEditModalOpen(true)}
+                            >
+                              Edit
+                            </DropdownItem>
+                            <DropdownItem key="print" onPress={handlePrint}>
+                              Print
+                            </DropdownItem>
+                            <DropdownItem
+                              key="systemlog"
+                              onPress={handleToggleSystemLog}
+                            >
+                              {showSystemLog
+                                ? 'Hide System Log'
+                                : 'Show System Log'}
+                            </DropdownItem>
+                            <DropdownItem
+                              key="summary"
+                              onPress={() => handleComingSoon('Ticket Summary')}
+                            >
+                              Ticket Summary
+                            </DropdownItem>
+                          </DropdownSection>
+
+                          {/* Relate */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="subtask"
+                              onPress={() => setIsAddSubtaskModalOpen(true)}
+                            >
+                              Add Subtask
+                            </DropdownItem>
+                            <DropdownItem
+                              key="parent"
+                              onPress={() => setIsAddParentModalOpen(true)}
+                            >
+                              Add Parent
+                            </DropdownItem>
+                            <DropdownItem
+                              key="convert"
+                              onPress={() => setIsConvertToReplyModalOpen(true)}
+                            >
+                              Convert to Reply
+                            </DropdownItem>
+                            <DropdownItem
+                              key="link-asset"
+                              onPress={() => handleComingSoon('Link Asset')}
+                            >
+                              Link Asset
+                            </DropdownItem>
+                            <DropdownItem
+                              key="duplicate"
+                              onPress={() => setIsDuplicateModalOpen(true)}
+                            >
+                              Duplicate
+                            </DropdownItem>
+                          </DropdownSection>
+
+                          {/* Lifecycle */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="forward"
+                              onPress={() => setIsForwardModalOpen(true)}
+                            >
+                              Forward by Email
+                            </DropdownItem>
+                            {canModerate ? (
+                              <DropdownItem
+                                key="problem"
+                                onPress={handleToggleProblem}
+                                isDisabled={
+                                  markAsProblemMutation.isPending ||
+                                  unmarkAsProblemMutation.isPending
+                                }
+                              >
+                                {ticket?.isProblem
+                                  ? 'Unmark as Problem'
+                                  : 'Mark as Problem'}
+                              </DropdownItem>
+                            ) : (
+                              <DropdownItem key="problem" isDisabled>
+                                {ticket?.isProblem
+                                  ? 'Unmark as Problem'
+                                  : 'Mark as Problem'}
+                              </DropdownItem>
+                            )}
+                            {canModerate ? (
+                              <DropdownItem
+                                key="publish"
+                                onPress={handleTogglePublishAsIdea}
+                                isDisabled={
+                                  publishAsIdeaMutation.isPending ||
+                                  unpublishAsIdeaMutation.isPending
+                                }
+                              >
+                                {ticket?.isPublishedAsIdea
+                                  ? 'Remove from Ideas Forum'
+                                  : 'Publish to Ideas Forum'}
+                              </DropdownItem>
+                            ) : (
+                              <DropdownItem key="publish" isDisabled>
+                                {ticket?.isPublishedAsIdea
+                                  ? 'Remove from Ideas Forum'
+                                  : 'Publish to Ideas Forum'}
+                              </DropdownItem>
+                            )}
+                            <DropdownItem
+                              key="spam"
+                              onPress={
+                                isSpam
+                                  ? handleUnmarkSpam
+                                  : () => setIsMarkSpamModalOpen(true)
                               }
                             >
-                              {ticket?.isProblem
-                                ? 'Unmark as Problem'
-                                : 'Mark as Problem'}
+                              {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
                             </DropdownItem>
-                          ) : (
-                            <DropdownItem key="problem" isDisabled>
-                              {ticket?.isProblem
-                                ? 'Unmark as Problem'
-                                : 'Mark as Problem'}
-                            </DropdownItem>
-                          )}
-                          {canModerate ? (
-                            <DropdownItem
-                              key="publish"
-                              onPress={handleTogglePublishAsIdea}
-                              isDisabled={
-                                publishAsIdeaMutation.isPending ||
-                                unpublishAsIdeaMutation.isPending
-                              }
-                            >
-                              {ticket?.isPublishedAsIdea
-                                ? 'Remove from Ideas Forum'
-                                : 'Publish to Ideas Forum'}
-                            </DropdownItem>
-                          ) : (
-                            <DropdownItem key="publish" isDisabled>
-                              {ticket?.isPublishedAsIdea
-                                ? 'Remove from Ideas Forum'
-                                : 'Publish to Ideas Forum'}
-                            </DropdownItem>
-                          )}
-                          <DropdownItem
-                            key="spam"
-                            onPress={
-                              isSpam
-                                ? handleUnmarkSpam
-                                : () => setIsMarkSpamModalOpen(true)
-                            }
-                          >
-                            {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
-                          </DropdownItem>
-                        </DropdownSection>
+                          </DropdownSection>
 
-                        {/* Danger Zone */}
-                        <DropdownSection>
-                          <DropdownItem
-                            key="delete"
-                            className="text-danger"
-                            onPress={handleDeleteTicket}
-                          >
-                            Delete
-                          </DropdownItem>
-                        </DropdownSection>
-                      </DropdownMenu>
+                          {/* Danger Zone */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="delete"
+                              className="text-danger"
+                              onPress={handleDeleteTicket}
+                            >
+                              Delete
+                            </DropdownItem>
+                          </DropdownSection>
+                        </DropdownMenu>
+                      </DropdownPopover>
                     </Dropdown>
                   </PermissionGuard>
                 </div>
