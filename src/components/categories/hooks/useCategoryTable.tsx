@@ -122,38 +122,36 @@ export function useCategoryTable({
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+          <div className="-my-1.5 flex items-center justify-end gap-1">
             <BaseButton
-              size="sm"
-              variant="light"
-              isIconOnly
-              onPress={() => handleDuplicate(row.original)}
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
               aria-label="Duplicate category"
-            >
-              <Icon name="document-duplicate" className="h-4 w-4" />
-            </BaseButton>
+              onPress={() => handleDuplicate(row.original)}
+              icon={<Icon name="document-duplicate" className="h-4 w-4" />}
+            />
             <BaseButton
-              size="sm"
-              variant="light"
-              isIconOnly
-              onPress={() => onEditCategory(row.original)}
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
               aria-label="Edit category"
-            >
-              <Icon name="pencil-square" className="h-4 w-4" />
-            </BaseButton>
+              onPress={() => onEditCategory(row.original)}
+              icon={<Icon name="pencil" className="h-4 w-4" />}
+            />
             <BaseButton
-              size="sm"
-              variant="light"
-              color="danger"
-              isIconOnly
-              onPress={() => onDeleteCategory(row.original.id)}
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
               aria-label="Delete category"
-            >
-              <Icon name="trash" className="h-4 w-4" />
-            </BaseButton>
+              onPress={() => onDeleteCategory(row.original.id)}
+              icon={<Icon name="trash" className="h-4 w-4" />}
+            />
           </div>
         ),
-        size: 120,
+        enableSorting: false,
+        enableHiding: false,
+        size: 100,
       }),
     ],
     [onEditCategory, onDeleteCategory, handleDuplicate],

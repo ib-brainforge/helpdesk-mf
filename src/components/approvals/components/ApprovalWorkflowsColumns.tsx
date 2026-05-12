@@ -1,13 +1,6 @@
 import { StatusBadge } from '@/components/shared';
 import { ApprovalMode, type ApprovalWorkflowListDto } from '@/types/approval';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownPopover,
-  DropdownTrigger,
-} from '@heroui/react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 // REVIEW: Following existing pattern from AutomationRulesColumns
@@ -75,38 +68,29 @@ export const createApprovalWorkflowsColumns = ({
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: '',
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="-my-1.5 flex items-center justify-end gap-1">
         <BaseButton
-          size="sm"
-          variant="light"
+          variant="link"
+          size="none"
+          className="text-dark dark:text-light hover:text-blue"
+          aria-label="Edit approval workflow"
           onPress={() => onEdit(row.original.id)}
-          icon={<Icon name="pencil" className="h-3.5 w-3.5" />}
-        >
-          Edit
-        </BaseButton>
-        <Dropdown>
-          <DropdownTrigger>
-            <BaseButton
-              size="sm"
-              variant="light"
-              icon={<Icon name="dotsV" className="h-3.5 w-3.5" />}
-            />
-          </DropdownTrigger>
-          <DropdownPopover>
-            <DropdownMenu aria-label="Workflow actions">
-              <DropdownItem
-                key="delete"
-                className="text-danger"
-                onPress={() => onDelete(row.original.id)}
-              >
-                Delete
-              </DropdownItem>
-            </DropdownMenu>
-          </DropdownPopover>
-        </Dropdown>
+          icon={<Icon name="pencil" className="h-4 w-4" />}
+        />
+        <BaseButton
+          variant="link"
+          size="none"
+          className="text-danger hover:text-danger-600"
+          aria-label="Delete approval workflow"
+          onPress={() => onDelete(row.original.id)}
+          icon={<Icon name="trash" className="h-4 w-4" />}
+        />
       </div>
     ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 80,
   },
 ];

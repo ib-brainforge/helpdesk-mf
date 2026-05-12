@@ -114,11 +114,11 @@ export const createCustomFieldsColumns = (
     id: 'actions',
     header: '',
     cell: ({ row }) => (
-      <div className="flex items-center justify-end gap-1">
+      <div className="-my-1.5 flex items-center justify-end gap-1">
         <BaseButton
           variant="link"
           size="none"
-          className="text-foreground hover:text-blue"
+          className="text-dark dark:text-light hover:text-blue"
           aria-label="Edit field"
           onPress={() => row.original.id && options?.onEdit?.(row.original.id)}
           icon={<Icon name="pencil" className="h-4 w-4" />}

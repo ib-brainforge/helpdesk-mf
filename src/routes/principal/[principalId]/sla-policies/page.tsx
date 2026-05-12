@@ -92,33 +92,37 @@ function PrincipalSlaPoliciesPage() {
     }),
     columnHelper.display({
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => (
-        <div className="flex gap-2">
+        <div className="-my-1.5 flex items-center justify-end gap-1">
           <BaseButton
-            size="sm"
-            variant="bordered"
+            variant="link"
+            size="none"
+            className="text-dark dark:text-light hover:text-blue"
+            aria-label="Edit SLA policy"
             onPress={() =>
               navigate(
                 `/principal/${principalId}/sla-policies/${row.original.id}`,
               )
             }
-          >
-            Edit
-          </BaseButton>
+            icon={<Icon name="pencil" className="h-4 w-4" />}
+          />
           <BaseButton
-            size="sm"
-            color="danger"
-            variant="light"
+            variant="link"
+            size="none"
+            className="text-danger hover:text-danger-600"
+            aria-label="Delete SLA policy"
             onPress={() =>
               handleDeleteRequest(row.original.id!, row.original.name!)
             }
             isDisabled={deleteMutation.isPending}
-          >
-            Delete
-          </BaseButton>
+            icon={<Icon name="trash" className="h-4 w-4" />}
+          />
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 80,
     }),
   ];
 

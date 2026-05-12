@@ -62,30 +62,30 @@ export const createEmailTemplatesColumns = ({
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
+    header: '',
     cell: info => (
-      <div className="flex items-center gap-1">
+      <div className="-my-1.5 flex items-center justify-end gap-1">
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-dark dark:text-light hover:text-blue"
+          aria-label="Edit email template"
           onPress={() => onEdit(info.row.original.id)}
-          aria-label="Edit"
-        >
-          <Icon name="pencil" className="h-4 w-4" />
-        </BaseButton>
+          icon={<Icon name="pencil" className="h-4 w-4" />}
+        />
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-danger hover:text-danger-600"
+          aria-label="Delete email template"
           onPress={() => onDelete(info.row.original.id)}
-          aria-label="Delete"
-          color="danger"
-        >
-          <Icon name="trash" className="h-4 w-4" />
-        </BaseButton>
+          icon={<Icon name="trash" className="h-4 w-4" />}
+        />
       </div>
     ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 80,
   }),
 ];
 

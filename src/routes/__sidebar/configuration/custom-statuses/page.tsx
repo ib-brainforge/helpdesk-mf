@@ -136,30 +136,29 @@ function CustomStatusesPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+          <div className="-my-1.5 flex items-center justify-end gap-1">
             <BaseButton
-              size="sm"
-              variant="light"
-              isIconOnly
-              onPress={() => handleEdit(row.original)}
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
               aria-label="Edit status"
-            >
-              <Icon name="pencil-square" className="h-4 w-4" />
-            </BaseButton>
+              onPress={() => handleEdit(row.original)}
+              icon={<Icon name="pencil" className="h-4 w-4" />}
+            />
             <BaseButton
-              size="sm"
-              variant="light"
-              color="danger"
-              isIconOnly
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
+              aria-label="Delete status"
               onPress={() =>
                 handleDeleteRequest(row.original.id, row.original.name)
               }
-              aria-label="Delete status"
-            >
-              <Icon name="trash" className="h-4 w-4" />
-            </BaseButton>
+              icon={<Icon name="trash" className="h-4 w-4" />}
+            />
           </div>
         ),
+        enableSorting: false,
+        enableHiding: false,
         size: 80,
       }),
     ],

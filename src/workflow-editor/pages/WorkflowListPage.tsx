@@ -139,20 +139,19 @@ export function WorkflowListPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+          <div className="-my-1.5 flex items-center justify-end gap-1">
             <BaseButton
-              size="sm"
-              isIconOnly
-              variant="light"
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
               aria-label="Clone workflow"
               onPress={() => setCloneTarget(row.original)}
               icon={<Icon name="copy" className="h-4 w-4" />}
             />
             <BaseButton
-              size="sm"
-              isIconOnly
-              variant="light"
-              color="danger"
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
               aria-label="Delete workflow"
               onPress={() => setPendingDeleteId(row.original.id)}
               isDisabled={!isTenantOwned(row.original)}
@@ -160,6 +159,9 @@ export function WorkflowListPage() {
             />
           </div>
         ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 80,
       },
     ],
     [],
