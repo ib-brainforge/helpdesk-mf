@@ -50,11 +50,11 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
               setSelectedStatus(value as TicketStatus);
             }}
           >
-            <BaseSelectItem key={TicketStatus.New}>New</BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.InProgress}>
+            <BaseSelectItem key={TicketStatus.New} value={TicketStatus.New}>New</BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.InProgress} value={TicketStatus.InProgress}>
               In Progress
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.Closed}>Closed</BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.Closed} value={TicketStatus.Closed}>Closed</BaseSelectItem>
           </BaseSelect>
         </BaseModalBody>
         <BaseModalFooter>

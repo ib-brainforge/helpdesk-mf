@@ -59,7 +59,7 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
               }}
             >
               {LINK_TYPES.map(type => (
-                <BaseSelectItem key={type.value}>{type.label}</BaseSelectItem>
+                <BaseSelectItem key={type.value} value={type.value}>{type.label}</BaseSelectItem>
               ))}
             </BaseSelect>
             <BaseInput

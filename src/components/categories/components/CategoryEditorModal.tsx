@@ -191,7 +191,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                   }}
                 >
                   {sections.map(section => (
-                    <BaseSelectItem key={section.id}>
+                    <BaseSelectItem key={section.id} value={section.id}>
                       {section.name}
                     </BaseSelectItem>
                   ))}
@@ -214,7 +214,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {ACCESS_LEVEL_OPTIONS.map(option => (
-                    <BaseSelectItem key={String(option.id)}>
+                    <BaseSelectItem key={String(option.id)} value={String(option.id)}>
                       {option.name}
                     </BaseSelectItem>
                   ))}

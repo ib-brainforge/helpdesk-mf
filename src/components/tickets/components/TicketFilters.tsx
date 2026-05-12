@@ -174,10 +174,10 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             handlePresetChange(value);
           }}
         >
-          <BaseSelectItem key="all">All Tickets</BaseSelectItem>
-          <BaseSelectItem key="my-tickets">My Tickets</BaseSelectItem>
-          <BaseSelectItem key="unassigned">Unassigned</BaseSelectItem>
-          <BaseSelectItem key="overdue">Overdue</BaseSelectItem>
+          <BaseSelectItem key="all" value="all">All Tickets</BaseSelectItem>
+          <BaseSelectItem key="my-tickets" value="my-tickets">My Tickets</BaseSelectItem>
+          <BaseSelectItem key="unassigned" value="unassigned">Unassigned</BaseSelectItem>
+          <BaseSelectItem key="overdue" value="overdue">Overdue</BaseSelectItem>
         </BaseSelect>
       </div>
 

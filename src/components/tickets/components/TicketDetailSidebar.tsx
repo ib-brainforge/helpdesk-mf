@@ -202,13 +202,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketStatus.New.toString()}>
+            <BaseSelectItem key={TicketStatus.New.toString()} value={TicketStatus.New.toString()}>
               New
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.InProgress.toString()}>
+            <BaseSelectItem key={TicketStatus.InProgress.toString()} value={TicketStatus.InProgress.toString()}>
               In Progress
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.Closed.toString()}>
+            <BaseSelectItem key={TicketStatus.Closed.toString()} value={TicketStatus.Closed.toString()}>
               Closed
             </BaseSelectItem>
           </BaseSelect>
@@ -236,13 +236,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketPriority.Critical}>
+            <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
               Critical
             </BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Normal}>Normal</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>Normal</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
           </BaseSelect>
         </PermissionGuard>
       </div>

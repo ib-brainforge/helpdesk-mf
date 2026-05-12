@@ -190,9 +190,9 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
             aria-label="Category"
           >
             {[
-              <BaseSelectItem key="">Global (All Categories)</BaseSelectItem>,
+              <BaseSelectItem key="" value="">Global (All Categories)</BaseSelectItem>,
               ...categories.map((cat: any) => (
-                <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+                <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
               )),
             ]}
           </BaseSelect>
@@ -208,13 +208,13 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
             aria-label="Approval Mode"
           >
             {[
-              <BaseSelectItem key={ApprovalMode.Sequential.toString()}>
+              <BaseSelectItem key={ApprovalMode.Sequential.toString()} value={ApprovalMode.Sequential.toString()}>
                 Sequential
               </BaseSelectItem>,
-              <BaseSelectItem key={ApprovalMode.Parallel.toString()}>
+              <BaseSelectItem key={ApprovalMode.Parallel.toString()} value={ApprovalMode.Parallel.toString()}>
                 Parallel
               </BaseSelectItem>,
-              <BaseSelectItem key={ApprovalMode.AnyOne.toString()}>
+              <BaseSelectItem key={ApprovalMode.AnyOne.toString()} value={ApprovalMode.AnyOne.toString()}>
                 Any One
               </BaseSelectItem>,
             ]}
@@ -330,11 +330,11 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     aria-label="Approver"
                   >
                     {[
-                      <BaseSelectItem key="">
+                      <BaseSelectItem key="" value="">
                         Select approver...
                       </BaseSelectItem>,
                       ...userOptions.map(opt => (
-                        <BaseSelectItem key={opt.value}>
+                        <BaseSelectItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </BaseSelectItem>
                       )),
@@ -370,9 +370,9 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                       aria-label="Escalate To"
                     >
                       {[
-                        <BaseSelectItem key="">No escalation</BaseSelectItem>,
+                        <BaseSelectItem key="" value="">No escalation</BaseSelectItem>,
                         ...userOptions.map(opt => (
-                          <BaseSelectItem key={opt.value}>
+                          <BaseSelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </BaseSelectItem>
                         )),

@@ -91,7 +91,7 @@ function KnowledgeBaseSearchPage() {
           className="w-64"
         >
           {categories?.map(cat => (
-            <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+            <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
           )) || []}
         </BaseSelect>
       </div>

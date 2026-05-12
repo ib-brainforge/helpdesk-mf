@@ -231,7 +231,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     isInvalid={field.state.meta.errors.length > 0}
                   >
                     {FIELD_TYPE_OPTIONS.map(option => (
-                      <BaseSelectItem key={String(option.id)}>
+                      <BaseSelectItem key={String(option.id)} value={String(option.id)}>
                         {option.name}
                       </BaseSelectItem>
                     ))}
@@ -254,7 +254,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     isInvalid={field.state.meta.errors.length > 0}
                   >
                     {USAGE_TYPE_OPTIONS.map(option => (
-                      <BaseSelectItem key={String(option.id)}>
+                      <BaseSelectItem key={String(option.id)} value={String(option.id)}>
                         {option.name}
                       </BaseSelectItem>
                     ))}
@@ -278,7 +278,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {ACCESS_LEVEL_OPTIONS.map(option => (
-                    <BaseSelectItem key={String(option.id)}>
+                    <BaseSelectItem key={String(option.id)} value={String(option.id)}>
                       {option.name}
                     </BaseSelectItem>
                   ))}

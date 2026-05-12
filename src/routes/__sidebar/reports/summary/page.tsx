@@ -277,9 +277,9 @@ function ReportsSummaryPage() {
             className="w-48"
           >
             {[
-              <BaseSelectItem key="all">All categories</BaseSelectItem>,
+              <BaseSelectItem key="all" value="all">All categories</BaseSelectItem>,
               ...categories.map(cat => (
-                <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+                <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
               )),
             ]}
           </BaseSelect>

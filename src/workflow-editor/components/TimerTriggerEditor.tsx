@@ -133,7 +133,7 @@ export function TimerTriggerEditor({
             aria-label="Select business hours schedule"
           >
             {(schedules ?? []).map(s => (
-              <BaseSelectItem key={s.id ?? ''}>
+              <BaseSelectItem key={s.id ?? ''} value={s.id ?? ''}>
                 {s.name ?? s.id ?? ''}
               </BaseSelectItem>
             ))}

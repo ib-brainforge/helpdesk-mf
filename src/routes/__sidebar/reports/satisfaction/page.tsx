@@ -127,16 +127,16 @@ function CSATReportPage() {
               }}
               className="max-w-xs"
             >
-              <BaseSelectItem key={CSATGroupBy.Technician}>
+              <BaseSelectItem key={CSATGroupBy.Technician} value={CSATGroupBy.Technician}>
                 Technician
               </BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Category}>
+              <BaseSelectItem key={CSATGroupBy.Category} value={CSATGroupBy.Category}>
                 Category
               </BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Priority}>
+              <BaseSelectItem key={CSATGroupBy.Priority} value={CSATGroupBy.Priority}>
                 Priority
               </BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Month}>Month</BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Month} value={CSATGroupBy.Month}>Month</BaseSelectItem>
             </BaseSelect>
           </Box>
         </>

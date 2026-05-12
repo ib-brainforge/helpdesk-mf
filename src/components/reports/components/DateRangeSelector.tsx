@@ -82,7 +82,7 @@ export const DateRangeSelector: FC<DateRangeSelectorProps> = ({
         className="w-48"
       >
         {PRESET_RANGES.map(range => (
-          <BaseSelectItem key={range.value}>{range.label}</BaseSelectItem>
+          <BaseSelectItem key={range.value} value={range.value}>{range.label}</BaseSelectItem>
         ))}
       </BaseSelect>
     </div>

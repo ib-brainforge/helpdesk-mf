@@ -199,7 +199,7 @@ function EditEmailTemplatePage() {
                     >
                       {Object.entries(NOTIFICATION_TYPE_LABELS).map(
                         ([key, label]) => (
-                          <BaseSelectItem key={key}>{label}</BaseSelectItem>
+                          <BaseSelectItem key={key} value={key}>{label}</BaseSelectItem>
                         ),
                       )}
                     </BaseSelect>

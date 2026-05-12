@@ -120,7 +120,7 @@ export function StateInspector({
         size="sm"
       >
         {CATEGORY_ITEMS.map(item => (
-          <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>
+          <BaseSelectItem key={item.id} value={item.id}>{item.name}</BaseSelectItem>
         ))}
       </BaseSelect>
 
@@ -135,7 +135,7 @@ export function StateInspector({
         size="sm"
       >
         {TYPE_ITEMS.map(item => (
-          <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>
+          <BaseSelectItem key={item.id} value={item.id}>{item.name}</BaseSelectItem>
         ))}
       </BaseSelect>
 

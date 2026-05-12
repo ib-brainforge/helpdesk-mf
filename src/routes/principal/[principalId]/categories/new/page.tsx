@@ -126,7 +126,7 @@ function PrincipalCategoryNewPage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
-                <BaseSelectItem key={value}>{label}</BaseSelectItem>
+                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
               ))}
             </BaseSelect>
           )}

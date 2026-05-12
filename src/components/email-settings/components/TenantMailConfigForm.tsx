@@ -154,10 +154,10 @@ export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
                 errorMessage={formatFormErrors(field.state.meta.errors)}
                 isInvalid={field.state.meta.errors.length > 0}
               >
-                <BaseSelectItem key={String(OutboundMailProtocol.Smtp)}>
+                <BaseSelectItem key={String(OutboundMailProtocol.Smtp)} value={String(OutboundMailProtocol.Smtp)}>
                   SMTP
                 </BaseSelectItem>
-                <BaseSelectItem key={String(OutboundMailProtocol.SendGrid)}>
+                <BaseSelectItem key={String(OutboundMailProtocol.SendGrid)} value={String(OutboundMailProtocol.SendGrid)}>
                   SendGrid
                 </BaseSelectItem>
               </BaseSelect>

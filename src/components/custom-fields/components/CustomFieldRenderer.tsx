@@ -169,7 +169,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
               .filter(o => !o.isDisabled || o.id === value?.selectedOptionId)
               .sort((a, b) => a.sortOrder - b.sortOrder)
               .map(option => (
-                <BaseSelectItem key={option.id}>{option.value}</BaseSelectItem>
+                <BaseSelectItem key={option.id} value={option.id}>{option.value}</BaseSelectItem>
               ))}
           </BaseSelect>
         );

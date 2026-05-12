@@ -186,7 +186,7 @@ export function CustomStatusEditorModal({
             }}
           >
             {MAPS_TO_OPTIONS.map(opt => (
-              <BaseSelectItem key={String(opt.value)}>
+              <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
               </BaseSelectItem>
             ))}

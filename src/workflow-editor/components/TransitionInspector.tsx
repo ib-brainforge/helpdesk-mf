@@ -70,7 +70,7 @@ export function TransitionInspector({
         size="sm"
       >
         {TRIGGER_ITEMS.map(item => (
-          <BaseSelectItem key={item.id}>{item.name}</BaseSelectItem>
+          <BaseSelectItem key={item.id} value={item.id}>{item.name}</BaseSelectItem>
         ))}
       </BaseSelect>
 

@@ -184,7 +184,7 @@ function NewApprovalWorkflowPage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {APPROVAL_MODE_OPTIONS.map(opt => (
-                <BaseSelectItem key={String(opt.value)}>
+                <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
                   {opt.label}
                 </BaseSelectItem>
               ))}
@@ -321,9 +321,9 @@ function NewApprovalWorkflowPage() {
                   aria-label="Approver"
                 >
                   {[
-                    <BaseSelectItem key="">Select approver...</BaseSelectItem>,
+                    <BaseSelectItem key="" value="">Select approver...</BaseSelectItem>,
                     ...userOptions.map(opt => (
-                      <BaseSelectItem key={opt.value}>
+                      <BaseSelectItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </BaseSelectItem>
                     )),

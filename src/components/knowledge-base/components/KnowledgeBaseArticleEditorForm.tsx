@@ -249,7 +249,7 @@ export const KnowledgeBaseArticleEditorForm: FC<
                 }}
               >
                 {categories?.map(category => (
-                  <BaseSelectItem key={category.id}>
+                  <BaseSelectItem key={category.id} value={category.id}>
                     {category.name}
                   </BaseSelectItem>
                 )) || []}
@@ -324,7 +324,7 @@ export const KnowledgeBaseArticleEditorForm: FC<
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {ACCESS_LEVEL_OPTIONS.map(level => (
-                    <BaseSelectItem key={level.id} textValue={level.name}>
+                    <BaseSelectItem key={level.id} value={level.id} textValue={level.name}>
                       <div className="flex flex-col">
                         <span className="font-medium">{level.name}</span>
                         <span className="text-xs text-default-400">
@@ -353,7 +353,7 @@ export const KnowledgeBaseArticleEditorForm: FC<
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {STATUS_OPTIONS.map(status => (
-                    <BaseSelectItem key={status.id} textValue={status.name}>
+                    <BaseSelectItem key={status.id} value={status.id} textValue={status.name}>
                       <div className="flex flex-col">
                         <span className="font-medium">{status.name}</span>
                         <span className="text-xs text-default-400">

@@ -125,7 +125,7 @@ function NewKnowledgeBaseArticlePage() {
               }}
             >
               {(categories ?? []).map(cat => (
-                <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+                <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
               ))}
             </BaseSelect>
           )}
@@ -144,7 +144,7 @@ function NewKnowledgeBaseArticlePage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
-                <BaseSelectItem key={value}>{label}</BaseSelectItem>
+                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
               ))}
             </BaseSelect>
           )}

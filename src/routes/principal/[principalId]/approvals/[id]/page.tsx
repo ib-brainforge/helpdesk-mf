@@ -186,7 +186,7 @@ function PrincipalApprovalWorkflowDetailPage() {
                 >
                   {Object.entries(APPROVAL_MODE_LABELS).map(
                     ([value, label]) => (
-                      <BaseSelectItem key={value}>{label}</BaseSelectItem>
+                      <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
                     ),
                   )}
                 </BaseSelect>

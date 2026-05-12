@@ -127,7 +127,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
               placeholder="Select a category"
             >
               {(categories || []).map(category => (
-                <BaseSelectItem key={category.id ?? ''}>
+                <BaseSelectItem key={category.id ?? ''} value={category.id ?? ''}>
                   {category.name}
                 </BaseSelectItem>
               ))}

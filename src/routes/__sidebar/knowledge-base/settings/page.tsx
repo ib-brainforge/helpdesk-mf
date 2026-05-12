@@ -145,9 +145,9 @@ function CategoryFormModal({
                 }}
               >
                 {[
-                  <BaseSelectItem key="">None (top-level)</BaseSelectItem>,
+                  <BaseSelectItem key="" value="">None (top-level)</BaseSelectItem>,
                   ...parentOptions.map(cat => (
-                    <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
+                    <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
                   )),
                 ]}
               </BaseSelect>

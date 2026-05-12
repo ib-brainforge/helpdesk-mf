@@ -125,7 +125,7 @@ function NewEmailTemplatePage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {Object.entries(NOTIFICATION_TYPE_LABELS).map(([key, label]) => (
-                <BaseSelectItem key={key}>{label}</BaseSelectItem>
+                <BaseSelectItem key={key} value={key}>{label}</BaseSelectItem>
               ))}
             </BaseSelect>
           )}

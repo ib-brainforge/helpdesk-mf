@@ -205,7 +205,7 @@ function PrincipalTicketDetailPage() {
                 >
                   {Object.values(HelpdeskDomainTicketsEnumsTicketStatus).map(
                     s => (
-                      <BaseSelectItem key={s}>{s}</BaseSelectItem>
+                      <BaseSelectItem key={s} value={s}>{s}</BaseSelectItem>
                     ),
                   )}
                 </BaseSelect>
@@ -228,7 +228,7 @@ function PrincipalTicketDetailPage() {
                 >
                   {Object.values(HelpdeskDomainTicketsEnumsTicketPriority).map(
                     p => (
-                      <BaseSelectItem key={p}>{p}</BaseSelectItem>
+                      <BaseSelectItem key={p} value={p}>{p}</BaseSelectItem>
                     ),
                   )}
                 </BaseSelect>

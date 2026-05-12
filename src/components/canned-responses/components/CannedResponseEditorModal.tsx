@@ -211,13 +211,13 @@ export function CannedResponseEditorModal({
                 );
               }}
             >
-              <BaseSelectItem key={CannedResponseScope.Personal.toString()}>
+              <BaseSelectItem key={CannedResponseScope.Personal.toString()} value={CannedResponseScope.Personal.toString()}>
                 Personal - Only visible to you
               </BaseSelectItem>
-              <BaseSelectItem key={CannedResponseScope.Team.toString()}>
+              <BaseSelectItem key={CannedResponseScope.Team.toString()} value={CannedResponseScope.Team.toString()}>
                 Team - Visible to your team
               </BaseSelectItem>
-              <BaseSelectItem key={CannedResponseScope.Global.toString()}>
+              <BaseSelectItem key={CannedResponseScope.Global.toString()} value={CannedResponseScope.Global.toString()}>
                 Global - Visible to everyone
               </BaseSelectItem>
             </BaseSelect>
@@ -232,9 +232,9 @@ export function CannedResponseEditorModal({
               }}
             >
               {[
-                <BaseSelectItem key="">None</BaseSelectItem>,
+                <BaseSelectItem key="" value="">None</BaseSelectItem>,
                 ...categories.map(cat => (
-                  <BaseSelectItem key={cat.id}>
+                  <BaseSelectItem key={cat.id} value={cat.id}>
                     {cat.sectionName
                       ? `${cat.sectionName} / ${cat.name}`
                       : cat.name}
