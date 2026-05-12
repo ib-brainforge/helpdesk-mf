@@ -29,13 +29,15 @@
   },
   "packageManager": "pnpm@9.15.0",
   "lint-staged": {
-    "*.{jsonc}": ["biome check --files-ignore-unknown=true"]
+    "*.{jsonc}": [
+      "biome check --files-ignore-unknown=true"
+    ]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.4.376-develop.e68ee1b",
+    "@brainforgeau/components": "0.4.380-develop.0ca5635",
     "@brainforgeau/helpdesk-client": "0.1.132-develop.7f17d52",
     "@brainforgeau/identity-management-client": "0.1.501-develop.6624384",
     "@brainforgeau/observability": "0.4.44-develop.a423be9",
