@@ -14,7 +14,7 @@ import React from 'react';
 
 function TicketsPage() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       <TicketGrid />
     </div>
   );

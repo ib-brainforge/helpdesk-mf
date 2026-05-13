@@ -153,6 +153,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     <div className="flex w-full flex-wrap items-end gap-2.5">
       <div className="min-w-60 flex-1">
         <BaseInput
+          label="Search"
           type="text"
           placeholder="Search tickets..."
           value={searchTerm}

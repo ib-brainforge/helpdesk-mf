@@ -378,7 +378,7 @@ export const TicketGrid: FC = () => {
       </DrawerRoot>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-auto px-4 md:px-6">
+      <div className="flex flex-1 flex-col overflow-auto px-4 pt-4 md:px-6 md:pt-6">
         <div className="shrink-0">
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
