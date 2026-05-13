@@ -34,7 +34,6 @@ registerStatusColors({
 });
 import {
   ErrorBoundary,
-  PageSpinner,
   SideNav,
   type SideNavDesktopMode,
   useNavbarAction,
@@ -54,6 +53,7 @@ import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 const TopNavbar = React.lazy(() =>
   import('@brainforgeau/navbar/Navbar').then(m => ({ default: m.TopNavbar })),
 );
+import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { Logo } from '@/components/Logo';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { TEST_IDS } from '@/constants/testIds';
@@ -269,7 +269,7 @@ export default function Layout() {
         >
           <PageTracker category="helpdesk" />
           <ErrorBoundary>
-            <Suspense fallback={<PageSpinner title="Loading..." />}>
+            <Suspense fallback={<NavbarSkeleton />}>
               {isAuthenticated && (
                 <TopNavbar
                   data-testid={TEST_IDS.navbar.top}
