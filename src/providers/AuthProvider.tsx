@@ -1,6 +1,6 @@
-import { PageSpinner } from '@brainforgeau/components';
 import type React from 'react';
 
+import { AppLoading } from '@/components/AppLoading';
 import { configAtom, getAppConfig } from '@/state/config';
 import { FlexibleAuthProvider } from '@brainforgeau/security';
 import { useAtomValue } from 'jotai';
@@ -21,14 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       identityBaseUrl={identityBaseUrl}
       app="helpdesk"
       timeout={30000}
-      loadingFallback={
-        <div
-          className="flex flex-1 h-screen bg-background justify-center items-center"
-          data-loader="auth-provider"
-        >
-          <PageSpinner title="Loading..." />
-        </div>
-      }
+      loadingFallback={<AppLoading />}
     >
       {children}
     </FlexibleAuthProvider>
