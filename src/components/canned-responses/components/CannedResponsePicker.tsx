@@ -77,7 +77,7 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="3xl">
+    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
       <BaseModalContent>
         {modalOnClose => (
           <>

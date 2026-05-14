@@ -85,7 +85,7 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
   ].filter(Boolean).length;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="xl">
+    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-xl">
       <BaseModalContent>
         <BaseModalHeader>
           <div className="flex items-center gap-2">

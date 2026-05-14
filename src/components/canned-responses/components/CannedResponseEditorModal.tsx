@@ -127,7 +127,7 @@ export function CannedResponseEditorModal({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="3xl">
+    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
       <BaseModalContent>
         <BaseModalHeader
           title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}

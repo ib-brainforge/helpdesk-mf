@@ -141,7 +141,7 @@ export function AiAssistantModal({
       isAiNotConfiguredError(suggestReplyMutation.error));
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
+    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
       <BaseModalContent>
         <BaseModalHeader onClose={handleClose}>
           <div className="flex items-center gap-2">

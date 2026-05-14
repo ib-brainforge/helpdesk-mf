@@ -150,7 +150,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
+    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
       <BaseModalContent>
         <BaseModalHeader
           title={isEdit ? 'Edit Category' : 'Create Category'}

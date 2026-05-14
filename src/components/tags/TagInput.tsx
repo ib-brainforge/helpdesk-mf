@@ -72,7 +72,7 @@ export const TagInput: FC<TagInputProps> = ({
         allowsCustomValue
       >
         {filteredTags.map(tag => (
-          <BaseAutocompleteItem key={tag.id} value={tag.id}>
+          <BaseAutocompleteItem key={tag.id} id={tag.id}>
             {tag.name}
           </BaseAutocompleteItem>
         ))}

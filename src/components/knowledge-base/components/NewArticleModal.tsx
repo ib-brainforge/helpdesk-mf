@@ -93,7 +93,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
   }, [onClose]);
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="3xl">
+    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
       <BaseModalContent>
         <BaseModalHeader>
           <h2 className="text-xl font-semibold">New Article</h2>

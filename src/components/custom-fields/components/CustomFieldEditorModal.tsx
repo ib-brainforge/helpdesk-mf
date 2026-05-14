@@ -185,7 +185,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
+    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
       <BaseModalContent>
         <BaseModalHeader
           title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
