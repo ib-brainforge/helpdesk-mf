@@ -153,12 +153,9 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseSelect
             label={field.name}
             placeholder="-- Select --"
-            selectedKeys={
-              value?.selectedOptionId ? [value.selectedOptionId] : []
-            }
-            onSelectionChange={keys => {
-              const selectedKey = keys || null;
-              onChange({ selectedOptionId: selectedKey });
+            selectedKey={value?.selectedOptionId ?? null}
+            onSelectionChange={key => {
+              onChange({ selectedOptionId: (key as string) || null });
             }}
             isDisabled={readOnly}
             isInvalid={!!error}

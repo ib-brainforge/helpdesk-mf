@@ -120,10 +120,9 @@ function CSATReportPage() {
             <BaseSelect
               label="Group by"
               placeholder="Select grouping"
-              selectedKeys={groupBy ? new Set([groupBy]) : new Set<string>()}
-              onSelectionChange={keys => {
-                const key = keys as CSATGroupBy | undefined;
-                setGroupBy(key);
+              selectedKey={groupBy ?? null}
+              onSelectionChange={key => {
+                setGroupBy((key as CSATGroupBy) || undefined);
               }}
               className="max-w-xs"
             >

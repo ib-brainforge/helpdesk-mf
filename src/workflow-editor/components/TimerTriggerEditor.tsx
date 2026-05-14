@@ -77,10 +77,8 @@ export function TimerTriggerEditor({
     onChange(next);
   }
 
-  function handleScheduleChange(keys: {
-    currentKey?: string | number | bigint | null;
-  }) {
-    const id = keys != null ? String(keys) : undefined;
+  function handleScheduleChange(key: string | number | null) {
+    const id = key != null ? String(key) : undefined;
     update({ businessHoursScheduleId: id, useBusinessHours: true });
   }
 
@@ -124,9 +122,7 @@ export function TimerTriggerEditor({
             placeholder={
               schedulesLoading ? 'Loading schedules…' : 'Select a schedule'
             }
-            selectedKeys={
-              businessHoursScheduleId ? [businessHoursScheduleId] : []
-            }
+            selectedKey={businessHoursScheduleId ?? null}
             onSelectionChange={handleScheduleChange}
             isDisabled={readOnly || schedulesLoading}
             size="sm"

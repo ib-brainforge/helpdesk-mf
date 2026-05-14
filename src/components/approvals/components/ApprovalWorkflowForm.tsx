@@ -183,9 +183,8 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
           <BaseSelect
             label="Category"
             selectedKey={categoryId ? categoryId : null}
-            onSelectionChange={keys => {
-              const selected = Array.from(keys as Set<string>)[0];
-              setCategoryId(selected || '');
+            onSelectionChange={key => {
+              setCategoryId((key as string) || '');
             }}
             aria-label="Category"
           >
@@ -200,9 +199,8 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
           <BaseSelect
             label="Approval Mode"
             selectedKey={approvalMode.toString()}
-            onSelectionChange={keys => {
-              const selected = Array.from(keys as Set<string>)[0];
-              setApprovalMode(Number.parseInt(selected) as ApprovalMode);
+            onSelectionChange={key => {
+              setApprovalMode(Number.parseInt(key as string) as ApprovalMode);
             }}
             isRequired
             aria-label="Approval Mode"
@@ -320,10 +318,9 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     selectedKey={
                       step.approverUserId ? step.approverUserId : null
                     }
-                    onSelectionChange={keys => {
-                      const selected = Array.from(keys as Set<string>)[0];
+                    onSelectionChange={key => {
                       handleUpdateStep(index, {
-                        approverUserId: selected || undefined,
+                        approverUserId: (key as string) || undefined,
                       });
                     }}
                     size="sm"
@@ -360,10 +357,9 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                       selectedKey={
                         step.escalateToUserId ? step.escalateToUserId : null
                       }
-                      onSelectionChange={keys => {
-                        const selected = Array.from(keys as Set<string>)[0];
+                      onSelectionChange={key => {
                         handleUpdateStep(index, {
-                          escalateToUserId: selected || undefined,
+                          escalateToUserId: (key as string) || undefined,
                         });
                       }}
                       size="sm"

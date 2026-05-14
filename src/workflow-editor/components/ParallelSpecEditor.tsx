@@ -79,12 +79,9 @@ export function ParallelSpecEditor({
       {/* Join State — single-select */}
       <BaseSelect
         label="Join State"
-        selectedKeys={
-          spec.joinStateId ? new Set([spec.joinStateId]) : new Set<string>()
-        }
-        onSelectionChange={keys => {
-          const first = keys;
-          update({ joinStateId: String(first ?? '') });
+        selectedKey={spec.joinStateId ?? null}
+        onSelectionChange={key => {
+          update({ joinStateId: (key as string) || undefined });
         }}
         isDisabled={readOnly}
         size="sm"
