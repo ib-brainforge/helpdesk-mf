@@ -15,8 +15,8 @@ importers:
         specifier: 0.1.164-develop.f6417ba
         version: 0.1.164-develop.f6417ba
       '@brainforgeau/identity-management-client':
-        specifier: 0.1.571-develop.1c8d656
-        version: 0.1.571-develop.1c8d656
+        specifier: 0.1.583-develop.22921e5
+        version: 0.1.583-develop.22921e5
       '@brainforgeau/observability':
         specifier: 0.4.44-develop.a423be9
         version: 0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -935,8 +935,8 @@ packages:
     resolution: {integrity: sha512-upO3uV/IGb9fBE0tWVK9G67lX8OA/LgcnAKgIXsfVutF1pRaqNE8JfWrjTDX2RBEZtxwB4vCVZGV7Y7/ScOt6w==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.1.164-develop.f6417ba/3a37f600c37862585e3993d1942ca8250bbe18ff}
     engines: {node: '>=18.0.0'}
 
-  '@brainforgeau/identity-management-client@0.1.571-develop.1c8d656':
-    resolution: {integrity: sha512-OjyIWtdqAL+nOyBdTrwTXVwOqkfKCvV9FomrPXtOOAPg6NmX0ul9moitlxcsr75yPhFg4kIf1/g/WYwzcmyMOw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.571-develop.1c8d656/ad4f1d3110f3e98e1cec959f5628d9ba509e9fde}
+  '@brainforgeau/identity-management-client@0.1.583-develop.22921e5':
+    resolution: {integrity: sha512-KqCnAOGxqsD/mL+OM9hfGGOe+na8Wwefef0pSpryWaW8yhEtchWKcYYBHEvETAd1lT5OPmHECBPU/sLJO7m4EQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.583-develop.22921e5/70dc1560552c9fb01a6a224e8b47e1ff0c0b5e47}
     engines: {node: '>=18.0.0'}
 
   '@brainforgeau/observability@0.4.44-develop.a423be9':
@@ -8458,7 +8458,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/identity-management-client@0.1.571-develop.1c8d656':
+  '@brainforgeau/identity-management-client@0.1.583-develop.22921e5':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
