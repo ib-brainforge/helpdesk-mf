@@ -64,32 +64,32 @@ export function ComponentsPalette() {
     };
     event.dataTransfer.setData(
       'application/x-workflow-node',
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
     event.dataTransfer.effectAllowed = 'move';
   }
 
   return (
     <aside
-      className="flex w-64 shrink-0 flex-col border-l border-default-200 bg-white dark:bg-default-50"
+      className="border-light dark:bg-default-50 flex w-64 shrink-0 flex-col border-l bg-white"
       aria-label="Components palette"
     >
-      <div className="border-b border-default-200 px-4 py-3">
-        <div className="text-sm font-semibold text-default-900">Components</div>
-        <div className="text-xs text-default-400">
+      <div className="border-light border-b px-4 py-3">
+        <div className="text-default-900 text-sm font-semibold">Components</div>
+        <div className="text-default-400 text-xs">
           Drag and drop onto the canvas
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-2">
-        {ITEMS.map(item => {
+      <div className="flex-1 space-y-2 overflow-y-auto p-2">
+        {ITEMS.map((item) => {
           const colors =
             item.colorOverride ?? CATEGORY_COLORS[item.defaultCategory];
           return (
             <div
               key={item.type}
               draggable
-              onDragStart={e => handleDragStart(e, item)}
-              className="flex items-center gap-3 rounded bg-white p-2 cursor-grab hover:bg-default-50 active:cursor-grabbing select-none"
+              onDragStart={(e) => handleDragStart(e, item)}
+              className="hover:bg-default-50 flex cursor-grab select-none items-center gap-3 rounded bg-white p-2 active:cursor-grabbing"
               style={{
                 borderWidth: 1,
                 borderStyle: 'solid',
@@ -98,7 +98,7 @@ export function ComponentsPalette() {
               }}
             >
               <span
-                className="inline-flex h-6 w-6 items-center justify-center rounded flex-shrink-0"
+                className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded"
                 style={{
                   background: colors.bg,
                   color: colors.text,
@@ -126,10 +126,10 @@ export function ComponentsPalette() {
                 </svg>
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-default-900">
+                <div className="text-default-900 text-xs font-semibold">
                   {item.label}
                 </div>
-                <div className="text-[10px] text-default-400 truncate">
+                <div className="text-default-400 truncate text-[10px]">
                   {item.description}
                 </div>
               </div>

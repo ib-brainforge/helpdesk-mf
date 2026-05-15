@@ -1,4 +1,5 @@
 import { getAppConfig } from '@/state/config';
+import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { Card, CardContent } from '@heroui/react';
@@ -22,34 +23,32 @@ function SettingCard({
   isExternal,
 }: SettingCardProps) {
   const content = (
-    <Card
-      className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
+    <BaseCard
+      className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:border-primary hover:shadow-md'}`}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-1">
-            <Icon name={icon} className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <h3 className="text-base font-semibold">{title}</h3>
-              {isExternal && (
-                <Icon
-                  name="arrow-top-right-on-square"
-                  className="h-3.5 w-3.5 text-default-400"
-                />
-              )}
-            </div>
-            <p className="text-sm text-default-500">{description}</p>
-            {isComingSoon && (
-              <span className="inline-block mt-2 text-xs text-warning">
-                Coming soon
-              </span>
+      <div className="flex items-start gap-3">
+        <div className="mt-1 flex-shrink-0">
+          <Icon name={icon} className="text-primary h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex items-center gap-1.5">
+            <h3 className="text-base font-semibold">{title}</h3>
+            {isExternal && (
+              <Icon
+                name="arrow-top-right-on-square"
+                className="text-default-400 h-3.5 w-3.5"
+              />
             )}
           </div>
+          <p className="text-default-500 text-sm">{description}</p>
+          {isComingSoon && (
+            <span className="text-warning mt-2 inline-block text-xs">
+              Coming soon
+            </span>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </BaseCard>
   );
 
   if (isComingSoon) {
@@ -209,13 +208,13 @@ function AdministrationPage() {
       </PageHeader>
 
       <div className="space-y-8">
-        {sections.map(section => (
+        {sections.map((section) => (
           <div key={section.title}>
-            <h2 className="text-lg font-semibold mb-4 text-default-700">
+            <h2 className="text-default-700 mb-4 text-lg font-semibold">
               {section.title}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {section.items.map(item => (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {section.items.map((item) => (
                 <SettingCard key={item.title} {...item} />
               ))}
             </div>

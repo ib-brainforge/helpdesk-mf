@@ -1,4 +1,5 @@
 import {
+  BaseCard,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
@@ -141,44 +142,49 @@ export function AiAssistantModal({
       isAiNotConfiguredError(suggestReplyMutation.error));
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="lg"
+      className="max-w-2xl"
+    >
       <BaseModalContent>
         <BaseModalHeader onClose={handleClose}>
           <div className="flex items-center gap-2">
-            <Icon name="flash" className="h-5 w-5 text-primary" />
+            <Icon name="flash" className="text-primary h-5 w-5" />
             <span>Jitbit AI Assistant</span>
           </div>
         </BaseModalHeader>
         <BaseModalBody className="pb-6">
           {/* Result panel */}
           {(isLoading || aiResult || hasAiError) && (
-            <div className="mb-4 rounded-lg border border-default-200 bg-default-50 p-4 min-h-[80px] flex items-start">
+            <div className="border-light bg-default-50 mb-4 flex min-h-[80px] items-start rounded-lg border p-4">
               {isLoading && (
-                <div className="flex items-center gap-3 text-default-500 text-sm">
+                <div className="text-default-500 flex items-center gap-3 text-sm">
                   <Spinner size="sm" />
                   <span>Generating...</span>
                 </div>
               )}
               {!isLoading && hasAiError && (
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-warning-600 font-medium">
+                  <p className="text-warning-600 text-sm font-medium">
                     AI features are not configured
                   </p>
-                  <p className="text-sm text-default-500">
+                  <p className="text-default-500 text-sm">
                     Contact your administrator to configure the AI provider for
                     this deployment.
                   </p>
                 </div>
               )}
               {!isLoading && aiResult && (
-                <p className="text-sm text-default-700 whitespace-pre-wrap">
+                <p className="text-default-700 whitespace-pre-wrap text-sm">
                   {aiResult}
                 </p>
               )}
             </div>
           )}
 
-          <p className="text-sm text-default-500 mb-4">
+          <p className="text-default-500 mb-4 text-sm">
             How can AI help you with this ticket?
           </p>
 
@@ -188,28 +194,26 @@ export function AiAssistantModal({
               type="button"
               onClick={handleSuggestReply}
               disabled={isLoading}
-              className="text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-left disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Card className="hover:border-primary transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                      <Icon
-                        name="chat-bubble-left-right"
-                        className="h-6 w-6 text-primary"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold mb-0.5">
-                        Generate response
-                      </h3>
-                      <p className="text-xs text-default-500">
-                        AI-powered reply suggestions
-                      </p>
-                    </div>
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Icon
+                      name="chat-bubble-left-right"
+                      className="text-primary h-6 w-6"
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <h3 className="mb-0.5 text-sm font-semibold">
+                      Generate response
+                    </h3>
+                    <p className="text-default-500 text-xs">
+                      AI-powered reply suggestions
+                    </p>
+                  </div>
+                </div>
+              </BaseCard>
             </button>
 
             {/* Ticket summary — real */}
@@ -217,28 +221,26 @@ export function AiAssistantModal({
               type="button"
               onClick={handleTicketSummary}
               disabled={isLoading}
-              className="text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-left disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Card className="hover:border-primary transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                      <Icon
-                        name="document-text"
-                        className="h-6 w-6 text-primary"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold mb-0.5">
-                        Ticket summary
-                      </h3>
-                      <p className="text-xs text-default-500">
-                        Quick overview of the ticket
-                      </p>
-                    </div>
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Icon
+                      name="document-text"
+                      className="text-primary h-6 w-6"
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <h3 className="mb-0.5 text-sm font-semibold">
+                      Ticket summary
+                    </h3>
+                    <p className="text-default-500 text-xs">
+                      Quick overview of the ticket
+                    </p>
+                  </div>
+                </div>
+              </BaseCard>
             </button>
 
             {/* Improve reply — coming soon */}
@@ -247,23 +249,21 @@ export function AiAssistantModal({
               onClick={handleComingSoon}
               className="text-left"
             >
-              <Card className="hover:border-primary transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                      <Icon name="sparkles" className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold mb-0.5">
-                        Improve reply
-                      </h3>
-                      <p className="text-xs text-default-500">
-                        Enhance your response
-                      </p>
-                    </div>
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Icon name="sparkles" className="text-primary h-6 w-6" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <h3 className="mb-0.5 text-sm font-semibold">
+                      Improve reply
+                    </h3>
+                    <p className="text-default-500 text-xs">
+                      Enhance your response
+                    </p>
+                  </div>
+                </div>
+              </BaseCard>
             </button>
 
             {/* Generate KB — coming soon */}
@@ -272,23 +272,21 @@ export function AiAssistantModal({
               onClick={handleComingSoon}
               className="text-left"
             >
-              <Card className="hover:border-primary transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                      <Icon name="book-open" className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold mb-0.5">
-                        Generate KB
-                      </h3>
-                      <p className="text-xs text-default-500">
-                        Create knowledge base article
-                      </p>
-                    </div>
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Icon name="book-open" className="text-primary h-6 w-6" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <h3 className="mb-0.5 text-sm font-semibold">
+                      Generate KB
+                    </h3>
+                    <p className="text-default-500 text-xs">
+                      Create knowledge base article
+                    </p>
+                  </div>
+                </div>
+              </BaseCard>
             </button>
           </div>
 
@@ -298,24 +296,22 @@ export function AiAssistantModal({
             onClick={handleComingSoon}
             className="w-full text-left"
           >
-            <Card className="hover:border-primary transition-colors mt-3">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
-                    <Icon
-                      name="chat-bubble-bottom-center-text"
-                      className="h-6 w-6 text-primary"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold mb-0.5">
-                      Custom AI-chat
-                    </h3>
-                    <p className="text-xs text-default-500">Ask AI anything</p>
-                  </div>
+            <BaseCard className="hover:border-primary mt-3 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary-50 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
+                  <Icon
+                    name="chat-bubble-bottom-center-text"
+                    className="text-primary h-6 w-6"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <h3 className="mb-0.5 text-sm font-semibold">
+                    Custom AI-chat
+                  </h3>
+                  <p className="text-default-500 text-xs">Ask AI anything</p>
+                </div>
+              </div>
+            </BaseCard>
           </button>
         </BaseModalBody>
       </BaseModalContent>

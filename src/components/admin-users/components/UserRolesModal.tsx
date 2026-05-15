@@ -45,7 +45,7 @@ export function UserRolesModal({
   const assignMutation = useAssignUserRole();
   const unassignMutation = useUnassignUserRole();
 
-  const currentRoles = new Set((roles ?? []).map(r => r.roleName));
+  const currentRoles = new Set((roles ?? []).map((r) => r.roleName));
 
   const handleToggle = async (role: HelpdeskRole) => {
     try {
@@ -77,7 +77,7 @@ export function UserRolesModal({
       <BaseModalContent>
         <BaseModalHeader>Manage Helpdesk Roles — {userName}</BaseModalHeader>
         <BaseModalBody className="space-y-3">
-          <p className="text-sm text-default-500">
+          <p className="text-default-500 text-sm">
             These are helpdesk-specific roles. To manage Keycloak identity roles
             (login, SSO, application access), use the{' '}
             <span className="text-primary font-medium">
@@ -92,12 +92,12 @@ export function UserRolesModal({
             </div>
           ) : (
             <div className="space-y-2">
-              {HELPDESK_ROLES.map(role => {
+              {HELPDESK_ROLES.map((role) => {
                 const isAssigned = currentRoles.has(role);
                 return (
                   <div
                     key={role}
-                    className="flex items-center justify-between p-3 rounded-lg border border-default-200 bg-default-50"
+                    className="border-light bg-default-50 flex items-center justify-between rounded-lg border p-3"
                   >
                     <div className="flex items-center gap-3">
                       <Chip
@@ -107,7 +107,7 @@ export function UserRolesModal({
                       >
                         {role}
                       </Chip>
-                      <p className="text-sm text-default-600">
+                      <p className="text-default-600 text-sm">
                         {ROLE_DESCRIPTIONS[role]}
                       </p>
                     </div>

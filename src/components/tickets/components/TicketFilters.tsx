@@ -67,12 +67,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   // Map data to options
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
-    [usersData],
+    [usersData]
   );
 
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
-    [categoriesData],
+    [categoriesData]
   );
 
   const handlePresetChange = useCallback(
@@ -100,7 +100,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onFiltersChange({});
       }
     },
-    [onFiltersChange, currentUser],
+    [onFiltersChange, currentUser]
   );
 
   const handleStatusChange = useCallback(
@@ -110,7 +110,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         status: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange],
+    [filters, onFiltersChange]
   );
 
   const handlePriorityChange = useCallback(
@@ -120,7 +120,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         priority: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange],
+    [filters, onFiltersChange]
   );
 
   const handleCategoryChange = useCallback(
@@ -130,7 +130,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         categoryId: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange],
+    [filters, onFiltersChange]
   );
 
   const handleAssigneeChange = useCallback(
@@ -140,7 +140,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         assigneeId: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange],
+    [filters, onFiltersChange]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -157,7 +157,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           type="text"
           placeholder="Search tickets..."
           value={searchTerm}
-          onChange={e => onSearch(e.target.value)}
+          onChange={(e) => onSearch(e.target.value)}
           startContent={
             <Icon name="magnifying-glass" className="h-4 w-4 text-gray-400" />
           }
@@ -170,15 +170,23 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           placeholder="Select preset"
           className="w-full"
           selectedKey={preset}
-          onSelectionChange={keys => {
+          onSelectionChange={(keys) => {
             const value = keys as string;
             handlePresetChange(value);
           }}
         >
-          <BaseSelectItem key="all" value="all">All Tickets</BaseSelectItem>
-          <BaseSelectItem key="my-tickets" value="my-tickets">My Tickets</BaseSelectItem>
-          <BaseSelectItem key="unassigned" value="unassigned">Unassigned</BaseSelectItem>
-          <BaseSelectItem key="overdue" value="overdue">Overdue</BaseSelectItem>
+          <BaseSelectItem key="all" value="all">
+            All Tickets
+          </BaseSelectItem>
+          <BaseSelectItem key="my-tickets" value="my-tickets">
+            My Tickets
+          </BaseSelectItem>
+          <BaseSelectItem key="unassigned" value="unassigned">
+            Unassigned
+          </BaseSelectItem>
+          <BaseSelectItem key="overdue" value="overdue">
+            Overdue
+          </BaseSelectItem>
         </BaseSelect>
       </div>
 
@@ -186,15 +194,25 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         <BaseTagSelect
           label="Status"
           placeholder="Filter by status"
-          classNames={{ base: "w-full" }}
-          value={filters.status?.map(s => s.toString()) ?? []}
+          classNames={{ base: 'w-full [&_svg]:my-0' }}
+          value={filters.status?.map((s) => s.toString()) ?? []}
           onValueChange={handleStatusChange}
         >
-          <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>New</BaseTagSelectItem>
-          <BaseTagSelectItem key={TicketStatus.InProgress} value={TicketStatus.InProgress}>
+          <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>
+            New
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketStatus.InProgress}
+            value={TicketStatus.InProgress}
+          >
             In Progress
           </BaseTagSelectItem>
-          <BaseTagSelectItem key={TicketStatus.Closed} value={TicketStatus.Closed}>Closed</BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketStatus.Closed}
+            value={TicketStatus.Closed}
+          >
+            Closed
+          </BaseTagSelectItem>
         </BaseTagSelect>
       </div>
 
@@ -202,17 +220,40 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         <BaseTagSelect
           label="Priority"
           placeholder="Filter by priority"
-          classNames={{ base: "w-full" }}
-          value={filters.priority?.map(p => p.toString()) ?? []}
+          classNames={{ base: 'w-full [&_svg]:my-0' }}
+          value={filters.priority?.map((p) => p.toString()) ?? []}
           onValueChange={handlePriorityChange}
         >
-          <BaseTagSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+          <BaseTagSelectItem
+            key={TicketPriority.Critical}
+            value={TicketPriority.Critical}
+          >
             Critical
           </BaseTagSelectItem>
-          <BaseTagSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseTagSelectItem>
-          <BaseTagSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>Normal</BaseTagSelectItem>
-          <BaseTagSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseTagSelectItem>
-          <BaseTagSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.High}
+            value={TicketPriority.High}
+          >
+            High
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.Normal}
+            value={TicketPriority.Normal}
+          >
+            Normal
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.Low}
+            value={TicketPriority.Low}
+          >
+            Low
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.None}
+            value={TicketPriority.None}
+          >
+            None
+          </BaseTagSelectItem>
         </BaseTagSelect>
       </div>
 
@@ -223,7 +264,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           className="w-full"
           isClearable
           selectedKey={filters.categoryId?.[0] ?? null}
-          onSelectionChange={key => {
+          onSelectionChange={(key) => {
             const newKey = key as string | null;
             handleCategoryChange(newKey ? [newKey] : []);
           }}
@@ -231,14 +272,16 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onValueChange={(value: string) => {
             searchCategories({ query: value });
           }}
-          onOpenChange={open => {
+          onOpenChange={(open) => {
             if (open && !isSearchingCategories) {
               searchCategories({ query: '' });
             }
           }}
           isLoading={isSearchingCategories}
-          renderSelectedItem={selectedKey => {
-            const category = categoriesOptions.find(c => c.id === selectedKey);
+          renderSelectedItem={(selectedKey) => {
+            const category = categoriesOptions.find(
+              (c) => c.id === selectedKey
+            );
             if (!category) return null;
             return (
               <span className="truncate text-xs font-medium">
@@ -249,7 +292,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             );
           }}
         >
-          {categoriesOptions.map(category => (
+          {categoriesOptions.map((category) => (
             <BaseAutocompleteItem
               key={category.id}
               id={category.id}
@@ -281,7 +324,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           className="w-full"
           isClearable
           selectedKey={filters.assigneeId?.[0] ?? null}
-          onSelectionChange={key => {
+          onSelectionChange={(key) => {
             const newKey = key as string | null;
             handleAssigneeChange(newKey ? [newKey] : []);
           }}
@@ -289,14 +332,14 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onValueChange={(value: string) => {
             searchUsers({ query: value });
           }}
-          onOpenChange={open => {
+          onOpenChange={(open) => {
             if (open && !isSearchingUsers) {
               searchUsers({ query: '' });
             }
           }}
           isLoading={isSearchingUsers}
-          renderSelectedItem={selectedKey => {
-            const user = usersOptions.find(u => u.id === selectedKey);
+          renderSelectedItem={(selectedKey) => {
+            const user = usersOptions.find((u) => u.id === selectedKey);
             if (!user) return null;
             return (
               <div className="flex w-full min-w-0 flex-1 items-center gap-2">
@@ -308,8 +351,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             );
           }}
         >
-          {usersOptions.map(user => (
-            <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
+          {usersOptions.map((user) => (
+            <BaseAutocompleteItem
+              key={user.id}
+              id={user.id}
+              textValue={user.name}
+            >
               <div className="flex items-center gap-2.5">
                 <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                 <div className="flex-1">

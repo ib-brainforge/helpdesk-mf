@@ -12,13 +12,17 @@
  * in the PageHeader.Actions slot rather than inside the form body.
  */
 
-import { useApprovalWorkflow, useUpdateApprovalWorkflow } from '@/components/approvals';
+import {
+  useApprovalWorkflow,
+  useUpdateApprovalWorkflow,
+} from '@/components/approvals';
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import { ApprovalMode, type ApprovalWorkflowStepDto } from '@/types/approval';
 import {
   BaseButton,
+  BaseCard,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -124,7 +128,7 @@ function EditApprovalWorkflowPage() {
 
   // Step helpers
   const handleAddStep = useCallback(() => {
-    setSteps(prev => [
+    setSteps((prev) => [
       ...prev,
       {
         stepOrder: prev.length,
@@ -138,25 +142,25 @@ function EditApprovalWorkflowPage() {
   }, []);
 
   const handleRemoveStep = useCallback((index: number) => {
-    setSteps(prev =>
+    setSteps((prev) =>
       prev
         .filter((_, i) => i !== index)
-        .map((step, i) => ({ ...step, stepOrder: i })),
+        .map((step, i) => ({ ...step, stepOrder: i }))
     );
   }, []);
 
   const handleUpdateStep = useCallback(
     (index: number, updates: Partial<ApprovalWorkflowStepDto>) => {
-      setSteps(prev =>
-        prev.map((step, i) => (i === index ? { ...step, ...updates } : step)),
+      setSteps((prev) =>
+        prev.map((step, i) => (i === index ? { ...step, ...updates } : step))
       );
     },
-    [],
+    []
   );
 
   const handleMoveStepUp = useCallback((index: number) => {
     if (index === 0) return;
-    setSteps(prev => {
+    setSteps((prev) => {
       const next = [...prev];
       [next[index - 1], next[index]] = [next[index], next[index - 1]];
       return next.map((step, i) => ({ ...step, stepOrder: i }));
@@ -164,7 +168,7 @@ function EditApprovalWorkflowPage() {
   }, []);
 
   const handleMoveStepDown = useCallback((index: number) => {
-    setSteps(prev => {
+    setSteps((prev) => {
       if (index === prev.length - 1) return prev;
       const next = [...prev];
       [next[index], next[index + 1]] = [next[index + 1], next[index]];
@@ -197,264 +201,270 @@ function EditApprovalWorkflowPage() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
     >
-      <DetailPage.Tab id="details" title="Details" formActions={form.formActions}>
+      <DetailPage.Tab
+        id="details"
+        title="Details"
+        formActions={form.formActions}
+      >
         <div className="max-w-2xl space-y-6">
           {/* Basic Information */}
-          <Card>
-            <CardContent className="p-5 space-y-4">
-              <h2 className="text-base font-semibold">Basic Information</h2>
+          <BaseCard>
+            <h2 className="text-base font-semibold">Basic Information</h2>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <f.Field name="name">
-                  {field => (
-                    <BaseInput
-                      label="Workflow Name"
-                      isRequired
-                      placeholder="Enter workflow name"
-                      value={field.state.value}
-                      onChange={e => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      isInvalid={field.state.meta.errors.length > 0}
-                      errorMessage={field.state.meta.errors.map(String).join(', ')}
-                    />
-                  )}
-                </f.Field>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <f.Field name="name">
+                {(field) => (
+                  <BaseInput
+                    label="Workflow Name"
+                    isRequired
+                    placeholder="Enter workflow name"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    isInvalid={field.state.meta.errors.length > 0}
+                    errorMessage={field.state.meta.errors
+                      .map(String)
+                      .join(', ')}
+                  />
+                )}
+              </f.Field>
 
-                <f.Field name="approvalMode">
-                  {field => (
-                    <BaseSelect
-                      label="Approval Mode"
-                      isRequired
-                      selectedKey={String(field.state.value)}
-                      onSelectionChange={key => {
-                        if (key)
-                          field.handleChange(
-                            Number.parseInt(String(key)) as ApprovalMode,
-                          );
-                      }}
-                      isInvalid={field.state.meta.errors.length > 0}
-                      errorMessage={field.state.meta.errors.map(String).join(', ')}
+              <f.Field name="approvalMode">
+                {(field) => (
+                  <BaseSelect
+                    label="Approval Mode"
+                    isRequired
+                    selectedKey={String(field.state.value)}
+                    onSelectionChange={(key) => {
+                      if (key)
+                        field.handleChange(
+                          Number.parseInt(String(key)) as ApprovalMode
+                        );
+                    }}
+                    isInvalid={field.state.meta.errors.length > 0}
+                    errorMessage={field.state.meta.errors
+                      .map(String)
+                      .join(', ')}
+                  >
+                    {APPROVAL_MODE_OPTIONS.map((opt) => (
+                      <BaseSelectItem
+                        key={String(opt.value)}
+                        value={String(opt.value)}
+                      >
+                        {opt.label}
+                      </BaseSelectItem>
+                    ))}
+                  </BaseSelect>
+                )}
+              </f.Field>
+
+              <f.Field name="description">
+                {(field) => (
+                  <BaseTextarea
+                    label="Description"
+                    placeholder="Optional description"
+                    value={field.state.value}
+                    onValueChange={field.handleChange}
+                    onBlur={field.handleBlur}
+                    minRows={3}
+                    className="md:col-span-2"
+                  />
+                )}
+              </f.Field>
+
+              <f.Field name="isActive">
+                {(field) => (
+                  <div className="flex flex-col gap-1">
+                    <Switch
+                      isSelected={field.state.value}
+                      onChange={field.handleChange}
                     >
-                      {APPROVAL_MODE_OPTIONS.map(opt => (
-                        <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
-                          {opt.label}
-                        </BaseSelectItem>
-                      ))}
-                    </BaseSelect>
-                  )}
-                </f.Field>
+                      <span className="text-sm font-medium">Active</span>
+                    </Switch>
+                    <p className="text-muted-foreground text-xs">
+                      Enable this workflow
+                    </p>
+                  </div>
+                )}
+              </f.Field>
 
-                <f.Field name="description">
-                  {field => (
-                    <BaseTextarea
-                      label="Description"
-                      placeholder="Optional description"
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                      onBlur={field.handleBlur}
-                      minRows={3}
-                      className="md:col-span-2"
-                    />
-                  )}
-                </f.Field>
-
-                <f.Field name="isActive">
-                  {field => (
-                    <div className="flex flex-col gap-1">
-                      <Switch
-                        isSelected={field.state.value}
-                        onChange={field.handleChange}
-                      >
-                        <span className="text-sm font-medium">Active</span>
-                      </Switch>
-                      <p className="text-xs text-muted-foreground">
-                        Enable this workflow
-                      </p>
-                    </div>
-                  )}
-                </f.Field>
-
-                <f.Field name="triggerOnCreation">
-                  {field => (
-                    <div className="flex flex-col gap-1">
-                      <Switch
-                        isSelected={field.state.value}
-                        onChange={field.handleChange}
-                      >
-                        <span className="text-sm font-medium">
-                          Trigger on Creation
-                        </span>
-                      </Switch>
-                      <p className="text-xs text-muted-foreground">
-                        Automatically trigger when ticket is created
-                      </p>
-                    </div>
-                  )}
-                </f.Field>
-              </div>
-            </CardContent>
-          </Card>
+              <f.Field name="triggerOnCreation">
+                {(field) => (
+                  <div className="flex flex-col gap-1">
+                    <Switch
+                      isSelected={field.state.value}
+                      onChange={field.handleChange}
+                    >
+                      <span className="text-sm font-medium">
+                        Trigger on Creation
+                      </span>
+                    </Switch>
+                    <p className="text-muted-foreground text-xs">
+                      Automatically trigger when ticket is created
+                    </p>
+                  </div>
+                )}
+              </f.Field>
+            </div>
+          </BaseCard>
 
           {/* Approval Steps — managed as local state outside useEntityForm */}
-          <Card>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold">Approval Steps</h2>
-                <BaseButton
-                  size="sm"
-                  variant="light"
-                  onPress={handleAddStep}
-                  icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-                >
-                  Add Step
-                </BaseButton>
+          <BaseCard>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">Approval Steps</h2>
+              <BaseButton
+                size="sm"
+                variant="light"
+                onPress={handleAddStep}
+                icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+              >
+                Add Step
+              </BaseButton>
+            </div>
+
+            {steps.length === 0 && (
+              <div className="text-muted-foreground flex flex-col items-center justify-center py-10 text-center">
+                <Icon
+                  name="clipboard-document-list"
+                  className="mb-2 h-10 w-10"
+                />
+                <p className="text-sm">
+                  No steps added yet. Click "Add Step" to create approval steps.
+                </p>
               </div>
+            )}
 
-              {steps.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-                  <Icon
-                    name="clipboard-document-list"
-                    className="h-10 w-10 mb-2"
-                  />
-                  <p className="text-sm">
-                    No steps added yet. Click "Add Step" to create approval steps.
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {steps.map((step, index) => (
-                  <Card key={index}>
-                    <CardContent className="flex flex-col gap-3 pt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                          Step {index + 1}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <BaseButton
-                            size="sm"
-                            variant="light"
-                            onPress={() => handleMoveStepUp(index)}
-                            isDisabled={index === 0}
-                            icon={
-                              <Icon name="chevron-up" className="h-3.5 w-3.5" />
-                            }
-                          />
-                          <BaseButton
-                            size="sm"
-                            variant="light"
-                            onPress={() => handleMoveStepDown(index)}
-                            isDisabled={index === steps.length - 1}
-                            icon={
-                              <Icon
-                                name="chevron-down"
-                                className="h-3.5 w-3.5"
-                              />
-                            }
-                          />
-                          <BaseButton
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => handleRemoveStep(index)}
-                            icon={<Icon name="trash" className="h-3.5 w-3.5" />}
-                          />
-                        </div>
+            <div className="space-y-3">
+              {steps.map((step, index) => (
+                <BaseCard key={index}>
+                  <div className="flex flex-col gap-3 pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Step {index + 1}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <BaseButton
+                          size="sm"
+                          variant="light"
+                          onPress={() => handleMoveStepUp(index)}
+                          isDisabled={index === 0}
+                          icon={
+                            <Icon name="chevron-up" className="h-3.5 w-3.5" />
+                          }
+                        />
+                        <BaseButton
+                          size="sm"
+                          variant="light"
+                          onPress={() => handleMoveStepDown(index)}
+                          isDisabled={index === steps.length - 1}
+                          icon={
+                            <Icon name="chevron-down" className="h-3.5 w-3.5" />
+                          }
+                        />
+                        <BaseButton
+                          size="sm"
+                          variant="light"
+                          color="danger"
+                          onPress={() => handleRemoveStep(index)}
+                          icon={<Icon name="trash" className="h-3.5 w-3.5" />}
+                        />
                       </div>
+                    </div>
 
+                    <BaseInput
+                      label="Step Name"
+                      value={step.name}
+                      onValueChange={(v) =>
+                        handleUpdateStep(index, { name: v })
+                      }
+                      isRequired
+                      placeholder="e.g., Manager Approval"
+                      size="sm"
+                    />
+
+                    <BaseSelect
+                      label="Approver"
+                      selectedKey={step.approverUserId ?? '__none__'}
+                      onSelectionChange={(key) => {
+                        handleUpdateStep(index, {
+                          approverUserId:
+                            key === '__none__' ? undefined : (key as string),
+                        });
+                      }}
+                      size="sm"
+                      aria-label="Approver"
+                    >
+                      {[
+                        <BaseSelectItem key="__none__" id="__none__">
+                          Select approver...
+                        </BaseSelectItem>,
+                        ...userOptions.map((opt) => (
+                          <BaseSelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </BaseSelectItem>
+                        )),
+                      ]}
+                    </BaseSelect>
+
+                    <div className="grid grid-cols-2 gap-3">
                       <BaseInput
-                        label="Step Name"
-                        value={step.name}
-                        onValueChange={v => handleUpdateStep(index, { name: v })}
-                        isRequired
-                        placeholder="e.g., Manager Approval"
+                        label="Timeout (hours)"
+                        type="number"
+                        value={step.timeoutHours?.toString() ?? ''}
+                        onValueChange={(v) =>
+                          handleUpdateStep(index, {
+                            timeoutHours: v ? Number.parseInt(v) : undefined,
+                          })
+                        }
+                        placeholder="Optional"
                         size="sm"
                       />
 
                       <BaseSelect
-                        label="Approver"
-                        selectedKey={step.approverUserId ?? '__none__'}
-                        onSelectionChange={key => {
+                        label="Escalate To"
+                        selectedKey={step.escalateToUserId ?? '__none__'}
+                        onSelectionChange={(key) => {
                           handleUpdateStep(index, {
-                            approverUserId: key === '__none__' ? undefined : (key as string),
+                            escalateToUserId:
+                              key === '__none__' ? undefined : (key as string),
                           });
                         }}
                         size="sm"
-                        aria-label="Approver"
+                        aria-label="Escalate To"
                       >
                         {[
                           <BaseSelectItem key="__none__" id="__none__">
-                            Select approver...
+                            No escalation
                           </BaseSelectItem>,
-                          ...userOptions.map(opt => (
+                          ...userOptions.map((opt) => (
                             <BaseSelectItem key={opt.value} value={opt.value}>
                               {opt.label}
                             </BaseSelectItem>
                           )),
                         ]}
                       </BaseSelect>
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <BaseInput
-                          label="Timeout (hours)"
-                          type="number"
-                          value={step.timeoutHours?.toString() ?? ''}
-                          onValueChange={v =>
-                            handleUpdateStep(index, {
-                              timeoutHours: v
-                                ? Number.parseInt(v)
-                                : undefined,
-                            })
-                          }
-                          placeholder="Optional"
-                          size="sm"
-                        />
-
-                        <BaseSelect
-                          label="Escalate To"
-                          selectedKey={step.escalateToUserId ?? '__none__'}
-                          onSelectionChange={key => {
-                            handleUpdateStep(index, {
-                              escalateToUserId: key === '__none__' ? undefined : (key as string),
-                            });
-                          }}
-                          size="sm"
-                          aria-label="Escalate To"
-                        >
-                          {[
-                            <BaseSelectItem key="__none__" id="__none__">
-                              No escalation
-                            </BaseSelectItem>,
-                            ...userOptions.map(opt => (
-                              <BaseSelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </BaseSelectItem>
-                            )),
-                          ]}
-                        </BaseSelect>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Required</p>
+                        <p className="text-muted-foreground text-xs">
+                          Step must be completed (cannot skip)
+                        </p>
                       </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">Required</p>
-                          <p className="text-xs text-muted-foreground">
-                            Step must be completed (cannot skip)
-                          </p>
-                        </div>
-                        <Switch
-                          size="sm"
-                          isSelected={step.isRequired}
-                          onChange={checked =>
-                            handleUpdateStep(index, { isRequired: checked })
-                          }
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                      <Switch
+                        size="sm"
+                        isSelected={step.isRequired}
+                        onChange={(checked) =>
+                          handleUpdateStep(index, { isRequired: checked })
+                        }
+                      />
+                    </div>
+                  </div>
+                </BaseCard>
+              ))}
+            </div>
+          </BaseCard>
         </div>
       </DetailPage.Tab>
     </DetailPage>

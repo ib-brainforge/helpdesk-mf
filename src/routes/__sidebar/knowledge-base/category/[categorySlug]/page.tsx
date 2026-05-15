@@ -2,7 +2,7 @@ import { useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/us
 import { TagChip } from '@/components/tags';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { KnowledgeBaseStatus } from '@/types';
-import { BaseInput, Icon } from '@brainforgeau/components';
+import { BaseCard, BaseInput, Icon } from '@brainforgeau/components';
 import {
   PageBody,
   PageHeader,
@@ -24,7 +24,9 @@ function KnowledgeBaseCategoryPage() {
   const { data: categories } = useKnowledgeBaseCategories();
 
   // Find category by slug
-  const category = categories?.find(cat => (cat as any).slug === categorySlug);
+  const category = categories?.find(
+    (cat) => (cat as any).slug === categorySlug
+  );
 
   // Fetch articles in this category
   const { data: articles, isLoading } = useQuery({
@@ -42,7 +44,7 @@ function KnowledgeBaseCategoryPage() {
         undefined,
         undefined,
         undefined,
-        undefined,
+        undefined
       );
       return response.data;
     },
@@ -50,7 +52,7 @@ function KnowledgeBaseCategoryPage() {
   });
 
   const getStatusColor = (
-    status: KnowledgeBaseStatus,
+    status: KnowledgeBaseStatus
   ): 'default' | 'success' | 'warning' => {
     switch (status) {
       case KnowledgeBaseStatus.Published:
@@ -107,7 +109,7 @@ function KnowledgeBaseCategoryPage() {
       </PageHeader>
 
       {/* Article count */}
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="mb-6 text-sm text-gray-500">
         {category?.articleCount || 0} article(s) in this category
       </p>
 
@@ -116,7 +118,7 @@ function KnowledgeBaseCategoryPage() {
         <BaseInput
           placeholder="Search in this category..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
         />
       </div>
@@ -144,9 +146,9 @@ function KnowledgeBaseCategoryPage() {
               to={`/knowledge-base/${article.slug}`}
               className="block"
             >
-              <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
+              <BaseCard className="cursor-pointer transition-shadow hover:shadow-lg">
                 <div className="mb-3 flex items-start justify-between">
-                  <h3 className="text-lg font-semibold line-clamp-2">
+                  <h3 className="line-clamp-2 text-lg font-semibold">
                     {article.title}
                   </h3>
                   <TagChip
@@ -160,7 +162,7 @@ function KnowledgeBaseCategoryPage() {
                     }
                   />
                 </div>
-                <p className="mb-3 text-sm text-gray-600 line-clamp-3">
+                <p className="mb-3 line-clamp-3 text-sm text-gray-600">
                   {article.excerpt}
                 </p>
                 <div className="mb-3 flex flex-wrap gap-1">
@@ -192,7 +194,7 @@ function KnowledgeBaseCategoryPage() {
                     </span>
                   )}
                 </div>
-              </Card>
+              </BaseCard>
             </Link>
           ))}
         </div>

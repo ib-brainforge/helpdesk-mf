@@ -2,7 +2,7 @@ import {
   TEMPLATE_VARIABLES,
   type TemplateVariableCategory,
 } from '@/types/email-template';
-import { BaseButton, Icon } from '@brainforgeau/components';
+import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
 import { Card, CardContent, CardHeader, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -17,10 +17,10 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
   ]);
 
   const toggleCategory = (categoryName: string) => {
-    setExpandedCategories(prev =>
+    setExpandedCategories((prev) =>
       prev.includes(categoryName)
-        ? prev.filter(name => name !== categoryName)
-        : [...prev, categoryName],
+        ? prev.filter((name) => name !== categoryName)
+        : [...prev, categoryName]
     );
   };
 
@@ -36,66 +36,62 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <h3 className="text-sm font-semibold">Template Variables</h3>
-      </CardHeader>
-      <CardContent className="overflow-y-auto">
-        <div className="flex flex-col gap-2">
-          {TEMPLATE_VARIABLES.map((category: TemplateVariableCategory) => (
-            <div
-              key={category.name}
-              className="border-b border-gray-200 pb-2 last:border-b-0 dark:border-gray-700"
+    <BaseCard className="h-full">
+      <h3 className="text-sm font-semibold">Template Variables</h3>
+      <div className="flex flex-col gap-2">
+        {TEMPLATE_VARIABLES.map((category: TemplateVariableCategory) => (
+          <div
+            key={category.name}
+            className="border-b border-gray-200 pb-2 last:border-b-0 dark:border-gray-700"
+          >
+            <button
+              type="button"
+              onClick={() => toggleCategory(category.name)}
+              className="flex w-full items-center justify-between py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
             >
-              <button
-                type="button"
-                onClick={() => toggleCategory(category.name)}
-                className="flex w-full items-center justify-between py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
-                <span className="text-sm font-medium">{category.name}</span>
-                <Icon
-                  name={
-                    expandedCategories.includes(category.name)
-                      ? 'chevron-up'
-                      : 'chevron-down'
-                  }
-                  className="h-4 w-4"
-                />
-              </button>
+              <span className="text-sm font-medium">{category.name}</span>
+              <Icon
+                name={
+                  expandedCategories.includes(category.name)
+                    ? 'chevron-up'
+                    : 'chevron-down'
+                }
+                className="h-4 w-4"
+              />
+            </button>
 
-              {expandedCategories.includes(category.name) && (
-                <div className="mt-1 flex flex-col gap-1">
-                  {category.variables.map(variable => (
-                    <button
-                      key={variable.placeholder}
-                      type="button"
-                      onClick={() => handleCopyVariable(variable.placeholder)}
-                      className="group flex flex-col rounded p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
-                      title={variable.description}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                          {variable.name}
-                        </span>
-                        <Icon
-                          name="clipboard"
-                          className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                        />
-                      </div>
-                      <code className="text-xs text-gray-500 dark:text-gray-400">
-                        {variable.placeholder}
-                      </code>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
-                        {variable.description}
+            {expandedCategories.includes(category.name) && (
+              <div className="mt-1 flex flex-col gap-1">
+                {category.variables.map((variable) => (
+                  <button
+                    key={variable.placeholder}
+                    type="button"
+                    onClick={() => handleCopyVariable(variable.placeholder)}
+                    className="group flex flex-col rounded p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                    title={variable.description}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {variable.name}
                       </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+                      <Icon
+                        name="clipboard"
+                        className="h-3 w-3 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100"
+                      />
+                    </div>
+                    <code className="text-xs text-gray-500 dark:text-gray-400">
+                      {variable.placeholder}
+                    </code>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {variable.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </BaseCard>
   );
 };

@@ -1,4 +1,9 @@
-import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseCard,
+  BaseInput,
+  Icon,
+} from '@brainforgeau/components';
 import { EmptyState, ListPage } from '@brainforgeau/components/page';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
@@ -60,8 +65,8 @@ function CustomPrioritiesPage() {
       table={table}
       isLoading={false}
       subheader={
-        <div className="max-w-2xl p-4 bg-default-50 rounded-lg border border-default-200">
-          <p className="text-sm text-default-700 mb-4">
+        <BaseCard className="max-w-2xl">
+          <p className="text-default-700 mb-4 text-sm">
             Custom priorities allow you to define specific priority levels
             beyond the default options (Critical, High, Normal, Low). Use this
             to match your organization's workflow.
@@ -71,8 +76,8 @@ function CustomPrioritiesPage() {
               label="Priority Name"
               placeholder="Enter priority name..."
               value={priorityName}
-              onChange={e => setPriorityName(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setPriorityName(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleAdd();
                 }
@@ -87,7 +92,7 @@ function CustomPrioritiesPage() {
               Add
             </BaseButton>
           </div>
-        </div>
+        </BaseCard>
       }
       empty={
         <EmptyState

@@ -13,7 +13,12 @@ import {
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { BaseButton, Icon, PageSpinner } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseCard,
+  Icon,
+  PageSpinner,
+} from '@brainforgeau/components';
 import {
   DetailPage,
   PendingCrumb,
@@ -89,7 +94,7 @@ function KnowledgeBaseArticlePage() {
     >
       {/* Article tab — main content + rating. No formActions (read-only). */}
       <DetailPage.Tab id="article" title="Article">
-        <Card className="p-6">
+        <BaseCard>
           <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
             <span className="flex items-center gap-1">
               <Icon name="user" className="h-4 w-4" />
@@ -114,7 +119,7 @@ function KnowledgeBaseArticlePage() {
 
           {article.tags.length > 0 && (
             <div className="mb-6 flex flex-wrap gap-2">
-              {article.tags.map(tag => (
+              {article.tags.map((tag) => (
                 <TagChip key={tag} name={tag} />
               ))}
             </div>
@@ -167,13 +172,13 @@ function KnowledgeBaseArticlePage() {
               </BaseButton>
             </div>
           </div>
-        </Card>
+        </BaseCard>
       </DetailPage.Tab>
 
       {/* Info tab — article metadata + related articles. No formActions (read-only). */}
       <DetailPage.Tab id="info" title="Info">
-        <div className="space-y-6 max-w-sm">
-          <Card className="p-4">
+        <div className="max-w-sm space-y-6">
+          <BaseCard>
             <h3 className="mb-3 text-lg font-semibold">Article Info</h3>
             <div className="space-y-2 text-sm">
               <div>
@@ -205,7 +210,7 @@ function KnowledgeBaseArticlePage() {
                 </div>
               )}
             </div>
-          </Card>
+          </BaseCard>
 
           {article.relatedArticleIds &&
             article.relatedArticleIds.length > 0 && (

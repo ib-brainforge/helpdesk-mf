@@ -1028,7 +1028,7 @@ export function WorkflowListPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data?.map(d => (
           <Link key={d.id} to={`/configuration/workflows/${d.id}`}>
-            <Card className="p-4 hover:shadow-md cursor-pointer">
+            <BaseCard className="p-4 hover:shadow-md cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold">{d.name}</div>
@@ -1037,7 +1037,7 @@ export function WorkflowListPage() {
                 {d.latestVersion && <VersionBadge status={d.latestVersion.status} />}
                 {!d.latestVersion && <VersionBadge status={VersionStatus.Draft} />}
               </div>
-            </Card>
+            </BaseCard>
           </Link>
         ))}
       </div>

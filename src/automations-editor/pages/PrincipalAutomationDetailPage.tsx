@@ -4,7 +4,7 @@
  * Mirrors PrincipalWorkflowDetailPage — uses principalId + ruleId from params,
  * same canvas + top-bar layout as the tenant AutomationDetailPage.
  */
-import { BaseButton } from '@brainforgeau/components';
+import { BaseButton, BaseCard } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import {
   GraphEditor,
@@ -73,7 +73,7 @@ export function PrincipalAutomationDetailPage() {
     if (!rule) return null;
     if (rule.versions.length > 0) {
       return [...rule.versions].sort(
-        (a, b) => b.versionNumber - a.versionNumber,
+        (a, b) => b.versionNumber - a.versionNumber
       )[0];
     }
     return rule.publishedVersion ?? null;
@@ -183,7 +183,7 @@ export function PrincipalAutomationDetailPage() {
 
   const reversedVersions = useMemo(
     () => (rule ? [...rule.versions].reverse() : []),
-    [rule],
+    [rule]
   );
 
   const isSaving = createVersionMutation.isPending;
@@ -199,7 +199,7 @@ export function PrincipalAutomationDetailPage() {
 
   if (error || !rule) {
     return (
-      <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
+      <div className="border-danger-200 bg-danger-50 text-danger rounded border p-4">
         Failed to load automation. Please try again.
       </div>
     );
@@ -209,23 +209,23 @@ export function PrincipalAutomationDetailPage() {
     // REVIEW: -m-5 override matches workflow-editor and tracking-mf pattern for full-height canvas
     <div className="-m-5 flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-default-200 bg-white px-4 py-2 dark:bg-default-50">
+      <div className="border-light dark:bg-default-50 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">
-          <nav className="flex items-center gap-1.5 text-xs text-default-500">
+          <nav className="text-default-500 flex items-center gap-1.5 text-xs">
             <NavLink
               to={`/principal/${principalId}/automations`}
-              className="text-default-500 no-underline hover:text-default-700"
+              className="text-default-500 hover:text-default-700 no-underline"
             >
               Automations
             </NavLink>
             <span>/</span>
-            <span className="font-semibold text-default-900 dark:text-white">
+            <span className="text-default-900 font-semibold dark:text-white">
               {rule.name}
             </span>
           </nav>
           {activeVersion && (
             <>
-              <span className="text-xs font-medium text-default-600">
+              <span className="text-default-600 text-xs font-medium">
                 v{activeVersion.versionNumber}
               </span>
               {versionStatusBadge(rule.isPublished)}
@@ -238,14 +238,14 @@ export function PrincipalAutomationDetailPage() {
             size="sm"
             variant="bordered"
             color={showPalette ? 'primary' : undefined}
-            onPress={() => setShowPalette(p => !p)}
+            onPress={() => setShowPalette((p) => !p)}
           >
             Components
           </BaseButton>
           <BaseButton
             size="sm"
             variant="bordered"
-            onPress={() => setShowVersionsSidebar(prev => !prev)}
+            onPress={() => setShowVersionsSidebar((prev) => !prev)}
           >
             Versions
           </BaseButton>
@@ -290,16 +290,16 @@ export function PrincipalAutomationDetailPage() {
 
         {showVersionsSidebar && (
           <aside
-            className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-default-200 bg-white dark:bg-default-50"
+            className="border-light dark:bg-default-50 flex w-80 shrink-0 flex-col overflow-hidden border-l bg-white"
             aria-label="Version history"
           >
-            <div className="flex items-center justify-between border-b border-default-200 px-4 py-3">
-              <span className="text-sm font-semibold text-default-700">
+            <div className="border-light flex items-center justify-between border-b px-4 py-3">
+              <span className="text-default-700 text-sm font-semibold">
                 Version History
               </span>
               <button
                 type="button"
-                className="text-sm text-default-400 hover:text-default-600"
+                className="text-default-400 hover:text-default-600 text-sm"
                 onClick={() => setShowVersionsSidebar(false)}
                 aria-label="Close version history"
               >
@@ -309,25 +309,25 @@ export function PrincipalAutomationDetailPage() {
 
             <div className="flex-1 space-y-4 overflow-y-auto p-4">
               {rule.versions.length > 0 && (
-                <Card className="border border-default-200">
-                  <div className="px-4 pt-4 pb-2">
-                    <h3 className="text-sm font-semibold text-default-700">
+                <BaseCard>
+                  <div className="px-4 pb-2 pt-4">
+                    <h3 className="text-default-700 text-sm font-semibold">
                       All Versions
                     </h3>
                   </div>
-                  <ul className="divide-y divide-default-100 px-2 pb-2">
-                    {reversedVersions.map(v => (
+                  <ul className="divide-default-100 divide-y px-2 pb-2">
+                    {reversedVersions.map((v) => (
                       <li key={v.id} className="flex items-center gap-3 py-2.5">
                         <div className="flex-1">
                           <span className="text-sm font-medium">
                             v{v.versionNumber}
                           </span>
                           {v.name && (
-                            <span className="ml-1 text-xs text-default-400">
+                            <span className="text-default-400 ml-1 text-xs">
                               — {v.name}
                             </span>
                           )}
-                          <span className="ml-2 text-xs text-default-400">
+                          <span className="text-default-400 ml-2 text-xs">
                             {formatDate(v.createdAt)}
                           </span>
                         </div>
@@ -343,11 +343,11 @@ export function PrincipalAutomationDetailPage() {
                       </li>
                     ))}
                   </ul>
-                </Card>
+                </BaseCard>
               )}
 
               {rule.versions.length === 0 && (
-                <p className="text-xs italic text-default-400">
+                <p className="text-default-400 text-xs italic">
                   No versions yet. Save or publish to create the first version.
                 </p>
               )}

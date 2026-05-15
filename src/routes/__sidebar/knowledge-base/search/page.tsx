@@ -2,6 +2,7 @@ import { useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/us
 import { TagChip } from '@/components/tags';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
+  BaseCard,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -46,7 +47,7 @@ function KnowledgeBaseSearchPage() {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbArticlesSearchGet(
         searchTerm,
-        selectedCategory ? Number(selectedCategory) : undefined,
+        selectedCategory ? Number(selectedCategory) : undefined
       );
       return response.data;
     },
@@ -76,7 +77,7 @@ function KnowledgeBaseSearchPage() {
         <BaseInput
           placeholder="Search articles..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
           className="flex-1"
           autoFocus
@@ -84,14 +85,16 @@ function KnowledgeBaseSearchPage() {
         <BaseSelect
           placeholder="All Categories"
           selectedKey={selectedCategory ? selectedCategory : null}
-          onSelectionChange={keys => {
+          onSelectionChange={(keys) => {
             const key = keys as string;
             setSelectedCategory(key || '');
           }}
           className="w-64"
         >
-          {categories?.map(cat => (
-            <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
+          {categories?.map((cat) => (
+            <BaseSelectItem key={cat.id} value={cat.id}>
+              {cat.name}
+            </BaseSelectItem>
           )) || []}
         </BaseSelect>
       </div>
@@ -130,17 +133,17 @@ function KnowledgeBaseSearchPage() {
                 to={`/knowledge-base/${article.slug}`}
                 className="block"
               >
-                <Card className="p-5 hover:shadow-lg transition-shadow cursor-pointer">
+                <BaseCard className="cursor-pointer p-5 transition-shadow hover:shadow-lg">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="mb-2 line-clamp-2 text-lg font-semibold">
                         {article.title}
                       </h3>
 
                       {/* Highlighted snippet from search */}
                       {article.highlight && (
                         <div
-                          className="text-sm text-gray-700 mb-3 line-clamp-3"
+                          className="mb-3 line-clamp-3 text-sm text-gray-700"
                           dangerouslySetInnerHTML={{
                             __html: DOMPurify.sanitize(article.highlight),
                           }}
@@ -149,14 +152,14 @@ function KnowledgeBaseSearchPage() {
 
                       {/* Excerpt fallback */}
                       {!article.highlight && article.excerpt && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                        <p className="mb-3 line-clamp-3 text-sm text-gray-600">
                           {article.excerpt}
                         </p>
                       )}
 
                       {/* Tags */}
                       {article.tags && article.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="mb-3 flex flex-wrap gap-1">
                           {article.tags.slice(0, 5).map((tag: string) => (
                             <TagChip key={tag} name={tag} size="sm" />
                           ))}
@@ -185,7 +188,7 @@ function KnowledgeBaseSearchPage() {
                           </span>
                         )}
                         {article.relevance && (
-                          <span className="flex items-center gap-1 text-primary">
+                          <span className="text-primary flex items-center gap-1">
                             <Icon name="star" className="h-3 w-3" />
                             {Math.round(article.relevance * 100)}% match
                           </span>
@@ -195,10 +198,10 @@ function KnowledgeBaseSearchPage() {
 
                     <Icon
                       name="arrow-right"
-                      className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1"
+                      className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400"
                     />
                   </div>
-                </Card>
+                </BaseCard>
               </Link>
             ))}
           </div>

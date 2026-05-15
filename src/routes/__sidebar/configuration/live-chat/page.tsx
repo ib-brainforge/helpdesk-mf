@@ -14,6 +14,7 @@ import {
   BaseButton,
   BaseInput,
   BaseTextarea,
+  BaseCard,
   Icon,
 } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
@@ -32,7 +33,7 @@ const DAY_LABELS: Record<BusinessHoursDay, string> = {
 };
 
 function parseBusinessHours(
-  json: string | null | undefined,
+  json: string | null | undefined
 ): BusinessHoursJson {
   if (!json) return {};
   try {
@@ -43,7 +44,7 @@ function parseBusinessHours(
 }
 
 function serializeBusinessHours(hours: BusinessHoursJson): string | null {
-  const hasAnyEnabled = Object.values(hours).some(d => d?.enabled);
+  const hasAnyEnabled = Object.values(hours).some((d) => d?.enabled);
   const hasAnyDay = Object.keys(hours).length > 0;
   if (!hasAnyDay || !hasAnyEnabled) return null;
   return JSON.stringify(hours);
@@ -85,22 +86,22 @@ function LiveChatForm({
   const [isEnabled, setIsEnabled] = useState(initialIsEnabled);
   const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor);
   const [greetingMessage, setGreetingMessage] = useState(
-    initialGreetingMessage,
+    initialGreetingMessage
   );
   const [businessHours, setBusinessHours] =
     useState<BusinessHoursJson>(initialBusinessHours);
   const [useBusinessHours, setUseBusinessHours] = useState(
-    initialUseBusinessHours,
+    initialUseBusinessHours
   );
   const [allowedDomains, setAllowedDomains] = useState<string[]>(
-    initialAllowedDomains,
+    initialAllowedDomains
   );
   const [newDomain, setNewDomain] = useState('');
   const [scriptCopied, setScriptCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleDayToggle = (day: BusinessHoursDay, enabled: boolean) => {
-    setBusinessHours(prev => ({
+    setBusinessHours((prev) => ({
       ...prev,
       [day]: {
         ...(prev[day] ?? DEFAULT_DAY_CONFIG),
@@ -112,9 +113,9 @@ function LiveChatForm({
   const handleDayTime = (
     day: BusinessHoursDay,
     field: 'open' | 'close',
-    value: string,
+    value: string
   ) => {
-    setBusinessHours(prev => ({
+    setBusinessHours((prev) => ({
       ...prev,
       [day]: {
         ...(prev[day] ?? DEFAULT_DAY_CONFIG),
@@ -126,12 +127,12 @@ function LiveChatForm({
   const handleAddDomain = () => {
     const trimmed = newDomain.trim().toLowerCase();
     if (!trimmed || allowedDomains.includes(trimmed)) return;
-    setAllowedDomains(prev => [...prev, trimmed]);
+    setAllowedDomains((prev) => [...prev, trimmed]);
     setNewDomain('');
   };
 
   const handleRemoveDomain = (domain: string) => {
-    setAllowedDomains(prev => prev.filter(d => d !== domain));
+    setAllowedDomains((prev) => prev.filter((d) => d !== domain));
   };
 
   const handleSave = async () => {
@@ -176,201 +177,195 @@ function LiveChatForm({
   return (
     <div className="max-w-3xl space-y-6">
       {/* General Settings */}
-      <Card>
-        <CardContent className="p-6 space-y-6">
-          <h2 className="text-base font-semibold">General</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">General</h2>
 
-          {/* Enable toggle */}
-          <div className="flex items-center justify-between py-3 border-b border-default-200">
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold">Enable live chat widget</h3>
-              <p className="text-xs text-default-500 mt-1">
-                When enabled, the widget will be served to customers on your
-                website.
-              </p>
-            </div>
-            <Switch isSelected={isEnabled} onChange={setIsEnabled} size="sm" />
-          </div>
-
-          {/* Primary color */}
-          <div className="py-3 border-b border-default-200">
-            <label
-              htmlFor="live-chat-primary-color"
-              className="block text-sm font-semibold mb-2"
-            >
-              Primary colour
-            </label>
-            <p className="text-xs text-default-500 mb-3">
-              Hex colour for the widget button and header (e.g. #6366f1).
+        {/* Enable toggle */}
+        <div className="border-light flex items-center justify-between border-b py-3">
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold">Enable live chat widget</h3>
+            <p className="text-default-500 mt-1 text-xs">
+              When enabled, the widget will be served to customers on your
+              website.
             </p>
-            <div className="flex items-center gap-3 max-w-xs">
-              <input
-                id="live-chat-primary-color"
-                type="color"
-                value={primaryColor}
-                onChange={e => setPrimaryColor(e.target.value)}
-                className="w-10 h-10 rounded cursor-pointer border border-default-200"
-                disabled={!isEnabled}
-              />
-              <BaseInput
-                value={primaryColor}
-                onValueChange={setPrimaryColor}
-                placeholder="#6366f1"
-                isDisabled={!isEnabled}
-                className="flex-1"
-                aria-label="Primary colour hex value"
-              />
-            </div>
           </div>
+          <Switch isSelected={isEnabled} onChange={setIsEnabled} size="sm" />
+        </div>
 
-          {/* Greeting message */}
-          <div className="py-3">
-            <label
-              htmlFor="live-chat-greeting"
-              className="block text-sm font-semibold mb-2"
-            >
-              Greeting message
-            </label>
-            <p className="text-xs text-default-500 mb-3">
-              Shown to visitors before they start a conversation.
-            </p>
-            <BaseTextarea
-              id="live-chat-greeting"
-              value={greetingMessage}
-              onValueChange={setGreetingMessage}
-              placeholder="Hi! How can we help you today?"
-              minRows={2}
-              maxRows={4}
-              isDisabled={!isEnabled}
+        {/* Primary color */}
+        <div className="border-light border-b py-3">
+          <label
+            htmlFor="live-chat-primary-color"
+            className="mb-2 block text-sm font-semibold"
+          >
+            Primary colour
+          </label>
+          <p className="text-default-500 mb-3 text-xs">
+            Hex colour for the widget button and header (e.g. #6366f1).
+          </p>
+          <div className="flex max-w-xs items-center gap-3">
+            <input
+              id="live-chat-primary-color"
+              type="color"
+              value={primaryColor}
+              onChange={(e) => setPrimaryColor(e.target.value)}
+              className="border-light h-10 w-10 cursor-pointer rounded border"
+              disabled={!isEnabled}
             />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Business Hours */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold">Business hours</h2>
-              <p className="text-xs text-default-500 mt-1">
-                Restrict widget availability to specific hours. Leave off for
-                24/7 availability.
-              </p>
-            </div>
-            <Switch
-              isSelected={useBusinessHours}
-              onChange={setUseBusinessHours}
-              size="sm"
-              isDisabled={!isEnabled}
-            />
-          </div>
-
-          {useBusinessHours && (
-            <div className="space-y-3 pt-2">
-              {DAYS_OF_WEEK.map(day => {
-                const dayConfig: BusinessHoursDayConfig =
-                  businessHours[day] ?? DEFAULT_DAY_CONFIG;
-                return (
-                  <div
-                    key={day}
-                    className="flex items-center gap-4 py-2 border-b border-default-100 last:border-0"
-                  >
-                    <div className="w-24 flex items-center gap-2">
-                      <Switch
-                        isSelected={dayConfig.enabled}
-                        onChange={val => handleDayToggle(day, val)}
-                        size="sm"
-                        isDisabled={!isEnabled}
-                      />
-                      <span className="text-sm">{DAY_LABELS[day]}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <BaseInput
-                        type="time"
-                        value={dayConfig.open}
-                        onChange={e =>
-                          handleDayTime(day, 'open', e.target.value)
-                        }
-                        isDisabled={!isEnabled || !dayConfig.enabled}
-                        className="w-32"
-                        size="sm"
-                      />
-                      <span className="text-default-400 text-sm">to</span>
-                      <BaseInput
-                        type="time"
-                        value={dayConfig.close}
-                        onChange={e =>
-                          handleDayTime(day, 'close', e.target.value)
-                        }
-                        isDisabled={!isEnabled || !dayConfig.enabled}
-                        className="w-32"
-                        size="sm"
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Allowed Domains */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div>
-            <h2 className="text-base font-semibold">Allowed domains</h2>
-            <p className="text-xs text-default-500 mt-1">
-              Restrict the widget to specific domains. Leave empty to allow any
-              domain.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
             <BaseInput
-              value={newDomain}
-              onValueChange={setNewDomain}
-              placeholder="example.com"
+              value={primaryColor}
+              onValueChange={setPrimaryColor}
+              placeholder="#6366f1"
               isDisabled={!isEnabled}
               className="flex-1"
-              onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
+              aria-label="Primary colour hex value"
             />
-            <BaseButton
-              size="sm"
-              variant="bordered"
-              onPress={handleAddDomain}
-              isDisabled={!isEnabled || !newDomain.trim()}
-            >
-              Add
-            </BaseButton>
           </div>
+        </div>
 
-          {allowedDomains.length > 0 && (
-            <ul className="space-y-2">
-              {allowedDomains.map(domain => (
-                <li
-                  key={domain}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-default-50 border border-default-200"
+        {/* Greeting message */}
+        <div className="py-3">
+          <label
+            htmlFor="live-chat-greeting"
+            className="mb-2 block text-sm font-semibold"
+          >
+            Greeting message
+          </label>
+          <p className="text-default-500 mb-3 text-xs">
+            Shown to visitors before they start a conversation.
+          </p>
+          <BaseTextarea
+            id="live-chat-greeting"
+            value={greetingMessage}
+            onValueChange={setGreetingMessage}
+            placeholder="Hi! How can we help you today?"
+            minRows={2}
+            maxRows={4}
+            isDisabled={!isEnabled}
+          />
+        </div>
+      </BaseCard>
+
+      {/* Business Hours */}
+      <BaseCard>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold">Business hours</h2>
+            <p className="text-default-500 mt-1 text-xs">
+              Restrict widget availability to specific hours. Leave off for 24/7
+              availability.
+            </p>
+          </div>
+          <Switch
+            isSelected={useBusinessHours}
+            onChange={setUseBusinessHours}
+            size="sm"
+            isDisabled={!isEnabled}
+          />
+        </div>
+
+        {useBusinessHours && (
+          <div className="space-y-3 pt-2">
+            {DAYS_OF_WEEK.map((day) => {
+              const dayConfig: BusinessHoursDayConfig =
+                businessHours[day] ?? DEFAULT_DAY_CONFIG;
+              return (
+                <div
+                  key={day}
+                  className="border-default-100 flex items-center gap-4 border-b py-2 last:border-0"
                 >
-                  <span className="text-sm font-mono">{domain}</span>
-                  <BaseButton
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    color="danger"
-                    onPress={() => handleRemoveDomain(domain)}
-                    isDisabled={!isEnabled}
-                    aria-label={`Remove ${domain}`}
-                  >
-                    <Icon name="x-mark" className="w-4 h-4" />
-                  </BaseButton>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                  <div className="flex w-24 items-center gap-2">
+                    <Switch
+                      isSelected={dayConfig.enabled}
+                      onChange={(val) => handleDayToggle(day, val)}
+                      size="sm"
+                      isDisabled={!isEnabled}
+                    />
+                    <span className="text-sm">{DAY_LABELS[day]}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <BaseInput
+                      type="time"
+                      value={dayConfig.open}
+                      onChange={(e) =>
+                        handleDayTime(day, 'open', e.target.value)
+                      }
+                      isDisabled={!isEnabled || !dayConfig.enabled}
+                      className="w-32"
+                      size="sm"
+                    />
+                    <span className="text-default-400 text-sm">to</span>
+                    <BaseInput
+                      type="time"
+                      value={dayConfig.close}
+                      onChange={(e) =>
+                        handleDayTime(day, 'close', e.target.value)
+                      }
+                      isDisabled={!isEnabled || !dayConfig.enabled}
+                      className="w-32"
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </BaseCard>
+
+      {/* Allowed Domains */}
+      <BaseCard>
+        <div>
+          <h2 className="text-base font-semibold">Allowed domains</h2>
+          <p className="text-default-500 mt-1 text-xs">
+            Restrict the widget to specific domains. Leave empty to allow any
+            domain.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <BaseInput
+            value={newDomain}
+            onValueChange={setNewDomain}
+            placeholder="example.com"
+            isDisabled={!isEnabled}
+            className="flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+          />
+          <BaseButton
+            size="sm"
+            variant="bordered"
+            onPress={handleAddDomain}
+            isDisabled={!isEnabled || !newDomain.trim()}
+          >
+            Add
+          </BaseButton>
+        </div>
+
+        {allowedDomains.length > 0 && (
+          <ul className="space-y-2">
+            {allowedDomains.map((domain) => (
+              <li
+                key={domain}
+                className="bg-default-50 border-light flex items-center justify-between rounded-lg border px-3 py-2"
+              >
+                <span className="font-mono text-sm">{domain}</span>
+                <BaseButton
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  color="danger"
+                  onPress={() => handleRemoveDomain(domain)}
+                  isDisabled={!isEnabled}
+                  aria-label={`Remove ${domain}`}
+                >
+                  <Icon name="x-mark" className="h-4 w-4" />
+                </BaseButton>
+              </li>
+            ))}
+          </ul>
+        )}
+      </BaseCard>
 
       {/* Save */}
       <div className="flex justify-start">
@@ -380,40 +375,38 @@ function LiveChatForm({
       </div>
 
       {/* Embed Script */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold">Embed script</h2>
-              <p className="text-xs text-default-500 mt-1">
-                Paste this snippet into the {'<head>'} of your website to
-                display the live chat widget.
-              </p>
-            </div>
-            <BaseButton
-              size="sm"
-              variant="bordered"
-              onPress={handleCopyScript}
-              isDisabled={isLoadingScript || !embedScript}
-              startContent={
-                <Icon
-                  name={scriptCopied ? 'check' : 'clipboard'}
-                  className="w-4 h-4"
-                />
-              }
-            >
-              {scriptCopied ? 'Copied!' : 'Copy'}
-            </BaseButton>
+      <BaseCard>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold">Embed script</h2>
+            <p className="text-default-500 mt-1 text-xs">
+              Paste this snippet into the {'<head>'} of your website to display
+              the live chat widget.
+            </p>
           </div>
+          <BaseButton
+            size="sm"
+            variant="bordered"
+            onPress={handleCopyScript}
+            isDisabled={isLoadingScript || !embedScript}
+            startContent={
+              <Icon
+                name={scriptCopied ? 'check' : 'clipboard'}
+                className="h-4 w-4"
+              />
+            }
+          >
+            {scriptCopied ? 'Copied!' : 'Copy'}
+          </BaseButton>
+        </div>
 
-          <pre className="bg-default-50 border border-default-200 rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-            {isLoadingScript
-              ? 'Loading...'
-              : embedScript ||
-                '<!-- Enable live chat and save settings to generate the embed script -->'}
-          </pre>
-        </CardContent>
-      </Card>
+        <pre className="bg-default-50 border-light overflow-x-auto whitespace-pre-wrap rounded-lg border p-4 font-mono text-xs">
+          {isLoadingScript
+            ? 'Loading...'
+            : embedScript ||
+              '<!-- Enable live chat and save settings to generate the embed script -->'}
+        </pre>
+      </BaseCard>
     </div>
   );
 }
@@ -436,7 +429,7 @@ function LiveChatPage() {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <span className="text-default-400">Loading configuration...</span>
         </div>
       ) : (

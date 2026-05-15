@@ -2,6 +2,10 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 
 import './index.css';
 
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
 import { breadcrumbs } from '@/breadcrumbs';
 import { Providers } from '@/providers';
 import { registerStatusColors } from '@brainforgeau/components/page';
@@ -51,7 +55,7 @@ import {
 import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 
 const TopNavbar = React.lazy(() =>
-  import('@brainforgeau/navbar/Navbar').then(m => ({ default: m.TopNavbar })),
+  import('@brainforgeau/navbar/Navbar').then((m) => ({ default: m.TopNavbar }))
 );
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { Logo } from '@/components/Logo';
@@ -84,26 +88,26 @@ const navItemsTop: GuardedItem<NavItem>[] = [
   {
     label: 'Tickets',
     href: '/tickets',
-    icon: 'ticket',
+    icon: 'text',
     testId: 'nav-tickets',
     requiredPermissions: [HelpdeskPermissions.TicketRead],
   },
   {
     label: 'Knowledge Base',
     href: '/knowledge-base',
-    icon: 'book-open',
+    icon: 'learning',
     testId: 'nav-knowledge-base',
   },
   {
     label: 'Reports',
     href: '/reports',
-    icon: 'chart-bar',
+    icon: 'analytics',
     testId: 'nav-reports',
   },
   {
     label: 'Ideas Forum',
     href: '/ideas',
-    icon: 'light-bulb',
+    icon: 'lamp',
     testId: 'nav-ideas',
     requiredPermissions: [HelpdeskPermissions.TicketRead],
   },
@@ -140,49 +144,49 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
       {
         label: 'Custom Fields',
         href: '/configuration/custom-fields',
-        icon: 'adjustments-horizontal',
+        icon: 'f-field',
         testId: 'nav-configuration-custom-fields',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Automation',
         href: '/configuration/automations',
-        icon: 'cpu-chip',
+        icon: 'cube',
         testId: 'nav-configuration-automations',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Workflows',
         href: '/configuration/workflows',
-        icon: 'arrows-right-left',
+        icon: 'matching',
         testId: 'nav-configuration-workflows',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Email Templates',
         href: '/configuration/email-templates',
-        icon: 'envelope',
+        icon: 'email',
         testId: 'nav-configuration-email-templates',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Email Settings',
         href: '/configuration/email',
-        icon: 'envelope-open',
+        icon: 'builder2',
         testId: 'nav-configuration-email',
         requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
         label: 'Integrations',
         href: '/configuration/integrations',
-        icon: 'puzzle-piece',
+        icon: 'plug',
         testId: 'nav-configuration-integrations',
         requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
         label: 'Live Chat',
         href: '/configuration/live-chat',
-        icon: 'chat-bubble-left-right',
+        icon: 'chatO',
         testId: 'nav-configuration-live-chat',
         requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
@@ -214,7 +218,7 @@ export default function Layout() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleDesktopMode = () => {
-    setDesktopMode(prev => (prev === 'extended' ? 'collapsed' : 'extended'));
+    setDesktopMode((prev) => (prev === 'extended' ? 'collapsed' : 'extended'));
   };
 
   // Handle hamburger menu click - toggle desktop mode on desktop, open drawer on mobile
@@ -240,7 +244,7 @@ export default function Layout() {
   // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
   const isPrincipalRoute = useMemo(
     () => location.pathname.startsWith('/principal/'),
-    [location.pathname],
+    [location.pathname]
   );
 
   useEffect(() => {
@@ -255,7 +259,7 @@ export default function Layout() {
       { key: 'top', items: filterNavItems(navItemsTop) },
       { key: 'bottom', items: filterNavItems(navItemsBottom) },
     ],
-    [filterNavItems, permissions],
+    [filterNavItems, permissions]
   );
 
   return (
@@ -264,7 +268,9 @@ export default function Layout() {
         <BreadcrumbRegistryProvider
           registry={breadcrumbs}
           renderLink={({ item, className, children }) => (
-            <NavLink to={item.href} className={className}>{children}</NavLink>
+            <NavLink to={item.href} className={className}>
+              {children}
+            </NavLink>
           )}
         >
           <PageTracker category="helpdesk" />

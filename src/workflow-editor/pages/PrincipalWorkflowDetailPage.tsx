@@ -1,5 +1,5 @@
 import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
-import { BaseButton } from '@brainforgeau/components';
+import { BaseButton, BaseCard } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import { Card, Chip, Spinner, toast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
@@ -38,7 +38,7 @@ export function PrincipalWorkflowDetailPage() {
   }>();
   const { data, isLoading, error } = usePrincipalWorkflowDefinition(
     principalId ?? '',
-    id ?? null,
+    id ?? null
   );
   const createDraftMutation = useCreatePrincipalDraft();
   const updateMut = useUpdatePrincipalDraft();
@@ -85,7 +85,7 @@ export function PrincipalWorkflowDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
+      <div className="border-danger-200 bg-danger-50 text-danger rounded border p-4">
         Failed to load workflow. Please try again.
       </div>
     );
@@ -171,7 +171,7 @@ export function PrincipalWorkflowDetailPage() {
 
   function handleCanvasChange(
     nextStates: WorkflowStateDto[],
-    nextTransitions: WorkflowTransitionDto[],
+    nextTransitions: WorkflowTransitionDto[]
   ) {
     setStates(nextStates);
     setTransitions(nextTransitions);
@@ -182,50 +182,50 @@ export function PrincipalWorkflowDetailPage() {
     newStateData: Omit<WorkflowStateDto, 'id'> & {
       positionX: number;
       positionY: number;
-    },
+    }
   ) {
     const fullState: WorkflowStateDto = {
       ...newStateData,
       id: crypto.randomUUID(),
     };
-    setStates(prev => [...prev, fullState]);
+    setStates((prev) => [...prev, fullState]);
     setDirty(true);
   }
 
   const reversedVersions = useMemo(
     () => [...data.versions].reverse(),
-    [data.versions],
+    [data.versions]
   );
 
   return (
     // REVIEW: -m-5 override matches tracking-mf rules page pattern for full-height canvas
     <div className="-m-5 flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
       {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-default-200 bg-white px-4 py-2 dark:bg-default-50">
+      <div className="border-light dark:bg-default-50 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">
-          <nav className="flex items-center gap-1.5 text-xs text-default-500">
+          <nav className="text-default-500 flex items-center gap-1.5 text-xs">
             <NavLink
               to={`/principal/${principalId}/workflows`}
-              className="text-default-500 no-underline hover:text-default-700"
+              className="text-default-500 hover:text-default-700 no-underline"
             >
               Workflows
             </NavLink>
             <span>/</span>
-            <span className="font-semibold text-default-900 dark:text-white">
+            <span className="text-default-900 font-semibold dark:text-white">
               {data.name}
             </span>
           </nav>
           <ScopeBadge ownerScope={data.ownerScope} />
           {activeVersion && (
             <>
-              <span className="text-xs font-medium text-default-600">
+              <span className="text-default-600 text-xs font-medium">
                 v{activeVersion.versionNumber}
               </span>
               <VersionBadge status={activeVersion.status} />
             </>
           )}
           {principalId && (
-            <span className="text-xs text-default-400">
+            <span className="text-default-400 text-xs">
               <PrincipalLookup principalId={principalId} />
             </span>
           )}
@@ -266,7 +266,7 @@ export function PrincipalWorkflowDetailPage() {
               size="sm"
               variant="bordered"
               color={showPalette ? 'primary' : undefined}
-              onPress={() => setShowPalette(p => !p)}
+              onPress={() => setShowPalette((p) => !p)}
             >
               Components
             </BaseButton>
@@ -274,7 +274,7 @@ export function PrincipalWorkflowDetailPage() {
           <BaseButton
             size="sm"
             variant="bordered"
-            onPress={() => setShowVersionsSidebar(prev => !prev)}
+            onPress={() => setShowVersionsSidebar((prev) => !prev)}
           >
             Versions
           </BaseButton>
@@ -293,7 +293,7 @@ export function PrincipalWorkflowDetailPage() {
       {/* No-version empty state */}
       {!activeVersion && (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-          <p className="text-sm text-default-500">
+          <p className="text-default-500 text-sm">
             No versions yet. Create a draft to start building this workflow.
           </p>
           {canEdit && (
@@ -317,7 +317,7 @@ export function PrincipalWorkflowDetailPage() {
               sourceDefinitionId={id}
               sourceDefinitionName={data.name}
               principalId={principalId}
-              getDetailUrl={newId =>
+              getDetailUrl={(newId) =>
                 `/principal/${principalId}/workflows/${newId}`
               }
             />
@@ -343,16 +343,16 @@ export function PrincipalWorkflowDetailPage() {
 
           {showVersionsSidebar && (
             <aside
-              className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-default-200 bg-white dark:bg-default-50"
+              className="border-light dark:bg-default-50 flex w-80 shrink-0 flex-col overflow-hidden border-l bg-white"
               aria-label="Version history"
             >
-              <div className="flex items-center justify-between border-b border-default-200 px-4 py-3">
-                <span className="text-sm font-semibold text-default-700">
+              <div className="border-light flex items-center justify-between border-b px-4 py-3">
+                <span className="text-default-700 text-sm font-semibold">
                   Version History
                 </span>
                 <button
                   type="button"
-                  className="text-sm text-default-400 hover:text-default-600"
+                  className="text-default-400 hover:text-default-600 text-sm"
                   onClick={() => setShowVersionsSidebar(false)}
                   aria-label="Close version history"
                 >
@@ -370,11 +370,11 @@ export function PrincipalWorkflowDetailPage() {
 
                 {activeVersion.states.length > 0 && (
                   <div>
-                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-default-500">
+                    <h3 className="text-default-500 mb-2 text-xs font-semibold uppercase tracking-wide">
                       States
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {activeVersion.states.map(s => (
+                      {activeVersion.states.map((s) => (
                         <Chip key={s.id} size="sm">
                           {s.name}
                         </Chip>
@@ -384,14 +384,14 @@ export function PrincipalWorkflowDetailPage() {
                 )}
 
                 {data.versions.length > 0 && (
-                  <Card className="border border-default-200">
-                    <div className="px-4 pt-4 pb-2">
-                      <h3 className="text-sm font-semibold text-default-700">
+                  <BaseCard>
+                    <div className="px-4 pb-2 pt-4">
+                      <h3 className="text-default-700 text-sm font-semibold">
                         All Versions
                       </h3>
                     </div>
-                    <ul className="divide-y divide-default-100 px-2 pb-2">
-                      {reversedVersions.map(v => (
+                    <ul className="divide-default-100 divide-y px-2 pb-2">
+                      {reversedVersions.map((v) => (
                         <li
                           key={v.id}
                           className="flex items-center gap-3 py-2.5"
@@ -401,7 +401,7 @@ export function PrincipalWorkflowDetailPage() {
                               v{v.versionNumber}
                             </span>
                             {v.publishedAt && (
-                              <span className="ml-2 text-xs text-default-400">
+                              <span className="text-default-400 ml-2 text-xs">
                                 {formatDate(v.publishedAt)}
                               </span>
                             )}
@@ -410,11 +410,11 @@ export function PrincipalWorkflowDetailPage() {
                         </li>
                       ))}
                     </ul>
-                  </Card>
+                  </BaseCard>
                 )}
 
                 {data.versions.length === 0 && (
-                  <p className="text-xs italic text-default-400">
+                  <p className="text-default-400 text-xs italic">
                     No published versions yet.
                   </p>
                 )}
@@ -431,7 +431,9 @@ export function PrincipalWorkflowDetailPage() {
           sourceDefinitionId={id}
           sourceDefinitionName={data.name}
           principalId={principalId}
-          getDetailUrl={newId => `/principal/${principalId}/workflows/${newId}`}
+          getDetailUrl={(newId) =>
+            `/principal/${principalId}/workflows/${newId}`
+          }
         />
       )}
     </div>

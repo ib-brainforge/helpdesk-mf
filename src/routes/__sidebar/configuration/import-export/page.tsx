@@ -1,5 +1,5 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { BaseButton, Icon } from '@brainforgeau/components';
+import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { AdminImportExportApi } from '@brainforgeau/helpdesk-client';
 import { withAuthorizationRequired } from '@brainforgeau/security';
@@ -121,28 +121,28 @@ function ImportExportPage() {
       />
 
       {/* Honest deferral notice — not a "coming soon" stub, but an admission with a path forward */}
-      <div className="mb-6 rounded-lg bg-warning-50 border border-warning-200 px-4 py-4 max-w-2xl">
+      <div className="bg-warning-50 border-warning-200 mb-6 max-w-2xl rounded-lg border px-4 py-4">
         <div className="flex gap-3">
           <Icon
             name="information-circle"
-            className="w-5 h-5 text-warning-600 flex-shrink-0 mt-0.5"
+            className="text-warning-600 mt-0.5 h-5 w-5 flex-shrink-0"
           />
           <div>
-            <p className="text-sm font-semibold text-warning-800">
+            <p className="text-warning-800 text-sm font-semibold">
               Self-service import/export is coming in a future release
             </p>
-            <p className="text-sm text-warning-700 mt-1">
+            <p className="text-warning-700 mt-1 text-sm">
               The infrastructure for bulk data operations is in place, but the
               processing pipeline that handles large datasets safely (conflict
               resolution, schema migration, streaming downloads) is still being
               built.
             </p>
-            <p className="text-sm text-warning-700 mt-2">
+            <p className="text-warning-700 mt-2 text-sm">
               For immediate needs — migrating from another system or extracting
               a full data copy — contact{' '}
               <a
                 href="mailto:support@brainforge.au"
-                className="font-medium underline hover:text-warning-900"
+                className="hover:text-warning-900 font-medium underline"
               >
                 support@brainforge.au
               </a>
@@ -154,107 +154,97 @@ function ImportExportPage() {
 
       <div className="max-w-2xl space-y-4">
         {/* Export card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
-                <Icon
-                  name="arrow-up-tray"
-                  className="w-5 h-5 text-primary-600"
-                />
+        <BaseCard>
+          <div className="flex items-start gap-4">
+            <div className="bg-primary-50 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+              <Icon name="arrow-up-tray" className="text-primary-600 h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-base font-semibold">Export tenant data</h2>
+              <p className="text-default-500 mt-1 text-sm">
+                Download a full export of your tickets, contacts, custom fields,
+                and configuration as a structured archive. Useful for backups or
+                migrating to another platform.
+              </p>
+              <div className="mt-4">
+                <BaseButton
+                  color="primary"
+                  variant="bordered"
+                  onPress={handleExport}
+                  isDisabled={isExporting}
+                  startContent={
+                    !isExporting ? (
+                      <Icon name="arrow-down-tray" className="h-4 w-4" />
+                    ) : undefined
+                  }
+                >
+                  Request export
+                </BaseButton>
               </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold">Export tenant data</h2>
-                <p className="text-sm text-default-500 mt-1">
-                  Download a full export of your tickets, contacts, custom
-                  fields, and configuration as a structured archive. Useful for
-                  backups or migrating to another platform.
-                </p>
-                <div className="mt-4">
+            </div>
+          </div>
+        </BaseCard>
+
+        {/* Import card */}
+        <BaseCard>
+          <div className="flex items-start gap-4">
+            <div className="bg-success-50 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+              <Icon
+                name="arrow-down-tray"
+                className="text-success-600 h-5 w-5"
+              />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-base font-semibold">Import tenant data</h2>
+              <p className="text-default-500 mt-1 text-sm">
+                Upload a .zip archive to import tickets and configuration into
+                this tenant. Only archives exported from BrainForge Helpdesk are
+                supported.
+              </p>
+
+              {/* Hidden native file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".zip,application/zip,application/x-zip-compressed"
+                className="hidden"
+                onChange={handleFileSelect}
+                aria-label="Select .zip file to import"
+              />
+
+              <div className="mt-4 flex items-center gap-3">
+                <BaseButton
+                  variant="bordered"
+                  onPress={() => fileInputRef.current?.click()}
+                  startContent={<Icon name="folder-open" className="h-4 w-4" />}
+                >
+                  {importFileName ?? 'Select .zip file'}
+                </BaseButton>
+
+                {importFileName && (
                   <BaseButton
                     color="primary"
-                    variant="bordered"
-                    onPress={handleExport}
-                    isDisabled={isExporting}
+                    onPress={handleImport}
+                    isDisabled={isImporting}
                     startContent={
-                      !isExporting ? (
-                        <Icon name="arrow-down-tray" className="w-4 h-4" />
+                      !isImporting ? (
+                        <Icon name="arrow-up-tray" className="h-4 w-4" />
                       ) : undefined
                     }
                   >
-                    Request export
+                    Upload and import
                   </BaseButton>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Import card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-success-50 flex items-center justify-center flex-shrink-0">
-                <Icon
-                  name="arrow-down-tray"
-                  className="w-5 h-5 text-success-600"
-                />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold">Import tenant data</h2>
-                <p className="text-sm text-default-500 mt-1">
-                  Upload a .zip archive to import tickets and configuration into
-                  this tenant. Only archives exported from BrainForge Helpdesk
-                  are supported.
-                </p>
-
-                {/* Hidden native file input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".zip,application/zip,application/x-zip-compressed"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                  aria-label="Select .zip file to import"
-                />
-
-                <div className="mt-4 flex items-center gap-3">
-                  <BaseButton
-                    variant="bordered"
-                    onPress={() => fileInputRef.current?.click()}
-                    startContent={
-                      <Icon name="folder-open" className="w-4 h-4" />
-                    }
-                  >
-                    {importFileName ?? 'Select .zip file'}
-                  </BaseButton>
-
-                  {importFileName && (
-                    <BaseButton
-                      color="primary"
-                      onPress={handleImport}
-                      isDisabled={isImporting}
-                      startContent={
-                        !isImporting ? (
-                          <Icon name="arrow-up-tray" className="w-4 h-4" />
-                        ) : undefined
-                      }
-                    >
-                      Upload and import
-                    </BaseButton>
-                  )}
-                </div>
-
-                {importFileName && (
-                  <p className="text-xs text-default-400 mt-2">
-                    Selected:{' '}
-                    <span className="font-mono">{importFileName}</span>
-                  </p>
                 )}
               </div>
+
+              {importFileName && (
+                <p className="text-default-400 mt-2 text-xs">
+                  Selected: <span className="font-mono">{importFileName}</span>
+                </p>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </BaseCard>
       </div>
     </PageBody>
   );

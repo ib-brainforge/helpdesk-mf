@@ -34,7 +34,7 @@ const getCommentBackgroundClass = (type: CommentType): string => {
     return 'bg-warning-50 dark:bg-warning-100/10 border-warning-200 dark:border-warning-800';
   }
   if (type === CommentType.SystemMessage) {
-    return 'bg-default-100 dark:bg-default-50/10 border-default-200 dark:border-default-700';
+    return 'bg-default-100 dark:bg-default-50/10 border-light dark:border-default-700';
   }
   return 'bg-content1 border-divider';
 };
@@ -72,17 +72,17 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
   return (
     <div className="space-y-4">
-      {comments.map(comment => {
+      {comments.map((comment) => {
         const commentType =
           fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
         return (
           <div
             key={comment.id}
-            className={`p-4 rounded-lg border ${getCommentBackgroundClass(commentType)}`}
+            className={`rounded-lg border p-4 ${getCommentBackgroundClass(commentType)}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">
+                <span className="text-sm font-semibold">
                   {comment.createdByUserName ||
                     comment.authorId ||
                     'Unknown User'}
@@ -91,7 +91,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   {getCommentTypeName(commentType)}
                 </StatusBadge>
               </div>
-              <span className="text-xs text-default-400">
+              <span className="text-default-400 text-xs">
                 {formatDateTime(comment.createdAt, { timezone })}
               </span>
             </div>

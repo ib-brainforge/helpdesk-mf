@@ -39,7 +39,7 @@ export function CustomStatusEditorModal({
   const [color, setColor] = useState('#6366f1');
   const [sortOrder, setSortOrder] = useState(0);
   const [mapsToStatus, setMapsToStatus] = useState<TicketStatus>(
-    TicketStatus.InProgress,
+    TicketStatus.InProgress
   );
   const [isClosed, setIsClosed] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
@@ -144,7 +144,7 @@ export function CustomStatusEditorModal({
             label="Name"
             placeholder="e.g. Awaiting Customer Reply"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             isInvalid={!!nameError}
             errorMessage={nameError}
             maxLength={100}
@@ -157,22 +157,22 @@ export function CustomStatusEditorModal({
                 label="Sort Order"
                 type="number"
                 value={String(sortOrder)}
-                onChange={e => setSortOrder(Number(e.target.value) || 0)}
+                onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
                 min={0}
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1.5 text-foreground">
+              <label className="text-foreground mb-1.5 block text-sm font-medium">
                 Color
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={color}
-                  onChange={e => setColor(e.target.value)}
-                  className="h-10 w-10 rounded border border-default-200 cursor-pointer"
+                  onChange={(e) => setColor(e.target.value)}
+                  className="border-light h-10 w-10 cursor-pointer rounded border"
                 />
-                <span className="text-sm text-default-500">{color}</span>
+                <span className="text-default-500 text-sm">{color}</span>
               </div>
             </div>
           </div>
@@ -180,23 +180,23 @@ export function CustomStatusEditorModal({
           <BaseSelect
             label="Maps to system status"
             selectedKey={String(mapsToStatus)}
-            onSelectionChange={keys => {
+            onSelectionChange={(keys) => {
               const key = keys as string;
               setMapsToStatus(Number(key) as TicketStatus);
             }}
           >
-            {MAPS_TO_OPTIONS.map(opt => (
+            {MAPS_TO_OPTIONS.map((opt) => (
               <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
               </BaseSelectItem>
             ))}
           </BaseSelect>
 
-          <div className="space-y-3 p-3 bg-default-50 rounded-lg border border-default-200">
+          <div className="bg-default-50 border-light space-y-3 rounded-lg border p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Counts as closed</p>
-                <p className="text-xs text-default-500">
+                <p className="text-default-500 text-xs">
                   Tickets with this status are counted as resolved in reports
                 </p>
               </div>
@@ -206,7 +206,7 @@ export function CustomStatusEditorModal({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Default for new tickets</p>
-                <p className="text-xs text-default-500">
+                <p className="text-default-500 text-xs">
                   New tickets will start with this status
                 </p>
               </div>
@@ -217,7 +217,7 @@ export function CustomStatusEditorModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Active</p>
-                  <p className="text-xs text-default-500">
+                  <p className="text-default-500 text-xs">
                     Inactive statuses are hidden from selection
                   </p>
                 </div>

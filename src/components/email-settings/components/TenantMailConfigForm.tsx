@@ -11,9 +11,7 @@
  * Exports `tenantMailConfigSchema` for use by the page-level useEntityForm call.
  */
 
-import {
-  testTenantMailConfig,
-} from '@/state/notificationApiClient';
+import { testTenantMailConfig } from '@/state/notificationApiClient';
 import {
   OutboundMailProtocol,
   type TenantMailConfigDto,
@@ -21,6 +19,7 @@ import {
 } from '@/types/email';
 import {
   BaseButton,
+  BaseCard,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -61,7 +60,11 @@ type FormValues = z.infer<typeof tenantMailConfigSchema>;
 function formatFormErrors(errors: unknown[]): string | undefined {
   if (!errors || errors.length === 0) return undefined;
   return errors
-    .map(e => (typeof e === 'string' ? e : (e as { message?: string }).message || String(e)))
+    .map((e) =>
+      typeof e === 'string'
+        ? e
+        : (e as { message?: string }).message || String(e)
+    )
     .join(', ');
 }
 
@@ -105,7 +108,7 @@ export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
       if (result.success) {
         toast(
           `Connection successful${result.latencyMs != null ? ` — ${result.latencyMs}ms` : ''}`,
-          { variant: 'success' },
+          { variant: 'success' }
         );
       } else {
         toast('Connection failed', {
@@ -114,7 +117,10 @@ export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
         });
       }
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { detail?: string } }; message?: string };
+      const err = error as {
+        response?: { data?: { detail?: string } };
+        message?: string;
+      };
       const msg = err?.response?.data?.detail || err?.message || 'Test failed';
       toast('Test failed', { description: msg, variant: 'danger' });
     } finally {
@@ -125,193 +131,191 @@ export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
   return (
     <div className="max-w-2xl space-y-6">
       {/* Enable / Protocol */}
-      <Card>
-        <CardContent className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Outbound mail server</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">Outbound mail server</h2>
 
-          <div className="flex items-center gap-6">
-            <f.Field name="isEnabled">
-              {field => (
-                <Switch
-                  isSelected={field.state.value}
-                  onChange={field.handleChange}
-                >
-                  Enable custom outbound mail
-                </Switch>
-              )}
-            </f.Field>
-          </div>
-
-          <f.Field name="outboundProtocol">
-            {field => (
-              <BaseSelect
-                label="Protocol"
-                className="max-w-xs"
-                selectedKey={String(field.state.value)}
-                onSelectionChange={keys =>
-                  field.handleChange(Number(keys) as OutboundMailProtocol)
-                }
-                errorMessage={formatFormErrors(field.state.meta.errors)}
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                <BaseSelectItem key={String(OutboundMailProtocol.Smtp)} value={String(OutboundMailProtocol.Smtp)}>
-                  SMTP
-                </BaseSelectItem>
-                <BaseSelectItem key={String(OutboundMailProtocol.SendGrid)} value={String(OutboundMailProtocol.SendGrid)}>
-                  SendGrid
-                </BaseSelectItem>
-              </BaseSelect>
-            )}
-          </f.Field>
-        </CardContent>
-      </Card>
-
-      {/* Server */}
-      <Card>
-        <CardContent className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Server settings</h2>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <f.Field name="outboundHost">
-              {field => (
-                <BaseInput
-                  label="Host"
-                  className="md:col-span-2"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={e => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="smtp.example.com"
-                />
-              )}
-            </f.Field>
-
-            <f.Field name="outboundPort">
-              {field => (
-                <BaseInput
-                  label="Port"
-                  type="number"
-                  name={field.name}
-                  value={
-                    field.state.value != null ? String(field.state.value) : ''
-                  }
-                  onBlur={field.handleBlur}
-                  onChange={e =>
-                    field.handleChange(
-                      e.target.value ? Number(e.target.value) : null,
-                    )
-                  }
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="587"
-                />
-              )}
-            </f.Field>
-          </div>
-
-          <f.Field name="useSsl">
-            {field => (
+        <div className="flex items-center gap-6">
+          <f.Field name="isEnabled">
+            {(field) => (
               <Switch
                 isSelected={field.state.value}
                 onChange={field.handleChange}
               >
-                Use SSL / TLS
+                Enable custom outbound mail
               </Switch>
             )}
           </f.Field>
-        </CardContent>
-      </Card>
+        </div>
+
+        <f.Field name="outboundProtocol">
+          {(field) => (
+            <BaseSelect
+              label="Protocol"
+              className="max-w-xs"
+              selectedKey={String(field.state.value)}
+              onSelectionChange={(keys) =>
+                field.handleChange(Number(keys) as OutboundMailProtocol)
+              }
+              errorMessage={formatFormErrors(field.state.meta.errors)}
+              isInvalid={field.state.meta.errors.length > 0}
+            >
+              <BaseSelectItem
+                key={String(OutboundMailProtocol.Smtp)}
+                value={String(OutboundMailProtocol.Smtp)}
+              >
+                SMTP
+              </BaseSelectItem>
+              <BaseSelectItem
+                key={String(OutboundMailProtocol.SendGrid)}
+                value={String(OutboundMailProtocol.SendGrid)}
+              >
+                SendGrid
+              </BaseSelectItem>
+            </BaseSelect>
+          )}
+        </f.Field>
+      </BaseCard>
+
+      {/* Server */}
+      <BaseCard>
+        <h2 className="text-base font-semibold">Server settings</h2>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <f.Field name="outboundHost">
+            {(field) => (
+              <BaseInput
+                label="Host"
+                className="md:col-span-2"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="smtp.example.com"
+              />
+            )}
+          </f.Field>
+
+          <f.Field name="outboundPort">
+            {(field) => (
+              <BaseInput
+                label="Port"
+                type="number"
+                name={field.name}
+                value={
+                  field.state.value != null ? String(field.state.value) : ''
+                }
+                onBlur={field.handleBlur}
+                onChange={(e) =>
+                  field.handleChange(
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="587"
+              />
+            )}
+          </f.Field>
+        </div>
+
+        <f.Field name="useSsl">
+          {(field) => (
+            <Switch
+              isSelected={field.state.value}
+              onChange={field.handleChange}
+            >
+              Use SSL / TLS
+            </Switch>
+          )}
+        </f.Field>
+      </BaseCard>
 
       {/* Credentials */}
-      <Card>
-        <CardContent className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Credentials</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">Credentials</h2>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <f.Field name="username">
-              {field => (
-                <BaseInput
-                  label="Username"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={e => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="support@example.com"
-                />
-              )}
-            </f.Field>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <f.Field name="username">
+            {(field) => (
+              <BaseInput
+                label="Username"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="support@example.com"
+              />
+            )}
+          </f.Field>
 
-            <f.Field name="password">
-              {field => (
-                <BaseInput
-                  label={
-                    dto?.hasPassword
-                      ? 'Password (leave blank to keep current)'
-                      : 'Password'
-                  }
-                  type="password"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={e => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="••••••••"
-                  description={
-                    dto?.hasPassword
-                      ? 'A password is currently stored.'
-                      : undefined
-                  }
-                />
-              )}
-            </f.Field>
-          </div>
-        </CardContent>
-      </Card>
+          <f.Field name="password">
+            {(field) => (
+              <BaseInput
+                label={
+                  dto?.hasPassword
+                    ? 'Password (leave blank to keep current)'
+                    : 'Password'
+                }
+                type="password"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="••••••••"
+                description={
+                  dto?.hasPassword
+                    ? 'A password is currently stored.'
+                    : undefined
+                }
+              />
+            )}
+          </f.Field>
+        </div>
+      </BaseCard>
 
       {/* Sender identity */}
-      <Card>
-        <CardContent className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Sender identity</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">Sender identity</h2>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <f.Field name="fromEmail">
-              {field => (
-                <BaseInput
-                  label="From email"
-                  type="email"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={e => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="helpdesk@example.com"
-                />
-              )}
-            </f.Field>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <f.Field name="fromEmail">
+            {(field) => (
+              <BaseInput
+                label="From email"
+                type="email"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="helpdesk@example.com"
+              />
+            )}
+          </f.Field>
 
-            <f.Field name="fromName">
-              {field => (
-                <BaseInput
-                  label="From name"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={e => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="Helpdesk Support"
-                />
-              )}
-            </f.Field>
-          </div>
-        </CardContent>
-      </Card>
+          <f.Field name="fromName">
+            {(field) => (
+              <BaseInput
+                label="From name"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="Helpdesk Support"
+              />
+            )}
+          </f.Field>
+        </div>
+      </BaseCard>
 
       {/* Test result banner */}
       {testResult && (

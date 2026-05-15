@@ -56,7 +56,7 @@ export const INTEGRATION_PROVIDERS: IntegrationProviderMeta[] = [
     type: IntegrationType.Slack,
     label: 'Slack',
     description: 'Post ticket updates and notifications to Slack channels.',
-    icon: 'chat-bubble-left-right',
+    icon: 'chat',
     configFields: [
       {
         key: 'webhookUrl',
@@ -75,7 +75,7 @@ export const INTEGRATION_PROVIDERS: IntegrationProviderMeta[] = [
     type: IntegrationType.Jira,
     label: 'Jira',
     description: 'Sync tickets with Jira issues bidirectionally.',
-    icon: 'ticket',
+    icon: 'text',
     configFields: [
       {
         key: 'baseUrl',
@@ -108,7 +108,7 @@ export const INTEGRATION_PROVIDERS: IntegrationProviderMeta[] = [
     type: IntegrationType.GitHub,
     label: 'GitHub',
     description: 'Link tickets to GitHub issues and pull requests.',
-    icon: 'code-bracket',
+    icon: 'link',
     configFields: [
       {
         key: 'owner',
@@ -135,7 +135,7 @@ export const INTEGRATION_PROVIDERS: IntegrationProviderMeta[] = [
     type: IntegrationType.Zapier,
     label: 'Zapier',
     description: 'Trigger Zapier zaps from ticket events via webhook.',
-    icon: 'bolt',
+    icon: 'fil-in',
     configFields: [
       {
         key: 'webhookUrl',

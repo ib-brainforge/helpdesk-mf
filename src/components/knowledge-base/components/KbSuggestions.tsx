@@ -3,6 +3,7 @@ import { Card } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import type { FC } from 'react';
 import { useSimilarArticles } from '../hooks/useKnowledgeBase';
+import { BaseCard } from '@brainforgeau/components';
 
 interface KbSuggestionsProps {
   searchText: string;
@@ -20,7 +21,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
   const shouldFetch = searchText.length >= minChars;
   const { data: suggestions, isLoading } = useSimilarArticles(
     shouldFetch ? searchText : '',
-    limit,
+    limit
   );
 
   const hasSuggestions = suggestions && suggestions.length > 0;
@@ -30,9 +31,9 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
   }
 
   return (
-    <Card className="p-4 mt-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon name="light-bulb" className="h-5 w-5 text-warning" />
+    <BaseCard className="mt-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Icon name="light-bulb" className="text-warning h-5 w-5" />
         <h3 className="text-sm font-semibold">
           Related Knowledge Base Articles
         </h3>
@@ -46,29 +47,29 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
             <Link
               key={article.id}
               to={`/knowledge-base/${article.slug}`}
-              onClick={e => {
+              onClick={(e) => {
                 if (onArticleClick) {
                   e.preventDefault();
                   onArticleClick(article.slug);
                 }
               }}
-              className="block p-3 rounded-lg hover:bg-default-100 transition-colors"
+              className="hover:bg-default-100 block rounded-lg p-3 transition-colors"
             >
               <div className="flex items-start gap-2">
                 <Icon
                   name="document-text"
-                  className="h-4 w-4 mt-0.5 text-primary flex-shrink-0"
+                  className="text-primary mt-0.5 h-4 w-4 flex-shrink-0"
                 />
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-foreground line-clamp-1">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-foreground line-clamp-1 text-sm font-medium">
                     {article.title}
                   </h4>
                   {article.excerpt && (
-                    <p className="text-xs text-gray-600 line-clamp-2 mt-1">
+                    <p className="mt-1 line-clamp-2 text-xs text-gray-600">
                       {article.excerpt}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
                     {article.categoryName && (
                       <span>{article.categoryName}</span>
                     )}
@@ -85,9 +86,9 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
         </div>
       )}
 
-      <div className="text-xs text-gray-500 mt-3 pt-3 border-t border-divider">
+      <div className="border-divider mt-3 border-t pt-3 text-xs text-gray-500">
         These articles might help solve your issue before creating a ticket.
       </div>
-    </Card>
+    </BaseCard>
   );
 };

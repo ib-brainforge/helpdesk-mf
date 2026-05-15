@@ -16,6 +16,7 @@ import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { ApprovalMode, type ApprovalWorkflowStepDto } from '@/types/approval';
 import {
   BaseButton,
+  BaseCard,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -90,7 +91,7 @@ function NewApprovalWorkflowPage() {
 
   // Step helpers
   const handleAddStep = useCallback(() => {
-    setSteps(prev => [
+    setSteps((prev) => [
       ...prev,
       {
         stepOrder: prev.length,
@@ -104,25 +105,25 @@ function NewApprovalWorkflowPage() {
   }, []);
 
   const handleRemoveStep = useCallback((index: number) => {
-    setSteps(prev =>
+    setSteps((prev) =>
       prev
         .filter((_, i) => i !== index)
-        .map((step, i) => ({ ...step, stepOrder: i })),
+        .map((step, i) => ({ ...step, stepOrder: i }))
     );
   }, []);
 
   const handleUpdateStep = useCallback(
     (index: number, updates: Partial<ApprovalWorkflowStepDto>) => {
-      setSteps(prev =>
-        prev.map((step, i) => (i === index ? { ...step, ...updates } : step)),
+      setSteps((prev) =>
+        prev.map((step, i) => (i === index ? { ...step, ...updates } : step))
       );
     },
-    [],
+    []
   );
 
   const handleMoveStepUp = useCallback((index: number) => {
     if (index === 0) return;
-    setSteps(prev => {
+    setSteps((prev) => {
       const next = [...prev];
       [next[index - 1], next[index]] = [next[index], next[index - 1]];
       return next.map((step, i) => ({ ...step, stepOrder: i }));
@@ -130,7 +131,7 @@ function NewApprovalWorkflowPage() {
   }, []);
 
   const handleMoveStepDown = useCallback((index: number) => {
-    setSteps(prev => {
+    setSteps((prev) => {
       if (index === prev.length - 1) return prev;
       const next = [...prev];
       [next[index], next[index + 1]] = [next[index + 1], next[index]];
@@ -154,13 +155,13 @@ function NewApprovalWorkflowPage() {
     >
       <FormPage.Section title="Basic Information" columns={2}>
         <f.Field name="name">
-          {field => (
+          {(field) => (
             <BaseInput
               label="Workflow Name"
               isRequired
               placeholder="Enter workflow name"
               value={field.state.value}
-              onChange={e => field.handleChange(e.target.value)}
+              onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               isInvalid={field.state.meta.errors.length > 0}
               errorMessage={field.state.meta.errors.map(String).join(', ')}
@@ -169,22 +170,25 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="approvalMode">
-          {field => (
+          {(field) => (
             <BaseSelect
               label="Approval Mode"
               isRequired
               selectedKey={String(field.state.value)}
-              onSelectionChange={key => {
+              onSelectionChange={(key) => {
                 if (key)
                   field.handleChange(
-                    Number.parseInt(String(key)) as ApprovalMode,
+                    Number.parseInt(String(key)) as ApprovalMode
                   );
               }}
               isInvalid={field.state.meta.errors.length > 0}
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
-              {APPROVAL_MODE_OPTIONS.map(opt => (
-                <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
+              {APPROVAL_MODE_OPTIONS.map((opt) => (
+                <BaseSelectItem
+                  key={String(opt.value)}
+                  value={String(opt.value)}
+                >
                   {opt.label}
                 </BaseSelectItem>
               ))}
@@ -193,7 +197,7 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="description">
-          {field => (
+          {(field) => (
             <BaseTextarea
               label="Description"
               placeholder="Optional description"
@@ -207,7 +211,7 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="isActive">
-          {field => (
+          {(field) => (
             <div className="flex flex-col gap-1">
               <Switch
                 isSelected={field.state.value}
@@ -215,7 +219,7 @@ function NewApprovalWorkflowPage() {
               >
                 <span className="text-sm font-medium">Active</span>
               </Switch>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Enable this workflow
               </p>
             </div>
@@ -223,7 +227,7 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="triggerOnCreation">
-          {field => (
+          {(field) => (
             <div className="flex flex-col gap-1">
               <Switch
                 isSelected={field.state.value}
@@ -231,7 +235,7 @@ function NewApprovalWorkflowPage() {
               >
                 <span className="text-sm font-medium">Trigger on Creation</span>
               </Switch>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Automatically trigger when ticket is created
               </p>
             </div>
@@ -245,7 +249,7 @@ function NewApprovalWorkflowPage() {
       <FormPage.Section title="Approval Steps">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Add the approval steps for this workflow.
             </p>
             <BaseButton
@@ -259,8 +263,8 @@ function NewApprovalWorkflowPage() {
           </div>
 
           {steps.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-              <Icon name="clipboard-document-list" className="h-10 w-10 mb-2" />
+            <div className="text-muted-foreground flex flex-col items-center justify-center py-10 text-center">
+              <Icon name="clipboard-document-list" className="mb-2 h-10 w-10" />
               <p className="text-sm">
                 No steps added yet. Click "Add Step" to create approval steps.
               </p>
@@ -268,8 +272,8 @@ function NewApprovalWorkflowPage() {
           )}
 
           {steps.map((step, index) => (
-            <Card key={index}>
-              <CardContent className="flex flex-col gap-3 pt-4">
+            <BaseCard key={index}>
+              <div className="flex flex-col gap-3 pt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Step {index + 1}</span>
                   <div className="flex items-center gap-1">
@@ -302,7 +306,7 @@ function NewApprovalWorkflowPage() {
                 <BaseInput
                   label="Step Name"
                   value={step.name}
-                  onValueChange={v => handleUpdateStep(index, { name: v })}
+                  onValueChange={(v) => handleUpdateStep(index, { name: v })}
                   isRequired
                   placeholder="e.g., Manager Approval"
                   size="sm"
@@ -311,25 +315,28 @@ function NewApprovalWorkflowPage() {
                 <BaseSelect
                   label="Approver"
                   selectedKey={step.approverUserId ?? '__none__'}
-                  onSelectionChange={key => {
+                  onSelectionChange={(key) => {
                     handleUpdateStep(index, {
-                      approverUserId: key === '__none__' ? undefined : (key as string),
+                      approverUserId:
+                        key === '__none__' ? undefined : (key as string),
                     });
                   }}
                   size="sm"
                   aria-label="Approver"
                 >
                   {[
-                    <BaseSelectItem key="__none__" id="__none__">Select approver...</BaseSelectItem>,
-                    ...userOptions.map(opt => (
+                    <BaseSelectItem key="__none__" id="__none__">
+                      Select approver...
+                    </BaseSelectItem>,
+                    ...userOptions.map((opt) => (
                       <BaseSelectItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </BaseSelectItem>
                     )),
                   ]}
                 </BaseSelect>
-              </CardContent>
-            </Card>
+              </div>
+            </BaseCard>
           ))}
         </div>
       </FormPage.Section>

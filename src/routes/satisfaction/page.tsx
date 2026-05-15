@@ -1,6 +1,11 @@
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSubmitSatisfactionRating } from '@/hooks/useSatisfaction';
-import { BaseButton, BaseTextarea, Icon } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseCard,
+  BaseTextarea,
+  Icon,
+} from '@brainforgeau/components';
 import { Card } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useSearchParams } from '@modern-js/runtime/router';
@@ -47,14 +52,14 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Survey Link Invalid</title>
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <Card className="max-w-md w-full p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
                 name="exclamation-circle"
-                className="h-16 w-16 text-danger mx-auto mb-4"
+                className="text-danger mx-auto mb-4 h-16 w-16"
               />
-              <h1 className="text-2xl font-semibold mb-2">
+              <h1 className="mb-2 text-2xl font-semibold">
                 Invalid Survey Link
               </h1>
               <p className="text-gray-600">
@@ -62,7 +67,7 @@ function SatisfactionSurveyPage() {
                 token.
               </p>
             </div>
-          </Card>
+          </BaseCard>
         </div>
       </>
     );
@@ -74,20 +79,20 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Thank You!</title>
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <Card className="max-w-md w-full p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
                 name="check-circle"
-                className="h-16 w-16 text-green-500 mx-auto mb-4"
+                className="mx-auto mb-4 h-16 w-16 text-green-500"
               />
-              <h1 className="text-2xl font-semibold mb-2">Thank You!</h1>
+              <h1 className="mb-2 text-2xl font-semibold">Thank You!</h1>
               <p className="text-gray-600">
                 Your feedback has been submitted successfully. We appreciate
                 your time and input.
               </p>
             </div>
-          </Card>
+          </BaseCard>
         </div>
       </>
     );
@@ -103,15 +108,15 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Survey Error</title>
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <Card className="max-w-md w-full p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
                 name="exclamation-triangle"
-                className="h-16 w-16 text-orange-500 mx-auto mb-4"
+                className="mx-auto mb-4 h-16 w-16 text-orange-500"
               />
-              <h1 className="text-2xl font-semibold mb-2">Survey Error</h1>
-              <p className="text-gray-600 mb-4">{errorMessage}</p>
+              <h1 className="mb-2 text-2xl font-semibold">Survey Error</h1>
+              <p className="mb-4 text-gray-600">{errorMessage}</p>
               <BaseButton
                 variant="light"
                 onClick={() => submitMutation.reset()}
@@ -119,7 +124,7 @@ function SatisfactionSurveyPage() {
                 Try Again
               </BaseButton>
             </div>
-          </Card>
+          </BaseCard>
         </div>
       </>
     );
@@ -130,10 +135,10 @@ function SatisfactionSurveyPage() {
       <Helmet>
         <title>Customer Satisfaction Survey</title>
       </Helmet>
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-        <Card className="max-w-lg w-full p-8">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-semibold mb-2">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+        <BaseCard className="w-full max-w-lg">
+          <div className="mb-6 text-center">
+            <h1 className="mb-2 text-2xl font-semibold">
               How was your support experience?
             </h1>
             <p className="text-gray-600">
@@ -144,7 +149,7 @@ function SatisfactionSurveyPage() {
 
           <div className="space-y-6">
             <div className="flex flex-col items-center">
-              <label className="text-sm font-medium mb-3">Your Rating</label>
+              <label className="mb-3 text-sm font-medium">Your Rating</label>
               <StarRating value={rating} onChange={setRating} size="lg" />
               {rating > 0 && (
                 <p className="mt-2 text-sm text-gray-600">
@@ -162,7 +167,7 @@ function SatisfactionSurveyPage() {
                 label="Additional Comments (Optional)"
                 placeholder="Tell us more about your experience..."
                 value={comment}
-                onChange={e => setComment(e.target.value)}
+                onChange={(e) => setComment(e.target.value)}
                 minRows={4}
                 maxRows={8}
               />
@@ -178,7 +183,7 @@ function SatisfactionSurveyPage() {
               </BaseButton>
             </div>
           </div>
-        </Card>
+        </BaseCard>
       </div>
     </>
   );

@@ -109,7 +109,7 @@ function CategoryFormModal({
   };
 
   // Filter out the current category from parent options to avoid self-reference
-  const parentOptions = categories.filter(c => c.id !== category?.id);
+  const parentOptions = categories.filter((c) => c.id !== category?.id);
 
   return (
     <BaseModal isOpen={mode !== null} onClose={onClose} size="lg">
@@ -125,13 +125,13 @@ function CategoryFormModal({
               label="Name"
               isRequired
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Category name"
             />
             <BaseInput
               label="Description"
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
             />
             {mode === 'create' && (
@@ -139,14 +139,18 @@ function CategoryFormModal({
                 label="Parent category (optional)"
                 placeholder="None (top-level)"
                 selectedKey={parentId || '__none__'}
-                onSelectionChange={key => {
+                onSelectionChange={(key) => {
                   setParentId(key === '__none__' ? '' : (key as string));
                 }}
               >
                 {[
-                  <BaseSelectItem key="__none__" id="__none__">None (top-level)</BaseSelectItem>,
-                  ...parentOptions.map(cat => (
-                    <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
+                  <BaseSelectItem key="__none__" id="__none__">
+                    None (top-level)
+                  </BaseSelectItem>,
+                  ...parentOptions.map((cat) => (
+                    <BaseSelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </BaseSelectItem>
                   )),
                 ]}
               </BaseSelect>
@@ -203,8 +207,8 @@ function KbCategoriesPage() {
 
   const allCategories = categories as unknown as KnowledgeBaseCategoryDto[];
 
-  const filtered = allCategories.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
+  const filtered = allCategories.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const openCreate = () => {
@@ -257,11 +261,11 @@ function KbCategoriesPage() {
         <BaseInput
           placeholder="Search categories..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           startContent={
             <Icon
               name="magnifying-glass"
-              className="h-4 w-4 text-default-400"
+              className="text-default-400 h-4 w-4"
             />
           }
         />
@@ -272,30 +276,30 @@ function KbCategoriesPage() {
           <Spinner size="lg" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-default-500">
+        <div className="text-default-500 py-12 text-center">
           {search
             ? 'No categories match your search.'
             : 'No categories yet. Create the first one!'}
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map(cat => (
+          {filtered.map((cat) => (
             <div
               key={cat.id}
-              className="flex items-center justify-between p-4 rounded-lg border border-default-200 bg-default-50 hover:bg-default-100 transition-colors"
+              className="border-light bg-default-50 hover:bg-default-100 flex items-center justify-between rounded-lg border p-4 transition-colors"
             >
               <div className="flex items-center gap-3">
                 {cat.parentId && (
-                  <span className="w-4 h-px bg-default-300 ml-4" />
+                  <span className="bg-default-300 ml-4 h-px w-4" />
                 )}
                 <div>
                   <p className="font-medium">{cat.name}</p>
                   {cat.description && (
-                    <p className="text-xs text-default-500 mt-0.5">
+                    <p className="text-default-500 mt-0.5 text-xs">
                       {cat.description}
                     </p>
                   )}
-                  <p className="text-xs text-default-400 mt-0.5">
+                  <p className="text-default-400 mt-0.5 text-xs">
                     {cat.articleCount ?? 0} article
                     {(cat.articleCount ?? 0) !== 1 ? 's' : ''}
                   </p>

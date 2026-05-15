@@ -58,7 +58,7 @@ export const TicketGrid: FC = () => {
   const currentUserId = user?.profile?.sub;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
+    null
   );
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const mobileSidebarState = useOverlayState();
@@ -71,14 +71,14 @@ export const TicketGrid: FC = () => {
   const setSelectedTab = useCallback(
     (key: string) => {
       setSearchParams(
-        prev => {
+        (prev) => {
           prev.set('tab', key);
           return prev;
         },
-        { replace: true },
+        { replace: true }
       );
     },
-    [setSearchParams],
+    [setSearchParams]
   );
   const {
     items,
@@ -95,21 +95,21 @@ export const TicketGrid: FC = () => {
   useRealtimeTickets();
 
   // Enrich tickets with user data (avatars, names, emails)
-  const assigneeIds = items.map(t => t.assigneeId).filter(Boolean);
-  const requesterIds = items.map(t => t.requesterId).filter(Boolean);
+  const assigneeIds = items.map((t) => t.assigneeId).filter(Boolean);
+  const requesterIds = items.map((t) => t.requesterId).filter(Boolean);
   const allUserIds = [...assigneeIds, ...requesterIds];
   const { userMap, isLoading: isLoadingUsers } = useUserEnrichment(allUserIds);
 
   const enrichedItems: TicketRow[] = useMemo(
     () =>
-      items.map(ticket => ({
+      items.map((ticket) => ({
         ...ticket,
         assigneeUserInfo: ticket.assigneeId ? userMap[ticket.assigneeId] : null,
         requesterUserInfo: ticket.requesterId
           ? userMap[ticket.requesterId]
           : null,
       })),
-    [items, userMap],
+    [items, userMap]
   );
 
   const updateTicketMutation = useUpdateTicket();
@@ -125,21 +125,21 @@ export const TicketGrid: FC = () => {
     (ticketId: string, assigneeId: string) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { assigneeId } });
     },
-    [updateTicketMutation],
+    [updateTicketMutation]
   );
 
   const handleChangeStatus = useCallback(
     (ticketId: string, status: TicketStatus) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { status } });
     },
-    [updateTicketMutation],
+    [updateTicketMutation]
   );
 
   const handleChangePriority = useCallback(
     (ticketId: string, priority: TicketPriority) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { priority } });
     },
-    [updateTicketMutation],
+    [updateTicketMutation]
   );
 
   const columns = useMemo(
@@ -150,7 +150,7 @@ export const TicketGrid: FC = () => {
         onChangePriority: handleChangePriority,
         timezone,
       }),
-    [handleAssign, handleChangeStatus, handleChangePriority, timezone],
+    [handleAssign, handleChangeStatus, handleChangePriority, timezone]
   );
 
   const { table } = useTicketsTable({
@@ -189,7 +189,7 @@ export const TicketGrid: FC = () => {
   const handleBulkAssignConfirm = useCallback(
     (assigneeId: string | undefined) => {
       const ids = selectedRows
-        .map(row => row.original.id)
+        .map((row) => row.original.id)
         .filter((id): id is string => !!id);
       bulkUpdateMutation.mutate(
         { ids, updates: { assigneeId } },
@@ -201,16 +201,16 @@ export const TicketGrid: FC = () => {
             });
             table.resetRowSelection();
           },
-        },
+        }
       );
     },
-    [selectedRows, bulkUpdateMutation, table],
+    [selectedRows, bulkUpdateMutation, table]
   );
 
   const handleBulkStatusConfirm = useCallback(
     (status: TicketStatus) => {
       const ids = selectedRows
-        .map(row => row.original.id)
+        .map((row) => row.original.id)
         .filter((id): id is string => !!id);
       bulkUpdateMutation.mutate(
         { ids, updates: { status } },
@@ -222,15 +222,15 @@ export const TicketGrid: FC = () => {
             });
             table.resetRowSelection();
           },
-        },
+        }
       );
     },
-    [selectedRows, bulkUpdateMutation, table],
+    [selectedRows, bulkUpdateMutation, table]
   );
 
   const handleBulkDelete = useCallback(async () => {
     const ids = selectedRows
-      .map(row => row.original.id)
+      .map((row) => row.original.id)
       .filter((id): id is string => !!id);
     const ok = await confirm({
       title: 'Delete Tickets',
@@ -255,7 +255,7 @@ export const TicketGrid: FC = () => {
       setSearchTerm(term);
       setFilters({ ...filters, searchTerm: term });
     },
-    [filters, setFilters],
+    [filters, setFilters]
   );
 
   const handleCategorySelect = useCallback(
@@ -268,14 +268,14 @@ export const TicketGrid: FC = () => {
       // Close mobile drawer after selecting a category
       mobileSidebarState.close();
     },
-    [filters, setFilters, mobileSidebarState],
+    [filters, setFilters, mobileSidebarState]
   );
 
   const handleTagSelect = useCallback(
     (tagId: string) => {
-      setSelectedTags(prev => {
+      setSelectedTags((prev) => {
         const newTags = prev.includes(tagId)
-          ? prev.filter(t => t !== tagId)
+          ? prev.filter((t) => t !== tagId)
           : [...prev, tagId];
 
         // Update filters with tag IDs
@@ -287,7 +287,7 @@ export const TicketGrid: FC = () => {
         return newTags;
       });
     },
-    [filters, setFilters],
+    [filters, setFilters]
   );
 
   const handleTabChange = useCallback(
@@ -332,7 +332,7 @@ export const TicketGrid: FC = () => {
 
       setFilters(newFilters);
     },
-    [filters, setFilters, currentUserId, setSelectedTab],
+    [filters, setFilters, currentUserId, setSelectedTab]
   );
 
   // Calculate badge counts for each tab
@@ -345,7 +345,7 @@ export const TicketGrid: FC = () => {
       assignedToYou: 0,
       all: totalCount,
     }),
-    [totalCount],
+    [totalCount]
   );
 
   const sidebarProps = {
@@ -357,7 +357,7 @@ export const TicketGrid: FC = () => {
   return (
     <div className="flex h-full gap-0">
       {/* Desktop sidebar — always visible, hidden on mobile */}
-      <aside className="hidden md:flex h-full w-64 flex-shrink-0 flex-col border-r border-default-200 bg-default-50">
+      <aside className="border-light bg-default-50 hidden h-full w-64 flex-shrink-0 flex-col border-r md:flex">
         <TicketSidebar {...sidebarProps} />
       </aside>
 
@@ -386,11 +386,11 @@ export const TicketGrid: FC = () => {
               {/* Hamburger button — mobile only */}
               <button
                 type="button"
-                className="md:hidden flex items-center justify-center rounded-md p-1.5 hover:bg-default-100 transition-colors"
+                className="hover:bg-default-100 flex items-center justify-center rounded-md p-1.5 transition-colors md:hidden"
                 aria-label="Open filter sidebar"
                 onClick={() => mobileSidebarState.open()}
               >
-                <Icon name="Bars3Icon" className="h-5 w-5 text-default-600" />
+                <Icon name="Bars3Icon" className="text-default-600 h-5 w-5" />
               </button>
               <h1 className="text-2xl font-semibold">Tickets</h1>
             </div>
@@ -412,6 +412,7 @@ export const TicketGrid: FC = () => {
             <BaseTabs
               selectedKey={selectedTab}
               onSelectionChange={handleTabChange}
+              classNames={{ tabList: 'mb-5', panel: 'empty:hidden' }}
             >
               <BaseTab
                 key="unanswered"
@@ -467,15 +468,14 @@ export const TicketGrid: FC = () => {
                 }
               />
             </BaseTabs>
+            {/* Filters */}
+            <TicketFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              onSearch={handleSearch}
+              searchTerm={searchTerm}
+            />
           </div>
-
-          {/* Filters */}
-          <TicketFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            onSearch={handleSearch}
-            searchTerm={searchTerm}
-          />
 
           {/* Bulk Actions */}
           {hasSelectedRows && (
@@ -555,7 +555,7 @@ export const TicketGrid: FC = () => {
         <NewTicketModal
           isOpen={isNewTicketModalOpen}
           onClose={() => setIsNewTicketModalOpen(false)}
-          onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
+          onCreated={(ticketId) => navigate(`/tickets/${ticketId}`)}
         />
         {confirmDialog}
       </div>

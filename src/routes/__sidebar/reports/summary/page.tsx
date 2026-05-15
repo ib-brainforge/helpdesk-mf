@@ -9,6 +9,7 @@ import { SummaryCard } from '@/components/shared';
 import { useTicketsData } from '@/components/tickets/hooks/useTickets';
 import {
   BaseButton,
+  BaseCard,
   BaseSelect,
   BaseSelectItem,
   BaseTable,
@@ -30,63 +31,64 @@ import { useMemo, useState } from 'react';
 function PieChart({
   data,
   title,
-}: { data: { name: string; value: number }[]; title: string }) {
+}: {
+  data: { name: string; value: number }[];
+  title: string;
+}) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const colors = ['#0070f3', '#7928ca', '#ff0080', '#00dfd8'];
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <h3 className="text-sm font-semibold mb-4">{title}</h3>
-        <div className="flex items-center justify-center">
-          <div className="relative w-32 h-32">
-            {/* REVIEW: Simple CSS pie chart - replace with proper chart library if needed */}
-            <div
-              className="w-full h-full rounded-full"
-              style={{
-                background: `conic-gradient(${data
-                  .map((item, i) => {
-                    const prevPercentage =
-                      (data.slice(0, i).reduce((sum, d) => sum + d.value, 0) /
-                        total) *
-                      100;
-                    const percentage = (item.value / total) * 100;
-                    return `${colors[i % colors.length]} ${prevPercentage}% ${prevPercentage + percentage}%`;
-                  })
-                  .join(', ')})`,
-              }}
-            />
-          </div>
+    <BaseCard>
+      <h3 className="mb-4 text-sm font-semibold">{title}</h3>
+      <div className="flex items-center justify-center">
+        <div className="relative h-32 w-32">
+          {/* REVIEW: Simple CSS pie chart - replace with proper chart library if needed */}
+          <div
+            className="h-full w-full rounded-full"
+            style={{
+              background: `conic-gradient(${data
+                .map((item, i) => {
+                  const prevPercentage =
+                    (data.slice(0, i).reduce((sum, d) => sum + d.value, 0) /
+                      total) *
+                    100;
+                  const percentage = (item.value / total) * 100;
+                  return `${colors[i % colors.length]} ${prevPercentage}% ${prevPercentage + percentage}%`;
+                })
+                .join(', ')})`,
+            }}
+          />
         </div>
-        <div className="mt-4 space-y-2">
-          {data.map((item, i) => (
-            <div
-              key={item.name}
-              className="flex items-center justify-between text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-sm"
-                  style={{ backgroundColor: colors[i % colors.length] }}
-                />
-                <span className="text-default-600">{item.name}</span>
-              </div>
-              <span className="font-medium">{item.value}</span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {data.map((item, i) => (
+          <div
+            key={item.name}
+            className="flex items-center justify-between text-xs"
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="h-3 w-3 rounded-sm"
+                style={{ backgroundColor: colors[i % colors.length] }}
+              />
+              <span className="text-default-600">{item.name}</span>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <span className="font-medium">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </BaseCard>
   );
 }
 
 function ReportsSummaryPage() {
   const timezone = useTimezone();
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [endDate, setEndDate] = useState(
-    new Date().toISOString().split('T')[0],
+    new Date().toISOString().split('T')[0]
   );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -146,28 +148,30 @@ function ReportsSummaryPage() {
     let result = tickets;
 
     if (selectedCategory !== 'all') {
-      result = result.filter(ticket => ticket.categoryId === selectedCategory);
+      result = result.filter(
+        (ticket) => ticket.categoryId === selectedCategory
+      );
     }
 
     if (advancedFilters.statuses.length > 0) {
       result = result.filter(
-        ticket =>
+        (ticket) =>
           ticket.status != null &&
-          advancedFilters.statuses.includes(ticket.status),
+          advancedFilters.statuses.includes(ticket.status)
       );
     }
     if (advancedFilters.priorities.length > 0) {
       result = result.filter(
-        ticket =>
+        (ticket) =>
           ticket.priority != null &&
-          advancedFilters.priorities.includes(ticket.priority),
+          advancedFilters.priorities.includes(ticket.priority)
       );
     }
     if (advancedFilters.categoryIds.length > 0) {
       result = result.filter(
-        ticket =>
+        (ticket) =>
           ticket.categoryId != null &&
-          advancedFilters.categoryIds.includes(ticket.categoryId),
+          advancedFilters.categoryIds.includes(ticket.categoryId)
       );
     }
 
@@ -179,7 +183,7 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'ticketNumber',
         header: 'Ticket ID',
-        cell: info => (
+        cell: (info) => (
           <span className="text-primary font-medium">
             #{info.getValue() as string}
           </span>
@@ -188,17 +192,17 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'subject',
         header: 'Subject',
-        cell: info => info.getValue() as string,
+        cell: (info) => info.getValue() as string,
       },
       {
         accessorKey: 'categoryName',
         header: 'Category',
-        cell: info => info.getValue() as string,
+        cell: (info) => info.getValue() as string,
       },
       {
         accessorKey: 'status',
         header: 'Status',
-        cell: info => {
+        cell: (info) => {
           const status = info.getValue() as string;
           const colors: Record<string, string> = {
             New: 'bg-primary-100 text-primary-800',
@@ -207,7 +211,7 @@ function ReportsSummaryPage() {
           };
           return (
             <span
-              className={`px-2 py-0.5 rounded-full text-xs ${colors[status] || 'bg-default-100'}`}
+              className={`rounded-full px-2 py-0.5 text-xs ${colors[status] || 'bg-default-100'}`}
             >
               {status}
             </span>
@@ -217,7 +221,7 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'priority',
         header: 'Priority',
-        cell: info => {
+        cell: (info) => {
           const priority = info.getValue() as string;
           const colors: Record<string, string> = {
             Critical: 'bg-danger-100 text-danger-800',
@@ -228,7 +232,7 @@ function ReportsSummaryPage() {
           };
           return (
             <span
-              className={`px-2 py-0.5 rounded-full text-xs ${colors[priority] || 'bg-default-100'}`}
+              className={`rounded-full px-2 py-0.5 text-xs ${colors[priority] || 'bg-default-100'}`}
             >
               {priority}
             </span>
@@ -238,18 +242,18 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'requesterName',
         header: 'Requester',
-        cell: info => info.getValue() as string,
+        cell: (info) => info.getValue() as string,
       },
       {
         accessorKey: 'createdAt',
         header: 'Created',
-        cell: info => {
+        cell: (info) => {
           const date = info.getValue() as string;
           return formatDateTime(date, { timezone });
         },
       },
     ],
-    [timezone],
+    [timezone]
   );
 
   const table = useReactTable({
@@ -271,15 +275,19 @@ function ReportsSummaryPage() {
             label="Category"
             placeholder="All categories"
             selectedKey={selectedCategory}
-            onSelectionChange={keys => {
+            onSelectionChange={(keys) => {
               setSelectedCategory(keys as string);
             }}
             className="w-48"
           >
             {[
-              <BaseSelectItem key="all" value="all">All categories</BaseSelectItem>,
-              ...categories.map(cat => (
-                <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
+              <BaseSelectItem key="all" value="all">
+                All categories
+              </BaseSelectItem>,
+              ...categories.map((cat) => (
+                <BaseSelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </BaseSelectItem>
               )),
             ]}
           </BaseSelect>
@@ -295,7 +303,7 @@ function ReportsSummaryPage() {
           >
             More filters
             {activeAdvancedFilterCount > 0 && (
-              <span className="ml-1.5 bg-primary text-white text-xs rounded-full px-1.5 py-0.5">
+              <span className="bg-primary ml-1.5 rounded-full px-1.5 py-0.5 text-xs text-white">
                 {activeAdvancedFilterCount}
               </span>
             )}

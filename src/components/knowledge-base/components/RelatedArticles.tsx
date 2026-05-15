@@ -1,4 +1,5 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { Card } from '@heroui/react';
@@ -26,28 +27,28 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
 
       // Fetch each related article
       const promises = articleIds
-        .filter(id => id !== currentArticleId)
+        .filter((id) => id !== currentArticleId)
         .slice(0, 5)
-        .map(id => client.v1KbArticlesIdGet(id));
+        .map((id) => client.v1KbArticlesIdGet(id));
 
       const results = await Promise.allSettled(promises);
 
       return results
         .filter(
           (result): result is PromiseFulfilledResult<any> =>
-            result.status === 'fulfilled',
+            result.status === 'fulfilled'
         )
-        .map(result => result.value.data);
+        .map((result) => result.value.data);
     },
     enabled: !!articleIds && articleIds.length > 0,
   });
 
   if (isLoading) {
     return (
-      <Card className="p-4">
+      <BaseCard>
         <h3 className="mb-3 text-lg font-semibold">{title}</h3>
         <p className="text-sm text-gray-500">Loading...</p>
-      </Card>
+      </BaseCard>
     );
   }
 
@@ -56,26 +57,26 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
   }
 
   return (
-    <Card className="p-4">
+    <BaseCard>
       <h3 className="mb-3 text-lg font-semibold">{title}</h3>
       <div className="space-y-3">
         {relatedArticles.map((article: any) => (
           <Link
             key={article.id}
             to={`/knowledge-base/${article.slug}`}
-            className="block p-2 rounded-lg hover:bg-default-100 transition-colors"
+            className="hover:bg-default-100 block rounded-lg p-2 transition-colors"
           >
             <div className="flex items-start gap-2">
               <Icon
                 name="document-text"
-                className="h-4 w-4 mt-0.5 text-primary flex-shrink-0"
+                className="text-primary mt-0.5 h-4 w-4 flex-shrink-0"
               />
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium line-clamp-2">
+              <div className="min-w-0 flex-1">
+                <h4 className="line-clamp-2 text-sm font-medium">
                   {article.title}
                 </h4>
                 {article.categoryName && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-gray-500">
                     {article.categoryName}
                   </p>
                 )}
@@ -84,6 +85,6 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
           </Link>
         ))}
       </div>
-    </Card>
+    </BaseCard>
   );
 };

@@ -50,11 +50,11 @@ function CustomFieldsPage() {
   })();
   const setSelectedTab = (key: CustomFieldTabType) => {
     setSearchParams(
-      prev => {
+      (prev) => {
         prev.set('tab', key);
         return prev;
       },
-      { replace: true },
+      { replace: true }
     );
   };
   const { items, totalCount, pagination, setPagination, isLoading, refetch } =
@@ -81,18 +81,18 @@ function CustomFieldsPage() {
 
   const handleEdit = useCallback(
     (fieldId: string) => {
-      const field = items.find(item => item.id === fieldId);
+      const field = items.find((item) => item.id === fieldId);
       if (field) {
         setEditingField(field);
         setIsEditorModalOpen(true);
       }
     },
-    [items],
+    [items]
   );
 
   const handleDelete = useCallback(
     async (fieldId: string) => {
-      const field = items.find(item => item.id === fieldId);
+      const field = items.find((item) => item.id === fieldId);
       const ok = await confirm({
         title: 'Delete Custom Field',
         body: `Delete "${field?.name ?? 'this field'}"? This cannot be undone.`,
@@ -102,7 +102,7 @@ function CustomFieldsPage() {
       if (!ok) return;
       deleteMutation.mutate(fieldId);
     },
-    [confirm, deleteMutation, items],
+    [confirm, deleteMutation, items]
   );
 
   const handleCreate = () => {
@@ -118,7 +118,7 @@ function CustomFieldsPage() {
   const columns = useMemo(
     () =>
       createCustomFieldsColumns({ onEdit: handleEdit, onDelete: handleDelete }),
-    [handleEdit, handleDelete],
+    [handleEdit, handleDelete]
   );
 
   const { table } = useCustomFieldsTable({
@@ -131,13 +131,13 @@ function CustomFieldsPage() {
   });
 
   const sidebar = (
-    <nav className="space-y-1 pr-6 border-r border-default-200">
-      {(Object.keys(TAB_LABELS) as CustomFieldTabType[]).map(key => (
+    <nav className="border-light min-h-full space-y-1 border-r pr-6">
+      {(Object.keys(TAB_LABELS) as CustomFieldTabType[]).map((key) => (
         <button
           key={key}
           type="button"
           onClick={() => setSelectedTab(key)}
-          className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
             selectedTab === key
               ? 'bg-primary text-white'
               : 'text-default-700 hover:bg-default-100'

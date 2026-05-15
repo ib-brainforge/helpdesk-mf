@@ -5,6 +5,7 @@ import {
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
 import { TicketStatus } from '@/types/custom-status';
+import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import {
@@ -72,7 +73,7 @@ function CustomStatusesPage() {
         });
       }
     },
-    [confirm, deleteMutation],
+    [confirm, deleteMutation]
   );
 
   const columns = useMemo(
@@ -82,7 +83,7 @@ function CustomStatusesPage() {
         header: '',
         cell: ({ row }) => (
           <div
-            className="w-4 h-4 rounded-full border border-default-200"
+            className="border-light h-4 w-4 rounded-full border"
             style={{ backgroundColor: row.original.color ?? '#6366f1' }}
           />
         ),
@@ -92,8 +93,8 @@ function CustomStatusesPage() {
         id: 'name',
         header: 'Name',
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm">{row.original.name}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.isDefault && (
               <Chip size="sm" color="accent">
                 Default
@@ -116,7 +117,7 @@ function CustomStatusesPage() {
         id: 'mapsTo',
         header: 'Maps To',
         cell: ({ row }) => (
-          <span className="text-sm text-default-600">
+          <span className="text-default-600 text-sm">
             {MAPS_TO_LABELS[row.original.mapsToStatus] ?? 'Unknown'}
           </span>
         ),
@@ -126,7 +127,7 @@ function CustomStatusesPage() {
         id: 'sortOrder',
         header: 'Sort Order',
         cell: ({ row }) => (
-          <span className="text-sm text-default-600">
+          <span className="text-default-600 text-sm">
             {row.original.sortOrder}
           </span>
         ),
@@ -162,13 +163,13 @@ function CustomStatusesPage() {
         size: 80,
       }),
     ],
-    [handleEdit, handleDeleteRequest],
+    [handleEdit, handleDeleteRequest]
   );
 
   const table = useReactTable({
     data: customStatuses,
     columns,
-    getRowId: row => row.id,
+    getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });
@@ -189,14 +190,14 @@ function CustomStatusesPage() {
         </BaseButton>
       }
       subheader={
-        <div className="p-4 bg-default-50 rounded-lg border border-default-200 max-w-3xl">
-          <p className="text-sm text-default-700">
+        <BaseCard className="max-w-3xl">
+          <p className="text-default-700 text-sm">
             Custom statuses appear in the ticket status selector alongside the
             built-in statuses (New, In Progress, Closed). Each custom status
             maps to a built-in lifecycle state for SLA and reporting
             calculations.
           </p>
-        </div>
+        </BaseCard>
       }
       empty={
         <EmptyState
