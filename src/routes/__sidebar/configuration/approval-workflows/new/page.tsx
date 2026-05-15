@@ -312,7 +312,7 @@ function NewApprovalWorkflowPage() {
                   label="Approver"
                   selectedKey={step.approverUserId ?? null}
                   onSelectionChange={key => {
-                    const selected = Array.from(key as Set<string>)[0];
+                    const selected = typeof key === 'string' ? key : undefined;
                     handleUpdateStep(index, {
                       approverUserId: selected || undefined,
                     });

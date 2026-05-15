@@ -375,7 +375,7 @@ function EditApprovalWorkflowPage() {
                         label="Approver"
                         selectedKey={step.approverUserId ?? null}
                         onSelectionChange={key => {
-                          const selected = Array.from(key as Set<string>)[0];
+                          const selected = typeof key === 'string' ? key : undefined;
                           handleUpdateStep(index, {
                             approverUserId: selected || undefined,
                           });
@@ -415,9 +415,7 @@ function EditApprovalWorkflowPage() {
                           label="Escalate To"
                           selectedKey={step.escalateToUserId ?? null}
                           onSelectionChange={key => {
-                            const selected = Array.from(
-                              key as Set<string>,
-                            )[0];
+                            const selected = typeof key === 'string' ? key : undefined;
                             handleUpdateStep(index, {
                               escalateToUserId: selected || undefined,
                             });
