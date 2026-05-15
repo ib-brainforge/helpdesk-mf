@@ -197,8 +197,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <BaseSelect
             selectedKey={ticket.status?.toString() ?? ''}
             onSelectionChange={keys => {
-              const value = keys as string;
-              onUpdate?.({ status: value as any });
+              if (typeof keys === 'string') {
+                onUpdate?.({ status: keys as TicketStatus });
+              }
             }}
             isDisabled={isUpdating}
           >
@@ -231,8 +232,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <BaseSelect
             selectedKey={ticket.priority?.toString() ?? ''}
             onSelectionChange={keys => {
-              const value = keys as string;
-              onUpdate?.({ priority: value as any });
+              if (typeof keys === 'string') {
+                onUpdate?.({ priority: keys as TicketPriority });
+              }
             }}
             isDisabled={isUpdating}
           >
