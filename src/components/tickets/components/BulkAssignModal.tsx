@@ -106,7 +106,7 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
             }}
           >
             {usersOptions.map(user => (
-              <BaseAutocompleteItem key={user.id} textValue={user.name}>
+              <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
                 <div className="flex items-center gap-2.5">
                   <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                   <div className="flex-1">

@@ -252,6 +252,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           {categoriesOptions.map(category => (
             <BaseAutocompleteItem
               key={category.id}
+              id={category.id}
               textValue={
                 category.sectionName
                   ? `${category.sectionName} / ${category.name}`
@@ -308,7 +309,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           }}
         >
           {usersOptions.map(user => (
-            <BaseAutocompleteItem key={user.id} textValue={user.name}>
+            <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
               <div className="flex items-center gap-2.5">
                 <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                 <div className="flex-1">

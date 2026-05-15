@@ -265,6 +265,7 @@ export const NewTicketForm: FC = () => {
                 {categoriesOptions.map(category => (
                   <BaseAutocompleteItem
                     key={category.id}
+                    id={category.id}
                     textValue={
                       category.sectionName
                         ? `${category.sectionName} / ${category.name}`
@@ -328,7 +329,7 @@ export const NewTicketForm: FC = () => {
               }}
             >
               {usersOptions.map(user => (
-                <BaseAutocompleteItem key={user.id} textValue={user.name}>
+                <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
                   <div className="flex items-center gap-2.5">
                     <BaseAvatar
                       src={user.avatarUrl}
