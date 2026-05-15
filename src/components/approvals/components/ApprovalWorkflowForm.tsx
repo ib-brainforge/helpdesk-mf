@@ -182,14 +182,14 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
           <BaseSelect
             label="Category"
-            selectedKey={categoryId ? categoryId : null}
+            selectedKey={categoryId || '__all__'}
             onSelectionChange={key => {
-              setCategoryId((key as string) || '');
+              setCategoryId(key === '__all__' ? '' : (key as string));
             }}
             aria-label="Category"
           >
             {[
-              <BaseSelectItem key="" value="">Global (All Categories)</BaseSelectItem>,
+              <BaseSelectItem key="__all__" id="__all__">Global (All Categories)</BaseSelectItem>,
               ...categories.map((cat: any) => (
                 <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
               )),
@@ -315,19 +315,17 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
                   <BaseSelect
                     label="Approver"
-                    selectedKey={
-                      step.approverUserId ? step.approverUserId : null
-                    }
+                    selectedKey={step.approverUserId ?? '__none__'}
                     onSelectionChange={key => {
                       handleUpdateStep(index, {
-                        approverUserId: (key as string) || undefined,
+                        approverUserId: key === '__none__' ? undefined : (key as string),
                       });
                     }}
                     size="sm"
                     aria-label="Approver"
                   >
                     {[
-                      <BaseSelectItem key="" value="">
+                      <BaseSelectItem key="__none__" id="__none__">
                         Select approver...
                       </BaseSelectItem>,
                       ...userOptions.map(opt => (
@@ -354,19 +352,17 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
 
                     <BaseSelect
                       label="Escalate To"
-                      selectedKey={
-                        step.escalateToUserId ? step.escalateToUserId : null
-                      }
+                      selectedKey={step.escalateToUserId ?? '__none__'}
                       onSelectionChange={key => {
                         handleUpdateStep(index, {
-                          escalateToUserId: (key as string) || undefined,
+                          escalateToUserId: key === '__none__' ? undefined : (key as string),
                         });
                       }}
                       size="sm"
                       aria-label="Escalate To"
                     >
                       {[
-                        <BaseSelectItem key="" value="">No escalation</BaseSelectItem>,
+                        <BaseSelectItem key="__none__" id="__none__">No escalation</BaseSelectItem>,
                         ...userOptions.map(opt => (
                           <BaseSelectItem key={opt.value} value={opt.value}>
                             {opt.label}

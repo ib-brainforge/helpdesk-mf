@@ -310,18 +310,17 @@ function NewApprovalWorkflowPage() {
 
                 <BaseSelect
                   label="Approver"
-                  selectedKey={step.approverUserId ?? null}
+                  selectedKey={step.approverUserId ?? '__none__'}
                   onSelectionChange={key => {
-                    const selected = typeof key === 'string' ? key : undefined;
                     handleUpdateStep(index, {
-                      approverUserId: selected || undefined,
+                      approverUserId: key === '__none__' ? undefined : (key as string),
                     });
                   }}
                   size="sm"
                   aria-label="Approver"
                 >
                   {[
-                    <BaseSelectItem key="" value="">Select approver...</BaseSelectItem>,
+                    <BaseSelectItem key="__none__" id="__none__">Select approver...</BaseSelectItem>,
                     ...userOptions.map(opt => (
                       <BaseSelectItem key={opt.value} value={opt.value}>
                         {opt.label}

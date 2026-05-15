@@ -225,14 +225,13 @@ export function CannedResponseEditorModal({
             <BaseSelect
               label="Category"
               placeholder="Select category (optional)"
-              selectedKey={categoryId ? categoryId : null}
-              onSelectionChange={keys => {
-                const key = keys as string;
-                setCategoryId(key || '');
+              selectedKey={categoryId || '__none__'}
+              onSelectionChange={key => {
+                setCategoryId(key === '__none__' ? '' : (key as string));
               }}
             >
               {[
-                <BaseSelectItem key="" value="">None</BaseSelectItem>,
+                <BaseSelectItem key="__none__" id="__none__">None</BaseSelectItem>,
                 ...categories.map(cat => (
                   <BaseSelectItem key={cat.id} value={cat.id}>
                     {cat.sectionName

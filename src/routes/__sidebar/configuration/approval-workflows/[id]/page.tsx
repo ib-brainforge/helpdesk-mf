@@ -373,18 +373,17 @@ function EditApprovalWorkflowPage() {
 
                       <BaseSelect
                         label="Approver"
-                        selectedKey={step.approverUserId ?? null}
+                        selectedKey={step.approverUserId ?? '__none__'}
                         onSelectionChange={key => {
-                          const selected = typeof key === 'string' ? key : undefined;
                           handleUpdateStep(index, {
-                            approverUserId: selected || undefined,
+                            approverUserId: key === '__none__' ? undefined : (key as string),
                           });
                         }}
                         size="sm"
                         aria-label="Approver"
                       >
                         {[
-                          <BaseSelectItem key="" value="">
+                          <BaseSelectItem key="__none__" id="__none__">
                             Select approver...
                           </BaseSelectItem>,
                           ...userOptions.map(opt => (
@@ -413,18 +412,17 @@ function EditApprovalWorkflowPage() {
 
                         <BaseSelect
                           label="Escalate To"
-                          selectedKey={step.escalateToUserId ?? null}
+                          selectedKey={step.escalateToUserId ?? '__none__'}
                           onSelectionChange={key => {
-                            const selected = typeof key === 'string' ? key : undefined;
                             handleUpdateStep(index, {
-                              escalateToUserId: selected || undefined,
+                              escalateToUserId: key === '__none__' ? undefined : (key as string),
                             });
                           }}
                           size="sm"
                           aria-label="Escalate To"
                         >
                           {[
-                            <BaseSelectItem key="" value="">
+                            <BaseSelectItem key="__none__" id="__none__">
                               No escalation
                             </BaseSelectItem>,
                             ...userOptions.map(opt => (

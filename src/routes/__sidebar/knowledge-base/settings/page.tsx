@@ -138,14 +138,13 @@ function CategoryFormModal({
               <BaseSelect
                 label="Parent category (optional)"
                 placeholder="None (top-level)"
-                selectedKey={parentId ? parentId : null}
-                onSelectionChange={keys => {
-                  const key = keys as string;
-                  setParentId(key ?? '');
+                selectedKey={parentId || '__none__'}
+                onSelectionChange={key => {
+                  setParentId(key === '__none__' ? '' : (key as string));
                 }}
               >
                 {[
-                  <BaseSelectItem key="" value="">None (top-level)</BaseSelectItem>,
+                  <BaseSelectItem key="__none__" id="__none__">None (top-level)</BaseSelectItem>,
                   ...parentOptions.map(cat => (
                     <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
                   )),
