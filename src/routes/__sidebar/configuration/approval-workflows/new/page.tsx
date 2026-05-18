@@ -21,10 +21,11 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseTextarea,
+  BaseToggle,
   Icon,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
-import { Card, CardContent, Switch } from '@heroui/react';
+import { Card, CardContent } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
@@ -213,12 +214,12 @@ function NewApprovalWorkflowPage() {
         <f.Field name="isActive">
           {(field) => (
             <div className="flex flex-col gap-1">
-              <Switch
+              <BaseToggle
                 isSelected={field.state.value}
                 onChange={field.handleChange}
               >
                 <span className="text-sm font-medium">Active</span>
-              </Switch>
+              </BaseToggle>
               <p className="text-muted-foreground text-xs">
                 Enable this workflow
               </p>
@@ -229,12 +230,12 @@ function NewApprovalWorkflowPage() {
         <f.Field name="triggerOnCreation">
           {(field) => (
             <div className="flex flex-col gap-1">
-              <Switch
+              <BaseToggle
                 isSelected={field.state.value}
                 onChange={field.handleChange}
               >
                 <span className="text-sm font-medium">Trigger on Creation</span>
-              </Switch>
+              </BaseToggle>
               <p className="text-muted-foreground text-xs">
                 Automatically trigger when ticket is created
               </p>

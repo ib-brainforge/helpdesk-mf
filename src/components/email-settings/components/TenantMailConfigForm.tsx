@@ -23,10 +23,11 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
   Icon,
 } from '@brainforgeau/components';
 import type { EntityFormInstance } from '@brainforgeau/components/page';
-import { Card, CardContent, Switch, toast } from '@heroui/react';
+import { Card, CardContent, toast } from '@heroui/react';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -137,12 +138,12 @@ export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
         <div className="flex items-center gap-6">
           <f.Field name="isEnabled">
             {(field) => (
-              <Switch
+              <BaseToggle
                 isSelected={field.state.value}
                 onChange={field.handleChange}
               >
                 Enable custom outbound mail
-              </Switch>
+              </BaseToggle>
             )}
           </f.Field>
         </div>
@@ -222,12 +223,12 @@ export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
 
         <f.Field name="useSsl">
           {(field) => (
-            <Switch
+            <BaseToggle
               isSelected={field.state.value}
               onChange={field.handleChange}
             >
               Use SSL / TLS
-            </Switch>
+            </BaseToggle>
           )}
         </f.Field>
       </BaseCard>

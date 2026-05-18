@@ -9,9 +9,9 @@ import {
   BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { toast } from '@heroui/react';
-import { Switch } from '@heroui/react';
 import { type FC, useCallback, useState } from 'react';
 import {
   useCreateKnowledgeBaseArticle,
@@ -141,12 +141,12 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
               description="Comma-separated tags"
             />
 
-            <Switch
+            <BaseToggle
               isSelected={forTechniciansOnly}
               onChange={setForTechniciansOnly}
             >
               For technicians only
-            </Switch>
+            </BaseToggle>
           </div>
         </BaseModalBody>
         <BaseModalFooter>

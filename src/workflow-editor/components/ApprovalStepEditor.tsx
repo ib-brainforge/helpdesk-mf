@@ -1,8 +1,7 @@
 // ApprovalStepEditor — configure the approval requirement on a workflow transition.
 // Plan 7 will wire this to the backend WorkflowApproval aggregate once client regenerates.
 
-import { BaseInput, BaseTextarea } from '@brainforgeau/components';
-import { Switch } from '@heroui/react';
+import { BaseInput, BaseTextarea, BaseToggle } from '@brainforgeau/components';
 import { useEffect, useState } from 'react';
 import type { ApprovalSpecDto } from '../types';
 
@@ -72,11 +71,10 @@ export function ApprovalStepEditor({
       </h4>
 
       <div className="flex items-center gap-3">
-        <Switch
+        <BaseToggle
           isSelected={isRequired}
           onChange={handleToggle}
           isDisabled={readOnly}
-          size="sm"
           aria-label="Require approval before transition fires"
         />
         <span className="text-sm text-gray-700">Require approval</span>

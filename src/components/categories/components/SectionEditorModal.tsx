@@ -5,15 +5,16 @@ import type {
   UpdateSectionCommand,
 } from '@/types/category';
 import {
+  BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalHeader,
+  BaseToggle,
 } from '@brainforgeau/components';
-import { BaseInput } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -140,12 +141,12 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
 
             <form.Field name="isActive">
               {field => (
-                <Switch
+                <BaseToggle
                   isSelected={field.state.value}
                   onChange={checked => field.handleChange(checked)}
                 >
                   Active
-                </Switch>
+                </BaseToggle>
               )}
             </form.Field>
 

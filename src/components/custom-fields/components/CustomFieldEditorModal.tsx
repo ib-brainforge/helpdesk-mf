@@ -8,20 +8,19 @@ import type {
 } from '@/types/custom-field';
 import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
 import {
+  BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalHeader,
-} from '@brainforgeau/components';
-import {
-  BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -289,23 +288,23 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             <div className="flex gap-4">
               <form.Field name="isRequired">
                 {field => (
-                  <Switch
+                  <BaseToggle
                     isSelected={field.state.value}
                     onChange={checked => field.handleChange(checked)}
                   >
                     Required
-                  </Switch>
+                  </BaseToggle>
                 )}
               </form.Field>
 
               <form.Field name="isActive">
                 {field => (
-                  <Switch
+                  <BaseToggle
                     isSelected={field.state.value}
                     onChange={checked => field.handleChange(checked)}
                   >
                     Active
-                  </Switch>
+                  </BaseToggle>
                 )}
               </form.Field>
             </div>

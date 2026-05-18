@@ -27,6 +27,7 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseTextarea,
+  BaseToggle,
   Icon,
   PageSpinner,
 } from '@brainforgeau/components';
@@ -37,7 +38,7 @@ import {
   useEntityForm,
 } from '@brainforgeau/components/page';
 import { withAuthorizationRequired } from '@brainforgeau/security';
-import { Card, CardContent, Switch } from '@heroui/react';
+import { Card, CardContent } from '@heroui/react';
 import { useParams } from '@modern-js/runtime/router';
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
@@ -275,12 +276,12 @@ function EditApprovalWorkflowPage() {
               <f.Field name="isActive">
                 {(field) => (
                   <div className="flex flex-col gap-1">
-                    <Switch
+                    <BaseToggle
                       isSelected={field.state.value}
                       onChange={field.handleChange}
                     >
                       <span className="text-sm font-medium">Active</span>
-                    </Switch>
+                    </BaseToggle>
                     <p className="text-muted-foreground text-xs">
                       Enable this workflow
                     </p>
@@ -291,14 +292,14 @@ function EditApprovalWorkflowPage() {
               <f.Field name="triggerOnCreation">
                 {(field) => (
                   <div className="flex flex-col gap-1">
-                    <Switch
+                    <BaseToggle
                       isSelected={field.state.value}
                       onChange={field.handleChange}
                     >
                       <span className="text-sm font-medium">
                         Trigger on Creation
                       </span>
-                    </Switch>
+                    </BaseToggle>
                     <p className="text-muted-foreground text-xs">
                       Automatically trigger when ticket is created
                     </p>
@@ -452,8 +453,7 @@ function EditApprovalWorkflowPage() {
                           Step must be completed (cannot skip)
                         </p>
                       </div>
-                      <Switch
-                        size="sm"
+                      <BaseToggle
                         isSelected={step.isRequired}
                         onChange={(checked) =>
                           handleUpdateStep(index, { isRequired: checked })

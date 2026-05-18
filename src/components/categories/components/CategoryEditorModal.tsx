@@ -2,15 +2,14 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import {
+  BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalHeader,
-} from '@brainforgeau/components';
-import {
-  BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
@@ -19,7 +18,7 @@ import type {
   HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand,
   HelpdeskDomainCategoriesEnumsAccessLevel,
 } from '@brainforgeau/helpdesk-client';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -255,12 +254,12 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
 
             <form.Field name="useFromAddressAsReplyTo">
               {field => (
-                <Switch
+                <BaseToggle
                   isSelected={field.state.value ?? false}
                   onChange={checked => field.handleChange(checked)}
                 >
                   Use from address as reply-to
-                </Switch>
+                </BaseToggle>
               )}
             </form.Field>
 
@@ -280,12 +279,12 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
 
             <form.Field name="isActive">
               {field => (
-                <Switch
+                <BaseToggle
                   isSelected={field.state.value}
                   onChange={checked => field.handleChange(checked)}
                 >
                   Active
-                </Switch>
+                </BaseToggle>
               )}
             </form.Field>
 

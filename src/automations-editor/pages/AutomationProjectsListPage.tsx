@@ -18,13 +18,14 @@ import {
   BaseModalFooter,
   BaseModalHeader,
   BaseTable,
+  BaseToggle,
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
 import type { RuleProjectDto } from '@brainforgeau/rules-ui';
 import { StatusBadge } from '@brainforgeau/components/page';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { NavLink, useNavigate } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -169,11 +170,10 @@ export function AutomationProjectsListPage() {
         id: 'enabled',
         header: 'Enabled',
         cell: ({ row }) => (
-          <Switch
+          <BaseToggle
             aria-label={`Toggle ${row.original.name}`}
             isSelected={row.original.isEnabled}
             onChange={() => handleToggleEnabled(row.original)}
-            size="sm"
           />
         ),
       },

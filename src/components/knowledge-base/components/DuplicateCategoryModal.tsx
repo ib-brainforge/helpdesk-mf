@@ -6,8 +6,8 @@ import {
   BaseModalContent,
   BaseModalFooter,
   BaseModalHeader,
+  BaseToggle,
 } from '@brainforgeau/components';
-import { Switch } from '@heroui/react';
 import { type FC, useState } from 'react';
 import { useDuplicateKbCategory } from '../hooks/useKnowledgeBase';
 
@@ -58,7 +58,7 @@ export const DuplicateCategoryModal: FC<DuplicateCategoryModalProps> = ({
                   Duplicate all articles in this category into the new category
                 </p>
               </div>
-              <Switch
+              <BaseToggle
                 isSelected={includeArticles}
                 onChange={setIncludeArticles}
               />

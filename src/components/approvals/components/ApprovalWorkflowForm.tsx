@@ -8,9 +8,10 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseTextarea,
+  BaseToggle,
   Icon,
 } from '@brainforgeau/components';
-import { Card, CardContent, Switch } from '@heroui/react';
+import { Card, CardContent } from '@heroui/react';
 import { type FC, useCallback, useState } from 'react';
 
 // REVIEW: Controlled form component following existing patterns
@@ -236,7 +237,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
             <p className="font-medium">Active</p>
             <p className="text-xs text-gray-500">Enable this workflow</p>
           </div>
-          <Switch isSelected={isActive} onChange={setIsActive} />
+          <BaseToggle isSelected={isActive} onChange={setIsActive} />
         </div>
 
         <div className="flex items-center justify-between">
@@ -246,7 +247,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
               Automatically trigger when ticket is created in this category
             </p>
           </div>
-          <Switch
+          <BaseToggle
             isSelected={triggerOnCreation}
             onChange={setTriggerOnCreation}
           />
@@ -387,8 +388,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
                     Step must be completed (cannot skip)
                   </p>
                 </div>
-                <Switch
-                  size="sm"
+                <BaseToggle
                   isSelected={step.isRequired}
                   onChange={(checked) =>
                     handleUpdateStep(index, { isRequired: checked })

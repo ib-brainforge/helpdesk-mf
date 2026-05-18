@@ -12,14 +12,15 @@ import {
 } from '@/types/live-chat';
 import {
   BaseButton,
+  BaseCard,
   BaseInput,
   BaseTextarea,
-  BaseCard,
+  BaseToggle,
   Icon,
 } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { withAuthorizationRequired } from '@brainforgeau/security';
-import { Card, CardContent, Switch, toast } from '@heroui/react';
+import { Card, CardContent, toast } from '@heroui/react';
 import { useState } from 'react';
 
 const DAY_LABELS: Record<BusinessHoursDay, string> = {
@@ -189,7 +190,7 @@ function LiveChatForm({
               website.
             </p>
           </div>
-          <Switch isSelected={isEnabled} onChange={setIsEnabled} size="sm" />
+          <BaseToggle isSelected={isEnabled} onChange={setIsEnabled} />
         </div>
 
         {/* Primary color */}
@@ -256,10 +257,9 @@ function LiveChatForm({
               availability.
             </p>
           </div>
-          <Switch
+          <BaseToggle
             isSelected={useBusinessHours}
             onChange={setUseBusinessHours}
-            size="sm"
             isDisabled={!isEnabled}
           />
         </div>
@@ -275,10 +275,9 @@ function LiveChatForm({
                   className="border-default-100 flex items-center gap-4 border-b py-2 last:border-0"
                 >
                   <div className="flex w-24 items-center gap-2">
-                    <Switch
+                    <BaseToggle
                       isSelected={dayConfig.enabled}
                       onChange={(val) => handleDayToggle(day, val)}
-                      size="sm"
                       isDisabled={!isEnabled}
                     />
                     <span className="text-sm">{DAY_LABELS[day]}</span>

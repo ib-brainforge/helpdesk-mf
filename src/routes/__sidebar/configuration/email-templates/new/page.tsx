@@ -18,10 +18,10 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseTextarea,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
-import { Switch } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -151,12 +151,12 @@ function NewEmailTemplatePage() {
         <f.Field name="isActive">
           {field => (
             <div className="flex items-center gap-2 md:col-span-2">
-              <Switch
+              <BaseToggle
                 isSelected={field.state.value}
                 onChange={field.handleChange}
               >
                 Template is Active
-              </Switch>
+              </BaseToggle>
             </div>
           )}
         </f.Field>

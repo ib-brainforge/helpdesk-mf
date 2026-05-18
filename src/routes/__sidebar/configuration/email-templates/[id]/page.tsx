@@ -21,6 +21,7 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
   PageSpinner,
 } from '@brainforgeau/components';
 import { BaseTextarea } from '@brainforgeau/components';
@@ -31,7 +32,6 @@ import {
   useEntityForm,
 } from '@brainforgeau/components/page';
 import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
-import { Switch } from '@heroui/react';
 import { useParams } from '@modern-js/runtime/router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -248,12 +248,12 @@ function EditEmailTemplatePage() {
 
               <form.Field name="isActive">
                 {field => (
-                  <Switch
+                  <BaseToggle
                     isSelected={field.state.value}
                     onChange={field.handleChange}
                   >
                     Template is Active
-                  </Switch>
+                  </BaseToggle>
                 )}
               </form.Field>
             </div>

@@ -10,9 +10,10 @@ import {
   BaseModalContent,
   BaseModalFooter,
   BaseModalHeader,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import {
   useAddIntegration,
@@ -161,7 +162,7 @@ export function IntegrationEditorModal({
                 When off, this integration will be skipped by the routing layer.
               </p>
             </div>
-            <Switch isSelected={isEnabled} onChange={setIsEnabled} />
+            <BaseToggle isSelected={isEnabled} onChange={setIsEnabled} />
           </div>
 
           {/* Provider-specific config fields */}

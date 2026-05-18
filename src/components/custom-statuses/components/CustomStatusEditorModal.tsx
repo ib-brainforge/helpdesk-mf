@@ -9,9 +9,10 @@ import {
   BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import {
   useCreateCustomStatus,
@@ -200,7 +201,7 @@ export function CustomStatusEditorModal({
                   Tickets with this status are counted as resolved in reports
                 </p>
               </div>
-              <Switch isSelected={isClosed} onChange={setIsClosed} />
+              <BaseToggle isSelected={isClosed} onChange={setIsClosed} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -210,7 +211,7 @@ export function CustomStatusEditorModal({
                   New tickets will start with this status
                 </p>
               </div>
-              <Switch isSelected={isDefault} onChange={setIsDefault} />
+              <BaseToggle isSelected={isDefault} onChange={setIsDefault} />
             </div>
 
             {isEditing && (
@@ -221,7 +222,7 @@ export function CustomStatusEditorModal({
                     Inactive statuses are hidden from selection
                   </p>
                 </div>
-                <Switch isSelected={isActive} onChange={setIsActive} />
+                <BaseToggle isSelected={isActive} onChange={setIsActive} />
               </div>
             )}
           </div>

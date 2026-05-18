@@ -6,8 +6,8 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
-import { Switch } from '@heroui/react';
 import { useMemo } from 'react';
 import type { TimerTriggerSpecDto } from '../types';
 
@@ -100,11 +100,10 @@ export function TimerTriggerEditor({
       />
 
       <div className="flex items-center gap-3">
-        <Switch
+        <BaseToggle
           isSelected={useBusinessHours}
           onChange={val => update({ useBusinessHours: val })}
           isDisabled={readOnly}
-          size="sm"
           aria-label="Use business hours for timer calculation"
         />
         <div>

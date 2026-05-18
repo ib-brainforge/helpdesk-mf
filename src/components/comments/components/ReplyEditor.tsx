@@ -8,11 +8,12 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AttachmentDto } from '@/types';
 import type { CannedResponseDto } from '@/types/canned-response';
 import { CommentType } from '@/types/comment';
+import { BaseToggle } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { CommentsApi } from '@brainforgeau/helpdesk-client';
 import { CannedResponsePicker } from '@components/canned-responses';
-import { Switch, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -179,13 +180,12 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           >
             Canned Response
           </BaseButton>
-          <Switch
+          <BaseToggle
             isSelected={isInternalNote}
             onChange={setIsInternalNote}
-            size="sm"
           >
             Internal Note
-          </Switch>
+          </BaseToggle>
         </div>
       </div>
 
