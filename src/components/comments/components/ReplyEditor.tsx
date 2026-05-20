@@ -314,7 +314,16 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         <span className="text-xs text-default-400">
           Press{' '}
           <kbd className="px-1 py-0.5 text-xs rounded bg-default-100">
-            Cmd+Enter
+            {/* REVIEW: navigator.userAgentData?.platform is the modern API; fall back to
+                navigator.platform for browsers that don't support it (Firefox, Safari).
+                Both return a string containing "Mac" on macOS. */}
+            {typeof navigator !== 'undefined' &&
+            (/mac/i).test(
+              (navigator as Navigator & { userAgentData?: { platform?: string } })
+                .userAgentData?.platform ?? navigator.platform
+            )
+              ? 'Cmd+Enter'
+              : 'Ctrl+Enter'}
           </kbd>{' '}
           to send
         </span>

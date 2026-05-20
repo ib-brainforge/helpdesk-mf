@@ -69,6 +69,66 @@ import { useAtomValue } from 'jotai';
 
 const MOBILE_BREAKPOINT = 1024;
 
+/**
+ * Maps every breadcrumb labelKey used in breadcrumbs.ts to its intended leaf
+ * display label. Without this, BreadcrumbRegistryProvider falls back to
+ * humanise() which title-cases every dot-separated segment of the full key.
+ * REVIEW: Plain JS object lookup — no i18n library dependency needed.
+ */
+const BREADCRUMB_LABELS: Record<string, string> = {
+  'helpdesk': 'Helpdesk',
+  'helpdesk.dashboard': 'Dashboard',
+  'helpdesk.satisfaction': 'Satisfaction',
+  'helpdesk.ideas': 'Ideas',
+  'helpdesk.tickets': 'Tickets',
+  'helpdesk.tickets.new': 'New Ticket',
+  'helpdesk.configuration': 'Configuration',
+  'helpdesk.configuration.categories': 'Categories',
+  'helpdesk.configuration.categories.new': 'New Category',
+  'helpdesk.configuration.custom-statuses': 'Custom Statuses',
+  'helpdesk.configuration.custom-priorities': 'Custom Priorities',
+  'helpdesk.configuration.custom-fields': 'Custom Fields',
+  'helpdesk.configuration.canned-responses': 'Canned Responses',
+  'helpdesk.configuration.email': 'Email Settings',
+  'helpdesk.configuration.email-templates': 'Email Templates',
+  'helpdesk.configuration.email-templates.new': 'New Template',
+  'helpdesk.configuration.integrations': 'Integrations',
+  'helpdesk.configuration.live-chat': 'Live Chat',
+  'helpdesk.configuration.import-export': 'Import & Export',
+  'helpdesk.configuration.approval-workflows': 'Approval Workflows',
+  'helpdesk.configuration.approval-workflows.new': 'New Workflow',
+  'helpdesk.configuration.automations': 'Automations',
+  'helpdesk.configuration.workflows': 'Workflows',
+  'helpdesk.configuration.workflows.rule-migration-report': 'Rule Migration Report',
+  'helpdesk.reports': 'Reports',
+  'helpdesk.reports.summary': 'Summary',
+  'helpdesk.reports.by-category': 'By Category',
+  'helpdesk.reports.by-priority': 'By Priority',
+  'helpdesk.reports.by-status': 'By Status',
+  'helpdesk.reports.satisfaction': 'Satisfaction',
+  'helpdesk.reports.utilization': 'Utilization',
+  'helpdesk.reports.overdue': 'Overdue',
+  'helpdesk.reports.deleted': 'Deleted',
+  'helpdesk.reports.audit': 'Audit',
+  'helpdesk.reports.assets': 'Assets',
+  'helpdesk.reports.companies': 'Companies',
+  'helpdesk.approvals': 'Approvals',
+  'helpdesk.approvals.new': 'New Approval',
+  'helpdesk.admin': 'Admin',
+  'helpdesk.admin.settings': 'Settings',
+  'helpdesk.admin.users': 'Users',
+  'helpdesk.knowledge-base': 'Knowledge Base',
+  'helpdesk.knowledge-base.new': 'New Article',
+  'helpdesk.knowledge-base.edit': 'Edit',
+  'helpdesk.knowledge-base.search': 'Search',
+  'helpdesk.knowledge-base.settings': 'Settings',
+  'helpdesk.settings': 'Settings',
+};
+
+function breadcrumbI18nResolver(key: string): string {
+  return BREADCRUMB_LABELS[key] ?? key;
+}
+
 interface NavItem {
   label: string;
   href?: string;
@@ -267,6 +327,9 @@ export default function Layout() {
       <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
         <BreadcrumbRegistryProvider
           registry={breadcrumbs}
+          // REVIEW: i18nResolver maps each full labelKey to its intended leaf label so
+          // breadcrumbs show "Email Settings" not "Helpdesk Configuration Email Settings".
+          i18nResolver={breadcrumbI18nResolver}
           renderLink={({ item, className, children }) => (
             <NavLink to={item.href} className={className}>
               {children}

@@ -136,7 +136,9 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         className={buttonClass}
         aria-label="Bullet List"
       >
-        <Icon name="list-bullet" className="h-4 w-4" />
+        {/* REVIEW: 'list-bullet' is kebab-case and not in the Icon registry.
+            PascalCase heroicon name is used instead. */}
+        <Icon name="ListBulletIcon" className="h-4 w-4" />
       </BaseButton>
       <BaseButton
         size="sm"
@@ -160,7 +162,8 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         className={buttonClass}
         aria-label="Quote"
       >
-        <Icon name="chat-bubble-left-right" className="h-4 w-4" />
+        {/* REVIEW: 'chat-bubble-left-right' is kebab-case; using PascalCase heroicon. */}
+        <Icon name="ChatBubbleLeftRightIcon" className="h-4 w-4" />
       </BaseButton>
       <BaseButton
         size="sm"
@@ -200,7 +203,8 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         className={buttonClass}
         aria-label="Insert Table"
       >
-        <Icon name="table-cells" className="h-4 w-4" />
+        {/* REVIEW: 'table-cells' is kebab-case; using PascalCase heroicon. */}
+        <Icon name="TableCellsIcon" className="h-4 w-4" />
       </BaseButton>
 
       <div className="w-px h-6 bg-divider mx-1" />
@@ -234,7 +238,8 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         className={buttonClass}
         aria-label="Undo"
       >
-        <Icon name="arrow-uturn-left" className="h-4 w-4" />
+        {/* REVIEW: 'arrow-uturn-left' is kebab-case; using PascalCase heroicon. */}
+        <Icon name="ArrowUturnLeftIcon" className="h-4 w-4" />
       </BaseButton>
       <BaseButton
         size="sm"
@@ -245,7 +250,8 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
         className={buttonClass}
         aria-label="Redo"
       >
-        <Icon name="arrow-uturn-right" className="h-4 w-4" />
+        {/* REVIEW: 'arrow-uturn-right' is kebab-case; using PascalCase heroicon. */}
+        <Icon name="ArrowUturnRightIcon" className="h-4 w-4" />
       </BaseButton>
     </div>
   );

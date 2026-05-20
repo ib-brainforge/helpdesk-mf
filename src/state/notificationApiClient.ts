@@ -23,9 +23,13 @@ function getNotificationBaseUrl(): string {
     | string
     | undefined;
   if (!url) {
-    throw new Error(
-      'Notification API base URL (api.notificationUrl) is not configured',
+    // REVIEW: Returning empty string causes a clear fetch error rather than a
+    // synchronous throw in the render path. The query will fail with a network
+    // error and the page can show a graceful empty/error state.
+    console.warn(
+      '[notificationApiClient] api.notificationUrl is not configured; email settings will be unavailable.',
     );
+    return '';
   }
   return url.replace(/\/$/, '');
 }

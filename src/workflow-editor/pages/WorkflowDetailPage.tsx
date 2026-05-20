@@ -175,8 +175,11 @@ export function WorkflowDetailPage() {
     );
   }
 
+  // REVIEW: flex-1 min-h-0 fills the app-shell flex parent instead of hardcoding
+  // calc(100vh-4rem) which assumed a fixed 4rem navbar and caused the editor to
+  // overlap the TopNavbar.
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
+    <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
       {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
       <div className="border-light dark:bg-default-50 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">

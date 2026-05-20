@@ -44,6 +44,11 @@ function parseBusinessHours(
   }
 }
 
+/** Returns true when the string is a valid CSS hex colour (#rgb or #rrggbb). */
+function isValidHex(value: string): boolean {
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
+}
+
 function serializeBusinessHours(hours: BusinessHoursJson): string | null {
   const hasAnyEnabled = Object.values(hours).some((d) => d?.enabled);
   const hasAnyDay = Object.keys(hours).length > 0;
@@ -100,6 +105,16 @@ function LiveChatForm({
   const [newDomain, setNewDomain] = useState('');
   const [scriptCopied, setScriptCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [primaryColorError, setPrimaryColorError] = useState<string | null>(null);
+
+  const handlePrimaryColorChange = (value: string) => {
+    setPrimaryColor(value);
+    if (value && !isValidHex(value)) {
+      setPrimaryColorError('Enter a valid hex colour, e.g. #6366f1');
+    } else {
+      setPrimaryColorError(null);
+    }
+  };
 
   const handleDayToggle = (day: BusinessHoursDay, enabled: boolean) => {
     setBusinessHours((prev) => ({
@@ -137,6 +152,15 @@ function LiveChatForm({
   };
 
   const handleSave = async () => {
+    // Block save if client-side colour validation already found a problem.
+    if (primaryColorError) {
+      toast('Validation error', {
+        description: primaryColorError,
+        variant: 'warning',
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateConfig.mutateAsync({
@@ -152,9 +176,23 @@ function LiveChatForm({
         description: 'Live chat settings saved.',
         variant: 'success',
       });
-    } catch {
+    } catch (err: unknown) {
+      // Extract the server ProblemDetails message when available so the user
+      // sees the actual validation error instead of a generic fallback.
+      // REVIEW: Axios wraps the response under err.response.data; the backend
+      // returns ProblemDetails with a 'detail' field for validation errors.
+      const axiosErr = err as {
+        response?: { data?: { detail?: string; title?: string; errors?: Record<string, string[]> } };
+        message?: string;
+      };
+      const serverDetail =
+        axiosErr?.response?.data?.detail ??
+        (axiosErr?.response?.data?.errors
+          ? Object.values(axiosErr.response.data.errors).flat().join(' ')
+          : undefined) ??
+        axiosErr?.response?.data?.title;
       toast('Error', {
-        description: 'Failed to save live chat settings.',
+        description: serverDetail ?? 'Failed to save live chat settings.',
         variant: 'danger',
       });
     } finally {
@@ -208,18 +246,20 @@ function LiveChatForm({
             <input
               id="live-chat-primary-color"
               type="color"
-              value={primaryColor}
-              onChange={(e) => setPrimaryColor(e.target.value)}
+              value={isValidHex(primaryColor) ? primaryColor : '#6366f1'}
+              onChange={(e) => handlePrimaryColorChange(e.target.value)}
               className="border-light h-10 w-10 cursor-pointer rounded border"
               disabled={!isEnabled}
             />
             <BaseInput
               value={primaryColor}
-              onValueChange={setPrimaryColor}
+              onValueChange={handlePrimaryColorChange}
               placeholder="#6366f1"
               isDisabled={!isEnabled}
               className="flex-1"
               aria-label="Primary colour hex value"
+              isInvalid={!!primaryColorError}
+              errorMessage={primaryColorError ?? undefined}
             />
           </div>
         </div>

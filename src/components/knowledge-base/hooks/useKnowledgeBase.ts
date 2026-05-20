@@ -184,7 +184,9 @@ export const useKnowledgeBaseArticle = (slug: string) => {
         throw new Error('Article slug is required');
       }
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbArticlesBySlugSlugGet(slug);
+      // Pass incrementViewCount: true so each page visit increments the counter.
+      // The backend defaults this param to false which is why views always showed 0.
+      const response = await client.v1KbArticlesBySlugSlugGet(slug, true);
       if (!response.data) {
         throw new Error('Article not found');
       }
@@ -310,8 +312,13 @@ export const useRateKnowledgeBaseArticle = () => {
       return response.data;
     },
     onSuccess: (_, { articleId }) => {
+      // Invalidate both slug-based and id-based article caches. The slug-based
+      // query key is ['knowledge-base', 'article', slug] and the id-based one is
+      // ['knowledge-base', 'article-by-id', articleId]. Using the shared prefix
+      // ['knowledge-base', 'article'] ensures both slug and id caches are busted
+      // regardless of which key the caller used to fetch the article.
       queryClient.invalidateQueries({
-        queryKey: ['knowledge-base', 'article', articleId],
+        queryKey: ['knowledge-base', 'article'],
       });
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'article-by-id', articleId],

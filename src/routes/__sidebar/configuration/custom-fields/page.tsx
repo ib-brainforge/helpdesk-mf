@@ -137,9 +137,11 @@ function CustomFieldsPage() {
           key={key}
           type="button"
           onClick={() => setSelectedTab(key)}
+          // REVIEW: Replaced bg-primary/text-white (low contrast, hard to see) with a
+          // left-border + bg-default-100 active pattern consistent with other sub-navs.
           className={`w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
             selectedTab === key
-              ? 'bg-primary text-white'
+              ? 'border-l-4 border-primary bg-primary-50 pl-2 text-primary'
               : 'text-default-700 hover:bg-default-100'
           }`}
         >

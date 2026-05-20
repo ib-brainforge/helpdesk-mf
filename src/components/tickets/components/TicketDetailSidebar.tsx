@@ -18,6 +18,7 @@ import {
   BaseTagSelectItem,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useAtom } from 'jotai';
@@ -590,13 +591,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested KB Articles - Placeholder */}
-      <div className="border-t pt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Suggested KB Articles
-        </label>
-        <p className="text-xs text-gray-400 italic">No suggestions available</p>
-      </div>
+      {/* Suggested KB Articles — seeded from ticket subject */}
+      {ticket.subject && (
+        <div className="border-t pt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Suggested KB Articles
+          </label>
+          <KbSuggestions searchText={ticket.subject} minChars={3} limit={5} />
+        </div>
+      )}
     </div>
   );
 };

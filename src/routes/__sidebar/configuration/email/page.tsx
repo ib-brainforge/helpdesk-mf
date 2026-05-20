@@ -23,7 +23,7 @@ import {
   tenantMailConfigSchema,
 } from '@/components/email-settings';
 import { OutboundMailProtocol } from '@/types/email';
-import { PageSpinner } from '@brainforgeau/components';
+import { Icon, PageSpinner } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -49,7 +49,11 @@ function buildDefaultValues(dto: TenantMailConfigDto | undefined): FormValues {
 
 function EmailSettingsPage() {
   const queryClient = useQueryClient();
-  const { data: dto, isLoading } = useQuery<TenantMailConfigDto>({
+  const {
+    data: dto,
+    isLoading,
+    error,
+  } = useQuery<TenantMailConfigDto>({
     queryKey: QUERY_KEY,
     queryFn: getTenantMailConfig,
   });
@@ -80,6 +84,18 @@ function EmailSettingsPage() {
 
   if (isLoading) {
     return <PageSpinner title="Loading email settings..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+        <Icon name="exclamation-circle" className="mx-auto h-12 w-12 text-warning-400" />
+        <p className="text-xl font-semibold">Email settings unavailable</p>
+        <p className="text-sm text-default-500">
+          The notification service is not reachable or not configured.
+        </p>
+      </div>
+    );
   }
 
   return (

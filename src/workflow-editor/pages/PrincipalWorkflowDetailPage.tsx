@@ -197,9 +197,10 @@ export function PrincipalWorkflowDetailPage() {
     [data.versions]
   );
 
+  // REVIEW: flex-1 min-h-0 fills the app-shell flex parent. -m-5 kept to bleed
+  // to the page edge (matching the tracking-mf full-canvas pattern).
   return (
-    // REVIEW: -m-5 override matches tracking-mf rules page pattern for full-height canvas
-    <div className="-m-5 flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
+    <div className="-m-5 flex flex-1 min-h-0 flex-col overflow-hidden">
       {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
       <div className="border-light dark:bg-default-50 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">

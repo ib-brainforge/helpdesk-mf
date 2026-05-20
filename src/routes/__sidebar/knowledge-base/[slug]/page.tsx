@@ -142,34 +142,41 @@ function KnowledgeBaseArticlePage() {
             <h3 className="mb-4 text-lg font-semibold">
               Was this article helpful?
             </h3>
-            <div className="flex justify-center gap-4">
-              <BaseButton
-                color="success"
-                variant="bordered"
-                onPress={() =>
-                  article.id &&
-                  rateArticle.mutate({ articleId: article.id, isHelpful: true })
-                }
-                isDisabled={rateArticle.isPending}
-                icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
-              >
-                Yes ({article.ratingCount || 0})
-              </BaseButton>
-              <BaseButton
-                color="danger"
-                variant="bordered"
-                onPress={() =>
-                  article.id &&
-                  rateArticle.mutate({
-                    articleId: article.id,
-                    isHelpful: false,
-                  })
-                }
-                isDisabled={rateArticle.isPending}
-                icon={<Icon name="hand-thumb-down" className="h-5 w-5" />}
-              >
-                No
-              </BaseButton>
+            <div className="flex justify-center gap-8">
+              <div className="flex flex-col items-center gap-1">
+                <BaseButton
+                  color="success"
+                  variant="bordered"
+                  onPress={() =>
+                    article.id &&
+                    rateArticle.mutate({ articleId: article.id, isHelpful: true })
+                  }
+                  isDisabled={rateArticle.isPending}
+                  icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
+                >
+                  Yes
+                </BaseButton>
+                <span className="text-xs text-gray-500">
+                  {article.ratingCount || 0} ratings
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <BaseButton
+                  color="danger"
+                  variant="bordered"
+                  onPress={() =>
+                    article.id &&
+                    rateArticle.mutate({
+                      articleId: article.id,
+                      isHelpful: false,
+                    })
+                  }
+                  isDisabled={rateArticle.isPending}
+                  icon={<Icon name="hand-thumb-down" className="h-5 w-5" />}
+                >
+                  No
+                </BaseButton>
+              </div>
             </div>
           </div>
         </BaseCard>
