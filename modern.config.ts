@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
 import { appTools, defineConfig } from '@modern-js/app-tools';
 import { bffPlugin } from '@modern-js/plugin-bff';
 import { moduleFederationPlugin } from '@module-federation/modern-js';
@@ -8,6 +8,48 @@ import CompressionPlugin from 'compression-webpack-plugin';
 // Check if running as microfrontend (default) or standalone
 const isStandalone = process.env.STANDALONE === 'true';
 const basePath = process.env.BASE_PATH || '';
+
+/**
+ * Resolve a package's ESM entry from its `exports["."].import.default` field.
+ *
+ * @tanstack/* packages ship dual ESM + CJS builds, each of which creates its
+ * OWN React context (e.g. `QueryClientContext`). When app code imports the ESM
+ * build (`import` condition) but a CJS-compiled dependency such as
+ * @brainforgeau/components does `require('@tanstack/react-query')` (`require`
+ * condition), webpack pulls in BOTH builds as distinct modules. The result is
+ * two `QueryClientContext` objects: <QueryClientProvider> writes the client
+ * into the ESM context, while `useQueryClient()` inside the page-template hooks
+ * (useEntityForm / useListPage) reads the CJS context and finds nothing —
+ * throwing "No QueryClient set, use QueryClientProvider to set one".
+ *
+ * Aliasing the bare specifier to the single ESM entry forces webpack to treat
+ * the package as ONE module regardless of import vs require, so provider and
+ * consumers share the same context. See `tanstackSingletonAlias` below.
+ */
+function resolveEsmEntry(pkg: string): string {
+  const pkgJsonPath = require.resolve(`${pkg}/package.json`);
+  const pkgRoot = dirname(pkgJsonPath);
+  const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+  const esmRelative = pkgJson?.exports?.['.']?.import?.default;
+  if (typeof esmRelative !== 'string') {
+    throw new Error(`Cannot resolve ESM entry for ${pkg}`);
+  }
+  return resolve(pkgRoot, esmRelative);
+}
+
+/**
+ * Force @tanstack/react-query + @tanstack/query-core to a single ESM build.
+ *
+ * Applied UNCONDITIONALLY (both standalone and microfrontend mode): the
+ * dual-build context split is a webpack module-resolution issue inside the
+ * host bundle, unrelated to Module Federation sharing. query-core is included
+ * so the `QueryClient` class (used by jotai-tanstack-query's queryClientAtom
+ * and by QueryClientProvider's `client.mount()`) is also a single instance.
+ */
+const tanstackSingletonAlias: Record<string, string> = {
+  '@tanstack/react-query$': resolveEsmEntry('@tanstack/react-query'),
+  '@tanstack/query-core$': resolveEsmEntry('@tanstack/query-core'),
+};
 
 // Extract @brainforgeau package versions from package.json
 function getBrainforgePackageVersions(): Record<string, string> {
@@ -104,18 +146,26 @@ export default defineConfig({
     port: 8087,
   },
   resolve: {
-    // Force single Jotai instance in standalone mode via aliases
-    ...(isStandalone
-      ? {
-          alias: {
+    alias: {
+      // Force @tanstack/react-query + query-core to a single ESM build so the
+      // QueryClientContext created by <QueryClientProvider> is the SAME context
+      // read by useQueryClient() inside CJS-compiled deps (@brainforgeau/components
+      // page-template hooks). Without this, app code resolves the ESM build and
+      // the components package resolves the CJS build — two distinct contexts —
+      // causing an app-wide "No QueryClient set" crash on permission-gated routes.
+      // Applied unconditionally (the split is unrelated to Module Federation).
+      ...tanstackSingletonAlias,
+      // Force single Jotai instance in standalone mode via aliases
+      ...(isStandalone
+        ? {
             jotai: require.resolve('jotai'),
             'jotai/react': require.resolve('jotai/react'),
             'jotai/vanilla': require.resolve('jotai/vanilla'),
             'jotai/utils': require.resolve('jotai/utils'),
             'jotai/react/utils': require.resolve('jotai/react/utils'),
-          },
-        }
-      : {}),
+          }
+        : {}),
+    },
   },
   source: {
     // Expose environment variables to client-side code as config object
