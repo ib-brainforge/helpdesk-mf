@@ -35,12 +35,14 @@ export function usePrincipalTickets(
       const response = await client.v1PrincipalsPrincipalIdTicketsGet(
         principalId,
         filters?.status,
+        undefined, // customStatusId — not surfaced in the principal tickets view
         filters?.priority,
         filters?.categoryId,
         filters?.assigneeId,
         filters?.requesterId,
         filters?.searchTerm,
         filters?.unreadOnly,
+        undefined, // overdueOnly — not surfaced in the principal tickets view
         undefined, // unassignedOnly — not used for principal tickets view
         pagination.pageIndex + 1,
         pagination.pageSize,

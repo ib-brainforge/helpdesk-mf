@@ -144,6 +144,13 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
       });
       return;
     }
+    if (!categoryId) {
+      toast('Category required', {
+        description: 'Please select a category for the ticket',
+        variant: 'warning',
+      });
+      return;
+    }
 
     try {
       const dto: CreateTicketDto = {
@@ -251,7 +258,8 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
 
               <BaseAutocomplete
                 label="Category"
-                placeholder="Select category (optional)"
+                placeholder="Select category"
+                isRequired
                 isClearable
                 selectedKey={categoryId ?? null}
                 onSelectionChange={key =>
@@ -376,7 +384,12 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
           <BaseButton
             color="primary"
             onPress={handleCreate}
-            isDisabled={createTicketMutation.isPending}
+            isDisabled={
+              createTicketMutation.isPending ||
+              !subject.trim() ||
+              !description.trim() ||
+              !categoryId
+            }
           >
             Create Ticket
           </BaseButton>

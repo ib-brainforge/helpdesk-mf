@@ -23,7 +23,7 @@ export const CategoryBarChart: FC<CategoryBarChartProps> = ({ data }) => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
     .map(item => ({
-      name: item.categoryName,
+      name: item.name,
       count: item.count,
       percentage: item.percentage,
     }));

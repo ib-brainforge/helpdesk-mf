@@ -23,7 +23,7 @@ export const StatusPieChart: FC<StatusPieChartProps> = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    name: item.statusName,
+    name: item.name,
     value: item.count,
     percentage: item.percentage,
   }));

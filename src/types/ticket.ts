@@ -45,23 +45,17 @@ import type {
 } from '@brainforgeau/helpdesk-client';
 
 export type TicketListDto = GeneratedTicketListDto & {
-  // Add any UI-specific fields if needed
+  // requesterName / assigneeName are now provided natively by the generated
+  // client; categoryName remains a UI-only enrichment field.
   categoryName?: string;
-  assigneeName?: string;
-  requesterName?: string;
 };
 
 export type TicketDto = GeneratedTicketDto & {
-  // Add any UI-specific fields if needed
+  // requesterName / assigneeName / isProblem / isPublishedAsIdea /
+  // publishedAsIdeaAt are now provided natively by the generated client.
+  // categoryName remains a UI-only enrichment field.
   categoryName?: string;
-  assigneeName?: string;
-  requesterName?: string;
   customFields?: CustomFieldValueDto[];
-  // Wave 6 fields — added to backend TicketDto in Wave 6 PR; not yet in generated client
-  // REVIEW: Remove this manual extension once the helpdesk-client package is regenerated post-merge
-  isProblem?: boolean;
-  isPublishedAsIdea?: boolean;
-  publishedAsIdeaAt?: string | null;
   // TODO: Remove these when helpdesk-backend-client exposes isDeleted and isSpam in TicketDto
   isDeleted?: boolean;
   isSpam?: boolean;
@@ -88,6 +82,10 @@ export interface TicketFilters {
   searchTerm?: string;
   tagIds?: string[]; // Filter by tag IDs
   unassignedOnly?: boolean;
+  /** When true, only tickets past their due date are returned (backend OverdueOnly param). */
+  overdueOnly?: boolean;
+  /** Filter by a custom (tenant-defined) ticket status — maps to the backend CustomStatusId param. */
+  customStatusId?: string;
 }
 
 export interface CreateTicketDto {

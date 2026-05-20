@@ -27,7 +27,7 @@ export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    name: item.priorityName,
+    name: item.name,
     count: item.count,
     percentage: item.percentage,
   }));

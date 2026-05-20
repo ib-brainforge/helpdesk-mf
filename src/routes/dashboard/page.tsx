@@ -45,9 +45,10 @@ function toStatusDonut(
   return data
     .filter(item => item.count > 0)
     .map(item => ({
-      label: item.statusName,
+      label: item.name,
       value: item.count,
-      color: STATUS_COLORS[item.statusName] || '#6b7280',
+      color:
+        STATUS_COLORS[item.status] || STATUS_COLORS[item.name] || '#6b7280',
     }));
 }
 
@@ -57,9 +58,12 @@ function toPriorityDonut(
   return data
     .filter(item => item.count > 0)
     .map(item => ({
-      label: item.priorityName,
+      label: item.name,
       value: item.count,
-      color: PRIORITY_COLORS[item.priorityName] || '#6b7280',
+      color:
+        PRIORITY_COLORS[item.priority] ||
+        PRIORITY_COLORS[item.name] ||
+        '#6b7280',
     }));
 }
 
@@ -71,7 +75,7 @@ function toCategoryDonut(
     .slice(0, 10)
     .filter(item => item.count > 0)
     .map((item, index) => ({
-      label: item.categoryName,
+      label: item.name,
       value: item.count,
       color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
     }));

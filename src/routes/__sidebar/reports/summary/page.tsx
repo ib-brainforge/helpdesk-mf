@@ -127,21 +127,24 @@ function ReportsSummaryPage() {
   ].filter(Boolean).length;
 
   const categoryChartData = useMemo(() => {
-    if (!summaryData?.byCategory) return [];
-    const dict = summaryData.byCategory as unknown as Record<string, number>;
-    return Object.entries(dict).map(([name, value]) => ({ name, value }));
+    return (summaryData?.byCategory ?? []).map((item) => ({
+      name: item.name,
+      value: item.count,
+    }));
   }, [summaryData]);
 
   const statusChartData = useMemo(() => {
-    if (!summaryData?.byStatus) return [];
-    const dict = summaryData.byStatus as unknown as Record<string, number>;
-    return Object.entries(dict).map(([name, value]) => ({ name, value }));
+    return (summaryData?.byStatus ?? []).map((item) => ({
+      name: item.name,
+      value: item.count,
+    }));
   }, [summaryData]);
 
   const priorityChartData = useMemo(() => {
-    if (!summaryData?.byPriority) return [];
-    const dict = summaryData.byPriority as unknown as Record<string, number>;
-    return Object.entries(dict).map(([name, value]) => ({ name, value }));
+    return (summaryData?.byPriority ?? []).map((item) => ({
+      name: item.name,
+      value: item.count,
+    }));
   }, [summaryData]);
 
   const filteredTickets = useMemo(() => {
@@ -338,8 +341,8 @@ function ReportsSummaryPage() {
           <SummaryCard
             title="Avg Response Time"
             value={
-              (summaryData as any)?.avgFirstResponseMinutes != null
-                ? `${((summaryData as any).avgFirstResponseMinutes / 60).toFixed(1)}h`
+              summaryData?.avgFirstResponseMinutes != null
+                ? `${(summaryData.avgFirstResponseMinutes / 60).toFixed(1)}h`
                 : 'N/A'
             }
             icon="flash"

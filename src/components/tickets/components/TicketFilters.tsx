@@ -1,3 +1,4 @@
+import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   type TicketFilters as TicketFiltersType,
@@ -42,6 +43,17 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
 }) => {
   const [preset, setPreset] = useState<string>('all');
   const { currentUser } = useCurrentUser();
+
+  // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
+  const { customStatuses } = useCustomStatuses();
+  const activeCustomStatuses = useMemo(
+    () => customStatuses.filter((s) => s.isActive),
+    [customStatuses]
+  );
+
+  // Custom-status option values are prefixed so they can be told apart from
+  // built-in TicketStatus enum values when routing to the backend.
+  const CUSTOM_STATUS_PREFIX = 'custom:';
 
   // Users search mutation for assignee autocomplete
   const [
@@ -93,8 +105,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onFiltersChange({ unassignedOnly: true });
           break;
         case 'overdue':
-          // REVIEW: Backend doesn't support overdue filter yet - would need to be implemented
-          onFiltersChange({});
+          onFiltersChange({ overdueOnly: true });
           break;
         default:
           onFiltersChange({});
@@ -105,9 +116,20 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
 
   const handleStatusChange = useCallback(
     (value: string[]) => {
+      // Selections are a mix of built-in TicketStatus enum values and
+      // prefixed custom-status ids. Built-in values route to `status`,
+      // custom ids route to `customStatusId`.
+      const builtInStatuses = value.filter(
+        (v) => !v.startsWith(CUSTOM_STATUS_PREFIX)
+      );
+      const customStatusIds = value
+        .filter((v) => v.startsWith(CUSTOM_STATUS_PREFIX))
+        .map((v) => v.slice(CUSTOM_STATUS_PREFIX.length));
+
       onFiltersChange({
         ...filters,
-        status: value.length > 0 ? value : undefined,
+        status: builtInStatuses.length > 0 ? builtInStatuses : undefined,
+        customStatusId: customStatusIds[0],
       });
     },
     [filters, onFiltersChange]
@@ -195,24 +217,42 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           label="Status"
           placeholder="Filter by status"
           classNames={{ base: 'w-full [&_svg]:my-0' }}
-          value={filters.status?.map((s) => s.toString()) ?? []}
+          value={[
+            ...(filters.status?.map((s) => s.toString()) ?? []),
+            ...(filters.customStatusId
+              ? [`${CUSTOM_STATUS_PREFIX}${filters.customStatusId}`]
+              : []),
+          ]}
           onValueChange={handleStatusChange}
         >
-          <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>
-            New
-          </BaseTagSelectItem>
-          <BaseTagSelectItem
-            key={TicketStatus.InProgress}
-            value={TicketStatus.InProgress}
-          >
-            In Progress
-          </BaseTagSelectItem>
-          <BaseTagSelectItem
-            key={TicketStatus.Closed}
-            value={TicketStatus.Closed}
-          >
-            Closed
-          </BaseTagSelectItem>
+          {[
+            <BaseTagSelectItem
+              key={TicketStatus.New}
+              value={TicketStatus.New}
+            >
+              New
+            </BaseTagSelectItem>,
+            <BaseTagSelectItem
+              key={TicketStatus.InProgress}
+              value={TicketStatus.InProgress}
+            >
+              In Progress
+            </BaseTagSelectItem>,
+            <BaseTagSelectItem
+              key={TicketStatus.Closed}
+              value={TicketStatus.Closed}
+            >
+              Closed
+            </BaseTagSelectItem>,
+            ...activeCustomStatuses.map((cs) => (
+              <BaseTagSelectItem
+                key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+                value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+              >
+                {cs.name}
+              </BaseTagSelectItem>
+            )),
+          ]}
         </BaseTagSelect>
       </div>
 

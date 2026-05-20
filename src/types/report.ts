@@ -1,5 +1,8 @@
-// TODO: Replace with types from @brainforgeau/helpdesk-backend-client when available
-// These types match the backend DTOs for Reports
+// These types match the regenerated @brainforgeau/helpdesk-client report DTOs.
+// The breakdown DTOs share the shape { <key>, name, count, percentage } where
+// <key> is the type-specific identifier field (status / priority / category /
+// technician). Kept as local aliases so the report hook layer stays decoupled
+// from the long generated type names.
 
 import type { TicketPriority, TicketStatus } from './ticket';
 
@@ -13,40 +16,51 @@ export interface TicketSummaryReportDto {
   totalCreated: number;
   totalClosed: number;
   totalOpen: number;
-  averageResolutionTimeHours: number;
+  averageResolutionTimeHours: number | null;
+  avgFirstResponseMinutes?: number | null;
+  avgResolutionMinutes?: number | null;
   byStatus: StatusBreakdownDto[];
   byPriority: PriorityBreakdownDto[];
   byCategory: CategoryBreakdownDto[];
   byTechnician: TechnicianBreakdownDto[];
+  fromDate?: string | null;
+  toDate?: string | null;
 }
 
 export interface StatusBreakdownDto {
-  status: TicketStatus;
-  statusName: string;
+  /** Status enum value (e.g. "New", "InProgress", "Closed"). */
+  status: string;
+  /** Display name for the status. */
+  name: string;
   count: number;
   percentage: number;
 }
 
 export interface PriorityBreakdownDto {
-  priority: TicketPriority;
-  priorityName: string;
+  /** Priority enum value (e.g. "Low", "Normal", "High"). */
+  priority: string;
+  /** Display name for the priority. */
+  name: string;
   count: number;
   percentage: number;
 }
 
 export interface CategoryBreakdownDto {
-  categoryId: string;
-  categoryName: string;
+  /** Category identifier. */
+  category: string;
+  /** Display name for the category. */
+  name: string;
   count: number;
   percentage: number;
 }
 
 export interface TechnicianBreakdownDto {
-  technicianId: string;
-  technicianName: string;
-  assignedCount: number;
-  resolvedCount: number;
-  averageResolutionTimeHours: number;
+  /** Technician identifier. */
+  technician: string;
+  /** Display name for the technician. */
+  name: string;
+  count: number;
+  percentage: number;
 }
 
 export interface DynamicsReportDto {

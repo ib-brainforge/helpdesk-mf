@@ -28,6 +28,7 @@ export const useTicketsData = () => {
       const client = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1TicketsGet(
         filters.status?.[0] ? toApiTicketStatus(filters.status[0]) : undefined,
+        filters.customStatusId, // customStatusId — tenant-defined custom status
         filters.priority?.[0]
           ? toApiTicketPriority(filters.priority[0])
           : undefined,
@@ -37,8 +38,9 @@ export const useTicketsData = () => {
         undefined, // requesterId
         filters.searchTerm,
         undefined, // unreadOnly
+        filters.overdueOnly ? true : undefined, // overdueOnly — tickets past their due date
         undefined, // spamOnly — default view excludes spam
-        filters.unassignedOnly ? true : undefined, // unassignedOnly — now a typed param
+        filters.unassignedOnly ? true : undefined, // unassignedOnly — typed param
         pagination.pageIndex + 1,
         pagination.pageSize,
         undefined, // sortBy

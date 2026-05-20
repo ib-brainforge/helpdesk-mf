@@ -5,6 +5,7 @@ import { TagInput } from '@/components/tags/TagInput';
 import { useTags } from '@/components/tags/hooks/useTags';
 import type { AttachmentDto } from '@/types';
 import { type CreateTicketDto, TicketPriority } from '@/types/ticket';
+import { formatFormErrors } from '@/utils/error-handling';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -19,7 +20,6 @@ import {
 import { toast } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useForm } from '@tanstack/react-form';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { useCreateTicket } from '../hooks/useTickets';
@@ -41,7 +41,8 @@ const createTicketSchema = z.object({
     .max(200, 'Subject is too long'),
   description: z.string().min(1, 'Description is required'),
   priority: z.nativeEnum(TicketPriority),
-  categoryId: z.string().optional(),
+  // Category is required — the backend now hard-rejects tickets without one.
+  categoryId: z.string().min(1, 'Category is required'),
   assigneeId: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
@@ -96,10 +97,14 @@ export const NewTicketForm: FC = () => {
       subject: '',
       description: '',
       priority: TicketPriority.Normal,
-      categoryId: undefined,
+      categoryId: '',
       assigneeId: undefined,
       tags: [],
     } as CreateTicketFormData,
+    validators: {
+      onChange: createTicketSchema,
+      onSubmit: createTicketSchema,
+    },
     onSubmit: async ({ value }) => {
       try {
         const dto: CreateTicketDto = {
@@ -177,6 +182,8 @@ export const NewTicketForm: FC = () => {
                 value={field.state.value}
                 onChange={e => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
+                isInvalid={field.state.meta.errors.length > 0}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
               />
               {/* TODO: Similar KB article suggestions as user types */}
             </div>
@@ -195,6 +202,8 @@ export const NewTicketForm: FC = () => {
               onBlur={field.handleBlur}
               minRows={6}
               description="Use the textarea to describe the issue in detail"
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={formatFormErrors(field.state.meta.errors)}
             />
           )}
         </form.Field>
@@ -226,19 +235,22 @@ export const NewTicketForm: FC = () => {
             )}
           </form.Field>
 
-          {/* Category */}
+          {/* Category — required */}
           <form.Field name="categoryId">
             {field => (
               <BaseAutocomplete
                 label="Category"
-                placeholder="Search category (optional)..."
+                placeholder="Search category..."
+                isRequired
                 isClearable
+                isInvalid={field.state.meta.errors.length > 0}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
                 selectedKey={field.state.value ?? null}
                 onSelectionChange={key => {
                   const newKey = key as string | null;
-                  field.handleChange(newKey ?? undefined);
+                  field.handleChange(newKey ?? '');
                 }}
-                onClear={() => field.handleChange(undefined)}
+                onClear={() => field.handleChange('')}
                 onValueChange={(value: string) => {
                   searchCategories({ query: value });
                 }}

@@ -29,8 +29,43 @@ export const useTicketSummaryReport = (
     queryFn: async () => {
       const client = await createHelpdeskApiClient(ReportsApi);
       const { data } = await client.v1ReportsSummaryGet(startDate, endDate);
-      // REVIEW: Type mapping from generated types to local types
-      return data as unknown as TicketSummaryReportDto;
+      // The generated SummaryReportDto and its breakdown entries expose every
+      // numeric field as optional; normalise to the local TicketSummaryReportDto
+      // shape (which requires count/percentage) with safe defaults.
+      return {
+        totalCreated: data.totalCreated ?? 0,
+        totalClosed: data.totalClosed ?? 0,
+        totalOpen: data.totalOpen ?? 0,
+        averageResolutionTimeHours: data.averageResolutionTimeHours ?? 0,
+        avgFirstResponseMinutes: data.avgFirstResponseMinutes ?? null,
+        avgResolutionMinutes: data.avgResolutionMinutes ?? null,
+        byStatus: (data.byStatus ?? []).map(item => ({
+          status: item.status,
+          name: item.name,
+          count: item.count ?? 0,
+          percentage: item.percentage ?? 0,
+        })),
+        byPriority: (data.byPriority ?? []).map(item => ({
+          priority: item.priority,
+          name: item.name,
+          count: item.count ?? 0,
+          percentage: item.percentage ?? 0,
+        })),
+        byCategory: (data.byCategory ?? []).map(item => ({
+          category: item.category,
+          name: item.name,
+          count: item.count ?? 0,
+          percentage: item.percentage ?? 0,
+        })),
+        byTechnician: (data.byTechnician ?? []).map(item => ({
+          technician: item.technician,
+          name: item.name,
+          count: item.count ?? 0,
+          percentage: item.percentage ?? 0,
+        })),
+        fromDate: data.fromDate ?? null,
+        toDate: data.toDate ?? null,
+      };
     },
   });
 };

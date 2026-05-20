@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@brainforgeau/components": "0.4.456-develop.2d61586",
-    "@brainforgeau/helpdesk-client": "0.1.164-develop.f6417ba",
+    "@brainforgeau/helpdesk-client": "0.1.179-develop.8b36471",
     "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
     "@brainforgeau/observability": "0.4.44-develop.a423be9",
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
@@ -114,6 +114,11 @@
   },
   "overrides": {
     "@internationalized/date": "3.10.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "axios": "1.13.5"
+    }
   },
   "//pendingDevDependencies": {
     "@brainforgeau/eslint-plugin-page-templates": "TODO: add once publish workflow is set up in mf-packages (package not yet in GitHub Packages registry as of W1-P11)"
