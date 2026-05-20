@@ -21,14 +21,14 @@ importers:
         specifier: 0.1.583-develop.22921e5
         version: 0.1.583-develop.22921e5
       '@brainforgeau/observability':
-        specifier: 0.4.44-develop.a423be9
-        version: 0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: 0.4.53-develop.94b6bdf
+        version: 0.4.53-develop.94b6bdf(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@brainforgeau/rules-ui':
         specifier: 0.4.114-develop.374091a
         version: 0.4.114-develop.374091a(yazpxi5rtok2posk2oik62ofuq)
       '@brainforgeau/security':
         specifier: 0.4.304-develop.7aa9445
-        version: 0.4.304-develop.7aa9445(@brainforgeau/observability@0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
+        version: 0.4.304-develop.7aa9445(@brainforgeau/observability@0.4.53-develop.94b6bdf(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
         specifier: 0.2.64-develop.3645b80
         version: 0.2.64-develop.3645b80(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
@@ -942,8 +942,8 @@ packages:
     resolution: {integrity: sha512-KqCnAOGxqsD/mL+OM9hfGGOe+na8Wwefef0pSpryWaW8yhEtchWKcYYBHEvETAd1lT5OPmHECBPU/sLJO7m4EQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.583-develop.22921e5/70dc1560552c9fb01a6a224e8b47e1ff0c0b5e47}
     engines: {node: '>=18.0.0'}
 
-  '@brainforgeau/observability@0.4.44-develop.a423be9':
-    resolution: {integrity: sha512-z65Yo3YlqV9aUQZjdIK+Ys6jOsD/e2KQjGtBfsdTUpD9JCs/8z9KKPQyeCWkkXhoFtk7lYEy4b1w8ZX9XdiNHQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/observability/0.4.44-develop.a423be9/27f317661bbeb8d4ec6afff8419cac0c35bdc4ae}
+  '@brainforgeau/observability@0.4.53-develop.94b6bdf':
+    resolution: {integrity: sha512-jGQq+xK87HtuEQmq6xcwDqdUqiKhGQkvZAr31/aecoQNdPjWmq29AUiJAmQn0nVL9qIM/RYoDgPodiBBLYBR0g==, tarball: https://npm.pkg.github.com/download/@brainforgeau/observability/0.4.53-develop.94b6bdf/e385f4f6fcf0f8c4a7feb505126ee737955f02a7}
     peerDependencies:
       react: ^19.2.5
       react-dom: ^19.2.5
@@ -8467,14 +8467,16 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/observability@0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/observability@0.4.53-develop.94b6bdf(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/context-zone': 1.30.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/exporter-trace-otlp-http': 0.57.2(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation': 0.208.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation-fetch': 0.57.2(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation-xml-http-request': 0.57.2(@opentelemetry/api@1.9.0)
+      '@opentelemetry/otlp-transformer': 0.57.2(@opentelemetry/api@1.9.0)
       '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-web': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.39.0
@@ -8494,14 +8496,14 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@brainforgeau/security@0.4.304-develop.7aa9445(@brainforgeau/observability@0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/security@0.4.304-develop.7aa9445(@brainforgeau/observability@0.4.53-develop.94b6bdf(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
       axios: 1.13.5
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       react-oidc-context: 3.3.0(oidc-client-ts@3.4.1)(react@19.2.6)
     optionalDependencies:
-      '@brainforgeau/observability': 0.4.44-develop.a423be9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@brainforgeau/observability': 0.4.53-develop.94b6bdf(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     transitivePeerDependencies:
       - debug
 
@@ -11298,6 +11300,10 @@ snapshots:
     dependencies:
       acorn: 8.15.0
 
+  acorn-import-attributes@1.9.5(acorn@8.16.0):
+    dependencies:
+      acorn: 8.16.0
+
   acorn-import-phases@1.0.4(acorn@8.15.0):
     dependencies:
       acorn: 8.15.0
@@ -13041,15 +13047,15 @@ snapshots:
 
   import-in-the-middle@1.15.0:
     dependencies:
-      acorn: 8.15.0
-      acorn-import-attributes: 1.9.5(acorn@8.15.0)
+      acorn: 8.16.0
+      acorn-import-attributes: 1.9.5(acorn@8.16.0)
       cjs-module-lexer: 1.4.3
       module-details-from-path: 1.0.4
 
   import-in-the-middle@2.0.6:
     dependencies:
-      acorn: 8.15.0
-      acorn-import-attributes: 1.9.5(acorn@8.15.0)
+      acorn: 8.16.0
+      acorn-import-attributes: 1.9.5(acorn@8.16.0)
       cjs-module-lexer: 2.2.0
       module-details-from-path: 1.0.4
 
