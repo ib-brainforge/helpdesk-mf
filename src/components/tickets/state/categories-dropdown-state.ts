@@ -1,5 +1,5 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
+import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
 import { atomWithMutation } from 'jotai-tanstack-query';
 
 export interface CategoryOption {
@@ -8,57 +8,33 @@ export interface CategoryOption {
   sectionName?: string;
 }
 
-type CategoryHierarchyDto = {
-  sections?: Array<{
-    id?: string;
-    name?: string;
-    categories?: Array<{
-      id?: string;
-      name?: string;
-      sectionId?: string;
-      isActive?: boolean;
-    }>;
-  }>;
-};
-
 export const categoriesMutationAtom = atomWithMutation<
   CategoryOption[],
   { query: string }
 >(() => ({
   mutationKey: ['categories-search'],
   mutationFn: async ({ query }: { query: string }) => {
-    const client = await createHelpdeskApiClient(CategoriesApi);
-    const { data } = await client.v1CategoriesGet();
+    const client = await createHelpdeskApiClient(PlatformMyCategoriesApi);
+    const { data } = await client.v1PlatformMyCategoriesGet();
 
-    // Flatten hierarchy into flat array of categories
-    const hierarchy = data as CategoryHierarchyDto;
-    const flatCategories: CategoryOption[] = [];
+    // data is a flat CategoryDto[] — no hierarchy unwrapping needed.
+    const categories: CategoryOption[] = (data ?? [])
+      .filter(cat => cat.isActive !== false)
+      .map(cat => ({
+        id: cat.id ?? '',
+        name: cat.name ?? 'Unnamed Category',
+        sectionName: cat.sectionName ?? undefined,
+      }));
 
-    hierarchy.sections?.forEach(section => {
-      section.categories?.forEach(cat => {
-        if (cat.isActive !== false) {
-          const categoryName = cat.name ?? 'Unnamed Category';
-          const sectionName = section.name;
+    // Filter by query if provided.
+    if (!query) return categories;
 
-          // Filter by query if provided
-          const matchesQuery =
-            !query ||
-            categoryName.toLowerCase().includes(query.toLowerCase()) ||
-            (sectionName &&
-              sectionName.toLowerCase().includes(query.toLowerCase()));
-
-          if (matchesQuery) {
-            flatCategories.push({
-              id: cat.id!,
-              name: categoryName,
-              sectionName: sectionName,
-            });
-          }
-        }
-      });
-    });
-
-    return flatCategories;
+    const lq = query.toLowerCase();
+    return categories.filter(
+      cat =>
+        cat.name.toLowerCase().includes(lq) ||
+        cat.sectionName?.toLowerCase().includes(lq),
+    );
   },
 }));
 
