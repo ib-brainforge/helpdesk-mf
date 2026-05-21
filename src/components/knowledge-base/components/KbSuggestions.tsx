@@ -1,5 +1,4 @@
 import { Icon } from '@brainforgeau/components/base';
-import { Card } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import type { FC } from 'react';
 import { useSimilarArticles } from '../hooks/useKnowledgeBase';
@@ -19,10 +18,15 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
   onArticleClick,
 }) => {
   const shouldFetch = searchText.length >= minChars;
-  const { data: suggestions, isLoading } = useSimilarArticles(
+  const { data: suggestions, isLoading, isError } = useSimilarArticles(
     shouldFetch ? searchText : '',
     limit
   );
+
+  // If the suggestions call failed, degrade silently — never block the ticket detail view.
+  if (isError) {
+    return null;
+  }
 
   const hasSuggestions = suggestions && suggestions.length > 0;
 

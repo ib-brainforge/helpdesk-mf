@@ -341,6 +341,10 @@ export const useSimilarArticles = (text: string, limit = 5) => {
     },
     enabled: text.length >= 3,
     staleTime: 60_000, // Cache for 1 minute
+    // Never propagate errors to the React error boundary — a failed suggestions
+    // call should silently degrade, not crash the ticket detail page.
+    throwOnError: false,
+    retry: false,
   });
 };
 
