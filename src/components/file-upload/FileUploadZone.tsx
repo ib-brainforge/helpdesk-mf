@@ -1,8 +1,9 @@
+import type { FileUploadProgress } from '@/types';
+import { BaseCard } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { Card, ProgressBar } from '@heroui/react';
 import type { FC } from 'react';
 import { useCallback, useState } from 'react';
-import { Icon } from '@brainforgeau/components/base';
-import { Card, Progress } from '@heroui/react';
-import type { FileUploadProgress } from '@/types';
 
 interface FileUploadZoneProps {
   onFilesSelected: (files: File[]) => void;
@@ -22,17 +23,24 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const validateFiles = (files: File[]): { valid: File[]; errors: string[] } => {
+  const validateFiles = (
+    files: File[]
+  ): { valid: File[]; errors: string[] } => {
     const valid: File[] = [];
     const errors: string[] = [];
 
     for (const file of files) {
       if (file.size > maxFileSize) {
-        errors.push(`${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`);
+        errors.push(
+          `${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`
+        );
         continue;
       }
 
-      if (acceptedTypes.length > 0 && !acceptedTypes.some(type => file.type.includes(type))) {
+      if (
+        acceptedTypes.length > 0 &&
+        !acceptedTypes.some((type) => file.type.includes(type))
+      ) {
         errors.push(`${file.name} has an unsupported file type`);
         continue;
       }
@@ -73,7 +81,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
         onFilesSelected(valid);
       }
     },
-    [onFilesSelected, maxFileSize, acceptedTypes],
+    [onFilesSelected, maxFileSize, acceptedTypes]
   );
 
   const handleFileInputChange = useCallback(
@@ -93,7 +101,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
       // Reset input
       e.target.value = '';
     },
-    [onFilesSelected, maxFileSize, acceptedTypes],
+    [onFilesSelected, maxFileSize, acceptedTypes]
   );
 
   const formatFileSize = (bytes: number) => {
@@ -119,7 +127,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
           <div>
             <p className="text-lg font-medium">
               Drop files here or{' '}
-              <label className="cursor-pointer text-primary hover:underline">
+              <label className="text-primary cursor-pointer hover:underline">
                 browse
                 <input
                   type="file"
@@ -138,7 +146,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
       </Card>
 
       {error && (
-        <div className="rounded bg-danger-50 p-3 text-sm text-danger">
+        <div className="bg-danger-50 text-danger rounded p-3 text-sm">
           {error}
         </div>
       )}
@@ -147,17 +155,19 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
         <div className="space-y-2">
           {progress.map((file) => (
             <div key={file.fileName} className="rounded border p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium truncate">{file.fileName}</span>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="truncate text-sm font-medium">
+                  {file.fileName}
+                </span>
                 <span className="text-xs text-gray-500">{file.progress}%</span>
               </div>
-              <Progress
+              <ProgressBar
                 value={file.progress}
-                color={file.status === 'error' ? 'danger' : 'primary'}
+                color={file.status === 'error' ? 'danger' : 'accent'}
                 size="sm"
               />
               {file.error && (
-                <p className="mt-1 text-xs text-danger">{file.error}</p>
+                <p className="text-danger mt-1 text-xs">{file.error}</p>
               )}
             </div>
           ))}

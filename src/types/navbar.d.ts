@@ -22,5 +22,9 @@ declare module '@brainforgeau/navbar/Navbar' {
 }
 
 declare module '@brainforgeau/navbar' {
-  export { TopNavbar, NavbarConfig, NavbarProps } from '@brainforgeau/navbar/Navbar';
+  export {
+    TopNavbar,
+    NavbarConfig,
+    NavbarProps,
+  } from '@brainforgeau/navbar/Navbar';
 }

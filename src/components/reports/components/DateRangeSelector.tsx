@@ -1,9 +1,8 @@
-import { useState, type FC } from 'react';
-import { DateRangePicker } from '@heroui/react';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import type { DateValue } from '@internationalized/date';
+import { type FC, useState } from 'react';
 
-// REVIEW: Using controlled component pattern with callback for parent state updates
+// REVIEW: Custom date range picker removed — HeroUI 3 DateRangePicker uses compound API.
+// Custom range can be added back when the component library exposes a simple wrapper.
 interface DateRangeSelectorProps {
   startDate: string;
   endDate: string;
@@ -19,7 +18,6 @@ const PRESET_RANGES = [
   { value: 'lastMonth', label: 'Last Month' },
   { value: 'thisQuarter', label: 'This Quarter' },
   { value: 'thisYear', label: 'This Year' },
-  { value: 'custom', label: 'Custom Range' },
 ];
 
 export const DateRangeSelector: FC<DateRangeSelectorProps> = ({
@@ -28,7 +26,6 @@ export const DateRangeSelector: FC<DateRangeSelectorProps> = ({
   onChange,
 }) => {
   const [selectedPreset, setSelectedPreset] = useState<string>('last30');
-  const [showCustom, setShowCustom] = useState(false);
 
   const handlePresetChange = (preset: string) => {
     setSelectedPreset(preset);
@@ -66,49 +63,28 @@ export const DateRangeSelector: FC<DateRangeSelectorProps> = ({
       case 'thisYear':
         start = new Date(now.getFullYear(), 0, 1);
         break;
-      case 'custom':
-        setShowCustom(true);
-        return;
       default:
         start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
-    setShowCustom(false);
     onChange(start.toISOString(), end.toISOString());
-  };
-
-  const handleCustomRangeChange = (range: { start: DateValue; end: DateValue } | null) => {
-    if (range?.start && range?.end) {
-      // Convert CalendarDate to ISO string
-      const startDate = new Date(range.start.year, range.start.month - 1, range.start.day);
-      const endDate = new Date(range.end.year, range.end.month - 1, range.end.day);
-      onChange(startDate.toISOString(), endDate.toISOString());
-    }
   };
 
   return (
     <div className="flex gap-4">
       <BaseSelect
-        selectedKeys={new Set([selectedPreset])}
-        onSelectionChange={(keys) => {
-          const key = Array.from(keys)[0] as string;
+        selectedKey={selectedPreset}
+        onSelectionChange={keys => {
+          const key = keys as string;
           handlePresetChange(key);
         }}
         placeholder="Select date range"
         className="w-48"
       >
-        {PRESET_RANGES.map((range) => (
-          <BaseSelectItem key={range.value}>{range.label}</BaseSelectItem>
+        {PRESET_RANGES.map(range => (
+          <BaseSelectItem key={range.value} value={range.value}>{range.label}</BaseSelectItem>
         ))}
       </BaseSelect>
-
-      {showCustom && (
-        <DateRangePicker
-          label="Custom Date Range"
-          onChange={handleCustomRangeChange}
-          className="w-80"
-        />
-      )}
     </div>
   );
 };

@@ -1,12 +1,13 @@
 import {
+  BaseCard,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalHeader,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { Card, CardBody, Spinner, addToast } from '@heroui/react';
-import { useState } from 'react';
+import { Card, CardContent, Spinner, toast } from '@heroui/react';
+import { useRef, useState } from 'react';
 import { useGetTicketSummary, useSuggestReply } from '../hooks/useAiAssist';
 
 type AiAssistantModalProps = {
@@ -56,9 +57,16 @@ export function AiAssistantModal({
   const summaryMutation = useGetTicketSummary();
   const suggestReplyMutation = useSuggestReply();
 
+  // AbortController ref — a new controller is created per request; cancelled on modal close.
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const isLoading = summaryMutation.isPending || suggestReplyMutation.isPending;
 
   const handleClose = () => {
+    // Cancel any in-flight AI request before resetting state.
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+
     setActiveFeature(null);
     setAiResult(null);
     summaryMutation.reset();
@@ -69,17 +77,23 @@ export function AiAssistantModal({
   const handleTicketSummary = async () => {
     setActiveFeature('ticket-summary');
     setAiResult(null);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const result = await summaryMutation.mutateAsync(ticketId);
+      const result = await summaryMutation.mutateAsync({
+        ticketId,
+        signal: controller.signal,
+      });
       setAiResult(result.result);
     } catch (error) {
       if (isAiNotConfiguredError(error)) {
         // handled in render
       } else {
-        addToast({
-          title: 'AI error',
+        toast('AI error', {
           description: 'Failed to get ticket summary. Please try again.',
-          severity: 'danger',
+          variant: 'danger',
         });
         setActiveFeature(null);
       }
@@ -89,17 +103,23 @@ export function AiAssistantModal({
   const handleSuggestReply = async () => {
     setActiveFeature('generate-response');
     setAiResult(null);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const result = await suggestReplyMutation.mutateAsync(ticketId);
+      const result = await suggestReplyMutation.mutateAsync({
+        ticketId,
+        signal: controller.signal,
+      });
       setAiResult(result.result);
     } catch (error) {
       if (isAiNotConfiguredError(error)) {
         // handled in render
       } else {
-        addToast({
-          title: 'AI error',
+        toast('AI error', {
           description: 'Failed to get reply suggestion. Please try again.',
-          severity: 'danger',
+          variant: 'danger',
         });
         setActiveFeature(null);
       }
@@ -107,10 +127,9 @@ export function AiAssistantModal({
   };
 
   const handleComingSoon = () => {
-    addToast({
-      title: 'Coming soon',
+    toast('Coming soon', {
       description: 'AI features will be available soon',
-      severity: 'warning',
+      variant: 'warning',
     });
   };
 
@@ -123,171 +142,177 @@ export function AiAssistantModal({
       isAiNotConfiguredError(suggestReplyMutation.error));
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="2xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="lg"
+      className="max-w-2xl"
+    >
       <BaseModalContent>
-        <BaseModalHeader>
+        <BaseModalHeader onClose={handleClose}>
           <div className="flex items-center gap-2">
-            <Icon name="flash" className="h-5 w-5 text-primary" />
+            <Icon name="flash" className="text-primary h-5 w-5" />
             <span>Jitbit AI Assistant</span>
           </div>
         </BaseModalHeader>
         <BaseModalBody className="pb-6">
           {/* Result panel */}
           {(isLoading || aiResult || hasAiError) && (
-            <div className="mb-4 rounded-lg border border-default-200 bg-default-50 p-4 min-h-[80px] flex items-start">
+            <div className="border-light bg-default-50 mb-4 flex min-h-[80px] items-start rounded-lg border p-4">
               {isLoading && (
-                <div className="flex items-center gap-3 text-default-500 text-sm">
+                <div className="text-default-500 flex items-center gap-3 text-sm">
                   <Spinner size="sm" />
                   <span>Generating...</span>
                 </div>
               )}
               {!isLoading && hasAiError && (
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-warning-600 font-medium">
+                  <p className="text-warning-600 text-sm font-medium">
                     AI features are not configured
                   </p>
-                  <p className="text-sm text-default-500">
-                    Contact your administrator to configure the AI provider for this deployment.
+                  <p className="text-default-500 text-sm">
+                    Contact your administrator to configure the AI provider for
+                    this deployment.
                   </p>
                 </div>
               )}
               {!isLoading && aiResult && (
-                <p className="text-sm text-default-700 whitespace-pre-wrap">
+                <p className="text-default-700 whitespace-pre-wrap text-sm">
                   {aiResult}
                 </p>
               )}
             </div>
           )}
 
-          <p className="text-sm text-default-500 mb-4">
+          <p className="text-default-500 mb-4 text-sm">
             How can AI help you with this ticket?
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Generate response — real */}
-            <Card
-              isPressable
-              onPress={handleSuggestReply}
-              isDisabled={isLoading}
-              className="hover:border-primary transition-colors"
+            <button
+              type="button"
+              onClick={handleSuggestReply}
+              disabled={isLoading}
+              className="text-left disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <CardBody className="p-4">
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
                     <Icon
                       name="chat-bubble-left-right"
-                      className="h-6 w-6 text-primary"
+                      className="text-primary h-6 w-6"
                     />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">
+                    <h3 className="mb-0.5 text-sm font-semibold">
                       Generate response
                     </h3>
-                    <p className="text-xs text-default-500">
+                    <p className="text-default-500 text-xs">
                       AI-powered reply suggestions
                     </p>
                   </div>
                 </div>
-              </CardBody>
-            </Card>
+              </BaseCard>
+            </button>
 
             {/* Ticket summary — real */}
-            <Card
-              isPressable
-              onPress={handleTicketSummary}
-              isDisabled={isLoading}
-              className="hover:border-primary transition-colors"
+            <button
+              type="button"
+              onClick={handleTicketSummary}
+              disabled={isLoading}
+              className="text-left disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <CardBody className="p-4">
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
                     <Icon
                       name="document-text"
-                      className="h-6 w-6 text-primary"
+                      className="text-primary h-6 w-6"
                     />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">
+                    <h3 className="mb-0.5 text-sm font-semibold">
                       Ticket summary
                     </h3>
-                    <p className="text-xs text-default-500">
+                    <p className="text-default-500 text-xs">
                       Quick overview of the ticket
                     </p>
                   </div>
                 </div>
-              </CardBody>
-            </Card>
+              </BaseCard>
+            </button>
 
             {/* Improve reply — coming soon */}
-            <Card
-              isPressable
-              onPress={handleComingSoon}
-              className="hover:border-primary transition-colors"
+            <button
+              type="button"
+              onClick={handleComingSoon}
+              className="text-left"
             >
-              <CardBody className="p-4">
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                    <Icon name="sparkles" className="h-6 w-6 text-primary" />
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Icon name="sparkles" className="text-primary h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">
+                    <h3 className="mb-0.5 text-sm font-semibold">
                       Improve reply
                     </h3>
-                    <p className="text-xs text-default-500">
+                    <p className="text-default-500 text-xs">
                       Enhance your response
                     </p>
                   </div>
                 </div>
-              </CardBody>
-            </Card>
+              </BaseCard>
+            </button>
 
             {/* Generate KB — coming soon */}
-            <Card
-              isPressable
-              onPress={handleComingSoon}
-              className="hover:border-primary transition-colors"
+            <button
+              type="button"
+              onClick={handleComingSoon}
+              className="text-left"
             >
-              <CardBody className="p-4">
-                <div className="flex flex-col items-center text-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
-                    <Icon name="book-open" className="h-6 w-6 text-primary" />
+              <BaseCard className="hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Icon name="book-open" className="text-primary h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold mb-0.5">
+                    <h3 className="mb-0.5 text-sm font-semibold">
                       Generate KB
                     </h3>
-                    <p className="text-xs text-default-500">
+                    <p className="text-default-500 text-xs">
                       Create knowledge base article
                     </p>
                   </div>
                 </div>
-              </CardBody>
-            </Card>
+              </BaseCard>
+            </button>
           </div>
 
           {/* Custom AI-chat — full width, coming soon */}
-          <Card
-            isPressable
-            onPress={handleComingSoon}
-            className="hover:border-primary transition-colors mt-3"
+          <button
+            type="button"
+            onClick={handleComingSoon}
+            className="w-full text-left"
           >
-            <CardBody className="p-4">
+            <BaseCard className="hover:border-primary mt-3 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                <div className="bg-primary-50 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
                   <Icon
                     name="chat-bubble-bottom-center-text"
-                    className="h-6 w-6 text-primary"
+                    className="text-primary h-6 w-6"
                   />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold mb-0.5">
+                  <h3 className="mb-0.5 text-sm font-semibold">
                     Custom AI-chat
                   </h3>
-                  <p className="text-xs text-default-500">Ask AI anything</p>
+                  <p className="text-default-500 text-xs">Ask AI anything</p>
                 </div>
               </div>
-            </CardBody>
-          </Card>
+            </BaseCard>
+          </button>
         </BaseModalBody>
       </BaseModalContent>
     </BaseModal>

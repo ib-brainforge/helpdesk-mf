@@ -150,8 +150,11 @@ export const KbImportModal: FC<KbImportModalProps> = ({ isOpen, onClose }) => {
             <BaseButton
               color="primary"
               onPress={handleImport}
-              isDisabled={!selectedFile || importMutation.isPending}
-              isLoading={importMutation.isPending}
+              isDisabled={
+                importMutation.isPending ||
+                !selectedFile ||
+                importMutation.isPending
+              }
             >
               Import
             </BaseButton>

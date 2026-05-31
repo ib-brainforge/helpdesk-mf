@@ -1,9 +1,9 @@
+import { CONTEXT_TOKEN_CHANGED_EVENT } from '@brainforgeau/security';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
-import { useHydrateAtoms } from 'jotai/react/utils';
 import { queryClientAtom } from 'jotai-tanstack-query';
-import { useState, useEffect } from 'react';
-import { CONTEXT_TOKEN_CHANGED_EVENT } from '@brainforgeau/security';
+import { useHydrateAtoms } from 'jotai/react/utils';
+import { useEffect, useState } from 'react';
 
 const HydrateAtoms = ({ children }: { children: React.ReactNode }) => {
   const [client] = useState(
@@ -19,7 +19,7 @@ const HydrateAtoms = ({ children }: { children: React.ReactNode }) => {
             retry: 0,
           },
         },
-      })
+      }),
   );
 
   useHydrateAtoms([[queryClientAtom, client]]);
@@ -41,7 +41,10 @@ export default function QueryProvider({
 
     window.addEventListener(CONTEXT_TOKEN_CHANGED_EVENT, handleContextChange);
     return () => {
-      window.removeEventListener(CONTEXT_TOKEN_CHANGED_EVENT, handleContextChange);
+      window.removeEventListener(
+        CONTEXT_TOKEN_CHANGED_EVENT,
+        handleContextChange,
+      );
     };
   }, [client]);
 

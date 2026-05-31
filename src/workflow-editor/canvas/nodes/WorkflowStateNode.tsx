@@ -36,7 +36,10 @@ const TYPE_OPTIONS: { value: StateType; label: string }[] = [
   { value: StateType.Terminal, label: 'Terminal' },
 ];
 
-export function WorkflowStateNode({ id, data }: NodeProps<WorkflowStateNodeType>) {
+export function WorkflowStateNode({
+  id,
+  data,
+}: NodeProps<WorkflowStateNodeType>) {
   const { state, onChange, onDelete } = data;
   const c = CATEGORY_COLORS[state.category];
   const [expanded, setExpanded] = useState(false);
@@ -62,7 +65,8 @@ export function WorkflowStateNode({ id, data }: NodeProps<WorkflowStateNodeType>
     if (trimmed === state.name) return;
     // Auto-update slug only if it still matches the auto-generated pattern
     const currentAutoSlug = slugify(state.name);
-    const newSlug = state.slug === currentAutoSlug ? slugify(trimmed) : state.slug;
+    const newSlug =
+      state.slug === currentAutoSlug ? slugify(trimmed) : state.slug;
     setSlugValue(newSlug);
     onChange?.(id, { ...state, name: trimmed, slug: newSlug });
   }
@@ -306,7 +310,9 @@ export function WorkflowStateNode({ id, data }: NodeProps<WorkflowStateNodeType>
             <select
               className="nodrag nopan"
               value={state.category}
-              onChange={e => handleCategoryChange(e.target.value as StateCategory)}
+              onChange={e =>
+                handleCategoryChange(e.target.value as StateCategory)
+              }
               style={{
                 width: '100%',
                 fontSize: 12,

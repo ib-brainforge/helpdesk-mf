@@ -1,6 +1,9 @@
-import { UsersApi, type UserDto } from '@brainforgeau/identity-management-client';
-import { atomWithMutation } from 'jotai-tanstack-query';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
+import {
+  type UserDto,
+  UsersApi,
+} from '@brainforgeau/identity-management-client';
+import { atomWithMutation } from 'jotai-tanstack-query';
 
 export interface UserOption {
   id: string;
@@ -14,18 +17,20 @@ const getUserName = (user: UserDto): string => {
   return fullName || user.email || 'Unnamed';
 };
 
-export const usersMutationAtom = atomWithMutation<UserDto[], { query: string }>(() => ({
-  mutationKey: ['users-search'],
-  mutationFn: async ({ query }: { query: string }) => {
-    const client = await createIdentityApiClient(UsersApi);
-    const response = await client.v1UsersGet(
-      undefined, // tenantId
-      true, // isActive
-      query, // search
-    );
-    return response.data.items ?? [];
-  },
-}));
+export const usersMutationAtom = atomWithMutation<UserDto[], { query: string }>(
+  () => ({
+    mutationKey: ['users-search'],
+    mutationFn: async ({ query }: { query: string }) => {
+      const client = await createIdentityApiClient(UsersApi);
+      const response = await client.v1UsersGet(
+        undefined, // tenantId
+        true, // isActive
+        query, // search
+      );
+      return response.data.items ?? [];
+    },
+  }),
+);
 
 export const mapUserToOption = (user: UserDto): UserOption => ({
   // Use keycloakUserId as the unique identifier since id is often empty/duplicate

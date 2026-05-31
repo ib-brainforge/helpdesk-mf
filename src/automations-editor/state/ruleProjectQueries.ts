@@ -10,17 +10,22 @@
  */
 import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAtomValue } from 'jotai';
-import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
-import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
-import type { RuleGraphContent } from '@brainforgeau/rules-ui';
 import type {
-  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
   ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
   ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
+  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
 } from '@brainforgeau/helpdesk-client';
-import type { RuleProjectDto, RuleGraphDto, RuleGraphVersionDto, ScheduleConfigDto } from '@brainforgeau/rules-ui';
+import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
+import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
+import type { RuleGraphContent } from '@brainforgeau/rules-ui';
+import type {
+  RuleGraphDto,
+  RuleGraphVersionDto,
+  RuleProjectDto,
+  ScheduleConfigDto,
+} from '@brainforgeau/rules-ui';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAtomValue } from 'jotai';
 
 // ── DTO mappers ────────────────────────────────────────────────────────────────
 
@@ -29,7 +34,8 @@ function toRuleGraphVersionDto(v: GenRuleGraphVersionDto): RuleGraphVersionDto {
     id: v.id ?? '',
     versionNumber: v.versionNumber ?? 0,
     name: v.name ?? null,
-    contentSnapshot: (v.contentSnapshot as RuleGraphContent | null | undefined) ?? null,
+    contentSnapshot:
+      (v.contentSnapshot as RuleGraphContent | null | undefined) ?? null,
     createdAt: v.createdAt ?? '',
   };
 }
@@ -205,10 +211,7 @@ export function useRuleGraphs(projectId: string | null) {
   });
 }
 
-export function useRuleGraph(
-  projectId: string | null,
-  ruleId: string | null,
-) {
+export function useRuleGraph(projectId: string | null, ruleId: string | null) {
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useQuery({
     queryKey: ruleProjectKeys.graph(
@@ -218,7 +221,10 @@ export function useRuleGraph(
     ),
     queryFn: async () => {
       const client = await createHelpdeskApiClient(RuleGraphsApi);
-      const res = await client.v1RuleProjectsProjectIdRulesIdGet(projectId!, ruleId!);
+      const res = await client.v1RuleProjectsProjectIdRulesIdGet(
+        projectId!,
+        ruleId!,
+      );
       return toRuleGraphDto(res.data);
     },
     enabled: !!projectId && !!ruleId,
@@ -285,17 +291,21 @@ export function useUpdateRuleGraph() {
       };
     }) => {
       const client = await createHelpdeskApiClient(RuleGraphsApi);
-      const res = await client.v1RuleProjectsProjectIdRulesIdPut(projectId, ruleId, {
-        id: ruleId,
+      const res = await client.v1RuleProjectsProjectIdRulesIdPut(
         projectId,
-        name: request.name,
-        description: request.description,
-        category: request.category,
-        isEnabled: request.isEnabled,
-        cooldownMinutes: request.cooldownMinutes,
-        consecutivePacketsRequired: request.consecutivePacketsRequired,
-        schedule: request.schedule as never,
-      });
+        ruleId,
+        {
+          id: ruleId,
+          projectId,
+          name: request.name,
+          description: request.description,
+          category: request.category,
+          isEnabled: request.isEnabled,
+          cooldownMinutes: request.cooldownMinutes,
+          consecutivePacketsRequired: request.consecutivePacketsRequired,
+          schedule: request.schedule as never,
+        },
+      );
       return toRuleGraphDto(res.data);
     },
     onSuccess: (_data, variables) =>
@@ -346,10 +356,14 @@ export function useCreateRuleGraphVersion() {
       versionName?: string;
     }) => {
       const client = await createHelpdeskApiClient(RuleGraphsApi);
-      const res = await client.v1RuleProjectsProjectIdRulesIdVersionsPost(projectId, ruleId, {
-        name: versionName ?? null,
-        contentSnapshot: content,
-      });
+      const res = await client.v1RuleProjectsProjectIdRulesIdVersionsPost(
+        projectId,
+        ruleId,
+        {
+          name: versionName ?? null,
+          contentSnapshot: content,
+        },
+      );
       return toRuleGraphVersionDto(res.data);
     },
     onSuccess: (_data, variables) =>
@@ -377,11 +391,12 @@ export function usePublishRuleGraphVersion() {
       versionId: string;
     }) => {
       const client = await createHelpdeskApiClient(RuleGraphsApi);
-      const res = await client.v1RuleProjectsProjectIdRulesIdVersionsVersionIdPublishPost(
-        projectId,
-        ruleId,
-        versionId,
-      );
+      const res =
+        await client.v1RuleProjectsProjectIdRulesIdVersionsVersionIdPublishPost(
+          projectId,
+          ruleId,
+          versionId,
+        );
       return toRuleGraphDto(res.data);
     },
     onSuccess: (_data, variables) => {

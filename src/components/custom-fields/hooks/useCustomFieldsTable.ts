@@ -13,7 +13,9 @@ export interface UseCustomFieldsTableProps {
   columns: ColumnDef<CustomFieldsRow, any>[];
   totalCount: number;
   pagination: PaginationState;
-  onPaginationChange: (pagination: PaginationState | ((old: PaginationState) => PaginationState)) => void;
+  onPaginationChange: (
+    pagination: PaginationState | ((old: PaginationState) => PaginationState),
+  ) => void;
 }
 
 export const useCustomFieldsTable = ({

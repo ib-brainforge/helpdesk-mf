@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { EmailTemplateDto } from '@/types/email-template';
+import { AppSettingsApi } from '@brainforgeau/helpdesk-client';
+import { useQuery } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useState } from 'react';
 
 // REVIEW: Email templates are stored in AppSettings with category 'EmailTemplate'
 export const useEmailTemplatesData = () => {
@@ -20,9 +20,10 @@ export const useEmailTemplatesData = () => {
       // Map AppSettings to EmailTemplateDto structure
       return (data || []).map((setting: any) => {
         // Parse the JSON value which contains the template data
-        const templateData = typeof setting.value === 'string'
-          ? JSON.parse(setting.value)
-          : setting.value;
+        const templateData =
+          typeof setting.value === 'string'
+            ? JSON.parse(setting.value)
+            : setting.value;
 
         return {
           id: setting.id!,
@@ -37,10 +38,11 @@ export const useEmailTemplatesData = () => {
   });
 
   // Client-side pagination
-  const items = data?.slice(
-    pagination.pageIndex * pagination.pageSize,
-    (pagination.pageIndex + 1) * pagination.pageSize,
-  ) ?? [];
+  const items =
+    data?.slice(
+      pagination.pageIndex * pagination.pageSize,
+      (pagination.pageIndex + 1) * pagination.pageSize,
+    ) ?? [];
 
   const totalCount = data?.length ?? 0;
 

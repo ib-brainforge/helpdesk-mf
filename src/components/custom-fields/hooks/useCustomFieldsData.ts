@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
+import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
+import { useQuery } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useState } from 'react';
 
 export const useCustomFieldsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -35,10 +35,11 @@ export const useCustomFieldsData = () => {
   });
 
   // Client-side pagination
-  const items = data?.slice(
-    pagination.pageIndex * pagination.pageSize,
-    (pagination.pageIndex + 1) * pagination.pageSize
-  ) ?? [];
+  const items =
+    data?.slice(
+      pagination.pageIndex * pagination.pageSize,
+      (pagination.pageIndex + 1) * pagination.pageSize,
+    ) ?? [];
 
   const totalCount = data?.length ?? 0;
 

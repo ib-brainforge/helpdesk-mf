@@ -1,19 +1,23 @@
-import { useEffect, useState } from 'react';
-import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
-  BaseInput,
-  BaseSelect,
-  BaseSelectItem,
-} from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { Switch, addToast } from '@heroui/react';
-import { useCreateCustomStatus, useUpdateCustomStatus } from '../hooks/useCustomStatuses';
 import { TicketStatus } from '@/types/custom-status';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
+import {
+  BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+  BaseSelect,
+  BaseSelectItem,
+  BaseToggle,
+} from '@brainforgeau/components';
+import { BaseButton } from '@brainforgeau/components/button';
+import { toast } from '@heroui/react';
+import { useEffect, useState } from 'react';
+import {
+  useCreateCustomStatus,
+  useUpdateCustomStatus,
+} from '../hooks/useCustomStatuses';
 
 interface CustomStatusEditorModalProps {
   isOpen: boolean;
@@ -35,7 +39,9 @@ export function CustomStatusEditorModal({
   const [name, setName] = useState('');
   const [color, setColor] = useState('#6366f1');
   const [sortOrder, setSortOrder] = useState(0);
-  const [mapsToStatus, setMapsToStatus] = useState<TicketStatus>(TicketStatus.InProgress);
+  const [mapsToStatus, setMapsToStatus] = useState<TicketStatus>(
+    TicketStatus.InProgress
+  );
   const [isClosed, setIsClosed] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -91,23 +97,49 @@ export function CustomStatusEditorModal({
       if (isEditing) {
         await updateMutation.mutateAsync({
           id: status.id,
-          payload: { name: name.trim(), color, sortOrder, mapsToStatus, isClosed, isDefault, isActive },
+          payload: {
+            name: name.trim(),
+            color,
+            sortOrder,
+            mapsToStatus,
+            isClosed,
+            isDefault,
+            isActive,
+          },
         });
-        addToast({ title: 'Updated', description: 'Custom status updated successfully', severity: 'success' });
+        toast('Updated', {
+          description: 'Custom status updated successfully',
+          variant: 'success',
+        });
       } else {
-        await createMutation.mutateAsync({ name: name.trim(), color, sortOrder, mapsToStatus, isClosed, isDefault });
-        addToast({ title: 'Created', description: 'Custom status created successfully', severity: 'success' });
+        await createMutation.mutateAsync({
+          name: name.trim(),
+          color,
+          sortOrder,
+          mapsToStatus,
+          isClosed,
+          isDefault,
+        });
+        toast('Created', {
+          description: 'Custom status created successfully',
+          variant: 'success',
+        });
       }
       onClose();
     } catch {
-      addToast({ title: 'Error', description: 'Failed to save custom status', severity: 'danger' });
+      toast('Error', {
+        description: 'Failed to save custom status',
+        variant: 'danger',
+      });
     }
   };
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader>{isEditing ? 'Edit Custom Status' : 'Create Custom Status'}</BaseModalHeader>
+        <BaseModalHeader>
+          {isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
+        </BaseModalHeader>
         <BaseModalBody className="space-y-4">
           <BaseInput
             label="Name"
@@ -131,65 +163,79 @@ export function CustomStatusEditorModal({
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1.5 text-foreground">Color</label>
+              <label className="text-foreground mb-1.5 block text-sm font-medium">
+                Color
+              </label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="h-10 w-10 rounded border border-default-200 cursor-pointer"
+                  className="border-light h-10 w-10 cursor-pointer rounded border"
                 />
-                <span className="text-sm text-default-500">{color}</span>
+                <span className="text-default-500 text-sm">{color}</span>
               </div>
             </div>
           </div>
 
           <BaseSelect
             label="Maps to system status"
-            selectedKeys={[String(mapsToStatus)]}
+            selectedKey={String(mapsToStatus)}
             onSelectionChange={(keys) => {
-              const key = Array.from(keys)[0] as string;
+              const key = keys as string;
               setMapsToStatus(Number(key) as TicketStatus);
             }}
           >
             {MAPS_TO_OPTIONS.map((opt) => (
-              <BaseSelectItem key={String(opt.value)}>{opt.label}</BaseSelectItem>
+              <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
+                {opt.label}
+              </BaseSelectItem>
             ))}
           </BaseSelect>
 
-          <div className="space-y-3 p-3 bg-default-50 rounded-lg border border-default-200">
+          <div className="bg-default-50 border-light space-y-3 rounded-lg border p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Counts as closed</p>
-                <p className="text-xs text-default-500">Tickets with this status are counted as resolved in reports</p>
+                <p className="text-default-500 text-xs">
+                  Tickets with this status are counted as resolved in reports
+                </p>
               </div>
-              <Switch isSelected={isClosed} onValueChange={setIsClosed} size="sm" />
+              <BaseToggle isSelected={isClosed} onChange={setIsClosed} />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Default for new tickets</p>
-                <p className="text-xs text-default-500">New tickets will start with this status</p>
+                <p className="text-default-500 text-xs">
+                  New tickets will start with this status
+                </p>
               </div>
-              <Switch isSelected={isDefault} onValueChange={setIsDefault} size="sm" />
+              <BaseToggle isSelected={isDefault} onChange={setIsDefault} />
             </div>
 
             {isEditing && (
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Active</p>
-                  <p className="text-xs text-default-500">Inactive statuses are hidden from selection</p>
+                  <p className="text-default-500 text-xs">
+                    Inactive statuses are hidden from selection
+                  </p>
                 </div>
-                <Switch isSelected={isActive} onValueChange={setIsActive} size="sm" />
+                <BaseToggle isSelected={isActive} onChange={setIsActive} />
               </div>
             )}
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose} isDisabled={isSubmitting}>
+          <BaseButton
+            variant="bordered"
+            onPress={onClose}
+            isDisabled={isSubmitting || isSubmitting}
+          >
             Cancel
           </BaseButton>
-          <BaseButton color="primary" onPress={handleSubmit} isLoading={isSubmitting}>
+          <BaseButton color="primary" onPress={handleSubmit}>
             {isEditing ? 'Save Changes' : 'Create Status'}
           </BaseButton>
         </BaseModalFooter>

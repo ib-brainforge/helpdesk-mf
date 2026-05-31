@@ -8,17 +8,23 @@
  * - Security log bridging
  */
 
-import React, { useEffect } from 'react';
 import {
   ObservabilityProvider as BaseObservabilityProvider,
   useLogger,
 } from '@brainforgeau/observability';
+import type React from 'react';
+import { useEffect } from 'react';
 import { observabilityConfig } from './config';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface SecurityLogSink {
-  log: (level: LogLevel, scope: string, message: string, context?: Record<string, unknown>) => void;
+  log: (
+    level: LogLevel,
+    scope: string,
+    message: string,
+    context?: Record<string, unknown>,
+  ) => void;
 }
 
 // Global key used by security package for log sink
@@ -48,7 +54,12 @@ function SecurityLogBridge({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Register the security log sink to forward logs to observability
     setSecurityLogSink({
-      log: (level: LogLevel, scope: string, message: string, context?: Record<string, unknown>) => {
+      log: (
+        level: LogLevel,
+        scope: string,
+        message: string,
+        context?: Record<string, unknown>,
+      ) => {
         const logFn = logger[level];
         if (logFn) {
           logFn(message, { scope, ...context });

@@ -9,9 +9,15 @@ export interface AiAssistResult {
 
 export const useGetTicketSummary = () => {
   return useMutation({
-    mutationFn: async (ticketId: string): Promise<AiAssistResult> => {
+    mutationFn: async ({
+      ticketId,
+      signal,
+    }: { ticketId: string; signal?: AbortSignal }): Promise<AiAssistResult> => {
       const client = await createHelpdeskApiClient(AiAssistApi);
-      const response = await client.v1AiTicketSummaryPost({ ticketId });
+      const response = await client.v1AiTicketSummaryPost(
+        { ticketId },
+        { signal },
+      );
       return response.data as AiAssistResult;
     },
   });
@@ -19,9 +25,15 @@ export const useGetTicketSummary = () => {
 
 export const useSuggestReply = () => {
   return useMutation({
-    mutationFn: async (ticketId: string): Promise<AiAssistResult> => {
+    mutationFn: async ({
+      ticketId,
+      signal,
+    }: { ticketId: string; signal?: AbortSignal }): Promise<AiAssistResult> => {
       const client = await createHelpdeskApiClient(AiAssistApi);
-      const response = await client.v1AiSuggestReplyPost({ ticketId });
+      const response = await client.v1AiSuggestReplyPost(
+        { ticketId },
+        { signal },
+      );
       return response.data as AiAssistResult;
     },
   });

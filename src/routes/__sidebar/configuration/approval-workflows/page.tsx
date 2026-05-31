@@ -4,18 +4,16 @@ import {
   useApprovalWorkflowsTable,
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { BaseButton, Icon } from '@brainforgeau/components';
 import {
-  BaseButton,
-  BaseTable,
-  Icon,
-  TablePagination,
-} from '@brainforgeau/components';
-import { Helmet } from '@modern-js/runtime/head';
+  EmptyState,
+  ListPage,
+  useConfirm,
+} from '@brainforgeau/components/page';
+import { withAuthorizationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
-import { useCallback, useMemo, useState } from 'react';
-
-// REVIEW: Following existing pattern from automation rules admin page
+import { useCallback, useMemo } from 'react';
 
 function ApprovalWorkflowsPage() {
   const navigate = useNavigate();
@@ -23,7 +21,7 @@ function ApprovalWorkflowsPage() {
     useApprovalWorkflows();
 
   const deleteMutation = useDeleteApprovalWorkflow();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const handleEdit = useCallback(
     (workflowId: string) => {
@@ -32,22 +30,33 @@ function ApprovalWorkflowsPage() {
     [navigate],
   );
 
-  const handleDeleteRequest = useCallback((workflowId: string) => {
-    setPendingDeleteId(workflowId);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => {
-        refetch();
-        setPendingDeleteId(null);
-      },
-      onError: () => {
-        setPendingDeleteId(null);
-      },
-    });
-  }, [pendingDeleteId, deleteMutation, refetch]);
+  const handleDeleteRequest = useCallback(
+    async (workflowId: string) => {
+      const ok = await confirm({
+        title: 'Delete Approval Workflow',
+        body: 'Are you sure you want to delete this approval workflow? This cannot be undone.',
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(workflowId, {
+        onSuccess: () => {
+          toast('Deleted', {
+            description: 'Approval workflow deleted successfully.',
+            variant: 'success',
+          });
+          refetch();
+        },
+        onError: () => {
+          toast('Error', {
+            description: 'Failed to delete approval workflow.',
+            variant: 'danger',
+          });
+        },
+      });
+    },
+    [confirm, deleteMutation, refetch],
+  );
 
   const columns = useMemo(
     () =>
@@ -66,63 +75,41 @@ function ApprovalWorkflowsPage() {
     onPaginationChange: setPagination,
   });
 
-  const paginationTemplate = () => {
-    const totalPages = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
-    return (
-      <TablePagination
-        totalPages={totalPages}
-        currentPage={pagination.pageIndex + 1}
-        onPageChange={(page: number) =>
-          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
-        }
-      />
-    );
-  };
-
   return (
-    <>
-      <Helmet>
-        <title>Approval Workflows - Configuration</title>
-      </Helmet>
-      <div className="mb-5">
-        <div className="mb-5 items-start gap-5 lg:flex">
-          <h1 className="text-gray mb-2 text-2xl font-semibold md:mb-0 dark:text-white">
-            Approval Workflows
-          </h1>
-          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
+    <ListPage
+      title="Approval Workflows"
+      breadcrumbsKey="configuration.approval-workflows.list"
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+          onPress={() => navigate('/configuration/approval-workflows/new')}
+        >
+          Approval Workflow
+        </BaseButton>
+      }
+      empty={
+        <EmptyState
+          title="No approval workflows yet"
+          description="Create your first approval workflow to require managerial sign-off on tickets."
+          action={
             <BaseButton
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+              color="primary"
               onPress={() => navigate('/configuration/approval-workflows/new')}
             >
-              Approval Workflow
+              Create Approval Workflow
             </BaseButton>
-          </div>
-        </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Configure approval workflows for tickets requiring managerial or team
-          approval.
-        </p>
-      </div>
-
-      <BaseTable
-        fullHeight
-        table={table}
-        showInfo={false}
-        paginationTemplate={paginationTemplate}
-        isLoading={isLoading}
-        loading={{ title: 'Loading...' }}
-      />
-
-      <ConfirmDeleteModal
-        isOpen={pendingDeleteId !== null}
-        onClose={() => setPendingDeleteId(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Approval Workflow"
-        message="Are you sure you want to delete this approval workflow? This cannot be undone."
-        isPending={deleteMutation.isPending}
-      />
-    </>
+          }
+          live
+        />
+      }
+      modals={dialog}
+    />
   );
 }
 
-export default ApprovalWorkflowsPage;
+export default withAuthorizationRequired(ApprovalWorkflowsPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});

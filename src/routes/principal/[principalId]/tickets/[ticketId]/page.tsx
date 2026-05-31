@@ -1,22 +1,123 @@
 /**
  * Principal ticket detail page — /principal/[principalId]/tickets/[ticketId]
+ *
+ * W1-P8: Migrated to <DetailPage> with four tabs:
+ *   - Details (form-bearing via useEntityForm)
+ *   - Comments (read-only thread)
+ *   - History (placeholder — read-only)
+ *   - Audit (placeholder — read-only)
+ *
+ * Tab state is URL-synced via `?tab=` using useTabSearchParam + useDetailTabState.
  */
 
-import { PageSpinner, BaseButton, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { useParams, useNavigate } from '@modern-js/runtime/router';
-import { usePrincipalTicket, useUpdatePrincipalTicketStatus } from '@/hooks/usePrincipalTicket';
+import { CommentThread, ReplyEditor, useComments } from '@/components/comments';
 import { StatusBadge } from '@/components/shared';
+import { usePrincipal } from '@/hooks/usePrincipal';
+import {
+  usePrincipalTicket,
+  useUpdatePrincipalTicketPriority,
+  useUpdatePrincipalTicketStatus,
+} from '@/hooks/usePrincipalTicket';
+import { useTabSearchParam } from '@/hooks/useTabSearchParam';
+import {
+  BaseButton,
+  BaseSelect,
+  BaseSelectItem,
+  PageSpinner,
+} from '@brainforgeau/components';
+import {
+  DetailPage,
+  EmptyState,
+  PendingCrumb,
+  useDetailTabState,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import {
+  HelpdeskDomainTicketsEnumsTicketPriority,
+  HelpdeskDomainTicketsEnumsTicketStatus,
+} from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
-import { addToast } from '@heroui/react';
+import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+const ticketDetailsSchema = z.object({
+  status: z.nativeEnum(HelpdeskDomainTicketsEnumsTicketStatus),
+  priority: z.nativeEnum(HelpdeskDomainTicketsEnumsTicketPriority),
+});
+
+type TicketDetailsFormData = z.infer<typeof ticketDetailsSchema>;
+
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
 
 function PrincipalTicketDetailPage() {
-  const { principalId, ticketId } = useParams<{ principalId: string; ticketId: string }>();
+  const { principalId, ticketId } = useParams<{
+    principalId: string;
+    ticketId: string;
+  }>();
   const navigate = useNavigate();
   const timezone = useTimezone();
-  const { data: ticket, isLoading, error } = usePrincipalTicket(principalId!, ticketId!);
-  const updateStatusMutation = useUpdatePrincipalTicketStatus(principalId!);
+  const { data: principal } = usePrincipal(principalId);
+
+  const {
+    data: ticket,
+    isLoading,
+    error,
+  } = usePrincipalTicket(principalId!, ticketId!);
+
+  const updateStatus = useUpdatePrincipalTicketStatus(principalId!);
+  const updatePriority = useUpdatePrincipalTicketPriority(principalId!);
+
+  const { comments, isLoading: commentsLoading } = useComments(ticketId!);
+
+  const { getParam, setParam } = useTabSearchParam();
+  const { activeTab, setActiveTab } = useDetailTabState({
+    defaultTab: 'details',
+    getParam,
+    setParam,
+  });
+
+  const detailsForm = useEntityForm<typeof ticketDetailsSchema>({
+    schema: ticketDetailsSchema,
+    defaultValues: {
+      status: HelpdeskDomainTicketsEnumsTicketStatus.New,
+      priority: HelpdeskDomainTicketsEnumsTicketPriority.Normal,
+    },
+    values: ticket
+      ? {
+          status: ticket.status ?? HelpdeskDomainTicketsEnumsTicketStatus.New,
+          priority:
+            ticket.priority ?? HelpdeskDomainTicketsEnumsTicketPriority.Normal,
+        }
+      : undefined,
+    onSubmit: async (values: TicketDetailsFormData) => {
+      if (!ticketId) return;
+      if (ticket?.status !== values.status) {
+        await updateStatus.mutateAsync({
+          ticketId,
+          command: { newStatus: values.status },
+        });
+      }
+      if (ticket?.priority !== values.priority) {
+        await updatePriority.mutateAsync({
+          ticketId,
+          command: { newPriority: values.priority },
+        });
+      }
+    },
+    invalidateQueryKeys: [
+      ['principal-ticket', principalId, ticketId],
+      ['principal-tickets', principalId],
+    ],
+    toast: { success: 'Ticket saved', error: 'Save failed' },
+  });
 
   if (isLoading) {
     return (
@@ -28,112 +129,173 @@ function PrincipalTicketDetailPage() {
 
   if (error || !ticket) {
     return (
-      <div className="flex h-32 flex-col items-center justify-center gap-2 text-center">
-        <p className="font-semibold">Ticket not found</p>
-        <BaseButton
-          variant="light"
-          size="sm"
-          onPress={() => navigate(`/principal/${principalId}/tickets`)}
-        >
-          Back to tickets
-        </BaseButton>
-      </div>
+      <EmptyState
+        title="Ticket not found"
+        description="This ticket does not exist or has been removed."
+        action={
+          <BaseButton
+            onPress={() => navigate(`/principal/${principalId}/tickets`)}
+          >
+            Back to tickets
+          </BaseButton>
+        }
+      />
     );
   }
 
-  const statusColorMap: Record<string, 'primary' | 'warning' | 'success' | 'default'> = {
-    New: 'primary',
-    InProgress: 'warning',
-    Closed: 'success',
-  };
-
-  const handleStatusChange = async (status: string) => {
-    try {
-      await updateStatusMutation.mutateAsync({
-        ticketId: ticketId!,
-        command: { newStatus: status as any },
-      });
-      addToast({ title: 'Status updated', color: 'success' });
-    } catch {
-      addToast({ title: 'Failed to update status', color: 'danger' });
-    }
-  };
+  const form = detailsForm.form;
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">{ticket.subject ?? 'Untitled Ticket'}</h1>
-          <p className="text-sm text-muted-foreground font-mono">
-            {ticket.id?.substring(0, 8)}
-          </p>
-        </div>
-        <BaseButton
-          variant="light"
-          size="sm"
-          onPress={() => navigate(`/principal/${principalId}/tickets`)}
-        >
-          Back
-        </BaseButton>
-      </div>
+    <DetailPage
+      title={ticket.subject ?? 'Untitled Ticket'}
+      breadcrumbsKey="principal.tickets.detail"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: principal?.name ?? PendingCrumb,
+        ticketId: ticketId!,
+        subject: ticket.subject ?? PendingCrumb,
+      }}
+      documentTitle={ticket.subject ? `Ticket: ${ticket.subject}` : undefined}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      {/* ------------------------------------------------------------------ */}
+      {/* Tab: Details                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <DetailPage.Tab
+        id="details"
+        title="Details"
+        formActions={detailsForm.formActions}
+      >
+        <div className="max-w-lg">
+          <form className="flex flex-col gap-5">
+            {/* Ticket metadata */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                Ticket ID
+              </span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {ticket.id?.substring(0, 8)}
+              </span>
+            </div>
 
-      <div className="flex flex-wrap gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Status</span>
-          <BaseSelect
-            size="sm"
-            selectedKeys={ticket.status ? [ticket.status] : []}
-            onSelectionChange={keys => {
-              const val = Array.from(keys)[0]?.toString();
-              if (val) handleStatusChange(val);
-            }}
-            className="w-40"
-          >
-            {['New', 'InProgress', 'Closed'].map(s => (
-              <BaseSelectItem key={s}>{s}</BaseSelectItem>
-            ))}
-          </BaseSelect>
-        </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                Created
+              </span>
+              <span className="text-sm">
+                {formatDateTime(ticket.createdAt, { timezone })}
+              </span>
+            </div>
 
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Priority</span>
-          <StatusBadge
-            color={
-              ticket.priority === 'Critical'
-                ? 'danger'
-                : ticket.priority === 'High'
-                  ? 'warning'
-                  : ticket.priority === 'Normal'
-                    ? 'primary'
-                    : 'default'
-            }
-          >
-            {ticket.priority ?? 'None'}
-          </StatusBadge>
-        </div>
+            {/* Editable fields */}
+            <form.Field name="status">
+              {field => (
+                <BaseSelect
+                  label="Status"
+                  selectedKey={field.state.value}
+                  onSelectionChange={key => {
+                    if (key)
+                      field.handleChange(
+                        String(key) as HelpdeskDomainTicketsEnumsTicketStatus,
+                      );
+                  }}
+                  isInvalid={field.state.meta.errors.length > 0}
+                  errorMessage={field.state.meta.errors.map(String).join(', ')}
+                >
+                  {Object.values(HelpdeskDomainTicketsEnumsTicketStatus).map(
+                    s => (
+                      <BaseSelectItem key={s} value={s}>{s}</BaseSelectItem>
+                    ),
+                  )}
+                </BaseSelect>
+              )}
+            </form.Field>
 
-        {ticket.categoryId && (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">Category ID</span>
-            <span className="font-mono text-xs">{ticket.categoryId.substring(0, 8)}</span>
-          </div>
-        )}
+            <form.Field name="priority">
+              {field => (
+                <BaseSelect
+                  label="Priority"
+                  selectedKey={field.state.value}
+                  onSelectionChange={key => {
+                    if (key)
+                      field.handleChange(
+                        String(key) as HelpdeskDomainTicketsEnumsTicketPriority,
+                      );
+                  }}
+                  isInvalid={field.state.meta.errors.length > 0}
+                  errorMessage={field.state.meta.errors.map(String).join(', ')}
+                >
+                  {Object.values(HelpdeskDomainTicketsEnumsTicketPriority).map(
+                    p => (
+                      <BaseSelectItem key={p} value={p}>{p}</BaseSelectItem>
+                    ),
+                  )}
+                </BaseSelect>
+              )}
+            </form.Field>
 
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Created</span>
-          <span className="text-sm">{formatDateTime(ticket.createdAt, { timezone })}</span>
-        </div>
-      </div>
+            {ticket.description && (
+              <div className="flex flex-col gap-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                  Description
+                </span>
+                <div className="border rounded p-4 text-sm whitespace-pre-wrap">
+                  {ticket.description}
+                </div>
+              </div>
+            )}
 
-      {ticket.description && (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Description
-          </h2>
-          <div className="border rounded p-4 text-sm whitespace-pre-wrap">{ticket.description}</div>
+            {ticket.categoryId && (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                  Category ID
+                </span>
+                <span className="font-mono text-xs">
+                  {ticket.categoryId.substring(0, 8)}
+                </span>
+              </div>
+            )}
+          </form>
         </div>
-      )}
-    </div>
+      </DetailPage.Tab>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Tab: Comments                                                        */}
+      {/* ------------------------------------------------------------------ */}
+      <DetailPage.Tab id="comments" title="Comments">
+        <div className="flex flex-col gap-4 max-w-3xl">
+          {commentsLoading ? (
+            <PageSpinner title="Loading comments..." />
+          ) : (
+            <>
+              <CommentThread comments={comments} />
+              <ReplyEditor ticketId={ticketId!} />
+            </>
+          )}
+        </div>
+      </DetailPage.Tab>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Tab: History                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <DetailPage.Tab id="history" title="History">
+        <EmptyState
+          title="No history yet"
+          description="Status and field changes will appear here."
+        />
+      </DetailPage.Tab>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Tab: Audit                                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <DetailPage.Tab id="audit" title="Audit">
+        <EmptyState
+          title="No audit entries"
+          description="System audit events for this ticket will appear here."
+        />
+      </DetailPage.Tab>
+    </DetailPage>
   );
 }
 

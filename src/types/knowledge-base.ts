@@ -1,16 +1,20 @@
-// TODO: Replace with types from @brainforgeau/helpdesk-backend-client when available
-// These types match the backend DTOs for Knowledge Base
+// Enums use string values that match the generated @brainforgeau/helpdesk-client types
+// (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
+// This allows direct comparison against values returned from the backend without any casting.
 
 export enum KnowledgeBaseStatus {
-  Draft = 0,
-  Published = 1,
-  Archived = 2,
+  Draft = 'Draft',
+  Published = 'Published',
+  Archived = 'Archived',
 }
 
+// Access level values match HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel from the generated client.
+// Note: the old local enum used Internal/Private; the backend uses Authenticated/TechOnly/AdminOnly.
 export enum KnowledgeBaseAccessLevel {
-  Public = 0,
-  Internal = 1,
-  Private = 2,
+  Public = 'Public',
+  Authenticated = 'Authenticated',
+  TechOnly = 'TechOnly',
+  AdminOnly = 'AdminOnly',
 }
 
 export interface KnowledgeBaseCategoryDto {
@@ -37,6 +41,8 @@ export interface KnowledgeBaseArticleListDto {
   ratingCount: number;
   tags: string[];
   authorId: string;
+  // authorName is not exposed by the backend KbArticleDetailDto (only authorId is available).
+  // UI should treat absence as a gap and display a graceful fallback rather than "Unknown".
   authorName?: string;
   createdAt: string;
   updatedAt: string;

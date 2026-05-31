@@ -400,14 +400,14 @@ export function RuleMigrationReportPage() {
       </div>
 
       {!data?.length && (
-        <Card className="p-6 text-center text-gray-500">
+        <BaseCard className="p-6 text-center text-gray-500">
           No legacy rules found. All automation rules are using workflow-aware types.
-        </Card>
+        </BaseCard>
       )}
 
       <div className="space-y-2">
         {data?.map(r => (
-          <Card key={r.ruleId} className="p-4">
+          <BaseCard key={r.ruleId} className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-semibold">{r.name}</div>
@@ -418,7 +418,7 @@ export function RuleMigrationReportPage() {
               </div>
               <Chip size="sm" color={r.isEnabled ? 'success' : 'default'} variant="flat">{r.isEnabled ? 'Enabled' : 'Disabled'}</Chip>
             </div>
-          </Card>
+          </BaseCard>
         ))}
       </div>
     </div>

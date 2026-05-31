@@ -1,8 +1,8 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
-  PrincipalApprovalsApi,
   type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreatePrincipalApprovalWorkflowCommand,
   type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdatePrincipalApprovalWorkflowCommand,
+  PrincipalApprovalsApi,
 } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -50,7 +50,10 @@ export function useCreatePrincipalApprovalWorkflow(principalId: string) {
     ) => {
       const client = await createHelpdeskApiClient(PrincipalApprovalsApi);
       const response =
-        await client.v1PrincipalsPrincipalIdApprovalWorkflowsPost(principalId, command);
+        await client.v1PrincipalsPrincipalIdApprovalWorkflowsPost(
+          principalId,
+          command,
+        );
       return response.data;
     },
     onSuccess: () => {
@@ -78,7 +81,9 @@ export function useUpdatePrincipalApprovalWorkflow(principalId: string) {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY, principalId] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, principalId, variables.id] });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEY, principalId, variables.id],
+      });
     },
   });
 }

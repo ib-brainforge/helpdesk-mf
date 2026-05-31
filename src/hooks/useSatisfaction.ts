@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
-  SatisfactionRatingDto,
-  SubmitSatisfactionRatingRequest,
-  UpdateSatisfactionRatingRequest,
   CSATReportDto,
   CSATReportFilters,
+  SatisfactionRatingDto,
   SatisfactionRatingsListFilters,
+  SubmitSatisfactionRatingRequest,
+  UpdateSatisfactionRatingRequest,
 } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // REVIEW: Following existing API hook patterns - TanStack Query + generated client
 // REVIEW: SatisfactionApi will be generated from backend OpenAPI spec once backend PR is merged
@@ -20,13 +20,15 @@ export const useSatisfactionRatingByTicket = (ticketId: string) => {
     queryFn: async () => {
       const client: any = await createHelpdeskApiClient(SatisfactionApi as any);
       const { data } = await client.v1SatisfactionTicketTicketIdGet(ticketId);
-      return (data as unknown) as SatisfactionRatingDto | null;
+      return data as unknown as SatisfactionRatingDto | null;
     },
     enabled: !!ticketId,
   });
 };
 
-export const useSatisfactionRatings = (filters: SatisfactionRatingsListFilters) => {
+export const useSatisfactionRatings = (
+  filters: SatisfactionRatingsListFilters,
+) => {
   return useQuery({
     queryKey: ['satisfaction', 'list', filters],
     queryFn: async () => {
@@ -40,7 +42,10 @@ export const useSatisfactionRatings = (filters: SatisfactionRatingsListFilters) 
         filters.page,
         filters.pageSize,
       );
-      return data as unknown as { items: SatisfactionRatingDto[]; totalCount: number };
+      return data as unknown as {
+        items: SatisfactionRatingDto[];
+        totalCount: number;
+      };
     },
   });
 };
@@ -55,7 +60,7 @@ export const useCSATReport = (filters: CSATReportFilters) => {
         filters.dateTo,
         filters.groupBy as any,
       );
-      return (data as unknown) as CSATReportDto;
+      return data as unknown as CSATReportDto;
     },
   });
 };

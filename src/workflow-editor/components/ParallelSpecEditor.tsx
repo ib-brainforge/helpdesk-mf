@@ -79,31 +79,27 @@ export function ParallelSpecEditor({
       {/* Join State — single-select */}
       <BaseSelect
         label="Join State"
-        selectedKeys={
-          spec.joinStateId ? new Set([spec.joinStateId]) : new Set<string>()
-        }
-        onSelectionChange={keys => {
-          const first = Array.from(keys)[0];
-          update({ joinStateId: String(first ?? '') });
+        selectedKey={spec.joinStateId ?? null}
+        onSelectionChange={key => {
+          update({ joinStateId: (key as string) || undefined });
         }}
         isDisabled={readOnly}
-        labelPlacement="outside"
         size="sm"
         placeholder="Select join state"
-        items={availableStates}
       >
-        {s => <BaseSelectItem key={s.id}>{s.name}</BaseSelectItem>}
+        {availableStates.map(s => (
+          <BaseSelectItem key={s.id} value={s.id}>{s.name}</BaseSelectItem>
+        ))}
       </BaseSelect>
 
       {/* Join Mode — BaseRadioGroup */}
       <BaseRadioGroup
         label="Join Mode"
         value={spec.joinMode}
-        onValueChange={value =>
+        onChange={value =>
           update({ joinMode: value as ParallelSpecDto['joinMode'] })
         }
         isDisabled={readOnly}
-        size="sm"
       >
         <BaseRadio value="AllMustComplete">All must complete</BaseRadio>
         <BaseRadio value="AnyBranch">Any branch</BaseRadio>

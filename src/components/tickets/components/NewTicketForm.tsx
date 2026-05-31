@@ -1,37 +1,48 @@
-import { type FC, useCallback, useState, useMemo, useEffect } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { zodValidator } from '@tanstack/zod-form-adapter';
-import { z } from 'zod';
-import { useNavigate } from '@modern-js/runtime/router';
+import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
+import { AttachmentList } from '@/components/file-upload/AttachmentList';
+import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
+import { TagInput } from '@/components/tags/TagInput';
+import { useTags } from '@/components/tags/hooks/useTags';
+import type { AttachmentDto } from '@/types';
+import { type CreateTicketDto, TicketPriority } from '@/types/ticket';
+import { formatFormErrors } from '@/utils/error-handling';
 import {
-  BaseButton,
-  BaseInput,
-  BaseTextarea,
-  BaseSelect,
-  BaseSelectItem,
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTextarea,
   Icon,
 } from '@brainforgeau/components';
+import { toast } from '@heroui/react';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useForm } from '@tanstack/react-form';
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { z } from 'zod';
 import { useCreateTicket } from '../hooks/useTickets';
-import { TicketPriority, type CreateTicketDto } from '@/types/ticket';
-import { TagInput } from '@/components/tags/TagInput';
-import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
-import { AttachmentList } from '@/components/file-upload/AttachmentList';
-import { useTags } from '@/components/tags/hooks/useTags';
-import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
-import type { AttachmentDto } from '@/types';
-import { addToast } from '@heroui/react';
+
 import { useAtom } from 'jotai';
-import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
-import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
+import {
+  categoriesMutationAtom,
+  mapCategoryToOption,
+} from '../state/categories-dropdown-state';
+import {
+  mapUserToOption,
+  usersMutationAtom,
+} from '../state/users-dropdown-state';
 
 const createTicketSchema = z.object({
-  subject: z.string().min(1, 'Subject is required').max(200, 'Subject is too long'),
+  subject: z
+    .string()
+    .min(1, 'Subject is required')
+    .max(200, 'Subject is too long'),
   description: z.string().min(1, 'Description is required'),
   priority: z.nativeEnum(TicketPriority),
-  categoryId: z.string().optional(),
+  // Category is required — the backend now hard-rejects tickets without one.
+  categoryId: z.string().min(1, 'Category is required'),
   assigneeId: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
@@ -51,10 +62,18 @@ export const NewTicketForm: FC = () => {
   const { uploadFiles, uploadProgress } = useUploadAttachment();
 
   // Users search mutation for assignee autocomplete
-  const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
+  const [
+    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
+  ] = useAtom(usersMutationAtom);
 
   // Categories search mutation for category autocomplete
-  const [{ mutate: searchCategories, data: categoriesData, isPending: isSearchingCategories }] = useAtom(categoriesMutationAtom);
+  const [
+    {
+      mutate: searchCategories,
+      data: categoriesData,
+      isPending: isSearchingCategories,
+    },
+  ] = useAtom(categoriesMutationAtom);
 
   // Load initial data when component mounts
   useEffect(() => {
@@ -65,12 +84,12 @@ export const NewTicketForm: FC = () => {
   // Map data to options
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
-    [usersData]
+    [usersData],
   );
 
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
-    [categoriesData]
+    [categoriesData],
   );
 
   const form = useForm({
@@ -78,10 +97,14 @@ export const NewTicketForm: FC = () => {
       subject: '',
       description: '',
       priority: TicketPriority.Normal,
-      categoryId: undefined,
+      categoryId: '',
       assigneeId: undefined,
       tags: [],
     } as CreateTicketFormData,
+    validators: {
+      onChange: createTicketSchema,
+      onSubmit: createTicketSchema,
+    },
     onSubmit: async ({ value }) => {
       try {
         const dto: CreateTicketDto = {
@@ -109,10 +132,12 @@ export const NewTicketForm: FC = () => {
         }
       } catch (error) {
         console.error('Failed to create ticket:', error);
-        addToast({
-          title: 'Failed to create ticket',
-          description: error instanceof Error ? error.message : 'An error occurred while creating the ticket',
-          severity: 'danger',
+        toast('Failed to create ticket', {
+          description:
+            error instanceof Error
+              ? error.message
+              : 'An error occurred while creating the ticket',
+          variant: 'danger',
         });
       }
     },
@@ -139,7 +164,7 @@ export const NewTicketForm: FC = () => {
 
       {/* Form */}
       <form
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
@@ -148,15 +173,17 @@ export const NewTicketForm: FC = () => {
       >
         {/* Subject */}
         <form.Field name="subject">
-          {(field) => (
+          {field => (
             <div>
               <BaseInput
                 label="Subject"
                 isRequired
                 placeholder="Enter ticket subject"
                 value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={e => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
+                isInvalid={field.state.meta.errors.length > 0}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
               />
               {/* TODO: Similar KB article suggestions as user types */}
             </div>
@@ -165,16 +192,18 @@ export const NewTicketForm: FC = () => {
 
         {/* Description */}
         <form.Field name="description">
-          {(field) => (
+          {field => (
             <BaseTextarea
               label="Description"
               isRequired
               placeholder="Describe the issue in detail"
               value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={e => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               minRows={6}
               description="Use the textarea to describe the issue in detail"
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={formatFormErrors(field.state.meta.errors)}
             />
           )}
         </form.Field>
@@ -183,61 +212,77 @@ export const NewTicketForm: FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Priority */}
           <form.Field name="priority">
-            {(field) => (
+            {field => (
               <BaseSelect
                 label="Priority"
                 isRequired
-                selectedKeys={new Set([field.state.value])}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string;
+                selectedKey={field.state.value}
+                onSelectionChange={keys => {
+                  const value = keys as string;
                   field.handleChange(value as TicketPriority);
                 }}
               >
-                <BaseSelectItem key={TicketPriority.Critical}>Critical</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Normal}>Normal</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+                  Critical
+                </BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>
+                  Normal
+                </BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
               </BaseSelect>
             )}
           </form.Field>
 
-          {/* Category */}
+          {/* Category — required */}
           <form.Field name="categoryId">
-            {(field) => (
+            {field => (
               <BaseAutocomplete
                 label="Category"
-                placeholder="Search category (optional)..."
+                placeholder="Search category..."
+                isRequired
                 isClearable
+                isInvalid={field.state.meta.errors.length > 0}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
                 selectedKey={field.state.value ?? null}
-                onSelectionChange={(key) => {
+                onSelectionChange={key => {
                   const newKey = key as string | null;
-                  field.handleChange(newKey ?? undefined);
+                  field.handleChange(newKey ?? '');
                 }}
-                onClear={() => field.handleChange(undefined)}
+                onClear={() => field.handleChange('')}
                 onValueChange={(value: string) => {
                   searchCategories({ query: value });
                 }}
-                onOpenChange={(open) => {
+                onOpenChange={open => {
                   if (open && !isSearchingCategories) {
                     searchCategories({ query: '' });
                   }
                 }}
                 isLoading={isSearchingCategories}
-                renderSelectedItem={(selectedKey) => {
-                  const category = categoriesOptions.find((c) => c.id === selectedKey);
+                renderSelectedItem={selectedKey => {
+                  const category = categoriesOptions.find(
+                    c => c.id === selectedKey,
+                  );
                   if (!category) return null;
                   return (
                     <span className="truncate text-xs font-medium">
-                      {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                      {category.sectionName
+                        ? `${category.sectionName} / ${category.name}`
+                        : category.name}
                     </span>
                   );
                 }}
               >
-                {categoriesOptions.map((category) => (
+                {categoriesOptions.map(category => (
                   <BaseAutocompleteItem
                     key={category.id}
-                    textValue={category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                    id={category.id}
+                    textValue={
+                      category.sectionName
+                        ? `${category.sectionName} / ${category.name}`
+                        : category.name
+                    }
                   >
                     <div className="flex flex-col">
                       <span className="text-xs text-[#59636E] dark:text-white">
@@ -258,13 +303,13 @@ export const NewTicketForm: FC = () => {
 
         {/* Assignee */}
         <form.Field name="assigneeId">
-          {(field) => (
+          {field => (
             <BaseAutocomplete
               label="Assignee"
               placeholder="Search assignee (optional)..."
               isClearable
               selectedKey={field.state.value ?? null}
-              onSelectionChange={(key) => {
+              onSelectionChange={key => {
                 const newKey = key as string | null;
                 field.handleChange(newKey ?? undefined);
               }}
@@ -272,14 +317,14 @@ export const NewTicketForm: FC = () => {
               onValueChange={(value: string) => {
                 searchUsers({ query: value });
               }}
-              onOpenChange={(open) => {
+              onOpenChange={open => {
                 if (open && !isSearchingUsers) {
                   searchUsers({ query: '' });
                 }
               }}
               isLoading={isSearchingUsers}
-              renderSelectedItem={(selectedKey) => {
-                const user = usersOptions.find((u) => u.id === selectedKey);
+              renderSelectedItem={selectedKey => {
+                const user = usersOptions.find(u => u.id === selectedKey);
                 if (!user) return null;
                 return (
                   <div className="flex w-full min-w-0 flex-1 items-center gap-2">
@@ -295,11 +340,8 @@ export const NewTicketForm: FC = () => {
                 );
               }}
             >
-              {usersOptions.map((user) => (
-                <BaseAutocompleteItem
-                  key={user.id}
-                  textValue={user.name}
-                >
+              {usersOptions.map(user => (
+                <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
                   <div className="flex items-center gap-2.5">
                     <BaseAvatar
                       src={user.avatarUrl}
@@ -341,9 +383,14 @@ export const NewTicketForm: FC = () => {
 
             {pendingFiles.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">Pending uploads ({pendingFiles.length} files):</p>
-                {pendingFiles.map((file) => (
-                  <div key={file.name} className="flex items-center justify-between rounded border p-2">
+                <p className="text-sm text-gray-600">
+                  Pending uploads ({pendingFiles.length} files):
+                </p>
+                {pendingFiles.map(file => (
+                  <div
+                    key={file.name}
+                    className="flex items-center justify-between rounded border p-2"
+                  >
                     <span className="text-sm truncate">{file.name}</span>
                     <BaseButton
                       size="sm"
@@ -366,14 +413,15 @@ export const NewTicketForm: FC = () => {
           <BaseButton
             variant="bordered"
             onPress={handleCancel}
-            isDisabled={createTicketMutation.isPending}
+            isDisabled={
+              createTicketMutation.isPending || createTicketMutation.isPending
+            }
           >
             Cancel
           </BaseButton>
           <BaseButton
             type="submit"
             color="primary"
-            isLoading={createTicketMutation.isPending}
             icon={<Icon name="check" className="h-4 w-4" />}
           >
             Create Ticket

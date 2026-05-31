@@ -1,16 +1,20 @@
-import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
-} from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { Chip, Spinner, addToast } from '@heroui/react';
-import { Icon } from '@brainforgeau/components/base';
-import { useUserRoles, useAssignUserRole, useUnassignUserRole } from '../hooks/useAdminUsers';
 import { HELPDESK_ROLES } from '@/types/admin-user';
 import type { HelpdeskRole } from '@/types/admin-user';
+import {
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+} from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { Chip, Spinner, toast } from '@heroui/react';
+import {
+  useAssignUserRole,
+  useUnassignUserRole,
+  useUserRoles,
+} from '../hooks/useAdminUsers';
 
 interface UserRolesModalProps {
   isOpen: boolean;
@@ -25,13 +29,18 @@ const ROLE_DESCRIPTIONS: Record<HelpdeskRole, string> = {
   customer: 'Can submit and view their own tickets',
 };
 
-const ROLE_COLORS: Record<HelpdeskRole, 'primary' | 'warning' | 'default'> = {
+const ROLE_COLORS: Record<HelpdeskRole, 'accent' | 'warning' | 'default'> = {
   admin: 'warning',
-  agent: 'primary',
+  agent: 'accent',
   customer: 'default',
 };
 
-export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesModalProps) {
+export function UserRolesModal({
+  isOpen,
+  onClose,
+  userId,
+  userName,
+}: UserRolesModalProps) {
   const { data: roles, isLoading } = useUserRoles(isOpen ? userId : null);
   const assignMutation = useAssignUserRole();
   const unassignMutation = useUnassignUserRole();
@@ -42,13 +51,22 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
     try {
       if (currentRoles.has(role)) {
         await unassignMutation.mutateAsync({ userId, roleName: role });
-        addToast({ title: 'Role removed', description: `Removed "${role}" from ${userName}`, severity: 'success' });
+        toast('Role removed', {
+          description: `Removed "${role}" from ${userName}`,
+          variant: 'success',
+        });
       } else {
         await assignMutation.mutateAsync({ userId, roleName: role });
-        addToast({ title: 'Role assigned', description: `Assigned "${role}" to ${userName}`, severity: 'success' });
+        toast('Role assigned', {
+          description: `Assigned "${role}" to ${userName}`,
+          variant: 'success',
+        });
       }
     } catch {
-      addToast({ title: 'Error', description: 'Failed to update role', severity: 'danger' });
+      toast('Error', {
+        description: 'Failed to update role',
+        variant: 'danger',
+      });
     }
   };
 
@@ -59,10 +77,13 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
       <BaseModalContent>
         <BaseModalHeader>Manage Helpdesk Roles — {userName}</BaseModalHeader>
         <BaseModalBody className="space-y-3">
-          <p className="text-sm text-default-500">
-            These are helpdesk-specific roles. To manage Keycloak identity roles (login, SSO,
-            application access), use the{' '}
-            <span className="text-primary font-medium">Identity Administration</span> panel.
+          <p className="text-default-500 text-sm">
+            These are helpdesk-specific roles. To manage Keycloak identity roles
+            (login, SSO, application access), use the{' '}
+            <span className="text-primary font-medium">
+              Identity Administration
+            </span>{' '}
+            panel.
           </p>
 
           {isLoading ? (
@@ -76,23 +97,24 @@ export function UserRolesModal({ isOpen, onClose, userId, userName }: UserRolesM
                 return (
                   <div
                     key={role}
-                    className="flex items-center justify-between p-3 rounded-lg border border-default-200 bg-default-50"
+                    className="border-light bg-default-50 flex items-center justify-between rounded-lg border p-3"
                   >
                     <div className="flex items-center gap-3">
                       <Chip
                         size="sm"
                         color={ROLE_COLORS[role]}
-                        variant={isAssigned ? 'solid' : 'bordered'}
+                        variant={isAssigned ? 'primary' : 'tertiary'}
                       >
                         {role}
                       </Chip>
-                      <p className="text-sm text-default-600">{ROLE_DESCRIPTIONS[role]}</p>
+                      <p className="text-default-600 text-sm">
+                        {ROLE_DESCRIPTIONS[role]}
+                      </p>
                     </div>
                     <BaseButton
                       size="sm"
                       variant={isAssigned ? 'bordered' : 'light'}
                       color={isAssigned ? 'danger' : 'primary'}
-                      isLoading={isBusy}
                       isDisabled={isBusy}
                       onPress={() => handleToggle(role)}
                       icon={

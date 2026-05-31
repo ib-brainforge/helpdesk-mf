@@ -1,19 +1,32 @@
-import { type FC, useState, useCallback, useMemo, useEffect } from 'react';
+import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
+  type TicketFilters as TicketFiltersType,
+  TicketPriority,
+  TicketStatus,
+} from '@/types/ticket';
+import {
+  BaseAutocomplete,
+  BaseAutocompleteItem,
+  BaseAvatar,
   BaseButton,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  BaseAutocomplete,
-  BaseAutocompleteItem,
-  BaseAvatar,
+  BaseTagSelect,
+  BaseTagSelectItem,
   Icon,
 } from '@brainforgeau/components';
-import { TicketStatus, TicketPriority, type TicketFilters as TicketFiltersType } from '@/types/ticket';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAtom } from 'jotai';
-import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
-import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  categoriesMutationAtom,
+  mapCategoryToOption,
+} from '../state/categories-dropdown-state';
+import {
+  mapUserToOption,
+  usersMutationAtom,
+} from '../state/users-dropdown-state';
 
 interface TicketFiltersProps {
   filters: TicketFiltersType;
@@ -31,11 +44,30 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   const [preset, setPreset] = useState<string>('all');
   const { currentUser } = useCurrentUser();
 
+  // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
+  const { customStatuses } = useCustomStatuses();
+  const activeCustomStatuses = useMemo(
+    () => customStatuses.filter((s) => s.isActive),
+    [customStatuses]
+  );
+
+  // Custom-status option values are prefixed so they can be told apart from
+  // built-in TicketStatus enum values when routing to the backend.
+  const CUSTOM_STATUS_PREFIX = 'custom:';
+
   // Users search mutation for assignee autocomplete
-  const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
+  const [
+    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
+  ] = useAtom(usersMutationAtom);
 
   // Categories search mutation for category autocomplete
-  const [{ mutate: searchCategories, data: categoriesData, isPending: isSearchingCategories }] = useAtom(categoriesMutationAtom);
+  const [
+    {
+      mutate: searchCategories,
+      data: categoriesData,
+      isPending: isSearchingCategories,
+    },
+  ] = useAtom(categoriesMutationAtom);
 
   // Load initial data when component mounts
   useEffect(() => {
@@ -55,47 +87,83 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     [categoriesData]
   );
 
-  const handlePresetChange = useCallback((value: string) => {
-    setPreset(value);
+  const handlePresetChange = useCallback(
+    (value: string) => {
+      setPreset(value);
 
-    // Apply preset filters
-    switch (value) {
-      case 'all':
-        onFiltersChange({});
-        break;
-      case 'my-tickets':
-        if (currentUser?.id) {
-          onFiltersChange({ assigneeId: [currentUser.id] });
-        }
-        break;
-      case 'unassigned':
-        // REVIEW: Backend doesn't support unassigned filter directly - would need to be implemented
-        onFiltersChange({});
-        break;
-      case 'overdue':
-        // REVIEW: Backend doesn't support overdue filter yet - would need to be implemented
-        onFiltersChange({});
-        break;
-      default:
-        onFiltersChange({});
-    }
-  }, [onFiltersChange, currentUser]);
+      // Apply preset filters
+      switch (value) {
+        case 'all':
+          onFiltersChange({});
+          break;
+        case 'my-tickets':
+          if (currentUser?.id) {
+            onFiltersChange({ assigneeId: [currentUser.id] });
+          }
+          break;
+        case 'unassigned':
+          onFiltersChange({ unassignedOnly: true });
+          break;
+        case 'overdue':
+          onFiltersChange({ overdueOnly: true });
+          break;
+        default:
+          onFiltersChange({});
+      }
+    },
+    [onFiltersChange, currentUser]
+  );
 
-  const handleStatusChange = useCallback((value: string[]) => {
-    onFiltersChange({ ...filters, status: value.length > 0 ? value : undefined });
-  }, [filters, onFiltersChange]);
+  const handleStatusChange = useCallback(
+    (value: string[]) => {
+      // Selections are a mix of built-in TicketStatus enum values and
+      // prefixed custom-status ids. Built-in values route to `status`,
+      // custom ids route to `customStatusId`.
+      const builtInStatuses = value.filter(
+        (v) => !v.startsWith(CUSTOM_STATUS_PREFIX)
+      );
+      const customStatusIds = value
+        .filter((v) => v.startsWith(CUSTOM_STATUS_PREFIX))
+        .map((v) => v.slice(CUSTOM_STATUS_PREFIX.length));
 
-  const handlePriorityChange = useCallback((value: string[]) => {
-    onFiltersChange({ ...filters, priority: value.length > 0 ? value : undefined });
-  }, [filters, onFiltersChange]);
+      onFiltersChange({
+        ...filters,
+        status: builtInStatuses.length > 0 ? builtInStatuses : undefined,
+        customStatusId: customStatusIds[0],
+      });
+    },
+    [filters, onFiltersChange]
+  );
 
-  const handleCategoryChange = useCallback((value: string[]) => {
-    onFiltersChange({ ...filters, categoryId: value.length > 0 ? value : undefined });
-  }, [filters, onFiltersChange]);
+  const handlePriorityChange = useCallback(
+    (value: string[]) => {
+      onFiltersChange({
+        ...filters,
+        priority: value.length > 0 ? value : undefined,
+      });
+    },
+    [filters, onFiltersChange]
+  );
 
-  const handleAssigneeChange = useCallback((value: string[]) => {
-    onFiltersChange({ ...filters, assigneeId: value.length > 0 ? value : undefined });
-  }, [filters, onFiltersChange]);
+  const handleCategoryChange = useCallback(
+    (value: string[]) => {
+      onFiltersChange({
+        ...filters,
+        categoryId: value.length > 0 ? value : undefined,
+      });
+    },
+    [filters, onFiltersChange]
+  );
+
+  const handleAssigneeChange = useCallback(
+    (value: string[]) => {
+      onFiltersChange({
+        ...filters,
+        assigneeId: value.length > 0 ? value : undefined,
+      });
+    },
+    [filters, onFiltersChange]
+  );
 
   const handleClearFilters = useCallback(() => {
     setPreset('all');
@@ -107,11 +175,14 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     <div className="flex w-full flex-wrap items-end gap-2.5">
       <div className="min-w-60 flex-1">
         <BaseInput
+          label="Search"
           type="text"
           placeholder="Search tickets..."
           value={searchTerm}
           onChange={(e) => onSearch(e.target.value)}
-          startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-gray-400" />}
+          startContent={
+            <Icon name="magnifying-glass" className="h-4 w-4 text-gray-400" />
+          }
         />
       </div>
 
@@ -120,49 +191,110 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           label="View Preset"
           placeholder="Select preset"
           className="w-full"
-          selectedKeys={new Set([preset])}
+          selectedKey={preset}
           onSelectionChange={(keys) => {
-            const value = Array.from(keys)[0] as string;
+            const value = keys as string;
             handlePresetChange(value);
           }}
         >
-          <BaseSelectItem key="all">All Tickets</BaseSelectItem>
-          <BaseSelectItem key="my-tickets">My Tickets</BaseSelectItem>
-          <BaseSelectItem key="unassigned">Unassigned</BaseSelectItem>
-          <BaseSelectItem key="overdue">Overdue</BaseSelectItem>
+          <BaseSelectItem key="all" value="all">
+            All Tickets
+          </BaseSelectItem>
+          <BaseSelectItem key="my-tickets" value="my-tickets">
+            My Tickets
+          </BaseSelectItem>
+          <BaseSelectItem key="unassigned" value="unassigned">
+            Unassigned
+          </BaseSelectItem>
+          <BaseSelectItem key="overdue" value="overdue">
+            Overdue
+          </BaseSelectItem>
         </BaseSelect>
       </div>
 
       <div className="min-w-40">
-        <BaseSelect
+        <BaseTagSelect
           label="Status"
           placeholder="Filter by status"
-          className="w-full"
-          selectionMode="multiple"
-          selectedKeys={new Set(filters.status?.map(s => s.toString()) ?? [])}
-          onSelectionChange={(keys) => handleStatusChange(Array.from(keys) as string[])}
+          classNames={{ base: 'w-full [&_svg]:my-0' }}
+          value={[
+            ...(filters.status?.map((s) => s.toString()) ?? []),
+            ...(filters.customStatusId
+              ? [`${CUSTOM_STATUS_PREFIX}${filters.customStatusId}`]
+              : []),
+          ]}
+          onValueChange={handleStatusChange}
         >
-          <BaseSelectItem key={TicketStatus.New}>New</BaseSelectItem>
-          <BaseSelectItem key={TicketStatus.InProgress}>In Progress</BaseSelectItem>
-          <BaseSelectItem key={TicketStatus.Closed}>Closed</BaseSelectItem>
-        </BaseSelect>
+          {[
+            <BaseTagSelectItem
+              key={TicketStatus.New}
+              value={TicketStatus.New}
+            >
+              New
+            </BaseTagSelectItem>,
+            <BaseTagSelectItem
+              key={TicketStatus.InProgress}
+              value={TicketStatus.InProgress}
+            >
+              In Progress
+            </BaseTagSelectItem>,
+            <BaseTagSelectItem
+              key={TicketStatus.Closed}
+              value={TicketStatus.Closed}
+            >
+              Closed
+            </BaseTagSelectItem>,
+            ...activeCustomStatuses.map((cs) => (
+              <BaseTagSelectItem
+                key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+                value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+              >
+                {cs.name}
+              </BaseTagSelectItem>
+            )),
+          ]}
+        </BaseTagSelect>
       </div>
 
       <div className="min-w-40">
-        <BaseSelect
+        <BaseTagSelect
           label="Priority"
           placeholder="Filter by priority"
-          className="w-full"
-          selectionMode="multiple"
-          selectedKeys={new Set(filters.priority?.map(p => p.toString()) ?? [])}
-          onSelectionChange={(keys) => handlePriorityChange(Array.from(keys) as string[])}
+          classNames={{ base: 'w-full [&_svg]:my-0' }}
+          value={filters.priority?.map((p) => p.toString()) ?? []}
+          onValueChange={handlePriorityChange}
         >
-          <BaseSelectItem key={TicketPriority.Critical}>Critical</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.Normal}>Normal</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
-          <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
-        </BaseSelect>
+          <BaseTagSelectItem
+            key={TicketPriority.Critical}
+            value={TicketPriority.Critical}
+          >
+            Critical
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.High}
+            value={TicketPriority.High}
+          >
+            High
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.Normal}
+            value={TicketPriority.Normal}
+          >
+            Normal
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.Low}
+            value={TicketPriority.Low}
+          >
+            Low
+          </BaseTagSelectItem>
+          <BaseTagSelectItem
+            key={TicketPriority.None}
+            value={TicketPriority.None}
+          >
+            None
+          </BaseTagSelectItem>
+        </BaseTagSelect>
       </div>
 
       <div className="min-w-40">
@@ -187,11 +319,15 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           }}
           isLoading={isSearchingCategories}
           renderSelectedItem={(selectedKey) => {
-            const category = categoriesOptions.find((c) => c.id === selectedKey);
+            const category = categoriesOptions.find(
+              (c) => c.id === selectedKey
+            );
             if (!category) return null;
             return (
               <span className="truncate text-xs font-medium">
-                {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                {category.sectionName
+                  ? `${category.sectionName} / ${category.name}`
+                  : category.name}
               </span>
             );
           }}
@@ -199,7 +335,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           {categoriesOptions.map((category) => (
             <BaseAutocompleteItem
               key={category.id}
-              textValue={category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+              id={category.id}
+              textValue={
+                category.sectionName
+                  ? `${category.sectionName} / ${category.name}`
+                  : category.name
+              }
             >
               <div className="flex flex-col">
                 <span className="text-xs text-[#59636E] dark:text-white">
@@ -242,11 +383,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             if (!user) return null;
             return (
               <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-                <BaseAvatar
-                  src={user.avatarUrl}
-                  name={user.name}
-                  size="xs"
-                />
+                <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                 <span className="truncate text-xs font-medium">
                   {user.name}
                 </span>
@@ -257,14 +394,11 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           {usersOptions.map((user) => (
             <BaseAutocompleteItem
               key={user.id}
+              id={user.id}
               textValue={user.name}
             >
               <div className="flex items-center gap-2.5">
-                <BaseAvatar
-                  src={user.avatarUrl}
-                  name={user.name}
-                  size="xs"
-                />
+                <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                 <div className="flex-1">
                   <span className="text-xs text-[#59636E] dark:text-white">
                     {user.name}

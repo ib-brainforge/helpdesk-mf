@@ -18,7 +18,7 @@ export const HelpdeskPermissions = {
 } as const;
 
 export type HelpdeskPermission =
-  | typeof HelpdeskPermissions.Settings[keyof typeof HelpdeskPermissions.Settings]
+  | (typeof HelpdeskPermissions.Settings)[keyof typeof HelpdeskPermissions.Settings]
   | typeof HelpdeskPermissions.TicketRead
   | typeof HelpdeskPermissions.TicketWrite
   | typeof HelpdeskPermissions.TicketDelete

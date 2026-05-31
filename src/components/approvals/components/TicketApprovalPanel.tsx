@@ -1,4 +1,3 @@
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
 import { StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import {
@@ -18,6 +17,7 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { type FC, useCallback, useState } from 'react';
@@ -28,8 +28,6 @@ import {
   useRequestApproval,
   useTicketApproval,
 } from '../hooks';
-
-// REVIEW: Component integrates into existing ticket detail view
 
 interface TicketApprovalPanelProps {
   ticketId: string;
@@ -44,10 +42,10 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
   const requestApprovalMutation = useRequestApproval();
   const makeDecisionMutation = useMakeApprovalDecision();
   const cancelApprovalMutation = useCancelApproval();
+  const { confirm, dialog } = useConfirm();
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
   const [selectedStepId, setSelectedStepId] = useState<string>('');
   const [decision, setDecision] = useState<ApprovalDecisionType>(
@@ -87,17 +85,17 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
     );
   }, [approval, selectedStepId, decision, comment, makeDecisionMutation]);
 
-  const handleCancelApproval = useCallback(() => {
+  const handleCancelApproval = useCallback(async () => {
     if (!approval) return;
-    setShowCancelConfirm(true);
-  }, [approval]);
-
-  const handleCancelApprovalConfirm = useCallback(() => {
-    if (!approval) return;
-    cancelApprovalMutation.mutate(approval.id, {
-      onSettled: () => setShowCancelConfirm(false),
+    const ok = await confirm({
+      title: 'Cancel Approval',
+      body: 'Are you sure you want to cancel this approval? This cannot be undone.',
+      confirmLabel: 'Cancel Approval',
+      destructive: true,
     });
-  }, [approval, cancelApprovalMutation]);
+    if (!ok) return;
+    cancelApprovalMutation.mutate(approval.id);
+  }, [approval, confirm, cancelApprovalMutation]);
 
   const getStateChipColor = (state: ApprovalState) => {
     switch (state) {
@@ -208,8 +206,9 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               <BaseButton
                 color="primary"
                 onPress={handleRequestApproval}
-                isDisabled={!selectedWorkflowId}
-                isLoading={requestApprovalMutation.isPending}
+                isDisabled={
+                  requestApprovalMutation.isPending || !selectedWorkflowId
+                }
               >
                 Request
               </BaseButton>
@@ -382,7 +381,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               <BaseTextarea
                 label="Comment (optional)"
                 value={comment}
-                onValueChange={value => setComment(value || '')}
+                onValueChange={v => setComment(v || '')}
                 placeholder="Add a comment about your decision..."
                 minRows={3}
               />
@@ -398,7 +397,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
             <BaseButton
               color="primary"
               onPress={handleMakeDecision}
-              isLoading={makeDecisionMutation.isPending}
+              isDisabled={makeDecisionMutation.isPending}
             >
               Submit Decision
             </BaseButton>
@@ -406,15 +405,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         </BaseModalContent>
       </BaseModal>
 
-      {/* Cancel approval confirmation */}
-      <ConfirmDeleteModal
-        isOpen={showCancelConfirm}
-        onClose={() => setShowCancelConfirm(false)}
-        onConfirm={handleCancelApprovalConfirm}
-        title="Cancel Approval"
-        message="Are you sure you want to cancel this approval? This cannot be undone."
-        isPending={cancelApprovalMutation.isPending}
-      />
+      {dialog}
     </>
   );
 };

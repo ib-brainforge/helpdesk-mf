@@ -1,15 +1,15 @@
-import { type FC, useState } from 'react';
+import { TicketStatus } from '@/types/ticket';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseButton,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
-import { TicketStatus } from '@/types/ticket';
+import { type FC, useState } from 'react';
 
 interface BulkStatusModalProps {
   isOpen: boolean;
@@ -24,7 +24,9 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
   onConfirm,
   ticketCount,
 }) => {
-  const [selectedStatus, setSelectedStatus] = useState<TicketStatus>(TicketStatus.New);
+  const [selectedStatus, setSelectedStatus] = useState<TicketStatus>(
+    TicketStatus.New,
+  );
 
   const handleConfirm = () => {
     onConfirm(selectedStatus);
@@ -37,19 +39,22 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
         <BaseModalHeader title="Change Status">Change Status</BaseModalHeader>
         <BaseModalBody>
           <p className="mb-4">
-            Change status for {ticketCount} ticket{ticketCount !== 1 ? 's' : ''} to:
+            Change status for {ticketCount} ticket{ticketCount !== 1 ? 's' : ''}{' '}
+            to:
           </p>
           <BaseSelect
             label="Status"
-            selectedKeys={new Set([selectedStatus])}
-            onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
+            selectedKey={selectedStatus}
+            onSelectionChange={keys => {
+              const value = keys as string;
               setSelectedStatus(value as TicketStatus);
             }}
           >
-            <BaseSelectItem key={TicketStatus.New}>New</BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.InProgress}>In Progress</BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.Closed}>Closed</BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.New} value={TicketStatus.New}>New</BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.InProgress} value={TicketStatus.InProgress}>
+              In Progress
+            </BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.Closed} value={TicketStatus.Closed}>Closed</BaseSelectItem>
           </BaseSelect>
         </BaseModalBody>
         <BaseModalFooter>

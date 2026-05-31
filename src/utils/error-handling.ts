@@ -27,7 +27,7 @@ export interface ProblemDetails {
 
 export function extractErrorMessages(
   error: unknown,
-  fallbackMessage = 'An unexpected error occurred'
+  fallbackMessage = 'An unexpected error occurred',
 ): string[] {
   const err = error as any;
   const responseData = err?.response?.data;
@@ -38,7 +38,7 @@ export function extractErrorMessages(
 
       Object.entries(responseData.errors).forEach(([, messages]) => {
         if (Array.isArray(messages)) {
-          messages.forEach((message) => {
+          messages.forEach(message => {
             errorMessages.push(String(message));
           });
         } else if (messages) {
@@ -73,7 +73,7 @@ export function extractErrorMessages(
 
 export function extractErrorMessage(
   error: unknown,
-  fallbackMessage = 'An unexpected error occurred'
+  fallbackMessage = 'An unexpected error occurred',
 ): string {
   const messages = extractErrorMessages(error, fallbackMessage);
   return messages.join('; ');
@@ -134,7 +134,7 @@ export function formatFormErrors(errors: unknown[]): string {
   if (!errors || errors.length === 0) return '';
 
   return errors
-    .map((error) => {
+    .map(error => {
       if (typeof error === 'string') {
         return error;
       }
@@ -183,6 +183,6 @@ export function dispatchGlobalError(error: unknown, path?: string): void {
         details: status >= 500 ? details : undefined,
         type: status >= 500 ? 'server_error' : undefined,
       },
-    })
+    }),
   );
 }

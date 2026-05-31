@@ -1,11 +1,11 @@
-import type { FC } from 'react';
-import { useState, useEffect, useCallback } from 'react';
-import { BaseButton } from '@brainforgeau/components/button';
-import { Icon, BaseInput } from '@brainforgeau/components';
+import type { TicketTimeTrackingDto, TimeEntryDto } from '@/types';
+import { BaseInput, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import type { TimeEntryDto, TicketTimeTrackingDto } from '@/types';
+import type { FC } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface TimeTrackerProps {
   ticketId: string;
@@ -69,7 +69,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
   };
 
   const handleAddManualEntry = useCallback(() => {
-    const minutes = parseInt(manualMinutes, 10);
+    const minutes = Number.parseInt(manualMinutes, 10);
     if (isNaN(minutes) || minutes <= 0) return;
 
     onAddManualEntry?.(minutes, manualNotes);
@@ -122,17 +122,21 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
             type="number"
             label="Minutes"
             value={manualMinutes}
-            onChange={(e) => setManualMinutes(e.target.value)}
+            onChange={e => setManualMinutes(e.target.value)}
             placeholder="Enter minutes"
           />
           <BaseInput
             label="Notes"
             value={manualNotes}
-            onChange={(e) => setManualNotes(e.target.value)}
+            onChange={e => setManualNotes(e.target.value)}
             placeholder="Optional notes"
           />
           <div className="flex gap-2">
-            <BaseButton size="sm" color="primary" onPress={handleAddManualEntry}>
+            <BaseButton
+              size="sm"
+              color="primary"
+              onPress={handleAddManualEntry}
+            >
               Add Entry
             </BaseButton>
             <BaseButton
@@ -160,7 +164,9 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
       {timeTracking && (
         <div className="mb-4 flex justify-between rounded bg-primary-50 p-3">
           <span className="font-medium">Total Time:</span>
-          <span className="font-bold">{formatDuration(timeTracking.totalMinutes)}</span>
+          <span className="font-bold">
+            {formatDuration(timeTracking.totalMinutes)}
+          </span>
         </div>
       )}
 
@@ -168,19 +174,27 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
       {timeTracking && timeTracking.entries.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-semibold text-gray-700">Time Entries</h4>
-          {timeTracking.entries.map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between rounded border p-2">
+          {timeTracking.entries.map(entry => (
+            <div
+              key={entry.id}
+              className="flex items-center justify-between rounded border p-2"
+            >
               <div className="flex-1">
                 <p className="text-sm font-medium">
                   {formatDuration(entry.durationMinutes || 0)}
                   {entry.isBillable && (
-                    <span className="ml-2 text-xs text-success">(Billable)</span>
+                    <span className="ml-2 text-xs text-success">
+                      (Billable)
+                    </span>
                   )}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {entry.userName} • {formatDateTime(entry.startTime, { timezone })}
+                  {entry.userName} •{' '}
+                  {formatDateTime(entry.startTime, { timezone })}
                 </p>
-                {entry.notes && <p className="text-xs text-gray-600">{entry.notes}</p>}
+                {entry.notes && (
+                  <p className="text-xs text-gray-600">{entry.notes}</p>
+                )}
               </div>
               <div className="flex gap-1">
                 <BaseButton

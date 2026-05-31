@@ -1,8 +1,5 @@
 import { WorkflowCanvas } from '../canvas/WorkflowCanvas';
-import type {
-  WorkflowStateDto,
-  WorkflowTransitionDto,
-} from '../types';
+import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 
 export interface WorkflowEditorProps {
   states: WorkflowStateDto[];

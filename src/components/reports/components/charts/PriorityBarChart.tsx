@@ -1,15 +1,15 @@
+import type { PriorityBreakdownDto } from '@/types';
 import type { FC } from 'react';
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import type { PriorityBreakdownDto } from '@/types';
 
 interface PriorityBarChartProps {
   data: PriorityBreakdownDto[];
@@ -27,7 +27,7 @@ export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    name: item.priorityName,
+    name: item.name,
     count: item.count,
     percentage: item.percentage,
   }));

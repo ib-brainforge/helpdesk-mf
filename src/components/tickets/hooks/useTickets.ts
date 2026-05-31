@@ -28,17 +28,23 @@ export const useTicketsData = () => {
       const client = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1TicketsGet(
         filters.status?.[0] ? toApiTicketStatus(filters.status[0]) : undefined,
+        filters.customStatusId, // customStatusId — tenant-defined custom status
         filters.priority?.[0]
           ? toApiTicketPriority(filters.priority[0])
           : undefined,
         filters.categoryId?.[0],
-        filters.assigneeId?.[0],
+        // When unassignedOnly is active, clear assigneeId so the backend filter is not confused.
+        filters.unassignedOnly ? undefined : filters.assigneeId?.[0],
         undefined, // requesterId
         filters.searchTerm,
         undefined, // unreadOnly
+        filters.overdueOnly ? true : undefined, // overdueOnly — tickets past their due date
         undefined, // spamOnly — default view excludes spam
+        filters.unassignedOnly ? true : undefined, // unassignedOnly — typed param
         pagination.pageIndex + 1,
         pagination.pageSize,
+        undefined, // sortBy
+        undefined, // sortDirection
       );
 
       const result = response.data;
@@ -456,7 +462,9 @@ export const useSetTicketParent = () => {
       await client.v1TicketsIdParentPut(ticketId, { parentTicketId });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ticket', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.ticketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
@@ -567,8 +575,12 @@ export const useCreateSubtask = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['ticket', variables.parentTicketId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-children', variables.parentTicketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.parentTicketId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-children', variables.parentTicketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
@@ -583,7 +595,7 @@ export const useMarkTicketAsProblem = () => {
       await client.v1TicketsIdMarkProblemPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
     },
   });
@@ -598,7 +610,7 @@ export const useUnmarkTicketAsProblem = () => {
       await client.v1TicketsIdUnmarkProblemPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
     },
   });
@@ -613,7 +625,7 @@ export const usePublishTicketAsIdea = () => {
       await client.v1TicketsIdPublishAsIdeaPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
     },
@@ -629,7 +641,7 @@ export const useUnpublishTicketAsIdea = () => {
       await client.v1TicketsIdUnpublishAsIdeaPost(ticketId);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
+    onSuccess: ticketId => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
     },
@@ -648,12 +660,22 @@ export type IdeaListItem = {
 };
 
 export const useIdeasForum = (page = 1, pageSize = 20) => {
-  return useQuery<{ items: IdeaListItem[]; totalCount: number; page: number; pageSize: number }>({
+  return useQuery<{
+    items: IdeaListItem[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+  }>({
     queryKey: ['ideas', page, pageSize],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(IdeasApi);
       const response = await client.v1IdeasGet(page, pageSize);
-      return response.data as { items: IdeaListItem[]; totalCount: number; page: number; pageSize: number };
+      return response.data as {
+        items: IdeaListItem[];
+        totalCount: number;
+        page: number;
+        pageSize: number;
+      };
     },
   });
 };

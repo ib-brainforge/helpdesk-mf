@@ -1,15 +1,15 @@
-import { useState } from 'react';
 import {
   type ColumnDef,
   type PaginationState,
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { useState } from 'react';
 import type { EmailTemplateRow } from '../types';
 
 interface UseEmailTemplatesTableProps {
@@ -41,7 +41,7 @@ export const useEmailTemplatesTable = ({
       pagination,
       globalFilter: searchTerm,
     },
-    getRowId: (row) => row.id ?? '',
+    getRowId: row => row.id ?? '',
     manualPagination: true,
     rowCount: totalCount,
     enableSorting: true,
@@ -49,7 +49,7 @@ export const useEmailTemplatesTable = ({
     enableColumnFilters: false,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: (updater) => {
+    onPaginationChange: updater => {
       if (onPaginationChange) {
         const newPagination =
           typeof updater === 'function' ? updater(pagination) : updater;

@@ -1,16 +1,20 @@
-import { useParams, Link } from '@modern-js/runtime/router';
-import { Helmet } from '@modern-js/runtime/head';
-import { Card } from '@heroui/react';
-import { Icon, BaseInput } from '@brainforgeau/components';
-import { useState } from 'react';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
-import { useQuery } from '@tanstack/react-query';
-import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { KnowledgeBaseStatus } from '@/types';
+import { BaseCard, BaseInput, Icon } from '@brainforgeau/components';
+import {
+  PageBody,
+  PageHeader,
+  PendingCrumb,
+} from '@brainforgeau/components/page';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
+import { useTimezone } from '@brainforgeau/security';
+import { Card } from '@heroui/react';
+import { Link, useParams } from '@modern-js/runtime/router';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 
 function KnowledgeBaseCategoryPage() {
   const { categorySlug } = useParams();
@@ -20,20 +24,36 @@ function KnowledgeBaseCategoryPage() {
   const { data: categories } = useKnowledgeBaseCategories();
 
   // Find category by slug
-  const category = categories?.find((cat) => (cat as any).slug === categorySlug);
+  const category = categories?.find(
+    (cat) => (cat as any).slug === categorySlug
+  );
 
   // Fetch articles in this category
   const { data: articles, isLoading } = useQuery({
-    queryKey: ['knowledge-base', 'articles', 'category', category?.id, searchTerm],
+    queryKey: [
+      'knowledge-base',
+      'articles',
+      'category',
+      category?.id,
+      searchTerm,
+    ],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbArticlesGet(category?.id, undefined, undefined, undefined, undefined);
+      const response = await client.v1KbArticlesGet(
+        category?.id,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
       return response.data;
     },
     enabled: !!category?.id,
   });
 
-  const getStatusColor = (status: KnowledgeBaseStatus): 'default' | 'success' | 'warning' => {
+  const getStatusColor = (
+    status: KnowledgeBaseStatus
+  ): 'default' | 'success' | 'warning' => {
     switch (status) {
       case KnowledgeBaseStatus.Published:
         return 'success';
@@ -61,72 +81,76 @@ function KnowledgeBaseCategoryPage() {
 
   if (!category && !isLoading) {
     return (
-      <div className="py-12 text-center">
-        <Icon name="folder" className="mx-auto h-12 w-12 text-gray-400" />
-        <p className="mt-4 text-gray-500">Category not found</p>
-      </div>
+      <PageBody>
+        <div className="py-12 text-center">
+          <Icon name="folder" className="mx-auto h-12 w-12 text-gray-400" />
+          <p className="mt-4 text-gray-500">Category not found</p>
+        </div>
+      </PageBody>
     );
   }
 
   return (
-    <>
-      <Helmet>
-        <title>{category?.name || 'Category'} - Knowledge Base</title>
-      </Helmet>
+    <PageBody>
+      <PageHeader
+        title={category?.name ?? 'Category'}
+        breadcrumbsKey="knowledge-base.category"
+        breadcrumbsParams={{
+          categorySlug: categorySlug ?? '',
+          categoryName: category ? category.name : PendingCrumb,
+        }}
+        documentTitle={
+          category ? `${category.name} – Knowledge Base` : 'Knowledge Base'
+        }
+      >
+        {category?.description && (
+          <PageHeader.Meta>{category.description}</PageHeader.Meta>
+        )}
+      </PageHeader>
 
-      <div className="mb-5">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm mb-4">
-          <Link to="/knowledge-base" className="text-primary hover:underline">
-            Knowledge Base
-          </Link>
-          <Icon name="chevron-right" className="h-4 w-4 text-gray-400" />
-          <span className="text-gray-600">{category?.name}</span>
-        </nav>
+      {/* Article count */}
+      <p className="mb-6 text-sm text-gray-500">
+        {category?.articleCount || 0} article(s) in this category
+      </p>
 
-        {/* Category Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Icon name="folder" className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-semibold">{category?.name}</h1>
-          </div>
-          {category?.description && (
-            <p className="text-gray-600 ml-11">{category.description}</p>
-          )}
-          <p className="text-sm text-gray-500 ml-11 mt-1">
-            {category?.articleCount || 0} article(s) in this category
+      {/* Search within category */}
+      <div className="mb-6">
+        <BaseInput
+          placeholder="Search in this category..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
+        />
+      </div>
+
+      {/* Articles List */}
+      {isLoading ? (
+        <div className="py-12 text-center">
+          <p className="text-gray-500">Loading articles...</p>
+        </div>
+      ) : !articles || articles.items?.length === 0 ? (
+        <div className="py-12 text-center">
+          <Icon
+            name="document-text"
+            className="mx-auto h-12 w-12 text-gray-400"
+          />
+          <p className="mt-4 text-gray-500">
+            No articles found in this category
           </p>
         </div>
-
-        {/* Search within category */}
-        <div className="mb-6">
-          <BaseInput
-            placeholder="Search in this category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
-          />
-        </div>
-
-        {/* Articles List */}
-        {isLoading ? (
-          <div className="py-12 text-center">
-            <p className="text-gray-500">Loading articles...</p>
-          </div>
-        ) : !articles || articles.items?.length === 0 ? (
-          <div className="py-12 text-center">
-            <Icon name="document-text" className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-gray-500">No articles found in this category</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {articles.items?.map((article: any) => (
-              <Link key={article.id} to={`/knowledge-base/${article.slug}`} className="block">
-              <Card
-                className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-              >
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {articles.items?.map((article: any) => (
+            <Link
+              key={article.id}
+              to={`/knowledge-base/${article.slug}`}
+              className="block"
+            >
+              <BaseCard className="cursor-pointer transition-shadow hover:shadow-lg">
                 <div className="mb-3 flex items-start justify-between">
-                  <h3 className="text-lg font-semibold line-clamp-2">{article.title}</h3>
+                  <h3 className="line-clamp-2 text-lg font-semibold">
+                    {article.title}
+                  </h3>
                   <TagChip
                     name={getStatusLabel(article.status)}
                     color={
@@ -138,13 +162,17 @@ function KnowledgeBaseCategoryPage() {
                     }
                   />
                 </div>
-                <p className="mb-3 text-sm text-gray-600 line-clamp-3">{article.excerpt}</p>
+                <p className="mb-3 line-clamp-3 text-sm text-gray-600">
+                  {article.excerpt}
+                </p>
                 <div className="mb-3 flex flex-wrap gap-1">
                   {article.tags?.slice(0, 3).map((tag: string) => (
                     <TagChip key={tag} name={tag} size="sm" />
                   ))}
                   {article.tags?.length > 3 && (
-                    <span className="text-xs text-gray-500">+{article.tags.length - 3} more</span>
+                    <span className="text-xs text-gray-500">
+                      +{article.tags.length - 3} more
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-500">
@@ -161,16 +189,17 @@ function KnowledgeBaseCategoryPage() {
                     )}
                   </div>
                   {article.publishedAt && (
-                    <span>{formatDateTime(article.publishedAt, { timezone })}</span>
+                    <span>
+                      {formatDateTime(article.publishedAt, { timezone })}
+                    </span>
                   )}
                 </div>
-              </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+              </BaseCard>
+            </Link>
+          ))}
+        </div>
+      )}
+    </PageBody>
   );
 }
 

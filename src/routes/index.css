@@ -1,7 +1,30 @@
+@import "../../node_modules/@heroui/styles/dist/index.css";
+/* Inlined from @brainforgeau/components/styles.css — drawer/modal/tiptap overrides */
+.drawer__dialog {
+  padding: 0;
+}
+.drawer__body {
+  margin: 0;
+  padding: 0;
+}
+.modal__header {
+  flex-direction: row;
+}
+.tiptap p.is-editor-empty:first-child::before {
+  @apply text-light-gray float-left content-[attr(data-placeholder)] h-0 pointer-events-none;
+}
+.tiptap:focus {
+  @apply outline-none;
+}
+.tiptap img {
+  @apply max-w-full h-auto;
+}
+.tiptap img.ProseMirror-selectednode {
+  @apply outline-2 outline-blue rounded-[3px];
+}
 @import "tailwindcss";
 @plugin './hero.ts';
 
-@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
-@source '../../node_modules/@brainforgeau/components/**/*.{js,ts,jsx,tsx}';
-@import '../../node_modules/@brainforgeau/theme/theme.css';
-@import '../styles/tiptap.css';
+@source '../../node_modules/@brainforgeau/components';
+@import "@brainforgeau/theme/theme.css";
+@import "../styles/tiptap.css";

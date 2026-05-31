@@ -1,7 +1,7 @@
-import React from 'react';
+import { TicketDetail } from '@/components/tickets';
 import { PageSpinner } from '@brainforgeau/components/base';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { TicketDetail } from '@/components/tickets';
+import React from 'react';
 
 function TicketDetailPage() {
   return <TicketDetail />;

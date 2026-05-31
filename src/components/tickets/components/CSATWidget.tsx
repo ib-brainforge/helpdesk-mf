@@ -1,11 +1,11 @@
-import type { FC } from 'react';
+import { StarRating } from '@/components/satisfaction/StarRating';
+import { useSatisfactionRatingByTicket } from '@/hooks/useSatisfaction';
+import { TicketStatus } from '@/types/ticket';
 import { Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { StarRating } from '@/components/satisfaction/StarRating';
-import { useSatisfactionRatingByTicket } from '@/hooks/useSatisfaction';
-import { TicketStatus } from '@/types/ticket';
+import type { FC } from 'react';
 
 // REVIEW: Widget component for ticket detail page - shows CSAT if exists
 interface CSATWidgetProps {
@@ -27,7 +27,9 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
       <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
           <Icon name="star" className="h-5 w-5 text-gray-400 animate-pulse" />
-          <p className="text-sm text-gray-500">Loading satisfaction rating...</p>
+          <p className="text-sm text-gray-500">
+            Loading satisfaction rating...
+          </p>
         </div>
       </Box>
     );
@@ -38,7 +40,9 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
       <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
           <Icon name="star" className="h-5 w-5 text-gray-400" />
-          <p className="text-sm text-gray-600">No customer satisfaction rating yet</p>
+          <p className="text-sm text-gray-600">
+            No customer satisfaction rating yet
+          </p>
         </div>
         <p className="text-xs text-gray-500 mt-1">
           Customer will receive a survey email after ticket closure.

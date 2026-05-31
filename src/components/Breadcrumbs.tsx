@@ -1,6 +1,6 @@
-import { NavLink } from '@modern-js/runtime/router';
 import { BaseBreadcrumbs as BaseBreadcrumbsComponent } from '@brainforgeau/components/breadcrumbs';
-import type { ReactNode, ComponentProps } from 'react';
+import { NavLink } from '@modern-js/runtime/router';
+import type { ComponentProps, ReactNode } from 'react';
 
 export type BaseBreadcrumbItem = {
   label: string;
@@ -18,7 +18,9 @@ type BaseBreadcrumbsProps = ComponentProps<typeof BaseBreadcrumbsComponent> & {
   renderLink?: (props: BreadcrumbLinkRenderProps) => ReactNode;
 };
 
-export const Breadcrumbs = (props: Omit<BaseBreadcrumbsProps, 'renderLink'>) => {
+export const Breadcrumbs = (
+  props: Omit<BaseBreadcrumbsProps, 'renderLink'>,
+) => {
   const componentProps = {
     ...props,
     renderLink: ({ item, className, children }: BreadcrumbLinkRenderProps) => (

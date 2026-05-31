@@ -25,7 +25,10 @@ interface BffInput {
 function getAllowedOrigins(): string[] {
   const origins = process.env.ALLOWED_ORIGINS;
   if (!origins) return [];
-  return origins.split(',').map(o => o.trim()).filter(Boolean);
+  return origins
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
 }
 
 /**
@@ -78,10 +81,13 @@ export const post = async (input: BffInput): Promise<Response> => {
   const tempoEndpoint = process.env.TEMPO_ENDPOINT;
 
   if (!tempoEndpoint) {
-    return new Response(JSON.stringify({ error: 'Tempo endpoint not configured' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Tempo endpoint not configured' }),
+      {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   }
 
   try {
@@ -97,7 +103,9 @@ export const post = async (input: BffInput): Promise<Response> => {
     const password = process.env.TEMPO_PASSWORD;
 
     if (username && password) {
-      const credentials = Buffer.from(`${username}:${password}`).toString('base64');
+      const credentials = Buffer.from(`${username}:${password}`).toString(
+        'base64',
+      );
       headers['Authorization'] = `Basic ${credentials}`;
     }
 
@@ -110,10 +118,13 @@ export const post = async (input: BffInput): Promise<Response> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[BFF] Tempo push failed:', response.status, errorText);
-      return new Response(JSON.stringify({ error: 'Tempo push failed', status: response.status }), {
-        status: response.status,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Tempo push failed', status: response.status }),
+        {
+          status: response.status,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     // Return the response from Tempo (it may contain partial success info)

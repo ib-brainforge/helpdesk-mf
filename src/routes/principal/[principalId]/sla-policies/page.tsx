@@ -1,23 +1,26 @@
 /**
  * Principal SLA policies list page — /principal/[principalId]/sla-policies
  *
- * Admin-only. Lists all principal-scoped SLA policies.
- * Create navigates to /sla-policies/new. Delete uses ConfirmDeleteModal.
+ * W1-P6: Migrated to <ListPage>. Admin-only (enforced by layout context check).
+ * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useDeletePrincipalSlaPolicy,
   usePrincipalSlaPolicies,
 } from '@/hooks/usePrincipalSlaPolicies';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
 import {
-  BaseButton,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import type { HelpdeskApplicationSlaDTOsSlaPolicyDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast, useDisclosure } from '@heroui/react';
+import { toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -28,7 +31,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
 const columnHelper =
@@ -38,47 +41,31 @@ function PrincipalSlaPoliciesPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
+  const { confirm, dialog } = useConfirm();
+  const { data: principal } = usePrincipal(principalId);
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
-
-  const {
-    data: policies,
-    isLoading,
-    error,
-  } = usePrincipalSlaPolicies(principalId ?? '');
+  const { data: policies, isLoading } = usePrincipalSlaPolicies(
+    principalId ?? '',
+  );
   const deleteMutation = useDeletePrincipalSlaPolicy(principalId ?? '');
 
-  if (context?.level !== 'admin') {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Access Denied</p>
-        <p className="text-default-500 text-sm">
-          SLA policy management requires admin access.
-        </p>
-      </div>
-    );
-  }
-
   const handleDeleteRequest = useCallback(
-    (id: string, name: string) => {
-      setPendingDeleteId(id);
-      setPendingDeleteName(name);
-      onDeleteOpen();
+    async (id: string, name: string) => {
+      const ok = await confirm({
+        title: 'Delete SLA Policy',
+        body: `Delete SLA policy "${name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          toast('SLA policy deleted', { variant: 'success' });
+        },
+      });
     },
-    [onDeleteOpen],
+    [confirm, deleteMutation],
   );
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => {
-        addToast({ title: 'SLA policy deleted', severity: 'success' });
-        setPendingDeleteId(null);
-      },
-    });
-  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -105,31 +92,37 @@ function PrincipalSlaPoliciesPage() {
     }),
     columnHelper.display({
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => (
-        <div className="flex gap-2">
+        <div className="-my-1.5 flex items-center justify-end gap-1">
           <BaseButton
-            size="sm"
-            variant="bordered"
+            variant="link"
+            size="none"
+            className="text-dark dark:text-light hover:text-blue"
+            aria-label="Edit SLA policy"
             onPress={() =>
               navigate(
                 `/principal/${principalId}/sla-policies/${row.original.id}`,
               )
             }
-          >
-            Edit
-          </BaseButton>
+            icon={<Icon name="pencil" className="h-4 w-4" />}
+          />
           <BaseButton
-            size="sm"
-            color="danger"
-            variant="light"
-            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
-          >
-            Delete
-          </BaseButton>
+            variant="link"
+            size="none"
+            className="text-danger hover:text-danger-600"
+            aria-label="Delete SLA policy"
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isDisabled={deleteMutation.isPending}
+            icon={<Icon name="trash" className="h-4 w-4" />}
+          />
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 80,
     }),
   ];
 
@@ -139,47 +132,57 @@ function PrincipalSlaPoliciesPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Admin guard: layout enforces auth; this check handles the agent role case.
+  if (context?.level !== 'admin') {
+    return (
+      <EmptyState
+        title="Access Denied"
+        description="SLA policy management requires admin access."
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">SLA Policies</h1>
-        <BaseButton onPress={() => navigate(`/principal/${principalId}/sla-policies/new`)}>
+    <ListPage
+      title="SLA Policies"
+      breadcrumbsKey="principal.sla-policies.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: principal?.name ?? PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+          onPress={() => navigate(`/principal/${principalId}/sla-policies/new`)}
+        >
           New SLA Policy
         </BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading SLA policies..." />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-          Failed to load SLA policies. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <BaseTable
-          table={table}
-          isLoading={isLoading}
-          loading={{ title: 'Loading...' }}
+      }
+      empty={
+        <EmptyState
+          title="No SLA policies yet"
+          description="Create an SLA policy to define response and resolution time targets."
+          action={
+            <BaseButton
+              color="primary"
+              onPress={() =>
+                navigate(`/principal/${principalId}/sla-policies/new`)
+              }
+            >
+              New SLA Policy
+            </BaseButton>
+          }
+          live
         />
-      )}
-
-      <ConfirmDeleteModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirm={handleDeleteConfirm}
-        title="Delete SLA Policy"
-        message={`Delete SLA policy "${pendingDeleteName}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
-    </div>
+      }
+      modals={dialog}
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalSlaPoliciesPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

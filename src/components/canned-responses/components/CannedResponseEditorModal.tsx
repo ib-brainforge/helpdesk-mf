@@ -1,24 +1,28 @@
-import { useEffect, useState } from 'react';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
   BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
 import { Icon } from '@brainforgeau/components/base';
-import { addToast } from '@heroui/react';
-import { useCreateCannedResponse, useUpdateCannedResponse } from '../hooks/useCannedResponses';
+import { BaseButton } from '@brainforgeau/components/button';
+import { toast } from '@heroui/react';
+import Placeholder from '@tiptap/extension-placeholder';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { useEffect, useState } from 'react';
+
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { CannedResponseScope } from '@/types/canned-response';
 import type { CannedResponseDto } from '@/types/canned-response';
-import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import {
+  useCreateCannedResponse,
+  useUpdateCannedResponse,
+} from '../hooks/useCannedResponses';
 
 interface CannedResponseEditorModalProps {
   isOpen: boolean;
@@ -32,7 +36,9 @@ export function CannedResponseEditorModal({
   cannedResponse,
 }: CannedResponseEditorModalProps) {
   const [title, setTitle] = useState('');
-  const [scope, setScope] = useState<CannedResponseScope>(CannedResponseScope.Personal);
+  const [scope, setScope] = useState<CannedResponseScope>(
+    CannedResponseScope.Personal,
+  );
   const [categoryId, setCategoryId] = useState('');
 
   const isEditing = !!cannedResponse;
@@ -59,7 +65,10 @@ export function CannedResponseEditorModal({
   useEffect(() => {
     if (isOpen && cannedResponse) {
       setTitle(cannedResponse.title || '');
-      setScope((cannedResponse.scope as unknown as CannedResponseScope) || CannedResponseScope.Personal);
+      setScope(
+        (cannedResponse.scope as unknown as CannedResponseScope) ||
+          CannedResponseScope.Personal,
+      );
       setCategoryId(cannedResponse.categoryId || '');
       editor?.commands.setContent(cannedResponse.body || '');
     } else if (isOpen && !cannedResponse) {
@@ -72,10 +81,9 @@ export function CannedResponseEditorModal({
 
   const handleSave = async () => {
     if (!title.trim()) {
-      addToast({
-        title: 'Validation error',
+      toast('Validation error', {
         description: 'Title is required',
-        severity: 'danger',
+        variant: 'danger',
       });
       return;
     }
@@ -93,10 +101,9 @@ export function CannedResponseEditorModal({
             categoryId: categoryId || undefined,
           },
         });
-        addToast({
-          title: 'Updated',
+        toast('Updated', {
           description: 'Canned response updated successfully',
-          severity: 'success',
+          variant: 'success',
         });
       } else {
         await createMutation.mutateAsync({
@@ -105,26 +112,26 @@ export function CannedResponseEditorModal({
           scope: scope as any,
           categoryId: categoryId || undefined,
         });
-        addToast({
-          title: 'Created',
+        toast('Created', {
           description: 'Canned response created successfully',
-          severity: 'success',
+          variant: 'success',
         });
       }
       onClose();
     } catch (error) {
-      addToast({
-        title: 'Error',
+      toast('Error', {
         description: `Failed to ${isEditing ? 'update' : 'create'} canned response`,
-        severity: 'danger',
+        variant: 'danger',
       });
     }
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="3xl">
+    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
       <BaseModalContent>
-        <BaseModalHeader title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}>
+        <BaseModalHeader
+          title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
+        >
           {isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
         </BaseModalHeader>
         <BaseModalBody>
@@ -133,7 +140,7 @@ export function CannedResponseEditorModal({
               label="Name"
               placeholder="Enter response name"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               isRequired
             />
 
@@ -164,7 +171,9 @@ export function CannedResponseEditorModal({
                   </button>
                   <button
                     type="button"
-                    onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                    onClick={() =>
+                      editor?.chain().focus().toggleBulletList().run()
+                    }
                     className={`p-1.5 rounded hover:bg-default-100 ${
                       editor?.isActive('bulletList') ? 'bg-default-200' : ''
                     }`}
@@ -174,7 +183,9 @@ export function CannedResponseEditorModal({
                   </button>
                   <button
                     type="button"
-                    onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                    onClick={() =>
+                      editor?.chain().focus().toggleOrderedList().run()
+                    }
                     className={`p-1.5 rounded hover:bg-default-100 ${
                       editor?.isActive('orderedList') ? 'bg-default-200' : ''
                     }`}
@@ -192,19 +203,21 @@ export function CannedResponseEditorModal({
             <BaseSelect
               label="Scope"
               placeholder="Select scope"
-              selectedKeys={new Set([scope.toString()])}
-              onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as string;
-                setScope(Number.parseInt(key) as unknown as CannedResponseScope);
+              selectedKey={scope.toString()}
+              onSelectionChange={keys => {
+                const key = keys as string;
+                setScope(
+                  Number.parseInt(key) as unknown as CannedResponseScope,
+                );
               }}
             >
-              <BaseSelectItem key={CannedResponseScope.Personal.toString()}>
+              <BaseSelectItem key={CannedResponseScope.Personal.toString()} value={CannedResponseScope.Personal.toString()}>
                 Personal - Only visible to you
               </BaseSelectItem>
-              <BaseSelectItem key={CannedResponseScope.Team.toString()}>
+              <BaseSelectItem key={CannedResponseScope.Team.toString()} value={CannedResponseScope.Team.toString()}>
                 Team - Visible to your team
               </BaseSelectItem>
-              <BaseSelectItem key={CannedResponseScope.Global.toString()}>
+              <BaseSelectItem key={CannedResponseScope.Global.toString()} value={CannedResponseScope.Global.toString()}>
                 Global - Visible to everyone
               </BaseSelectItem>
             </BaseSelect>
@@ -212,18 +225,18 @@ export function CannedResponseEditorModal({
             <BaseSelect
               label="Category"
               placeholder="Select category (optional)"
-              selectedKeys={categoryId ? new Set([categoryId]) : new Set()}
-              onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as string;
-                setCategoryId(key || '');
+              selectedKey={categoryId || '__none__'}
+              onSelectionChange={key => {
+                setCategoryId(key === '__none__' ? '' : (key as string));
               }}
-              isLoading={isLoadingCategories}
             >
               {[
-                <BaseSelectItem key="">None</BaseSelectItem>,
-                ...categories.map((cat) => (
-                  <BaseSelectItem key={cat.id}>
-                    {cat.sectionName ? `${cat.sectionName} / ${cat.name}` : cat.name}
+                <BaseSelectItem key="__none__" id="__none__">None</BaseSelectItem>,
+                ...categories.map(cat => (
+                  <BaseSelectItem key={cat.id} value={cat.id}>
+                    {cat.sectionName
+                      ? `${cat.sectionName} / ${cat.name}`
+                      : cat.name}
                   </BaseSelectItem>
                 )),
               ]}
@@ -237,7 +250,7 @@ export function CannedResponseEditorModal({
           <BaseButton
             color="primary"
             onPress={handleSave}
-            isLoading={createMutation.isPending || updateMutation.isPending}
+            isDisabled={createMutation.isPending || updateMutation.isPending}
           >
             {isEditing ? 'Update' : 'Create'}
           </BaseButton>

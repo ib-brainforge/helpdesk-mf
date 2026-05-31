@@ -8,7 +8,8 @@ import {
   BaseModalHeader,
   BaseTextarea,
 } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
+
+import { toast } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useState } from 'react';
 import { useCloneDefinition } from '../state/workflowQueries';
@@ -46,14 +47,13 @@ export function BulkCloneModal({
         newDescription: newDescription.trim() || undefined,
         principalId,
       });
-      addToast({ title: `Cloned as "${result.name}"`, severity: 'success' });
+      toast(`Cloned as "${result.name}"`, { variant: 'success' });
       onClose();
       navigate(getDetailUrl(result.id));
     } catch (err) {
-      addToast({
-        title: 'Clone failed',
+      toast('Clone failed', {
         description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
+        variant: 'danger',
       });
     }
   }
@@ -104,8 +104,7 @@ export function BulkCloneModal({
               </BaseButton>
               <BaseButton
                 color="primary"
-                isLoading={cloneMutation.isPending}
-                isDisabled={!newName.trim()}
+                isDisabled={cloneMutation.isPending || !newName.trim()}
                 onPress={() => handleClone(onClose)}
               >
                 Clone

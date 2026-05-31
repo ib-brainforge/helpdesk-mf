@@ -5,7 +5,12 @@
  * Extracted from platform-ticket-columns.tsx and ticket-grid-columns.tsx to avoid duplication
  */
 
-export type BadgeColor = 'primary' | 'warning' | 'success' | 'danger' | 'default';
+export type BadgeColor =
+  | 'primary'
+  | 'warning'
+  | 'success'
+  | 'danger'
+  | 'default';
 
 export interface StatusConfig {
   label: string;

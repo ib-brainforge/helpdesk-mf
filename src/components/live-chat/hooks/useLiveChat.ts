@@ -1,7 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type {
+  LiveChatWidgetConfigDto,
+  UpdateLiveChatConfigRequest,
+} from '@/types/live-chat';
 import { LiveChatApi } from '@brainforgeau/helpdesk-client';
-import type { LiveChatWidgetConfigDto, UpdateLiveChatConfigRequest } from '@/types/live-chat';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const LIVE_CHAT_CONFIG_KEY = 'helpdesk-live-chat-config';
 

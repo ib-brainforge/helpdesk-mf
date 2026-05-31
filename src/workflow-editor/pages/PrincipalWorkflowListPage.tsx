@@ -11,7 +11,8 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { addToast } from '@heroui/react';
+import { toast } from '@heroui/react';
+
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -37,7 +38,16 @@ function formatDate(iso: string): string {
   });
 }
 
-export function PrincipalWorkflowListPage() {
+interface PrincipalWorkflowListPageProps {
+  /**
+   * When false, suppresses the internal <h1>. Set to false when the parent
+   * route wraps this component in a <PageHeader> to avoid a duplicate heading.
+   * @default true
+   */
+  showTitle?: boolean;
+}
+
+export function PrincipalWorkflowListPage({ showTitle = true }: PrincipalWorkflowListPageProps) {
   const { principalId } = useParams<{ principalId: string }>();
   const { data, isLoading } = usePrincipalWorkflowList(principalId ?? '');
   const createMutation = useCreatePrincipalDefinition();
@@ -76,7 +86,7 @@ export function PrincipalWorkflowListPage() {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'principal_workflow_list_create_failed',
       });
-      addToast({ title: 'Failed to create workflow', severity: 'danger' });
+      toast('Failed to create workflow', { variant: 'danger' });
     }
   }
 
@@ -84,15 +94,14 @@ export function PrincipalWorkflowListPage() {
     if (!principalId || !pendingDeleteId) return;
     try {
       await deleteMutation.mutateAsync({ principalId, id: pendingDeleteId });
-      addToast({ title: 'Workflow deleted', severity: 'success' });
+      toast('Workflow deleted', { variant: 'success' });
     } catch (err) {
       logger.captureError(err instanceof Error ? err : new Error(String(err)), {
         context: 'principal_workflow_list_delete_failed',
       });
-      addToast({
-        title: 'Delete failed',
+      toast('Delete failed', {
         description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
+        variant: 'danger',
       });
     } finally {
       setPendingDeleteId(null);
@@ -142,20 +151,19 @@ export function PrincipalWorkflowListPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+          <div className="-my-1.5 flex items-center justify-end gap-1">
             <BaseButton
-              size="sm"
-              isIconOnly
-              variant="light"
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
               aria-label="Clone workflow"
               onPress={() => setCloneTarget(row.original)}
               icon={<Icon name="copy" className="h-4 w-4" />}
             />
             <BaseButton
-              size="sm"
-              isIconOnly
-              variant="light"
-              color="danger"
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
               aria-label="Delete workflow"
               onPress={() => setPendingDeleteId(row.original.id)}
               isDisabled={!isTenantOwned(row.original)}
@@ -163,6 +171,9 @@ export function PrincipalWorkflowListPage() {
             />
           </div>
         ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 80,
       },
     ],
     [principalId],
@@ -204,9 +215,11 @@ export function PrincipalWorkflowListPage() {
       <div className="mb-5">
         <div className="mb-5 flex items-start gap-5 lg:flex">
           <div>
-            <h1 className="text-gray mb-1 text-2xl font-semibold dark:text-white">
-              Principal Workflows
-            </h1>
+            {showTitle && (
+              <h1 className="text-gray mb-1 text-2xl font-semibold dark:text-white">
+                Principal Workflows
+              </h1>
+            )}
             <p className="text-sm text-default-500">
               <PrincipalLookup principalId={principalId ?? ''} />
             </p>
@@ -283,8 +296,7 @@ export function PrincipalWorkflowListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
+                  isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >
                   Create

@@ -1,3 +1,4 @@
+import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Rule graphs list page for a given automation project.
  *
@@ -18,18 +19,17 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Chip, addToast } from '@heroui/react';
+import type { RuleGraphDto } from '@brainforgeau/rules-ui';
+import { Chip, toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
-import type { RuleGraphDto } from '@brainforgeau/rules-ui';
 import {
-  useRuleGraphs,
   useCreateRuleGraph,
   useDeleteRuleGraph,
+  useRuleGraphs,
 } from '../state/ruleProjectQueries';
-import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -41,11 +41,11 @@ function formatDate(iso: string): string {
 
 function publishedBadge(isPublished: boolean) {
   return isPublished ? (
-    <Chip size="sm" color="success" variant="flat">
+    <Chip size="sm" color="success">
       Published
     </Chip>
   ) : (
-    <Chip size="sm" color="warning" variant="flat">
+    <Chip size="sm" color="warning">
       Draft
     </Chip>
   );
@@ -105,11 +105,10 @@ export function RuleGraphsListPage() {
       setIsCreateOpen(false);
       navigate(`/configuration/automations/${projectId}/rules/${result.id}`);
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'rule_graphs_list_create_failed' },
-      );
-      addToast({ title: 'Failed to create rule graph', severity: 'danger' });
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'rule_graphs_list_create_failed',
+      });
+      toast('Failed to create rule graph', { variant: 'danger' });
     }
   }
 
@@ -117,16 +116,14 @@ export function RuleGraphsListPage() {
     if (!pendingDeleteId || !projectId) return;
     try {
       await deleteMutation.mutateAsync({ projectId, ruleId: pendingDeleteId });
-      addToast({ title: 'Rule graph deleted', severity: 'success' });
+      toast('Rule graph deleted', { variant: 'success' });
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'rule_graphs_list_delete_failed' },
-      );
-      addToast({
-        title: 'Delete failed',
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'rule_graphs_list_delete_failed',
+      });
+      toast('Delete failed', {
         description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
+        variant: 'danger',
       });
     } finally {
       setPendingDeleteId(null);
@@ -161,18 +158,20 @@ export function RuleGraphsListPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+          <div className="-my-1.5 flex items-center justify-end gap-1">
             <BaseButton
-              size="sm"
-              isIconOnly
-              variant="light"
-              color="danger"
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
               aria-label="Delete rule graph"
               onPress={() => setPendingDeleteId(row.original.id)}
               icon={<Icon name="trash" className="h-4 w-4" />}
             />
           </div>
         ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 80,
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,8 +300,7 @@ export function RuleGraphsListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
+                  isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >
                   Create

@@ -1,19 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
 // REVIEW: Approval APIs will be available after backend is deployed and client is regenerated
 // import { ApprovalsApi, ApprovalWorkflowsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { addToast } from '@heroui/react';
+import { toast } from '@heroui/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useState } from 'react';
+
 import type {
-  ApprovalWorkflowListDto,
   ApprovalWorkflowDto,
+  ApprovalWorkflowListDto,
   CreateApprovalWorkflowCommand,
-  UpdateApprovalWorkflowCommand,
-  TicketApprovalDto,
+  MakeApprovalDecisionCommand,
   PendingApprovalDto,
   RequestApprovalCommand,
-  MakeApprovalDecisionCommand,
+  TicketApprovalDto,
+  UpdateApprovalWorkflowCommand,
 } from '@/types/approval';
 
 // REVIEW: Temporary placeholder classes until backend API client is regenerated
@@ -65,11 +66,13 @@ export const useApprovalWorkflows = () => {
     queryKey: ['approval-workflows', pagination.pageIndex, pagination.pageSize],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(ApprovalWorkflowsApi as any);
-      const { data } = await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsGet(
+      const { data } = await (
+        client as ApprovalWorkflowsApi
+      ).v1ApprovalWorkflowsGet(
         undefined, // categoryId
         undefined, // isActive
         pagination.pageIndex + 1,
-        pagination.pageSize
+        pagination.pageSize,
       );
       // API returns PagedResult, extract items
       return ((data as any)?.items || []).map((workflow: any) => ({
@@ -105,7 +108,9 @@ export const useApprovalWorkflow = (workflowId?: string) => {
     queryFn: async () => {
       if (!workflowId) return null;
       const client = await createHelpdeskApiClient(ApprovalWorkflowsApi as any);
-      const { data } = await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsIdGet(workflowId);
+      const { data } = await (
+        client as ApprovalWorkflowsApi
+      ).v1ApprovalWorkflowsIdGet(workflowId);
       return (data as ApprovalWorkflowDto | null) ?? null;
     },
     enabled: !!workflowId,
@@ -118,11 +123,13 @@ export const useCreateApprovalWorkflow = () => {
   return useMutation({
     mutationFn: async (command: CreateApprovalWorkflowCommand) => {
       const client = await createHelpdeskApiClient(ApprovalWorkflowsApi as any);
-      const { data } = await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsPost(command);
+      const { data } = await (
+        client as ApprovalWorkflowsApi
+      ).v1ApprovalWorkflowsPost(command);
       return data;
     },
     onSuccess: () => {
-      addToast({ title: 'Approval workflow created successfully', severity: 'success' });
+      toast('Approval workflow created successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['approval-workflows'] });
     },
     onError: () => {
@@ -135,12 +142,18 @@ export const useUpdateApprovalWorkflow = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, command }: { id: string; command: UpdateApprovalWorkflowCommand }) => {
+    mutationFn: async ({
+      id,
+      command,
+    }: { id: string; command: UpdateApprovalWorkflowCommand }) => {
       const client = await createHelpdeskApiClient(ApprovalWorkflowsApi as any);
-      await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsIdPut(id, command);
+      await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsIdPut(
+        id,
+        command,
+      );
     },
     onSuccess: (_, { id }) => {
-      addToast({ title: 'Approval workflow updated successfully', severity: 'success' });
+      toast('Approval workflow updated successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['approval-workflows'] });
       queryClient.invalidateQueries({ queryKey: ['approval-workflow', id] });
     },
@@ -156,10 +169,12 @@ export const useDeleteApprovalWorkflow = () => {
   return useMutation({
     mutationFn: async (workflowId: string) => {
       const client = await createHelpdeskApiClient(ApprovalWorkflowsApi as any);
-      await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsIdDelete(workflowId);
+      await (client as ApprovalWorkflowsApi).v1ApprovalWorkflowsIdDelete(
+        workflowId,
+      );
     },
     onSuccess: () => {
-      addToast({ title: 'Approval workflow deleted successfully', severity: 'success' });
+      toast('Approval workflow deleted successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['approval-workflows'] });
     },
     onError: () => {
@@ -174,7 +189,9 @@ export const useTicketApproval = (ticketId?: string) => {
     queryFn: async () => {
       if (!ticketId) return null;
       const client = await createHelpdeskApiClient(ApprovalsApi as any);
-      const { data } = await (client as ApprovalsApi).v1ApprovalsTicketTicketIdGet(ticketId);
+      const { data } = await (
+        client as ApprovalsApi
+      ).v1ApprovalsTicketTicketIdGet(ticketId);
       return (data as TicketApprovalDto | null) ?? null;
     },
     enabled: !!ticketId,
@@ -193,7 +210,7 @@ export const usePendingApprovals = () => {
       const client = await createHelpdeskApiClient(ApprovalsApi as any);
       const { data } = await (client as ApprovalsApi).v1ApprovalsPendingGet(
         pagination.pageIndex + 1,
-        pagination.pageSize
+        pagination.pageSize,
       );
       // API returns PagedResult, extract items
       return ((data as any)?.items || []) as PendingApprovalDto[];
@@ -221,12 +238,16 @@ export const useRequestApproval = () => {
   return useMutation({
     mutationFn: async (command: RequestApprovalCommand) => {
       const client = await createHelpdeskApiClient(ApprovalsApi as any);
-      const { data } = await (client as ApprovalsApi).v1ApprovalsRequestPost(command);
+      const { data } = await (client as ApprovalsApi).v1ApprovalsRequestPost(
+        command,
+      );
       return data;
     },
     onSuccess: (_, { ticketId }) => {
-      addToast({ title: 'Approval requested successfully', severity: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['ticket-approval', ticketId] });
+      toast('Approval requested successfully', { variant: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-approval', ticketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
     },
     onError: () => {
@@ -241,14 +262,17 @@ export const useMakeApprovalDecision = () => {
   return useMutation({
     mutationFn: async (command: MakeApprovalDecisionCommand) => {
       const client = await createHelpdeskApiClient(ApprovalsApi as any);
-      await (client as ApprovalsApi).v1ApprovalsIdDecidePost(command.approvalId, {
-        stepId: command.stepId,
-        decision: command.decision,
-        comment: command.comment,
-      });
+      await (client as ApprovalsApi).v1ApprovalsIdDecidePost(
+        command.approvalId,
+        {
+          stepId: command.stepId,
+          decision: command.decision,
+          comment: command.comment,
+        },
+      );
     },
     onSuccess: () => {
-      addToast({ title: 'Decision recorded successfully', severity: 'success' });
+      toast('Decision recorded successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['ticket-approval'] });
       queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
     },
@@ -267,7 +291,7 @@ export const useCancelApproval = () => {
       await (client as ApprovalsApi).v1ApprovalsIdCancelPost(approvalId);
     },
     onSuccess: () => {
-      addToast({ title: 'Approval cancelled successfully', severity: 'success' });
+      toast('Approval cancelled successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['ticket-approval'] });
       queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
     },

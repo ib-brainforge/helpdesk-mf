@@ -1,3 +1,4 @@
+import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Tenant-scoped automation rule-projects list page.
  *
@@ -17,23 +18,24 @@ import {
   BaseModalFooter,
   BaseModalHeader,
   BaseTable,
+  BaseToggle,
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
-import { Chip, Switch, addToast } from '@heroui/react';
+import type { RuleProjectDto } from '@brainforgeau/rules-ui';
+import { StatusBadge } from '@brainforgeau/components/page';
+import { toast } from '@heroui/react';
 import { NavLink, useNavigate } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
-import type { RuleProjectDto } from '@brainforgeau/rules-ui';
 import {
-  useRuleProjects,
   useCreateRuleProject,
   useDeleteRuleProject,
+  useRuleProjects,
   useUpdateRuleProject,
 } from '../state/ruleProjectQueries';
-import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -44,25 +46,7 @@ function formatDate(iso: string): string {
 }
 
 function statusBadge(status: string) {
-  if (status === 'Active') {
-    return (
-      <Chip size="sm" color="success" variant="flat">
-        Active
-      </Chip>
-    );
-  }
-  if (status === 'Archived') {
-    return (
-      <Chip size="sm" color="default" variant="flat">
-        Archived
-      </Chip>
-    );
-  }
-  return (
-    <Chip size="sm" color="warning" variant="flat">
-      Draft
-    </Chip>
-  );
+  return <StatusBadge domain="automation.status" status={status} size="sm" />;
 }
 
 function toSlug(name: string): string {
@@ -114,11 +98,10 @@ export function AutomationProjectsListPage() {
       setIsCreateOpen(false);
       navigate(`/configuration/automations/${result.id}`);
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'automation_list_create_failed' },
-      );
-      addToast({ title: 'Failed to create automation project', severity: 'danger' });
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'automation_list_create_failed',
+      });
+      toast('Failed to create automation project', { variant: 'danger' });
     }
   }
 
@@ -126,16 +109,14 @@ export function AutomationProjectsListPage() {
     if (!pendingDeleteId) return;
     try {
       await deleteMutation.mutateAsync(pendingDeleteId);
-      addToast({ title: 'Automation project deleted', severity: 'success' });
+      toast('Automation project deleted', { variant: 'success' });
     } catch (err) {
-      logger.captureError(
-        err instanceof Error ? err : new Error(String(err)),
-        { context: 'automation_list_delete_failed' },
-      );
-      addToast({
-        title: 'Delete failed',
+      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
+        context: 'automation_list_delete_failed',
+      });
+      toast('Delete failed', {
         description: err instanceof Error ? err.message : 'Unknown error',
-        severity: 'danger',
+        variant: 'danger',
       });
     } finally {
       setPendingDeleteId(null);
@@ -154,7 +135,7 @@ export function AutomationProjectsListPage() {
         },
       });
     } catch {
-      addToast({ title: 'Failed to update project', severity: 'danger' });
+      toast('Failed to update project', { variant: 'danger' });
     }
   }
 
@@ -189,11 +170,10 @@ export function AutomationProjectsListPage() {
         id: 'enabled',
         header: 'Enabled',
         cell: ({ row }) => (
-          <Switch
+          <BaseToggle
             aria-label={`Toggle ${row.original.name}`}
             isSelected={row.original.isEnabled}
-            onValueChange={() => handleToggleEnabled(row.original)}
-            size="sm"
+            onChange={() => handleToggleEnabled(row.original)}
           />
         ),
       },
@@ -201,18 +181,20 @@ export function AutomationProjectsListPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
+          <div className="-my-1.5 flex items-center justify-end gap-1">
             <BaseButton
-              size="sm"
-              isIconOnly
-              variant="light"
-              color="danger"
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
               aria-label="Delete automation project"
               onPress={() => setPendingDeleteId(row.original.id)}
               icon={<Icon name="trash" className="h-4 w-4" />}
             />
           </div>
         ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 80,
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -329,8 +311,7 @@ export function AutomationProjectsListPage() {
                 </BaseButton>
                 <BaseButton
                   color="primary"
-                  isLoading={createMutation.isPending}
-                  isDisabled={!newName.trim()}
+                  isDisabled={createMutation.isPending || !newName.trim()}
                   onPress={handleCreate}
                 >
                   Create

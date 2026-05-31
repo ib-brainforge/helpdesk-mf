@@ -1,27 +1,36 @@
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CategoryDto, SectionDto } from '@/types/category';
+import { AccessLevel } from '@/types/category';
 import {
+  BaseInput,
   BaseModal,
+  BaseModalBody,
   BaseModalContent,
   BaseModalHeader,
-  BaseModalBody,
+  BaseSelect,
+  BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { addToast, Switch } from '@heroui/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CategoryDto, SectionDto, CreateCategoryCommand, UpdateCategoryCommand } from '@/types/category';
-import { AccessLevel } from '@/types/category';
+import type {
+  HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand,
+  HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand,
+  HelpdeskDomainCategoriesEnumsAccessLevel,
+} from '@brainforgeau/helpdesk-client';
+import { toast } from '@heroui/react';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 
 const categoryFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   sectionId: z.string().nullable().optional(),
   accessLevel: z.nativeEnum(AccessLevel),
   defaultAssigneeId: z.string().nullable().optional(),
-  emailRoutingAddress: z.string().email().nullable().optional(),
-  emailRoutingProtocol: z.string().nullable().optional(),
+  fromEmailAddress: z.string().email().nullable().optional(),
+  fromEmailName: z.string().nullable().optional(),
+  useFromAddressAsReplyTo: z.boolean().optional(),
   isActive: z.boolean(),
   sortOrder: z.number().min(0),
   customFieldIds: z.array(z.string()).optional(),
@@ -42,10 +51,15 @@ const ACCESS_LEVEL_OPTIONS = [
   { id: AccessLevel.AdminsOnly, name: 'Admins Only' },
 ];
 
-const EMAIL_PROTOCOL_OPTIONS = [
-  { id: 'IMAP', name: 'IMAP' },
-  { id: 'POP3', name: 'POP3' },
-];
+// Map local numeric AccessLevel enum to the generated string enum expected by the API.
+const ACCESS_LEVEL_TO_API: Record<
+  AccessLevel,
+  HelpdeskDomainCategoriesEnumsAccessLevel
+> = {
+  [AccessLevel.Everyone]: 'Everyone',
+  [AccessLevel.AgentsOnly]: 'AgentsOnly',
+  [AccessLevel.AdminsOnly]: 'AdminsOnly',
+};
 
 export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
   isOpen,
@@ -61,37 +75,36 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
       const client = await createHelpdeskApiClient(CategoriesApi);
 
       if (isEdit && category) {
-        const updateDto: UpdateCategoryCommand = {
-          name: data.name,
-          sectionId: data.sectionId || undefined,
-          accessLevel: data.accessLevel,
-          defaultAssigneeId: data.defaultAssigneeId || undefined,
-          emailRoutingAddress: data.emailRoutingAddress || undefined,
-          emailRoutingProtocol: data.emailRoutingProtocol || undefined,
-          isActive: data.isActive,
-          sortOrder: data.sortOrder,
-          customFieldIds: data.customFieldIds,
-        };
-        await client.v1CategoriesIdPut(category.id, updateDto as any);
+        const updateDto: HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand =
+          {
+            name: data.name,
+            sectionId: data.sectionId || null,
+            accessLevel: ACCESS_LEVEL_TO_API[data.accessLevel],
+            fromEmailAddress: data.fromEmailAddress || null,
+            fromEmailName: data.fromEmailName || null,
+            useFromAddressAsReplyTo: data.useFromAddressAsReplyTo ?? false,
+            sortOrder: data.sortOrder,
+            customFieldIds: data.customFieldIds ?? null,
+          };
+        await client.v1CategoriesIdPut(category.id, updateDto);
       } else {
-        const createDto: CreateCategoryCommand = {
-          name: data.name,
-          sectionId: data.sectionId || undefined,
-          accessLevel: data.accessLevel,
-          defaultAssigneeId: data.defaultAssigneeId || undefined,
-          emailRoutingAddress: data.emailRoutingAddress || undefined,
-          emailRoutingProtocol: data.emailRoutingProtocol || undefined,
-          isActive: data.isActive,
-          sortOrder: data.sortOrder,
-          customFieldIds: data.customFieldIds,
-        };
-        await client.v1CategoriesPost(createDto as any);
+        const createDto: HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand =
+          {
+            name: data.name,
+            sectionId: data.sectionId || null,
+            accessLevel: ACCESS_LEVEL_TO_API[data.accessLevel],
+            fromEmailAddress: data.fromEmailAddress || null,
+            fromEmailName: data.fromEmailName || null,
+            useFromAddressAsReplyTo: data.useFromAddressAsReplyTo ?? false,
+            sortOrder: data.sortOrder,
+            customFieldIds: data.customFieldIds ?? null,
+          };
+        await client.v1CategoriesPost(createDto);
       }
     },
     onSuccess: () => {
-      addToast({
-        title: `Category ${isEdit ? 'updated' : 'created'} successfully`,
-        severity: 'success',
+      toast(`Category ${isEdit ? 'updated' : 'created'} successfully`, {
+        variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       onClose();
@@ -107,8 +120,9 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
       sectionId: category?.sectionId || null,
       accessLevel: category?.accessLevel ?? AccessLevel.Everyone,
       defaultAssigneeId: category?.defaultAssigneeId || null,
-      emailRoutingAddress: category?.emailRoutingAddress || null,
-      emailRoutingProtocol: category?.emailRoutingProtocol || null,
+      fromEmailAddress: category?.fromEmailAddress || null,
+      fromEmailName: category?.fromEmailName || null,
+      useFromAddressAsReplyTo: category?.useFromAddressAsReplyTo ?? false,
       isActive: category?.isActive ?? true,
       sortOrder: category?.sortOrder ?? 0,
       customFieldIds: category?.customFieldIds || [],
@@ -129,15 +143,13 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
 
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
-    return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+    return errors
+      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+      .join(', ');
   };
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      size="2xl"
-    >
+    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
       <BaseModalContent>
         <BaseModalHeader
           title={isEdit ? 'Edit Category' : 'Create Category'}
@@ -145,7 +157,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
         />
         <BaseModalBody>
           <form
-            onSubmit={async (e) => {
+            onSubmit={async e => {
               e.preventDefault();
               e.stopPropagation();
               await form.handleSubmit();
@@ -153,13 +165,13 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
             className="flex flex-col gap-4 pb-4"
           >
             <form.Field name="name">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="Name"
                   isRequired
                   name={field.name}
                   value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 />
@@ -167,53 +179,57 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
             </form.Field>
 
             <form.Field name="sectionId">
-              {(field) => (
+              {field => (
                 <BaseSelect
                   label="Section"
                   placeholder="Select section (optional)"
-                  selectedKeys={field.state.value ? [field.state.value] : []}
-                  onSelectionChange={(keys) => {
-                    const newValue = keys.currentKey || null;
+                  selectedKey={field.state.value ? field.state.value : null}
+                  onSelectionChange={keys => {
+                    const newValue = keys || null;
                     field.handleChange(newValue);
                   }}
                 >
-                  {sections.map((section) => (
-                    <BaseSelectItem key={section.id}>{section.name}</BaseSelectItem>
+                  {sections.map(section => (
+                    <BaseSelectItem key={section.id} value={section.id}>
+                      {section.name}
+                    </BaseSelectItem>
                   ))}
                 </BaseSelect>
               )}
             </form.Field>
 
             <form.Field name="accessLevel">
-              {(field) => (
+              {field => (
                 <BaseSelect
                   label="Access Level"
                   placeholder="Select access level"
                   isRequired
-                  selectedKeys={[String(field.state.value)]}
-                  onSelectionChange={(keys) => {
-                    const newValue = Number(keys.currentKey) as AccessLevel;
+                  selectedKey={String(field.state.value)}
+                  onSelectionChange={keys => {
+                    const newValue = Number(keys) as AccessLevel;
                     field.handleChange(newValue);
                   }}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 >
-                  {ACCESS_LEVEL_OPTIONS.map((option) => (
-                    <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
+                  {ACCESS_LEVEL_OPTIONS.map(option => (
+                    <BaseSelectItem key={String(option.id)} value={String(option.id)}>
+                      {option.name}
+                    </BaseSelectItem>
                   ))}
                 </BaseSelect>
               )}
             </form.Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <form.Field name="emailRoutingAddress">
-                {(field) => (
+              <form.Field name="fromEmailAddress">
+                {field => (
                   <BaseInput
-                    label="Email Routing Address"
+                    label="From Email Address"
                     type="email"
                     name={field.name}
                     value={field.state.value ?? ''}
-                    onChange={(e) => field.handleChange(e.target.value || null)}
+                    onChange={e => field.handleChange(e.target.value || null)}
                     placeholder="support@example.com"
                     errorMessage={formatFormErrors(field.state.meta.errors)}
                     isInvalid={field.state.meta.errors.length > 0}
@@ -221,33 +237,40 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                 )}
               </form.Field>
 
-              <form.Field name="emailRoutingProtocol">
-                {(field) => (
-                  <BaseSelect
-                    label="Email Protocol"
-                    placeholder="Select protocol"
-                    selectedKeys={field.state.value ? [field.state.value] : []}
-                    onSelectionChange={(keys) => {
-                      const newValue = keys.currentKey || null;
-                      field.handleChange(newValue);
-                    }}
-                  >
-                    {EMAIL_PROTOCOL_OPTIONS.map((protocol) => (
-                      <BaseSelectItem key={protocol.id}>{protocol.name}</BaseSelectItem>
-                    ))}
-                  </BaseSelect>
+              <form.Field name="fromEmailName">
+                {field => (
+                  <BaseInput
+                    label="From Name"
+                    name={field.name}
+                    value={field.state.value ?? ''}
+                    onChange={e => field.handleChange(e.target.value || null)}
+                    placeholder="Support Team"
+                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    isInvalid={field.state.meta.errors.length > 0}
+                  />
                 )}
               </form.Field>
             </div>
 
+            <form.Field name="useFromAddressAsReplyTo">
+              {field => (
+                <BaseToggle
+                  isSelected={field.state.value ?? false}
+                  onChange={checked => field.handleChange(checked)}
+                >
+                  Use from address as reply-to
+                </BaseToggle>
+              )}
+            </form.Field>
+
             <form.Field name="sortOrder">
-              {(field) => (
+              {field => (
                 <BaseInput
                   label="Sort Order"
                   type="number"
                   name={field.name}
                   value={String(field.state.value)}
-                  onChange={(e) => field.handleChange(Number(e.target.value))}
+                  onChange={e => field.handleChange(Number(e.target.value))}
                   errorMessage={formatFormErrors(field.state.meta.errors)}
                   isInvalid={field.state.meta.errors.length > 0}
                 />
@@ -255,21 +278,25 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
             </form.Field>
 
             <form.Field name="isActive">
-              {(field) => (
-                <Switch
+              {field => (
+                <BaseToggle
                   isSelected={field.state.value}
-                  onValueChange={(checked) => field.handleChange(checked)}
+                  onChange={checked => field.handleChange(checked)}
                 >
                   Active
-                </Switch>
+                </BaseToggle>
               )}
             </form.Field>
 
             <div className="flex justify-end gap-2 mt-4">
-              <BaseButton variant="bordered" onPress={handleClose} type="button">
+              <BaseButton
+                variant="bordered"
+                onPress={handleClose}
+                type="button"
+              >
                 Cancel
               </BaseButton>
-              <BaseButton type="submit" isLoading={mutation.isPending}>
+              <BaseButton type="submit" isDisabled={mutation.isPending}>
                 {isEdit ? 'Update' : 'Create'}
               </BaseButton>
             </div>

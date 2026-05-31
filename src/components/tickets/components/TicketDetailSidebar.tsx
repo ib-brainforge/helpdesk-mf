@@ -1,22 +1,36 @@
-import { type FC, useCallback, useMemo, useEffect } from 'react';
+import { StatusBadge } from '@/components/shared';
 import {
-  BaseSelect,
-  BaseSelectItem,
+  useAddTagToTicket,
+  useRemoveTagFromTicket,
+  useTags,
+  useTicketTags,
+} from '@/components/tags/hooks/useTags';
+import { HelpdeskPermissions } from '@/constants/permissions';
+import { type TicketDto, TicketPriority, TicketStatus } from '@/types/ticket';
+import {
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
   BaseButton,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTagSelect,
+  BaseTagSelectItem,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { StatusBadge } from '@/components/shared';
-import { TicketStatus, TicketPriority, type TicketDto } from '@/types/ticket';
-import { useTags, useTicketTags, useAddTagToTicket, useRemoveTagFromTicket } from '@/components/tags/hooks/useTags';
-import { HelpdeskPermissions } from '@/constants/permissions';
+import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useAtom } from 'jotai';
-import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
-import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
+import { type FC, useCallback, useEffect, useMemo } from 'react';
+import {
+  categoriesMutationAtom,
+  mapCategoryToOption,
+} from '../state/categories-dropdown-state';
+import {
+  mapUserToOption,
+  usersMutationAtom,
+} from '../state/users-dropdown-state';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
 
 interface TicketDetailSidebarProps {
@@ -77,14 +91,13 @@ const formatTimeSpent = (timeSpan: string | undefined) => {
   // Parse TimeSpan format: "HH:MM:SS" or duration in seconds
   if (typeof timeSpan === 'string' && timeSpan.includes(':')) {
     const parts = timeSpan.split(':');
-    const hours = parseInt(parts[0] || '0', 10);
-    const minutes = parseInt(parts[1] || '0', 10);
+    const hours = Number.parseInt(parts[0] || '0', 10);
+    const minutes = Number.parseInt(parts[1] || '0', 10);
     return `${hours}h ${minutes}m`;
   }
 
   return timeSpan || '0h 0m';
 };
-
 
 export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   ticket,
@@ -101,15 +114,25 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
   // Tags
   const { tags: availableTags } = useTags();
-  const { tags: ticketTags, refetch: refetchTicketTags } = useTicketTags(ticket.id ?? '');
+  const { tags: ticketTags, refetch: refetchTicketTags } = useTicketTags(
+    ticket.id ?? '',
+  );
   const addTagMutation = useAddTagToTicket();
   const removeTagMutation = useRemoveTagFromTicket();
 
   // Users search mutation for assignee autocomplete
-  const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
+  const [
+    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
+  ] = useAtom(usersMutationAtom);
 
   // Categories search mutation for category autocomplete
-  const [{ mutate: searchCategories, data: categoriesData, isPending: isSearchingCategories }] = useAtom(categoriesMutationAtom);
+  const [
+    {
+      mutate: searchCategories,
+      data: categoriesData,
+      isPending: isSearchingCategories,
+    },
+  ] = useAtom(categoriesMutationAtom);
 
   // Load initial data when component mounts
   useEffect(() => {
@@ -121,12 +144,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   // Map data to options
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
-    [usersData]
+    [usersData],
   );
 
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
-    [categoriesData]
+    [categoriesData],
   );
 
   const handleTagsChange = useCallback(
@@ -140,74 +163,109 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       }
 
       for (const tagId of removed) {
-        await removeTagMutation.mutateAsync({ ticketId: ticket.id ?? '', tagId });
+        await removeTagMutation.mutateAsync({
+          ticketId: ticket.id ?? '',
+          tagId,
+        });
       }
 
       await refetchTicketTags();
     },
-    [ticket.id, ticketTags, addTagMutation, removeTagMutation, refetchTicketTags]
+    [
+      ticket.id,
+      ticketTags,
+      addTagMutation,
+      removeTagMutation,
+      refetchTicketTags,
+    ],
   );
 
   return (
     <div className="space-y-6">
       {/* Status */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Status
+        </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-          fallback={<StatusBadge color={statusConfig.color}>{statusConfig.label}</StatusBadge>}
+          fallback={
+            <StatusBadge color={statusConfig.color}>
+              {statusConfig.label}
+            </StatusBadge>
+          }
         >
           <BaseSelect
-            selectedKeys={new Set([ticket.status?.toString() ?? ''])}
-            onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
-              onUpdate?.({ status: value as any });
+            selectedKey={ticket.status?.toString() ?? ''}
+            onSelectionChange={keys => {
+              if (typeof keys === 'string') {
+                onUpdate?.({ status: keys as TicketStatus });
+              }
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketStatus.New.toString()}>New</BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.InProgress.toString()}>In Progress</BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.Closed.toString()}>Closed</BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.New.toString()} value={TicketStatus.New.toString()}>
+              New
+            </BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.InProgress.toString()} value={TicketStatus.InProgress.toString()}>
+              In Progress
+            </BaseSelectItem>
+            <BaseSelectItem key={TicketStatus.Closed.toString()} value={TicketStatus.Closed.toString()}>
+              Closed
+            </BaseSelectItem>
           </BaseSelect>
         </PermissionGuard>
       </div>
 
       {/* Priority */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Priority
+        </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-          fallback={<StatusBadge color={priorityConfig.color}>{priorityConfig.label}</StatusBadge>}
+          fallback={
+            <StatusBadge color={priorityConfig.color}>
+              {priorityConfig.label}
+            </StatusBadge>
+          }
         >
           <BaseSelect
-            selectedKeys={new Set([ticket.priority?.toString() ?? ''])}
-            onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
-              onUpdate?.({ priority: value as any });
+            selectedKey={ticket.priority?.toString() ?? ''}
+            onSelectionChange={keys => {
+              if (typeof keys === 'string') {
+                onUpdate?.({ priority: keys as TicketPriority });
+              }
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketPriority.Critical}>Critical</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Normal}>Normal</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+              Critical
+            </BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>Normal</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
           </BaseSelect>
         </PermissionGuard>
       </div>
 
       {/* Assignee */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Assignee</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Assignee
+        </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
-          fallback={<p className="text-sm">{ticket.assigneeName ?? 'Unassigned'}</p>}
+          fallback={
+            <p className="text-sm">{ticket.assigneeName ?? 'Unassigned'}</p>
+          }
         >
           <BaseAutocomplete
             placeholder="Search assignee..."
             isClearable
             selectedKey={ticket.assigneeId ?? null}
-            onSelectionChange={(key) => {
+            onSelectionChange={key => {
               const newKey = key as string | null;
               onUpdate?.({ assigneeId: newKey ?? undefined });
             }}
@@ -215,23 +273,19 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             onValueChange={(value: string) => {
               searchUsers({ query: value });
             }}
-            onOpenChange={(open) => {
+            onOpenChange={open => {
               if (open && !isSearchingUsers) {
                 searchUsers({ query: '' });
               }
             }}
             isLoading={isSearchingUsers}
             isDisabled={isUpdating}
-            renderSelectedItem={(selectedKey) => {
-              const user = usersOptions.find((u) => u.id === selectedKey);
+            renderSelectedItem={selectedKey => {
+              const user = usersOptions.find(u => u.id === selectedKey);
               if (!user) return null;
               return (
                 <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-                  <BaseAvatar
-                    src={user.avatarUrl}
-                    name={user.name}
-                    size="xs"
-                  />
+                  <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                   <span className="truncate text-xs font-medium">
                     {user.name}
                   </span>
@@ -239,17 +293,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               );
             }}
           >
-            {usersOptions.map((user) => (
-              <BaseAutocompleteItem
-                key={user.id}
-                textValue={user.name}
-              >
+            {usersOptions.map(user => (
+              <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
                 <div className="flex items-center gap-2.5">
-                  <BaseAvatar
-                    src={user.avatarUrl}
-                    name={user.name}
-                    size="xs"
-                  />
+                  <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                   <div className="flex-1">
                     <span className="text-xs text-[#59636E] dark:text-white">
                       {user.name}
@@ -269,7 +316,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
       {/* Category */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Category
+        </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
           fallback={<p className="text-sm">{ticket.categoryName ?? '—'}</p>}
@@ -278,7 +327,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             placeholder="Search category..."
             isClearable
             selectedKey={ticket.categoryId ?? null}
-            onSelectionChange={(key) => {
+            onSelectionChange={key => {
               const newKey = key as string | null;
               onUpdate?.({ categoryId: newKey ?? undefined });
             }}
@@ -286,27 +335,36 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             onValueChange={(value: string) => {
               searchCategories({ query: value });
             }}
-            onOpenChange={(open) => {
+            onOpenChange={open => {
               if (open && !isSearchingCategories) {
                 searchCategories({ query: '' });
               }
             }}
             isLoading={isSearchingCategories}
             isDisabled={isUpdating}
-            renderSelectedItem={(selectedKey) => {
-              const category = categoriesOptions.find((c) => c.id === selectedKey);
+            renderSelectedItem={selectedKey => {
+              const category = categoriesOptions.find(
+                c => c.id === selectedKey,
+              );
               if (!category) return null;
               return (
                 <span className="truncate text-xs font-medium">
-                  {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                  {category.sectionName
+                    ? `${category.sectionName} / ${category.name}`
+                    : category.name}
                 </span>
               );
             }}
           >
-            {categoriesOptions.map((category) => (
+            {categoriesOptions.map(category => (
               <BaseAutocompleteItem
                 key={category.id}
-                textValue={category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                id={category.id}
+                textValue={
+                  category.sectionName
+                    ? `${category.sectionName} / ${category.name}`
+                    : category.name
+                }
               >
                 <div className="flex flex-col">
                   <span className="text-xs text-[#59636E] dark:text-white">
@@ -327,13 +385,17 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       <div className="border-t pt-6">
         {/* Requester */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Requester</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Requester
+          </label>
           <p className="text-sm">{ticket.requesterName ?? '—'}</p>
         </div>
 
         {/* Via (Origin) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Via</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Via
+          </label>
           <StatusBadge color={originConfig.color}>
             {originConfig.label}
           </StatusBadge>
@@ -341,50 +403,76 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Time Spent */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Time Spent</label>
-          <p className="text-sm">{formatTimeSpent((ticket as any).timeSpent)}</p>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Time Spent
+          </label>
+          <p className="text-sm">
+            {formatTimeSpent((ticket as any).timeSpent)}
+          </p>
         </div>
 
         {/* Due Date */}
         {ticket.dueDate && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-            <p className="text-sm">{formatDateTime(ticket.dueDate, { timezone })}</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Due Date
+            </label>
+            <p className="text-sm">
+              {formatDateTime(ticket.dueDate, { timezone })}
+            </p>
           </div>
         )}
 
         {/* Started At */}
         {(ticket as any).startedAtUtc && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Started At</label>
-            <p className="text-sm">{formatDateTime((ticket as any).startedAtUtc, { timezone })}</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Started At
+            </label>
+            <p className="text-sm">
+              {formatDateTime((ticket as any).startedAtUtc, { timezone })}
+            </p>
           </div>
         )}
 
         {/* Closed At */}
         {(ticket as any).closedAtUtc && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Closed At</label>
-            <p className="text-sm">{formatDateTime((ticket as any).closedAtUtc, { timezone })}</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Closed At
+            </label>
+            <p className="text-sm">
+              {formatDateTime((ticket as any).closedAtUtc, { timezone })}
+            </p>
           </div>
         )}
 
         {/* Created */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-          <p className="text-sm">{formatDateTime(ticket.createdAt, { timezone })}</p>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Created
+          </label>
+          <p className="text-sm">
+            {formatDateTime(ticket.createdAt, { timezone })}
+          </p>
         </div>
 
         {/* Updated */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Updated</label>
-          <p className="text-sm">{formatDateTime(ticket.updatedAt, { timezone })}</p>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Updated
+          </label>
+          <p className="text-sm">
+            {formatDateTime(ticket.updatedAt, { timezone })}
+          </p>
         </div>
 
         {/* Subscribers */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">Subscribers</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Subscribers
+            </label>
             {onSubscribeToggle && (
               <BaseButton
                 size="sm"
@@ -392,7 +480,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                 color={isSubscribed ? 'primary' : undefined}
                 onPress={onSubscribeToggle}
                 isDisabled={isSubscribeLoading}
-                icon={<Icon name={isSubscribed ? 'bell' : 'bell-slash'} className="h-3.5 w-3.5" />}
+                icon={
+                  <Icon
+                    name={isSubscribed ? 'bell' : 'bell-slash'}
+                    className="h-3.5 w-3.5"
+                  />
+                }
               >
                 {isSubscribed ? 'Subscribed' : 'Subscribe me'}
               </BaseButton>
@@ -409,7 +502,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">{ticket.subscriberIds.length} subscriber{ticket.subscriberIds.length !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-gray-500 mt-2">
+                {ticket.subscriberIds.length} subscriber
+                {ticket.subscriberIds.length !== 1 ? 's' : ''}
+              </p>
             </>
           ) : (
             <p className="text-xs text-gray-500 mt-1">No subscribers yet.</p>
@@ -423,32 +519,30 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             fallback={
               ticket.tags && ticket.tags.length > 0 ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tags
+                  </label>
                   <div className="flex flex-wrap gap-2">
-                    {ticket.tags.map((tag) => (
-                      <StatusBadge key={tag}>
-                        {tag}
-                      </StatusBadge>
+                    {ticket.tags.map(tag => (
+                      <StatusBadge key={tag}>{tag}</StatusBadge>
                     ))}
                   </div>
                 </div>
               ) : null
             }
           >
-            <BaseSelect
+            <div className={isUpdating ? 'pointer-events-none opacity-50' : ''}>
+            <BaseTagSelect
               label="Tags"
               placeholder="Select tags..."
-              selectionMode="multiple"
-              isVirtualized={true}
-              maxListboxHeight={300}
-              selectedKeys={new Set(ticketTags?.map(t => t.id) ?? [])}
-              onSelectionChange={(keys) => handleTagsChange(Array.from(keys) as string[])}
-              isDisabled={isUpdating}
+              value={ticketTags?.map(t => t.id) ?? []}
+              onValueChange={handleTagsChange}
             >
-              {availableTags.map((tag) => (
-                <BaseSelectItem key={tag.id}>{tag.name}</BaseSelectItem>
+              {availableTags.map(tag => (
+                <BaseTagSelectItem key={tag.id} value={tag.id}>{tag.name}</BaseTagSelectItem>
               ))}
-            </BaseSelect>
+            </BaseTagSelect>
+            </div>
           </PermissionGuard>
         </div>
       </div>
@@ -456,7 +550,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Recurring - Placeholder */}
       <div className="border-t pt-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Recurring</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Recurring
+          </label>
           <p className="text-sm text-gray-500">None</p>
         </div>
 
@@ -466,7 +562,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Parent ticket */}
         {(ticket as any).parentTicketId && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Parent Ticket</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Parent Ticket
+            </label>
             <p className="text-sm font-mono text-blue-600">
               #{(ticket as any).parentTicketId?.substring(0, 8)}
             </p>
@@ -477,11 +575,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Custom Fields */}
       {ticket.customFields && ticket.customFields.length > 0 && (
         <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Custom Fields</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Custom Fields
+          </label>
           <div className="space-y-2">
-            {ticket.customFields.map((field) => (
+            {ticket.customFields.map(field => (
               <div key={field.fieldId}>
-                <label className="block text-xs text-gray-500">{field.fieldName}</label>
+                <label className="block text-xs text-gray-500">
+                  {field.fieldName}
+                </label>
                 <p className="text-sm">{field.value}</p>
               </div>
             ))}
@@ -489,11 +591,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested KB Articles - Placeholder */}
-      <div className="border-t pt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Suggested KB Articles</label>
-        <p className="text-xs text-gray-400 italic">No suggestions available</p>
-      </div>
+      {/* Suggested KB Articles — seeded from ticket subject */}
+      {ticket.subject && (
+        <div className="border-t pt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Suggested KB Articles
+          </label>
+          <KbSuggestions searchText={ticket.subject} minChars={3} limit={5} />
+        </div>
+      )}
     </div>
   );
 };

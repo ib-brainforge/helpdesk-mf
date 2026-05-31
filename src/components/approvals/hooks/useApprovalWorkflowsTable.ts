@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import type { ApprovalWorkflowListDto } from '@/types/approval';
 import {
+  type PaginationState,
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
-  type PaginationState,
 } from '@tanstack/react-table';
-import type { ApprovalWorkflowListDto } from '@/types/approval';
+import { useMemo } from 'react';
 
 interface UseApprovalWorkflowsTableProps {
   data: ApprovalWorkflowListDto[];

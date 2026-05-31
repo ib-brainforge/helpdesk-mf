@@ -1,10 +1,15 @@
-import { useState, useEffect, type FC } from 'react';
-import { useSearchParams } from '@modern-js/runtime/router';
-import { Helmet } from '@modern-js/runtime/head';
-import { Card, Textarea } from '@heroui/react';
-import { BaseButton, Icon } from '@brainforgeau/components';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSubmitSatisfactionRating } from '@/hooks/useSatisfaction';
+import {
+  BaseButton,
+  BaseCard,
+  BaseTextarea,
+  Icon,
+} from '@brainforgeau/components';
+import { Card } from '@heroui/react';
+import { Helmet } from '@modern-js/runtime/head';
+import { useSearchParams } from '@modern-js/runtime/router';
+import { type FC, useEffect, useState } from 'react';
 
 // REVIEW: Public page - no authentication required (uses token from URL)
 function SatisfactionSurveyPage() {
@@ -47,16 +52,22 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Survey Link Invalid</title>
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <Card className="max-w-md w-full p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
-              <Icon name="exclamation-circle" className="h-16 w-16 text-danger mx-auto mb-4" />
-              <h1 className="text-2xl font-semibold mb-2">Invalid Survey Link</h1>
+              <Icon
+                name="exclamation-circle"
+                className="text-danger mx-auto mb-4 h-16 w-16"
+              />
+              <h1 className="mb-2 text-2xl font-semibold">
+                Invalid Survey Link
+              </h1>
               <p className="text-gray-600">
-                This satisfaction survey link is invalid or missing the required token.
+                This satisfaction survey link is invalid or missing the required
+                token.
               </p>
             </div>
-          </Card>
+          </BaseCard>
         </div>
       </>
     );
@@ -68,16 +79,20 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Thank You!</title>
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <Card className="max-w-md w-full p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
-              <Icon name="check-circle" className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-semibold mb-2">Thank You!</h1>
+              <Icon
+                name="check-circle"
+                className="mx-auto mb-4 h-16 w-16 text-green-500"
+              />
+              <h1 className="mb-2 text-2xl font-semibold">Thank You!</h1>
               <p className="text-gray-600">
-                Your feedback has been submitted successfully. We appreciate your time and input.
+                Your feedback has been submitted successfully. We appreciate
+                your time and input.
               </p>
             </div>
-          </Card>
+          </BaseCard>
         </div>
       </>
     );
@@ -93,17 +108,23 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Survey Error</title>
         </Helmet>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <Card className="max-w-md w-full p-8">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
-              <Icon name="exclamation-triangle" className="h-16 w-16 text-orange-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-semibold mb-2">Survey Error</h1>
-              <p className="text-gray-600 mb-4">{errorMessage}</p>
-              <BaseButton variant="light" onClick={() => submitMutation.reset()}>
+              <Icon
+                name="exclamation-triangle"
+                className="mx-auto mb-4 h-16 w-16 text-orange-500"
+              />
+              <h1 className="mb-2 text-2xl font-semibold">Survey Error</h1>
+              <p className="mb-4 text-gray-600">{errorMessage}</p>
+              <BaseButton
+                variant="light"
+                onClick={() => submitMutation.reset()}
+              >
                 Try Again
               </BaseButton>
             </div>
-          </Card>
+          </BaseCard>
         </div>
       </>
     );
@@ -114,19 +135,21 @@ function SatisfactionSurveyPage() {
       <Helmet>
         <title>Customer Satisfaction Survey</title>
       </Helmet>
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-        <Card className="max-w-lg w-full p-8">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-semibold mb-2">How was your support experience?</h1>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+        <BaseCard className="w-full max-w-lg">
+          <div className="mb-6 text-center">
+            <h1 className="mb-2 text-2xl font-semibold">
+              How was your support experience?
+            </h1>
             <p className="text-gray-600">
-              We would love to hear your feedback. Please rate your experience and share any
-              comments.
+              We would love to hear your feedback. Please rate your experience
+              and share any comments.
             </p>
           </div>
 
           <div className="space-y-6">
             <div className="flex flex-col items-center">
-              <label className="text-sm font-medium mb-3">Your Rating</label>
+              <label className="mb-3 text-sm font-medium">Your Rating</label>
               <StarRating value={rating} onChange={setRating} size="lg" />
               {rating > 0 && (
                 <p className="mt-2 text-sm text-gray-600">
@@ -140,7 +163,7 @@ function SatisfactionSurveyPage() {
             </div>
 
             <div>
-              <Textarea
+              <BaseTextarea
                 label="Additional Comments (Optional)"
                 placeholder="Tell us more about your experience..."
                 value={comment}
@@ -153,15 +176,14 @@ function SatisfactionSurveyPage() {
             <div className="flex justify-center pt-2">
               <BaseButton
                 onClick={handleSubmit}
-                disabled={rating === 0 || submitMutation.isPending}
-                isLoading={submitMutation.isPending}
+                isDisabled={rating === 0 || submitMutation.isPending}
                 className="px-8"
               >
                 Submit Feedback
               </BaseButton>
             </div>
           </div>
-        </Card>
+        </BaseCard>
       </div>
     </>
   );

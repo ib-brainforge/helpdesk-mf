@@ -1,8 +1,8 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
-  PrincipalSlaPoliciesApi,
   type HelpdeskApplicationSlaCommandsCreateSlaPolicyCreatePrincipalSlaPolicyCommand,
   type HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdatePrincipalSlaPolicyCommand,
+  PrincipalSlaPoliciesApi,
 } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -66,11 +66,17 @@ export function useUpdatePrincipalSlaPolicy(principalId: string) {
       command: HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdatePrincipalSlaPolicyCommand;
     }) => {
       const client = await createHelpdeskApiClient(PrincipalSlaPoliciesApi);
-      await client.v1PrincipalsPrincipalIdSlaPoliciesIdPut(principalId, id, command);
+      await client.v1PrincipalsPrincipalIdSlaPoliciesIdPut(
+        principalId,
+        id,
+        command,
+      );
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY, principalId] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, principalId, variables.id] });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEY, principalId, variables.id],
+      });
     },
   });
 }

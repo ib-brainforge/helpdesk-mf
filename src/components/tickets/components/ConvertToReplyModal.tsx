@@ -69,7 +69,7 @@ export const ConvertToReplyModal: FC<ConvertToReplyModalProps> = ({
           <BaseButton
             variant="bordered"
             onPress={onClose}
-            isDisabled={isLoading}
+            isDisabled={isLoading || isLoading}
           >
             Cancel
           </BaseButton>
@@ -77,7 +77,6 @@ export const ConvertToReplyModal: FC<ConvertToReplyModalProps> = ({
             color="primary"
             onPress={handleConfirm}
             isDisabled={!trimmed || isInvalid}
-            isLoading={isLoading}
           >
             Convert
           </BaseButton>

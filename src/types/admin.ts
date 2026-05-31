@@ -22,7 +22,12 @@ export interface PlatformTicketListItem {
 }
 
 export type PlatformTicketStatus = 'New' | 'InProgress' | 'Closed';
-export type PlatformTicketPriority = 'None' | 'Low' | 'Normal' | 'High' | 'Critical';
+export type PlatformTicketPriority =
+  | 'None'
+  | 'Low'
+  | 'Normal'
+  | 'High'
+  | 'Critical';
 
 export interface PlatformTicketFilters {
   status?: PlatformTicketStatus;

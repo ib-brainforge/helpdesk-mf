@@ -6,8 +6,8 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
+  BaseToggle,
 } from '@brainforgeau/components';
-import { Switch } from '@heroui/react';
 import { useMemo } from 'react';
 import type { TimerTriggerSpecDto } from '../types';
 
@@ -77,10 +77,8 @@ export function TimerTriggerEditor({
     onChange(next);
   }
 
-  function handleScheduleChange(keys: {
-    currentKey?: string | number | bigint | null;
-  }) {
-    const id = keys.currentKey != null ? String(keys.currentKey) : undefined;
+  function handleScheduleChange(key: string | number | null) {
+    const id = key != null ? String(key) : undefined;
     update({ businessHoursScheduleId: id, useBusinessHours: true });
   }
 
@@ -94,7 +92,7 @@ export function TimerTriggerEditor({
         label="Duration (ISO 8601)"
         value={duration}
         onValueChange={val => update({ duration: val })}
-        isReadOnly={readOnly}
+        readOnly={readOnly}
         labelPlacement="outside"
         size="sm"
         placeholder="e.g. PT1H30M (1h 30m), P7D (7 days)"
@@ -102,11 +100,10 @@ export function TimerTriggerEditor({
       />
 
       <div className="flex items-center gap-3">
-        <Switch
+        <BaseToggle
           isSelected={useBusinessHours}
-          onValueChange={val => update({ useBusinessHours: val })}
+          onChange={val => update({ useBusinessHours: val })}
           isDisabled={readOnly}
-          size="sm"
           aria-label="Use business hours for timer calculation"
         />
         <div>
@@ -124,17 +121,14 @@ export function TimerTriggerEditor({
             placeholder={
               schedulesLoading ? 'Loading schedules…' : 'Select a schedule'
             }
-            selectedKeys={
-              businessHoursScheduleId ? [businessHoursScheduleId] : []
-            }
+            selectedKey={businessHoursScheduleId ?? null}
             onSelectionChange={handleScheduleChange}
             isDisabled={readOnly || schedulesLoading}
-            labelPlacement="outside"
             size="sm"
             aria-label="Select business hours schedule"
           >
             {(schedules ?? []).map(s => (
-              <BaseSelectItem key={s.id ?? ''}>
+              <BaseSelectItem key={s.id ?? ''} value={s.id ?? ''}>
                 {s.name ?? s.id ?? ''}
               </BaseSelectItem>
             ))}

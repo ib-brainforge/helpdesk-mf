@@ -1,27 +1,35 @@
-import { type FC, useState, useCallback, useMemo, useEffect } from 'react';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
-  BaseButton,
-  BaseInput,
-  BaseTextarea,
-  BaseSelect,
-  BaseSelectItem,
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
+  BaseButton,
+  BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseModalHeader,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTextarea,
+  ValidationAlert,
 } from '@brainforgeau/components';
-import { addToast } from '@heroui/react';
-import { useCreateTicket } from '../hooks/useTickets';
-import { TicketPriority, type CreateTicketDto } from '@/types/ticket';
+import { toast } from '@heroui/react';
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags } from '@/components/tags/hooks/useTags';
+import { type CreateTicketDto, TicketPriority } from '@/types/ticket';
 import { useAtom } from 'jotai';
-import { usersMutationAtom, mapUserToOption } from '../state/users-dropdown-state';
-import { categoriesMutationAtom, mapCategoryToOption } from '../state/categories-dropdown-state';
+import { useCreateTicket } from '../hooks/useTickets';
+import {
+  categoriesMutationAtom,
+  mapCategoryToOption,
+} from '../state/categories-dropdown-state';
+import {
+  mapUserToOption,
+  usersMutationAtom,
+} from '../state/users-dropdown-state';
 
 interface NewTicketModalProps {
   isOpen: boolean;
@@ -29,20 +37,67 @@ interface NewTicketModalProps {
   onCreated?: (ticketId: string) => void;
 }
 
-export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCreated }) => {
+/** Extract a human-readable error message from a ProblemDetails-style axios error. */
+function extractErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const axiosError = error as {
+      response?: {
+        data?: {
+          errors?: Record<string, string[]> | string[];
+          detail?: string;
+          title?: string;
+        };
+      };
+      message?: string;
+    };
+    const data = axiosError.response?.data;
+    if (data?.errors) {
+      // ProblemDetails validation errors: map of field→messages or flat array
+      if (Array.isArray(data.errors)) {
+        return data.errors.slice(0, 3).join(', ');
+      }
+      const fieldErrors = Object.values(data.errors).flat().slice(0, 3);
+      if (fieldErrors.length > 0) {
+        return fieldErrors.join(', ');
+      }
+    }
+    if (data?.detail) return data.detail;
+    if (data?.title) return data.title;
+    if (axiosError.message) return axiosError.message;
+  }
+  if (error instanceof Error) return error.message;
+  return 'An unexpected error occurred. Please try again.';
+}
+
+export const NewTicketModal: FC<NewTicketModalProps> = ({
+  isOpen,
+  onClose,
+  onCreated,
+}) => {
   const createTicketMutation = useCreateTicket();
 
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<TicketPriority>(TicketPriority.Normal);
+  const [priority, setPriority] = useState<TicketPriority>(
+    TicketPriority.Normal,
+  );
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [assigneeId, setAssigneeId] = useState<string | undefined>(undefined);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { tags: availableTags } = useTags();
 
-  const [{ mutate: searchUsers, data: usersData, isPending: isSearchingUsers }] = useAtom(usersMutationAtom);
-  const [{ mutate: searchCategories, data: categoriesData, isPending: isSearchingCategories }] = useAtom(categoriesMutationAtom);
+  const [
+    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
+  ] = useAtom(usersMutationAtom);
+  const [
+    {
+      mutate: searchCategories,
+      data: categoriesData,
+      isPending: isSearchingCategories,
+    },
+  ] = useAtom(categoriesMutationAtom);
 
   useEffect(() => {
     if (isOpen) {
@@ -53,12 +108,12 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
 
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
-    [usersData]
+    [usersData],
   );
 
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
-    [categoriesData]
+    [categoriesData],
   );
 
   const resetForm = useCallback(() => {
@@ -68,22 +123,31 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
     setCategoryId(undefined);
     setAssigneeId(undefined);
     setSelectedTags([]);
+    setSubmitError(null);
   }, []);
 
   const handleCreate = useCallback(async () => {
+    // Clear any previous submission error before attempting again.
+    setSubmitError(null);
+
     if (!subject.trim()) {
-      addToast({
-        title: 'Subject required',
+      toast('Subject required', {
         description: 'Please enter a ticket subject',
-        severity: 'warning',
+        variant: 'warning',
       });
       return;
     }
     if (!description.trim()) {
-      addToast({
-        title: 'Description required',
+      toast('Description required', {
         description: 'Please enter a ticket description',
-        severity: 'warning',
+        variant: 'warning',
+      });
+      return;
+    }
+    if (!categoryId) {
+      toast('Category required', {
+        description: 'Please select a category for the ticket',
+        variant: 'warning',
       });
       return;
     }
@@ -100,10 +164,9 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
 
       const result: any = await createTicketMutation.mutateAsync(dto);
 
-      addToast({
-        title: 'Ticket created',
+      toast('Ticket created', {
         description: `Ticket "${subject}" has been created`,
-        severity: 'success',
+        variant: 'success',
       });
 
       resetForm();
@@ -113,13 +176,25 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
         onCreated?.(result.id);
       }
     } catch (error) {
-      addToast({
-        title: 'Failed to create ticket',
-        description: error instanceof Error ? error.message : 'An error occurred',
-        severity: 'danger',
+      const errorMessage = extractErrorMessage(error);
+      setSubmitError(errorMessage);
+      toast('Failed to create ticket', {
+        description: errorMessage,
+        variant: 'danger',
       });
     }
-  }, [subject, description, priority, categoryId, assigneeId, selectedTags, createTicketMutation, resetForm, onClose, onCreated]);
+  }, [
+    subject,
+    description,
+    priority,
+    categoryId,
+    assigneeId,
+    selectedTags,
+    createTicketMutation,
+    resetForm,
+    onClose,
+    onCreated,
+  ]);
 
   const handleCancel = useCallback(() => {
     resetForm();
@@ -127,16 +202,27 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
   }, [resetForm, onClose]);
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleCancel} size="3xl" scrollBehavior="inside">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleCancel}
+      size="3xl"
+      scrollBehavior="inside"
+    >
       <BaseModalContent>
         <BaseModalHeader title="New Ticket" onClose={handleCancel} />
         <BaseModalBody>
+          {submitError && (
+            <ValidationAlert
+              errors={[submitError]}
+              onClose={() => setSubmitError(null)}
+            />
+          )}
           <div className="space-y-4">
             <BaseInput
               label="Subject"
               isRequired
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={e => setSubject(e.target.value)}
               placeholder="Enter ticket subject"
             />
 
@@ -144,7 +230,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
               label="Description"
               isRequired
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Describe the issue in detail"
               minRows={4}
             />
@@ -153,52 +239,74 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
               <BaseSelect
                 label="Priority"
                 isRequired
-                selectedKeys={new Set([priority])}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string;
+                selectedKey={priority}
+                onSelectionChange={keys => {
+                  const value = keys as string;
                   setPriority(value as TicketPriority);
                 }}
               >
-                <BaseSelectItem key={TicketPriority.Critical}>Critical</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.High}>High</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Normal}>Normal</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Low}>Low</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.None}>None</BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+                  Critical
+                </BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>
+                  Normal
+                </BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
+                <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
               </BaseSelect>
 
               <BaseAutocomplete
                 label="Category"
-                placeholder="Select category (optional)"
+                placeholder="Select category"
+                isRequired
                 isClearable
                 selectedKey={categoryId ?? null}
-                onSelectionChange={(key) => setCategoryId((key as string) || undefined)}
+                onSelectionChange={key =>
+                  setCategoryId((key as string) || undefined)
+                }
                 onClear={() => setCategoryId(undefined)}
-                onValueChange={(value: string) => searchCategories({ query: value })}
-                onOpenChange={(open) => {
+                onValueChange={(value: string) =>
+                  searchCategories({ query: value })
+                }
+                onOpenChange={open => {
                   if (open && !isSearchingCategories) {
                     searchCategories({ query: '' });
                   }
                 }}
                 isLoading={isSearchingCategories}
-                renderSelectedItem={(selectedKey) => {
-                  const category = categoriesOptions.find((c) => c.id === selectedKey);
+                renderSelectedItem={selectedKey => {
+                  const category = categoriesOptions.find(
+                    c => c.id === selectedKey,
+                  );
                   if (!category) return null;
                   return (
                     <span className="truncate text-xs font-medium">
-                      {category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                      {category.sectionName
+                        ? `${category.sectionName} / ${category.name}`
+                        : category.name}
                     </span>
                   );
                 }}
               >
-                {categoriesOptions.map((category) => (
+                {categoriesOptions.map(category => (
                   <BaseAutocompleteItem
                     key={category.id}
-                    textValue={category.sectionName ? `${category.sectionName} / ${category.name}` : category.name}
+                    id={category.id}
+                    textValue={
+                      category.sectionName
+                        ? `${category.sectionName} / ${category.name}`
+                        : category.name
+                    }
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs text-[#59636E] dark:text-white">{category.name}</span>
+                      <span className="text-xs text-[#59636E] dark:text-white">
+                        {category.name}
+                      </span>
                       {category.sectionName && (
-                        <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">{category.sectionName}</span>
+                        <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                          {category.sectionName}
+                        </span>
                       )}
                     </div>
                   </BaseAutocompleteItem>
@@ -211,34 +319,50 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
               placeholder="Select assignee (optional)"
               isClearable
               selectedKey={assigneeId ?? null}
-              onSelectionChange={(key) => setAssigneeId((key as string) || undefined)}
+              onSelectionChange={key =>
+                setAssigneeId((key as string) || undefined)
+              }
               onClear={() => setAssigneeId(undefined)}
               onValueChange={(value: string) => searchUsers({ query: value })}
-              onOpenChange={(open) => {
+              onOpenChange={open => {
                 if (open && !isSearchingUsers) {
                   searchUsers({ query: '' });
                 }
               }}
               isLoading={isSearchingUsers}
-              renderSelectedItem={(selectedKey) => {
-                const user = usersOptions.find((u) => u.id === selectedKey);
+              renderSelectedItem={selectedKey => {
+                const user = usersOptions.find(u => u.id === selectedKey);
                 if (!user) return null;
                 return (
                   <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-                    <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
-                    <span className="truncate text-xs font-medium">{user.name}</span>
+                    <BaseAvatar
+                      src={user.avatarUrl}
+                      name={user.name}
+                      size="xs"
+                    />
+                    <span className="truncate text-xs font-medium">
+                      {user.name}
+                    </span>
                   </div>
                 );
               }}
             >
-              {usersOptions.map((user) => (
-                <BaseAutocompleteItem key={user.id} textValue={user.name}>
+              {usersOptions.map(user => (
+                <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
                   <div className="flex items-center gap-2.5">
-                    <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
+                    <BaseAvatar
+                      src={user.avatarUrl}
+                      name={user.name}
+                      size="xs"
+                    />
                     <div className="flex-1">
-                      <span className="text-xs text-[#59636E] dark:text-white">{user.name}</span>
+                      <span className="text-xs text-[#59636E] dark:text-white">
+                        {user.name}
+                      </span>
                       {user.email && (
-                        <span className="dark:text-light block text-[10px] text-[#8C8F97]">{user.email}</span>
+                        <span className="dark:text-light block text-[10px] text-[#8C8F97]">
+                          {user.email}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -260,7 +384,12 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({ isOpen, onClose, onCre
           <BaseButton
             color="primary"
             onPress={handleCreate}
-            isLoading={createTicketMutation.isPending}
+            isDisabled={
+              createTicketMutation.isPending ||
+              !subject.trim() ||
+              !description.trim() ||
+              !categoryId
+            }
           >
             Create Ticket
           </BaseButton>

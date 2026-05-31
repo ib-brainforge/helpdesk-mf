@@ -1,23 +1,26 @@
 /**
  * Principal approval workflows list page — /principal/[principalId]/approvals
  *
- * Admin-only. Lists principal-scoped approval workflows.
- * Create navigates to /approvals/new. Delete uses ConfirmDeleteModal.
+ * W1-P6: Migrated to <ListPage>. Admin-only (enforced by layout context check).
+ * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
 } from '@/hooks/usePrincipalApprovalWorkflows';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
 import {
-  BaseButton,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast, useDisclosure } from '@heroui/react';
+import { toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -28,7 +31,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
 // REVIEW: HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto not yet in published client.
@@ -49,47 +52,31 @@ function PrincipalApprovalsPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
+  const { confirm, dialog } = useConfirm();
+  const { data: principal } = usePrincipal(principalId);
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
-
-  const {
-    data: workflows,
-    isLoading,
-    error,
-  } = usePrincipalApprovalWorkflows(principalId ?? '');
+  const { data: workflows, isLoading } = usePrincipalApprovalWorkflows(
+    principalId ?? '',
+  );
   const deleteMutation = useDeletePrincipalApprovalWorkflow(principalId ?? '');
 
-  if (context?.level !== 'admin') {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Access Denied</p>
-        <p className="text-default-500 text-sm">
-          Approval workflow management requires admin access.
-        </p>
-      </div>
-    );
-  }
-
   const handleDeleteRequest = useCallback(
-    (id: string, name: string) => {
-      setPendingDeleteId(id);
-      setPendingDeleteName(name);
-      onDeleteOpen();
+    async (id: string, name: string) => {
+      const ok = await confirm({
+        title: 'Delete Approval Workflow',
+        body: `Delete approval workflow "${name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          toast('Approval workflow deleted', { variant: 'success' });
+        },
+      });
     },
-    [onDeleteOpen],
+    [confirm, deleteMutation],
   );
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => {
-        addToast({ title: 'Approval workflow deleted', severity: 'success' });
-        setPendingDeleteId(null);
-      },
-    });
-  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -99,8 +86,9 @@ function PrincipalApprovalsPage() {
     columnHelper.accessor('approvalMode', {
       header: 'Mode',
       cell: info =>
-        APPROVAL_MODE_LABELS[info.getValue() as keyof typeof APPROVAL_MODE_LABELS] ??
-        info.getValue(),
+        APPROVAL_MODE_LABELS[
+          info.getValue() as keyof typeof APPROVAL_MODE_LABELS
+        ] ?? info.getValue(),
     }),
     columnHelper.accessor('stepCount', {
       header: 'Steps',
@@ -124,29 +112,35 @@ function PrincipalApprovalsPage() {
     }),
     columnHelper.display({
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => (
-        <div className="flex gap-2">
+        <div className="-my-1.5 flex items-center justify-end gap-1">
           <BaseButton
-            size="sm"
-            variant="bordered"
+            variant="link"
+            size="none"
+            className="text-dark dark:text-light hover:text-blue"
+            aria-label="Edit approval workflow"
             onPress={() =>
               navigate(`/principal/${principalId}/approvals/${row.original.id}`)
             }
-          >
-            Edit
-          </BaseButton>
+            icon={<Icon name="pencil" className="h-4 w-4" />}
+          />
           <BaseButton
-            size="sm"
-            color="danger"
-            variant="light"
-            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
-          >
-            Delete
-          </BaseButton>
+            variant="link"
+            size="none"
+            className="text-danger hover:text-danger-600"
+            aria-label="Delete approval workflow"
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isDisabled={deleteMutation.isPending}
+            icon={<Icon name="trash" className="h-4 w-4" />}
+          />
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 80,
     }),
   ];
 
@@ -156,47 +150,57 @@ function PrincipalApprovalsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Admin guard: layout enforces auth; this check handles the agent role case.
+  if (context?.level !== 'admin') {
+    return (
+      <EmptyState
+        title="Access Denied"
+        description="Approval workflow management requires admin access."
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Approval Workflows</h1>
-        <BaseButton onPress={() => navigate(`/principal/${principalId}/approvals/new`)}>
+    <ListPage
+      title="Approval Workflows"
+      breadcrumbsKey="principal.approvals.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: principal?.name ?? PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+          onPress={() => navigate(`/principal/${principalId}/approvals/new`)}
+        >
           New Workflow
         </BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading approval workflows..." />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-          Failed to load approval workflows. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <BaseTable
-          table={table}
-          isLoading={isLoading}
-          loading={{ title: 'Loading...' }}
+      }
+      empty={
+        <EmptyState
+          title="No approval workflows yet"
+          description="Create an approval workflow to define multi-step sign-off processes."
+          action={
+            <BaseButton
+              color="primary"
+              onPress={() =>
+                navigate(`/principal/${principalId}/approvals/new`)
+              }
+            >
+              New Workflow
+            </BaseButton>
+          }
+          live
         />
-      )}
-
-      <ConfirmDeleteModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Approval Workflow"
-        message={`Delete approval workflow "${pendingDeleteName}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
-    </div>
+      }
+      modals={dialog}
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalApprovalsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

@@ -7,14 +7,14 @@
  * - The flat helpdesk.platform.manage role and Tenant Viewer have been deleted.
  */
 
-import React from 'react';
+import { TicketGrid } from '@/components/tickets/components/TicketGrid';
 import { PageSpinner } from '@brainforgeau/components/base';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { TicketGrid } from '@/components/tickets/components/TicketGrid';
+import React from 'react';
 
 function TicketsPage() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       <TicketGrid />
     </div>
   );

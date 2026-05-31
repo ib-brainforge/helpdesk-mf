@@ -1,17 +1,17 @@
-import type { FC } from 'react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import type { DynamicsDataPointDto } from '@/types';
 import { formatDateTimeAsDate } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import type { DynamicsDataPointDto } from '@/types';
+import type { FC } from 'react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 interface ResolutionTimeChartProps {
   data: DynamicsDataPointDto[];

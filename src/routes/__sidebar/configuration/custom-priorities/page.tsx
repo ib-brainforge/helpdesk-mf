@@ -1,58 +1,75 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, Icon, BaseInput } from '@brainforgeau/components';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { addToast } from '@heroui/react';
+import {
+  BaseButton,
+  BaseCard,
+  BaseInput,
+  Icon,
+} from '@brainforgeau/components';
+import { EmptyState, ListPage } from '@brainforgeau/components/page';
+import { withAuthorizationRequired } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
+
+// REVIEW: Custom priorities API is not yet implemented. This page is a placeholder
+// that will be wired to a real endpoint when the backend is ready.
+
+interface CustomPriority {
+  id: string;
+  name: string;
+}
+
+const EMPTY_COLUMNS: ColumnDef<CustomPriority, any>[] = [
+  {
+    id: 'name',
+    header: 'Name',
+    cell: ({ row }) => <span>{row.original.name}</span>,
+  },
+];
 
 function CustomPrioritiesPage() {
   const [priorityName, setPriorityName] = useState('');
 
   const handleAdd = () => {
     if (!priorityName.trim()) {
-      addToast({
-        title: 'Validation error',
+      toast('Validation error', {
         description: 'Please enter a priority name',
-        severity: 'warning',
+        variant: 'warning',
       });
       return;
     }
 
-    addToast({
-      title: 'Backend not available',
+    toast('Backend not available', {
       description: 'Custom priorities API is not yet implemented',
-      severity: 'warning',
+      variant: 'warning',
     });
     setPriorityName('');
   };
 
+  const columns = useMemo(() => EMPTY_COLUMNS, []);
+
+  // REVIEW: Replace with real data hook when backend is ready
+  const table = useReactTable<CustomPriority>({
+    data: [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
   return (
-    <>
-      <Helmet>
-        <title>Custom Priorities - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Configuration', href: '/configuration' },
-            { label: 'Custom Priorities', href: '/configuration/custom-priorities', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Custom Priorities</h1>
-        <p className="text-default-500 mt-1">
-          Create and manage custom priority levels for your helpdesk tickets
-        </p>
-      </div>
-
-      <div className="max-w-2xl">
-        <div className="mb-6 p-4 bg-default-50 rounded-lg border border-default-200">
-          <p className="text-sm text-default-700 mb-4">
-            Custom priorities allow you to define specific priority levels beyond the default
-            options (Critical, High, Normal, Low). Use this to match your organization's workflow.
+    <ListPage
+      title="Custom Priorities"
+      breadcrumbsKey="configuration.custom-priorities.list"
+      table={table}
+      isLoading={false}
+      subheader={
+        <BaseCard className="max-w-2xl">
+          <p className="text-default-700 mb-4 text-sm">
+            Custom priorities allow you to define specific priority levels
+            beyond the default options (Critical, High, Normal, Low). Use this
+            to match your organization's workflow.
           </p>
           <div className="flex items-end gap-3">
             <BaseInput
@@ -75,24 +92,19 @@ function CustomPrioritiesPage() {
               Add
             </BaseButton>
           </div>
-        </div>
-
-        {/* REVIEW: Mock data placeholder - replace when backend is ready */}
-        <div className="border rounded-lg overflow-hidden">
-          <div className="bg-default-100 px-4 py-3 border-b">
-            <h3 className="font-semibold text-sm">Existing Priorities</h3>
-          </div>
-          <div className="p-8 text-center">
-            <Icon name="inbox" className="h-12 w-12 text-default-300 mx-auto mb-3" />
-            <p className="text-default-500 mb-1">No custom priorities yet</p>
-            <p className="text-default-400 text-sm">
-              Add your first custom priority using the form above
-            </p>
-          </div>
-        </div>
-      </div>
-    </>
+        </BaseCard>
+      }
+      empty={
+        <EmptyState
+          title="No custom priorities yet"
+          description="Add your first custom priority using the form above."
+          size="sm"
+        />
+      }
+    />
   );
 }
 
-export default CustomPrioritiesPage;
+export default withAuthorizationRequired(CustomPrioritiesPage, {
+  requiredPermissions: ['Helpdesk.Settings.Manage'],
+});

@@ -1,18 +1,21 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Chip, Spinner, Link } from '@heroui/react';
+import { UserRolesModal } from '@/components/admin-users/components/UserRolesModal';
 import { useTenantUsers } from '@/components/admin-users/hooks/useAdminUsers';
 import { useUsersData } from '@/components/users';
-import { UserRolesModal } from '@/components/admin-users/components/UserRolesModal';
-import type { TenantUserDto, HelpdeskRole } from '@/types/admin-user';
 import { getAppConfig } from '@/state/config';
+import type { HelpdeskRole, TenantUserDto } from '@/types/admin-user';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import {
+  EmptyState,
+  PageBody,
+  PageHeader,
+} from '@brainforgeau/components/page';
+import { Chip, Link, Spinner } from '@heroui/react';
+import { useState } from 'react';
 
-const ACTIVITY_ROLE_COLOR: Record<string, 'warning' | 'primary' | 'default'> = {
+const ACTIVITY_ROLE_COLOR: Record<string, 'warning' | 'accent' | 'default'> = {
   admin: 'warning',
-  agent: 'primary',
+  agent: 'accent',
   customer: 'default',
 };
 
@@ -26,7 +29,7 @@ function AdminUsersPage() {
   const isLoading = isLoadingHelpdeskUsers || isLoadingIdentity;
 
   // Build a lookup map for identity display data by userId
-  const identityMap = new Map(identityUsers.map((u) => [u.id, u]));
+  const identityMap = new Map(identityUsers.map(u => [u.id, u]));
 
   const handleManageRoles = (user: TenantUserDto) => {
     setSelectedUser(user);
@@ -40,50 +43,52 @@ function AdminUsersPage() {
     : null;
 
   return (
-    <>
-      <Helmet>
-        <title>Users — Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings' },
-            { label: 'Users', href: '/admin/users', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Users</h1>
-          <p className="text-default-500 mt-1">
-            Manage helpdesk roles for users known to this tenant
-          </p>
-        </div>
+    <PageBody>
+      <PageHeader title="Users" breadcrumbsKey="admin.users">
+        <PageHeader.Meta>
+          Manage helpdesk roles for users known to this tenant
+        </PageHeader.Meta>
         {keycloakAdminUrl && (
-          <Link href={keycloakAdminUrl} isExternal>
-            <BaseButton
-              variant="bordered"
-              icon={<Icon name="arrow-top-right-on-square" className="h-4 w-4" />}
+          <PageHeader.Actions>
+            <Link
+              href={keycloakAdminUrl}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Identity Administration
-            </BaseButton>
-          </Link>
+              <BaseButton
+                variant="bordered"
+                icon={
+                  <Icon name="arrow-top-right-on-square" className="h-4 w-4" />
+                }
+              >
+                Identity Administration
+              </BaseButton>
+            </Link>
+          </PageHeader.Actions>
         )}
-      </div>
+      </PageHeader>
 
       <div className="mb-4 p-4 bg-warning-50 border border-warning-200 rounded-lg">
         <div className="flex gap-2">
-          <Icon name="information-circle" className="h-5 w-5 text-warning-600 flex-shrink-0 mt-0.5" />
+          <Icon
+            name="information-circle"
+            className="h-5 w-5 text-warning-600 flex-shrink-0 mt-0.5"
+          />
           <div>
-            <p className="text-sm font-medium text-warning-800">Helpdesk roles only</p>
+            <p className="text-sm font-medium text-warning-800">
+              Helpdesk roles only
+            </p>
             <p className="text-sm text-warning-700">
-              This page manages helpdesk-specific roles (agent, admin, customer). To create, delete,
-              or manage Keycloak login access for users, use the{' '}
+              This page manages helpdesk-specific roles (agent, admin,
+              customer). To create, delete, or manage Keycloak login access for
+              users, use the{' '}
               {keycloakAdminUrl ? (
-                <Link href={keycloakAdminUrl} isExternal className="text-warning-800 underline">
+                <Link
+                  href={keycloakAdminUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-warning-800 underline"
+                >
                   Identity Administration
                 </Link>
               ) : (
@@ -100,26 +105,30 @@ function AdminUsersPage() {
           <Spinner size="lg" />
         </div>
       ) : tenantUsers.length === 0 ? (
-        <div className="border rounded-lg p-12 text-center">
-          <Icon name="users" className="h-12 w-12 text-default-300 mx-auto mb-3" />
-          <p className="text-default-500 font-medium mb-1">No users yet</p>
-          <p className="text-default-400 text-sm">
-            Users appear here once they submit or are assigned to tickets
-          </p>
-        </div>
+        <EmptyState
+          title="No users yet"
+          description="Users appear here once they submit or are assigned to tickets."
+          live
+        />
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-default-100 px-4 py-3 border-b">
-            <h3 className="font-semibold text-sm">Tenant Users ({tenantUsers.length})</h3>
+            <h3 className="font-semibold text-sm">
+              Tenant Users ({tenantUsers.length})
+            </h3>
           </div>
           <div className="divide-y">
-            {tenantUsers.map((user) => {
+            {tenantUsers.map(user => {
               const identity = identityMap.get(user.userId);
-              const displayName = identity?.name ?? `User ${user.userId.slice(0, 8)}…`;
+              const displayName =
+                identity?.name ?? `User ${user.userId.slice(0, 8)}…`;
               const email = identity?.email;
 
               return (
-                <div key={user.userId} className="px-4 py-3 flex items-center gap-3">
+                <div
+                  key={user.userId}
+                  className="px-4 py-3 flex items-center gap-3"
+                >
                   {/* Avatar placeholder */}
                   <div className="w-9 h-9 rounded-full bg-default-200 flex items-center justify-center flex-shrink-0">
                     <Icon name="user" className="h-4 w-4 text-default-500" />
@@ -130,20 +139,29 @@ function AdminUsersPage() {
                       <span className="font-medium text-sm">{displayName}</span>
                       <Chip
                         size="sm"
-                        color={ACTIVITY_ROLE_COLOR[user.activityRole] ?? 'default'}
-                        variant="flat"
+                        color={
+                          ACTIVITY_ROLE_COLOR[user.activityRole] ?? 'default'
+                        }
                       >
                         {user.activityRole}
                       </Chip>
-                      {user.assignedRoles.filter((r) => r !== user.activityRole).map((role) => (
-                        <Chip key={role} size="sm" color="secondary" variant="bordered">
-                          +{role}
-                        </Chip>
-                      ))}
+                      {user.assignedRoles
+                        .filter(r => r !== user.activityRole)
+                        .map(role => (
+                          <Chip
+                            key={role}
+                            size="sm"
+                            color="default"
+                            variant="tertiary"
+                          >
+                            +{role}
+                          </Chip>
+                        ))}
                     </div>
                     <p className="text-xs text-default-400 mt-0.5">
                       {email && <span>{email} · </span>}
-                      {user.submittedTicketCount} submitted · {user.assignedTicketCount} assigned
+                      {user.submittedTicketCount} submitted ·{' '}
+                      {user.assignedTicketCount} assigned
                     </p>
                   </div>
 
@@ -176,7 +194,7 @@ function AdminUsersPage() {
           }
         />
       )}
-    </>
+    </PageBody>
   );
 }
 

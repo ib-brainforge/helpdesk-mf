@@ -1,4 +1,4 @@
-import { Html, Head, Body, Scripts } from '@modern-js/runtime/document';
+import { Body, Head, Html, Scripts } from '@modern-js/runtime/document';
 
 const APP_TITLE = process.env.APP_TITLE || 'Loading...';
 const BASE_PATH = process.env.BASE_PATH || '';
@@ -15,11 +15,27 @@ export default function Document() {
     <Html lang="en" data-app-loading="true">
       <Head>
         <title>{APP_TITLE}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <link rel="icon" type="image/png" href={withBasePath('favicon-96x96.png')} sizes="96x96" />
-        <link rel="icon" type="image/svg+xml" href={withBasePath('favicon.svg')} />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          href={withBasePath('favicon-96x96.png')}
+          sizes="96x96"
+        />
+        <link
+          rel="icon"
+          type="image/svg+xml"
+          href={withBasePath('favicon.svg')}
+        />
         <link rel="shortcut icon" href={withBasePath('favicon.ico')} />
-        <link rel="apple-touch-icon" sizes="180x180" href={withBasePath('apple-touch-icon.png')} />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href={withBasePath('apple-touch-icon.png')}
+        />
         <script src={withBasePath('config.js')} />
         <script
           dangerouslySetInnerHTML={{

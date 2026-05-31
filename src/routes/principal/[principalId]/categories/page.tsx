@@ -1,24 +1,27 @@
 /**
  * Principal categories list page — /principal/[principalId]/categories
  *
- * Admin-only. Lists all principal-scoped categories.
- * Create navigates to /categories/new. Delete uses ConfirmDeleteModal.
+ * W1-P6: Migrated to <ListPage>. Admin-only (enforced by layout context check).
+ * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
+import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useDeletePrincipalCategory,
   usePrincipalCategories,
 } from '@/hooks/usePrincipalCategories';
-import { ConfirmDeleteModal } from '@/components/principal/ConfirmDeleteModal';
-import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
 import {
-  BaseButton,
-  BaseTable,
-  PageSpinner,
-} from '@brainforgeau/components';
+  EmptyState,
+  ListPage,
+  PendingCrumb,
+  useConfirm,
+} from '@brainforgeau/components/page';
 import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
-import { addToast, useDisclosure } from '@heroui/react';
+import { toast } from '@heroui/react';
 import {
   useNavigate,
   useOutletContext,
@@ -29,7 +32,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
 const columnHelper =
@@ -39,47 +42,31 @@ function PrincipalCategoriesPage() {
   const { principalId } = useParams<{ principalId: string }>();
   const context = useOutletContext<PrincipalOutletContext>();
   const navigate = useNavigate();
+  const { confirm, dialog } = useConfirm();
+  const { data: principal } = usePrincipal(principalId);
 
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
-
-  const {
-    data: categories,
-    isLoading,
-    error,
-  } = usePrincipalCategories(principalId ?? '');
+  const { data: categories, isLoading } = usePrincipalCategories(
+    principalId ?? '',
+  );
   const deleteMutation = useDeletePrincipalCategory(principalId ?? '');
 
-  if (context?.level !== 'admin') {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-xl font-semibold">Access Denied</p>
-        <p className="text-default-500 text-sm">
-          Category management requires admin access.
-        </p>
-      </div>
-    );
-  }
-
   const handleDeleteRequest = useCallback(
-    (id: string, name: string) => {
-      setPendingDeleteId(id);
-      setPendingDeleteName(name);
-      onDeleteOpen();
+    async (id: string, name: string) => {
+      const ok = await confirm({
+        title: 'Delete Category',
+        body: `Delete category "${name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          toast('Category deleted', { variant: 'success' });
+        },
+      });
     },
-    [onDeleteOpen],
+    [confirm, deleteMutation],
   );
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => {
-        addToast({ title: 'Category deleted', severity: 'success' });
-        setPendingDeleteId(null);
-      },
-    });
-  }, [pendingDeleteId, deleteMutation]);
 
   const columns = [
     columnHelper.accessor('name', {
@@ -95,8 +82,9 @@ function PrincipalCategoriesPage() {
     columnHelper.accessor('accessLevel', {
       header: 'Access',
       cell: info =>
-        ACCESS_LEVEL_LABELS[info.getValue() as keyof typeof ACCESS_LEVEL_LABELS] ??
-        info.getValue(),
+        ACCESS_LEVEL_LABELS[
+          info.getValue() as keyof typeof ACCESS_LEVEL_LABELS
+        ] ?? info.getValue(),
     }),
     columnHelper.accessor('isActive', {
       header: 'Active',
@@ -112,31 +100,37 @@ function PrincipalCategoriesPage() {
     }),
     columnHelper.display({
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => (
-        <div className="flex gap-2">
+        <div className="-my-1.5 flex items-center justify-end gap-1">
           <BaseButton
-            size="sm"
-            variant="bordered"
+            variant="link"
+            size="none"
+            className="text-dark dark:text-light hover:text-blue"
+            aria-label="Edit category"
             onPress={() =>
               navigate(
                 `/principal/${principalId}/categories/${row.original.id}`,
               )
             }
-          >
-            Edit
-          </BaseButton>
+            icon={<Icon name="pencil" className="h-4 w-4" />}
+          />
           <BaseButton
-            size="sm"
-            color="danger"
-            variant="light"
-            onPress={() => handleDeleteRequest(row.original.id!, row.original.name!)}
-            isLoading={deleteMutation.isPending && pendingDeleteId === row.original.id}
-          >
-            Delete
-          </BaseButton>
+            variant="link"
+            size="none"
+            className="text-danger hover:text-danger-600"
+            aria-label="Delete category"
+            onPress={() =>
+              handleDeleteRequest(row.original.id!, row.original.name!)
+            }
+            isDisabled={deleteMutation.isPending}
+            icon={<Icon name="trash" className="h-4 w-4" />}
+          />
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 80,
     }),
   ];
 
@@ -146,47 +140,57 @@ function PrincipalCategoriesPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Admin guard: layout enforces auth; this check handles the agent role case.
+  if (context?.level !== 'admin') {
+    return (
+      <EmptyState
+        title="Access Denied"
+        description="Category management requires admin access."
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Categories</h1>
-        <BaseButton onPress={() => navigate(`/principal/${principalId}/categories/new`)}>
+    <ListPage
+      title="Categories"
+      breadcrumbsKey="principal.categories.list"
+      breadcrumbsParams={{
+        principalId: principalId!,
+        principalName: principal?.name ?? PendingCrumb,
+      }}
+      table={table}
+      isLoading={isLoading}
+      actions={
+        <BaseButton
+          color="primary"
+          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+          onPress={() => navigate(`/principal/${principalId}/categories/new`)}
+        >
           New Category
         </BaseButton>
-      </div>
-
-      {isLoading && (
-        <div className="flex h-32 items-center justify-center">
-          <PageSpinner title="Loading categories..." />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded border border-danger-200 bg-danger-50 p-4 text-danger">
-          Failed to load categories. Please try again.
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <BaseTable
-          table={table}
-          isLoading={isLoading}
-          loading={{ title: 'Loading...' }}
+      }
+      empty={
+        <EmptyState
+          title="No categories yet"
+          description="Add the first category to start organising tickets for this principal."
+          action={
+            <BaseButton
+              color="primary"
+              onPress={() =>
+                navigate(`/principal/${principalId}/categories/new`)
+              }
+            >
+              New Category
+            </BaseButton>
+          }
+          live
         />
-      )}
-
-      <ConfirmDeleteModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Category"
-        message={`Delete category "${pendingDeleteName}"? This cannot be undone.`}
-        isPending={deleteMutation.isPending}
-      />
-    </div>
+      }
+      modals={dialog}
+    />
   );
 }
 
 export default withAuthenticationRequired(PrincipalCategoriesPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => null,
 });

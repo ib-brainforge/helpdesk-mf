@@ -1,14 +1,13 @@
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Helmet } from '@modern-js/runtime/head';
-import {
-  Box,
-  DonutChart,
-  PageSpinner,
-} from '@brainforgeau/components';
-import { SummaryCard } from '@/components/shared';
-import { TEST_IDS } from '@/constants/testIds';
 import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
-import type { StatusBreakdownDto, PriorityBreakdownDto, CategoryBreakdownDto } from '@/types';
+import { SummaryCard } from '@/components/shared';
+import type {
+  CategoryBreakdownDto,
+  PriorityBreakdownDto,
+  StatusBreakdownDto,
+} from '@/types';
+import { Box, DonutChart, PageSpinner } from '@brainforgeau/components';
+import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 
 const STATUS_COLORS: Record<string, string> = {
   New: '#3b82f6',
@@ -28,43 +27,61 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS = [
-  '#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e',
-  '#0ea5e9', '#ec4899', '#6b7280', '#14b8a6', '#f97316',
+  '#6366f1',
+  '#10b981',
+  '#f59e0b',
+  '#8b5cf6',
+  '#f43f5e',
+  '#0ea5e9',
+  '#ec4899',
+  '#6b7280',
+  '#14b8a6',
+  '#f97316',
 ];
 
-function toStatusDonut(data: StatusBreakdownDto[]): { label: string; value: number; color: string }[] {
+function toStatusDonut(
+  data: StatusBreakdownDto[],
+): { label: string; value: number; color: string }[] {
   return data
     .filter(item => item.count > 0)
     .map(item => ({
-      label: item.statusName,
+      label: item.name,
       value: item.count,
-      color: STATUS_COLORS[item.statusName] || '#6b7280',
+      color:
+        STATUS_COLORS[item.status] || STATUS_COLORS[item.name] || '#6b7280',
     }));
 }
 
-function toPriorityDonut(data: PriorityBreakdownDto[]): { label: string; value: number; color: string }[] {
+function toPriorityDonut(
+  data: PriorityBreakdownDto[],
+): { label: string; value: number; color: string }[] {
   return data
     .filter(item => item.count > 0)
     .map(item => ({
-      label: item.priorityName,
+      label: item.name,
       value: item.count,
-      color: PRIORITY_COLORS[item.priorityName] || '#6b7280',
+      color:
+        PRIORITY_COLORS[item.priority] ||
+        PRIORITY_COLORS[item.name] ||
+        '#6b7280',
     }));
 }
 
-function toCategoryDonut(data: CategoryBreakdownDto[]): { label: string; value: number; color: string }[] {
+function toCategoryDonut(
+  data: CategoryBreakdownDto[],
+): { label: string; value: number; color: string }[] {
   return [...data]
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
     .filter(item => item.count > 0)
     .map((item, index) => ({
-      label: item.categoryName,
+      label: item.name,
       value: item.count,
       color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
     }));
 }
 
-function DashboardPage() {
+function HelpdeskDashboardPage() {
   const { data: summaryData, isLoading } = useTicketSummaryReport();
 
   if (isLoading) {
@@ -82,21 +99,11 @@ function DashboardPage() {
     : [];
 
   return (
-    <>
-      <Helmet>
-        <title>Dashboard</title>
-      </Helmet>
-      <div className="mb-5" data-testid={TEST_IDS.dashboard.page}>
-        <div className="mb-5 items-center justify-between lg:flex">
-          <h1 className="text-2xl font-semibold dark:text-white mb-2.5 lg:mb-0">
-            Helpdesk Dashboard
-          </h1>
-        </div>
-      </div>
-
-      <div className="mb-7.5 flex flex-col gap-6">
-        {/* Key Metrics */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <DashboardPage
+      title="Helpdesk Dashboard"
+      breadcrumbsKey="dashboard"
+      summary={
+        <>
           <SummaryCard
             title="Total Created"
             value={summaryData?.totalCreated ?? 0}
@@ -115,9 +122,7 @@ function DashboardPage() {
             value={summaryData?.totalOpen ?? 0}
             subtitle="Awaiting resolution"
             icon="exclamation-triangle"
-            variant={
-              (summaryData?.totalOpen ?? 0) > 0 ? 'warning' : 'default'
-            }
+            variant={(summaryData?.totalOpen ?? 0) > 0 ? 'warning' : 'default'}
           />
           <SummaryCard
             title="Avg Resolution"
@@ -126,15 +131,15 @@ function DashboardPage() {
             icon="clock"
             variant="default"
           />
-        </div>
-
-        {/* Charts Row */}
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        </>
+      }
+      charts={
+        <>
           <Box title="Tickets by Status">
             {statusDonut.length > 0 ? (
               <DonutChart data={statusDonut} />
             ) : (
-              <EmptyChartState message="No ticket data" />
+              <EmptyState title="No ticket data" size="sm" />
             )}
           </Box>
 
@@ -142,7 +147,7 @@ function DashboardPage() {
             {priorityDonut.length > 0 ? (
               <DonutChart data={priorityDonut} />
             ) : (
-              <EmptyChartState message="No priority data" />
+              <EmptyState title="No priority data" size="sm" />
             )}
           </Box>
 
@@ -150,23 +155,15 @@ function DashboardPage() {
             {categoryDonut.length > 0 ? (
               <DonutChart data={categoryDonut} />
             ) : (
-              <EmptyChartState message="No category data" />
+              <EmptyState title="No category data" size="sm" />
             )}
           </Box>
-        </div>
-      </div>
-    </>
+        </>
+      }
+    />
   );
 }
 
-function EmptyChartState({ message }: { message: string }) {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <span className="text-default-400 text-sm">{message}</span>
-    </div>
-  );
-}
-
-export default withAuthenticationRequired(DashboardPage, {
+export default withAuthenticationRequired(HelpdeskDashboardPage, {
   OnRedirecting: () => <PageSpinner title="Loading..." />,
 });

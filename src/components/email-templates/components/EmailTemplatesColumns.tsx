@@ -1,8 +1,8 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
-import { BaseButton, Icon } from '@brainforgeau/components';
 import { StatusBadge } from '@/components/shared';
-import type { EmailTemplateRow } from '../types';
 import { NotificationType } from '@/types/email-template';
+import { BaseButton, Icon } from '@brainforgeau/components';
+import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import type { EmailTemplateRow } from '../types';
 
 const columnHelper = createColumnHelper<EmailTemplateRow>();
 
@@ -31,11 +31,11 @@ export const createEmailTemplatesColumns = ({
 }: CreateEmailTemplatesColumnsProps): ColumnDef<EmailTemplateRow, any>[] => [
   columnHelper.accessor('name', {
     header: 'Name',
-    cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+    cell: info => <span className="font-medium">{info.getValue()}</span>,
   }),
   columnHelper.accessor('notificationType', {
     header: 'Notification Type',
-    cell: (info) => {
+    cell: info => {
       const type = info.getValue() as NotificationType;
       return (
         <StatusBadge color="primary">
@@ -46,7 +46,7 @@ export const createEmailTemplatesColumns = ({
   }),
   columnHelper.accessor('subject', {
     header: 'Subject',
-    cell: (info) => (
+    cell: info => (
       <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
         {info.getValue()}
       </span>
@@ -54,7 +54,7 @@ export const createEmailTemplatesColumns = ({
   }),
   columnHelper.accessor('isActive', {
     header: 'Status',
-    cell: (info) => (
+    cell: info => (
       <StatusBadge color={info.getValue() ? 'success' : 'default'}>
         {info.getValue() ? 'Active' : 'Inactive'}
       </StatusBadge>
@@ -62,30 +62,30 @@ export const createEmailTemplatesColumns = ({
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
-    cell: (info) => (
-      <div className="flex items-center gap-1">
+    header: '',
+    cell: info => (
+      <div className="-my-1.5 flex items-center justify-end gap-1">
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-dark dark:text-light hover:text-blue"
+          aria-label="Edit email template"
           onPress={() => onEdit(info.row.original.id)}
-          title="Edit"
-        >
-          <Icon name="pencil" className="h-4 w-4" />
-        </BaseButton>
+          icon={<Icon name="pencil" className="h-4 w-4" />}
+        />
         <BaseButton
-          variant="light"
-          size="sm"
-          isIconOnly
+          variant="link"
+          size="none"
+          className="text-danger hover:text-danger-600"
+          aria-label="Delete email template"
           onPress={() => onDelete(info.row.original.id)}
-          title="Delete"
-          color="danger"
-        >
-          <Icon name="trash" className="h-4 w-4" />
-        </BaseButton>
+          icon={<Icon name="trash" className="h-4 w-4" />}
+        />
       </div>
     ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 80,
   }),
 ];
 

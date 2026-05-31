@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import {
-  PrincipalTicketsApi,
-  type HelpdeskDomainTicketsEnumsTicketStatus,
-  type HelpdeskDomainTicketsEnumsTicketPriority,
-  type HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand,
-} from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import {
+  type HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand,
+  type HelpdeskDomainTicketsEnumsTicketPriority,
+  type HelpdeskDomainTicketsEnumsTicketStatus,
+  PrincipalTicketsApi,
+} from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useState } from 'react';
 
 export interface PrincipalTicketFilters {
   status?: HelpdeskDomainTicketsEnumsTicketStatus;
@@ -19,7 +19,10 @@ export interface PrincipalTicketFilters {
   unreadOnly?: boolean;
 }
 
-export function usePrincipalTickets(principalId: string, filters?: PrincipalTicketFilters) {
+export function usePrincipalTickets(
+  principalId: string,
+  filters?: PrincipalTicketFilters,
+) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
@@ -32,12 +35,15 @@ export function usePrincipalTickets(principalId: string, filters?: PrincipalTick
       const response = await client.v1PrincipalsPrincipalIdTicketsGet(
         principalId,
         filters?.status,
+        undefined, // customStatusId — not surfaced in the principal tickets view
         filters?.priority,
         filters?.categoryId,
         filters?.assigneeId,
         filters?.requesterId,
         filters?.searchTerm,
         filters?.unreadOnly,
+        undefined, // overdueOnly — not surfaced in the principal tickets view
+        undefined, // unassignedOnly — not used for principal tickets view
         pagination.pageIndex + 1,
         pagination.pageSize,
         'createdAt',
@@ -61,13 +67,20 @@ export function useCreatePrincipalTicket(principalId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (command: HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand) => {
+    mutationFn: async (
+      command: HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand,
+    ) => {
       const client = await createHelpdeskApiClient(PrincipalTicketsApi);
-      const response = await client.v1PrincipalsPrincipalIdTicketsPost(principalId, command);
+      const response = await client.v1PrincipalsPrincipalIdTicketsPost(
+        principalId,
+        command,
+      );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['principal-tickets', principalId] });
+      queryClient.invalidateQueries({
+        queryKey: ['principal-tickets', principalId],
+      });
     },
   });
 }

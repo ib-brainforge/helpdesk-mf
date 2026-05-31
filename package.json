@@ -25,8 +25,9 @@
     "test:e2e:allure:serve": "allure serve allure-results"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.0.0"
   },
+  "packageManager": "pnpm@9.15.0",
   "lint-staged": {
     "*.{jsonc}": [
       "biome check --files-ignore-unknown=true"
@@ -36,28 +37,25 @@
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.2.201-develop.5ea4845",
-    "@brainforgeau/helpdesk-client": "0.1.132-develop.7f17d52",
-    "@brainforgeau/identity-management-client": "0.1.408-develop.d9d4845",
-    "@brainforgeau/observability": "0.2.30-develop.5ea4845",
-    "@brainforgeau/rules-ui": "0.2.7-develop.73b1fb1",
-    "@brainforgeau/security": "0.2.243-develop.46d4c9e",
-    "@brainforgeau/theme": "0.2.44-develop.5ea4845",
+    "@brainforgeau/components": "0.4.469-develop.d6df22e",
+    "@brainforgeau/helpdesk-client": "0.1.179-develop.8b36471",
+    "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
+    "@brainforgeau/observability": "0.4.53-develop.94b6bdf",
+    "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
+    "@brainforgeau/security": "0.4.304-develop.7aa9445",
+    "@brainforgeau/theme": "0.2.64-develop.3645b80",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
-    "@heroui/card": "^2.2.27",
-    "@heroui/react": "2.8.2",
-    "@heroui/theme": "^2.4.20",
-    "@heroui/use-theme": "^2.1.10",
-    "@internationalized/date": "^3.10.0",
+    "@heroui/react": "^3.0.4",
+    "@heroui/styles": "^3.0.4",
+    "@internationalized/date": "^3.12.1",
     "@microsoft/signalr": "^8.0.0",
-    "@modern-js/plugin-bff": "^2.68.11",
-    "@modern-js/runtime": "^2.68.9",
-    "@module-federation/dts-plugin": "^0.21.4",
-    "@module-federation/enhanced": "^0.21.4",
-    "@module-federation/modern-js": "^0.21.2",
-    "@tanstack/react-form": "^1.23.0",
-    "@tanstack/react-query": "^5.89.0",
+    "@modern-js/plugin-bff": "^2.70.8",
+    "@modern-js/runtime": "^2.70.8",
+    "@module-federation/enhanced": "^0.21.6",
+    "@module-federation/modern-js": "^0.21.6",
+    "@tanstack/react-form": "^1.29.3",
+    "@tanstack/react-query": "^5.100.9",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/zod-form-adapter": "^0.42.1",
     "@tiptap/extension-code-block": "^3.19.0",
@@ -81,8 +79,8 @@
     "jotai": "2.13.1",
     "jotai-tanstack-query": "^0.11.0",
     "jotai-urql": "^0.7.2",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-error-boundary": "^6.0.0",
     "react-oidc-context": "3.3.0",
     "recharts": "^2.15.4",
@@ -91,29 +89,38 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@modern-js/app-tools": "^2.68.9",
-    "@modern-js/tsconfig": "^2.68.9",
+    "@modern-js/app-tools": "^2.70.8",
+    "@modern-js/tsconfig": "^2.70.8",
     "@playwright/test": "^1.49.0",
-    "@tailwindcss/postcss": "^4.1.12",
+    "@tailwindcss/postcss": "^4.3.0",
     "@tanstack/eslint-plugin-query": "^5.90.1",
     "@types/dompurify": "^3.2.0",
     "@types/jest": "~29.2.4",
     "@types/node": "~18.11.9",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "~18.3.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
     "allure-commandline": "^2.34.1",
     "allure-playwright": "^3.4.3",
     "compression-webpack-plugin": "^11.1.0",
     "lint-staged": "~15.4.0",
     "oidc-client-ts": "^3.3.0",
     "postcss": "^8.5.6",
-    "postcss-calc": "^10.1.1",
-    "postcss-replace": "^2.0.1",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.11.1",
-    "tailwindcss": "4.1.13",
+    "tailwindcss": "^4.3.0",
     "typescript": "~5.7.3"
+  },
+  "overrides": {
+    "@internationalized/date": "3.10.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "axios": "1.13.5"
+    }
+  },
+  "//pendingDevDependencies": {
+    "@brainforgeau/eslint-plugin-page-templates": "TODO: add once publish workflow is set up in mf-packages (package not yet in GitHub Packages registry as of W1-P11)"
   }
 }

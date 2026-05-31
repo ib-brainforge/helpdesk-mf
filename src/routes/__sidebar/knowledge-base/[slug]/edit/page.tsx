@@ -1,71 +1,253 @@
-import { useParams } from '@modern-js/runtime/router';
-import { Helmet } from '@modern-js/runtime/head';
-import { Suspense } from 'react';
-import { PageSpinner } from '@brainforgeau/components';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { KnowledgeBaseArticleEditorForm } from '@/components/knowledge-base';
-import { useKnowledgeBaseArticle } from '@/components/knowledge-base/hooks/useKnowledgeBase';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+/**
+ * Knowledge-base article edit page — /__sidebar/knowledge-base/[slug]/edit
+ *
+ * W1-P8: Migrated to <FormPage> using useEntityForm with `values:` controlled
+ * re-initialization so the form fields populate when the article query settles.
+ *
+ * This is an edit (not a create) so:
+ *  - Query fetches the existing article by slug.
+ *  - `values` prop on useEntityForm re-initializes the form when data arrives.
+ *  - Cancel navigates back to the article view.
+ */
 
-function EditKnowledgeBaseArticlePageContent({ slug }: { slug: string }) {
-  const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug);
+import {
+  useKnowledgeBaseArticle,
+  useKnowledgeBaseCategories,
+  useUpdateKnowledgeBaseArticle,
+} from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
+import {
+  BaseButton,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  PageSpinner,
+} from '@brainforgeau/components';
+import {
+  EmptyState,
+  FormPage,
+  useEntityForm,
+} from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+
+const articleEditSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200),
+  body: z.string().min(1, 'Body is required'),
+  categoryId: z.string().optional(),
+  accessLevel: z.nativeEnum(KnowledgeBaseAccessLevel),
+  status: z.nativeEnum(KnowledgeBaseStatus),
+});
+
+type ArticleEditFormData = z.infer<typeof articleEditSchema>;
+
+// ---------------------------------------------------------------------------
+// Access level + status options
+// ---------------------------------------------------------------------------
+
+const ACCESS_LEVEL_LABELS: Record<KnowledgeBaseAccessLevel, string> = {
+  [KnowledgeBaseAccessLevel.Public]: 'Public',
+  [KnowledgeBaseAccessLevel.Authenticated]: 'Authenticated',
+  [KnowledgeBaseAccessLevel.TechOnly]: 'Tech Only',
+  [KnowledgeBaseAccessLevel.AdminOnly]: 'Admin Only',
+};
+
+const STATUS_LABELS: Record<KnowledgeBaseStatus, string> = {
+  [KnowledgeBaseStatus.Draft]: 'Draft',
+  [KnowledgeBaseStatus.Published]: 'Published',
+  [KnowledgeBaseStatus.Archived]: 'Archived',
+};
+
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
+
+function EditKnowledgeBaseArticlePage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+
+  const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug!);
+  const { data: categories } = useKnowledgeBaseCategories();
+  const updateArticle = useUpdateKnowledgeBaseArticle();
+
+  const form = useEntityForm<typeof articleEditSchema>({
+    schema: articleEditSchema,
+    defaultValues: {
+      title: '',
+      body: '',
+      categoryId: undefined,
+      accessLevel: KnowledgeBaseAccessLevel.Public,
+      status: KnowledgeBaseStatus.Draft,
+    },
+    values: article
+      ? {
+          title: article.title ?? '',
+          body: article.body ?? '',
+          categoryId: article.categoryId ?? undefined,
+          accessLevel: article.accessLevel ?? KnowledgeBaseAccessLevel.Public,
+          status: article.status ?? KnowledgeBaseStatus.Draft,
+        }
+      : undefined,
+    onSubmit: async (values: ArticleEditFormData) => {
+      if (!article?.id) return;
+      await updateArticle.mutateAsync({
+        id: article.id,
+        updates: {
+          title: values.title,
+          body: values.body,
+          categoryId: values.categoryId,
+          accessLevel: values.accessLevel,
+          status: values.status,
+        },
+      });
+    },
+    invalidateQueryKeys: [
+      ['knowledge-base', 'article', slug],
+      ['knowledge-base', 'articles'],
+    ],
+    toast: { success: 'Article saved', error: 'Save failed' },
+  });
 
   if (isLoading) {
-    return <PageSpinner title="Loading article..." />;
-  }
-
-  if (error || !article) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Icon name="warning" className="h-12 w-12 text-amber-500 mb-4" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Article not found
-        </h2>
-        <p className="text-muted-foreground mb-4">
-          The article you're looking for doesn't exist or has been removed.
-        </p>
-        <BaseButton href="/knowledge-base" variant="light">
-          Back to Knowledge Base
-        </BaseButton>
+      <div className="flex h-32 items-center justify-center">
+        <PageSpinner title="Loading article..." />
       </div>
     );
   }
 
-  return (
-    <>
-      <Helmet>
-        <title>Edit Article - {article.title}</title>
-      </Helmet>
-
-      <div className="mb-5">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Knowledge Base', href: '/knowledge-base' },
-            { label: article.title, href: `/knowledge-base/${slug}` },
-            { label: 'Edit', href: `/knowledge-base/${slug}/edit`, isCurrent: true },
-          ]}
-        />
-
-        <KnowledgeBaseArticleEditorForm mode="edit" article={article} />
-      </div>
-    </>
-  );
-}
-
-function EditKnowledgeBaseArticlePage() {
-  const { slug } = useParams();
-
-  if (!slug) {
-    return <PageSpinner title="Loading..." />;
+  if (error || !article) {
+    return (
+      <EmptyState
+        title="Article not found"
+        description="The article you're looking for does not exist or has been removed."
+        action={
+          <BaseButton onPress={() => navigate('/knowledge-base')}>
+            Back to Knowledge Base
+          </BaseButton>
+        }
+      />
+    );
   }
 
+  const f = form.form;
+
   return (
-    <Suspense fallback={<PageSpinner title="Loading..." />}>
-      <EditKnowledgeBaseArticlePageContent slug={slug} />
-    </Suspense>
+    <FormPage
+      title={`Edit: ${article.title}`}
+      breadcrumbsKey="knowledge-base.article.edit"
+      breadcrumbsParams={{
+        slug: slug!,
+        title: article.title ?? '',
+      }}
+      form={form}
+      onCancel={() => navigate(`/knowledge-base/${slug}`)}
+    >
+      <FormPage.Section title="Article Details" columns={2}>
+        <f.Field name="title">
+          {field => (
+            <BaseInput
+              label="Title"
+              isRequired
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+              placeholder="Article title"
+              className="md:col-span-2"
+            />
+          )}
+        </f.Field>
+
+        <f.Field name="categoryId">
+          {field => (
+            <BaseSelect
+              label="Category"
+              selectedKey={field.state.value ?? null}
+              onSelectionChange={key => {
+                field.handleChange(key ? String(key) : undefined);
+              }}
+            >
+              {(categories ?? []).map(cat => (
+                <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
+
+        <f.Field name="accessLevel">
+          {field => (
+            <BaseSelect
+              label="Access Level"
+              selectedKey={field.state.value}
+              onSelectionChange={key => {
+                if (key)
+                  field.handleChange(String(key) as KnowledgeBaseAccessLevel);
+              }}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            >
+              {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
+                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
+
+        <f.Field name="status">
+          {field => (
+            <BaseSelect
+              label="Status"
+              selectedKey={field.state.value}
+              onSelectionChange={key => {
+                if (key) field.handleChange(String(key) as KnowledgeBaseStatus);
+              }}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            >
+              {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
+      </FormPage.Section>
+
+      <FormPage.Section title="Content">
+        <f.Field name="body">
+          {field => (
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">
+                Body <span className="text-danger">*</span>
+              </label>
+              {/* REVIEW: TipTap rich-text editor is intentionally kept as a
+                   plain textarea here because TipTap's onChange → handleChange
+                   integration requires a controlled wrapper. A future PR should
+                   swap this textarea for the <TipTapEditor> component. */}
+              <textarea
+                className="w-full rounded-lg border border-default-300 bg-default-100 p-3 font-mono text-sm min-h-[400px] focus:outline-none focus:ring-2 focus:ring-primary"
+                value={field.state.value}
+                onChange={e => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+                placeholder="Write your article content here..."
+                aria-invalid={field.state.meta.errors.length > 0}
+              />
+              {field.state.meta.errors.length > 0 && (
+                <p className="text-sm text-danger">
+                  {field.state.meta.errors.map(String).join(', ')}
+                </p>
+              )}
+            </div>
+          )}
+        </f.Field>
+      </FormPage.Section>
+    </FormPage>
   );
 }
 

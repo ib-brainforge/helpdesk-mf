@@ -12,16 +12,24 @@ import { authorizedAxios } from '@/state/authorizedAxios';
 import { getAppConfig } from '@/state/config';
 import type {
   TenantMailConfigDto,
-  UpsertTenantMailConfigRequest,
-  TestTenantMailConfigRequest,
   TenantMailConfigTestResult,
+  TestTenantMailConfigRequest,
+  UpsertTenantMailConfigRequest,
 } from '@/types/email';
 
 function getNotificationBaseUrl(): string {
   const config = getAppConfig();
-  const url: string | undefined = config?.api?.notificationUrl as string | undefined;
+  const url: string | undefined = config?.api?.notificationUrl as
+    | string
+    | undefined;
   if (!url) {
-    throw new Error('Notification API base URL (api.notificationUrl) is not configured');
+    // REVIEW: Returning empty string causes a clear fetch error rather than a
+    // synchronous throw in the render path. The query will fail with a network
+    // error and the page can show a graceful empty/error state.
+    console.warn(
+      '[notificationApiClient] api.notificationUrl is not configured; email settings will be unavailable.',
+    );
+    return '';
   }
   return url.replace(/\/$/, '');
 }

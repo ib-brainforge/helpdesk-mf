@@ -3,30 +3,35 @@
 
 import { formatDateTime } from '@brainforgeau/components/utils';
 
-export const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
+export const exportToCSV = (
+  data: Record<string, unknown>[],
+  filename: string,
+) => {
   if (!data || data.length === 0) {
     console.warn('No data to export');
     return;
   }
 
   // Get all unique columns from the data
-  const columns = Array.from(
-    new Set(data.flatMap((row) => Object.keys(row))),
-  );
+  const columns = Array.from(new Set(data.flatMap(row => Object.keys(row))));
 
   // Create CSV header
   const header = columns.join(',');
 
   // Create CSV rows
-  const rows = data.map((row) =>
+  const rows = data.map(row =>
     columns
-      .map((col) => {
+      .map(col => {
         const value = row[col];
         // Handle special characters and quotes
         if (value === null || value === undefined) return '';
         const stringValue = String(value);
         // Wrap in quotes if contains comma, newline, or quote
-        if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+        if (
+          stringValue.includes(',') ||
+          stringValue.includes('\n') ||
+          stringValue.includes('"')
+        ) {
           return `"${stringValue.replace(/"/g, '""')}"`;
         }
         return stringValue;
@@ -49,7 +54,10 @@ export const exportToCSV = (data: Record<string, unknown>[], filename: string) =
   document.body.removeChild(link);
 };
 
-export const exportToXlsx = async (data: Record<string, unknown>[], filename: string) => {
+export const exportToXlsx = async (
+  data: Record<string, unknown>[],
+  filename: string,
+) => {
   if (!data || data.length === 0) {
     console.warn('No data to export');
     return;
@@ -59,9 +67,9 @@ export const exportToXlsx = async (data: Record<string, unknown>[], filename: st
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Report');
 
-  const columns = Array.from(new Set(data.flatMap((row) => Object.keys(row))));
+  const columns = Array.from(new Set(data.flatMap(row => Object.keys(row))));
 
-  sheet.columns = columns.map((col) => ({
+  sheet.columns = columns.map(col => ({
     header: col,
     key: col,
     width: Math.max(col.length + 4, 16),
@@ -80,8 +88,8 @@ export const exportToXlsx = async (data: Record<string, unknown>[], filename: st
   };
 
   // Add data rows
-  data.forEach((row) => {
-    sheet.addRow(columns.map((col) => row[col] ?? ''));
+  data.forEach(row => {
+    sheet.addRow(columns.map(col => row[col] ?? ''));
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
@@ -105,11 +113,15 @@ export const formatReportData = (
   data: Record<string, unknown>[],
   timezone?: string | null,
 ): Record<string, unknown>[] => {
-  return data.map((row) => {
+  return data.map(row => {
     const formatted: Record<string, unknown> = {};
     Object.entries(row).forEach(([key, value]) => {
       // Format dates
-      if (typeof value === 'string' && !isNaN(Date.parse(value)) && key.toLowerCase().includes('date')) {
+      if (
+        typeof value === 'string' &&
+        !isNaN(Date.parse(value)) &&
+        key.toLowerCase().includes('date')
+      ) {
         formatted[key] = formatDateTime(value, { timezone });
       }
       // Format numbers

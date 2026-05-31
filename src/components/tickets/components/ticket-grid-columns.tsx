@@ -1,15 +1,21 @@
-import { BaseButton, Icon } from '@brainforgeau/components';
-import { PermissionGuard } from '@brainforgeau/security';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import type { ColumnDef } from '@tanstack/react-table';
-import { createColumnHelper } from '@tanstack/react-table';
-import { NavLink } from '@modern-js/runtime/router';
-import type { TicketRow } from '../types';
-import { TicketStatus, TicketPriority } from '@/types/ticket';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge, UserCell } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
+import { TicketPriority, TicketStatus } from '@/types/ticket';
+import { BaseButton, Icon } from '@brainforgeau/components';
+import { formatDateTime } from '@brainforgeau/components/utils';
+import { PermissionGuard } from '@brainforgeau/security';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownPopover,
+  DropdownTrigger,
+} from '@heroui/react';
+import { NavLink } from '@modern-js/runtime/router';
+import type { ColumnDef } from '@tanstack/react-table';
+import { createColumnHelper } from '@tanstack/react-table';
+import type { TicketRow } from '../types';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
@@ -116,11 +122,7 @@ export const createTicketColumns = (
     cell: ({ getValue }) => {
       const status = getValue();
       const config = getStatusConfig(status);
-      return (
-        <StatusBadge color={config.color}>
-          {config.label}
-        </StatusBadge>
-      );
+      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
     size: 120,
   }),
@@ -129,11 +131,7 @@ export const createTicketColumns = (
     cell: ({ getValue }) => {
       const priority = getValue();
       const config = getPriorityConfig(priority);
-      return (
-        <StatusBadge color={config.color}>
-          {config.label}
-        </StatusBadge>
-      );
+      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
     size: 120,
   }),
@@ -148,7 +146,9 @@ export const createTicketColumns = (
     cell: ({ row }) => {
       const { assigneeUserInfo, assigneeName } = row.original;
       if (!row.original.assigneeId) {
-        return <span className="text-sm text-muted-foreground">Unassigned</span>;
+        return (
+          <span className="text-sm text-muted-foreground">Unassigned</span>
+        );
       }
       return (
         <UserCell
@@ -180,7 +180,11 @@ export const createTicketColumns = (
     header: 'Created',
     cell: ({ getValue }) => {
       const date = getValue();
-      return <span className="text-sm">{formatDateTime(date, { timezone: options.timezone })}</span>;
+      return (
+        <span className="text-sm">
+          {formatDateTime(date, { timezone: options.timezone })}
+        </span>
+      );
     },
     size: 120,
   }),
@@ -188,7 +192,11 @@ export const createTicketColumns = (
     header: 'Updated',
     cell: ({ getValue }) => {
       const date = getValue();
-      return <span className="text-sm">{formatDateTime(date, { timezone: options.timezone })}</span>;
+      return (
+        <span className="text-sm">
+          {formatDateTime(date, { timezone: options.timezone })}
+        </span>
+      );
     },
     size: 120,
   }),
@@ -196,7 +204,10 @@ export const createTicketColumns = (
     id: 'actions',
     header: 'Actions',
     cell: ({ row }) => (
-      <PermissionGuard requiredPermissions={[HelpdeskPermissions.TicketWrite]} fallback={null}>
+      <PermissionGuard
+        requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+        fallback={null}
+      >
         <Dropdown>
           <DropdownTrigger>
             <BaseButton
@@ -207,70 +218,87 @@ export const createTicketColumns = (
               icon={<Icon name="dotsV" className="h-4 w-4" />}
             />
           </DropdownTrigger>
-          <DropdownMenu aria-label="Ticket actions">
-            <DropdownItem
-              key="assign"
-              onPress={() => {
-                // REVIEW: Using inline prompt for quick assign - proper modal would be better UX
-                const assigneeId = prompt('Enter user ID to assign (or leave empty to unassign):');
-                if (assigneeId !== null && options.onAssign && row.original.id) {
-                  options.onAssign(row.original.id, assigneeId);
-                }
-              }}
-            >
-              Assign
-            </DropdownItem>
-            <DropdownItem
-              key="status-new"
-              onPress={() => {
-                if (options.onChangeStatus && row.original.id) {
-                  options.onChangeStatus(row.original.id, TicketStatus.New);
-                }
-              }}
-            >
-              Mark as New
-            </DropdownItem>
-            <DropdownItem
-              key="status-inprogress"
-              onPress={() => {
-                if (options.onChangeStatus && row.original.id) {
-                  options.onChangeStatus(row.original.id, TicketStatus.InProgress);
-                }
-              }}
-            >
-              Mark as In Progress
-            </DropdownItem>
-            <DropdownItem
-              key="status-closed"
-              onPress={() => {
-                if (options.onChangeStatus && row.original.id) {
-                  options.onChangeStatus(row.original.id, TicketStatus.Closed);
-                }
-              }}
-            >
-              Close Ticket
-            </DropdownItem>
-            <DropdownItem
-              key="priority-critical"
-              onPress={() => {
-                if (options.onChangePriority && row.original.id) {
-                  options.onChangePriority(row.original.id, TicketPriority.Critical);
-                }
-              }}
-            >
-              Set Priority: Critical
-            </DropdownItem>
-            <DropdownItem
-              key="priority-high"
-              onPress={() => {
-                if (options.onChangePriority && row.original.id) {
-                  options.onChangePriority(row.original.id, TicketPriority.High);
-                }
-              }}
-            >
-              Set Priority: High
-            </DropdownItem>
-          </DropdownMenu>
+          <DropdownPopover>
+            <DropdownMenu aria-label="Ticket actions">
+              <DropdownItem
+                key="assign"
+                onPress={() => {
+                  // REVIEW: Using inline prompt for quick assign - proper modal would be better UX
+                  const assigneeId = prompt(
+                    'Enter user ID to assign (or leave empty to unassign):',
+                  );
+                  if (
+                    assigneeId !== null &&
+                    options.onAssign &&
+                    row.original.id
+                  ) {
+                    options.onAssign(row.original.id, assigneeId);
+                  }
+                }}
+              >
+                Assign
+              </DropdownItem>
+              <DropdownItem
+                key="status-new"
+                onPress={() => {
+                  if (options.onChangeStatus && row.original.id) {
+                    options.onChangeStatus(row.original.id, TicketStatus.New);
+                  }
+                }}
+              >
+                Mark as New
+              </DropdownItem>
+              <DropdownItem
+                key="status-inprogress"
+                onPress={() => {
+                  if (options.onChangeStatus && row.original.id) {
+                    options.onChangeStatus(
+                      row.original.id,
+                      TicketStatus.InProgress,
+                    );
+                  }
+                }}
+              >
+                Mark as In Progress
+              </DropdownItem>
+              <DropdownItem
+                key="status-closed"
+                onPress={() => {
+                  if (options.onChangeStatus && row.original.id) {
+                    options.onChangeStatus(row.original.id, TicketStatus.Closed);
+                  }
+                }}
+              >
+                Close Ticket
+              </DropdownItem>
+              <DropdownItem
+                key="priority-critical"
+                onPress={() => {
+                  if (options.onChangePriority && row.original.id) {
+                    options.onChangePriority(
+                      row.original.id,
+                      TicketPriority.Critical,
+                    );
+                  }
+                }}
+              >
+                Set Priority: Critical
+              </DropdownItem>
+              <DropdownItem
+                key="priority-high"
+                onPress={() => {
+                  if (options.onChangePriority && row.original.id) {
+                    options.onChangePriority(
+                      row.original.id,
+                      TicketPriority.High,
+                    );
+                  }
+                }}
+              >
+                Set Priority: High
+              </DropdownItem>
+            </DropdownMenu>
+          </DropdownPopover>
         </Dropdown>
       </PermissionGuard>
     ),

@@ -22,7 +22,7 @@ function SettingsCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <Chip size="sm" variant="flat" color="warning">
+          <Chip size="sm" color="warning">
             Demo data
           </Chip>
         </div>
@@ -49,20 +49,30 @@ function PrincipalSettingsPage() {
       <SettingsCard title="Account Information">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Principal Name</p>
+            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">
+              Principal Name
+            </p>
             <p className="font-medium">Acme Corp (stub)</p>
           </div>
           <div>
-            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Principal ID</p>
+            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">
+              Principal ID
+            </p>
             <p className="font-mono text-xs">{principalId ?? '—'}</p>
           </div>
           <div>
-            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Contact Email</p>
+            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">
+              Contact Email
+            </p>
             <p className="font-medium">admin@acmecorp.example (stub)</p>
           </div>
           <div>
-            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Account Status</p>
-            <Chip size="sm" color="success" variant="flat">Active (stub)</Chip>
+            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">
+              Account Status
+            </p>
+            <Chip size="sm" color="success">
+              Active (stub)
+            </Chip>
           </div>
         </div>
         <p className="text-xs text-default-400 mt-2">
@@ -74,11 +84,17 @@ function PrincipalSettingsPage() {
       <SettingsCard title="Subscription Tier">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Current Plan</p>
-            <Chip size="sm" color="primary" variant="flat">Professional (stub)</Chip>
+            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">
+              Current Plan
+            </p>
+            <Chip size="sm" color="accent">
+              Professional (stub)
+            </Chip>
           </div>
           <div>
-            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">Renewal Date</p>
+            <p className="text-default-400 text-xs uppercase tracking-wide mb-1">
+              Renewal Date
+            </p>
             <p className="font-medium">2027-01-01 (stub)</p>
           </div>
         </div>
@@ -90,7 +106,9 @@ function PrincipalSettingsPage() {
       {/* Tenants Under Principal */}
       <SettingsCard title="Tenants">
         <div className="flex flex-col items-center justify-center py-6 text-center text-default-500 gap-2">
-          <p className="text-sm">No tenants loaded — principal context pending.</p>
+          <p className="text-sm">
+            No tenants loaded — principal context pending.
+          </p>
           <p className="text-xs">
             This list will show all tenants linked to this principal account.
           </p>
@@ -106,7 +124,8 @@ function PrincipalSettingsPage() {
           Full billing details are managed in the billing portal.
         </p>
         <p className="text-xs text-default-400">
-          Billing page link will be available when billing integration completes.
+          Billing page link will be available when billing integration
+          completes.
         </p>
       </SettingsCard>
     </div>

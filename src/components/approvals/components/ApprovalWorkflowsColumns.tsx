@@ -1,8 +1,7 @@
-import { type ColumnDef } from '@tanstack/react-table';
-import { BaseButton, Icon } from '@brainforgeau/components';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { StatusBadge } from '@/components/shared';
 import { ApprovalMode, type ApprovalWorkflowListDto } from '@/types/approval';
+import { BaseButton, Icon } from '@brainforgeau/components';
+import type { ColumnDef } from '@tanstack/react-table';
 
 // REVIEW: Following existing pattern from AutomationRulesColumns
 
@@ -28,7 +27,9 @@ export const createApprovalWorkflowsColumns = ({
       <div>
         <div className="font-medium">{row.original.name}</div>
         {row.original.description && (
-          <div className="text-xs text-gray-500 mt-0.5">{row.original.description}</div>
+          <div className="text-xs text-gray-500 mt-0.5">
+            {row.original.description}
+          </div>
         )}
       </div>
     ),
@@ -67,37 +68,29 @@ export const createApprovalWorkflowsColumns = ({
   },
   {
     id: 'actions',
-    header: 'Actions',
+    header: '',
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
+      <div className="-my-1.5 flex items-center justify-end gap-1">
         <BaseButton
-          size="sm"
-          variant="light"
+          variant="link"
+          size="none"
+          className="text-dark dark:text-light hover:text-blue"
+          aria-label="Edit approval workflow"
           onPress={() => onEdit(row.original.id)}
-          icon={<Icon name="pencil" className="h-3.5 w-3.5" />}
-        >
-          Edit
-        </BaseButton>
-        <Dropdown>
-          <DropdownTrigger>
-            <BaseButton
-              size="sm"
-              variant="light"
-              icon={<Icon name="dotsV" className="h-3.5 w-3.5" />}
-            />
-          </DropdownTrigger>
-          <DropdownMenu aria-label="Workflow actions">
-            <DropdownItem
-              key="delete"
-              className="text-danger"
-              color="danger"
-              onPress={() => onDelete(row.original.id)}
-            >
-              Delete
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
+          icon={<Icon name="pencil" className="h-4 w-4" />}
+        />
+        <BaseButton
+          variant="link"
+          size="none"
+          className="text-danger hover:text-danger-600"
+          aria-label="Delete approval workflow"
+          onPress={() => onDelete(row.original.id)}
+          icon={<Icon name="trash" className="h-4 w-4" />}
+        />
       </div>
     ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 80,
   },
 ];

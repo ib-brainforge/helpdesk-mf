@@ -27,16 +27,19 @@ import { CommentType } from '@/types/comment';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box, PageSpinner } from '@brainforgeau/components/base';
+import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownPopover,
   DropdownSection,
   DropdownTrigger,
+  toast,
 } from '@heroui/react';
-import { addToast } from '@heroui/react';
+
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useRef, useState } from 'react';
 import {
@@ -65,7 +68,6 @@ import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { CSATWidget } from './CSATWidget';
 import { ConvertToReplyModal } from './ConvertToReplyModal';
-import { DeleteTicketModal } from './DeleteTicketModal';
 import { DuplicateTicketModal } from './DuplicateTicketModal';
 import { EditTicketModal } from './EditTicketModal';
 import { ForwardTicketModal } from './ForwardTicketModal';
@@ -166,12 +168,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const publishAsIdeaMutation = usePublishTicketAsIdea();
   const unpublishAsIdeaMutation = useUnpublishTicketAsIdea();
 
+  const { confirm: confirmAction, dialog: confirmDialog } = useConfirm();
   const [showAttachments, setShowAttachments] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMarkSpamModalOpen, setIsMarkSpamModalOpen] = useState(false);
 
   // Wave 3 modal state
@@ -216,7 +218,27 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const handleUpdate = useCallback(
     (updates: any) => {
       if (!id) return;
-      updateTicketMutation.mutate({ id, updates });
+      updateTicketMutation.mutate(
+        { id, updates },
+        updates.status
+          ? {
+              onError: (error: any) => {
+                const errorCode = error?.response?.data?.errors?.[0]?.code;
+                const detail = error?.response?.data?.detail;
+                const description =
+                  errorCode === 'TRANSITION_NOT_AVAILABLE'
+                    ? 'No workflow transition available for this status change. Check your workflow configuration.'
+                    : detail
+                      ? `Status change failed: ${detail}`
+                      : 'Failed to update ticket status. Please try again.';
+                toast('Status change failed', {
+                  description,
+                  variant: 'danger',
+                });
+              },
+            }
+          : undefined,
+      );
     },
     [id, updateTicketMutation],
   );
@@ -238,10 +260,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   }, []);
 
   const handleComingSoon = useCallback((feature: string) => {
-    addToast({
-      title: 'Coming soon',
+    toast('Coming soon', {
       description: `${feature} will be available soon`,
-      severity: 'warning',
+      variant: 'warning',
     });
   }, []);
 
@@ -251,36 +272,32 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (isSubscribed) {
       unsubscribeMutation.mutate(undefined, {
         onSuccess: () => {
-          addToast({
-            title: 'Unsubscribed',
+          toast('Unsubscribed', {
             description:
               'You will no longer receive notifications for this ticket.',
-            severity: 'success',
+            variant: 'success',
           });
         },
         onError: () => {
-          addToast({
-            title: 'Error',
+          toast('Error', {
             description: 'Failed to unsubscribe. Please try again.',
-            severity: 'danger',
+            variant: 'danger',
           });
         },
       });
     } else {
       subscribeMutation.mutate(undefined, {
         onSuccess: () => {
-          addToast({
-            title: 'Subscribed',
+          toast('Subscribed', {
             description:
               'You will receive notifications for updates to this ticket.',
-            severity: 'success',
+            variant: 'success',
           });
         },
         onError: () => {
-          addToast({
-            title: 'Error',
+          toast('Error', {
             description: 'Failed to subscribe. Please try again.',
-            severity: 'danger',
+            variant: 'danger',
           });
         },
       });
@@ -288,27 +305,31 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   }, [id, isSubscribed, subscribeMutation, unsubscribeMutation]);
 
   // Delete
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteTicket = useCallback(async () => {
     if (!id) return;
+    const ok = await confirmAction({
+      title: 'Delete Ticket',
+      body: 'This ticket will be moved to trash and can be restored within 30 days from the audit log.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
     deleteTicketMutation.mutate(id, {
       onSuccess: () => {
-        addToast({
-          title: 'Ticket deleted',
+        toast('Ticket deleted', {
           description: 'The ticket has been moved to trash.',
-          severity: 'success',
+          variant: 'success',
         });
         navigate('/tickets');
       },
       onError: () => {
-        addToast({
-          title: 'Error',
+        toast('Error', {
           description: 'Failed to delete ticket. Please try again.',
-          severity: 'danger',
+          variant: 'danger',
         });
-        setIsDeleteModalOpen(false);
       },
     });
-  }, [id, deleteTicketMutation, navigate]);
+  }, [id, confirmAction, deleteTicketMutation, navigate]);
 
   // Print
   const handlePrint = useCallback(() => {
@@ -320,19 +341,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     markSpamMutation.mutate(id, {
       onSuccess: () => {
-        addToast({
-          title: 'Marked as spam',
+        toast('Marked as spam', {
           description: 'The ticket has been marked as spam.',
-          severity: 'success',
+          variant: 'success',
         });
         setIsMarkSpamModalOpen(false);
         navigate('/tickets');
       },
       onError: () => {
-        addToast({
-          title: 'Error',
+        toast('Error', {
           description: 'Failed to mark ticket as spam. Please try again.',
-          severity: 'danger',
+          variant: 'danger',
         });
         setIsMarkSpamModalOpen(false);
       },
@@ -343,17 +362,15 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     unmarkSpamMutation.mutate(id, {
       onSuccess: () => {
-        addToast({
-          title: 'Spam flag removed',
+        toast('Spam flag removed', {
           description: 'The ticket has been returned to normal ticket views.',
-          severity: 'success',
+          variant: 'success',
         });
       },
       onError: () => {
-        addToast({
-          title: 'Error',
+        toast('Error', {
           description: 'Failed to unmark spam. Please try again.',
-          severity: 'danger',
+          variant: 'danger',
         });
       },
     });
@@ -366,10 +383,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { primaryTicketId: targetTicketId, ticketIdToMerge: id },
         {
           onSuccess: () => {
-            addToast({
-              title: 'Tickets merged',
+            toast('Tickets merged', {
               description: `Ticket merged into ${targetTicketId.substring(0, 8)}`,
-              severity: 'success',
+              variant: 'success',
             });
             navigate(`/tickets/${targetTicketId}`);
           },
@@ -386,10 +402,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { sourceTicketId: id, targetTicketId, linkType },
         {
           onSuccess: () => {
-            addToast({
-              title: 'Tickets linked',
+            toast('Tickets linked', {
               description: `Linked to ticket ${targetTicketId.substring(0, 8)}`,
-              severity: 'success',
+              variant: 'success',
             });
           },
         },
@@ -453,19 +468,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id) return;
     duplicateTicketMutation.mutate(id, {
       onSuccess: newTicketId => {
-        addToast({
-          title: 'Ticket duplicated',
+        toast('Ticket duplicated', {
           description: 'Navigating to the new ticket.',
-          severity: 'success',
+          variant: 'success',
         });
         setIsDuplicateModalOpen(false);
         navigate(`/tickets/${newTicketId}`);
       },
       onError: () => {
-        addToast({
-          title: 'Error',
+        toast('Error', {
           description: 'Failed to duplicate ticket. Please try again.',
-          severity: 'danger',
+          variant: 'danger',
         });
       },
     });
@@ -478,20 +491,18 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { ticketId: id, parentTicketId },
         {
           onSuccess: () => {
-            addToast({
-              title: 'Ticket converted',
+            toast('Ticket converted', {
               description:
                 'Content moved to parent ticket as an internal note.',
-              severity: 'success',
+              variant: 'success',
             });
             setIsConvertToReplyModalOpen(false);
             navigate(`/tickets/${parentTicketId}`);
           },
           onError: () => {
-            addToast({
-              title: 'Error',
+            toast('Error', {
               description: 'Failed to convert ticket. Please try again.',
-              severity: 'danger',
+              variant: 'danger',
             });
           },
         },
@@ -507,27 +518,24 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { ticketId: id, parentTicketId },
         {
           onSuccess: () => {
-            addToast({
-              title: 'Parent set',
+            toast('Parent set', {
               description: 'Parent ticket linked successfully.',
-              severity: 'success',
+              variant: 'success',
             });
             setIsAddParentModalOpen(false);
           },
           onError: (error: any) => {
             const errorCode = error?.response?.data?.errors?.[0]?.code;
             if (errorCode === 'CIRCULAR_HIERARCHY') {
-              addToast({
-                title: 'Circular hierarchy',
+              toast('Circular hierarchy', {
                 description:
                   'Setting this parent would create a circular hierarchy.',
-                severity: 'danger',
+                variant: 'danger',
               });
             } else {
-              addToast({
-                title: 'Error',
+              toast('Error', {
                 description: 'Failed to set parent ticket. Please try again.',
-                severity: 'danger',
+                variant: 'danger',
               });
             }
           },
@@ -545,18 +553,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         { parentTicketId: id, data },
         {
           onSuccess: newTicketId => {
-            addToast({
-              title: 'Subtask created',
+            toast('Subtask created', {
               description: 'The subtask has been created successfully.',
-              severity: 'success',
+              variant: 'success',
             });
             setIsAddSubtaskModalOpen(false);
           },
           onError: () => {
-            addToast({
-              title: 'Error',
+            toast('Error', {
               description: 'Failed to create subtask. Please try again.',
-              severity: 'danger',
+              variant: 'danger',
             });
           },
         },
@@ -569,20 +575,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (!id || !ticket) return;
     if (ticket.isProblem) {
       unmarkAsProblemMutation.mutate(id, {
-        onSuccess: () =>
-          addToast({ title: 'Problem flag removed', severity: 'success' }),
+        onSuccess: () => toast('Problem flag removed', { variant: 'success' }),
         onError: () =>
-          addToast({
-            title: 'Error removing problem flag',
-            severity: 'danger',
-          }),
+          toast('Error removing problem flag', { variant: 'danger' }),
       });
     } else {
       markAsProblemMutation.mutate(id, {
-        onSuccess: () =>
-          addToast({ title: 'Marked as Problem', severity: 'success' }),
-        onError: () =>
-          addToast({ title: 'Error marking as problem', severity: 'danger' }),
+        onSuccess: () => toast('Marked as Problem', { variant: 'success' }),
+        onError: () => toast('Error marking as problem', { variant: 'danger' }),
       });
     }
   }, [id, ticket, markAsProblemMutation, unmarkAsProblemMutation]);
@@ -592,22 +592,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     if (ticket.isPublishedAsIdea) {
       unpublishAsIdeaMutation.mutate(id, {
         onSuccess: () =>
-          addToast({ title: 'Removed from Ideas Forum', severity: 'success' }),
+          toast('Removed from Ideas Forum', { variant: 'success' }),
         onError: () =>
-          addToast({
-            title: 'Error removing from Ideas Forum',
-            severity: 'danger',
-          }),
+          toast('Error removing from Ideas Forum', { variant: 'danger' }),
       });
     } else {
       publishAsIdeaMutation.mutate(id, {
         onSuccess: () =>
-          addToast({ title: 'Published to Ideas Forum', severity: 'success' }),
+          toast('Published to Ideas Forum', { variant: 'success' }),
         onError: () =>
-          addToast({
-            title: 'Error publishing to Ideas Forum',
-            severity: 'danger',
-          }),
+          toast('Error publishing to Ideas Forum', { variant: 'danger' }),
       });
     }
   }, [id, ticket, publishAsIdeaMutation, unpublishAsIdeaMutation]);
@@ -634,10 +628,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       { id, updates: { assigneeId: currentUserId } },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Ticket assigned',
+          toast('Ticket assigned', {
             description: 'Ticket has been assigned to you',
-            severity: 'success',
+            variant: 'success',
           });
         },
       },
@@ -650,11 +643,21 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       { id, updates: { status: TicketStatus.Closed } },
       {
         onSuccess: () => {
-          addToast({
-            title: 'Ticket closed',
+          toast('Ticket closed', {
             description: 'Ticket status updated to Closed',
-            severity: 'success',
+            variant: 'success',
           });
+        },
+        onError: (error: any) => {
+          const errorCode = error?.response?.data?.errors?.[0]?.code;
+          const detail = error?.response?.data?.detail;
+          const description =
+            errorCode === 'TRANSITION_NOT_AVAILABLE'
+              ? 'No workflow transition available to close this ticket. Check your workflow configuration.'
+              : detail
+                ? `Status change failed: ${detail}`
+                : 'Failed to close ticket. Please try again.';
+          toast('Close ticket failed', { description, variant: 'danger' });
         },
       },
     );
@@ -781,162 +784,162 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           icon={<Icon name="dotsV" className="h-4 w-4" />}
                         />
                       </DropdownTrigger>
-                      <DropdownMenu
-                        aria-label="Ticket actions"
-                        disabledKeys={
-                          actionsDisabled
-                            ? [
-                                'edit',
-                                'print',
-                                'summary',
-                                'subtask',
-                                'parent',
-                                'convert',
-                                'link-asset',
-                                'duplicate',
-                                'forward',
-                                'spam',
-                                'unspam',
-                                'problem',
-                                'publish',
-                              ]
-                            : []
-                        }
-                      >
-                        {/* Edit & View */}
-                        <DropdownSection title="Edit & View" showDivider>
-                          <DropdownItem
-                            key="edit"
-                            onPress={() => setIsEditModalOpen(true)}
-                          >
-                            Edit
-                          </DropdownItem>
-                          <DropdownItem key="print" onPress={handlePrint}>
-                            Print
-                          </DropdownItem>
-                          <DropdownItem
-                            key="systemlog"
-                            onPress={handleToggleSystemLog}
-                          >
-                            {showSystemLog
-                              ? 'Hide System Log'
-                              : 'Show System Log'}
-                          </DropdownItem>
-                          <DropdownItem
-                            key="summary"
-                            onPress={() => handleComingSoon('Ticket Summary')}
-                          >
-                            Ticket Summary
-                          </DropdownItem>
-                        </DropdownSection>
-
-                        {/* Relate */}
-                        <DropdownSection title="Relate" showDivider>
-                          <DropdownItem
-                            key="subtask"
-                            onPress={() => setIsAddSubtaskModalOpen(true)}
-                          >
-                            Add Subtask
-                          </DropdownItem>
-                          <DropdownItem
-                            key="parent"
-                            onPress={() => setIsAddParentModalOpen(true)}
-                          >
-                            Add Parent
-                          </DropdownItem>
-                          <DropdownItem
-                            key="convert"
-                            onPress={() => setIsConvertToReplyModalOpen(true)}
-                            description="Merges this ticket into another as a comment"
-                          >
-                            Convert to Reply
-                          </DropdownItem>
-                          <DropdownItem
-                            key="link-asset"
-                            onPress={() => handleComingSoon('Link Asset')}
-                          >
-                            Link Asset
-                          </DropdownItem>
-                          <DropdownItem
-                            key="duplicate"
-                            onPress={() => setIsDuplicateModalOpen(true)}
-                          >
-                            Duplicate
-                          </DropdownItem>
-                        </DropdownSection>
-
-                        {/* Lifecycle */}
-                        <DropdownSection title="Lifecycle" showDivider>
-                          <DropdownItem
-                            key="forward"
-                            onPress={() => setIsForwardModalOpen(true)}
-                          >
-                            Forward by Email
-                          </DropdownItem>
-                          {canModerate ? (
+                      <DropdownPopover>
+                        <DropdownMenu
+                          aria-label="Ticket actions"
+                          disabledKeys={
+                            actionsDisabled
+                              ? [
+                                  'edit',
+                                  'print',
+                                  'summary',
+                                  'subtask',
+                                  'parent',
+                                  'convert',
+                                  'link-asset',
+                                  'duplicate',
+                                  'forward',
+                                  'spam',
+                                  'unspam',
+                                  'problem',
+                                  'publish',
+                                ]
+                              : []
+                          }
+                        >
+                          {/* Edit & View */}
+                          <DropdownSection>
                             <DropdownItem
-                              key="problem"
-                              onPress={handleToggleProblem}
-                              isDisabled={
-                                markAsProblemMutation.isPending ||
-                                unmarkAsProblemMutation.isPending
+                              key="edit"
+                              onPress={() => setIsEditModalOpen(true)}
+                            >
+                              Edit
+                            </DropdownItem>
+                            <DropdownItem key="print" onPress={handlePrint}>
+                              Print
+                            </DropdownItem>
+                            <DropdownItem
+                              key="systemlog"
+                              onPress={handleToggleSystemLog}
+                            >
+                              {showSystemLog
+                                ? 'Hide System Log'
+                                : 'Show System Log'}
+                            </DropdownItem>
+                            <DropdownItem
+                              key="summary"
+                              onPress={() => handleComingSoon('Ticket Summary')}
+                            >
+                              Ticket Summary
+                            </DropdownItem>
+                          </DropdownSection>
+
+                          {/* Relate */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="subtask"
+                              onPress={() => setIsAddSubtaskModalOpen(true)}
+                            >
+                              Add Subtask
+                            </DropdownItem>
+                            <DropdownItem
+                              key="parent"
+                              onPress={() => setIsAddParentModalOpen(true)}
+                            >
+                              Add Parent
+                            </DropdownItem>
+                            <DropdownItem
+                              key="convert"
+                              onPress={() => setIsConvertToReplyModalOpen(true)}
+                            >
+                              Convert to Reply
+                            </DropdownItem>
+                            <DropdownItem
+                              key="link-asset"
+                              onPress={() => handleComingSoon('Link Asset')}
+                            >
+                              Link Asset
+                            </DropdownItem>
+                            <DropdownItem
+                              key="duplicate"
+                              onPress={() => setIsDuplicateModalOpen(true)}
+                            >
+                              Duplicate
+                            </DropdownItem>
+                          </DropdownSection>
+
+                          {/* Lifecycle */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="forward"
+                              onPress={() => setIsForwardModalOpen(true)}
+                            >
+                              Forward by Email
+                            </DropdownItem>
+                            {canModerate ? (
+                              <DropdownItem
+                                key="problem"
+                                onPress={handleToggleProblem}
+                                isDisabled={
+                                  markAsProblemMutation.isPending ||
+                                  unmarkAsProblemMutation.isPending
+                                }
+                              >
+                                {ticket?.isProblem
+                                  ? 'Unmark as Problem'
+                                  : 'Mark as Problem'}
+                              </DropdownItem>
+                            ) : (
+                              <DropdownItem key="problem" isDisabled>
+                                {ticket?.isProblem
+                                  ? 'Unmark as Problem'
+                                  : 'Mark as Problem'}
+                              </DropdownItem>
+                            )}
+                            {canModerate ? (
+                              <DropdownItem
+                                key="publish"
+                                onPress={handleTogglePublishAsIdea}
+                                isDisabled={
+                                  publishAsIdeaMutation.isPending ||
+                                  unpublishAsIdeaMutation.isPending
+                                }
+                              >
+                                {ticket?.isPublishedAsIdea
+                                  ? 'Remove from Ideas Forum'
+                                  : 'Publish to Ideas Forum'}
+                              </DropdownItem>
+                            ) : (
+                              <DropdownItem key="publish" isDisabled>
+                                {ticket?.isPublishedAsIdea
+                                  ? 'Remove from Ideas Forum'
+                                  : 'Publish to Ideas Forum'}
+                              </DropdownItem>
+                            )}
+                            <DropdownItem
+                              key="spam"
+                              onPress={
+                                isSpam
+                                  ? handleUnmarkSpam
+                                  : () => setIsMarkSpamModalOpen(true)
                               }
                             >
-                              {ticket?.isProblem
-                                ? 'Unmark as Problem'
-                                : 'Mark as Problem'}
+                              {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
                             </DropdownItem>
-                          ) : (
-                            <DropdownItem key="problem" isDisabled>
-                              {ticket?.isProblem
-                                ? 'Unmark as Problem'
-                                : 'Mark as Problem'}
-                            </DropdownItem>
-                          )}
-                          {canModerate ? (
-                            <DropdownItem
-                              key="publish"
-                              onPress={handleTogglePublishAsIdea}
-                              isDisabled={
-                                publishAsIdeaMutation.isPending ||
-                                unpublishAsIdeaMutation.isPending
-                              }
-                            >
-                              {ticket?.isPublishedAsIdea
-                                ? 'Remove from Ideas Forum'
-                                : 'Publish to Ideas Forum'}
-                            </DropdownItem>
-                          ) : (
-                            <DropdownItem key="publish" isDisabled>
-                              {ticket?.isPublishedAsIdea
-                                ? 'Remove from Ideas Forum'
-                                : 'Publish to Ideas Forum'}
-                            </DropdownItem>
-                          )}
-                          <DropdownItem
-                            key="spam"
-                            onPress={
-                              isSpam
-                                ? handleUnmarkSpam
-                                : () => setIsMarkSpamModalOpen(true)
-                            }
-                          >
-                            {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
-                          </DropdownItem>
-                        </DropdownSection>
+                          </DropdownSection>
 
-                        {/* Danger Zone */}
-                        <DropdownSection title="Danger Zone">
-                          <DropdownItem
-                            key="delete"
-                            className="text-danger"
-                            color="danger"
-                            onPress={() => setIsDeleteModalOpen(true)}
-                          >
-                            Delete
-                          </DropdownItem>
-                        </DropdownSection>
-                      </DropdownMenu>
+                          {/* Danger Zone */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="delete"
+                              className="text-danger"
+                              onPress={handleDeleteTicket}
+                            >
+                              Delete
+                            </DropdownItem>
+                          </DropdownSection>
+                        </DropdownMenu>
+                      </DropdownPopover>
                     </Dropdown>
                   </PermissionGuard>
                 </div>
@@ -1004,14 +1007,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             </Box>
 
             {/* Description */}
-            <Box title="Description">
+            <Box>
               <div className="prose max-w-none">
                 <p className="whitespace-pre-wrap">{ticket.description}</p>
               </div>
             </Box>
 
             {/* Attachments */}
-            <Box title="Attachments">
+            <Box>
               <div className="flex items-center justify-end mb-4 helpdesk-print-hide">
                 <BaseButton
                   size="sm"
@@ -1055,7 +1058,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             </Box>
 
             {/* Comment Thread */}
-            <Box title="Comments">
+            <Box>
               <div className="space-y-4">
                 <div className="flex justify-end helpdesk-print-hide">
                   <BaseButton
@@ -1086,7 +1089,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             </Box>
 
             {/* Activity Timeline - Placeholder */}
-            <Box title="Activity Timeline">
+            <Box>
               <div className="space-y-4">
                 <div className="flex gap-3">
                   <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -1120,7 +1123,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6 helpdesk-print-hide">
             {/* Ticket Info */}
-            <Box title="Ticket Details">
+            <Box>
               <TicketDetailSidebar
                 ticket={ticket as any}
                 onUpdate={handleUpdate}
@@ -1156,7 +1159,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
             {/* Child Tickets */}
             {children && children.length > 0 && (
-              <Box title="Child Tickets">
+              <Box>
                 <div className="space-y-2">
                   {children.map((child: any) => (
                     <div
@@ -1246,12 +1249,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onClose={() => setIsNewTicketModalOpen(false)}
           onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
         />
-        <DeleteTicketModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onConfirm={handleDeleteConfirm}
-          isLoading={deleteTicketMutation.isPending}
-        />
+        {confirmDialog}
         <MarkSpamModal
           isOpen={isMarkSpamModalOpen}
           onClose={() => setIsMarkSpamModalOpen(false)}

@@ -1,91 +1,102 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { BaseButton, Icon, BaseSelect, BaseSelectItem, BaseTable } from '@brainforgeau/components';
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import {
+  type AdvancedFilterValues,
+  AdvancedFiltersModal,
+} from '@/components/reports/components/AdvancedFiltersModal';
+import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
+import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
+import { SummaryCard } from '@/components/shared';
+import { useTicketsData } from '@/components/tickets/hooks/useTickets';
+import {
+  BaseButton,
+  BaseCard,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTable,
+} from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components';
+import { DashboardPage } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody, Spinner } from '@heroui/react';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
-import { AdvancedFiltersModal, type AdvancedFilterValues } from '@/components/reports/components/AdvancedFiltersModal';
+import { Card, CardContent } from '@heroui/react';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
   type ColumnDef,
   type SortingState,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from '@tanstack/react-table';
-import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
-import { useTicketsData } from '@/components/tickets/hooks/useTickets';
-import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { useMemo, useState } from 'react';
 
-function PieChart({ data, title }: { data: { name: string; value: number }[]; title: string }) {
+function PieChart({
+  data,
+  title,
+}: {
+  data: { name: string; value: number }[];
+  title: string;
+}) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const colors = ['#0070f3', '#7928ca', '#ff0080', '#00dfd8'];
 
   return (
-    <Card>
-      <CardBody className="p-4">
-        <h3 className="text-sm font-semibold mb-4">{title}</h3>
-        <div className="flex items-center justify-center">
-          <div className="relative w-32 h-32">
-            {/* REVIEW: Simple CSS pie chart - replace with proper chart library if needed */}
-            <div className="w-full h-full rounded-full" style={{
-              background: `conic-gradient(${data.map((item, i) => {
-                const prevPercentage = data.slice(0, i).reduce((sum, d) => sum + d.value, 0) / total * 100;
-                const percentage = item.value / total * 100;
-                return `${colors[i % colors.length]} ${prevPercentage}% ${prevPercentage + percentage}%`;
-              }).join(', ')})`,
-            }} />
-          </div>
+    <BaseCard>
+      <h3 className="mb-4 text-sm font-semibold">{title}</h3>
+      <div className="flex items-center justify-center">
+        <div className="relative h-32 w-32">
+          {/* REVIEW: Simple CSS pie chart - replace with proper chart library if needed */}
+          <div
+            className="h-full w-full rounded-full"
+            style={{
+              background: `conic-gradient(${data
+                .map((item, i) => {
+                  const prevPercentage =
+                    (data.slice(0, i).reduce((sum, d) => sum + d.value, 0) /
+                      total) *
+                    100;
+                  const percentage = (item.value / total) * 100;
+                  return `${colors[i % colors.length]} ${prevPercentage}% ${prevPercentage + percentage}%`;
+                })
+                .join(', ')})`,
+            }}
+          />
         </div>
-        <div className="mt-4 space-y-2">
-          {data.map((item, i) => (
-            <div key={item.name} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-sm"
-                  style={{ backgroundColor: colors[i % colors.length] }}
-                />
-                <span className="text-default-600">{item.name}</span>
-              </div>
-              <span className="font-medium">{item.value}</span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {data.map((item, i) => (
+          <div
+            key={item.name}
+            className="flex items-center justify-between text-xs"
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="h-3 w-3 rounded-sm"
+                style={{ backgroundColor: colors[i % colors.length] }}
+              />
+              <span className="text-default-600">{item.name}</span>
             </div>
-          ))}
-        </div>
-      </CardBody>
-    </Card>
-  );
-}
-
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
-  return (
-    <Card>
-      <CardBody className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs text-default-500 mb-1">{label}</p>
-            <p className="text-2xl font-semibold">{value}</p>
+            <span className="font-medium">{item.value}</span>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
-            <Icon name={icon} className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-      </CardBody>
-    </Card>
+        ))}
+      </div>
+    </BaseCard>
   );
 }
 
 function ReportsSummaryPage() {
   const timezone = useTimezone();
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0]
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilterValues>({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
     statuses: [],
     priorities: [],
@@ -93,17 +104,10 @@ function ReportsSummaryPage() {
     assigneeIds: [],
   });
 
-  // Fetch report summary data
-  const { data: summaryData, isLoading: isLoadingSummary } = useTicketSummaryReport(startDate, endDate);
-
-  // Fetch categories for filter dropdown
+  const { data: summaryData, isLoading: isLoadingSummary } =
+    useTicketSummaryReport(startDate, endDate);
   const { categories } = useCategoriesData();
-
-  // Fetch tickets for table with category filter
-  const {
-    items: tickets,
-    isLoading: isLoadingTickets,
-  } = useTicketsData();
+  const { items: tickets, isLoading: isLoadingTickets } = useTicketsData();
 
   const handleDateRangeChange = (start: string, end: string) => {
     setStartDate(start);
@@ -112,7 +116,6 @@ function ReportsSummaryPage() {
 
   const handleApplyAdvancedFilters = (values: AdvancedFilterValues) => {
     setAdvancedFilters(values);
-    // Sync date range with advanced filters
     if (values.startDate) setStartDate(values.startDate);
     if (values.endDate) setEndDate(values.endDate);
   };
@@ -123,55 +126,70 @@ function ReportsSummaryPage() {
     advancedFilters.categoryIds.length > 0,
   ].filter(Boolean).length;
 
-  // Transform API data for pie charts
-  // API returns dictionaries like { "CategoryName": count } not arrays
   const categoryChartData = useMemo(() => {
-    if (!summaryData?.byCategory) return [];
-    const dict = summaryData.byCategory as unknown as Record<string, number>;
-    return Object.entries(dict).map(([name, value]) => ({ name, value }));
+    return (summaryData?.byCategory ?? []).map((item) => ({
+      name: item.name,
+      value: item.count,
+    }));
   }, [summaryData]);
 
   const statusChartData = useMemo(() => {
-    if (!summaryData?.byStatus) return [];
-    const dict = summaryData.byStatus as unknown as Record<string, number>;
-    return Object.entries(dict).map(([name, value]) => ({ name, value }));
+    return (summaryData?.byStatus ?? []).map((item) => ({
+      name: item.name,
+      value: item.count,
+    }));
   }, [summaryData]);
 
   const priorityChartData = useMemo(() => {
-    if (!summaryData?.byPriority) return [];
-    const dict = summaryData.byPriority as unknown as Record<string, number>;
-    return Object.entries(dict).map(([name, value]) => ({ name, value }));
+    return (summaryData?.byPriority ?? []).map((item) => ({
+      name: item.name,
+      value: item.count,
+    }));
   }, [summaryData]);
 
-  // Filter tickets by category + advanced filters
   const filteredTickets = useMemo(() => {
     let result = tickets;
 
     if (selectedCategory !== 'all') {
-      result = result.filter((ticket) => ticket.categoryId === selectedCategory);
+      result = result.filter(
+        (ticket) => ticket.categoryId === selectedCategory
+      );
     }
 
-    // Apply advanced filters if active
     if (advancedFilters.statuses.length > 0) {
-      result = result.filter((ticket) => ticket.status != null && advancedFilters.statuses.includes(ticket.status));
+      result = result.filter(
+        (ticket) =>
+          ticket.status != null &&
+          advancedFilters.statuses.includes(ticket.status)
+      );
     }
     if (advancedFilters.priorities.length > 0) {
-      result = result.filter((ticket) => ticket.priority != null && advancedFilters.priorities.includes(ticket.priority));
+      result = result.filter(
+        (ticket) =>
+          ticket.priority != null &&
+          advancedFilters.priorities.includes(ticket.priority)
+      );
     }
     if (advancedFilters.categoryIds.length > 0) {
-      result = result.filter((ticket) => ticket.categoryId != null && advancedFilters.categoryIds.includes(ticket.categoryId));
+      result = result.filter(
+        (ticket) =>
+          ticket.categoryId != null &&
+          advancedFilters.categoryIds.includes(ticket.categoryId)
+      );
     }
 
     return result;
   }, [tickets, selectedCategory, advancedFilters]);
 
-  const columns: ColumnDef<typeof tickets[0], any>[] = useMemo(
+  const columns: ColumnDef<(typeof tickets)[0], any>[] = useMemo(
     () => [
       {
         accessorKey: 'ticketNumber',
         header: 'Ticket ID',
         cell: (info) => (
-          <span className="text-primary font-medium">#{info.getValue() as string}</span>
+          <span className="text-primary font-medium">
+            #{info.getValue() as string}
+          </span>
         ),
       },
       {
@@ -195,7 +213,9 @@ function ReportsSummaryPage() {
             Closed: 'bg-success-100 text-success-800',
           };
           return (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${colors[status] || 'bg-default-100'}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${colors[status] || 'bg-default-100'}`}
+            >
               {status}
             </span>
           );
@@ -214,7 +234,9 @@ function ReportsSummaryPage() {
             None: 'bg-default-50 text-default-600',
           };
           return (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${colors[priority] || 'bg-default-100'}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${colors[priority] || 'bg-default-100'}`}
+            >
               {priority}
             </span>
           );
@@ -234,144 +256,119 @@ function ReportsSummaryPage() {
         },
       },
     ],
-    [timezone],
+    [timezone]
   );
 
   const table = useReactTable({
     data: filteredTickets,
     columns,
-    state: {
-      sorting,
-    },
+    state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
 
   return (
-    <>
-      <Helmet>
-        <title>Reports Summary - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub' },
-            { label: 'Summary', href: '/reports/summary', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Reports Summary</h1>
-          <p className="text-default-500 mt-1">Overview of ticket metrics with charts and trends</p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6 flex items-center gap-3">
-        <BaseSelect
-          label="Category"
-          placeholder="All categories"
-          selectedKeys={new Set([selectedCategory])}
-          onSelectionChange={(keys) => {
-            const key = Array.from(keys)[0] as string;
-            setSelectedCategory(key);
-          }}
-          className="w-48"
-        >
-          {[
-            <BaseSelectItem key="all">All categories</BaseSelectItem>,
-            ...categories.map((cat) => (
-              <BaseSelectItem key={cat.id}>{cat.name}</BaseSelectItem>
-            )),
-          ]}
-        </BaseSelect>
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onChange={handleDateRangeChange}
-        />
-        <BaseButton
-          variant="bordered"
-          onPress={() => setIsAdvancedFiltersOpen(true)}
-          icon={<Icon name="adjustments-horizontal" className="h-4 w-4" />}
-        >
-          More filters
-          {activeAdvancedFilterCount > 0 && (
-            <span className="ml-1.5 bg-primary text-white text-xs rounded-full px-1.5 py-0.5">
-              {activeAdvancedFilterCount}
-            </span>
-          )}
-        </BaseButton>
-      </div>
-
-      {isLoadingSummary ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : (
+    <DashboardPage
+      title="Reports Summary"
+      breadcrumbsKey="reports.summary"
+      actions={
         <>
-          {/* Charts */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <BaseSelect
+            label="Category"
+            placeholder="All categories"
+            selectedKey={selectedCategory}
+            onSelectionChange={(keys) => {
+              setSelectedCategory(keys as string);
+            }}
+            className="w-48"
+          >
+            {[
+              <BaseSelectItem key="all" value="all">
+                All categories
+              </BaseSelectItem>,
+              ...categories.map((cat) => (
+                <BaseSelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </BaseSelectItem>
+              )),
+            ]}
+          </BaseSelect>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateRangeChange}
+          />
+          <BaseButton
+            variant="bordered"
+            onPress={() => setIsAdvancedFiltersOpen(true)}
+            icon={<Icon name="adjustments-horizontal" className="h-4 w-4" />}
+          >
+            More filters
+            {activeAdvancedFilterCount > 0 && (
+              <span className="bg-primary ml-1.5 rounded-full px-1.5 py-0.5 text-xs text-white">
+                {activeAdvancedFilterCount}
+              </span>
+            )}
+          </BaseButton>
+        </>
+      }
+      summary={
+        <>
+          <SummaryCard
+            title="Tickets Created"
+            value={summaryData?.totalCreated ?? 0}
+            icon="plus"
+            variant="info"
+            isLoading={isLoadingSummary}
+          />
+          <SummaryCard
+            title="Tickets Closed"
+            value={summaryData?.totalClosed ?? 0}
+            icon="check"
+            variant="success"
+            isLoading={isLoadingSummary}
+          />
+          <SummaryCard
+            title="Tickets Open"
+            value={
+              (summaryData?.totalCreated ?? 0) - (summaryData?.totalClosed ?? 0)
+            }
+            icon="clock"
+            variant="warning"
+            isLoading={isLoadingSummary}
+          />
+          <SummaryCard
+            title="Avg Response Time"
+            value={
+              summaryData?.avgFirstResponseMinutes != null
+                ? `${(summaryData.avgFirstResponseMinutes / 60).toFixed(1)}h`
+                : 'N/A'
+            }
+            icon="flash"
+            variant="default"
+            isLoading={isLoadingSummary}
+          />
+        </>
+      }
+      charts={
+        !isLoadingSummary ? (
+          <>
             <PieChart data={categoryChartData} title="By Category" />
             <PieChart data={statusChartData} title="By Status" />
             <PieChart data={priorityChartData} title="By Priority" />
-          </div>
+          </>
+        ) : undefined
+      }
+    >
+      {/* Ticket details table */}
+      <p className="mb-4 text-lg font-semibold">Ticket Details</p>
+      <BaseTable
+        table={table}
+        isLoading={isLoadingTickets}
+        fullHeight={false}
+      />
 
-          {/* Stats */}
-          <div className="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
-            <StatCard
-              label="Tickets Created"
-              value={summaryData?.totalCreated ?? 0}
-              icon="plus"
-            />
-            <StatCard
-              label="Tickets Closed"
-              value={summaryData?.totalClosed ?? 0}
-              icon="check"
-            />
-            <StatCard
-              label="Tickets Open"
-              value={(summaryData?.totalCreated ?? 0) - (summaryData?.totalClosed ?? 0)}
-              icon="clock"
-            />
-            <StatCard
-              label="Avg Response Time"
-              value={
-                (summaryData as any)?.avgFirstResponseMinutes != null
-                  ? `${((summaryData as any).avgFirstResponseMinutes / 60).toFixed(1)}h`
-                  : 'N/A'
-              }
-              icon="flash"
-            />
-            <StatCard
-              label="Avg Resolution Time"
-              value={
-                (summaryData as any)?.avgResolutionMinutes != null
-                  ? `${((summaryData as any).avgResolutionMinutes / 60).toFixed(1)}h`
-                  : 'N/A'
-              }
-              icon="speedometer"
-            />
-          </div>
-        </>
-      )}
-
-      {/* Ticket Table */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-4">Ticket Details</h2>
-        <BaseTable
-          table={table}
-          isLoading={isLoadingTickets}
-          fullHeight={false}
-        />
-      </div>
-
-      {/* Advanced Filters Modal */}
       <AdvancedFiltersModal
         isOpen={isAdvancedFiltersOpen}
         initialValues={advancedFilters}
@@ -379,7 +376,7 @@ function ReportsSummaryPage() {
         onApply={handleApplyAdvancedFilters}
         onClose={() => setIsAdvancedFiltersOpen(false)}
       />
-    </>
+    </DashboardPage>
   );
 }
 

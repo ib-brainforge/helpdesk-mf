@@ -1,31 +1,41 @@
-import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  BaseButton,
-  BaseInput,
-  BaseSelect,
-  BaseSelectItem,
-  ValidationAlert,
-  Icon,
-} from '@brainforgeau/components';
-import { addToast, Card, CardBody, Switch, Spinner } from '@heroui/react';
-import {
-  getTenantMailConfig,
-  upsertTenantMailConfig,
-  testTenantMailConfig,
-} from '@/state/notificationApiClient';
+/**
+ * TenantMailConfigForm — presentational form component for outbound mail config.
+ *
+ * W1-review-fixes: Refactored from a self-contained form to a controlled presentational
+ * component. The form instance is owned by the parent page (EmailSettingsPage) via
+ * useEntityForm. This component receives `form` and `dto` as props.
+ *
+ * The "Test connection" button reads form values directly and is kept here because
+ * it is a panel-specific action (not a save), tied to the SMTP config UI.
+ *
+ * Exports `tenantMailConfigSchema` for use by the page-level useEntityForm call.
+ */
+
+import { testTenantMailConfig } from '@/state/notificationApiClient';
 import {
   OutboundMailProtocol,
   type TenantMailConfigDto,
   type TenantMailConfigTestResult,
 } from '@/types/email';
+import {
+  BaseButton,
+  BaseCard,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseToggle,
+  Icon,
+} from '@brainforgeau/components';
+import type { EntityFormInstance } from '@brainforgeau/components/page';
+import { Card, CardContent, toast } from '@heroui/react';
+import { useState } from 'react';
+import { z } from 'zod';
 
-const QUERY_KEY = ['tenant-mail-config'] as const;
+// ---------------------------------------------------------------------------
+// Schema — exported so the page can create a useEntityForm from it
+// ---------------------------------------------------------------------------
 
-// Validation — only enforce host/port/username when SMTP + enabled
-const tenantMailConfigSchema = z.object({
+export const tenantMailConfigSchema = z.object({
   isEnabled: z.boolean(),
   outboundProtocol: z.nativeEnum(OutboundMailProtocol),
   outboundHost: z.string().nullable(),
@@ -34,82 +44,53 @@ const tenantMailConfigSchema = z.object({
   /** Plaintext — null means "keep existing password" on update */
   password: z.string().nullable(),
   useSsl: z.boolean(),
-  fromEmail: z.string().email('Must be a valid email').nullable().or(z.literal('')),
+  fromEmail: z
+    .string()
+    .email('Must be a valid email')
+    .nullable()
+    .or(z.literal('')),
   fromName: z.string().nullable(),
 });
 
 type FormValues = z.infer<typeof tenantMailConfigSchema>;
 
-function buildDefaultValues(dto: TenantMailConfigDto | undefined): FormValues {
-  return {
-    isEnabled: dto?.isEnabled ?? false,
-    outboundProtocol: dto?.outboundProtocol ?? OutboundMailProtocol.Smtp,
-    outboundHost: dto?.outboundHost ?? null,
-    outboundPort: dto?.outboundPort ?? 587,
-    username: dto?.username ?? null,
-    password: null, // never pre-fill password
-    useSsl: dto?.useSsl ?? true,
-    fromEmail: dto?.fromEmail ?? null,
-    fromName: dto?.fromName ?? null,
-  };
-}
+// ---------------------------------------------------------------------------
+// Helper
+// ---------------------------------------------------------------------------
 
-function formatFormErrors(errors: any[]): string | undefined {
+function formatFormErrors(errors: unknown[]): string | undefined {
   if (!errors || errors.length === 0) return undefined;
-  return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+  return errors
+    .map((e) =>
+      typeof e === 'string'
+        ? e
+        : (e as { message?: string }).message || String(e)
+    )
+    .join(', ');
 }
 
-export function TenantMailConfigForm() {
-  const queryClient = useQueryClient();
-  const [submitErrors, setSubmitErrors] = useState<string[]>([]);
-  const [testResult, setTestResult] = useState<TenantMailConfigTestResult | null>(null);
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export interface TenantMailConfigFormProps {
+  /** The entity form instance owned by the parent page via useEntityForm. */
+  form: EntityFormInstance<typeof tenantMailConfigSchema>;
+  /** Current persisted DTO — used to show "password already set" hint. */
+  dto: TenantMailConfigDto | undefined;
+}
+
+export function TenantMailConfigForm({ form, dto }: TenantMailConfigFormProps) {
+  const [testResult, setTestResult] =
+    useState<TenantMailConfigTestResult | null>(null);
   const [isTesting, setIsTesting] = useState(false);
 
-  const { data: dto, isLoading } = useQuery<TenantMailConfigDto>({
-    queryKey: QUERY_KEY,
-    queryFn: getTenantMailConfig,
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: upsertTenantMailConfig,
-    onSuccess: (updated) => {
-      queryClient.setQueryData(QUERY_KEY, updated);
-      addToast({ title: 'Email settings saved', severity: 'success' });
-      form.reset(buildDefaultValues(updated));
-      setSubmitErrors([]);
-    },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.detail || error?.message || 'Failed to save settings';
-      setSubmitErrors([msg]);
-    },
-  });
-
-  const form = useForm({
-    defaultValues: buildDefaultValues(dto),
-    validators: {
-      onChange: tenantMailConfigSchema,
-      onSubmit: tenantMailConfigSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await saveMutation.mutateAsync({
-        isEnabled: value.isEnabled,
-        outboundProtocol: value.outboundProtocol,
-        outboundHost: value.outboundHost || null,
-        outboundPort: value.outboundPort,
-        username: value.username || null,
-        // null = keep existing password; empty string = clear (send null)
-        password: value.password || null,
-        useSsl: value.useSsl,
-        fromEmail: value.fromEmail || null,
-        fromName: value.fromName || null,
-      });
-    },
-  });
+  const f = form.form;
 
   const handleTest = async () => {
-    const values = form.state.values;
+    const values = f.state.values as FormValues;
     if (!values.outboundHost || !values.outboundPort) {
-      addToast({ title: 'Enter host and port before testing', severity: 'warning' });
+      toast('Enter host and port before testing', { variant: 'warning' });
       return;
     }
 
@@ -121,224 +102,221 @@ export function TenantMailConfigForm() {
         outboundHost: values.outboundHost,
         outboundPort: values.outboundPort,
         username: values.username || null,
-        // Use form password if filled, otherwise indicate existing (backend uses stored)
         password: values.password || null,
         useSsl: values.useSsl,
       });
       setTestResult(result);
       if (result.success) {
-        addToast({
-          title: `Connection successful${result.latencyMs != null ? ` (${result.latencyMs}ms)` : ''}`,
-          severity: 'success',
-        });
+        toast(
+          `Connection successful${result.latencyMs != null ? ` — ${result.latencyMs}ms` : ''}`,
+          { variant: 'success' }
+        );
       } else {
-        addToast({
-          title: 'Connection failed',
+        toast('Connection failed', {
           description: result.error ?? 'Unknown error',
-          severity: 'danger',
+          variant: 'danger',
         });
       }
-    } catch (error: any) {
-      const msg = error?.response?.data?.detail || error?.message || 'Test failed';
-      addToast({ title: 'Test failed', description: msg, severity: 'danger' });
+    } catch (error: unknown) {
+      const err = error as {
+        response?: { data?: { detail?: string } };
+        message?: string;
+      };
+      const msg = err?.response?.data?.detail || err?.message || 'Test failed';
+      toast('Test failed', { description: msg, variant: 'danger' });
     } finally {
       setIsTesting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 text-default-500">
-        <Spinner size="sm" />
-        <span>Loading email settings...</span>
-      </div>
-    );
-  }
-
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        form.handleSubmit();
-      }}
-      className="max-w-2xl space-y-6"
-    >
-      <ValidationAlert errors={submitErrors} onClose={() => setSubmitErrors([])} />
-
+    <div className="max-w-2xl space-y-6">
       {/* Enable / Protocol */}
-      <Card>
-        <CardBody className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Outbound mail server</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">Outbound mail server</h2>
 
-          <div className="flex items-center gap-6">
-            <form.Field name="isEnabled">
-              {(field) => (
-                <Switch
-                  isSelected={field.state.value}
-                  onValueChange={field.handleChange}
-                >
-                  Enable custom outbound mail
-                </Switch>
-              )}
-            </form.Field>
-          </div>
-
-          <form.Field name="outboundProtocol">
+        <div className="flex items-center gap-6">
+          <f.Field name="isEnabled">
             {(field) => (
-              <BaseSelect
-                label="Protocol"
-                className="max-w-xs"
-                selectedKeys={[String(field.state.value)]}
-                onSelectionChange={(keys) =>
-                  field.handleChange(Number(keys.currentKey) as OutboundMailProtocol)
+              <BaseToggle
+                isSelected={field.state.value}
+                onChange={field.handleChange}
+              >
+                Enable custom outbound mail
+              </BaseToggle>
+            )}
+          </f.Field>
+        </div>
+
+        <f.Field name="outboundProtocol">
+          {(field) => (
+            <BaseSelect
+              label="Protocol"
+              className="max-w-xs"
+              selectedKey={String(field.state.value)}
+              onSelectionChange={(keys) =>
+                field.handleChange(Number(keys) as OutboundMailProtocol)
+              }
+              errorMessage={formatFormErrors(field.state.meta.errors)}
+              isInvalid={field.state.meta.errors.length > 0}
+            >
+              <BaseSelectItem
+                key={String(OutboundMailProtocol.Smtp)}
+                value={String(OutboundMailProtocol.Smtp)}
+              >
+                SMTP
+              </BaseSelectItem>
+              <BaseSelectItem
+                key={String(OutboundMailProtocol.SendGrid)}
+                value={String(OutboundMailProtocol.SendGrid)}
+              >
+                SendGrid
+              </BaseSelectItem>
+            </BaseSelect>
+          )}
+        </f.Field>
+      </BaseCard>
+
+      {/* Server */}
+      <BaseCard>
+        <h2 className="text-base font-semibold">Server settings</h2>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <f.Field name="outboundHost">
+            {(field) => (
+              <BaseInput
+                label="Host"
+                className="md:col-span-2"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="smtp.example.com"
+              />
+            )}
+          </f.Field>
+
+          <f.Field name="outboundPort">
+            {(field) => (
+              <BaseInput
+                label="Port"
+                type="number"
+                name={field.name}
+                value={
+                  field.state.value != null ? String(field.state.value) : ''
+                }
+                onBlur={field.handleBlur}
+                onChange={(e) =>
+                  field.handleChange(
+                    e.target.value ? Number(e.target.value) : null
+                  )
                 }
                 errorMessage={formatFormErrors(field.state.meta.errors)}
                 isInvalid={field.state.meta.errors.length > 0}
-              >
-                <BaseSelectItem key={String(OutboundMailProtocol.Smtp)}>SMTP</BaseSelectItem>
-                <BaseSelectItem key={String(OutboundMailProtocol.SendGrid)}>SendGrid</BaseSelectItem>
-              </BaseSelect>
+                placeholder="587"
+              />
             )}
-          </form.Field>
-        </CardBody>
-      </Card>
+          </f.Field>
+        </div>
 
-      {/* Server */}
-      <Card>
-        <CardBody className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Server settings</h2>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <form.Field name="outboundHost">
-              {(field) => (
-                <BaseInput
-                  label="Host"
-                  className="md:col-span-2"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="smtp.example.com"
-                />
-              )}
-            </form.Field>
-
-            <form.Field name="outboundPort">
-              {(field) => (
-                <BaseInput
-                  label="Port"
-                  type="number"
-                  name={field.name}
-                  value={field.state.value != null ? String(field.state.value) : ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) =>
-                    field.handleChange(e.target.value ? Number(e.target.value) : null)
-                  }
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="587"
-                />
-              )}
-            </form.Field>
-          </div>
-
-          <form.Field name="useSsl">
-            {(field) => (
-              <Switch isSelected={field.state.value} onValueChange={field.handleChange}>
-                Use SSL / TLS
-              </Switch>
-            )}
-          </form.Field>
-        </CardBody>
-      </Card>
+        <f.Field name="useSsl">
+          {(field) => (
+            <BaseToggle
+              isSelected={field.state.value}
+              onChange={field.handleChange}
+            >
+              Use SSL / TLS
+            </BaseToggle>
+          )}
+        </f.Field>
+      </BaseCard>
 
       {/* Credentials */}
-      <Card>
-        <CardBody className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Credentials</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">Credentials</h2>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <form.Field name="username">
-              {(field) => (
-                <BaseInput
-                  label="Username"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="support@example.com"
-                />
-              )}
-            </form.Field>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <f.Field name="username">
+            {(field) => (
+              <BaseInput
+                label="Username"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="support@example.com"
+              />
+            )}
+          </f.Field>
 
-            <form.Field name="password">
-              {(field) => (
-                <BaseInput
-                  label={
-                    dto?.hasPassword
-                      ? 'Password (leave blank to keep current)'
-                      : 'Password'
-                  }
-                  type="password"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="••••••••"
-                  description={dto?.hasPassword ? 'A password is currently stored.' : undefined}
-                />
-              )}
-            </form.Field>
-          </div>
-        </CardBody>
-      </Card>
+          <f.Field name="password">
+            {(field) => (
+              <BaseInput
+                label={
+                  dto?.hasPassword
+                    ? 'Password (leave blank to keep current)'
+                    : 'Password'
+                }
+                type="password"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="••••••••"
+                description={
+                  dto?.hasPassword
+                    ? 'A password is currently stored.'
+                    : undefined
+                }
+              />
+            )}
+          </f.Field>
+        </div>
+      </BaseCard>
 
       {/* Sender identity */}
-      <Card>
-        <CardBody className="p-5 space-y-4">
-          <h2 className="text-base font-semibold">Sender identity</h2>
+      <BaseCard>
+        <h2 className="text-base font-semibold">Sender identity</h2>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <form.Field name="fromEmail">
-              {(field) => (
-                <BaseInput
-                  label="From email"
-                  type="email"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="helpdesk@example.com"
-                />
-              )}
-            </form.Field>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <f.Field name="fromEmail">
+            {(field) => (
+              <BaseInput
+                label="From email"
+                type="email"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="helpdesk@example.com"
+              />
+            )}
+          </f.Field>
 
-            <form.Field name="fromName">
-              {(field) => (
-                <BaseInput
-                  label="From name"
-                  name={field.name}
-                  value={field.state.value ?? ''}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value || null)}
-                  errorMessage={formatFormErrors(field.state.meta.errors)}
-                  isInvalid={field.state.meta.errors.length > 0}
-                  placeholder="Helpdesk Support"
-                />
-              )}
-            </form.Field>
-          </div>
-        </CardBody>
-      </Card>
+          <f.Field name="fromName">
+            {(field) => (
+              <BaseInput
+                label="From name"
+                name={field.name}
+                value={field.state.value ?? ''}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value || null)}
+                errorMessage={formatFormErrors(field.state.meta.errors)}
+                isInvalid={field.state.meta.errors.length > 0}
+                placeholder="Helpdesk Support"
+              />
+            )}
+          </f.Field>
+        </div>
+      </BaseCard>
 
       {/* Test result banner */}
       {testResult && (
@@ -361,27 +339,18 @@ export function TenantMailConfigForm() {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Test connection — standalone action, not part of Save/Reset flow */}
       <div className="flex items-center gap-3">
-        <BaseButton
-          color="primary"
-          type="submit"
-          isLoading={saveMutation.isPending}
-        >
-          Save settings
-        </BaseButton>
-
         <BaseButton
           variant="bordered"
           type="button"
-          isLoading={isTesting}
-          isDisabled={saveMutation.isPending}
+          isDisabled={isTesting || form.isSubmitting}
           onPress={handleTest}
           icon={<Icon name="signal" className="h-4 w-4" />}
         >
           Test connection
         </BaseButton>
       </div>
-    </form>
+    </div>
   );
 }

@@ -1,9 +1,10 @@
-import { CommentType, type CommentDto } from '@/types/comment';
 import { StatusBadge } from '@/components/shared';
-import DOMPurify from 'dompurify';
+import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { EmptyState } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
+import DOMPurify from 'dompurify';
 
 interface CommentThreadProps {
   comments: CommentDto[];
@@ -33,7 +34,7 @@ const getCommentBackgroundClass = (type: CommentType): string => {
     return 'bg-warning-50 dark:bg-warning-100/10 border-warning-200 dark:border-warning-800';
   }
   if (type === CommentType.SystemMessage) {
-    return 'bg-default-100 dark:bg-default-50/10 border-default-200 dark:border-default-700';
+    return 'bg-default-100 dark:bg-default-50/10 border-light dark:border-default-700';
   }
   return 'bg-content1 border-divider';
 };
@@ -45,7 +46,10 @@ const getCommentTextClass = (type: CommentType): string => {
   return 'text-foreground';
 };
 
-export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoading }) => {
+export const CommentThread: React.FC<CommentThreadProps> = ({
+  comments,
+  isLoading,
+}) => {
   const timezone = useTimezone();
   if (isLoading) {
     return (
@@ -57,40 +61,45 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
 
   if (comments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <p className="text-default-500 text-sm">No comments yet.</p>
-        <p className="text-default-400 text-xs mt-1">Be the first to add a comment.</p>
-      </div>
+      <EmptyState
+        title="No comments yet"
+        description="Be the first to add a comment."
+        size="sm"
+        live
+      />
     );
   }
 
   return (
     <div className="space-y-4">
       {comments.map((comment) => {
-        const commentType = fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
+        const commentType =
+          fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
         return (
           <div
             key={comment.id}
-            className={`p-4 rounded-lg border ${getCommentBackgroundClass(commentType)}`}
+            className={`rounded-lg border p-4 ${getCommentBackgroundClass(commentType)}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">
-                  {comment.createdByUserName || comment.authorId || 'Unknown User'}
+                <span className="text-sm font-semibold">
+                  {comment.createdByUserName ||
+                    comment.authorId ||
+                    'Unknown User'}
                 </span>
-                <StatusBadge
-                  color={getCommentTypeColor(commentType)}
-                >
+                <StatusBadge color={getCommentTypeColor(commentType)}>
                   {getCommentTypeName(commentType)}
                 </StatusBadge>
               </div>
-              <span className="text-xs text-default-400">
+              <span className="text-default-400 text-xs">
                 {formatDateTime(comment.createdAt, { timezone })}
               </span>
             </div>
             <div
               className={`text-sm ${getCommentTextClass(commentType)}`}
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.body ?? '') }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(comment.body ?? ''),
+              }}
             />
           </div>
         );
