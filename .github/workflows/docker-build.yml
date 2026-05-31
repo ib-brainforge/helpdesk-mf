@@ -2,7 +2,7 @@ name: Build and Deploy Helpdesk MF
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, main]
     paths-ignore:
       - 'e2e/**'
       - '*.md'
@@ -20,7 +20,6 @@ jobs:
     with:
       image_name: ${{ github.repository }}
       dockerfile_path: ./Dockerfile
-      push_branches: '["develop"]'
     secrets: inherit
 
   deploy-dev:
