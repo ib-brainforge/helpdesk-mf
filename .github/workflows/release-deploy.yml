@@ -18,7 +18,7 @@ jobs:
 
   deploy-production:
     needs: prepare
-    uses: ./.github/workflows/deploy-to-flux.yml
+    uses: BrainForgeAU/.github/.github/workflows/deploy-to-flux.yml
     with:
       environment_name: production
       image_tag: ${{ needs.prepare.outputs.image_tag }}
