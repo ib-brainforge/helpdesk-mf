@@ -672,7 +672,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <Icon
-            name="exclamation-triangle"
+            name="warning"
             className="h-12 w-12 text-danger mx-auto mb-4"
           />
           <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
@@ -714,7 +714,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           <BaseButton
             variant="link"
             onPress={handleBack}
-            icon={<Icon name="arrow-left" className="h-4 w-4" />}
+            icon={<Icon name="arrowL" className="h-4 w-4" />}
           >
             Back to Tickets
           </BaseButton>
@@ -968,7 +968,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     color="primary"
                     onPress={handleReply}
                     isDisabled={actionsDisabled}
-                    icon={<Icon name="chat-bubble-left" className="h-4 w-4" />}
+                    icon={<Icon name="chat" className="h-4 w-4" />}
                   >
                     Reply
                   </BaseButton>
@@ -980,7 +980,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <BaseButton
                     variant="bordered"
                     onPress={handleTakeover}
-                    icon={<Icon name="user-plus" className="h-4 w-4" />}
+                    icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
                     isDisabled={
                       actionsDisabled || ticket.assigneeId === currentUserId
                     }
@@ -995,7 +995,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <BaseButton
                     variant="bordered"
                     onPress={handleCloseTicket}
-                    icon={<Icon name="check-circle" className="h-4 w-4" />}
+                    icon={<Icon name="check-fill" className="h-4 w-4" />}
                     isDisabled={
                       actionsDisabled || ticket.status === TicketStatus.Closed
                     }

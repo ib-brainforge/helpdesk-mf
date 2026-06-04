@@ -70,7 +70,7 @@ export const KbImportModal: FC<KbImportModalProps> = ({ isOpen, onClose }) => {
               tabIndex={0}
             >
               <Icon
-                name="arrow-up-tray"
+                name="upload"
                 className="h-8 w-8 text-default-400 mx-auto mb-2"
               />
               {selectedFile ? (
