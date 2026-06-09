@@ -16,10 +16,14 @@ jobs:
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "image_tag=${IMAGE_NAME}:${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
 
-  deploy-production:
+  deploy:
     needs: prepare
-    uses: BrainForgeAU/.github/.github/workflows/deploy-to-flux.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [security-upgrade-2, staging]
+    uses: BrainForgeAU/.github/.github/workflows/deploy-to-flux.yml@main
     with:
-      environment_name: production
+      environment_name: ${{ matrix.environment }}
       image_tag: ${{ needs.prepare.outputs.image_tag }}
     secrets: inherit
