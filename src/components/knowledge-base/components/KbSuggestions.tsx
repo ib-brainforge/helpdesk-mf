@@ -37,7 +37,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
   return (
     <BaseCard className="mt-4">
       <div className="mb-3 flex items-center gap-2">
-        <Icon name="light-bulb" className="text-warning h-5 w-5" />
+        <Icon name="lamp" className="text-warning h-5 w-5" />
         <h3 className="text-sm font-semibold">
           Related Knowledge Base Articles
         </h3>
@@ -61,7 +61,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
             >
               <div className="flex items-start gap-2">
                 <Icon
-                  name="document-text"
+                  name="doc"
                   className="text-primary mt-0.5 h-4 w-4 flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
@@ -77,11 +77,12 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
                     {article.categoryName && (
                       <span>{article.categoryName}</span>
                     )}
-                    {article.relevance && (
-                      <span className="text-primary">
-                        {Math.round(article.relevance * 100)}% match
-                      </span>
-                    )}
+                    {article.relevanceScore !== undefined &&
+                      article.relevanceScore !== null && (
+                        <span className="text-primary">
+                          {Math.round(article.relevanceScore * 100)}% match
+                        </span>
+                      )}
                   </div>
                 </div>
               </div>

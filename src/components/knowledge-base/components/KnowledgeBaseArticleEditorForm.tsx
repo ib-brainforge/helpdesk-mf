@@ -383,7 +383,7 @@ export const KnowledgeBaseArticleEditorForm: FC<
               <BaseButton
                 color="success"
                 onPress={handlePublish}
-                icon={<Icon name="check-circle" className="h-4 w-4" />}
+                icon={<Icon name="check-fill" className="h-4 w-4" />}
               >
                 Publish
               </BaseButton>

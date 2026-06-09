@@ -181,7 +181,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           value={searchTerm}
           onChange={(e) => onSearch(e.target.value)}
           startContent={
-            <Icon name="magnifying-glass" className="h-4 w-4 text-gray-400" />
+            <Icon name="search" className="h-4 w-4 text-gray-400" />
           }
         />
       </div>
@@ -419,7 +419,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         <BaseButton
           variant="bordered"
           onPress={handleClearFilters}
-          icon={<Icon name="x-mark" className="h-4 w-4" />}
+          icon={<Icon name="x" className="h-4 w-4" />}
         >
           Clear Filters
         </BaseButton>

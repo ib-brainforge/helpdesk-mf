@@ -6,6 +6,7 @@ import {
   useTicketTags,
 } from '@/components/tags/hooks/useTags';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { type TicketDto, TicketPriority, TicketStatus } from '@/types/ticket';
 import {
   BaseAutocomplete,
@@ -111,6 +112,23 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   const statusConfig = getStatusConfig(ticket.status as any);
   const priorityConfig = getPriorityConfig(ticket.priority as any);
   const originConfig = getOriginConfig((ticket as any).origin);
+
+  // Resolve requester / assignee names: prefer the names provided natively by
+  // the generated client, falling back to identity enrichment by id (mirrors
+  // the ticket grid behaviour) so the sidebar never shows a bare "—".
+  const userIds = useMemo(
+    () => [ticket.requesterId, ticket.assigneeId],
+    [ticket.requesterId, ticket.assigneeId],
+  );
+  const { userMap } = useUserEnrichment(userIds);
+  const requesterDisplayName =
+    ticket.requesterName ??
+    (ticket.requesterId ? userMap[ticket.requesterId]?.name : undefined) ??
+    '—';
+  const assigneeDisplayName =
+    ticket.assigneeName ??
+    (ticket.assigneeId ? userMap[ticket.assigneeId]?.name : undefined) ??
+    'Unassigned';
 
   // Tags
   const { tags: availableTags } = useTags();
@@ -258,7 +276,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
           fallback={
-            <p className="text-sm">{ticket.assigneeName ?? 'Unassigned'}</p>
+            <p className="text-sm">{assigneeDisplayName}</p>
           }
         >
           <BaseAutocomplete
@@ -388,7 +406,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Requester
           </label>
-          <p className="text-sm">{ticket.requesterName ?? '—'}</p>
+          <p className="text-sm">{requesterDisplayName}</p>
         </div>
 
         {/* Via (Origin) */}

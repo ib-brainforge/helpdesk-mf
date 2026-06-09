@@ -167,7 +167,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
                 onClick={() => asset.assetId && handleUnlink(asset.assetId)}
                 aria-label={`Remove asset ${asset.assetId}`}
               >
-                <Icon name="x-mark" className="h-3 w-3" />
+                <Icon name="x" className="h-3 w-3" />
               </button>
             </div>
           ))}
