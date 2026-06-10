@@ -18,9 +18,11 @@ import {
   type UpdateKnowledgeBaseArticleDto,
 } from '@/types';
 import {
+  useArchiveKnowledgeBaseArticle,
   useCreateKnowledgeBaseArticle,
   useKnowledgeBaseCategories,
   usePublishKnowledgeBaseArticle,
+  useUnpublishKnowledgeBaseArticle,
   useUpdateKnowledgeBaseArticle,
 } from '../hooks/useKnowledgeBase';
 import { TipTapEditor } from './TipTapEditor';
@@ -90,6 +92,8 @@ export const KnowledgeBaseArticleEditorForm: FC<
   const createArticleMutation = useCreateKnowledgeBaseArticle();
   const updateArticleMutation = useUpdateKnowledgeBaseArticle();
   const publishArticleMutation = usePublishKnowledgeBaseArticle();
+  const unpublishArticleMutation = useUnpublishKnowledgeBaseArticle();
+  const archiveArticleMutation = useArchiveKnowledgeBaseArticle();
   const { data: categories } = useKnowledgeBaseCategories();
 
   const [currentStatus, setCurrentStatus] = useState(
@@ -138,13 +142,27 @@ export const KnowledgeBaseArticleEditorForm: FC<
             categoryId: value.categoryId,
             tags: value.tags,
             accessLevel: value.accessLevel,
-            status: value.status,
           };
 
           await updateArticleMutation.mutateAsync({
             id: article.id,
             updates: updateDto,
           });
+
+          // Apply status transition if the status has changed.
+          // The update command does not accept a status field — status changes go through
+          // dedicated endpoints (publish / unpublish / archive) per the domain model.
+          const previousStatus = article.status ?? KnowledgeBaseStatus.Draft;
+          if (value.status !== previousStatus) {
+            if (value.status === KnowledgeBaseStatus.Published) {
+              await publishArticleMutation.mutateAsync(article.id);
+            } else if (value.status === KnowledgeBaseStatus.Draft) {
+              await unpublishArticleMutation.mutateAsync(article.id);
+            } else if (value.status === KnowledgeBaseStatus.Archived) {
+              await archiveArticleMutation.mutateAsync(article.id);
+            }
+          }
+
           setCurrentStatus(value.status);
         }
       } catch (error) {
@@ -187,7 +205,9 @@ export const KnowledgeBaseArticleEditorForm: FC<
   const isLoading =
     createArticleMutation.isPending ||
     updateArticleMutation.isPending ||
-    publishArticleMutation.isPending;
+    publishArticleMutation.isPending ||
+    unpublishArticleMutation.isPending ||
+    archiveArticleMutation.isPending;
   const isDraft = currentStatus === KnowledgeBaseStatus.Draft;
 
   return (

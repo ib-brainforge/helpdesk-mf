@@ -10,7 +10,6 @@ import {
 import { BaseTab, BaseTabs } from '@brainforgeau/components';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import {
-  Chip,
   DrawerBackdrop,
   DrawerBody,
   DrawerContent,
@@ -46,6 +45,7 @@ const TICKET_VALID_TABS = new Set([
   'unanswered',
   'unclosed',
   'unassigned',
+  'overdue',
   'assigned-to-you',
   'all',
 ]);
@@ -317,6 +317,9 @@ export const TicketGrid: FC = () => {
             status: undefined,
           };
           break;
+        case 'overdue':
+          newFilters = { ...filters, overdueOnly: true, status: undefined, assigneeId: undefined };
+          break;
         case 'assigned-to-you':
           newFilters = {
             ...filters,
@@ -333,19 +336,6 @@ export const TicketGrid: FC = () => {
       setFilters(newFilters);
     },
     [filters, setFilters, currentUserId, setSelectedTab]
-  );
-
-  // Calculate badge counts for each tab
-  // REVIEW: For now showing totalCount - ideally each tab should fetch its own count
-  const tabCounts = useMemo(
-    () => ({
-      unanswered: 0, // Would need separate API call
-      unclosed: 0,
-      unassigned: 0,
-      assignedToYou: 0,
-      all: totalCount,
-    }),
-    [totalCount]
   );
 
   const sidebarProps = {
@@ -414,59 +404,12 @@ export const TicketGrid: FC = () => {
               onSelectionChange={handleTabChange}
               classNames={{ tabList: 'mb-5', panel: 'empty:hidden' }}
             >
-              <BaseTab
-                key="unanswered"
-                title={
-                  <div className="flex items-center gap-2">
-                    <span>Unanswered</span>
-                    {tabCounts.unanswered > 0 && (
-                      <Chip size="sm">{tabCounts.unanswered}</Chip>
-                    )}
-                  </div>
-                }
-              />
-              <BaseTab
-                key="unclosed"
-                title={
-                  <div className="flex items-center gap-2">
-                    <span>Unclosed</span>
-                    {tabCounts.unclosed > 0 && (
-                      <Chip size="sm">{tabCounts.unclosed}</Chip>
-                    )}
-                  </div>
-                }
-              />
-              <BaseTab
-                key="unassigned"
-                title={
-                  <div className="flex items-center gap-2">
-                    <span>Unassigned</span>
-                    {tabCounts.unassigned > 0 && (
-                      <Chip size="sm">{tabCounts.unassigned}</Chip>
-                    )}
-                  </div>
-                }
-              />
-              <BaseTab
-                key="assigned-to-you"
-                title={
-                  <div className="flex items-center gap-2">
-                    <span>Assigned to you</span>
-                    {tabCounts.assignedToYou > 0 && (
-                      <Chip size="sm">{tabCounts.assignedToYou}</Chip>
-                    )}
-                  </div>
-                }
-              />
-              <BaseTab
-                key="all"
-                title={
-                  <div className="flex items-center gap-2">
-                    <span>All</span>
-                    <Chip size="sm">{tabCounts.all}</Chip>
-                  </div>
-                }
-              />
+              <BaseTab key="unanswered" title="Unanswered" />
+              <BaseTab key="unclosed" title="Unclosed" />
+              <BaseTab key="unassigned" title="Unassigned" />
+              <BaseTab key="overdue" title="Overdue" />
+              <BaseTab key="assigned-to-you" title="Assigned to you" />
+              <BaseTab key="all" title="All" />
             </BaseTabs>
             {/* Filters */}
             <TicketFilters

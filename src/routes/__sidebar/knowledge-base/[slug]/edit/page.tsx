@@ -8,11 +8,21 @@
  *  - Query fetches the existing article by slug.
  *  - `values` prop on useEntityForm re-initializes the form when data arrives.
  *  - Cancel navigates back to the article view.
+ *
+ * NET-114 follow-up fix: `values` object is memoized so its reference identity
+ * only changes when actual article field values change. Without useMemo, a new
+ * object literal is created on every render (including those triggered by
+ * onSelectionChange itself), causing useEntityForm to call form.reset() on the
+ * very next tick and clobber every select change before it registers as dirty.
  */
 
+import { useMemo } from 'react';
 import {
+  useArchiveKnowledgeBaseArticle,
   useKnowledgeBaseArticle,
   useKnowledgeBaseCategories,
+  usePublishKnowledgeBaseArticle,
+  useUnpublishKnowledgeBaseArticle,
   useUpdateKnowledgeBaseArticle,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
@@ -74,6 +84,34 @@ function EditKnowledgeBaseArticlePage() {
   const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug!);
   const { data: categories } = useKnowledgeBaseCategories();
   const updateArticle = useUpdateKnowledgeBaseArticle();
+  const publishArticle = usePublishKnowledgeBaseArticle();
+  const unpublishArticle = useUnpublishKnowledgeBaseArticle();
+  const archiveArticle = useArchiveKnowledgeBaseArticle();
+
+  // Stable reference: only a new object is created when article field values
+  // actually change (identity based on primitive fields, not the article object
+  // reference). Without this memo, useEntityForm's prevValuesRef check sees a
+  // new object on every render and calls form.reset(), clobbering user edits.
+  const formValues = useMemo(
+    () =>
+      article
+        ? {
+            title: article.title ?? '',
+            body: article.body ?? '',
+            categoryId: article.categoryId ?? undefined,
+            accessLevel: article.accessLevel ?? KnowledgeBaseAccessLevel.Public,
+            status: article.status ?? KnowledgeBaseStatus.Draft,
+          }
+        : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      article?.title,
+      article?.body,
+      article?.categoryId,
+      article?.accessLevel,
+      article?.status,
+    ],
+  );
 
   const form = useEntityForm<typeof articleEditSchema>({
     schema: articleEditSchema,
@@ -84,17 +122,11 @@ function EditKnowledgeBaseArticlePage() {
       accessLevel: KnowledgeBaseAccessLevel.Public,
       status: KnowledgeBaseStatus.Draft,
     },
-    values: article
-      ? {
-          title: article.title ?? '',
-          body: article.body ?? '',
-          categoryId: article.categoryId ?? undefined,
-          accessLevel: article.accessLevel ?? KnowledgeBaseAccessLevel.Public,
-          status: article.status ?? KnowledgeBaseStatus.Draft,
-        }
-      : undefined,
+    values: formValues,
     onSubmit: async (values: ArticleEditFormData) => {
       if (!article?.id) return;
+
+      // Save content fields — status is NOT sent in the update command.
       await updateArticle.mutateAsync({
         id: article.id,
         updates: {
@@ -102,9 +134,20 @@ function EditKnowledgeBaseArticlePage() {
           body: values.body,
           categoryId: values.categoryId,
           accessLevel: values.accessLevel,
-          status: values.status,
         },
       });
+
+      // Apply status transition if changed.
+      const previousStatus = article.status ?? KnowledgeBaseStatus.Draft;
+      if (values.status !== previousStatus) {
+        if (values.status === KnowledgeBaseStatus.Published) {
+          await publishArticle.mutateAsync(article.id);
+        } else if (values.status === KnowledgeBaseStatus.Draft) {
+          await unpublishArticle.mutateAsync(article.id);
+        } else if (values.status === KnowledgeBaseStatus.Archived) {
+          await archiveArticle.mutateAsync(article.id);
+        }
+      }
     },
     invalidateQueryKeys: [
       ['knowledge-base', 'article', slug],

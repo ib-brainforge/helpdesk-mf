@@ -280,10 +280,7 @@ export const usePublishKnowledgeBaseArticle = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      // REVIEW: Using publish endpoint if available, otherwise note this needs backend support
-      // For now, we'll just use a placeholder - backend needs to expose publish endpoint
-      const response = await client.v1KbArticlesIdGet(id);
-      return response.data;
+      await client.v1KbArticlesIdPublishPost(id);
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({
@@ -293,6 +290,55 @@ export const usePublishKnowledgeBaseArticle = () => {
         queryKey: ['knowledge-base', 'article-by-id', id],
       });
       toast('Article published successfully', { variant: 'success' });
+    },
+    onError: () => {
+      toast('Failed to publish article', { variant: 'danger' });
+    },
+  });
+};
+
+export const useUnpublishKnowledgeBaseArticle = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+      await client.v1KbArticlesIdUnpublishPost(id);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', id],
+      });
+      toast('Article returned to draft', { variant: 'success' });
+    },
+    onError: () => {
+      toast('Failed to unpublish article', { variant: 'danger' });
+    },
+  });
+};
+
+export const useArchiveKnowledgeBaseArticle = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+      await client.v1KbArticlesIdArchivePost(id);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', id],
+      });
+      toast('Article archived', { variant: 'success' });
+    },
+    onError: () => {
+      toast('Failed to archive article', { variant: 'danger' });
     },
   });
 };
