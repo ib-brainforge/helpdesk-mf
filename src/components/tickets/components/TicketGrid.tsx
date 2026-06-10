@@ -45,6 +45,7 @@ const TICKET_VALID_TABS = new Set([
   'unanswered',
   'unclosed',
   'unassigned',
+  'overdue',
   'assigned-to-you',
   'all',
 ]);
@@ -316,6 +317,9 @@ export const TicketGrid: FC = () => {
             status: undefined,
           };
           break;
+        case 'overdue':
+          newFilters = { ...filters, overdueOnly: true, status: undefined, assigneeId: undefined };
+          break;
         case 'assigned-to-you':
           newFilters = {
             ...filters,
@@ -403,6 +407,7 @@ export const TicketGrid: FC = () => {
               <BaseTab key="unanswered" title="Unanswered" />
               <BaseTab key="unclosed" title="Unclosed" />
               <BaseTab key="unassigned" title="Unassigned" />
+              <BaseTab key="overdue" title="Overdue" />
               <BaseTab key="assigned-to-you" title="Assigned to you" />
               <BaseTab key="all" title="All" />
             </BaseTabs>

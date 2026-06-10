@@ -1,5 +1,4 @@
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   type TicketFilters as TicketFiltersType,
   TicketPriority,
@@ -11,14 +10,12 @@ import {
   BaseAvatar,
   BaseButton,
   BaseInput,
-  BaseSelect,
-  BaseSelectItem,
   BaseTagSelect,
   BaseTagSelectItem,
   Icon,
 } from '@brainforgeau/components';
 import { useAtom } from 'jotai';
-import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { type FC, useCallback, useEffect, useMemo } from 'react';
 import {
   categoriesMutationAtom,
   mapCategoryToOption,
@@ -41,9 +38,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   onSearch,
   searchTerm,
 }) => {
-  const [preset, setPreset] = useState<string>('all');
-  const { currentUser } = useCurrentUser();
-
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
   const activeCustomStatuses = useMemo(
@@ -85,33 +79,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
     [categoriesData]
-  );
-
-  const handlePresetChange = useCallback(
-    (value: string) => {
-      setPreset(value);
-
-      // Apply preset filters
-      switch (value) {
-        case 'all':
-          onFiltersChange({});
-          break;
-        case 'my-tickets':
-          if (currentUser?.id) {
-            onFiltersChange({ assigneeId: [currentUser.id] });
-          }
-          break;
-        case 'unassigned':
-          onFiltersChange({ unassignedOnly: true });
-          break;
-        case 'overdue':
-          onFiltersChange({ overdueOnly: true });
-          break;
-        default:
-          onFiltersChange({});
-      }
-    },
-    [onFiltersChange, currentUser]
   );
 
   const handleStatusChange = useCallback(
@@ -166,7 +133,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   );
 
   const handleClearFilters = useCallback(() => {
-    setPreset('all');
     onFiltersChange({});
     onSearch('');
   }, [onFiltersChange, onSearch]);
@@ -184,32 +150,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             <Icon name="search" className="h-4 w-4 text-gray-400" />
           }
         />
-      </div>
-
-      <div className="min-w-40">
-        <BaseSelect
-          label="View Preset"
-          placeholder="Select preset"
-          className="w-full"
-          selectedKey={preset}
-          onSelectionChange={(keys) => {
-            const value = keys as string;
-            handlePresetChange(value);
-          }}
-        >
-          <BaseSelectItem key="all" value="all">
-            All Tickets
-          </BaseSelectItem>
-          <BaseSelectItem key="my-tickets" value="my-tickets">
-            My Tickets
-          </BaseSelectItem>
-          <BaseSelectItem key="unassigned" value="unassigned">
-            Unassigned
-          </BaseSelectItem>
-          <BaseSelectItem key="overdue" value="overdue">
-            Overdue
-          </BaseSelectItem>
-        </BaseSelect>
       </div>
 
       <div className="min-w-40">
