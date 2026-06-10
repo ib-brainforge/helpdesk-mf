@@ -8,8 +8,15 @@
  *  - Query fetches the existing article by slug.
  *  - `values` prop on useEntityForm re-initializes the form when data arrives.
  *  - Cancel navigates back to the article view.
+ *
+ * NET-114 follow-up fix: `values` object is memoized so its reference identity
+ * only changes when actual article field values change. Without useMemo, a new
+ * object literal is created on every render (including those triggered by
+ * onSelectionChange itself), causing useEntityForm to call form.reset() on the
+ * very next tick and clobber every select change before it registers as dirty.
  */
 
+import { useMemo } from 'react';
 import {
   useArchiveKnowledgeBaseArticle,
   useKnowledgeBaseArticle,
@@ -81,6 +88,31 @@ function EditKnowledgeBaseArticlePage() {
   const unpublishArticle = useUnpublishKnowledgeBaseArticle();
   const archiveArticle = useArchiveKnowledgeBaseArticle();
 
+  // Stable reference: only a new object is created when article field values
+  // actually change (identity based on primitive fields, not the article object
+  // reference). Without this memo, useEntityForm's prevValuesRef check sees a
+  // new object on every render and calls form.reset(), clobbering user edits.
+  const formValues = useMemo(
+    () =>
+      article
+        ? {
+            title: article.title ?? '',
+            body: article.body ?? '',
+            categoryId: article.categoryId ?? undefined,
+            accessLevel: article.accessLevel ?? KnowledgeBaseAccessLevel.Public,
+            status: article.status ?? KnowledgeBaseStatus.Draft,
+          }
+        : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      article?.title,
+      article?.body,
+      article?.categoryId,
+      article?.accessLevel,
+      article?.status,
+    ],
+  );
+
   const form = useEntityForm<typeof articleEditSchema>({
     schema: articleEditSchema,
     defaultValues: {
@@ -90,15 +122,7 @@ function EditKnowledgeBaseArticlePage() {
       accessLevel: KnowledgeBaseAccessLevel.Public,
       status: KnowledgeBaseStatus.Draft,
     },
-    values: article
-      ? {
-          title: article.title ?? '',
-          body: article.body ?? '',
-          categoryId: article.categoryId ?? undefined,
-          accessLevel: article.accessLevel ?? KnowledgeBaseAccessLevel.Public,
-          status: article.status ?? KnowledgeBaseStatus.Draft,
-        }
-      : undefined,
+    values: formValues,
     onSubmit: async (values: ArticleEditFormData) => {
       if (!article?.id) return;
 
