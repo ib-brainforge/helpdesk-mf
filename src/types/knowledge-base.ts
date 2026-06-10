@@ -77,7 +77,8 @@ export interface UpdateKnowledgeBaseArticleDto {
   categoryId?: string;
   tags?: string[];
   accessLevel?: KnowledgeBaseAccessLevel;
-  status?: KnowledgeBaseStatus;
+  // Note: status changes are applied via dedicated endpoints (publish/unpublish/archive),
+  // not through the update command. See useKnowledgeBase.ts for the transition logic.
 }
 
 export interface RateArticleDto {

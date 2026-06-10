@@ -11,8 +11,11 @@
  */
 
 import {
+  useArchiveKnowledgeBaseArticle,
   useKnowledgeBaseArticle,
   useKnowledgeBaseCategories,
+  usePublishKnowledgeBaseArticle,
+  useUnpublishKnowledgeBaseArticle,
   useUpdateKnowledgeBaseArticle,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
@@ -74,6 +77,9 @@ function EditKnowledgeBaseArticlePage() {
   const { data: article, isLoading, error } = useKnowledgeBaseArticle(slug!);
   const { data: categories } = useKnowledgeBaseCategories();
   const updateArticle = useUpdateKnowledgeBaseArticle();
+  const publishArticle = usePublishKnowledgeBaseArticle();
+  const unpublishArticle = useUnpublishKnowledgeBaseArticle();
+  const archiveArticle = useArchiveKnowledgeBaseArticle();
 
   const form = useEntityForm<typeof articleEditSchema>({
     schema: articleEditSchema,
@@ -95,6 +101,8 @@ function EditKnowledgeBaseArticlePage() {
       : undefined,
     onSubmit: async (values: ArticleEditFormData) => {
       if (!article?.id) return;
+
+      // Save content fields — status is NOT sent in the update command.
       await updateArticle.mutateAsync({
         id: article.id,
         updates: {
@@ -102,9 +110,20 @@ function EditKnowledgeBaseArticlePage() {
           body: values.body,
           categoryId: values.categoryId,
           accessLevel: values.accessLevel,
-          status: values.status,
         },
       });
+
+      // Apply status transition if changed.
+      const previousStatus = article.status ?? KnowledgeBaseStatus.Draft;
+      if (values.status !== previousStatus) {
+        if (values.status === KnowledgeBaseStatus.Published) {
+          await publishArticle.mutateAsync(article.id);
+        } else if (values.status === KnowledgeBaseStatus.Draft) {
+          await unpublishArticle.mutateAsync(article.id);
+        } else if (values.status === KnowledgeBaseStatus.Archived) {
+          await archiveArticle.mutateAsync(article.id);
+        }
+      }
     },
     invalidateQueryKeys: [
       ['knowledge-base', 'article', slug],

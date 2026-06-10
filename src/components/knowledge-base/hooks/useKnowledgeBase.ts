@@ -1,4 +1,6 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { authorizedAxios } from '@/state/authorizedAxios';
+import { configAtom } from '@/state/config';
 import type {
   CreateKnowledgeBaseArticleDto,
   KnowledgeBaseArticleDto,
@@ -17,6 +19,7 @@ import {
   KnowledgeBaseApi,
 } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
+import { getDefaultStore } from 'jotai';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Map a generated KbArticleStatus string to the local KnowledgeBaseStatus string enum.
@@ -280,10 +283,7 @@ export const usePublishKnowledgeBaseArticle = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      // REVIEW: Using publish endpoint if available, otherwise note this needs backend support
-      // For now, we'll just use a placeholder - backend needs to expose publish endpoint
-      const response = await client.v1KbArticlesIdGet(id);
-      return response.data;
+      await client.v1KbArticlesIdPublishPost(id);
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({
@@ -293,6 +293,61 @@ export const usePublishKnowledgeBaseArticle = () => {
         queryKey: ['knowledge-base', 'article-by-id', id],
       });
       toast('Article published successfully', { variant: 'success' });
+    },
+    onError: () => {
+      toast('Failed to publish article', { variant: 'danger' });
+    },
+  });
+};
+
+export const useUnpublishKnowledgeBaseArticle = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Uses POST /v1/kb/articles/{id}/unpublish added in NET-114 backend fix.
+      // Once the helpdesk-client is regenerated after that backend PR merges,
+      // replace with: client.v1KbArticlesIdUnpublishPost(id)
+      const config = getDefaultStore().get(configAtom) as any;
+      await authorizedAxios.post(`${config?.api?.baseUrl}/v1/kb/articles/${id}/unpublish`);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', id],
+      });
+      toast('Article returned to draft', { variant: 'success' });
+    },
+    onError: () => {
+      toast('Failed to unpublish article', { variant: 'danger' });
+    },
+  });
+};
+
+export const useArchiveKnowledgeBaseArticle = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Uses POST /v1/kb/articles/{id}/archive added in NET-114 backend fix.
+      // Once the helpdesk-client is regenerated after that backend PR merges,
+      // replace with: client.v1KbArticlesIdArchivePost(id)
+      const config = getDefaultStore().get(configAtom) as any;
+      await authorizedAxios.post(`${config?.api?.baseUrl}/v1/kb/articles/${id}/archive`);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'articles'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['knowledge-base', 'article-by-id', id],
+      });
+      toast('Article archived', { variant: 'success' });
+    },
+    onError: () => {
+      toast('Failed to archive article', { variant: 'danger' });
     },
   });
 };
