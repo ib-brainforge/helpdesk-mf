@@ -1,6 +1,4 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
 import type {
   CreateKnowledgeBaseArticleDto,
   KnowledgeBaseArticleDto,
@@ -19,7 +17,6 @@ import {
   KnowledgeBaseApi,
 } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
-import { getDefaultStore } from 'jotai';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Map a generated KbArticleStatus string to the local KnowledgeBaseStatus string enum.
@@ -305,11 +302,8 @@ export const useUnpublishKnowledgeBaseArticle = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Uses POST /v1/kb/articles/{id}/unpublish added in NET-114 backend fix.
-      // Once the helpdesk-client is regenerated after that backend PR merges,
-      // replace with: client.v1KbArticlesIdUnpublishPost(id)
-      const config = getDefaultStore().get(configAtom) as any;
-      await authorizedAxios.post(`${config?.api?.baseUrl}/v1/kb/articles/${id}/unpublish`);
+      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+      await client.v1KbArticlesIdUnpublishPost(id);
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({
@@ -331,11 +325,8 @@ export const useArchiveKnowledgeBaseArticle = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Uses POST /v1/kb/articles/{id}/archive added in NET-114 backend fix.
-      // Once the helpdesk-client is regenerated after that backend PR merges,
-      // replace with: client.v1KbArticlesIdArchivePost(id)
-      const config = getDefaultStore().get(configAtom) as any;
-      await authorizedAxios.post(`${config?.api?.baseUrl}/v1/kb/articles/${id}/archive`);
+      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+      await client.v1KbArticlesIdArchivePost(id);
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({

@@ -15,8 +15,8 @@ importers:
         specifier: 0.4.469-develop.d6df22e
         version: 0.4.469-develop.d6df22e(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)(zod@3.25.76)
       '@brainforgeau/helpdesk-client':
-        specifier: 0.1.179-develop.8b36471
-        version: 0.1.179-develop.8b36471
+        specifier: 0.1.203-develop.a5a0806
+        version: 0.1.203-develop.a5a0806
       '@brainforgeau/identity-management-client':
         specifier: 0.1.583-develop.22921e5
         version: 0.1.583-develop.22921e5
@@ -934,8 +934,8 @@ packages:
   '@brainforgeau/core-time@0.4.11-develop.ad45d4b':
     resolution: {integrity: sha512-+76Y7P3mr99CdzhKb0K9E6hnrISRz08EeS8LGDNrcYWz3ozdyfxa6fi3IX4m5CsYvUwd5GmV7/twl8FpqRUJvA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/core-time/0.4.11-develop.ad45d4b/1ab5794ea199edb0c4aca475d935eef797fb90f6}
 
-  '@brainforgeau/helpdesk-client@0.1.179-develop.8b36471':
-    resolution: {integrity: sha512-p1lD+tcCXsc+LyXW6xiBnjolLOvCHfUNWqP/C8cQts7Adj2Nle6qUeBAYsp4nQErfnXfk72hWyVMij3ZKVsGIQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.1.179-develop.8b36471/cce5e37db7e5fc6e2900b1961525bc5ba5447bec}
+  '@brainforgeau/helpdesk-client@0.1.203-develop.a5a0806':
+    resolution: {integrity: sha512-7vfv/qPnbmWmwGbARf3skwd/tlkx24y+WDjDzbHns2gjJLLk45kLLdPdAQJ+F+bELLM5ttSSTovAhO1XPL69nA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.1.203-develop.a5a0806/ac412262e06d08c3e7872020c6c76dd884edee2f}
     engines: {node: '>=18.0.0'}
 
   '@brainforgeau/identity-management-client@0.1.583-develop.22921e5':
@@ -8455,7 +8455,7 @@ snapshots:
     dependencies:
       '@js-temporal/polyfill': 0.4.4
 
-  '@brainforgeau/helpdesk-client@0.1.179-develop.8b36471':
+  '@brainforgeau/helpdesk-client@0.1.203-develop.a5a0806':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
