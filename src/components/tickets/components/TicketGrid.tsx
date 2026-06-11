@@ -295,41 +295,55 @@ export const TicketGrid: FC = () => {
       const tabKey = String(key);
       setSelectedTab(tabKey);
 
-      // Apply filters based on selected tab
-      let newFilters = { ...filters };
+      // Build a clean base from filters that the sidebar/filter-bar owns.
+      // Tab-specific fields (status, assigneeId, unassignedOnly, overdueOnly) are
+      // ALWAYS reset fresh per tab so stale flags never leak across tab switches.
+      // E.g. switching overdue → all must clear overdueOnly; unassigned → all must
+      // clear unassignedOnly.  Spreading the previous filters without resetting
+      // these fields caused every subsequent tab to inherit the previous tab's
+      // backend params and return an empty result.
+      const crossTabBase: typeof filters = {
+        searchTerm: filters.searchTerm,
+        categoryId: filters.categoryId,
+        tagIds: filters.tagIds,
+        priority: filters.priority,
+        customStatusId: filters.customStatusId,
+      };
+
+      let newFilters: typeof filters;
 
       switch (tabKey) {
         case 'unanswered':
-          // REVIEW: Backend doesn't have "unanswered" status - using New status as proxy
-          newFilters = { ...filters, status: [TicketStatus.New] };
+          // Backend doesn't have an "unanswered" status — New is the closest proxy.
+          newFilters = { ...crossTabBase, status: [TicketStatus.New] };
           break;
         case 'unclosed':
-          // REVIEW: Unclosed = everything except Closed
+          // Unclosed = everything that is not Closed.
           newFilters = {
-            ...filters,
+            ...crossTabBase,
             status: [TicketStatus.New, TicketStatus.InProgress],
           };
           break;
         case 'unassigned':
+          // Use the dedicated unassignedOnly param; passing a magic string as
+          // assigneeId is not recognised by the backend endpoint.
           newFilters = {
-            ...filters,
-            assigneeId: ['unassigned'],
-            status: undefined,
+            ...crossTabBase,
+            unassignedOnly: true,
           };
           break;
         case 'overdue':
-          newFilters = { ...filters, overdueOnly: true, status: undefined, assigneeId: undefined };
+          newFilters = { ...crossTabBase, overdueOnly: true };
           break;
         case 'assigned-to-you':
           newFilters = {
-            ...filters,
+            ...crossTabBase,
             assigneeId: currentUserId ? [currentUserId] : undefined,
-            status: undefined,
           };
           break;
         case 'all':
         default:
-          newFilters = { ...filters, status: undefined, assigneeId: undefined };
+          newFilters = { ...crossTabBase };
           break;
       }
 
