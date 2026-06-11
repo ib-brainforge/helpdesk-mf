@@ -115,7 +115,16 @@ function EditKnowledgeBaseArticlePage() {
 
   const form = useEntityForm<typeof articleEditSchema>({
     schema: articleEditSchema,
-    defaultValues: {
+    // defaultValues must track formValues (not be a static empty object).
+    // useEntityForm calls form.reset(values) when the controlled `values` prop
+    // changes, which updates TanStack Form's internal defaultValues.  On the
+    // very next React render TanStack Form calls form.update() with the
+    // defaultValues from this useForm() call; if that is still the static
+    // empty-string object and isTouched is false (just reset), the form is
+    // immediately wiped back to empty fields (NET-117).  By mirroring
+    // formValues here, both sides of the comparison always agree and the
+    // wipe path is never triggered.
+    defaultValues: formValues ?? {
       title: '',
       body: '',
       categoryId: undefined,

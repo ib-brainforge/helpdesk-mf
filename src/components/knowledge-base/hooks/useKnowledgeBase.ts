@@ -235,7 +235,9 @@ export const useCreateKnowledgeBaseArticle = () => {
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'articles'],
       });
-      toast('Article created successfully', { variant: 'success' });
+      // Toast is intentionally omitted here: the new-article page calls this
+      // mutation via useEntityForm which emits its own unified toast.
+      // A per-mutation toast would produce a duplicate notification (NET-117).
     },
   });
 };
@@ -269,7 +271,9 @@ export const useUpdateKnowledgeBaseArticle = () => {
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'article-by-id', variables.id],
       });
-      toast('Article updated successfully', { variant: 'success' });
+      // Toast is intentionally omitted here: the edit page calls this mutation
+      // via useEntityForm which emits its own unified "Article saved" toast.
+      // A per-mutation toast would produce duplicate notifications (NET-117).
     },
   });
 };
@@ -289,7 +293,7 @@ export const usePublishKnowledgeBaseArticle = () => {
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'article-by-id', id],
       });
-      toast('Article published successfully', { variant: 'success' });
+      // Toast omitted — useEntityForm on the edit page emits the unified toast (NET-117).
     },
     onError: () => {
       toast('Failed to publish article', { variant: 'danger' });
@@ -312,7 +316,7 @@ export const useUnpublishKnowledgeBaseArticle = () => {
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'article-by-id', id],
       });
-      toast('Article returned to draft', { variant: 'success' });
+      // Toast omitted — useEntityForm on the edit page emits the unified toast (NET-117).
     },
     onError: () => {
       toast('Failed to unpublish article', { variant: 'danger' });
@@ -335,7 +339,7 @@ export const useArchiveKnowledgeBaseArticle = () => {
       queryClient.invalidateQueries({
         queryKey: ['knowledge-base', 'article-by-id', id],
       });
-      toast('Article archived', { variant: 'success' });
+      // Toast omitted — useEntityForm on the edit page emits the unified toast (NET-117).
     },
     onError: () => {
       toast('Failed to archive article', { variant: 'danger' });
