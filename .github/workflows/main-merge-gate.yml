@@ -6,6 +6,7 @@ on:
 
 jobs:
   check-source-branch:
+    if: github.base_ref == 'main'
     runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     steps:
       - name: Verify source branch
