@@ -135,8 +135,8 @@ export function IntegrationEditorModal({
 
         <BaseModalBody className="space-y-4">
           {/* Routing disclaimer */}
-          <div className="rounded-lg bg-warning-50 border border-warning-200 px-4 py-3">
-            <p className="text-xs text-warning-700">
+          <div className="rounded-lg bg-warning-50 dark:bg-warning-100/10 border border-warning-200 dark:border-warning-800 px-4 py-3">
+            <p className="text-xs text-warning-700 dark:text-warning-400">
               <strong>Configuration only.</strong> Storing credentials here
               enables the routing infrastructure when it ships. Event delivery
               to {provider.label} is not yet active.

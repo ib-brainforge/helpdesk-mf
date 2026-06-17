@@ -28,3 +28,203 @@
 @source '../../node_modules/@brainforgeau/components';
 @import "@brainforgeau/theme/theme.css";
 @import "../styles/tiptap.css";
+
+/* Dropdown popover: add border in light mode so it doesn't blend into white bg */
+:root:not(.dark) .dropdown__popover {
+  border: 1px solid var(--border);
+}
+
+/* ReactFlow dark-mode overrides (Controls, MiniMap, Background) */
+.dark .react-flow {
+  --xy-background-color: #18181b;
+  --xy-background-pattern-color: #3f3f46;
+
+  --xy-minimap-background-color: #18181b;
+  --xy-minimap-mask-background-color: rgba(0, 0, 0, 0.6);
+  --xy-minimap-node-background-color: #a1a1aa;
+
+  --xy-controls-button-background-color: #27272a;
+  --xy-controls-button-background-color-hover: #3f3f46;
+  --xy-controls-button-color: #e4e4e7;
+  --xy-controls-button-border-color: #3f3f46;
+}
+/* The rules-ui <Background> uses className="!bg-white dark:!bg-dark" but
+   "bg-dark" is not a standard Tailwind color so the dark override is a no-op.
+   Force the pane and background dark here. */
+.dark .react-flow .react-flow__pane {
+  background-color: #18181b !important;
+}
+.dark .react-flow .react-flow__background {
+  background-color: #18181b !important;
+}
+/* MiniMap uses inline style="background: #ffffff" from rules-ui — override */
+.dark .react-flow__minimap {
+  background: #18181b !important;
+}
+/* Controls panel */
+.dark .react-flow__controls {
+  background: #27272a !important;
+  border-color: #3f3f46 !important;
+}
+.dark .react-flow__controls button {
+  background: #27272a !important;
+  border-color: #3f3f46 !important;
+  color: #e4e4e7 !important;
+  fill: #e4e4e7 !important;
+}
+.dark .react-flow__controls button:hover {
+  background: #3f3f46 !important;
+}
+.dark .react-flow__controls button svg {
+  fill: #e4e4e7 !important;
+}
+
+/* ── Rules-UI edge visibility (light mode) ─────────────────────────────────── */
+/* rules-ui DEFAULT_EDGE_OPTIONS sets stroke to T.border (#e2e5eb) via inline
+   style. Override to a darker gray so connections are clearly visible. */
+.rules-editor-canvas .react-flow__edge-path {
+  stroke: #64748b !important;
+}
+.rules-editor-canvas .react-flow__connection-path {
+  stroke: #64748b !important;
+}
+.rules-editor-canvas .react-flow__arrowhead polyline {
+  stroke: #64748b !important;
+  fill: #64748b !important;
+}
+
+/*
+ * Rules-UI GraphEditor + NodePalette dark-mode overrides.
+ *
+ * @brainforgeau/rules-ui renders ALL styling via hardcoded inline `style=`
+ * attributes using light theme tokens (bg: #f8f9fb, surface: #ffffff, etc.).
+ * Because inline styles beat class specificity, every override here needs
+ * !important. We target the inner divs (> div) since the nodes render their
+ * own styled containers inside the .react-flow__node wrapper.
+ */
+
+/* ── GraphEditor canvas background ──────────────────────────────────────────── */
+/* The wrapper div has style="background: #f8f9fb" */
+.dark .rules-editor-canvas > div {
+  background: #18181b !important;
+}
+
+/* ── Node containers ────────────────────────────────────────────────────────── */
+/* Override body background to dark. Do NOT override border-color — nodes use
+   coloured borders (green/blue/purple/red) that must remain visible. */
+.dark .react-flow__node > div {
+  background: #27272a !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+/* Node header rows keep their category-coloured pastel background (the light
+   tint becomes a distinctive accent on dark). Only override border separators
+   that use generic T.border (#e2e5eb). */
+.dark .react-flow__node > div > div > div {
+  background: transparent !important;
+}
+
+/* ── Text inside nodes ──────────────────────────────────────────────────────── */
+/* Labels ("Name", "Slug", "Type", etc.) need to be light for readability */
+.dark .react-flow__node label {
+  color: #a1a1aa !important;
+}
+.dark .react-flow__node p {
+  color: #a1a1aa !important;
+}
+
+/* ── Node input / textarea / select ─────────────────────────────────────────── */
+.dark .react-flow__node input,
+.dark .react-flow__node textarea,
+.dark .react-flow__node select {
+  background: #18181b !important;
+  border-color: #3f3f46 !important;
+  color: #e4e4e7 !important;
+}
+/* Checkboxes and radios should keep their accent color */
+.dark .react-flow__node input[type="checkbox"],
+.dark .react-flow__node input[type="radio"] {
+  background: transparent !important;
+}
+
+/* ── Buttons inside nodes ───────────────────────────────────────────────────── */
+/* Don't override button backgrounds — preserve coloured buttons (cyan, red).
+   Only lighten text on transparent/borderless buttons (chevrons, delete icons)
+   so they remain visible on the dark node body. */
+.dark .react-flow__node button {
+  color: #a1a1aa !important;
+}
+
+/* ── Handle connector borders ──────────────────────────────────────────────── */
+/* Handles use border: 2px solid #fff which should adapt to dark bg */
+.dark .react-flow__handle {
+  border-color: #27272a !important;
+}
+
+/* ── Edge label renderer (workflow transition panels/chips) ─────────────────── */
+/* EdgeLabelRenderer outputs OUTSIDE .react-flow__node, so separate rules needed */
+.dark .react-flow__edgelabel-renderer span {
+  color: #d4d4d8 !important;
+}
+.dark .react-flow__edgelabel-renderer label {
+  color: #a1a1aa !important;
+}
+.dark .react-flow__edgelabel-renderer input,
+.dark .react-flow__edgelabel-renderer textarea,
+.dark .react-flow__edgelabel-renderer select {
+  background: #18181b !important;
+  border-color: #3f3f46 !important;
+  color: #e4e4e7 !important;
+}
+/* Expanded transition panel background */
+.dark .react-flow__edgelabel-renderer > div > div[style*="background"] {
+  background: #27272a !important;
+  border-color: #52525b !important;
+}
+
+/* ── Edge paths (dark mode) ─────────────────────────────────────────────────── */
+.dark .react-flow .react-flow__edge-path {
+  stroke: #a1a1aa !important;
+}
+.dark .react-flow .react-flow__connection-path {
+  stroke: #a1a1aa !important;
+}
+.dark .react-flow .react-flow__arrowhead polyline {
+  stroke: #a1a1aa !important;
+  fill: #a1a1aa !important;
+}
+
+/* ── Edge labels ────────────────────────────────────────────────────────────── */
+.dark .react-flow .react-flow__edge-textwrapper {
+  fill: #27272a !important;
+}
+.dark .react-flow .react-flow__edge-text {
+  fill: #e4e4e7 !important;
+}
+
+/* ── NodePalette sidebar ────────────────────────────────────────────────────── */
+/* The palette is a sibling div next to .rules-editor-canvas, rendered with
+   inline style="background: #ffffff; border-left: 1px solid #e2e5eb" */
+.dark .rules-editor-canvas ~ div {
+  background: #18181b !important;
+  border-color: #3f3f46 !important;
+}
+.dark .rules-editor-canvas ~ div > div {
+  border-color: #3f3f46 !important;
+}
+.dark .rules-editor-canvas ~ div strong {
+  color: #e4e4e7 !important;
+}
+.dark .rules-editor-canvas ~ div p {
+  color: #71717a !important;
+}
+.dark .rules-editor-canvas ~ div span {
+  color: #e4e4e7 !important;
+}
+.dark .rules-editor-canvas ~ div [draggable="true"]:hover {
+  background: #27272a !important;
+}
+.dark .rules-editor-canvas ~ div button {
+  background: #27272a !important;
+  border-color: #3f3f46 !important;
+  color: #a1a1aa !important;
+}

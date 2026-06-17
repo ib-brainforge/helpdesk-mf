@@ -331,9 +331,63 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     });
   }, [id, confirmAction, deleteTicketMutation, navigate]);
 
-  // Print
+  // Print in a new window to avoid Chrome's prefers-color-scheme side effect
+  // that triggers the navbar remote's matchMedia listener on cancel.
   const handlePrint = useCallback(() => {
-    window.print();
+    const width = window.screen.availWidth;
+    const height = window.screen.availHeight;
+    const printWindow = window.open(
+      '',
+      '_blank',
+      `width=${width},height=${height},left=0,top=0`,
+    );
+    if (!printWindow) return;
+
+    // Grab the ticket content container
+    const content = document.querySelector('.max-w-7xl');
+    if (!content) {
+      printWindow.close();
+      window.print();
+      return;
+    }
+
+    // Copy all stylesheets from the parent page
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map((el) => el.outerHTML)
+      .join('\n');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en" class="light">
+        <head>
+          <meta charset="utf-8" />
+          <title>Print Ticket</title>
+          ${styles}
+          <style>
+            .helpdesk-print-hide { display: none !important; }
+            .helpdesk-print-full { grid-column: 1 / -1 !important; }
+            body { background: white; padding: 20px; }
+          </style>
+        </head>
+        <body>
+          ${content.outerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // Wait for stylesheets to load, then trigger print
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+    // Fallback if onload already fired
+    setTimeout(() => {
+      if (!printWindow.closed) {
+        printWindow.print();
+        printWindow.close();
+      }
+    }, 1000);
   }, []);
 
   // Mark As Spam
@@ -416,14 +470,31 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
       if (!id) return;
-      await uploadFiles(files, id, undefined);
+      try {
+        await uploadFiles(files, id, undefined);
+        toast(
+          files.length === 1
+            ? 'File uploaded successfully'
+            : `${files.length} files uploaded successfully`,
+          { variant: 'success' },
+        );
+      } catch {
+        toast('Failed to upload file', { variant: 'danger' });
+      }
     },
     [id, uploadFiles],
   );
 
   const handleDeleteAttachment = useCallback(
     (attachmentId: string) => {
-      deleteAttachmentMutation.mutate(attachmentId);
+      deleteAttachmentMutation.mutate(attachmentId, {
+        onSuccess: () => {
+          toast('Attachment deleted', { variant: 'success' });
+        },
+        onError: () => {
+          toast('Failed to delete attachment', { variant: 'danger' });
+        },
+      });
     },
     [deleteAttachmentMutation],
   );
@@ -708,7 +779,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto">
         {/* Back Button */}
         <div className="mb-4 helpdesk-print-hide">
           <BaseButton
@@ -1008,51 +1079,74 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
             {/* Description */}
             <Box>
-              <div className="prose max-w-none">
-                <p className="whitespace-pre-wrap">{ticket.description}</p>
-              </div>
+              {ticket.description ? (
+                <div className="prose max-w-none">
+                  <p className="whitespace-pre-wrap">{ticket.description}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">No description yet.</p>
+              )}
             </Box>
 
             {/* Attachments */}
             <Box>
-              <div className="flex items-center justify-end mb-4 helpdesk-print-hide">
-                <BaseButton
-                  size="sm"
-                  variant="light"
-                  onPress={() => setShowAttachments(!showAttachments)}
-                  icon={
-                    <Icon
-                      name={showAttachments ? 'chevron-up' : 'chevron-down'}
-                      className="h-4 w-4"
-                    />
-                  }
-                >
-                  {showAttachments ? 'Hide' : 'Show'}
-                </BaseButton>
-              </div>
-
-              {showAttachments && (
+              {attachmentsLoading ? (
+                <div className="text-center py-4">
+                  Loading attachments...
+                </div>
+              ) : attachments && attachments.length > 0 ? (
                 <div className="space-y-4">
+                  <AttachmentList
+                    attachments={attachments}
+                    onDelete={handleDeleteAttachment}
+                    canDelete={true}
+                  />
                   <PermissionGuard
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                    fallback={null}
                   >
-                    <FileUploadZone
-                      onFilesSelected={handleFilesSelected}
-                      progress={uploadProgress}
-                    />
-                  </PermissionGuard>
-
-                  {attachmentsLoading ? (
-                    <div className="text-center py-4">
-                      Loading attachments...
+                    <div className="helpdesk-print-hide">
+                      {showAttachments ? (
+                        <div className="space-y-2">
+                          <FileUploadZone
+                            onFilesSelected={handleFilesSelected}
+                            progress={uploadProgress}
+                          />
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            onPress={() => setShowAttachments(false)}
+                          >
+                            Cancel
+                          </BaseButton>
+                        </div>
+                      ) : (
+                        <BaseButton
+                          size="sm"
+                          variant="light"
+                          onPress={() => setShowAttachments(true)}
+                          icon={<Icon name="plus" className="h-4 w-4" />}
+                        >
+                          Add Attachment
+                        </BaseButton>
+                      )}
                     </div>
-                  ) : (
-                    <AttachmentList
-                      attachments={attachments}
-                      onDelete={handleDeleteAttachment}
-                      canDelete={true}
-                    />
-                  )}
+                  </PermissionGuard>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-400 italic">No attachments yet.</p>
+                  <PermissionGuard
+                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                    fallback={null}
+                  >
+                    <div className="helpdesk-print-hide">
+                      <FileUploadZone
+                        onFilesSelected={handleFilesSelected}
+                        progress={uploadProgress}
+                      />
+                    </div>
+                  </PermissionGuard>
                 </div>
               )}
             </Box>

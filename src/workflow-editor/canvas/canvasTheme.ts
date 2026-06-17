@@ -38,7 +38,7 @@ export const CATEGORY_COLORS: Record<
 
 export const CANVAS_TOKENS = {
   background: '#f9fafb',
-  edge: '#94a3b8',
+  edge: '#64748b',
   edgeSelected: '#3b82f6',
   minimapMask: 'rgba(226, 232, 240, 0.6)',
 };

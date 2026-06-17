@@ -71,7 +71,7 @@ export function ComponentsPalette() {
 
   return (
     <aside
-      className="border-light dark:bg-default-50 flex w-64 shrink-0 flex-col border-l bg-white"
+      className="border-light flex w-64 shrink-0 flex-col border-l bg-content1"
       aria-label="Components palette"
     >
       <div className="border-light border-b px-4 py-3">
@@ -89,7 +89,7 @@ export function ComponentsPalette() {
               key={item.type}
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
-              className="hover:bg-default-50 flex cursor-grab select-none items-center gap-3 rounded bg-white p-2 active:cursor-grabbing"
+              className="hover:bg-default-50 flex cursor-grab select-none items-center gap-3 rounded bg-content1 p-2 active:cursor-grabbing"
               style={{
                 borderWidth: 1,
                 borderStyle: 'solid',

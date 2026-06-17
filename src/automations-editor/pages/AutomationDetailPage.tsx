@@ -136,6 +136,25 @@ export function AutomationDetailPage() {
 
   async function handlePublish() {
     if (!projectId || !ruleId || !editableContent) return;
+
+    // Frontend validation: compiler requires input + output nodes
+    const nodes = editableContent.nodes ?? [];
+    const hasInput = nodes.some(
+      (n: { type?: string }) => n.type === 'inputNode',
+    );
+    const hasOutput = nodes.some(
+      (n: { type?: string }) => n.type === 'outputNode',
+    );
+    if (!hasInput || !hasOutput) {
+      toast('Cannot publish', {
+        description: !hasInput
+          ? 'The graph requires an Input node.'
+          : 'The graph requires an Output node.',
+        variant: 'danger',
+      });
+      return;
+    }
+
     try {
       // Always save current content as a new version before publishing
       const version = await createVersionMutation.mutateAsync({
@@ -150,7 +169,7 @@ export function AutomationDetailPage() {
       });
       setIsDirty(false);
       toast('Automation published', { variant: 'success' });
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof Error) {
         logger.captureError(err, {
           context: 'automation_detail_publish_failed',
@@ -158,11 +177,17 @@ export function AutomationDetailPage() {
       } else {
         logger.error('automation_detail_publish_failed');
       }
+      // Extract error detail from backend response
+      const detail =
+        (err as { response?: { data?: { detail?: string; errors?: string[] } } })
+          ?.response?.data?.detail ??
+        (err as { response?: { data?: { errors?: string[] } } })?.response?.data
+          ?.errors?.[0] ??
+        (err instanceof Error ? err.message : 'Unknown error');
       toast('Publish failed', {
-        description: err instanceof Error ? err.message : 'Unknown error',
+        description: detail,
         variant: 'danger',
       });
-      throw err;
     }
   }
 
@@ -175,14 +200,20 @@ export function AutomationDetailPage() {
         versionId: version.id,
       });
       toast('Version published', { variant: 'success' });
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof Error) {
         logger.captureError(err, {
           context: 'automation_detail_publish_version_failed',
         });
       }
+      const detail =
+        (err as { response?: { data?: { detail?: string; errors?: string[] } } })
+          ?.response?.data?.detail ??
+        (err as { response?: { data?: { errors?: string[] } } })?.response?.data
+          ?.errors?.[0] ??
+        (err instanceof Error ? err.message : 'Unknown error');
       toast('Publish failed', {
-        description: err instanceof Error ? err.message : 'Unknown error',
+        description: detail,
         variant: 'danger',
       });
     }
@@ -216,9 +247,9 @@ export function AutomationDetailPage() {
   // calc(100vh-4rem) which assumed a fixed 4rem navbar and caused the editor to
   // overlap the TopNavbar.
   return (
-    <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+    <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900 dark:text-zinc-100">
       {/* Top bar: breadcrumb + badges left, actions right */}
-      <div className="border-light dark:bg-default-50 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex min-w-0 items-center gap-3">
           <nav className="text-default-500 flex items-center gap-1.5 text-xs">
             <NavLink
@@ -282,7 +313,7 @@ export function AutomationDetailPage() {
       {/* Canvas + right sidebar */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Graph editor — keyed by active version so canvas remounts on version switch */}
-        <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="rules-editor-canvas min-w-0 flex-1 overflow-hidden min-h-[500px]">
           <GraphEditor
             key={activeVersion?.id ?? 'empty'}
             content={editableContent}
@@ -302,10 +333,10 @@ export function AutomationDetailPage() {
         {/* Versions sidebar */}
         {showVersionsSidebar && (
           <aside
-            className="border-light dark:bg-default-50 flex w-80 shrink-0 flex-col overflow-hidden border-l bg-white"
+            className="flex w-80 shrink-0 flex-col overflow-hidden border-l border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
             aria-label="Version history"
           >
-            <div className="border-light flex items-center justify-between border-b px-4 py-3">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
               <span className="text-default-700 text-sm font-semibold">
                 Version History
               </span>
