@@ -1,8 +1,20 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import {
+  createHelpdeskApiClient,
+  createHelpdeskApiConfiguration,
+} from '@/state/helpdeskApiClient';
 import type { AttachmentDto, FileUploadProgress } from '@/types';
 import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
+import type { RuntimeConfig } from '@brainforgeau/security';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getDefaultStore } from 'jotai';
 import { useCallback, useState } from 'react';
+import { configAtom } from '@/state/config';
+
+const getApiBaseUrl = (): string => {
+  const store = getDefaultStore();
+  const config = store.get(configAtom) as RuntimeConfig;
+  return config?.api?.baseUrl ?? '';
+};
 
 export const useAttachments = (ticketId?: string) => {
   const { data, isLoading, refetch } = useQuery<AttachmentDto[]>({
@@ -12,9 +24,21 @@ export const useAttachments = (ticketId?: string) => {
 
       const client = await createHelpdeskApiClient(AttachmentsApi);
       const response = await client.v1AttachmentsTicketTicketIdGet(ticketId);
+      const baseUrl = getApiBaseUrl();
 
-      // REVIEW: Backend returns array directly, not wrapped in items
-      return (response.data ?? []) as unknown as AttachmentDto[];
+      // Map backend DTO fields to frontend AttachmentDto
+      return ((response.data as any[]) ?? []).map((item: any) => ({
+        id: item.id,
+        fileName: item.fileName,
+        fileSize: item.fileSizeBytes,
+        contentType: item.contentType,
+        url: `${baseUrl}/v1/attachments/${item.id}`,
+        uploadedById: item.uploadedByUserId,
+        uploadedByName: item.uploadedByName,
+        uploadedAt: item.createdAt,
+        ticketId: item.ticketId,
+        commentId: item.commentId,
+      })) as AttachmentDto[];
     },
     enabled: Boolean(ticketId),
   });

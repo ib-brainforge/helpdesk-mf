@@ -27,6 +27,80 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 
+// ── Content normaliser ────────────────────────────────────────────────────────
+//
+// Migrated legacy rules store contentSnapshot in ReactFlow-native format
+// (position.x/y, data.conditions, etc.) instead of the RuleNodeDto format
+// expected by @brainforgeau/rules-ui (positionX/Y, switchConditions, etc.).
+// This normaliser detects the legacy shape and converts it so GraphEditor can
+// render the content correctly.
+
+function isReactFlowNode(n: Record<string, unknown>): boolean {
+  return (
+    typeof n.position === 'object' &&
+    n.position !== null &&
+    'x' in (n.position as Record<string, unknown>)
+  );
+}
+
+function normaliseContentSnapshot(
+  raw: unknown,
+): RuleGraphContent | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const content = raw as Record<string, unknown>;
+  const rawNodes = content.nodes as Record<string, unknown>[] | undefined;
+  const rawEdges = content.edges as Record<string, unknown>[] | undefined;
+  if (!Array.isArray(rawNodes)) return raw as RuleGraphContent;
+
+  // If the first node already has positionX, the content is in RuleNodeDto
+  // format — no normalisation needed.
+  if (rawNodes.length > 0 && 'positionX' in rawNodes[0]) {
+    return raw as RuleGraphContent;
+  }
+
+  // Convert ReactFlow-native nodes → RuleNodeDto
+  const nodes = rawNodes.map((n) => {
+    if (!isReactFlowNode(n)) return n;
+    const pos = n.position as { x: number; y: number };
+    const data = (n.data ?? {}) as Record<string, unknown>;
+    const conditions = data.conditions as
+      | { id: string; expression: string; sortOrder: number }[]
+      | undefined;
+    const actionContent = data.content as
+      | { actionType: string; description?: string; webhookUrl?: string }
+      | undefined;
+
+    return {
+      id: n.id,
+      type: n.type,
+      name: (data.label as string) ?? (n.type === 'inputNode' ? 'Request' : n.type === 'outputNode' ? 'Response' : n.type === 'switchNode' ? 'Switch' : n.type === 'actionNode' ? 'Action' : 'Node'),
+      positionX: pos.x ?? 0,
+      positionY: pos.y ?? 0,
+      hitPolicy: (data.hitPolicy as string) ?? null,
+      switchConditions: conditions
+        ? conditions.map((c) => ({
+            conditionId: c.id,
+            expression: c.expression,
+            sortOrder: c.sortOrder,
+          }))
+        : null,
+      decisionTable: (data.decisionTable as Record<string, unknown>) ?? null,
+      notifyConfig: (data.notifyConfig as Record<string, unknown>) ?? null,
+      actionConfig: actionContent
+        ? {
+            actionType: actionContent.actionType,
+            priority: null,
+            description: actionContent.description ?? null,
+            webhookUrl: actionContent.webhookUrl ?? null,
+          }
+        : null,
+      alertConfig: (data.alertConfig as Record<string, unknown>) ?? null,
+    };
+  });
+
+  return { nodes, edges: rawEdges ?? [] } as unknown as RuleGraphContent;
+}
+
 // ── DTO mappers ────────────────────────────────────────────────────────────────
 
 function toRuleGraphVersionDto(v: GenRuleGraphVersionDto): RuleGraphVersionDto {
@@ -34,8 +108,7 @@ function toRuleGraphVersionDto(v: GenRuleGraphVersionDto): RuleGraphVersionDto {
     id: v.id ?? '',
     versionNumber: v.versionNumber ?? 0,
     name: v.name ?? null,
-    contentSnapshot:
-      (v.contentSnapshot as RuleGraphContent | null | undefined) ?? null,
+    contentSnapshot: normaliseContentSnapshot(v.contentSnapshot),
     createdAt: v.createdAt ?? '',
   };
 }

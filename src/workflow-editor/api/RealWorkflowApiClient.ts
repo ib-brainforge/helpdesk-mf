@@ -101,8 +101,25 @@ interface BackendWorkflowDefinitionDto {
   versions: BackendWorkflowVersionDto[];
 }
 
+/** Slim summary returned by the list endpoint (no full versions array). */
+interface BackendWorkflowSummaryDto {
+  id: string;
+  name: string;
+  description: string | null;
+  subjectType: string;
+  ownerScope: string;
+  isActive: boolean;
+  isDefault: boolean;
+  publishedVersionNumber: number | null;
+  publishedVersionId: string | null;
+  totalVersions: number;
+  latestVersionStatus: string | null;
+  publishedAt: string | null;
+  hasDraft: boolean;
+}
+
 interface BackendListResponse {
-  items: BackendWorkflowDefinitionDto[];
+  items: BackendWorkflowSummaryDto[];
   totalCount?: number;
 }
 
@@ -153,6 +170,7 @@ function toTransitionDto(
 ): WorkflowTransitionDto {
   // Backend stores guard expression in guards[0].expression (CEL)
   const guardExpression = t.guards?.[0]?.expression ?? null;
+  const meta = t.displayMetadata ?? {};
 
   return {
     id: t.id,
@@ -163,6 +181,7 @@ function toTransitionDto(
     triggerSpec: t.eventName ? { eventName: t.eventName } : null,
     guardExpression: guardExpression || null,
     actions: [],
+    sourceHandleId: meta['ui.sourceHandle'] ?? null,
     // REVIEW: approvalSpec — backend stores approvals in a separate aggregate;
     // not embedded in transition row. Leaving undefined here; future iteration
     // can compose from a separate GET /v1/workflows/{id}/approvals endpoint.
@@ -218,6 +237,52 @@ function toDefinitionDto(
   };
 }
 
+/** Maps a slim list-endpoint summary to the frontend WorkflowDefinitionDto. */
+function toDefinitionDtoFromSummary(
+  s: BackendWorkflowSummaryDto,
+): WorkflowDefinitionDto {
+  const status = s.latestVersionStatus as VersionStatus | null;
+  const isPublished = status === VersionStatus.Published;
+
+  // Build a synthetic latestVersion when a published version exists
+  const latestVersion: WorkflowDefinitionVersionDto | null = isPublished
+    ? {
+        id: s.publishedVersionId ?? '',
+        versionNumber: s.publishedVersionNumber ?? 1,
+        status: VersionStatus.Published,
+        publishedAt: s.publishedAt,
+        publishedBy: null,
+        startStateId: null,
+        states: [],
+        transitions: [],
+      }
+    : null;
+
+  // Build a synthetic draftVersion when a draft exists
+  const draftVersion: WorkflowDefinitionVersionDto | null = s.hasDraft
+    ? {
+        id: '',
+        versionNumber: 0,
+        status: VersionStatus.Draft,
+        publishedAt: null,
+        publishedBy: null,
+        startStateId: null,
+        states: [],
+        transitions: [],
+      }
+    : null;
+
+  return {
+    id: s.id,
+    name: s.name,
+    description: s.description ?? null,
+    ownerScope: s.ownerScope as WorkflowDefinitionDto['ownerScope'],
+    latestVersion,
+    draftVersion,
+    versions: [],
+  };
+}
+
 // ── Adapters: frontend DTO → backend command DTO ────────────────────────────────
 
 function fromStateDto(s: WorkflowStateDto): Record<string, unknown> {
@@ -236,6 +301,10 @@ function fromStateDto(s: WorkflowStateDto): Record<string, unknown> {
     sortOrder: s.sortOrder,
     category: s.category,
     type: s.type,
+    requiredFieldIds: [],
+    allowedHolderRoles: [],
+    slaPolicyOverrideId: null,
+    entryTimer: null,
     displayMetadata,
     parallel: s.parallelSpec
       ? {
@@ -250,14 +319,30 @@ function fromStateDto(s: WorkflowStateDto): Record<string, unknown> {
 function fromTransitionDto(t: WorkflowTransitionDto): Record<string, unknown> {
   const guards = t.guardExpression ? [{ expression: t.guardExpression }] : [];
 
+  const displayMetadata: Record<string, string> = {};
+  if (t.sourceHandleId) {
+    displayMetadata['ui.sourceHandle'] = t.sourceHandleId;
+  }
+
   return {
     id: t.id,
+    slug: `transition-${t.id}`,
+    name: `Transition ${t.id.slice(0, 8)}`,
     fromStateId: t.fromStateId,
     toStateId: t.toStateId,
     trigger: t.triggerType,
     eventName:
       (t.triggerSpec as { eventName?: string } | null)?.eventName ?? null,
     guards,
+    allowedInvokerRoles: [],
+    requiresApprovalSpecId: null,
+    autoApplyOnApproval: false,
+    cancelsOnOtherTransition: false,
+    requiredContextKeys: [],
+    sortOrder: 0,
+    isPrimary: false,
+    isBulkEligible: false,
+    displayMetadata,
   };
 }
 
@@ -276,7 +361,7 @@ export function createRealWorkflowApiClient(
     async listDefinitions(): Promise<WorkflowDefinitionDto[]> {
       const res = await workflows.v1WorkflowsGet();
       const data = res.data as unknown as BackendListResponse;
-      return (data?.items ?? []).map(toDefinitionDto);
+      return (data?.items ?? []).map(toDefinitionDtoFromSummary);
     },
 
     async getDefinition(id: string): Promise<WorkflowDefinitionDto> {
@@ -326,7 +411,7 @@ export function createRealWorkflowApiClient(
         {
           definitionId: input.definitionId,
           versionId: input.versionId,
-          startStateId: input.startStateId ?? undefined,
+          startStateId: input.startStateId as string | undefined,
           states: input.states.map(fromStateDto) as never,
           transitions: input.transitions.map(fromTransitionDto) as never,
         },
@@ -391,7 +476,7 @@ export function createRealWorkflowApiClient(
       const res =
         await principal.v1PrincipalsPrincipalIdWorkflowsGet(principalId);
       const data = res.data as unknown as BackendListResponse;
-      return (data?.items ?? []).map(toDefinitionDto);
+      return (data?.items ?? []).map(toDefinitionDtoFromSummary);
     },
 
     async getPrincipalDefinition(
@@ -456,7 +541,7 @@ export function createRealWorkflowApiClient(
           principalId: input.principalId,
           definitionId: input.definitionId,
           versionId: input.versionId,
-          startStateId: input.startStateId ?? undefined,
+          startStateId: input.startStateId as string | undefined,
           states: input.states.map(fromStateDto) as never,
           transitions: input.transitions.map(fromTransitionDto) as never,
         },
@@ -573,9 +658,11 @@ export function createRealWorkflowApiClient(
         });
       }
 
-      // 3. Create a draft on the new definition
+      // 3. Use the initial draft created by the backend, or create one if missing
       let draftVersion: WorkflowDefinitionVersionDto;
-      if (input.principalId) {
+      if (newDef.draftVersion) {
+        draftVersion = newDef.draftVersion;
+      } else if (input.principalId) {
         draftVersion = await this.createPrincipalDraft(
           input.principalId,
           newDef.id,
@@ -610,23 +697,38 @@ export function createRealWorkflowApiClient(
         : null;
 
       // 5. Update the draft with the cloned content
-      if (input.principalId) {
-        await this.updatePrincipalDraft({
-          principalId: input.principalId,
-          definitionId: newDef.id,
-          versionId: draftVersion.id,
-          states: clonedStates,
-          transitions: clonedTransitions,
-          startStateId: newStartStateId,
-        });
-      } else {
-        await this.updateDraft({
-          definitionId: newDef.id,
-          versionId: draftVersion.id,
-          states: clonedStates,
-          transitions: clonedTransitions,
-          startStateId: newStartStateId,
-        });
+      try {
+        if (input.principalId) {
+          await this.updatePrincipalDraft({
+            principalId: input.principalId,
+            definitionId: newDef.id,
+            versionId: draftVersion.id,
+            states: clonedStates,
+            transitions: clonedTransitions,
+            startStateId: newStartStateId,
+          });
+        } else {
+          await this.updateDraft({
+            definitionId: newDef.id,
+            versionId: draftVersion.id,
+            states: clonedStates,
+            transitions: clonedTransitions,
+            startStateId: newStartStateId,
+          });
+        }
+      } catch (copyErr) {
+        // Definition was created but content copy failed.
+        // Return the empty definition so the caller can still navigate to it.
+        const partial = input.principalId
+          ? await this.getPrincipalDefinition(input.principalId, newDef.id)
+          : await this.getDefinition(newDef.id);
+        const msg =
+          copyErr instanceof Error ? copyErr.message : String(copyErr);
+        const err = new Error(
+          `Definition created but content copy failed: ${msg}`,
+        );
+        (err as any).partialResult = partial;
+        throw err;
       }
 
       // 6. Return the final definition with draft
