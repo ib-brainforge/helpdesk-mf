@@ -98,23 +98,20 @@ const config = {
   packageVersions,
   observability: {
     enabled: process.env.OBSERVABILITY_ENABLED === 'true',
-    loki: {
-      // Use BFF proxy URL to keep credentials server-side
-      // Include basePath so requests go to /helpdesk/edge/logs in production
-      url: process.env.LOKI_PROXY_URL || `${basePath}/edge/logs`,
-    },
+    // Telemetry gateway base URL (v2). Logs/traces/sessions are routed through
+    // the telemetry-gateway service; the SDK appends /v1/{sessions,logs,traces}.
+    // Defaults at runtime to the helpdesk backend API origin + /backend/telemetry;
+    // overridable per-environment via TELEMETRY_GATEWAY_URL.
+    telemetryGatewayUrl: process.env.TELEMETRY_GATEWAY_URL || '',
     tracing: {
       enabled: process.env.TRACING_ENABLED === 'true',
-      // Use BFF proxy URL to keep credentials server-side
-      // Include basePath so requests go to /helpdesk/edge/traces in production
-      endpoint: process.env.TRACING_PROXY_URL || `${basePath}/edge/traces`,
       // Domains to exclude from trace header propagation (to avoid CORS issues)
       ignoreUrlsPattern: process.env.TRACING_IGNORE_URLS_PATTERN || '',
     },
     metrics: {
       enabled: process.env.METRICS_ENABLED === 'true',
       webVitals: true,
-      // Metrics are logged to Loki as structured data
+      // Metrics are logged to Loki as structured data via the gateway
     },
   },
   environment: process.env.NODE_ENV || 'development',
