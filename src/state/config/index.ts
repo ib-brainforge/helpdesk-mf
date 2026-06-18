@@ -14,8 +14,13 @@ export interface AppConfig extends RuntimeConfig {
   };
   observability?: {
     enabled: boolean;
-    loki: { url: string };
-    tracing: { enabled: boolean; endpoint: string; ignoreUrlsPattern?: string };
+    /**
+     * Telemetry gateway base URL (v2). The SDK appends
+     * /v1/{sessions,logs,traces}. Empty string => derive from `api.baseUrl`
+     * origin + /backend/telemetry at runtime.
+     */
+    telemetryGatewayUrl?: string;
+    tracing: { enabled: boolean; ignoreUrlsPattern?: string };
     metrics: { enabled: boolean; webVitals: boolean };
   };
   [key: string]: any;

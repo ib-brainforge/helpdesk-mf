@@ -50,11 +50,20 @@ export function BulkCloneModal({
       toast(`Cloned as "${result.name}"`, { variant: 'success' });
       onClose();
       navigate(getDetailUrl(result.id));
-    } catch (err) {
-      toast('Clone failed', {
-        description: err instanceof Error ? err.message : 'Unknown error',
-        variant: 'danger',
-      });
+    } catch (err: any) {
+      onClose();
+      if (err?.partialResult) {
+        toast('Cloned (content copy incomplete)', {
+          description: 'The workflow was created but states could not be copied. You can manually rebuild it.',
+          variant: 'warning',
+        });
+        navigate(getDetailUrl(err.partialResult.id));
+      } else {
+        toast('Clone failed', {
+          description: err instanceof Error ? err.message : 'Unknown error',
+          variant: 'danger',
+        });
+      }
     }
   }
 

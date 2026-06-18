@@ -15,7 +15,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useLogger } from '@brainforgeau/observability';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { WorkflowTransitionEdge } from '../edges/WorkflowTransitionEdge';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
 import { type StateCategory, StateType, TriggerType } from '../types/enums';
@@ -40,6 +40,23 @@ export interface WorkflowCanvasProps {
       positionY: number;
     },
   ) => void;
+}
+
+function subscribeToColorMode(cb: () => void) {
+  const observer = new MutationObserver(cb);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+  return () => observer.disconnect();
+}
+
+function getColorMode(): 'dark' | 'light' {
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+}
+
+function useColorMode() {
+  return useSyncExternalStore(subscribeToColorMode, getColorMode);
 }
 
 const NODE_TYPES = {
@@ -103,6 +120,7 @@ function WorkflowCanvasInner({
   onAddState,
 }: WorkflowCanvasProps) {
   const logger = useLogger('WorkflowCanvas');
+  const colorMode = useColorMode();
   const { screenToFlowPosition } = useReactFlow();
 
   // Refs keep inline-node callbacks and drop handlers reading latest props
@@ -328,6 +346,7 @@ function WorkflowCanvasInner({
         edges={edges}
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
+        colorMode={colorMode}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={handleNodeDragStop}
@@ -348,9 +367,12 @@ function WorkflowCanvasInner({
         defaultEdgeOptions={{ type: 'workflowTransition' }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} color="#e2e8f0" />
+        <Background
+          variant={BackgroundVariant.Dots}
+          color={colorMode === 'dark' ? '#3f3f46' : '#e2e8f0'}
+        />
         <Controls />
-        <MiniMap pannable zoomable maskColor={CANVAS_TOKENS.minimapMask} />
+        <MiniMap pannable zoomable />
       </ReactFlow>
     </div>
   );

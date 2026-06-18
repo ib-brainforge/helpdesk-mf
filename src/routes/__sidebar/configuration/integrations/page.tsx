@@ -83,8 +83,8 @@ function IntegrationsPage() {
       />
 
       {/* Routing disclaimer banner */}
-      <BaseCard className="bg-light-blue border-blue mb-5 max-w-3xl">
-        <p className="text-warning-700 text-sm">
+      <BaseCard className="bg-light-blue dark:bg-blue-900/20 border-blue dark:border-blue-800 mb-5 max-w-3xl">
+        <p className="text-warning-700 dark:text-warning-400 text-sm">
           <strong>Preview:</strong> Integration configurations are saved but
           event routing to external providers (Slack, Jira, GitHub, Zapier) is
           not yet active. You can configure credentials now and routing will
@@ -105,7 +105,7 @@ function IntegrationsPage() {
                 {/* Provider header */}
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-light-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[3px]">
+                    <div className="bg-light-2 dark:bg-gray-700 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[3px]">
                       <Icon
                         name={provider.icon}
                         className="text-default-600 h-5 w-5"
@@ -132,11 +132,11 @@ function IntegrationsPage() {
 
                 {/* Existing instances */}
                 {instances.length > 0 && (
-                  <ul className="border-default-100 mt-3 space-y-2 border-t pt-3">
+                  <ul className="border-default-100 dark:border-default-700 mt-3 space-y-2 border-t pt-3">
                     {instances.map((instance) => (
                       <li
                         key={instance.id}
-                        className="bg-default-50 flex items-center justify-between rounded-lg px-3 py-2"
+                        className="bg-default-50 dark:bg-default-100/10 flex items-center justify-between rounded-lg px-3 py-2"
                       >
                         <div className="flex min-w-0 items-center gap-2">
                           <Chip
@@ -177,7 +177,7 @@ function IntegrationsPage() {
                 )}
 
                 {instances.length === 0 && (
-                  <p className="text-default-400 border-default-100 mt-3 border-t pt-3 text-xs">
+                  <p className="text-default-400 border-default-100 dark:border-default-700 mt-3 border-t pt-3 text-xs">
                     No {provider.label} integrations configured.
                   </p>
                 )}

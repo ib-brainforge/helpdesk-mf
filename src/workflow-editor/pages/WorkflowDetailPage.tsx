@@ -18,6 +18,7 @@ import {
   useWorkflowDefinition,
 } from '../state/workflowQueries';
 import type { WorkflowStateDto, WorkflowTransitionDto } from '../types';
+import { StateType } from '../types/enums';
 import { isTenantOwned } from '../types/workflow';
 
 function formatDate(iso: string): string {
@@ -86,12 +87,16 @@ export function WorkflowDetailPage() {
   async function handleSaveDraft() {
     if (!data?.draftVersion) return;
     try {
+      const startStateId =
+        data.draftVersion.startStateId ??
+        states.find(s => s.type === StateType.Initial)?.id ??
+        null;
       await updateMut.mutateAsync({
         definitionId: data.id,
         versionId: data.draftVersion.id,
         states,
         transitions,
-        startStateId: data.draftVersion.startStateId,
+        startStateId,
       });
       setDirty(false);
       toast('Draft saved', { variant: 'success' });
@@ -101,8 +106,14 @@ export function WorkflowDetailPage() {
       } else {
         logger.error('workflow_detail_save_failed');
       }
+      const axiosData = (err as { response?: { data?: Record<string, unknown> } })
+        .response?.data;
+      const detail =
+        (axiosData?.detail as string) ??
+        (axiosData?.title as string) ??
+        (err instanceof Error ? err.message : 'Unknown error');
       toast('Save failed', {
-        description: err instanceof Error ? err.message : 'Unknown error',
+        description: detail,
         variant: 'danger',
       });
       throw err;
@@ -181,7 +192,7 @@ export function WorkflowDetailPage() {
   return (
     <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
       {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
-      <div className="border-light dark:bg-default-50 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-2">
+      <div className="border-light flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-content1 px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">
           <nav className="text-default-500 flex items-center gap-1.5 text-xs">
             <NavLink
@@ -315,7 +326,7 @@ export function WorkflowDetailPage() {
 
           {showVersionsSidebar && (
             <aside
-              className="border-light dark:bg-default-50 flex w-80 shrink-0 flex-col overflow-hidden border-l bg-white"
+              className="border-light flex w-80 shrink-0 flex-col overflow-hidden border-l bg-content1"
               aria-label="Version history"
             >
               <div className="border-light flex items-center justify-between border-b px-4 py-3">

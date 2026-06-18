@@ -1,8 +1,5 @@
 import type { AttachmentDto } from '@/types';
 import { Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
 
 interface AttachmentListProps {
@@ -11,101 +8,95 @@ interface AttachmentListProps {
   canDelete?: boolean;
 }
 
+const getFileIcon = (contentType: string, fileName: string) => {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (contentType.startsWith('image/')) return 'img';
+  if (contentType.includes('pdf') || ext === 'pdf') return 'pdf';
+  if (contentType.includes('word') || ext === 'doc' || ext === 'docx') return 'doc';
+  if (contentType.includes('excel') || contentType.includes('spreadsheet') || ext === 'xlsx' || ext === 'xls' || ext === 'csv') return 'table';
+  return 'blank';
+};
+
+const getFileExtLabel = (fileName: string) => {
+  const ext = fileName.split('.').pop()?.toUpperCase();
+  return ext || 'FILE';
+};
+
 export const AttachmentList: FC<AttachmentListProps> = ({
   attachments,
   onDelete,
   canDelete = false,
 }) => {
-  const timezone = useTimezone();
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  };
-
-  const getFileIcon = (contentType: string) => {
-    if (contentType.startsWith('image/')) return 'photo';
-    if (contentType.includes('pdf')) return 'document-text';
-    if (contentType.includes('word')) return 'document';
-    if (contentType.includes('excel') || contentType.includes('spreadsheet'))
-      return 'table-cells';
-    if (contentType.includes('zip') || contentType.includes('archive'))
-      return 'archive-box';
-    return 'document';
-  };
-
-  const isImagePreviewable = (contentType: string) => {
-    return contentType.startsWith('image/');
-  };
-
   if (attachments.length === 0) {
-    return (
-      <div className="rounded border border-dashed p-6 text-center text-gray-500">
-        No attachments
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="space-y-2">
-      {attachments.map(attachment => (
-        <div
-          key={attachment.id}
-          className="flex items-center gap-3 rounded border p-3 hover:bg-gray-50"
-        >
-          {isImagePreviewable(attachment.contentType) ? (
-            <img
-              src={attachment.url}
-              alt={attachment.fileName}
-              className="h-12 w-12 rounded object-cover"
-            />
-          ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded bg-gray-100">
-              <Icon
-                name={getFileIcon(attachment.contentType)}
-                className="h-6 w-6 text-gray-600"
+    <div className="flex flex-wrap gap-3">
+      {attachments.map(attachment => {
+        const isImage = attachment.contentType?.startsWith('image/');
+
+        return (
+          <div
+            key={attachment.id}
+            className="group relative h-24 w-24 shrink-0 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
+            title={attachment.fileName}
+          >
+            {/* Preview content */}
+            {isImage ? (
+              <img
+                src={attachment.url}
+                alt={attachment.fileName}
+                className="h-full w-full object-cover"
               />
-            </div>
-          )}
-
-          <div className="flex-1 min-w-0">
-            <a
-              href={attachment.url}
-              download={attachment.fileName}
-              className="block truncate font-medium text-primary hover:underline"
-            >
-              {attachment.fileName}
-            </a>
-            <p className="text-xs text-gray-500">
-              {formatFileSize(attachment.fileSize)} •{' '}
-              {attachment.uploadedByName || 'Unknown'} •{' '}
-              {formatDateTime(attachment.uploadedAt, { timezone })}
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <a
-              href={attachment.url}
-              download={attachment.fileName}
-              className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm hover:bg-gray-100"
-            >
-              <Icon name="arrow-down-tray" className="h-4 w-4" />
-              Download
-            </a>
-            {canDelete && onDelete && (
-              <BaseButton
-                size="sm"
-                variant="light"
-                color="danger"
-                onPress={() => onDelete(attachment.id)}
-                icon={<Icon name="trash" className="h-4 w-4" />}
-              >
-                Delete
-              </BaseButton>
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center bg-gray-50 dark:bg-gray-800">
+                <Icon
+                  name={getFileIcon(attachment.contentType, attachment.fileName)}
+                  className="h-12 w-12 text-gray-400 dark:text-gray-500"
+                />
+                <span className="mt-1 text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                  {getFileExtLabel(attachment.fileName)}
+                </span>
+              </div>
             )}
+
+            {/* Hover overlay with actions */}
+            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+              <a
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                title="Download"
+                onClick={e => e.stopPropagation()}
+              >
+                <Icon name="download" className="h-4 w-4" />
+              </a>
+              {canDelete && onDelete && (
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation();
+                    onDelete(attachment.id);
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-red-500/80 transition-colors"
+                  title="Delete"
+                >
+                  <Icon name="trash" className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* File name tooltip strip at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+              <p className="truncate text-[9px] text-white text-center">
+                {attachment.fileName}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

@@ -392,7 +392,7 @@ export default function Layout() {
                 <Outlet />
               </ErrorBoundary>
             ) : (
-              <div className="flex flex-1">
+              <div className="flex flex-1 min-w-0">
                 <ErrorBoundary>
                   <Outlet />
                 </ErrorBoundary>

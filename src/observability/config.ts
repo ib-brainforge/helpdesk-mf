@@ -1,170 +1,179 @@
 /**
  * Helpdesk MF Observability Configuration
  *
- * Uses the centralized getAppConfig() for all config resolution.
+ * Builds the observability configuration for this microfrontend against the
+ * v2 telemetry-gateway (`@brainforgeau/observability` >= 2.1).
  *
- * Context fields (userId, tenantId, organizationId, divisionId) are populated
- * from the security atoms using lazy-evaluated functions.
+ * Logs, traces and the session mint all flow through the telemetry-gateway:
+ *   - POST <base>/v1/sessions  — mints an HMAC session token
+ *                                (needs Keycloak bearer + BrainForge context token)
+ *   - POST <base>/v1/logs      — ships log lines     (carries X-Telemetry-Session)
+ *   - POST <base>/v1/traces    — ships OTLP spans     (carries X-Telemetry-Session)
+ *
+ * The SDK manages the `X-Telemetry-Session` header itself; the host app only
+ * supplies credentials via `getCredentials`.
+ *
+ * Tenant-switch invalidation: the context fields (tenantId etc.) must be
+ * threaded in as *resolved string values*, not getter functions — the provider
+ * re-mints the session token only when those values change. See
+ * `ObservabilityProvider.tsx`, which subscribes to the security context atom
+ * and rebuilds the config per-render via `buildObservabilityConfig`.
+ *
+ * Helpdesk supports cross-tenant platform-support staff. The context token is
+ * still scoped to the *currently selected* tenant / organization / division, so
+ * threading the selected-context string values (and re-minting on switch) keeps
+ * telemetry correctly attributed even as a support agent moves between tenants.
  */
 
 import { getAppConfig } from '@/state/config';
-import type {
-  LokiConfig,
-  ObservabilityConfig,
-  TracingConfig,
-} from '@brainforgeau/observability';
+import type { ObservabilityConfig } from '@brainforgeau/observability';
 import { getAccessToken, getAuthState } from '@brainforgeau/security';
-
-// Extended config types with headers support
-// TODO: Remove after @brainforgeau/observability is updated with headers support
-interface LokiConfigWithHeaders extends LokiConfig {
-  headers?: () => Promise<Record<string, string>> | Record<string, string>;
-}
-
-interface TracingConfigWithHeaders extends TracingConfig {
-  headers?: () => Promise<Record<string, string>> | Record<string, string>;
-}
-
-/**
- * Get authorization headers for BFF proxy requests
- */
-const getAuthHeaders = async (): Promise<Record<string, string>> => {
-  const token = await getAccessToken();
-  if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  return {};
-};
 
 const appConfig = getAppConfig();
 
 /**
- * Lazy getter for userId from the auth user's profile (JWT sub claim)
+ * Context fields threaded into the observability config. Resolved string
+ * values (never getter functions) so the provider can detect a tenant switch.
  */
-const getUserId = (): string | undefined => {
-  try {
-    const user = getAuthState().user;
-    return user?.profile?.sub;
-  } catch {
-    return undefined;
-  }
-};
+export interface ObservabilityContextValues {
+  userId?: string;
+  userFullName?: string;
+  tenantId?: string;
+  tenantName?: string;
+  organizationId?: string;
+  divisionId?: string;
+}
 
 /**
- * Lazy getter for user's full name from the auth user's profile (JWT name claim)
- */
-const getUserFullName = (): string | undefined => {
-  try {
-    const user = getAuthState().user;
-    return user?.profile?.name;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
- * Lazy getter for tenantId from the selected context
- */
-const getTenantId = (): string | undefined => {
-  try {
-    const context = getAuthState().selectedContext;
-    return context?.tenantId ?? undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
- * Lazy getter for tenant name from the selected context
- */
-const getTenantName = (): string | undefined => {
-  try {
-    const context = getAuthState().selectedContext;
-    return context?.tenantName ?? undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
- * Lazy getter for organizationId from the selected context
- */
-const getOrganizationId = (): string | undefined => {
-  try {
-    const context = getAuthState().selectedContext;
-    return context?.organisationId ?? undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
- * Lazy getter for divisionId from the selected context
- */
-const getDivisionId = (): string | undefined => {
-  try {
-    const context = getAuthState().selectedContext;
-    return context?.divisionId ?? undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-/**
- * Observability configuration for helpdesk-mf
+ * Derive the telemetry-gateway base URL.
  *
- * - Logs go to Loki (via BFF proxy at /edge/logs)
- * - Traces go to Tempo (via BFF proxy at /edge/traces)
- * - Metrics are logged to Loki as structured data (no separate Prometheus push)
- * - Context fields are lazily evaluated from security atoms
+ * Prefers an explicit `observability.telemetryGatewayUrl` from runtime/build
+ * config. When not set, derives it from the helpdesk backend API origin: the
+ * backend lives at `<origin>/backend/helpdesk`, the gateway at
+ * `<origin>/backend/telemetry`.
  */
-export const observabilityConfig: ObservabilityConfig = {
-  app: 'helpdesk-mf',
-  env: appConfig?.environment || 'development',
-  version: appConfig?.version || 'unknown',
-  packageVersions: appConfig?.packageVersions,
-  enabled: appConfig?.observability?.enabled ?? false,
-  debug: appConfig?.environment === 'development',
+function resolveTelemetryGatewayBase(): string | undefined {
+  const explicit = appConfig?.observability?.telemetryGatewayUrl;
+  if (explicit) {
+    return explicit.replace(/\/+$/, '');
+  }
 
-  // Loki logging - URL from config (BFF proxy)
-  // Authentication is required for the BFF proxy endpoints
-  loki: appConfig?.observability?.loki?.url
-    ? ({
-        url: appConfig.observability.loki.url,
-        batchSize: 10,
-        flushInterval: 5000,
-        headers: getAuthHeaders,
-      } as LokiConfigWithHeaders)
-    : undefined,
+  const apiBaseUrl = appConfig?.api?.baseUrl;
+  if (!apiBaseUrl) {
+    return undefined;
+  }
 
-  // Tracing (Tempo) - endpoint from config (BFF proxy)
-  // Authentication is required for the BFF proxy endpoints
-  tracing: appConfig?.observability?.tracing?.enabled
-    ? ({
-        enabled: true,
-        endpoint: appConfig.observability.tracing.endpoint,
-        serviceName: 'helpdesk-mf',
-        headers: getAuthHeaders,
-        // Exclude URLs matching this pattern from trace header propagation to avoid CORS issues
-        // Pattern comes from TRACING_IGNORE_URLS_PATTERN env var (e.g., "auth\\.brainforge\\.com\\.au")
-        ignoreUrls: appConfig.observability.tracing.ignoreUrlsPattern
-          ? [new RegExp(appConfig.observability.tracing.ignoreUrlsPattern)]
-          : [],
-      } as TracingConfigWithHeaders)
-    : undefined,
+  try {
+    const origin = new URL(apiBaseUrl).origin;
+    return `${origin}/backend/telemetry`;
+  } catch {
+    return undefined;
+  }
+}
 
-  // Metrics - logged to Loki as structured data
-  metrics: {
-    enabled: appConfig?.observability?.metrics?.enabled ?? false,
-    webVitals: appConfig?.observability?.metrics?.webVitals ?? true,
-  },
+const telemetryGatewayBase = resolveTelemetryGatewayBase();
 
-  // Context fields - lazily evaluated from security atoms
-  // These are called each time a log/metric is created to get the current values
-  userId: getUserId,
-  userFullName: getUserFullName,
-  tenantId: getTenantId,
-  tenantName: getTenantName,
-  organizationId: getOrganizationId,
-  divisionId: getDivisionId,
+/**
+ * Telemetry-gateway endpoints (v2). Undefined when no base URL can be
+ * resolved — the provider then runs without session-backed telemetry.
+ */
+const endpoints = telemetryGatewayBase
+  ? {
+      sessions: `${telemetryGatewayBase}/v1/sessions`,
+      logs: `${telemetryGatewayBase}/v1/logs`,
+      traces: `${telemetryGatewayBase}/v1/traces`,
+    }
+  : undefined;
+
+/**
+ * Credentials callback invoked by the SDK whenever it needs to mint (or
+ * re-mint) a telemetry session token.
+ *
+ * - `bearer`       — the current Keycloak access token.
+ * - `contextToken` — the BrainForge context token for the active tenant /
+ *   organization / division, exposed by `@brainforgeau/security` on
+ *   `getAuthState().contextToken`.
+ *
+ * Read fresh on every mint so a re-mint after a tenant switch picks up the
+ * new tenant's context token.
+ */
+const getCredentials = async (): Promise<{
+  bearer: string;
+  contextToken: string;
+}> => {
+  const bearer = await getAccessToken();
+  let contextToken = '';
+  try {
+    contextToken = getAuthState().contextToken ?? '';
+  } catch {
+    contextToken = '';
+  }
+  return { bearer: bearer ?? '', contextToken };
 };
+
+/**
+ * Build the observability configuration for helpdesk-mf.
+ *
+ * Context fields are accepted as arguments so the local `ObservabilityProvider`
+ * can rebuild the config reactively from the security context atom — passing
+ * *resolved string values* (not getter functions) lets the provider detect a
+ * tenant switch and re-mint the telemetry session token.
+ */
+export function buildObservabilityConfig(
+  context?: ObservabilityContextValues,
+): ObservabilityConfig {
+  return {
+    app: 'helpdesk-mf',
+    env: appConfig?.environment || 'development',
+    version: appConfig?.version || 'unknown',
+    packageVersions: appConfig?.packageVersions,
+    enabled: appConfig?.observability?.enabled ?? false,
+    debug: appConfig?.environment === 'development',
+
+    // v2 telemetry-gateway endpoints (sessions / logs / traces).
+    endpoints,
+
+    // v2: SDK calls this to mint a session token. Keycloak bearer + BrainForge
+    // context token are read fresh on every mint.
+    getCredentials: endpoints ? getCredentials : undefined,
+
+    // Tracing through the gateway. `endpoints.traces` supersedes the old
+    // BFF `tracing.endpoint`; the SDK injects `X-Telemetry-Session` itself.
+    tracing: appConfig?.observability?.tracing?.enabled
+      ? {
+          enabled: true,
+          serviceName: 'helpdesk-mf',
+          // Exclude URLs matching this pattern from trace header propagation to
+          // avoid CORS issues (e.g. "auth\\.brainforge\\.com\\.au").
+          ignoreUrls: appConfig.observability.tracing.ignoreUrlsPattern
+            ? [new RegExp(appConfig.observability.tracing.ignoreUrlsPattern)]
+            : [],
+        }
+      : undefined,
+
+    // Metrics - logged to Loki as structured data via the gateway.
+    metrics: {
+      enabled: appConfig?.observability?.metrics?.enabled ?? false,
+      webVitals: appConfig?.observability?.metrics?.webVitals ?? true,
+    },
+
+    // Context fields - resolved string values threaded in reactively by the
+    // local ObservabilityProvider so tenant switches trigger a session re-mint.
+    userId: context?.userId,
+    userFullName: context?.userFullName,
+    tenantId: context?.tenantId,
+    tenantName: context?.tenantName,
+    organizationId: context?.organizationId,
+    divisionId: context?.divisionId,
+  };
+}
+
+/**
+ * Default observability configuration (no context threaded in).
+ *
+ * Used by non-React consumers such as the singleton `logger`. React code goes
+ * through the local `ObservabilityProvider`, which calls
+ * `buildObservabilityConfig` with live context values on every render.
+ */
+export const observabilityConfig: ObservabilityConfig =
+  buildObservabilityConfig();

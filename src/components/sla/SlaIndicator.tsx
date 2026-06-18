@@ -102,7 +102,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
                 {formatTimeRemaining(slaData.responseTimeRemaining)}
               </p>
               {slaData.responseTimeDeadline && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Due:{' '}
                   {formatDateTime(slaData.responseTimeDeadline, { timezone })}
                 </p>
@@ -127,7 +127,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
                 {formatTimeRemaining(slaData.resolutionTimeRemaining)}
               </p>
               {slaData.resolutionTimeDeadline && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Due:{' '}
                   {formatDateTime(slaData.resolutionTimeDeadline, { timezone })}
                 </p>

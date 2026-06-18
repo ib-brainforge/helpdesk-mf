@@ -78,22 +78,29 @@ export function WorkflowListPage() {
     }
   }
 
-  async function handleDeleteConfirm() {
-    if (!pendingDeleteId) return;
-    try {
-      await deleteMutation.mutateAsync(pendingDeleteId);
-      toast('Workflow deleted', { variant: 'success' });
-    } catch (err) {
-      logger.captureError(err instanceof Error ? err : new Error(String(err)), {
-        context: 'workflow_list_delete_failed',
+  function handleDeleteConfirm(): Promise<void> {
+    if (!pendingDeleteId) return Promise.resolve();
+    return new Promise(resolve => {
+      deleteMutation.mutate(pendingDeleteId, {
+        onSuccess: () => {
+          toast('Workflow deleted', { variant: 'success' });
+        },
+        onError: (err) => {
+          logger.captureError(
+            err instanceof Error ? err : new Error(String(err)),
+            { context: 'workflow_list_delete_failed' },
+          );
+          toast('Delete failed', {
+            description: err instanceof Error ? err.message : 'Unknown error',
+            variant: 'danger',
+          });
+        },
+        onSettled: () => {
+          setPendingDeleteId(null);
+          resolve();
+        },
       });
-      toast('Delete failed', {
-        description: err instanceof Error ? err.message : 'Unknown error',
-        variant: 'danger',
-      });
-    } finally {
-      setPendingDeleteId(null);
-    }
+    });
   }
 
   const columns = useMemo<ColumnDef<WorkflowDefinitionDto>[]>(
