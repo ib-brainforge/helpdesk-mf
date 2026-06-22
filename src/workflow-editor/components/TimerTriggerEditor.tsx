@@ -83,8 +83,8 @@ export function TimerTriggerEditor({
   }
 
   return (
-    <div className="space-y-3 border-t border-gray-200 pt-3 mt-1">
-      <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+    <div className="space-y-3 border-t border-default-200 pt-3 mt-1">
+      <h4 className="text-xs font-semibold text-default-600 uppercase tracking-wide">
         Timer Settings
       </h4>
 
@@ -107,8 +107,8 @@ export function TimerTriggerEditor({
           aria-label="Use business hours for timer calculation"
         />
         <div>
-          <span className="text-sm text-gray-700">Use business hours</span>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <span className="text-sm text-default-700">Use business hours</span>
+          <p className="text-xs text-default-400 mt-0.5">
             Timer counts only during configured business hours.
           </p>
         </div>
@@ -134,7 +134,7 @@ export function TimerTriggerEditor({
             ))}
           </BaseSelect>
           {selectedSchedule?.timeWindowSummary && (
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-default-400 mt-0.5">
               {selectedSchedule.timeWindowSummary}
             </p>
           )}

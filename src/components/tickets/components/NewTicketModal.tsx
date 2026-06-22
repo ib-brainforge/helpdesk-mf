@@ -304,7 +304,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
                         {category.name}
                       </span>
                       {category.sectionName && (
-                        <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                        <span className="text-[10px] text-[#8C8F97] dark:text-default-400">
                           {category.sectionName}
                         </span>
                       )}

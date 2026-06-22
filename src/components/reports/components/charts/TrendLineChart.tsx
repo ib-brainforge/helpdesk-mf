@@ -39,21 +39,21 @@ export const TrendLineChart: FC<TrendLineChartProps> = ({ data }) => {
         <Line
           type="monotone"
           dataKey="created"
-          stroke="#3b82f6"
+          stroke="#1868db"
           name="Created"
           strokeWidth={2}
         />
         <Line
           type="monotone"
           dataKey="closed"
-          stroke="#10b981"
+          stroke="#6a9a23"
           name="Closed"
           strokeWidth={2}
         />
         <Line
           type="monotone"
           dataKey="open"
-          stroke="#f59e0b"
+          stroke="#e2b203"
           name="Open"
           strokeWidth={2}
         />

@@ -32,11 +32,11 @@ export function TransitionInspector({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-900">
+      <h3 className="text-sm font-semibold text-default-900">
         Transition Properties
       </h3>
 
-      <div className="text-xs text-gray-500 space-y-1">
+      <div className="text-xs text-default-500 space-y-1">
         <div>
           <span className="font-medium">From:</span>{' '}
           {transition.fromStateId.slice(0, 8)}…
@@ -110,7 +110,7 @@ export function TransitionInspector({
         classNames={{ input: 'font-mono text-xs' }}
       />
 
-      <div className="text-xs text-gray-400 italic">
+      <div className="text-xs text-default-400 italic">
         Actions — configure in a future release.
       </div>
 

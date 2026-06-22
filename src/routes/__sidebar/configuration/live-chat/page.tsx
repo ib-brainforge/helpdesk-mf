@@ -110,7 +110,7 @@ function LiveChatForm({
   const handlePrimaryColorChange = (value: string) => {
     setPrimaryColor(value);
     if (value && !isValidHex(value)) {
-      setPrimaryColorError('Enter a valid hex colour, e.g. #6366f1');
+      setPrimaryColorError('Enter a valid hex colour, e.g. #1868db');
     } else {
       setPrimaryColorError(null);
     }
@@ -240,13 +240,13 @@ function LiveChatForm({
             Primary colour
           </label>
           <p className="text-default-500 mb-3 text-xs">
-            Hex colour for the widget button and header (e.g. #6366f1).
+            Hex colour for the widget button and header (e.g. #1868db).
           </p>
           <div className="flex max-w-xs items-center gap-3">
             <input
               id="live-chat-primary-color"
               type="color"
-              value={isValidHex(primaryColor) ? primaryColor : '#6366f1'}
+              value={isValidHex(primaryColor) ? primaryColor : '#1868db'}
               onChange={(e) => handlePrimaryColorChange(e.target.value)}
               className="border-light h-10 w-10 cursor-pointer rounded border"
               disabled={!isEnabled}
@@ -254,7 +254,7 @@ function LiveChatForm({
             <BaseInput
               value={primaryColor}
               onValueChange={handlePrimaryColorChange}
-              placeholder="#6366f1"
+              placeholder="#1868db"
               isDisabled={!isEnabled}
               className="flex-1"
               aria-label="Primary colour hex value"
@@ -475,7 +475,7 @@ function LiveChatPage() {
         <LiveChatForm
           key={config?.id ?? 'loading'}
           initialIsEnabled={config?.isEnabled ?? false}
-          initialPrimaryColor={config?.primaryColor ?? '#6366f1'}
+          initialPrimaryColor={config?.primaryColor ?? '#1868db'}
           initialGreetingMessage={
             config?.greetingMessage ?? 'Hi! How can we help you today?'
           }

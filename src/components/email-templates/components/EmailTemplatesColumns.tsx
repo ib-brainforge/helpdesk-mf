@@ -47,7 +47,7 @@ export const createEmailTemplatesColumns = ({
   columnHelper.accessor('subject', {
     header: 'Subject',
     cell: info => (
-      <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+      <span className="text-sm text-default-600 dark:text-default-400 line-clamp-1">
         {info.getValue()}
       </span>
     ),

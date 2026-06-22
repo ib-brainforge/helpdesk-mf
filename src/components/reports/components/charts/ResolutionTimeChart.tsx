@@ -37,8 +37,8 @@ export const ResolutionTimeChart: FC<ResolutionTimeChartProps> = ({ data }) => {
         <Area
           type="monotone"
           dataKey="avgResolutionTime"
-          stroke="#3b82f6"
-          fill="#93c5fd"
+          stroke="#1868db"
+          fill="#cce0ff"
           name="Avg Resolution Time"
         />
       </AreaChart>

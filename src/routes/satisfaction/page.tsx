@@ -52,7 +52,7 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Survey Link Invalid</title>
         </Helmet>
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex min-h-screen items-center justify-center bg-default-50">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
@@ -62,7 +62,7 @@ function SatisfactionSurveyPage() {
               <h1 className="mb-2 text-2xl font-semibold">
                 Invalid Survey Link
               </h1>
-              <p className="text-gray-600">
+              <p className="text-default-600">
                 This satisfaction survey link is invalid or missing the required
                 token.
               </p>
@@ -79,7 +79,7 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Thank You!</title>
         </Helmet>
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex min-h-screen items-center justify-center bg-default-50">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
@@ -87,7 +87,7 @@ function SatisfactionSurveyPage() {
                 className="mx-auto mb-4 h-16 w-16 text-green-500"
               />
               <h1 className="mb-2 text-2xl font-semibold">Thank You!</h1>
-              <p className="text-gray-600">
+              <p className="text-default-600">
                 Your feedback has been submitted successfully. We appreciate
                 your time and input.
               </p>
@@ -108,7 +108,7 @@ function SatisfactionSurveyPage() {
         <Helmet>
           <title>Survey Error</title>
         </Helmet>
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex min-h-screen items-center justify-center bg-default-50">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
@@ -116,7 +116,7 @@ function SatisfactionSurveyPage() {
                 className="mx-auto mb-4 h-16 w-16 text-orange-500"
               />
               <h1 className="mb-2 text-2xl font-semibold">Survey Error</h1>
-              <p className="mb-4 text-gray-600">{errorMessage}</p>
+              <p className="mb-4 text-default-600">{errorMessage}</p>
               <BaseButton
                 variant="light"
                 onClick={() => submitMutation.reset()}
@@ -135,13 +135,13 @@ function SatisfactionSurveyPage() {
       <Helmet>
         <title>Customer Satisfaction Survey</title>
       </Helmet>
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-default-50 p-4">
         <BaseCard className="w-full max-w-lg">
           <div className="mb-6 text-center">
             <h1 className="mb-2 text-2xl font-semibold">
               How was your support experience?
             </h1>
-            <p className="text-gray-600">
+            <p className="text-default-600">
               We would love to hear your feedback. Please rate your experience
               and share any comments.
             </p>
@@ -152,7 +152,7 @@ function SatisfactionSurveyPage() {
               <label className="mb-3 text-sm font-medium">Your Rating</label>
               <StarRating value={rating} onChange={setRating} size="lg" />
               {rating > 0 && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-default-600">
                   {rating === 1 && 'Very Poor'}
                   {rating === 2 && 'Poor'}
                   {rating === 3 && 'Fair'}

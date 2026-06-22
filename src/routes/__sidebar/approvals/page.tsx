@@ -27,7 +27,7 @@ function PendingApprovalsPage() {
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
-          <p className="text-gray-600">Loading pending approvals...</p>
+          <p className="text-default-600">Loading pending approvals...</p>
         </div>
       </div>
     );
@@ -51,7 +51,7 @@ function PendingApprovalsPage() {
             Refresh
           </BaseButton>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-default-600">
           Approvals waiting for your decision.
         </p>
       </div>
@@ -61,10 +61,10 @@ function PendingApprovalsPage() {
           <div className="py-12 text-center">
             <Icon
               name="check-circle"
-              className="mx-auto mb-4 h-16 w-16 text-gray-300"
+              className="mx-auto mb-4 h-16 w-16 text-default-300"
             />
             <h3 className="mb-2 text-lg font-semibold">No Pending Approvals</h3>
-            <p className="text-gray-600">
+            <p className="text-default-600">
               You don't have any approvals waiting for your decision.
             </p>
           </div>
@@ -82,7 +82,7 @@ function PendingApprovalsPage() {
                     <StatusBadge color="warning">Pending</StatusBadge>
                   </div>
 
-                  <div className="mb-4 space-y-1 text-sm text-gray-600">
+                  <div className="mb-4 space-y-1 text-sm text-default-600">
                     <div className="flex items-center gap-2">
                       <Icon
                         name="clipboard-document-check"

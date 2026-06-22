@@ -95,7 +95,7 @@ export const TagInput: FC<TagInputProps> = ({
       )}
 
       {maxTags && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-default-500">
           {selectedTags.length} / {maxTags} tags
         </p>
       )}

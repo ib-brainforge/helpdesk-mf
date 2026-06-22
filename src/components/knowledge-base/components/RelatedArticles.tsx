@@ -2,7 +2,6 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
-import { Card } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';
 import type { FC } from 'react';
@@ -47,7 +46,7 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
     return (
       <BaseCard>
         <h3 className="mb-3 text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-gray-500">Loading...</p>
+        <p className="text-sm text-default-500">Loading...</p>
       </BaseCard>
     );
   }
@@ -76,7 +75,7 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
                   {article.title}
                 </h4>
                 {article.categoryName && (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-default-500">
                     {article.categoryName}
                   </p>
                 )}

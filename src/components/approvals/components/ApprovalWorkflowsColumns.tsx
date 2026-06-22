@@ -27,7 +27,7 @@ export const createApprovalWorkflowsColumns = ({
       <div>
         <div className="font-medium">{row.original.name}</div>
         {row.original.description && (
-          <div className="text-xs text-gray-500 mt-0.5">
+          <div className="text-xs text-default-500 mt-0.5">
             {row.original.description}
           </div>
         )}

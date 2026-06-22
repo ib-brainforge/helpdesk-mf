@@ -81,7 +81,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
   return (
     <Box title="Time Tracking">
       {/* Timer Display */}
-      <div className="mb-6 rounded-lg bg-gray-100 dark:bg-gray-800 p-6 text-center">
+      <div className="mb-6 rounded-lg bg-default-100 dark:bg-default-800 p-6 text-center">
         <div className="mb-2 text-4xl font-mono font-bold">
           {formatTime(elapsedSeconds)}
         </div>
@@ -117,7 +117,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
 
       {/* Manual Entry Form */}
       {showManualEntry ? (
-        <div className="mb-4 space-y-2 rounded border dark:border-gray-700 p-4">
+        <div className="mb-4 space-y-2 rounded border dark:border-default-700 p-4">
           <BaseInput
             type="number"
             label="Minutes"
@@ -173,11 +173,11 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
       {/* Time Entries List */}
       {timeTracking && timeTracking.entries.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Time Entries</h4>
+          <h4 className="text-sm font-semibold text-default-700 dark:text-default-300">Time Entries</h4>
           {timeTracking.entries.map(entry => (
             <div
               key={entry.id}
-              className="flex items-center justify-between rounded border dark:border-gray-700 p-2"
+              className="flex items-center justify-between rounded border dark:border-default-700 p-2"
             >
               <div className="flex-1">
                 <p className="text-sm font-medium">
@@ -188,12 +188,12 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-default-500 dark:text-default-400">
                   {entry.userName} •{' '}
                   {formatDateTime(entry.startTime, { timezone })}
                 </p>
                 {entry.notes && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400">{entry.notes}</p>
+                  <p className="text-xs text-default-600 dark:text-default-400">{entry.notes}</p>
                 )}
               </div>
               <div className="flex gap-1">

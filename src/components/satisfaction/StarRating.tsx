@@ -63,7 +63,7 @@ export const StarRating: FC<StarRatingProps> = ({
             className={`${sizeClasses[size]} ${
               rating <= displayRating
                 ? 'text-yellow-400 fill-current'
-                : 'text-gray-300'
+                : 'text-default-300'
             }`}
           />
         </button>

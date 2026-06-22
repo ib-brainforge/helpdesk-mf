@@ -44,7 +44,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-gray-500">Loading suggestions...</div>
+        <div className="text-sm text-default-500">Loading suggestions...</div>
       ) : (
         <div className="space-y-2">
           {suggestions?.map((article: any) => (
@@ -69,11 +69,11 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
                     {article.title}
                   </h4>
                   {article.excerpt && (
-                    <p className="mt-1 line-clamp-2 text-xs text-gray-600">
+                    <p className="mt-1 line-clamp-2 text-xs text-default-600">
                       {article.excerpt}
                     </p>
                   )}
-                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-default-500">
                     {article.categoryName && (
                       <span>{article.categoryName}</span>
                     )}
@@ -91,7 +91,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
         </div>
       )}
 
-      <div className="border-divider mt-3 border-t pt-3 text-xs text-gray-500">
+      <div className="border-divider mt-3 border-t pt-3 text-xs text-default-500">
         These articles might help solve your issue before creating a ticket.
       </div>
     </BaseCard>
