@@ -116,14 +116,14 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
         className={`border-2 border-dashed p-8 text-center transition-colors ${
           isDragOver
             ? 'border-primary bg-primary-50'
-            : 'border-gray-300 hover:border-gray-400'
+            : 'border-default-300 hover:border-default-400'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <div className="flex flex-col items-center gap-4">
-          <Icon name="cloud-arrow-up" className="h-12 w-12 text-gray-400" />
+          <Icon name="cloud-arrow-up" className="h-12 w-12 text-default-400" />
           <div>
             <p className="text-lg font-medium">
               Drop files here or{' '}
@@ -138,7 +138,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
                 />
               </label>
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-default-500">
               Maximum file size: {formatFileSize(maxFileSize)}
             </p>
           </div>
@@ -159,7 +159,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
                 <span className="truncate text-sm font-medium">
                   {file.fileName}
                 </span>
-                <span className="text-xs text-gray-500">{file.progress}%</span>
+                <span className="text-xs text-default-500">{file.progress}%</span>
               </div>
               <ProgressBar
                 value={file.progress}

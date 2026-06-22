@@ -26,8 +26,8 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
     return (
       <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
-          <Icon name="star" className="h-5 w-5 text-gray-400 animate-pulse" />
-          <p className="text-sm text-gray-500">
+          <Icon name="star" className="h-5 w-5 text-default-400 animate-pulse" />
+          <p className="text-sm text-default-500">
             Loading satisfaction rating...
           </p>
         </div>
@@ -39,12 +39,12 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
     return (
       <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
-          <Icon name="star" className="h-5 w-5 text-gray-400" />
-          <p className="text-sm text-gray-600">
+          <Icon name="star" className="h-5 w-5 text-default-400" />
+          <p className="text-sm text-default-600">
             No customer satisfaction rating yet
           </p>
         </div>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-default-500 mt-1">
           Customer will receive a survey email after ticket closure.
         </p>
       </Box>
@@ -56,7 +56,7 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-default-600">
               Rated on {formatDateTime(rating.ratedAt, { timezone })}
             </p>
           </div>
@@ -64,14 +64,14 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
         </div>
 
         {rating.comment && (
-          <div className="pt-2 border-t border-gray-200">
+          <div className="pt-2 border-t border-default-200">
             <p className="text-sm font-medium mb-1">Customer Feedback:</p>
-            <p className="text-sm text-gray-700 italic">"{rating.comment}"</p>
+            <p className="text-sm text-default-700 italic">"{rating.comment}"</p>
           </div>
         )}
 
         {rating.ratedByUserName && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-default-500">
             <Icon name="user" className="h-3 w-3" />
             <span>Rated by: {rating.ratedByUserName}</span>
           </div>

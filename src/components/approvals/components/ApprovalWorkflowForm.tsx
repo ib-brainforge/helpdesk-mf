@@ -235,7 +235,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">Active</p>
-            <p className="text-xs text-gray-500">Enable this workflow</p>
+            <p className="text-xs text-default-500">Enable this workflow</p>
           </div>
           <BaseToggle isSelected={isActive} onChange={setIsActive} />
         </div>
@@ -243,7 +243,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">Trigger on Creation</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-default-500">
               Automatically trigger when ticket is created in this category
             </p>
           </div>
@@ -268,7 +268,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
         </div>
 
         {steps.length === 0 && (
-          <div className="py-8 text-center text-gray-500">
+          <div className="py-8 text-center text-default-500">
             <Icon
               name="clipboard-document-list"
               className="mx-auto mb-2 h-12 w-12"
@@ -384,7 +384,7 @@ export const ApprovalWorkflowForm: FC<ApprovalWorkflowFormProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Required</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-default-500">
                     Step must be completed (cannot skip)
                   </p>
                 </div>

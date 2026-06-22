@@ -30,7 +30,7 @@ function CSATReportPage() {
   });
 
   const satisfactionColor = useMemo(() => {
-    if (!reportData) return 'text-gray-600';
+    if (!reportData) return 'text-default-600';
     if (reportData.satisfactionPercentage >= 80) return 'text-green-600';
     if (reportData.satisfactionPercentage >= 60) return 'text-yellow-600';
     return 'text-danger';
@@ -152,11 +152,11 @@ function CSATReportPage() {
               {reportData.groupedData.map(item => (
                 <div
                   key={item.groupKey}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-default-50 rounded-lg"
                 >
                   <div>
                     <p className="font-medium">{item.groupName}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-default-600">
                       {item.count} ratings
                     </p>
                   </div>

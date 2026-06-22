@@ -163,7 +163,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               </BaseButton>
             </PermissionGuard>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-default-500">
             No approval requested for this ticket
           </p>
         </Box>
@@ -177,7 +177,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
             <BaseModalHeader>Request Approval</BaseModalHeader>
             <BaseModalBody>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default-600">
                   Select a workflow to request approval for this ticket.
                 </p>
                 <select
@@ -230,22 +230,22 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
 
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600">Workflow:</span>
+            <span className="text-default-600">Workflow:</span>
             <span className="font-medium">{approval.workflowName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Requested by:</span>
+            <span className="text-default-600">Requested by:</span>
             <span className="font-medium">{approval.requestedByUserName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Requested at:</span>
+            <span className="text-default-600">Requested at:</span>
             <span className="font-medium">
               {formatDateTime(approval.requestedAt, { timezone })}
             </span>
           </div>
           {approval.completedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600">Completed at:</span>
+              <span className="text-default-600">Completed at:</span>
               <span className="font-medium">
                 {formatDateTime(approval.completedAt, { timezone })}
               </span>
@@ -264,7 +264,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
               return (
                 <div
                   key={decisionItem.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-default-50 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-6 h-6 bg-white rounded-full border-2">
@@ -275,12 +275,12 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
                         {decisionItem.stepName}
                       </p>
                       {decisionItem.approverUserName && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-default-500">
                           {decisionItem.approverUserName}
                         </p>
                       )}
                       {decisionItem.comment && (
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-default-600 mt-1">
                           {decisionItem.comment}
                         </p>
                       )}

@@ -78,7 +78,7 @@ export function StateInspector({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-900">State Properties</h3>
+      <h3 className="text-sm font-semibold text-default-900">State Properties</h3>
 
       <BaseInput
         label="Name"

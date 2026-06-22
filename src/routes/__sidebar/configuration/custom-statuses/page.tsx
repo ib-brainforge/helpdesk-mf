@@ -84,7 +84,7 @@ function CustomStatusesPage() {
         cell: ({ row }) => (
           <div
             className="border-light h-4 w-4 rounded-full border"
-            style={{ backgroundColor: row.original.color ?? '#6366f1' }}
+            style={{ backgroundColor: row.original.color ?? '#1868db' }}
           />
         ),
         size: 32,

@@ -105,7 +105,7 @@ function IntegrationsPage() {
                 {/* Provider header */}
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-light-2 dark:bg-gray-700 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[3px]">
+                    <div className="bg-default-100 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[3px]">
                       <Icon
                         name={provider.icon}
                         className="text-default-600 h-5 w-5"

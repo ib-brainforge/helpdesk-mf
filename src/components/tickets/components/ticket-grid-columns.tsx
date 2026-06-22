@@ -68,7 +68,7 @@ export const createTicketColumns = (
         type="checkbox"
         checked={table.getIsAllPageRowsSelected()}
         onChange={table.getToggleAllPageRowsSelectedHandler()}
-        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        className="h-4 w-4 rounded border-default-300 text-primary focus:ring-primary"
       />
     ),
     cell: ({ row }) => (
@@ -76,7 +76,7 @@ export const createTicketColumns = (
         type="checkbox"
         checked={row.getIsSelected()}
         onChange={row.getToggleSelectedHandler()}
-        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        className="h-4 w-4 rounded border-default-300 text-primary focus:ring-primary"
       />
     ),
     enableSorting: false,

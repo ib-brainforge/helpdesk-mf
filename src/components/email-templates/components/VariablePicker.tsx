@@ -42,12 +42,12 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
         {TEMPLATE_VARIABLES.map((category: TemplateVariableCategory) => (
           <div
             key={category.name}
-            className="border-b border-gray-200 pb-2 last:border-b-0 dark:border-gray-700"
+            className="border-b border-default-200 pb-2 last:border-b-0 dark:border-default-700"
           >
             <button
               type="button"
               onClick={() => toggleCategory(category.name)}
-              className="flex w-full items-center justify-between py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="flex w-full items-center justify-between py-2 text-left hover:bg-default-50 dark:hover:bg-default-100"
             >
               <span className="text-sm font-medium">{category.name}</span>
               <Icon
@@ -67,22 +67,22 @@ export const VariablePicker = ({ onVariableSelect }: VariablePickerProps) => {
                     key={variable.placeholder}
                     type="button"
                     onClick={() => handleCopyVariable(variable.placeholder)}
-                    className="group flex flex-col rounded p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="group flex flex-col rounded p-2 text-left hover:bg-default-100 dark:hover:bg-default-100"
                     title={variable.description}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-xs font-medium text-default-700 dark:text-default-300">
                         {variable.name}
                       </span>
                       <Icon
                         name="clipboard"
-                        className="h-3 w-3 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100"
+                        className="h-3 w-3 text-default-400 opacity-0 transition-opacity group-hover:opacity-100"
                       />
                     </div>
-                    <code className="text-xs text-gray-500 dark:text-gray-400">
+                    <code className="text-xs text-default-500 dark:text-default-400">
                       {variable.placeholder}
                     </code>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                    <span className="text-xs text-default-400 dark:text-default-500">
                       {variable.description}
                     </span>
                   </button>

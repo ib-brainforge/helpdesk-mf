@@ -436,7 +436,7 @@ export const TicketGrid: FC = () => {
 
           {/* Bulk Actions */}
           {hasSelectedRows && (
-            <div className="mt-5 flex items-center gap-4 rounded-lg bg-gray-50 p-4">
+            <div className="mt-5 flex items-center gap-4 rounded-lg bg-default-50 p-4">
               <span className="text-sm font-medium">
                 {selectedRows.length} ticket
                 {selectedRows.length !== 1 ? 's' : ''} selected

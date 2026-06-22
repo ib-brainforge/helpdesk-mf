@@ -132,29 +132,29 @@ export function VersionDiffViewer({
   const totalChanges = diff.states.length + diff.transitions.length;
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-default-200 rounded-lg overflow-hidden">
       {/* Collapsible header */}
       <button
         type="button"
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-default-50 hover:bg-default-100 transition-colors text-left"
         onClick={() => setExpanded(prev => !prev)}
         aria-expanded={expanded}
       >
-        <span className="text-sm font-semibold text-gray-700">
+        <span className="text-sm font-semibold text-default-700">
           Compare draft vs published
           {totalChanges > 0 && (
-            <span className="ml-2 text-xs font-normal text-gray-500">
+            <span className="ml-2 text-xs font-normal text-default-500">
               ({totalChanges} change{totalChanges !== 1 ? 's' : ''})
             </span>
           )}
         </span>
-        <span className="text-gray-400 text-xs">{expanded ? '▲' : '▼'}</span>
+        <span className="text-default-400 text-xs">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {expanded && (
         <div className="p-4 space-y-5">
           {totalChanges === 0 && (
-            <p className="text-sm text-gray-500 italic">
+            <p className="text-sm text-default-500 italic">
               No differences between draft and published versions.
             </p>
           )}
@@ -162,7 +162,7 @@ export function VersionDiffViewer({
           {/* States diff */}
           {diff.states.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <h4 className="text-xs font-semibold text-default-500 uppercase tracking-wide mb-2">
                 States ({diff.states.length})
               </h4>
               <div className="space-y-2">
@@ -181,11 +181,11 @@ export function VersionDiffViewer({
                     <div className="min-w-0">
                       <span className="font-medium">{d.state.name}</span>
                       {d.prevState && d.prevState.name !== d.state.name && (
-                        <span className="text-gray-400 text-xs ml-1">
+                        <span className="text-default-400 text-xs ml-1">
                           (was: {d.prevState.name})
                         </span>
                       )}
-                      <span className="text-xs text-gray-400 ml-1 font-mono">
+                      <span className="text-xs text-default-400 ml-1 font-mono">
                         ({d.state.slug})
                       </span>
                     </div>
@@ -198,7 +198,7 @@ export function VersionDiffViewer({
           {/* Transitions diff */}
           {diff.transitions.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <h4 className="text-xs font-semibold text-default-500 uppercase tracking-wide mb-2">
                 Transitions ({diff.transitions.length})
               </h4>
               <div className="space-y-2">
@@ -214,7 +214,7 @@ export function VersionDiffViewer({
                     >
                       {chipLabel(d.type)}
                     </Chip>
-                    <div className="min-w-0 text-xs text-gray-600">
+                    <div className="min-w-0 text-xs text-default-600">
                       <span className="font-mono">
                         {d.transition.fromStateId.slice(0, 6)}…
                       </span>
@@ -222,7 +222,7 @@ export function VersionDiffViewer({
                       <span className="font-mono">
                         {d.transition.toStateId.slice(0, 6)}…
                       </span>
-                      <span className="ml-1 text-gray-400">
+                      <span className="ml-1 text-default-400">
                         [{d.transition.triggerType}]
                       </span>
                     </div>
@@ -233,7 +233,7 @@ export function VersionDiffViewer({
           )}
 
           {/* Summary */}
-          <div className="text-xs text-gray-400 border-t border-gray-100 pt-3">
+          <div className="text-xs text-default-400 border-t border-default-100 pt-3">
             Comparing draft v{draft.versionNumber} against published v
             {published.versionNumber}
           </div>

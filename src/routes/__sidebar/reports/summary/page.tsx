@@ -36,7 +36,7 @@ function PieChart({
   title: string;
 }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const colors = ['#0070f3', '#7928ca', '#ff0080', '#00dfd8'];
+  const colors = ['#1868db', '#bf63f3', '#f15050', '#6acda4', '#e2b203', '#ff7f00'];
 
   return (
     <BaseCard>

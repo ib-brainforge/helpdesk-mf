@@ -285,11 +285,11 @@ export const NewTicketForm: FC = () => {
                     }
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs text-[#59636E] dark:text-white">
+                      <span className="text-xs text-gray dark:text-white">
                         {category.name}
                       </span>
                       {category.sectionName && (
-                        <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                        <span className="text-[10px] text-light-gray dark:text-default-400">
                           {category.sectionName}
                         </span>
                       )}
@@ -349,11 +349,11 @@ export const NewTicketForm: FC = () => {
                       size="xs"
                     />
                     <div className="flex-1">
-                      <span className="text-xs text-[#59636E] dark:text-white">
+                      <span className="text-xs text-gray dark:text-white">
                         {user.name}
                       </span>
                       {user.email && (
-                        <span className="dark:text-light block text-[10px] text-[#8C8F97]">
+                        <span className="dark:text-light block text-[10px] text-light-gray">
                           {user.email}
                         </span>
                       )}
@@ -383,7 +383,7 @@ export const NewTicketForm: FC = () => {
 
             {pendingFiles.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default-600">
                   Pending uploads ({pendingFiles.length} files):
                 </p>
                 {pendingFiles.map(file => (

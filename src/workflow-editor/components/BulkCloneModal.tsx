@@ -85,7 +85,7 @@ export function BulkCloneModal({
             <BaseModalHeader>Clone Workflow</BaseModalHeader>
             <BaseModalBody>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default-600">
                   Creates a new workflow definition with a draft version copied
                   from <strong>{sourceDefinitionName}</strong>.
                 </p>

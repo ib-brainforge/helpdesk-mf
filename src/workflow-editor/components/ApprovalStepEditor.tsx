@@ -65,8 +65,8 @@ export function ApprovalStepEditor({
   }
 
   return (
-    <div className="space-y-3 border-t border-gray-200 pt-4 mt-4">
-      <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+    <div className="space-y-3 border-t border-default-200 pt-4 mt-4">
+      <h4 className="text-xs font-semibold text-default-600 uppercase tracking-wide">
         Approval
       </h4>
 
@@ -77,11 +77,11 @@ export function ApprovalStepEditor({
           isDisabled={readOnly}
           aria-label="Require approval before transition fires"
         />
-        <span className="text-sm text-gray-700">Require approval</span>
+        <span className="text-sm text-default-700">Require approval</span>
       </div>
 
       {isRequired && (
-        <div className="space-y-3 pl-2 border-l-2 border-gray-100">
+        <div className="space-y-3 pl-2 border-l-2 border-default-100">
           <BaseInput
             label="Approver Roles"
             value={rolesInput}

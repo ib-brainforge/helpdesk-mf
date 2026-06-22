@@ -202,7 +202,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     <div className="space-y-6">
       {/* Status */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Status
         </label>
         <PermissionGuard
@@ -237,7 +237,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
       {/* Priority */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Priority
         </label>
         <PermissionGuard
@@ -270,7 +270,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
       {/* Assignee */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Assignee
         </label>
         <PermissionGuard
@@ -334,7 +334,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
       {/* Category */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Category
         </label>
         <PermissionGuard
@@ -389,7 +389,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                     {category.name}
                   </span>
                   {category.sectionName && (
-                    <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                    <span className="text-[10px] text-[#8C8F97] dark:text-default-400">
                       {category.sectionName}
                     </span>
                   )}
@@ -403,7 +403,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       <div className="border-t pt-6">
         {/* Requester */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Requester
           </label>
           <p className="text-sm">{requesterDisplayName}</p>
@@ -411,7 +411,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Via (Origin) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Via
           </label>
           <StatusBadge color={originConfig.color}>
@@ -421,7 +421,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Time Spent */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Time Spent
           </label>
           <p className="text-sm">
@@ -432,7 +432,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Due Date */}
         {ticket.dueDate && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Due Date
             </label>
             <p className="text-sm">
@@ -444,7 +444,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Started At */}
         {(ticket as any).startedAtUtc && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Started At
             </label>
             <p className="text-sm">
@@ -456,7 +456,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Closed At */}
         {(ticket as any).closedAtUtc && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Closed At
             </label>
             <p className="text-sm">
@@ -467,7 +467,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Created */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Created
           </label>
           <p className="text-sm">
@@ -477,7 +477,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Updated */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Updated
           </label>
           <p className="text-sm">
@@ -488,7 +488,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Subscribers */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-default-700">
               Subscribers
             </label>
             {onSubscribeToggle && (
@@ -520,13 +520,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-default-500 mt-2">
                 {ticket.subscriberIds.length} subscriber
                 {ticket.subscriberIds.length !== 1 ? 's' : ''}
               </p>
             </>
           ) : (
-            <p className="text-xs text-gray-500 mt-1">No subscribers yet.</p>
+            <p className="text-xs text-default-500 mt-1">No subscribers yet.</p>
           )}
         </div>
 
@@ -537,7 +537,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             fallback={
               ticket.tags && ticket.tags.length > 0 ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-default-700 mb-2">
                     Tags
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -568,10 +568,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Recurring - Placeholder */}
       <div className="border-t pt-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Recurring
           </label>
-          <p className="text-sm text-gray-500">None</p>
+          <p className="text-sm text-default-500">None</p>
         </div>
 
         {/* Assets */}
@@ -580,7 +580,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Parent ticket */}
         {(ticket as any).parentTicketId && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Parent Ticket
             </label>
             <p className="text-sm font-mono text-blue-600">
@@ -593,13 +593,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Custom Fields */}
       {ticket.customFields && ticket.customFields.length > 0 && (
         <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-default-700 mb-2">
             Custom Fields
           </label>
           <div className="space-y-2">
             {ticket.customFields.map(field => (
               <div key={field.fieldId}>
-                <label className="block text-xs text-gray-500">
+                <label className="block text-xs text-default-500">
                   {field.fieldName}
                 </label>
                 <p className="text-sm">{field.value}</p>
@@ -612,7 +612,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Suggested KB Articles — seeded from ticket subject */}
       {ticket.subject && (
         <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-default-700 mb-2">
             Suggested KB Articles
           </label>
           <KbSuggestions searchText={ticket.subject} minChars={3} limit={5} />

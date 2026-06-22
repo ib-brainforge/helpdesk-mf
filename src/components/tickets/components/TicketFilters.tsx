@@ -147,7 +147,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           value={searchTerm}
           onChange={(e) => onSearch(e.target.value)}
           startContent={
-            <Icon name="search" className="h-4 w-4 text-gray-400" />
+            <Icon name="search" className="h-4 w-4 text-default-400" />
           }
         />
       </div>
@@ -283,11 +283,11 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
               }
             >
               <div className="flex flex-col">
-                <span className="text-xs text-[#59636E] dark:text-white">
+                <span className="text-xs text-gray dark:text-white">
                   {category.name}
                 </span>
                 {category.sectionName && (
-                  <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                  <span className="text-[10px] text-light-gray dark:text-default-400">
                     {category.sectionName}
                   </span>
                 )}
@@ -340,11 +340,11 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
               <div className="flex items-center gap-2.5">
                 <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                 <div className="flex-1">
-                  <span className="text-xs text-[#59636E] dark:text-white">
+                  <span className="text-xs text-gray dark:text-white">
                     {user.name}
                   </span>
                   {user.email && (
-                    <span className="dark:text-light block text-[10px] text-[#8C8F97]">
+                    <span className="dark:text-light block text-[10px] text-light-gray">
                       {user.email}
                     </span>
                   )}

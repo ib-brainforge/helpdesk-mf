@@ -16,11 +16,11 @@ interface PriorityBarChartProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  None: '#9ca3af', // gray
-  Low: '#3b82f6', // blue
-  Normal: '#10b981', // green
-  High: '#f59e0b', // amber
-  Critical: '#ef4444', // red
+  None: '#8c8f97',
+  Low: '#1868db',
+  Normal: '#6a9a23',
+  High: '#ff7f00',
+  Critical: '#f15050',
 };
 
 export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
@@ -44,7 +44,7 @@ export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
           }
         />
         <Legend />
-        <Bar dataKey="count" fill="#3b82f6" name="Ticket Count" />
+        <Bar dataKey="count" fill="#1868db" name="Ticket Count" />
       </BarChart>
     </ResponsiveContainer>
   );
