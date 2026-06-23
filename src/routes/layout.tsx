@@ -90,8 +90,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
   'helpdesk.configuration.email': 'Email Settings',
-  'helpdesk.configuration.email-templates': 'Email Templates',
-  'helpdesk.configuration.email-templates.new': 'New Template',
   'helpdesk.configuration.integrations': 'Integrations',
   'helpdesk.configuration.live-chat': 'Live Chat',
   'helpdesk.configuration.import-export': 'Import & Export',
@@ -220,13 +218,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         href: '/configuration/workflows',
         icon: 'matching',
         testId: 'nav-configuration-workflows',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
-      },
-      {
-        label: 'Email Templates',
-        href: '/configuration/email-templates',
-        icon: 'email',
-        testId: 'nav-configuration-email-templates',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
