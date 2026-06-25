@@ -42,7 +42,6 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/configuration/custom-priorities/page.tsx
 // routes/__sidebar/configuration/custom-fields/page.tsx
 // routes/__sidebar/configuration/canned-responses/page.tsx
-// routes/__sidebar/configuration/email/page.tsx
 // routes/__sidebar/configuration/integrations/page.tsx
 // routes/__sidebar/configuration/live-chat/page.tsx
 // routes/__sidebar/configuration/import-export/page.tsx
@@ -226,13 +225,6 @@ export const breadcrumbs = {
       labelKey: 'helpdesk.configuration.canned-responses',
       href: '/configuration/canned-responses',
     },
-  ],
-
-  /** routes/__sidebar/configuration/email/page.tsx */
-  'configuration.email': () => [
-    { labelKey: 'helpdesk' },
-    { labelKey: 'helpdesk.configuration', href: '/configuration' },
-    { labelKey: 'helpdesk.configuration.email', href: '/configuration/email' },
   ],
 
   /** routes/__sidebar/configuration/integrations/page.tsx */

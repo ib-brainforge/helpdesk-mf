@@ -89,8 +89,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.custom-priorities': 'Custom Priorities',
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
-  'helpdesk.configuration.email': 'Email Settings',
-  'helpdesk.configuration.integrations': 'Integrations',
+'helpdesk.configuration.integrations': 'Integrations',
   'helpdesk.configuration.live-chat': 'Live Chat',
   'helpdesk.configuration.import-export': 'Import & Export',
   'helpdesk.configuration.approval-workflows': 'Approval Workflows',
@@ -219,13 +218,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         icon: 'matching',
         testId: 'nav-configuration-workflows',
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
-      },
-      {
-        label: 'Email Settings',
-        href: '/configuration/email',
-        icon: 'builder2',
-        testId: 'nav-configuration-email',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
         label: 'Integrations',

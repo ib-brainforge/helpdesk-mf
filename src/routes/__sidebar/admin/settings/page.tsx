@@ -99,12 +99,6 @@ function AdministrationPage() {
           href: '/configuration/app-settings',
         },
         {
-          title: 'Email settings',
-          description: 'Configure email servers and notifications',
-          icon: 'envelope',
-          href: '/configuration/email',
-        },
-        {
           title: 'Users',
           description: 'Manage users, roles, and permissions',
           icon: 'users',
