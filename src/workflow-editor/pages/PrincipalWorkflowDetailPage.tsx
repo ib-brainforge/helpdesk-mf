@@ -1,18 +1,21 @@
 import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
 import { BaseButton, BaseCard } from '@brainforgeau/components';
 import { useLogger } from '@brainforgeau/observability';
+import { ComponentsPalette, autoLayout } from '@brainforgeau/workflow-ui';
 import { Card, Chip, Spinner, toast } from '@heroui/react';
 import { NavLink, useParams } from '@modern-js/runtime/router';
 import { useEffect, useMemo, useState } from 'react';
-import { autoLayout } from '../canvas/layoutUtils';
 import { BulkCloneModal } from '../components/BulkCloneModal';
-import { ComponentsPalette } from '../components/ComponentsPalette';
 import { PrincipalLookup } from '../components/PrincipalLookup';
 import { ScopeBadge } from '../components/ScopeBadge';
 import { VersionBadge } from '../components/VersionBadge';
 import { VersionDiffViewer } from '../components/VersionDiffViewer';
 import { WorkflowActionButtons } from '../components/WorkflowActionButtons';
 import { WorkflowEditor } from '../components/WorkflowEditor';
+import {
+  HELPDESK_CATEGORY_COLORS,
+  HELPDESK_STEP_TYPE_CATALOG,
+} from '../components/helpdeskWorkflowCatalog';
 import {
   useCreatePrincipalDraft,
   usePrincipalWorkflowDefinition,
@@ -351,7 +354,12 @@ export function PrincipalWorkflowDetailPage() {
             />
           </div>
 
-          {showPalette && !isReadOnly && <ComponentsPalette />}
+          {showPalette && !isReadOnly && (
+            <ComponentsPalette
+              stepTypeCatalog={HELPDESK_STEP_TYPE_CATALOG}
+              categoryColors={HELPDESK_CATEGORY_COLORS}
+            />
+          )}
 
           {showVersionsSidebar && (
             <aside

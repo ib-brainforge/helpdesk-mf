@@ -44,6 +44,7 @@
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
     "@brainforgeau/security": "0.4.312-develop.ef83c60",
     "@brainforgeau/theme": "0.2.64-develop.3645b80",
+    "@brainforgeau/workflow-ui": "0.1.3-develop.2adced5",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
     "@heroui/react": "^3.0.4",

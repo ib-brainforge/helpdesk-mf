@@ -1,4 +1,5 @@
 import { contextQueryKeyAtom } from '@/state/context-query-key';
+import { useWorkflowApi } from '@brainforgeau/workflow-ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import type {
@@ -10,7 +11,6 @@ import type {
   UpdateDraftInput,
   UpdatePrincipalDraftInput,
 } from '../types';
-import { useWorkflowApi } from './useWorkflowApi';
 
 export const workflowKeys = {
   all: (contextKey: string) => ['workflows', contextKey] as const,
