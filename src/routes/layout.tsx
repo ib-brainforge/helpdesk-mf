@@ -40,6 +40,7 @@ import {
   ErrorBoundary,
   SideNav,
   type SideNavDesktopMode,
+  lazyWithRetry,
   useNavbarAction,
 } from '@brainforgeau/components';
 import {
@@ -54,8 +55,9 @@ import {
 } from '@brainforgeau/security';
 import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 
-const TopNavbar = React.lazy(() =>
-  import('@brainforgeau/navbar/Navbar').then((m) => ({ default: m.TopNavbar }))
+const TopNavbar = lazyWithRetry(
+  () => import('@brainforgeau/navbar/Navbar'),
+  (m) => m?.TopNavbar
 );
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { Logo } from '@/components/Logo';
