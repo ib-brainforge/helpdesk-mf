@@ -16,9 +16,6 @@ import { useSla } from '@/components/sla/hooks/useSla';
 import {
   useAddTimeEntry,
   useDeleteTimeEntry,
-  usePauseTimer,
-  useStartTimer,
-  useStopTimer,
   useTimeTracking,
 } from '@/components/sla/hooks/useTimeTracking';
 import { HelpdeskPermissions } from '@/constants/permissions';
@@ -139,9 +136,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   // Time Tracking
   const { timeTracking } = useTimeTracking(id ?? '');
-  const startTimerMutation = useStartTimer();
-  const stopTimerMutation = useStopTimer();
-  const pauseTimerMutation = usePauseTimer();
   const addTimeEntryMutation = useAddTimeEntry();
   const deleteTimeEntryMutation = useDeleteTimeEntry();
   const mergeTicketsMutation = useMergeTickets();
@@ -499,28 +493,13 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     [deleteAttachmentMutation],
   );
 
-  const handleStartTimer = useCallback(() => {
-    if (!id) return;
-    startTimerMutation.mutate(id);
-  }, [id, startTimerMutation]);
-
-  const handleStopTimer = useCallback(() => {
-    if (!id) return;
-    stopTimerMutation.mutate(id);
-  }, [id, stopTimerMutation]);
-
-  const handlePauseTimer = useCallback(() => {
-    if (!id) return;
-    pauseTimerMutation.mutate(id);
-  }, [id, pauseTimerMutation]);
-
   const handleAddManualEntry = useCallback(
-    (minutes: number, notes: string) => {
+    (minutes: number, description: string) => {
       if (!id) return;
       addTimeEntryMutation.mutate({
         ticketId: id,
         durationMinutes: minutes,
-        notes,
+        description,
       });
     },
     [id, addTimeEntryMutation],
@@ -1237,9 +1216,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             <TimeTracker
               ticketId={id ?? ''}
               timeTracking={timeTracking}
-              onStartTimer={handleStartTimer}
-              onStopTimer={handleStopTimer}
-              onPauseTimer={handlePauseTimer}
               onAddManualEntry={handleAddManualEntry}
               onDeleteEntry={handleDeleteTimeEntry}
             />

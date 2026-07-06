@@ -1,48 +1,9 @@
 // CSAT (Customer Satisfaction) types
-// REVIEW: Following existing type pattern with DTOs from generated client
-
-export interface SatisfactionRatingDto {
-  id: string;
-  ticketId: string;
-  rating: number;
-  comment?: string;
-  ratedByUserId?: string;
-  ratedByUserName?: string;
-  ratedAt: string;
-}
-
-export interface SubmitSatisfactionRatingRequest {
-  token: string;
-  rating: number;
-  comment?: string;
-}
-
-export interface UpdateSatisfactionRatingRequest {
-  ratingId: string;
-  rating: number;
-  comment?: string;
-}
-
-export interface CSATReportDto {
-  averageRating: number;
-  totalRatings: number;
-  satisfactionPercentage: number;
-  ratingDistribution: {
-    rating1Count: number;
-    rating2Count: number;
-    rating3Count: number;
-    rating4Count: number;
-    rating5Count: number;
-  };
-  groupedData?: CSATGroupedDataDto[];
-}
-
-export interface CSATGroupedDataDto {
-  groupKey: string;
-  groupName: string;
-  averageRating: number;
-  count: number;
-}
+//
+// REVIEW: SatisfactionRatingDto / CSATReportDto / CSATGroupedDataDto now come
+// directly from the generated client (HelpdeskApplicationSatisfactionDTOs*),
+// see src/hooks/useSatisfaction.ts. Only the request-filter shapes and the
+// purely-frontend CSATGroupBy grouping concept remain local here.
 
 export enum CSATGroupBy {
   Technician = 'technician',

@@ -16,10 +16,11 @@ function PendingApprovalsPage() {
   const { items, isLoading, refetch } = usePendingApprovals();
 
   const handleViewTicket = useCallback(
-    (ticketId: string) => {
+    (ticketId?: string) => {
+      if (!ticketId) return;
       navigate(`/tickets/${ticketId}`);
     },
-    [navigate]
+    [navigate],
   );
 
   if (isLoading) {
@@ -71,7 +72,7 @@ function PendingApprovalsPage() {
         </BaseCard>
       ) : (
         <div className="space-y-4">
-          {items.map((approval) => (
+          {items.map(approval => (
             <BaseCard key={approval.approvalId}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -84,24 +85,19 @@ function PendingApprovalsPage() {
 
                   <div className="mb-4 space-y-1 text-sm text-default-600">
                     <div className="flex items-center gap-2">
-                      <Icon
-                        name="clipboard-document-check"
-                        className="h-4 w-4"
-                      />
-                      <span>Workflow: {approval.workflowName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <Icon name="user" className="h-4 w-4" />
                       <span>Step: {approval.stepName}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Icon name="clock" className="h-4 w-4" />
-                      <span>
-                        Requested{' '}
-                        {formatDateTime(approval.requestedAt, { timezone })} by{' '}
-                        {approval.requestedByUserName}
-                      </span>
-                    </div>
+                    {approval.requestedAt && (
+                      <div className="flex items-center gap-2">
+                        <Icon name="clock" className="h-4 w-4" />
+                        <span>
+                          Requested{' '}
+                          {formatDateTime(approval.requestedAt, { timezone })}{' '}
+                          by {approval.requestedByUserName}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <BaseButton

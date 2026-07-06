@@ -26,7 +26,10 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
     return (
       <Box title="Customer Satisfaction">
         <div className="flex items-center gap-2">
-          <Icon name="star" className="h-5 w-5 text-default-400 animate-pulse" />
+          <Icon
+            name="star"
+            className="h-5 w-5 text-default-400 animate-pulse"
+          />
           <p className="text-sm text-default-500">
             Loading satisfaction rating...
           </p>
@@ -60,13 +63,15 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
               Rated on {formatDateTime(rating.ratedAt, { timezone })}
             </p>
           </div>
-          <StarRating value={rating.rating} readonly size="md" />
+          <StarRating value={rating.rating ?? 0} readonly size="md" />
         </div>
 
         {rating.comment && (
           <div className="pt-2 border-t border-default-200">
             <p className="text-sm font-medium mb-1">Customer Feedback:</p>
-            <p className="text-sm text-default-700 italic">"{rating.comment}"</p>
+            <p className="text-sm text-default-700 italic">
+              "{rating.comment}"
+            </p>
           </div>
         )}
 

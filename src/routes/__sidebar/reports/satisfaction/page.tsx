@@ -31,25 +31,31 @@ function CSATReportPage() {
 
   const satisfactionColor = useMemo(() => {
     if (!reportData) return 'text-default-600';
-    if (reportData.satisfactionPercentage >= 80) return 'text-green-600';
-    if (reportData.satisfactionPercentage >= 60) return 'text-yellow-600';
+    const pct = reportData.satisfactionPercentage ?? 0;
+    if (pct >= 80) return 'text-green-600';
+    if (pct >= 60) return 'text-yellow-600';
     return 'text-danger';
   }, [reportData]);
 
   const mostCommonRating = useMemo(() => {
     if (!reportData?.ratingDistribution) return 'N/A';
     const dist = reportData.ratingDistribution;
+    const rating1Count = dist.rating1Count ?? 0;
+    const rating2Count = dist.rating2Count ?? 0;
+    const rating3Count = dist.rating3Count ?? 0;
+    const rating4Count = dist.rating4Count ?? 0;
+    const rating5Count = dist.rating5Count ?? 0;
     const max = Math.max(
-      dist.rating1Count,
-      dist.rating2Count,
-      dist.rating3Count,
-      dist.rating4Count,
-      dist.rating5Count,
+      rating1Count,
+      rating2Count,
+      rating3Count,
+      rating4Count,
+      rating5Count,
     );
-    if (max === dist.rating5Count) return '5 ⭐';
-    if (max === dist.rating4Count) return '4 ⭐';
-    if (max === dist.rating3Count) return '3 ⭐';
-    if (max === dist.rating2Count) return '2 ⭐';
+    if (max === rating5Count) return '5 ⭐';
+    if (max === rating4Count) return '4 ⭐';
+    if (max === rating3Count) return '3 ⭐';
+    if (max === rating2Count) return '2 ⭐';
     return '1 ⭐';
   }, [reportData]);
 
@@ -108,7 +114,13 @@ function CSATReportPage() {
           <Box title="Rating Distribution">
             {reportData?.ratingDistribution ? (
               <CSATRatingDistributionChart
-                distribution={reportData.ratingDistribution}
+                distribution={{
+                  rating1Count: reportData.ratingDistribution.rating1Count ?? 0,
+                  rating2Count: reportData.ratingDistribution.rating2Count ?? 0,
+                  rating3Count: reportData.ratingDistribution.rating3Count ?? 0,
+                  rating4Count: reportData.ratingDistribution.rating4Count ?? 0,
+                  rating5Count: reportData.ratingDistribution.rating5Count ?? 0,
+                }}
               />
             ) : (
               <EmptyState title="No rating data" size="sm" />
@@ -126,16 +138,27 @@ function CSATReportPage() {
               }}
               className="max-w-xs"
             >
-              <BaseSelectItem key={CSATGroupBy.Technician} value={CSATGroupBy.Technician}>
+              <BaseSelectItem
+                key={CSATGroupBy.Technician}
+                value={CSATGroupBy.Technician}
+              >
                 Technician
               </BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Category} value={CSATGroupBy.Category}>
+              <BaseSelectItem
+                key={CSATGroupBy.Category}
+                value={CSATGroupBy.Category}
+              >
                 Category
               </BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Priority} value={CSATGroupBy.Priority}>
+              <BaseSelectItem
+                key={CSATGroupBy.Priority}
+                value={CSATGroupBy.Priority}
+              >
                 Priority
               </BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Month} value={CSATGroupBy.Month}>Month</BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Month} value={CSATGroupBy.Month}>
+                Month
+              </BaseSelectItem>
             </BaseSelect>
           </Box>
         </>
@@ -162,10 +185,10 @@ function CSATReportPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <p className="text-xl font-bold">
-                      {item.averageRating.toFixed(1)}
+                      {(item.averageRating ?? 0).toFixed(1)}
                     </p>
                     <StarRating
-                      value={Math.round(item.averageRating)}
+                      value={Math.round(item.averageRating ?? 0)}
                       readonly
                       size="sm"
                     />

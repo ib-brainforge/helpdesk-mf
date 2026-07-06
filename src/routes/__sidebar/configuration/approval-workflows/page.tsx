@@ -1,112 +1,54 @@
-import {
-  createApprovalWorkflowsColumns,
-  useApprovalWorkflows,
-  useApprovalWorkflowsTable,
-  useDeleteApprovalWorkflow,
-} from '@/components/approvals';
+/**
+ * Approval Workflows list — /__sidebar/configuration/approval-workflows
+ *
+ * REVIEW: The generated ApprovalWorkflowsApi only exposes
+ * `v1ApprovalWorkflowsPost` (create) for tenant-scoped workflows — there is
+ * no backend GET list, detail, PUT, or DELETE endpoint yet (only the
+ * multitenant-admin PrincipalApprovalsApi, keyed by principalId, has full
+ * CRUD — see src/hooks/usePrincipalApprovalWorkflows.ts). Until the backend
+ * adds tenant-scoped list/detail/update/delete endpoints, this page can only
+ * offer creation; existing workflows cannot be listed, edited, or deleted
+ * from here.
+ */
+
 import { BaseButton, Icon } from '@brainforgeau/components';
-import {
-  EmptyState,
-  ListPage,
-  useConfirm,
-} from '@brainforgeau/components/page';
+import { EmptyState, PageHeader } from '@brainforgeau/components/page';
 import { withAuthorizationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
-import { useCallback, useMemo } from 'react';
 
 function ApprovalWorkflowsPage() {
   const navigate = useNavigate();
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
-    useApprovalWorkflows();
-
-  const deleteMutation = useDeleteApprovalWorkflow();
-  const { confirm, dialog } = useConfirm();
-
-  const handleEdit = useCallback(
-    (workflowId: string) => {
-      navigate(`/configuration/approval-workflows/${workflowId}`);
-    },
-    [navigate],
-  );
-
-  const handleDeleteRequest = useCallback(
-    async (workflowId: string) => {
-      const ok = await confirm({
-        title: 'Delete Approval Workflow',
-        body: 'Are you sure you want to delete this approval workflow? This cannot be undone.',
-        confirmLabel: 'Delete',
-        destructive: true,
-      });
-      if (!ok) return;
-      deleteMutation.mutate(workflowId, {
-        onSuccess: () => {
-          toast('Deleted', {
-            description: 'Approval workflow deleted successfully.',
-            variant: 'success',
-          });
-          refetch();
-        },
-        onError: () => {
-          toast('Error', {
-            description: 'Failed to delete approval workflow.',
-            variant: 'danger',
-          });
-        },
-      });
-    },
-    [confirm, deleteMutation, refetch],
-  );
-
-  const columns = useMemo(
-    () =>
-      createApprovalWorkflowsColumns({
-        onEdit: handleEdit,
-        onDelete: handleDeleteRequest,
-      }),
-    [handleEdit, handleDeleteRequest],
-  );
-
-  const { table } = useApprovalWorkflowsTable({
-    data: items,
-    columns,
-    totalCount,
-    pagination,
-    onPaginationChange: setPagination,
-  });
 
   return (
-    <ListPage
-      title="Approval Workflows"
-      breadcrumbsKey="configuration.approval-workflows.list"
-      table={table}
-      isLoading={isLoading}
-      actions={
-        <BaseButton
-          color="primary"
-          icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-          onPress={() => navigate('/configuration/approval-workflows/new')}
-        >
-          Approval Workflow
-        </BaseButton>
-      }
-      empty={
-        <EmptyState
-          title="No approval workflows yet"
-          description="Create your first approval workflow to require managerial sign-off on tickets."
-          action={
-            <BaseButton
-              color="primary"
-              onPress={() => navigate('/configuration/approval-workflows/new')}
-            >
-              Create Approval Workflow
-            </BaseButton>
-          }
-          live
-        />
-      }
-      modals={dialog}
-    />
+    <>
+      <PageHeader
+        title="Approval Workflows"
+        breadcrumbsKey="configuration.approval-workflows.list"
+      >
+        <PageHeader.Actions>
+          <BaseButton
+            color="primary"
+            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            onPress={() => navigate('/configuration/approval-workflows/new')}
+          >
+            Approval Workflow
+          </BaseButton>
+        </PageHeader.Actions>
+      </PageHeader>
+      <EmptyState
+        title="Workflow list not yet available"
+        description="Creating approval workflows is supported, but listing, editing, and deleting existing workflows requires a backend endpoint that hasn't shipped yet."
+        action={
+          <BaseButton
+            color="primary"
+            onPress={() => navigate('/configuration/approval-workflows/new')}
+          >
+            Create Approval Workflow
+          </BaseButton>
+        }
+        size="lg"
+      />
+    </>
   );
 }
 

@@ -1,66 +1,28 @@
-import type { TicketTimeTrackingDto, TimeEntryDto } from '@/types';
+import type { TicketTimeTrackingDto } from '@/components/sla/hooks/useTimeTracking';
 import { BaseInput, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 interface TimeTrackerProps {
   ticketId: string;
   timeTracking?: TicketTimeTrackingDto;
-  onStartTimer?: () => void;
-  onStopTimer?: () => void;
-  onPauseTimer?: () => void;
-  onAddManualEntry?: (minutes: number, notes: string) => void;
-  onEditEntry?: (entryId: string, minutes: number, notes: string) => void;
+  onAddManualEntry?: (minutes: number, description: string) => void;
   onDeleteEntry?: (entryId: string) => void;
 }
 
 export const TimeTracker: FC<TimeTrackerProps> = ({
-  ticketId,
   timeTracking,
-  onStartTimer,
-  onStopTimer,
-  onPauseTimer,
   onAddManualEntry,
-  onEditEntry,
   onDeleteEntry,
 }) => {
   const timezone = useTimezone();
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [manualMinutes, setManualMinutes] = useState('');
-  const [manualNotes, setManualNotes] = useState('');
+  const [manualDescription, setManualDescription] = useState('');
   const [showManualEntry, setShowManualEntry] = useState(false);
-
-  const isRunning = !!timeTracking?.activeEntry;
-
-  useEffect(() => {
-    if (!isRunning || !timeTracking?.activeEntry) {
-      setElapsedSeconds(0);
-      return;
-    }
-
-    const startTime = new Date(timeTracking.activeEntry.startTime).getTime();
-    const updateElapsed = () => {
-      const now = Date.now();
-      const elapsed = Math.floor((now - startTime) / 1000);
-      setElapsedSeconds(elapsed);
-    };
-
-    updateElapsed();
-    const interval = setInterval(updateElapsed, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning, timeTracking?.activeEntry]);
-
-  const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const formatDuration = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -70,51 +32,16 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
 
   const handleAddManualEntry = useCallback(() => {
     const minutes = Number.parseInt(manualMinutes, 10);
-    if (isNaN(minutes) || minutes <= 0) return;
+    if (Number.isNaN(minutes) || minutes <= 0) return;
 
-    onAddManualEntry?.(minutes, manualNotes);
+    onAddManualEntry?.(minutes, manualDescription);
     setManualMinutes('');
-    setManualNotes('');
+    setManualDescription('');
     setShowManualEntry(false);
-  }, [manualMinutes, manualNotes, onAddManualEntry]);
+  }, [manualMinutes, manualDescription, onAddManualEntry]);
 
   return (
     <Box title="Time Tracking">
-      {/* Timer Display */}
-      <div className="mb-6 rounded-lg bg-default-100 dark:bg-default-800 p-6 text-center">
-        <div className="mb-2 text-4xl font-mono font-bold">
-          {formatTime(elapsedSeconds)}
-        </div>
-        <div className="flex justify-center gap-2">
-          {!isRunning ? (
-            <BaseButton
-              color="success"
-              onPress={onStartTimer}
-              icon={<Icon name="play" className="h-4 w-4" />}
-            >
-              Start Timer
-            </BaseButton>
-          ) : (
-            <>
-              <BaseButton
-                color="warning"
-                onPress={onPauseTimer}
-                icon={<Icon name="pause" className="h-4 w-4" />}
-              >
-                Pause
-              </BaseButton>
-              <BaseButton
-                color="danger"
-                onPress={onStopTimer}
-                icon={<Icon name="stop" className="h-4 w-4" />}
-              >
-                Stop
-              </BaseButton>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Manual Entry Form */}
       {showManualEntry ? (
         <div className="mb-4 space-y-2 rounded border dark:border-default-700 p-4">
@@ -126,10 +53,10 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
             placeholder="Enter minutes"
           />
           <BaseInput
-            label="Notes"
-            value={manualNotes}
-            onChange={e => setManualNotes(e.target.value)}
-            placeholder="Optional notes"
+            label="Description"
+            value={manualDescription}
+            onChange={e => setManualDescription(e.target.value)}
+            placeholder="Optional description"
           />
           <div className="flex gap-2">
             <BaseButton
@@ -156,7 +83,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
           icon={<Icon name="plus" className="h-4 w-4" />}
           className="mb-4"
         >
-          Add Manual Entry
+          Add Time Entry
         </BaseButton>
       )}
 
@@ -173,7 +100,9 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
       {/* Time Entries List */}
       {timeTracking && timeTracking.entries.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-default-700 dark:text-default-300">Time Entries</h4>
+          <h4 className="text-sm font-semibold text-default-700 dark:text-default-300">
+            Time Entries
+          </h4>
           {timeTracking.entries.map(entry => (
             <div
               key={entry.id}
@@ -181,19 +110,17 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
             >
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  {formatDuration(entry.durationMinutes || 0)}
-                  {entry.isBillable && (
-                    <span className="ml-2 text-xs text-success">
-                      (Billable)
-                    </span>
-                  )}
+                  {formatDuration(entry.durationMinutes ?? 0)}
                 </p>
-                <p className="text-xs text-default-500 dark:text-default-400">
-                  {entry.userName} •{' '}
-                  {formatDateTime(entry.startTime, { timezone })}
-                </p>
-                {entry.notes && (
-                  <p className="text-xs text-default-600 dark:text-default-400">{entry.notes}</p>
+                {entry.entryDate && (
+                  <p className="text-xs text-default-500 dark:text-default-400">
+                    {formatDateTime(entry.entryDate, { timezone })}
+                  </p>
+                )}
+                {entry.description && (
+                  <p className="text-xs text-default-600 dark:text-default-400">
+                    {entry.description}
+                  </p>
                 )}
               </div>
               <div className="flex gap-1">
@@ -201,7 +128,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
                   size="sm"
                   variant="light"
                   color="danger"
-                  onPress={() => onDeleteEntry?.(entry.id)}
+                  onPress={() => entry.id && onDeleteEntry?.(entry.id)}
                   icon={<Icon name="trash" className="h-3 w-3" />}
                 />
               </div>

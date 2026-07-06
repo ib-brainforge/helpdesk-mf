@@ -1,5 +1,10 @@
 // TODO: Replace with types from @brainforgeau/helpdesk-backend-client when available
-// These types match the backend DTOs for SLA and Time Tracking
+// These types match the backend DTOs for SLA.
+//
+// REVIEW: TimeEntryDto / TicketTimeTrackingDto moved to
+// src/components/sla/hooks/useTimeTracking.ts, sourced directly from the
+// generated HelpdeskApplicationTimeTrackingDTOsTimeEntryDto — no local
+// duplicate DTO shape anymore.
 
 export enum SlaStatus {
   OnTrack = 0,
@@ -15,42 +20,4 @@ export interface SlaIndicatorDto {
   resolutionTimeDeadline?: string;
   resolutionTimeRemaining?: number; // minutes
   resolutionStatus?: SlaStatus;
-}
-
-export interface TimeEntryDto {
-  id: string;
-  ticketId: string;
-  userId: string;
-  userName?: string;
-  startTime: string;
-  endTime?: string;
-  durationMinutes?: number;
-  notes?: string;
-  isBillable: boolean;
-  createdAt: string;
-}
-
-export interface CreateTimeEntryDto {
-  ticketId: string;
-  startTime: string;
-  endTime?: string;
-  durationMinutes?: number;
-  notes?: string;
-  isBillable?: boolean;
-}
-
-export interface UpdateTimeEntryDto {
-  startTime?: string;
-  endTime?: string;
-  durationMinutes?: number;
-  notes?: string;
-  isBillable?: boolean;
-}
-
-export interface TicketTimeTrackingDto {
-  ticketId: string;
-  totalMinutes: number;
-  billableMinutes: number;
-  entries: TimeEntryDto[];
-  activeEntry?: TimeEntryDto;
 }
