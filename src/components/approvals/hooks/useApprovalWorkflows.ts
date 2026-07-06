@@ -5,18 +5,35 @@ import {
   type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowCommand,
   type HelpdeskApplicationApprovalsCommandsMakeApprovalDecisionMakeApprovalDecisionCommand,
   type HelpdeskApplicationApprovalsCommandsRequestApprovalRequestApprovalCommand,
+  type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand,
 } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-// REVIEW: The generated ApprovalWorkflowsApi only exposes
-// `v1ApprovalWorkflowsPost` (create) for the tenant-scoped workflow list —
-// there is no backend GET list/detail, PUT, or DELETE endpoint yet (only the
-// admin-console PrincipalApprovalsApi, keyed by principalId, has full CRUD).
-// This is a genuine backend/frontend contract gap, not a client-wiring issue.
-// useApprovalWorkflow / useUpdateApprovalWorkflow / useDeleteApprovalWorkflow
-// below are left as unimplemented no-ops (surfacing the gap explicitly)
-// until the backend adds tenant-scoped list/detail/update/delete endpoints.
+const QUERY_KEY = 'approval-workflows';
+
+export const useApprovalWorkflows = (isActive?: boolean) => {
+  return useQuery({
+    queryKey: [QUERY_KEY, isActive],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const { data } = await client.v1ApprovalWorkflowsGet(isActive);
+      return data ?? [];
+    },
+  });
+};
+
+export const useApprovalWorkflow = (id?: string) => {
+  return useQuery({
+    queryKey: [QUERY_KEY, id],
+    queryFn: async () => {
+      const client = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      const { data } = await client.v1ApprovalWorkflowsIdGet(id!);
+      return data;
+    },
+    enabled: !!id,
+  });
+};
 
 export const useCreateApprovalWorkflow = () => {
   const queryClient = useQueryClient();
@@ -31,7 +48,50 @@ export const useCreateApprovalWorkflow = () => {
     },
     onSuccess: () => {
       toast('Approval workflow created successfully', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['approval-workflows'] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+    },
+    onError: () => {
+      // Error handled by global axios interceptor
+    },
+  });
+};
+
+export const useUpdateApprovalWorkflow = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      command,
+    }: {
+      id: string;
+      command: HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand;
+    }) => {
+      const client = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      await client.v1ApprovalWorkflowsIdPut(id, command);
+    },
+    onSuccess: (_data, variables) => {
+      toast('Approval workflow saved', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.id] });
+    },
+    onError: () => {
+      // Error handled by global axios interceptor
+    },
+  });
+};
+
+export const useDeleteApprovalWorkflow = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const client = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+      await client.v1ApprovalWorkflowsIdDelete(id);
+    },
+    onSuccess: () => {
+      toast('Approval workflow deleted', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
     onError: () => {
       // Error handled by global axios interceptor

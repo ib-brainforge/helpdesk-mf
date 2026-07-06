@@ -1,5 +1,9 @@
 export {
+  useApprovalWorkflows,
+  useApprovalWorkflow,
   useCreateApprovalWorkflow,
+  useUpdateApprovalWorkflow,
+  useDeleteApprovalWorkflow,
   useTicketApproval,
   usePendingApprovals,
   useRequestApproval,
