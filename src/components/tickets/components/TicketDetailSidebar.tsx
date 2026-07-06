@@ -1,3 +1,4 @@
+import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
 import { StatusBadge } from '@/components/shared';
 import {
   useAddTagToTicket,
@@ -19,7 +20,6 @@ import {
   BaseTagSelectItem,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useAtom } from 'jotai';
@@ -109,9 +109,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   onSubscribeToggle,
 }) => {
   const timezone = useTimezone();
-  const statusConfig = getStatusConfig(ticket.status as any);
-  const priorityConfig = getPriorityConfig(ticket.priority as any);
-  const originConfig = getOriginConfig((ticket as any).origin);
+  const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+  const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
+  const originConfig = getOriginConfig(ticket.origin ?? '');
 
   // Resolve requester / assignee names: prefer the names provided natively by
   // the generated client, falling back to identity enrichment by id (mirrors
@@ -222,13 +222,22 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketStatus.New.toString()} value={TicketStatus.New.toString()}>
+            <BaseSelectItem
+              key={TicketStatus.New.toString()}
+              value={TicketStatus.New.toString()}
+            >
               New
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.InProgress.toString()} value={TicketStatus.InProgress.toString()}>
+            <BaseSelectItem
+              key={TicketStatus.InProgress.toString()}
+              value={TicketStatus.InProgress.toString()}
+            >
               In Progress
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.Closed.toString()} value={TicketStatus.Closed.toString()}>
+            <BaseSelectItem
+              key={TicketStatus.Closed.toString()}
+              value={TicketStatus.Closed.toString()}
+            >
               Closed
             </BaseSelectItem>
           </BaseSelect>
@@ -257,13 +266,33 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+            <BaseSelectItem
+              key={TicketPriority.Critical}
+              value={TicketPriority.Critical}
+            >
               Critical
             </BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>Normal</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
+            <BaseSelectItem
+              key={TicketPriority.High}
+              value={TicketPriority.High}
+            >
+              High
+            </BaseSelectItem>
+            <BaseSelectItem
+              key={TicketPriority.Normal}
+              value={TicketPriority.Normal}
+            >
+              Normal
+            </BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>
+              Low
+            </BaseSelectItem>
+            <BaseSelectItem
+              key={TicketPriority.None}
+              value={TicketPriority.None}
+            >
+              None
+            </BaseSelectItem>
           </BaseSelect>
         </PermissionGuard>
       </div>
@@ -275,9 +304,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
-          fallback={
-            <p className="text-sm">{assigneeDisplayName}</p>
-          }
+          fallback={<p className="text-sm">{assigneeDisplayName}</p>}
         >
           <BaseAutocomplete
             placeholder="Search assignee..."
@@ -312,7 +339,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
           >
             {usersOptions.map(user => (
-              <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
+              <BaseAutocompleteItem
+                key={user.id}
+                id={user.id}
+                textValue={user.name}
+              >
                 <div className="flex items-center gap-2.5">
                   <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                   <div className="flex-1">
@@ -424,9 +455,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <label className="block text-sm font-medium text-default-700 mb-1">
             Time Spent
           </label>
-          <p className="text-sm">
-            {formatTimeSpent((ticket as any).timeSpent)}
-          </p>
+          <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
         </div>
 
         {/* Due Date */}
@@ -442,25 +471,25 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         )}
 
         {/* Started At */}
-        {(ticket as any).startedAtUtc && (
+        {ticket.startedAtUtc && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-default-700 mb-1">
               Started At
             </label>
             <p className="text-sm">
-              {formatDateTime((ticket as any).startedAtUtc, { timezone })}
+              {formatDateTime(ticket.startedAtUtc, { timezone })}
             </p>
           </div>
         )}
 
         {/* Closed At */}
-        {(ticket as any).closedAtUtc && (
+        {ticket.closedAtUtc && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-default-700 mb-1">
               Closed At
             </label>
             <p className="text-sm">
-              {formatDateTime((ticket as any).closedAtUtc, { timezone })}
+              {formatDateTime(ticket.closedAtUtc, { timezone })}
             </p>
           </div>
         )}
@@ -550,16 +579,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }
           >
             <div className={isUpdating ? 'pointer-events-none opacity-50' : ''}>
-            <BaseTagSelect
-              label="Tags"
-              placeholder="Select tags..."
-              value={ticketTags?.map(t => t.id) ?? []}
-              onValueChange={handleTagsChange}
-            >
-              {availableTags.map(tag => (
-                <BaseTagSelectItem key={tag.id} value={tag.id}>{tag.name}</BaseTagSelectItem>
-              ))}
-            </BaseTagSelect>
+              <BaseTagSelect
+                label="Tags"
+                placeholder="Select tags..."
+                value={ticketTags?.map(t => t.id) ?? []}
+                onValueChange={handleTagsChange}
+              >
+                {availableTags.map(tag => (
+                  <BaseTagSelectItem key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </BaseTagSelectItem>
+                ))}
+              </BaseTagSelect>
             </div>
           </PermissionGuard>
         </div>
@@ -578,13 +609,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         <LinkedAssetsSection ticketId={ticket.id ?? ''} />
 
         {/* Parent ticket */}
-        {(ticket as any).parentTicketId && (
+        {ticket.parentTicketId && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-default-700 mb-1">
               Parent Ticket
             </label>
             <p className="text-sm font-mono text-blue-600">
-              #{(ticket as any).parentTicketId?.substring(0, 8)}
+              #{ticket.parentTicketId?.substring(0, 8)}
             </p>
           </div>
         )}

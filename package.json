@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@brainforgeau/components": "0.4.477-develop.71467fe",
-    "@brainforgeau/helpdesk-client": "0.1.203-develop.a5a0806",
+    "@brainforgeau/helpdesk-client": "0.1.239-develop.c94b37d",
     "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
     "@brainforgeau/observability": "0.4.61-develop.1e1460d",
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",

@@ -47,10 +47,10 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
 
       if (isEdit && section) {
         const updateDto: UpdateSectionCommand = { ...data };
-        await client.v1CategoriesSectionsIdPut(section.id, updateDto as any);
+        await client.v1CategoriesSectionsIdPut(section.id, updateDto);
       } else {
         const createDto: CreateSectionCommand = { ...data };
-        await client.v1CategoriesSectionsPost(createDto as any);
+        await client.v1CategoriesSectionsPost(createDto);
       }
     },
     onSuccess: () => {

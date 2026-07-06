@@ -1,3 +1,4 @@
+import { configAtom } from '@/state/config';
 import {
   createHelpdeskApiClient,
   createHelpdeskApiConfiguration,
@@ -8,7 +9,6 @@ import type { RuntimeConfig } from '@brainforgeau/security';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getDefaultStore } from 'jotai';
 import { useCallback, useState } from 'react';
-import { configAtom } from '@/state/config';
 
 const getApiBaseUrl = (): string => {
   const store = getDefaultStore();
@@ -27,18 +27,21 @@ export const useAttachments = (ticketId?: string) => {
       const baseUrl = getApiBaseUrl();
 
       // Map backend DTO fields to frontend AttachmentDto
-      return ((response.data as any[]) ?? []).map((item: any) => ({
-        id: item.id,
-        fileName: item.fileName,
-        fileSize: item.fileSizeBytes,
-        contentType: item.contentType,
+      return (response.data ?? []).map(item => ({
+        id: item.id ?? '',
+        fileName: item.fileName ?? '',
+        fileSize: item.fileSizeBytes ?? 0,
+        contentType: item.contentType ?? '',
         url: `${baseUrl}/v1/attachments/${item.id}`,
-        uploadedById: item.uploadedByUserId,
-        uploadedByName: item.uploadedByName,
-        uploadedAt: item.createdAt,
-        ticketId: item.ticketId,
-        commentId: item.commentId,
-      })) as AttachmentDto[];
+        uploadedById: item.uploadedByUserId ?? '',
+        // REVIEW: uploadedByName is not on the generated AttachmentDto (backend
+        // doesn't project the uploader's display name onto this DTO) — leaving
+        // undefined until the backend adds it or the UI enriches by user id.
+        uploadedByName: undefined,
+        uploadedAt: item.createdAt ?? '',
+        ticketId: item.ticketId ?? '',
+        commentId: item.commentId ?? undefined,
+      }));
     },
     enabled: Boolean(ticketId),
   });

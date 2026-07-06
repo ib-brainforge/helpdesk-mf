@@ -211,9 +211,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   const visibleComments = showSystemLog
     ? comments
-    : comments.filter(
-        c => (c as any).commentType !== CommentType.SystemMessage,
-      );
+    : comments.filter(c => c.commentType !== CommentType.SystemMessage);
 
   const handleUpdate = useCallback(
     (updates: any) => {
@@ -352,8 +350,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     }
 
     // Copy all stylesheets from the parent page
-    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-      .map((el) => el.outerHTML)
+    const styles = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"], style'),
+    )
+      .map(el => el.outerHTML)
       .join('\n');
 
     printWindow.document.write(`
@@ -742,10 +742,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <Icon
-            name="warning"
-            className="h-12 w-12 text-danger mx-auto mb-4"
-          />
+          <Icon name="warning" className="h-12 w-12 text-danger mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
           <p className="text-default-600 mb-4">
             The ticket you are looking for does not exist.
@@ -756,8 +753,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     );
   }
 
-  const statusConfig = getStatusConfig(ticket.status as any);
-  const priorityConfig = getPriorityConfig(ticket.priority as any);
+  const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+  const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
   const isSubscribeLoading =
     subscribeMutation.isPending || unsubscribeMutation.isPending;
 
@@ -1084,16 +1081,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <p className="whitespace-pre-wrap">{ticket.description}</p>
                 </div>
               ) : (
-                <p className="text-sm text-default-400 italic">No description yet.</p>
+                <p className="text-sm text-default-400 italic">
+                  No description yet.
+                </p>
               )}
             </Box>
 
             {/* Attachments */}
             <Box>
               {attachmentsLoading ? (
-                <div className="text-center py-4">
-                  Loading attachments...
-                </div>
+                <div className="text-center py-4">Loading attachments...</div>
               ) : attachments && attachments.length > 0 ? (
                 <div className="space-y-4">
                   <AttachmentList
@@ -1135,7 +1132,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-default-400 italic">No attachments yet.</p>
+                  <p className="text-sm text-default-400 italic">
+                    No attachments yet.
+                  </p>
                   <PermissionGuard
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     fallback={null}
@@ -1200,7 +1199,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 {ticket.updatedAt && ticket.updatedAt !== ticket.createdAt && (
                   <div className="flex gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-default-100 rounded-full flex items-center justify-center">
-                      <Icon name="pencil" className="h-4 w-4 text-default-600" />
+                      <Icon
+                        name="pencil"
+                        className="h-4 w-4 text-default-600"
+                      />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Ticket updated</p>
@@ -1219,7 +1221,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             {/* Ticket Info */}
             <Box>
               <TicketDetailSidebar
-                ticket={ticket as any}
+                ticket={ticket}
                 onUpdate={handleUpdate}
                 isUpdating={updateTicketMutation.isPending}
                 isSubscribed={isSubscribed}
@@ -1248,7 +1250,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             {/* CSAT Widget */}
             <CSATWidget
               ticketId={id ?? ''}
-              ticketStatus={ticket.status as any}
+              ticketStatus={ticket.status as TicketStatus}
             />
 
             {/* Child Tickets */}

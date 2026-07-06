@@ -11,7 +11,7 @@ import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
   type HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
   type HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
-  type HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto,
+  type HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
   KnowledgeBaseApi,
@@ -52,24 +52,40 @@ function mapAccessLevel(
   }
 }
 
+// v1KbCategoriesGet returns a nested tree (KbCategoryTreeDto, with real
+// articleCount + children), but the rest of the app (DuplicateCategoryModal,
+// the settings page, the category page) consumes a flat list keyed by
+// parentId — none of them walk `.children` recursively. Flatten the tree here
+// so callers keep working unchanged while picking up real articleCount and
+// parentId values (previously hardcoded to 0 / undefined).
+function flattenCategoryTree(
+  nodes: HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto[],
+  parentId?: string,
+): KnowledgeBaseCategoryDto[] {
+  return nodes.flatMap(node => {
+    const flat: KnowledgeBaseCategoryDto = {
+      id: node.id ?? '',
+      name: node.name ?? '',
+      slug: node.slug ?? undefined,
+      description: node.description ?? undefined,
+      parentId,
+      articleCount: node.articleCount ?? 0,
+      order: node.sortOrder ?? 0,
+    };
+    const children = node.children
+      ? flattenCategoryTree(node.children, flat.id)
+      : [];
+    return [flat, ...children];
+  });
+}
+
 export const useKnowledgeBaseCategories = () => {
   return useQuery<KnowledgeBaseCategoryDto[]>({
     queryKey: ['knowledge-base', 'categories'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbCategoriesGet();
-      const categories =
-        response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto[];
-      return categories.map(
-        (cat): KnowledgeBaseCategoryDto => ({
-          id: cat.id ?? '',
-          name: cat.name ?? '',
-          description: cat.description ?? undefined,
-          parentId: undefined,
-          articleCount: 0, // KbCategoryDto does not expose article count — backend does not return this field
-          order: cat.sortOrder ?? 0,
-        }),
-      );
+      return flattenCategoryTree(response.data ?? []);
     },
   });
 };
@@ -412,7 +428,12 @@ export const useImportKb = () => {
     mutationFn: async (file: File) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbImportPost(file);
-      return response.data as unknown as KbImportResult;
+      return {
+        articlesImported: response.data.articlesImported ?? 0,
+        categoriesImported: response.data.categoriesImported ?? 0,
+        errors: response.data.errors ?? [],
+        isPartial: response.data.isPartial ?? false,
+      };
     },
     onSuccess: result => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-base'] });
@@ -447,9 +468,7 @@ export const useExportKb = () => {
         fileNameMatch?.[1] ??
         `kb-export-${new Date().toISOString().slice(0, 10)}.zip`;
 
-      const url = window.URL.createObjectURL(
-        new Blob([response.data as unknown as BlobPart]),
-      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', fileName);
@@ -487,14 +506,19 @@ export const useDuplicateKbCategory = () => {
         id,
         includeArticles,
       );
-      const cat =
-        response.data as HelpdeskApplicationKnowledgeBaseModelsKbCategoryDto;
+      const cat = response.data;
       return {
         id: cat.id ?? '',
         name: cat.name ?? '',
+        slug: cat.slug ?? undefined,
         description: cat.description ?? undefined,
-        parentId: undefined,
-        articleCount: 0, // KbCategoryDto does not expose article count — backend does not return this field
+        parentId: cat.parentId ?? undefined,
+        // v1KbCategoriesIdDuplicatePost returns the flat KbCategoryDto, which
+        // does not expose articleCount (unlike KbCategoryTreeDto from the list
+        // endpoint) — a freshly duplicated category has no count from this
+        // response; the list refetch (onSuccess below) will pick up the real
+        // count from v1KbCategoriesGet.
+        articleCount: 0,
         order: cat.sortOrder ?? 0,
       };
     },

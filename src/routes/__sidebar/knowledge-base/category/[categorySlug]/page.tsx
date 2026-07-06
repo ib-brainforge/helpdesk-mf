@@ -24,9 +24,7 @@ function KnowledgeBaseCategoryPage() {
   const { data: categories } = useKnowledgeBaseCategories();
 
   // Find category by slug
-  const category = categories?.find(
-    (cat) => (cat as any).slug === categorySlug
-  );
+  const category = categories?.find(cat => cat.slug === categorySlug);
 
   // Fetch articles in this category
   const { data: articles, isLoading } = useQuery({
@@ -44,7 +42,7 @@ function KnowledgeBaseCategoryPage() {
         undefined,
         undefined,
         undefined,
-        undefined
+        undefined,
       );
       return response.data;
     },
@@ -52,7 +50,7 @@ function KnowledgeBaseCategoryPage() {
   });
 
   const getStatusColor = (
-    status: KnowledgeBaseStatus
+    status: KnowledgeBaseStatus,
   ): 'default' | 'success' | 'warning' => {
     switch (status) {
       case KnowledgeBaseStatus.Published:
@@ -118,7 +116,7 @@ function KnowledgeBaseCategoryPage() {
         <BaseInput
           placeholder="Search in this category..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
         />
       </div>
@@ -151,10 +149,7 @@ function KnowledgeBaseCategoryPage() {
                   <h3 className="line-clamp-2 text-lg font-semibold">
                     {article.title}
                   </h3>
-                  <Chip
-                    size="sm"
-                    color={getStatusColor(article.status)}
-                  >
+                  <Chip size="sm" color={getStatusColor(article.status)}>
                     {getStatusLabel(article.status)}
                   </Chip>
                 </div>

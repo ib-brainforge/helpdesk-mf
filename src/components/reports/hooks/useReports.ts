@@ -147,7 +147,16 @@ export const useOverdueTicketsReport = (fromDate?: string, toDate?: string) => {
         fromDate,
         toDate,
       );
-      return data as unknown as OverdueTicketDto[];
+      return (data ?? []).map(item => ({
+        id: item.id ?? '',
+        subject: item.subject ?? '',
+        assigneeId: item.assigneeId ?? null,
+        priority: item.priority ?? '',
+        daysOverdue: item.daysOverdue ?? 0,
+        createdAt: item.createdAt ?? '',
+        dueDate: item.dueDate ?? '',
+        status: item.status ?? '',
+      }));
     },
   });
 };
@@ -164,7 +173,12 @@ export const useTicketsByCategoryReport = (
         fromDate,
         toDate,
       );
-      return data as unknown as TicketByCategoryDto[];
+      return (data ?? []).map(item => ({
+        categoryId: item.categoryId ?? null,
+        categoryName: item.categoryName ?? '',
+        total: item.total ?? 0,
+        byStatus: item.byStatus ?? {},
+      }));
     },
   });
 };
@@ -181,7 +195,11 @@ export const useTicketsByPriorityReport = (
         fromDate,
         toDate,
       );
-      return data as unknown as TicketByPriorityDto[];
+      return (data ?? []).map(item => ({
+        priority: item.priority ?? '',
+        total: item.total ?? 0,
+        byStatus: item.byStatus ?? {},
+      }));
     },
   });
 };
@@ -198,7 +216,11 @@ export const useTicketsByStatusReport = (
         fromDate,
         toDate,
       );
-      return data as unknown as TicketByStatusDto[];
+      return (data ?? []).map(item => ({
+        status: item.status ?? '',
+        total: item.total ?? 0,
+        byPriority: item.byPriority ?? {},
+      }));
     },
   });
 };
@@ -217,7 +239,21 @@ export const useSlaComplianceReport = (
         toDate,
         policyId,
       );
-      return data as unknown as SlaComplianceDto;
+      return {
+        fromDate: data.fromDate ?? '',
+        toDate: data.toDate ?? '',
+        totalTickets: data.totalTickets ?? 0,
+        withinSla: data.withinSla ?? 0,
+        breachedSla: data.breachedSla ?? 0,
+        compliancePercentage: data.compliancePercentage ?? 0,
+        byPolicy: (data.byPolicy ?? []).map(p => ({
+          policyId: p.policyId ?? '',
+          policyName: p.policyName ?? '',
+          totalBreaches: p.totalBreaches ?? 0,
+          responseBreaches: p.responseBreaches ?? 0,
+          resolutionBreaches: p.resolutionBreaches ?? 0,
+        })),
+      };
     },
   });
 };
@@ -234,7 +270,25 @@ export const useCompanyStatisticsReport = (
         fromDate,
         toDate,
       );
-      return data as unknown as CompanyStatisticsDto;
+      return {
+        fromDate: data.fromDate ?? '',
+        toDate: data.toDate ?? '',
+        totalTickets: data.totalTickets ?? 0,
+        openTickets: data.openTickets ?? 0,
+        closedTickets: data.closedTickets ?? 0,
+        avgResolutionMinutes: data.avgResolutionMinutes ?? null,
+        avgFirstResponseMinutes: data.avgFirstResponseMinutes ?? null,
+        topCategories: (data.topCategories ?? []).map(c => ({
+          categoryId: c.categoryId ?? '',
+          categoryName: c.categoryName ?? '',
+          ticketCount: c.ticketCount ?? 0,
+        })),
+        topAssignees: (data.topAssignees ?? []).map(a => ({
+          assigneeId: a.assigneeId ?? '',
+          ticketCount: a.ticketCount ?? 0,
+          resolvedCount: a.resolvedCount ?? 0,
+        })),
+      };
     },
   });
 };
@@ -251,7 +305,15 @@ export const useAgentUtilizationReport = (
         fromDate,
         toDate,
       );
-      return data as unknown as AgentUtilizationDto[];
+      return (data ?? []).map(item => ({
+        agentId: item.agentId ?? '',
+        ticketsAssigned: item.ticketsAssigned ?? 0,
+        ticketsResolved: item.ticketsResolved ?? 0,
+        currentOpen: item.currentOpen ?? 0,
+        avgResolutionMinutes: item.avgResolutionMinutes ?? null,
+        fromDate: item.fromDate ?? '',
+        toDate: item.toDate ?? '',
+      }));
     },
   });
 };
@@ -265,7 +327,15 @@ export const useDeletedTicketsReport = (fromDate?: string, toDate?: string) => {
         fromDate,
         toDate,
       );
-      return data as unknown as DeletedTicketDto[];
+      return (data ?? []).map(item => ({
+        id: item.id ?? '',
+        subject: item.subject ?? '',
+        entityType: item.entityType ?? '',
+        deletedByUserId: item.deletedByUserId ?? '',
+        deletedAt: item.deletedAt ?? '',
+        reason: item.reason ?? null,
+        entityDescription: item.entityDescription ?? null,
+      }));
     },
   });
 };
@@ -290,7 +360,21 @@ export const useAuditLogReport = (params: {
         params.page ?? 1,
         params.pageSize ?? 50,
       );
-      return data as unknown as AuditLogReportDto;
+      return {
+        items: (data.items ?? []).map(item => ({
+          id: item.id ?? '',
+          entityType: item.entityType ?? '',
+          entityId: item.entityId ?? '',
+          entityDescription: item.entityDescription ?? null,
+          actorUserId: item.actorUserId ?? '',
+          occurredAt: item.occurredAt ?? '',
+          reason: item.reason ?? null,
+        })),
+        totalCount: data.totalCount ?? 0,
+        page: data.page ?? 1,
+        pageSize: data.pageSize ?? 50,
+        totalPages: data.totalPages ?? 0,
+      };
     },
   });
 };
@@ -301,7 +385,18 @@ export const useAssetsReport = (fromDate?: string, toDate?: string) => {
     queryFn: async () => {
       const client = await createHelpdeskApiClient(ReportsApi);
       const { data } = await client.v1ReportsAssetsGet(fromDate, toDate);
-      return data as unknown as AssetsReportDto[];
+      return (data ?? []).map(item => ({
+        assetId: item.assetId ?? '',
+        ticketCount: item.ticketCount ?? 0,
+        tickets: (item.tickets ?? []).map(t => ({
+          ticketId: t.ticketId ?? '',
+          subject: t.subject ?? '',
+          status: t.status ?? '',
+          priority: t.priority ?? '',
+          assigneeId: t.assigneeId ?? null,
+          createdAt: t.createdAt ?? '',
+        })),
+      }));
     },
   });
 };
