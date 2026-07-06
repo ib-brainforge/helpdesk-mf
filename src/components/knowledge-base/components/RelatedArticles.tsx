@@ -26,18 +26,18 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
 
       // Fetch each related article
       const promises = articleIds
-        .filter((id) => id !== currentArticleId)
+        .filter(id => id !== currentArticleId)
         .slice(0, 5)
-        .map((id) => client.v1KbArticlesIdGet(id));
+        .map(id => client.v1KbArticlesIdGet(id));
 
       const results = await Promise.allSettled(promises);
 
       return results
         .filter(
           (result): result is PromiseFulfilledResult<any> =>
-            result.status === 'fulfilled'
+            result.status === 'fulfilled',
         )
-        .map((result) => result.value.data);
+        .map(result => result.value.data);
     },
     enabled: !!articleIds && articleIds.length > 0,
   });

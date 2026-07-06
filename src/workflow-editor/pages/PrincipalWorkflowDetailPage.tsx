@@ -42,7 +42,7 @@ export function PrincipalWorkflowDetailPage() {
   }>();
   const { data, isLoading, error } = usePrincipalWorkflowDefinition(
     principalId ?? '',
-    id ?? null
+    id ?? null,
   );
   const createDraftMutation = useCreatePrincipalDraft();
   const updateMut = useUpdatePrincipalDraft();
@@ -144,8 +144,9 @@ export function PrincipalWorkflowDetailPage() {
       } else {
         logger.error('principal_workflow_detail_save_failed');
       }
-      const axiosData = (err as { response?: { data?: Record<string, unknown> } })
-        .response?.data;
+      const axiosData = (
+        err as { response?: { data?: Record<string, unknown> } }
+      ).response?.data;
       const detail =
         (axiosData?.detail as string) ??
         (axiosData?.title as string) ??
@@ -185,7 +186,7 @@ export function PrincipalWorkflowDetailPage() {
 
   function handleCanvasChange(
     nextStates: WorkflowStateDto[],
-    nextTransitions: WorkflowTransitionDto[]
+    nextTransitions: WorkflowTransitionDto[],
   ) {
     setStates(nextStates);
     setTransitions(nextTransitions);
@@ -196,19 +197,19 @@ export function PrincipalWorkflowDetailPage() {
     newStateData: Omit<WorkflowStateDto, 'id'> & {
       positionX: number;
       positionY: number;
-    }
+    },
   ) {
     const fullState: WorkflowStateDto = {
       ...newStateData,
       id: crypto.randomUUID(),
     };
-    setStates((prev) => [...prev, fullState]);
+    setStates(prev => [...prev, fullState]);
     setDirty(true);
   }
 
   const reversedVersions = useMemo(
     () => [...data.versions].reverse(),
-    [data.versions]
+    [data.versions],
   );
 
   // REVIEW: flex-1 min-h-0 fills the app-shell flex parent. -m-5 kept to bleed
@@ -281,7 +282,7 @@ export function PrincipalWorkflowDetailPage() {
               size="sm"
               variant="bordered"
               color={showPalette ? 'primary' : undefined}
-              onPress={() => setShowPalette((p) => !p)}
+              onPress={() => setShowPalette(p => !p)}
             >
               Components
             </BaseButton>
@@ -289,7 +290,7 @@ export function PrincipalWorkflowDetailPage() {
           <BaseButton
             size="sm"
             variant="bordered"
-            onPress={() => setShowVersionsSidebar((prev) => !prev)}
+            onPress={() => setShowVersionsSidebar(prev => !prev)}
           >
             Versions
           </BaseButton>
@@ -332,7 +333,7 @@ export function PrincipalWorkflowDetailPage() {
               sourceDefinitionId={id}
               sourceDefinitionName={data.name}
               principalId={principalId}
-              getDetailUrl={(newId) =>
+              getDetailUrl={newId =>
                 `/principal/${principalId}/workflows/${newId}`
               }
             />
@@ -394,7 +395,7 @@ export function PrincipalWorkflowDetailPage() {
                       States
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {activeVersion.states.map((s) => (
+                      {activeVersion.states.map(s => (
                         <Chip key={s.id} size="sm">
                           {s.name}
                         </Chip>
@@ -411,7 +412,7 @@ export function PrincipalWorkflowDetailPage() {
                       </h3>
                     </div>
                     <ul className="divide-default-100 divide-y px-2 pb-2">
-                      {reversedVersions.map((v) => (
+                      {reversedVersions.map(v => (
                         <li
                           key={v.id}
                           className="flex items-center gap-3 py-2.5"
@@ -451,9 +452,7 @@ export function PrincipalWorkflowDetailPage() {
           sourceDefinitionId={id}
           sourceDefinitionName={data.name}
           principalId={principalId}
-          getDetailUrl={(newId) =>
-            `/principal/${principalId}/workflows/${newId}`
-          }
+          getDetailUrl={newId => `/principal/${principalId}/workflows/${newId}`}
         />
       )}
     </div>

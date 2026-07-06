@@ -12,8 +12,16 @@ const getFileIcon = (contentType: string, fileName: string) => {
   const ext = fileName.split('.').pop()?.toLowerCase();
   if (contentType.startsWith('image/')) return 'img';
   if (contentType.includes('pdf') || ext === 'pdf') return 'pdf';
-  if (contentType.includes('word') || ext === 'doc' || ext === 'docx') return 'doc';
-  if (contentType.includes('excel') || contentType.includes('spreadsheet') || ext === 'xlsx' || ext === 'xls' || ext === 'csv') return 'table';
+  if (contentType.includes('word') || ext === 'doc' || ext === 'docx')
+    return 'doc';
+  if (
+    contentType.includes('excel') ||
+    contentType.includes('spreadsheet') ||
+    ext === 'xlsx' ||
+    ext === 'xls' ||
+    ext === 'csv'
+  )
+    return 'table';
   return 'blank';
 };
 
@@ -52,7 +60,10 @@ export const AttachmentList: FC<AttachmentListProps> = ({
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center bg-default-50 dark:bg-default-800">
                 <Icon
-                  name={getFileIcon(attachment.contentType, attachment.fileName)}
+                  name={getFileIcon(
+                    attachment.contentType,
+                    attachment.fileName,
+                  )}
                   className="h-12 w-12 text-default-400 dark:text-default-500"
                 />
                 <span className="mt-1 text-[11px] font-bold text-default-500 dark:text-default-400">

@@ -124,9 +124,7 @@ export function KbArticleListView({
   }
 
   if (articles.length === 0) {
-    return (
-      <EmptyState title="No articles found" live />
-    );
+    return <EmptyState title="No articles found" live />;
   }
 
   return (

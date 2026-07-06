@@ -1,8 +1,8 @@
+import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Link } from '@modern-js/runtime/router';
 import type { FC } from 'react';
 import { useSimilarArticles } from '../hooks/useKnowledgeBase';
-import { BaseCard } from '@brainforgeau/components';
 
 interface KbSuggestionsProps {
   searchText: string;
@@ -18,10 +18,11 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
   onArticleClick,
 }) => {
   const shouldFetch = searchText.length >= minChars;
-  const { data: suggestions, isLoading, isError } = useSimilarArticles(
-    shouldFetch ? searchText : '',
-    limit
-  );
+  const {
+    data: suggestions,
+    isLoading,
+    isError,
+  } = useSimilarArticles(shouldFetch ? searchText : '', limit);
 
   // If the suggestions call failed, degrade silently — never block the ticket detail view.
   if (isError) {
@@ -51,7 +52,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
             <Link
               key={article.id}
               to={`/knowledge-base/${article.slug}`}
-              onClick={(e) => {
+              onClick={e => {
                 if (onArticleClick) {
                   e.preventDefault();
                   onArticleClick(article.slug);

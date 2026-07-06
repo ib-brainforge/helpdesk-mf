@@ -23,9 +23,9 @@ import {
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
+import { StatusBadge } from '@brainforgeau/components/page';
 import { useLogger } from '@brainforgeau/observability';
 import type { RuleProjectDto } from '@brainforgeau/rules-ui';
-import { StatusBadge } from '@brainforgeau/components/page';
 import { toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';
@@ -69,7 +69,9 @@ interface PrincipalAutomationProjectsListPageProps {
   showTitle?: boolean;
 }
 
-export function PrincipalAutomationProjectsListPage({ showTitle = true }: PrincipalAutomationProjectsListPageProps) {
+export function PrincipalAutomationProjectsListPage({
+  showTitle = true,
+}: PrincipalAutomationProjectsListPageProps) {
   const { principalId } = useParams<{ principalId: string }>();
   const { data, isLoading } = useRuleProjects();
   const createMutation = useCreateRuleProject();

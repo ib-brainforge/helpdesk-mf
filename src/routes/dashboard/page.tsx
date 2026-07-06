@@ -5,7 +5,13 @@ import type {
   PriorityBreakdownDto,
   StatusBreakdownDto,
 } from '@/types';
-import { BaseButton, Box, DonutChart, Icon, PageSpinner } from '@brainforgeau/components';
+import {
+  BaseButton,
+  Box,
+  DonutChart,
+  Icon,
+  PageSpinner,
+} from '@brainforgeau/components';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
@@ -97,14 +103,17 @@ function HelpdeskDashboardPage() {
     const option = RANGE_OPTIONS.find(o => o.key === selectedRange);
     const days = option?.days ?? 30;
     const end = new Date().toISOString();
-    const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const start = new Date(
+      Date.now() - days * 24 * 60 * 60 * 1000,
+    ).toISOString();
     return { startDate: start, endDate: end };
   }, [selectedRange]);
 
-  const { data: summaryData, isLoading, error } = useTicketSummaryReport(
-    startDate,
-    endDate,
-  );
+  const {
+    data: summaryData,
+    isLoading,
+    error,
+  } = useTicketSummaryReport(startDate, endDate);
 
   if (isLoading) {
     return <PageSpinner title="Loading dashboard..." />;

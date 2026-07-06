@@ -196,15 +196,36 @@ function NewTicketPage() {
               isInvalid={field.state.meta.errors.length > 0}
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
-              <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+              <BaseSelectItem
+                key={TicketPriority.Critical}
+                value={TicketPriority.Critical}
+              >
                 Critical
               </BaseSelectItem>
-              <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
-              <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>
+              <BaseSelectItem
+                key={TicketPriority.High}
+                value={TicketPriority.High}
+              >
+                High
+              </BaseSelectItem>
+              <BaseSelectItem
+                key={TicketPriority.Normal}
+                value={TicketPriority.Normal}
+              >
                 Normal
               </BaseSelectItem>
-              <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
-              <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
+              <BaseSelectItem
+                key={TicketPriority.Low}
+                value={TicketPriority.Low}
+              >
+                Low
+              </BaseSelectItem>
+              <BaseSelectItem
+                key={TicketPriority.None}
+                value={TicketPriority.None}
+              >
+                None
+              </BaseSelectItem>
             </BaseSelect>
           )}
         </f.Field>
@@ -309,7 +330,11 @@ function NewTicketPage() {
               }}
             >
               {usersOptions.map(user => (
-                <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
+                <BaseAutocompleteItem
+                  key={user.id}
+                  id={user.id}
+                  textValue={user.name}
+                >
                   <div className="flex items-center gap-2.5">
                     <BaseAvatar
                       src={user.avatarUrl}

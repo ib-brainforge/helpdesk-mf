@@ -29,9 +29,7 @@
   },
   "packageManager": "pnpm@9.15.0",
   "lint-staged": {
-    "*.{jsonc}": [
-      "biome check --files-ignore-unknown=true"
-    ]
+    "*.{jsonc}": ["biome check --files-ignore-unknown=true"]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
@@ -76,16 +74,13 @@
     "dompurify": "^3.3.1",
     "exceljs": "^4.4.0",
     "framer-motion": "12.23.12",
-    "graphql": "^16.11.0",
     "jotai": "2.13.1",
     "jotai-tanstack-query": "^0.11.0",
-    "jotai-urql": "^0.7.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-error-boundary": "^6.0.0",
     "react-oidc-context": "3.3.0",
     "recharts": "^2.15.4",
-    "urql": "^5.0.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -112,9 +107,6 @@
     "simple-git-hooks": "^2.11.1",
     "tailwindcss": "^4.3.0",
     "typescript": "~5.7.3"
-  },
-  "overrides": {
-    "@internationalized/date": "3.10.0"
   },
   "pnpm": {
     "overrides": {

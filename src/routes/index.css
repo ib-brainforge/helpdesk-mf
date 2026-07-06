@@ -114,7 +114,7 @@
    coloured borders (green/blue/purple/red) that must remain visible. */
 .dark .react-flow__node > div {
   background: #27272a !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
 }
 /* Node header rows keep their category-coloured pastel background (the light
    tint becomes a distinctive accent on dark). Only override border separators

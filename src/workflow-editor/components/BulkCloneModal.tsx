@@ -54,7 +54,8 @@ export function BulkCloneModal({
       onClose();
       if (err?.partialResult) {
         toast('Cloned (content copy incomplete)', {
-          description: 'The workflow was created but states could not be copied. You can manually rebuild it.',
+          description:
+            'The workflow was created but states could not be copied. You can manually rebuild it.',
           variant: 'warning',
         });
         navigate(getDetailUrl(err.partialResult.id));

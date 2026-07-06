@@ -22,16 +22,12 @@ const runtimeConfig = store.get(configAtom) as RuntimeConfig | undefined;
 const helpdeskBaseUrl = runtimeConfig?.api?.baseUrl ?? '';
 
 // Module-scoped client — persists across renders, survives HMR navigation.
-// USE_REAL_CLIENT=true → real WorkflowsApi backed by authorizedAxios.
-// USE_REAL_CLIENT=false → in-memory mock (set in clientSwitch.ts).
-const workflowApiClient = buildWorkflowApiClient(
-  helpdeskBaseUrl
-    ? {
-        configuration: new Configuration({ basePath: helpdeskBaseUrl }),
-        axios: authorizedAxios,
-      }
-    : undefined,
-);
+// Real WorkflowsApi backed by authorizedAxios; basePath defaults to '' when the
+// runtime config hasn't resolved yet (matches other API clients in this app).
+const workflowApiClient = buildWorkflowApiClient({
+  configuration: new Configuration({ basePath: helpdeskBaseUrl }),
+  axios: authorizedAxios,
+});
 
 export function Providers({
   children,

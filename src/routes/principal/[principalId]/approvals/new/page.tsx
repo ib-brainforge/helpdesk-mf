@@ -134,7 +134,9 @@ function PrincipalApprovalWorkflowNewPage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {Object.entries(APPROVAL_MODE_LABELS).map(([value, label]) => (
-                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
+                <BaseSelectItem key={value} value={value}>
+                  {label}
+                </BaseSelectItem>
               ))}
             </BaseSelect>
           )}

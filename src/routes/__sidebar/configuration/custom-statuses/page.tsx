@@ -73,7 +73,7 @@ function CustomStatusesPage() {
         });
       }
     },
-    [confirm, deleteMutation]
+    [confirm, deleteMutation],
   );
 
   const columns = useMemo(
@@ -163,13 +163,13 @@ function CustomStatusesPage() {
         size: 80,
       }),
     ],
-    [handleEdit, handleDeleteRequest]
+    [handleEdit, handleDeleteRequest],
   );
 
   const table = useReactTable({
     data: customStatuses,
     columns,
-    getRowId: (row) => row.id,
+    getRowId: row => row.id,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });

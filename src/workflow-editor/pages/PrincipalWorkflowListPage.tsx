@@ -47,7 +47,9 @@ interface PrincipalWorkflowListPageProps {
   showTitle?: boolean;
 }
 
-export function PrincipalWorkflowListPage({ showTitle = true }: PrincipalWorkflowListPageProps) {
+export function PrincipalWorkflowListPage({
+  showTitle = true,
+}: PrincipalWorkflowListPageProps) {
   const { principalId } = useParams<{ principalId: string }>();
   const { data, isLoading } = usePrincipalWorkflowList(principalId ?? '');
   const createMutation = useCreatePrincipalDefinition();
@@ -99,7 +101,7 @@ export function PrincipalWorkflowListPage({ showTitle = true }: PrincipalWorkflo
           onSuccess: () => {
             toast('Workflow deleted', { variant: 'success' });
           },
-          onError: (err) => {
+          onError: err => {
             logger.captureError(
               err instanceof Error ? err : new Error(String(err)),
               { context: 'principal_workflow_list_delete_failed' },

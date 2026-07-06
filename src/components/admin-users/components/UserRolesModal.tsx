@@ -45,7 +45,7 @@ export function UserRolesModal({
   const assignMutation = useAssignUserRole();
   const unassignMutation = useUnassignUserRole();
 
-  const currentRoles = new Set((roles ?? []).map((r) => r.roleName));
+  const currentRoles = new Set((roles ?? []).map(r => r.roleName));
 
   const handleToggle = async (role: HelpdeskRole) => {
     try {
@@ -92,7 +92,7 @@ export function UserRolesModal({
             </div>
           ) : (
             <div className="space-y-2">
-              {HELPDESK_ROLES.map((role) => {
+              {HELPDESK_ROLES.map(role => {
                 const isAssigned = currentRoles.has(role);
                 return (
                   <div

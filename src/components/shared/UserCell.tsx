@@ -17,7 +17,12 @@ export const UserCell: React.FC<UserCellProps> = ({
 
   return (
     <div className="flex items-center gap-2">
-      <BaseAvatar src={userInfo?.avatarUrl} name={displayName} size="sm" className="flex-shrink-0" />
+      <BaseAvatar
+        src={userInfo?.avatarUrl}
+        name={displayName}
+        size="sm"
+        className="flex-shrink-0"
+      />
       <div className="flex flex-col leading-tight">
         <span className="text-sm font-medium text-foreground">
           {displayName}

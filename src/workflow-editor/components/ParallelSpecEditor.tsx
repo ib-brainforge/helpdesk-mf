@@ -88,7 +88,9 @@ export function ParallelSpecEditor({
         placeholder="Select join state"
       >
         {availableStates.map(s => (
-          <BaseSelectItem key={s.id} value={s.id}>{s.name}</BaseSelectItem>
+          <BaseSelectItem key={s.id} value={s.id}>
+            {s.name}
+          </BaseSelectItem>
         ))}
       </BaseSelect>
 

@@ -36,7 +36,7 @@ function IntegrationsPage() {
 
   const openEdit = (integration: IntegrationConfigDto) => {
     const provider = INTEGRATION_PROVIDERS.find(
-      (p) => p.type === integration.type
+      p => p.type === integration.type,
     );
     if (!provider) return;
     setEditingIntegration(integration);
@@ -72,7 +72,7 @@ function IntegrationsPage() {
       acc[i.type].push(i);
       return acc;
     },
-    {}
+    {},
   );
 
   return (
@@ -98,7 +98,7 @@ function IntegrationsPage() {
         </div>
       ) : (
         <div className="grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-2">
-          {INTEGRATION_PROVIDERS.map((provider) => {
+          {INTEGRATION_PROVIDERS.map(provider => {
             const instances = byType[provider.type] ?? [];
             return (
               <BaseCard key={provider.type}>
@@ -133,7 +133,7 @@ function IntegrationsPage() {
                 {/* Existing instances */}
                 {instances.length > 0 && (
                   <ul className="border-default-100 dark:border-default-700 mt-3 space-y-2 border-t pt-3">
-                    {instances.map((instance) => (
+                    {instances.map(instance => (
                       <li
                         key={instance.id}
                         className="bg-default-50 dark:bg-default-100/10 flex items-center justify-between rounded-lg px-3 py-2"

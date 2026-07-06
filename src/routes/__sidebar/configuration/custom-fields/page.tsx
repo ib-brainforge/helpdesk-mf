@@ -50,11 +50,11 @@ function CustomFieldsPage() {
   })();
   const setSelectedTab = (key: CustomFieldTabType) => {
     setSearchParams(
-      (prev) => {
+      prev => {
         prev.set('tab', key);
         return prev;
       },
-      { replace: true }
+      { replace: true },
     );
   };
   const { items, totalCount, pagination, setPagination, isLoading, refetch } =
@@ -81,18 +81,18 @@ function CustomFieldsPage() {
 
   const handleEdit = useCallback(
     (fieldId: string) => {
-      const field = items.find((item) => item.id === fieldId);
+      const field = items.find(item => item.id === fieldId);
       if (field) {
         setEditingField(field);
         setIsEditorModalOpen(true);
       }
     },
-    [items]
+    [items],
   );
 
   const handleDelete = useCallback(
     async (fieldId: string) => {
-      const field = items.find((item) => item.id === fieldId);
+      const field = items.find(item => item.id === fieldId);
       const ok = await confirm({
         title: 'Delete Custom Field',
         body: `Delete "${field?.name ?? 'this field'}"? This cannot be undone.`,
@@ -102,7 +102,7 @@ function CustomFieldsPage() {
       if (!ok) return;
       deleteMutation.mutate(fieldId);
     },
-    [confirm, deleteMutation, items]
+    [confirm, deleteMutation, items],
   );
 
   const handleCreate = () => {
@@ -118,7 +118,7 @@ function CustomFieldsPage() {
   const columns = useMemo(
     () =>
       createCustomFieldsColumns({ onEdit: handleEdit, onDelete: handleDelete }),
-    [handleEdit, handleDelete]
+    [handleEdit, handleDelete],
   );
 
   const { table } = useCustomFieldsTable({
@@ -132,7 +132,7 @@ function CustomFieldsPage() {
 
   const sidebar = (
     <nav className="border-light min-h-full space-y-1 border-r pr-6">
-      {(Object.keys(TAB_LABELS) as CustomFieldTabType[]).map((key) => (
+      {(Object.keys(TAB_LABELS) as CustomFieldTabType[]).map(key => (
         <button
           key={key}
           type="button"

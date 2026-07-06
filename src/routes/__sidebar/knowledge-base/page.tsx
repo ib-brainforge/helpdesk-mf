@@ -57,7 +57,10 @@ function KnowledgeBasePage() {
             </DropdownTrigger>
             <DropdownPopover>
               <DropdownMenu aria-label="Knowledge base actions">
-                <DropdownItem key="import" onPress={() => setIsImportOpen(true)}>
+                <DropdownItem
+                  key="import"
+                  onPress={() => setIsImportOpen(true)}
+                >
                   Import
                 </DropdownItem>
                 <DropdownItem

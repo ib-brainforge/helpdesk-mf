@@ -41,8 +41,8 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
   const activeCustomStatuses = useMemo(
-    () => customStatuses.filter((s) => s.isActive),
-    [customStatuses]
+    () => customStatuses.filter(s => s.isActive),
+    [customStatuses],
   );
 
   // Custom-status option values are prefixed so they can be told apart from
@@ -73,12 +73,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   // Map data to options
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
-    [usersData]
+    [usersData],
   );
 
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
-    [categoriesData]
+    [categoriesData],
   );
 
   const handleStatusChange = useCallback(
@@ -87,11 +87,11 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       // prefixed custom-status ids. Built-in values route to `status`,
       // custom ids route to `customStatusId`.
       const builtInStatuses = value.filter(
-        (v) => !v.startsWith(CUSTOM_STATUS_PREFIX)
+        v => !v.startsWith(CUSTOM_STATUS_PREFIX),
       );
       const customStatusIds = value
-        .filter((v) => v.startsWith(CUSTOM_STATUS_PREFIX))
-        .map((v) => v.slice(CUSTOM_STATUS_PREFIX.length));
+        .filter(v => v.startsWith(CUSTOM_STATUS_PREFIX))
+        .map(v => v.slice(CUSTOM_STATUS_PREFIX.length));
 
       onFiltersChange({
         ...filters,
@@ -99,7 +99,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         customStatusId: customStatusIds[0],
       });
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   const handlePriorityChange = useCallback(
@@ -109,7 +109,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         priority: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   const handleCategoryChange = useCallback(
@@ -119,7 +119,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         categoryId: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   const handleAssigneeChange = useCallback(
@@ -129,7 +129,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         assigneeId: value.length > 0 ? value : undefined,
       });
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   const handleClearFilters = useCallback(() => {
@@ -145,7 +145,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           type="text"
           placeholder="Search tickets..."
           value={searchTerm}
-          onChange={(e) => onSearch(e.target.value)}
+          onChange={e => onSearch(e.target.value)}
           startContent={
             <Icon name="search" className="h-4 w-4 text-default-400" />
           }
@@ -158,7 +158,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           placeholder="Filter by status"
           classNames={{ base: 'w-full [&_svg]:my-0' }}
           value={[
-            ...(filters.status?.map((s) => s.toString()) ?? []),
+            ...(filters.status?.map(s => s.toString()) ?? []),
             ...(filters.customStatusId
               ? [`${CUSTOM_STATUS_PREFIX}${filters.customStatusId}`]
               : []),
@@ -166,10 +166,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onValueChange={handleStatusChange}
         >
           {[
-            <BaseTagSelectItem
-              key={TicketStatus.New}
-              value={TicketStatus.New}
-            >
+            <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>
               New
             </BaseTagSelectItem>,
             <BaseTagSelectItem
@@ -184,7 +181,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             >
               Closed
             </BaseTagSelectItem>,
-            ...activeCustomStatuses.map((cs) => (
+            ...activeCustomStatuses.map(cs => (
               <BaseTagSelectItem
                 key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
                 value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
@@ -201,7 +198,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           label="Priority"
           placeholder="Filter by priority"
           classNames={{ base: 'w-full [&_svg]:my-0' }}
-          value={filters.priority?.map((p) => p.toString()) ?? []}
+          value={filters.priority?.map(p => p.toString()) ?? []}
           onValueChange={handlePriorityChange}
         >
           <BaseTagSelectItem
@@ -244,7 +241,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           className="w-full"
           isClearable
           selectedKey={filters.categoryId?.[0] ?? null}
-          onSelectionChange={(key) => {
+          onSelectionChange={key => {
             const newKey = key as string | null;
             handleCategoryChange(newKey ? [newKey] : []);
           }}
@@ -252,16 +249,14 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onValueChange={(value: string) => {
             searchCategories({ query: value });
           }}
-          onOpenChange={(open) => {
+          onOpenChange={open => {
             if (open && !isSearchingCategories) {
               searchCategories({ query: '' });
             }
           }}
           isLoading={isSearchingCategories}
-          renderSelectedItem={(selectedKey) => {
-            const category = categoriesOptions.find(
-              (c) => c.id === selectedKey
-            );
+          renderSelectedItem={selectedKey => {
+            const category = categoriesOptions.find(c => c.id === selectedKey);
             if (!category) return null;
             return (
               <span className="truncate text-xs font-medium">
@@ -272,7 +267,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             );
           }}
         >
-          {categoriesOptions.map((category) => (
+          {categoriesOptions.map(category => (
             <BaseAutocompleteItem
               key={category.id}
               id={category.id}
@@ -304,7 +299,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           className="w-full"
           isClearable
           selectedKey={filters.assigneeId?.[0] ?? null}
-          onSelectionChange={(key) => {
+          onSelectionChange={key => {
             const newKey = key as string | null;
             handleAssigneeChange(newKey ? [newKey] : []);
           }}
@@ -312,14 +307,14 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onValueChange={(value: string) => {
             searchUsers({ query: value });
           }}
-          onOpenChange={(open) => {
+          onOpenChange={open => {
             if (open && !isSearchingUsers) {
               searchUsers({ query: '' });
             }
           }}
           isLoading={isSearchingUsers}
-          renderSelectedItem={(selectedKey) => {
-            const user = usersOptions.find((u) => u.id === selectedKey);
+          renderSelectedItem={selectedKey => {
+            const user = usersOptions.find(u => u.id === selectedKey);
             if (!user) return null;
             return (
               <div className="flex w-full min-w-0 flex-1 items-center gap-2">
@@ -331,7 +326,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             );
           }}
         >
-          {usersOptions.map((user) => (
+          {usersOptions.map(user => (
             <BaseAutocompleteItem
               key={user.id}
               id={user.id}

@@ -180,10 +180,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           >
             Canned Response
           </BaseButton>
-          <BaseToggle
-            isSelected={isInternalNote}
-            onChange={setIsInternalNote}
-          >
+          <BaseToggle isSelected={isInternalNote} onChange={setIsInternalNote}>
             Internal Note
           </BaseToggle>
         </div>
@@ -318,9 +315,12 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
                 navigator.platform for browsers that don't support it (Firefox, Safari).
                 Both return a string containing "Mac" on macOS. */}
             {typeof navigator !== 'undefined' &&
-            (/mac/i).test(
-              (navigator as Navigator & { userAgentData?: { platform?: string } })
-                .userAgentData?.platform ?? navigator.platform
+            /mac/i.test(
+              (
+                navigator as Navigator & {
+                  userAgentData?: { platform?: string };
+                }
+              ).userAgentData?.platform ?? navigator.platform,
             )
               ? 'Cmd+Enter'
               : 'Ctrl+Enter'}

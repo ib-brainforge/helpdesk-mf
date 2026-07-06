@@ -46,7 +46,7 @@ function KnowledgeBaseSearchPage() {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbArticlesSearchGet(
         searchTerm,
-        selectedCategory ? Number(selectedCategory) : undefined
+        selectedCategory ? Number(selectedCategory) : undefined,
       );
       return response.data;
     },
@@ -76,7 +76,7 @@ function KnowledgeBaseSearchPage() {
         <BaseInput
           placeholder="Search articles..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
           className="flex-1"
           autoFocus
@@ -84,13 +84,13 @@ function KnowledgeBaseSearchPage() {
         <BaseSelect
           placeholder="All Categories"
           selectedKey={selectedCategory ? selectedCategory : null}
-          onSelectionChange={(keys) => {
+          onSelectionChange={keys => {
             const key = keys as string;
             setSelectedCategory(key || '');
           }}
           className="w-64"
         >
-          {categories?.map((cat) => (
+          {categories?.map(cat => (
             <BaseSelectItem key={cat.id} value={cat.id}>
               {cat.name}
             </BaseSelectItem>

@@ -43,9 +43,7 @@ function isReactFlowNode(n: Record<string, unknown>): boolean {
   );
 }
 
-function normaliseContentSnapshot(
-  raw: unknown,
-): RuleGraphContent | null {
+function normaliseContentSnapshot(raw: unknown): RuleGraphContent | null {
   if (!raw || typeof raw !== 'object') return null;
   const content = raw as Record<string, unknown>;
   const rawNodes = content.nodes as Record<string, unknown>[] | undefined;
@@ -59,7 +57,7 @@ function normaliseContentSnapshot(
   }
 
   // Convert ReactFlow-native nodes → RuleNodeDto
-  const nodes = rawNodes.map((n) => {
+  const nodes = rawNodes.map(n => {
     if (!isReactFlowNode(n)) return n;
     const pos = n.position as { x: number; y: number };
     const data = (n.data ?? {}) as Record<string, unknown>;
@@ -73,12 +71,22 @@ function normaliseContentSnapshot(
     return {
       id: n.id,
       type: n.type,
-      name: (data.label as string) ?? (n.type === 'inputNode' ? 'Request' : n.type === 'outputNode' ? 'Response' : n.type === 'switchNode' ? 'Switch' : n.type === 'actionNode' ? 'Action' : 'Node'),
+      name:
+        (data.label as string) ??
+        (n.type === 'inputNode'
+          ? 'Request'
+          : n.type === 'outputNode'
+            ? 'Response'
+            : n.type === 'switchNode'
+              ? 'Switch'
+              : n.type === 'actionNode'
+                ? 'Action'
+                : 'Node'),
       positionX: pos.x ?? 0,
       positionY: pos.y ?? 0,
       hitPolicy: (data.hitPolicy as string) ?? null,
       switchConditions: conditions
-        ? conditions.map((c) => ({
+        ? conditions.map(c => ({
             conditionId: c.id,
             expression: c.expression,
             sortOrder: c.sortOrder,

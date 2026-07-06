@@ -76,8 +76,8 @@ function CustomPrioritiesPage() {
               label="Priority Name"
               placeholder="Enter priority name..."
               value={priorityName}
-              onChange={(e) => setPriorityName(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setPriorityName(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === 'Enter') {
                   handleAdd();
                 }

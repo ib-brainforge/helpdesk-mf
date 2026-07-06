@@ -38,7 +38,24 @@
         "useNodejsImportProtocol": "warn",
         "noUnusedTemplateLiteral": "warn",
         "noUselessElse": "warn",
-        "useTemplate": "warn"
+        "useTemplate": "warn",
+        "noRestrictedGlobals": {
+          "level": "error",
+          "options": {
+            "deniedGlobals": ["fetch"]
+          }
+        }
+      },
+
+      "nursery": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "axios": "Import authorizedAxios from '@/state/authorizedAxios' (or use a generated @brainforgeau/*-client such as createHelpdeskApiClient). Raw axios is banned (Hard Gate #3, raw-fetch sweep 2026-07-06)."
+            }
+          }
+        }
       },
 
       "correctness": {
@@ -80,6 +97,21 @@
       }
     }
   },
+  "overrides": [
+    {
+      "include": ["src/state/authorizedAxios.ts", "src/utils/*ApiClient.ts"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": "off"
+          },
+          "style": {
+            "noRestrictedGlobals": "off"
+          }
+        }
+      }
+    }
+  ],
   "organizeImports": {
     "enabled": true
   },

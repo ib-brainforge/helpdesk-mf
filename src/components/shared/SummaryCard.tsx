@@ -73,7 +73,7 @@ export const SummaryCard = memo<SummaryCardProps>(
         </div>
       </BaseCard>
     );
-  }
+  },
 );
 
 SummaryCard.displayName = 'SummaryCard';

@@ -199,10 +199,7 @@ export function AiAssistantModal({
               <BaseCard className="hover:border-primary transition-colors">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
-                    <Icon
-                      name="chat"
-                      className="text-primary h-6 w-6"
-                    />
+                    <Icon name="chat" className="text-primary h-6 w-6" />
                   </div>
                   <div>
                     <h3 className="mb-0.5 text-sm font-semibold">
@@ -226,10 +223,7 @@ export function AiAssistantModal({
               <BaseCard className="hover:border-primary transition-colors">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
-                    <Icon
-                      name="doc"
-                      className="text-primary h-6 w-6"
-                    />
+                    <Icon name="doc" className="text-primary h-6 w-6" />
                   </div>
                   <div>
                     <h3 className="mb-0.5 text-sm font-semibold">
@@ -252,7 +246,10 @@ export function AiAssistantModal({
               <BaseCard className="hover:border-primary transition-colors">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
-                    <Icon name="SparklesIcon" className="text-primary h-6 w-6" />
+                    <Icon
+                      name="SparklesIcon"
+                      className="text-primary h-6 w-6"
+                    />
                   </div>
                   <div>
                     <h3 className="mb-0.5 text-sm font-semibold">
@@ -275,7 +272,10 @@ export function AiAssistantModal({
               <BaseCard className="hover:border-primary transition-colors">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
-                    <Icon name="BookOpenIcon" className="text-primary h-6 w-6" />
+                    <Icon
+                      name="BookOpenIcon"
+                      className="text-primary h-6 w-6"
+                    />
                   </div>
                   <div>
                     <h3 className="mb-0.5 text-sm font-semibold">
@@ -299,10 +299,7 @@ export function AiAssistantModal({
             <BaseCard className="hover:border-primary mt-3 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="bg-primary-50 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
-                  <Icon
-                    name="comment"
-                    className="text-primary h-6 w-6"
-                  />
+                  <Icon name="comment" className="text-primary h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="mb-0.5 text-sm font-semibold">

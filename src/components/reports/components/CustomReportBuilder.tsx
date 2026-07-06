@@ -155,10 +155,12 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
               value={selectedStatuses}
               onValueChange={setSelectedStatuses}
               placeholder="All statuses"
-              classNames={{ base: "w-full" }}
+              classNames={{ base: 'w-full' }}
             >
               {STATUS_OPTIONS.map(opt => (
-                <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
+                <BaseTagSelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </BaseTagSelectItem>
               ))}
             </BaseTagSelect>
           </div>
@@ -172,10 +174,12 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
               value={selectedPriorities}
               onValueChange={setSelectedPriorities}
               placeholder="All priorities"
-              classNames={{ base: "w-full" }}
+              classNames={{ base: 'w-full' }}
             >
               {PRIORITY_OPTIONS.map(opt => (
-                <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
+                <BaseTagSelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </BaseTagSelectItem>
               ))}
             </BaseTagSelect>
           </div>

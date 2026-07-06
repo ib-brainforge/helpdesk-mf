@@ -265,7 +265,10 @@ export const createTicketColumns = (
                 key="status-closed"
                 onPress={() => {
                   if (options.onChangeStatus && row.original.id) {
-                    options.onChangeStatus(row.original.id, TicketStatus.Closed);
+                    options.onChangeStatus(
+                      row.original.id,
+                      TicketStatus.Closed,
+                    );
                   }
                 }}
               >

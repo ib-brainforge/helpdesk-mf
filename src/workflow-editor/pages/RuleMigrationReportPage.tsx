@@ -27,7 +27,7 @@ export function RuleMigrationReportPage() {
       const r = await apply.mutateAsync(true);
       toast(
         `Dry run complete: ${r.rulesScanned} rule(s) scanned, ${r.conditionsMigrated} condition(s) + ${r.actionsMigrated} action(s) would be migrated`,
-        { variant: 'success' }
+        { variant: 'success' },
       );
     } catch (err) {
       if (err instanceof Error) {
@@ -47,7 +47,7 @@ export function RuleMigrationReportPage() {
       const r = await apply.mutateAsync(false);
       toast(
         `Migration applied: ${r.conditionsMigrated} condition(s) and ${r.actionsMigrated} action(s) migrated`,
-        { variant: 'success' }
+        { variant: 'success' },
       );
     } catch (err) {
       if (err instanceof Error) {
@@ -132,7 +132,7 @@ export function RuleMigrationReportPage() {
 
       {/* Rule list */}
       <div className="space-y-2">
-        {data?.map((r) => (
+        {data?.map(r => (
           <BaseCard key={r.ruleId}>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -149,7 +149,7 @@ export function RuleMigrationReportPage() {
                       {r.statusConditionCount !== 1 ? 's' : ''}
                     </Chip>
                   )}
-                  {r.mutatingActionTypes.map((t) => (
+                  {r.mutatingActionTypes.map(t => (
                     <Chip key={t} size="sm" color="danger">
                       {t}
                     </Chip>
@@ -169,7 +169,7 @@ export function RuleMigrationReportPage() {
       {/* Apply Migration confirm modal */}
       <ConfirmActionModal
         isOpen={applyConfirmOpen}
-        onOpenChange={(open) => !open && setApplyConfirmOpen(false)}
+        onOpenChange={open => !open && setApplyConfirmOpen(false)}
         title="Apply legacy rule migration?"
         description={`This will convert ${data?.length ?? 0} legacy rule(s) to workflow-aware types. The change is irreversible.`}
         confirmLabel="Apply"

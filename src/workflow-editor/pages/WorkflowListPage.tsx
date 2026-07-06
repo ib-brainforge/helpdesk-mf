@@ -85,7 +85,7 @@ export function WorkflowListPage() {
         onSuccess: () => {
           toast('Workflow deleted', { variant: 'success' });
         },
-        onError: (err) => {
+        onError: err => {
           logger.captureError(
             err instanceof Error ? err : new Error(String(err)),
             { context: 'workflow_list_delete_failed' },

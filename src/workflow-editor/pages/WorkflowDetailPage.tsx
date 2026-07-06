@@ -109,8 +109,9 @@ export function WorkflowDetailPage() {
       } else {
         logger.error('workflow_detail_save_failed');
       }
-      const axiosData = (err as { response?: { data?: Record<string, unknown> } })
-        .response?.data;
+      const axiosData = (
+        err as { response?: { data?: Record<string, unknown> } }
+      ).response?.data;
       const detail =
         (axiosData?.detail as string) ??
         (axiosData?.title as string) ??
@@ -147,7 +148,7 @@ export function WorkflowDetailPage() {
 
   function handleCanvasChange(
     nextStates: WorkflowStateDto[],
-    nextTransitions: WorkflowTransitionDto[]
+    nextTransitions: WorkflowTransitionDto[],
   ) {
     setStates(nextStates);
     setTransitions(nextTransitions);
@@ -158,19 +159,19 @@ export function WorkflowDetailPage() {
     newStateData: Omit<WorkflowStateDto, 'id'> & {
       positionX: number;
       positionY: number;
-    }
+    },
   ) {
     const fullState: WorkflowStateDto = {
       ...newStateData,
       id: crypto.randomUUID(),
     };
-    setStates((prev) => [...prev, fullState]);
+    setStates(prev => [...prev, fullState]);
     setDirty(true);
   }
 
   const reversedVersions = useMemo(
     () => (data ? [...data.versions].reverse() : []),
-    [data]
+    [data],
   );
 
   if (isLoading) {
@@ -255,7 +256,7 @@ export function WorkflowDetailPage() {
               size="sm"
               variant="bordered"
               color={showPalette ? 'primary' : undefined}
-              onPress={() => setShowPalette((p) => !p)}
+              onPress={() => setShowPalette(p => !p)}
             >
               Components
             </BaseButton>
@@ -263,7 +264,7 @@ export function WorkflowDetailPage() {
           <BaseButton
             size="sm"
             variant="bordered"
-            onPress={() => setShowVersionsSidebar((prev) => !prev)}
+            onPress={() => setShowVersionsSidebar(prev => !prev)}
           >
             Versions
           </BaseButton>
@@ -305,7 +306,7 @@ export function WorkflowDetailPage() {
               onOpenChange={setCloneOpen}
               sourceDefinitionId={id}
               sourceDefinitionName={data.name}
-              getDetailUrl={(newId) => `/configuration/workflows/${newId}`}
+              getDetailUrl={newId => `/configuration/workflows/${newId}`}
             />
           )}
         </div>
@@ -365,7 +366,7 @@ export function WorkflowDetailPage() {
                       States
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {activeVersion.states.map((s) => (
+                      {activeVersion.states.map(s => (
                         <Chip key={s.id} size="sm">
                           {s.name}
                         </Chip>
@@ -382,7 +383,7 @@ export function WorkflowDetailPage() {
                       </h3>
                     </div>
                     <ul className="divide-default-100 divide-y px-2 pb-2">
-                      {reversedVersions.map((v) => (
+                      {reversedVersions.map(v => (
                         <li
                           key={v.id}
                           className="flex items-center gap-3 py-2.5"
@@ -421,7 +422,7 @@ export function WorkflowDetailPage() {
           onOpenChange={setCloneOpen}
           sourceDefinitionId={id}
           sourceDefinitionName={data.name}
-          getDetailUrl={(newId) => `/configuration/workflows/${newId}`}
+          getDetailUrl={newId => `/configuration/workflows/${newId}`}
         />
       )}
     </div>

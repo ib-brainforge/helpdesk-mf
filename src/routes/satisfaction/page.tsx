@@ -167,7 +167,7 @@ function SatisfactionSurveyPage() {
                 label="Additional Comments (Optional)"
                 placeholder="Tell us more about your experience..."
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={e => setComment(e.target.value)}
                 minRows={4}
                 maxRows={8}
               />

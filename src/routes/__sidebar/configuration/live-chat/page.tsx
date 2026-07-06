@@ -34,7 +34,7 @@ const DAY_LABELS: Record<BusinessHoursDay, string> = {
 };
 
 function parseBusinessHours(
-  json: string | null | undefined
+  json: string | null | undefined,
 ): BusinessHoursJson {
   if (!json) return {};
   try {
@@ -50,7 +50,7 @@ function isValidHex(value: string): boolean {
 }
 
 function serializeBusinessHours(hours: BusinessHoursJson): string | null {
-  const hasAnyEnabled = Object.values(hours).some((d) => d?.enabled);
+  const hasAnyEnabled = Object.values(hours).some(d => d?.enabled);
   const hasAnyDay = Object.keys(hours).length > 0;
   if (!hasAnyDay || !hasAnyEnabled) return null;
   return JSON.stringify(hours);
@@ -92,20 +92,22 @@ function LiveChatForm({
   const [isEnabled, setIsEnabled] = useState(initialIsEnabled);
   const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor);
   const [greetingMessage, setGreetingMessage] = useState(
-    initialGreetingMessage
+    initialGreetingMessage,
   );
   const [businessHours, setBusinessHours] =
     useState<BusinessHoursJson>(initialBusinessHours);
   const [useBusinessHours, setUseBusinessHours] = useState(
-    initialUseBusinessHours
+    initialUseBusinessHours,
   );
   const [allowedDomains, setAllowedDomains] = useState<string[]>(
-    initialAllowedDomains
+    initialAllowedDomains,
   );
   const [newDomain, setNewDomain] = useState('');
   const [scriptCopied, setScriptCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [primaryColorError, setPrimaryColorError] = useState<string | null>(null);
+  const [primaryColorError, setPrimaryColorError] = useState<string | null>(
+    null,
+  );
 
   const handlePrimaryColorChange = (value: string) => {
     setPrimaryColor(value);
@@ -117,7 +119,7 @@ function LiveChatForm({
   };
 
   const handleDayToggle = (day: BusinessHoursDay, enabled: boolean) => {
-    setBusinessHours((prev) => ({
+    setBusinessHours(prev => ({
       ...prev,
       [day]: {
         ...(prev[day] ?? DEFAULT_DAY_CONFIG),
@@ -129,9 +131,9 @@ function LiveChatForm({
   const handleDayTime = (
     day: BusinessHoursDay,
     field: 'open' | 'close',
-    value: string
+    value: string,
   ) => {
-    setBusinessHours((prev) => ({
+    setBusinessHours(prev => ({
       ...prev,
       [day]: {
         ...(prev[day] ?? DEFAULT_DAY_CONFIG),
@@ -143,12 +145,12 @@ function LiveChatForm({
   const handleAddDomain = () => {
     const trimmed = newDomain.trim().toLowerCase();
     if (!trimmed || allowedDomains.includes(trimmed)) return;
-    setAllowedDomains((prev) => [...prev, trimmed]);
+    setAllowedDomains(prev => [...prev, trimmed]);
     setNewDomain('');
   };
 
   const handleRemoveDomain = (domain: string) => {
-    setAllowedDomains((prev) => prev.filter((d) => d !== domain));
+    setAllowedDomains(prev => prev.filter(d => d !== domain));
   };
 
   const handleSave = async () => {
@@ -182,7 +184,13 @@ function LiveChatForm({
       // REVIEW: Axios wraps the response under err.response.data; the backend
       // returns ProblemDetails with a 'detail' field for validation errors.
       const axiosErr = err as {
-        response?: { data?: { detail?: string; title?: string; errors?: Record<string, string[]> } };
+        response?: {
+          data?: {
+            detail?: string;
+            title?: string;
+            errors?: Record<string, string[]>;
+          };
+        };
         message?: string;
       };
       const serverDetail =
@@ -247,7 +255,7 @@ function LiveChatForm({
               id="live-chat-primary-color"
               type="color"
               value={isValidHex(primaryColor) ? primaryColor : '#1868db'}
-              onChange={(e) => handlePrimaryColorChange(e.target.value)}
+              onChange={e => handlePrimaryColorChange(e.target.value)}
               className="border-light h-10 w-10 cursor-pointer rounded border"
               disabled={!isEnabled}
             />
@@ -306,7 +314,7 @@ function LiveChatForm({
 
         {useBusinessHours && (
           <div className="space-y-3 pt-2">
-            {DAYS_OF_WEEK.map((day) => {
+            {DAYS_OF_WEEK.map(day => {
               const dayConfig: BusinessHoursDayConfig =
                 businessHours[day] ?? DEFAULT_DAY_CONFIG;
               return (
@@ -317,7 +325,7 @@ function LiveChatForm({
                   <div className="flex w-24 items-center gap-2">
                     <BaseToggle
                       isSelected={dayConfig.enabled}
-                      onChange={(val) => handleDayToggle(day, val)}
+                      onChange={val => handleDayToggle(day, val)}
                       isDisabled={!isEnabled}
                     />
                     <span className="text-sm">{DAY_LABELS[day]}</span>
@@ -326,9 +334,7 @@ function LiveChatForm({
                     <BaseInput
                       type="time"
                       value={dayConfig.open}
-                      onChange={(e) =>
-                        handleDayTime(day, 'open', e.target.value)
-                      }
+                      onChange={e => handleDayTime(day, 'open', e.target.value)}
                       isDisabled={!isEnabled || !dayConfig.enabled}
                       className="w-32"
                       size="sm"
@@ -337,7 +343,7 @@ function LiveChatForm({
                     <BaseInput
                       type="time"
                       value={dayConfig.close}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleDayTime(day, 'close', e.target.value)
                       }
                       isDisabled={!isEnabled || !dayConfig.enabled}
@@ -369,7 +375,7 @@ function LiveChatForm({
             placeholder="example.com"
             isDisabled={!isEnabled}
             className="flex-1"
-            onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+            onKeyDown={e => e.key === 'Enter' && handleAddDomain()}
           />
           <BaseButton
             size="sm"
@@ -383,7 +389,7 @@ function LiveChatForm({
 
         {allowedDomains.length > 0 && (
           <ul className="space-y-2">
-            {allowedDomains.map((domain) => (
+            {allowedDomains.map(domain => (
               <li
                 key={domain}
                 className="bg-default-50 border-light flex items-center justify-between rounded-lg border px-3 py-2"

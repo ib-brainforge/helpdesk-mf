@@ -119,7 +119,7 @@ function KnowledgeBaseArticlePage() {
 
           {article.tags.length > 0 && (
             <div className="mb-6 flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
+              {article.tags.map(tag => (
                 <TagChip key={tag} name={tag} />
               ))}
             </div>
@@ -149,7 +149,10 @@ function KnowledgeBaseArticlePage() {
                   variant="bordered"
                   onPress={() =>
                     article.id &&
-                    rateArticle.mutate({ articleId: article.id, isHelpful: true })
+                    rateArticle.mutate({
+                      articleId: article.id,
+                      isHelpful: true,
+                    })
                   }
                   isDisabled={rateArticle.isPending}
                   icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}

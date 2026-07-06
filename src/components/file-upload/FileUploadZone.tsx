@@ -24,7 +24,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const validateFiles = (
-    files: File[]
+    files: File[],
   ): { valid: File[]; errors: string[] } => {
     const valid: File[] = [];
     const errors: string[] = [];
@@ -32,14 +32,14 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
     for (const file of files) {
       if (file.size > maxFileSize) {
         errors.push(
-          `${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`
+          `${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`,
         );
         continue;
       }
 
       if (
         acceptedTypes.length > 0 &&
-        !acceptedTypes.some((type) => file.type.includes(type))
+        !acceptedTypes.some(type => file.type.includes(type))
       ) {
         errors.push(`${file.name} has an unsupported file type`);
         continue;
@@ -81,7 +81,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
         onFilesSelected(valid);
       }
     },
-    [onFilesSelected, maxFileSize, acceptedTypes]
+    [onFilesSelected, maxFileSize, acceptedTypes],
   );
 
   const handleFileInputChange = useCallback(
@@ -101,7 +101,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
       // Reset input
       e.target.value = '';
     },
-    [onFilesSelected, maxFileSize, acceptedTypes]
+    [onFilesSelected, maxFileSize, acceptedTypes],
   );
 
   const formatFileSize = (bytes: number) => {
@@ -153,13 +153,15 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
 
       {progress.length > 0 && (
         <div className="space-y-2">
-          {progress.map((file) => (
+          {progress.map(file => (
             <div key={file.fileName} className="rounded border p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="truncate text-sm font-medium">
                   {file.fileName}
                 </span>
-                <span className="text-xs text-default-500">{file.progress}%</span>
+                <span className="text-xs text-default-500">
+                  {file.progress}%
+                </span>
               </div>
               <ProgressBar
                 value={file.progress}
