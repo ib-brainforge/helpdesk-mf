@@ -18,6 +18,7 @@ export {
   type HelpdeskApplicationApprovalsDTOsTicketApprovalDto,
   type HelpdeskApplicationApprovalsDTOsPendingApprovalDto,
   type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowCommand,
+  type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand,
   type HelpdeskApplicationApprovalsCommandsRequestApprovalRequestApprovalCommand,
   type HelpdeskApplicationApprovalsCommandsMakeApprovalDecisionMakeApprovalDecisionCommand,
 } from '@brainforgeau/helpdesk-client';
