@@ -1,6 +1,7 @@
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 import { CustomFieldType } from '@/types/custom-field';
 import {
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -8,7 +9,6 @@ import {
   BaseTagSelectItem,
   BaseTextarea,
 } from '@brainforgeau/components';
-import { Checkbox } from '@heroui/react';
 import { useMemo } from 'react';
 
 // REVIEW: Value type for custom field changes
@@ -138,14 +138,14 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
 
       case CustomFieldType.Checkbox:
         return (
-          <Checkbox
+          <BaseCheckbox
             isSelected={value?.booleanValue ?? false}
-            onChange={checked => onChange({ booleanValue: checked })}
+            onValueChange={checked => onChange({ booleanValue: checked })}
             isDisabled={readOnly}
             isInvalid={!!error}
           >
             {field.name}
-          </Checkbox>
+          </BaseCheckbox>
         );
 
       case CustomFieldType.Dropdown:

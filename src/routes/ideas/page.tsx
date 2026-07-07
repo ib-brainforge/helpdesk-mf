@@ -17,7 +17,6 @@ import {
   useTimezone,
   withAuthenticationRequired,
 } from '@brainforgeau/security';
-import { Button } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useState } from 'react';
 

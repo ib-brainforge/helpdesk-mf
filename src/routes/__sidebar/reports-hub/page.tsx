@@ -1,8 +1,7 @@
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { Card, CardContent } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { NavLink } from '@modern-js/runtime/router';
 
 type ReportCardProps = {
@@ -178,26 +177,12 @@ function ReportsHubPage() {
   ];
 
   return (
-    <>
-      <Helmet>
-        <title>Reports - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Reports</h1>
-        <p className="text-default-500 mt-1">
+    <PageBody>
+      <PageHeader title="Reports" breadcrumbsKey="reports.hub">
+        <PageHeader.Meta>
           Analyze ticket metrics, team performance, and customer satisfaction
-        </p>
-      </div>
+        </PageHeader.Meta>
+      </PageHeader>
 
       <div className="space-y-8">
         {sections.map(section => (
@@ -213,7 +198,7 @@ function ReportsHubPage() {
           </div>
         ))}
       </div>
-    </>
+    </PageBody>
   );
 }
 
