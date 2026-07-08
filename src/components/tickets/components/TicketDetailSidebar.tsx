@@ -1,3 +1,4 @@
+import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
 import { StatusBadge } from '@/components/shared';
 import {
   useAddTagToTicket,
@@ -19,7 +20,6 @@ import {
   BaseTagSelectItem,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { useAtom } from 'jotai';
@@ -109,9 +109,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   onSubscribeToggle,
 }) => {
   const timezone = useTimezone();
-  const statusConfig = getStatusConfig(ticket.status as any);
-  const priorityConfig = getPriorityConfig(ticket.priority as any);
-  const originConfig = getOriginConfig((ticket as any).origin);
+  const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+  const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
+  const originConfig = getOriginConfig(ticket.origin ?? '');
 
   // Resolve requester / assignee names: prefer the names provided natively by
   // the generated client, falling back to identity enrichment by id (mirrors
@@ -202,7 +202,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     <div className="space-y-6">
       {/* Status */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Status
         </label>
         <PermissionGuard
@@ -222,13 +222,22 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketStatus.New.toString()} value={TicketStatus.New.toString()}>
+            <BaseSelectItem
+              key={TicketStatus.New.toString()}
+              value={TicketStatus.New.toString()}
+            >
               New
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.InProgress.toString()} value={TicketStatus.InProgress.toString()}>
+            <BaseSelectItem
+              key={TicketStatus.InProgress.toString()}
+              value={TicketStatus.InProgress.toString()}
+            >
               In Progress
             </BaseSelectItem>
-            <BaseSelectItem key={TicketStatus.Closed.toString()} value={TicketStatus.Closed.toString()}>
+            <BaseSelectItem
+              key={TicketStatus.Closed.toString()}
+              value={TicketStatus.Closed.toString()}
+            >
               Closed
             </BaseSelectItem>
           </BaseSelect>
@@ -237,7 +246,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
       {/* Priority */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Priority
         </label>
         <PermissionGuard
@@ -257,27 +266,45 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+            <BaseSelectItem
+              key={TicketPriority.Critical}
+              value={TicketPriority.Critical}
+            >
               Critical
             </BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>Normal</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
-            <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
+            <BaseSelectItem
+              key={TicketPriority.High}
+              value={TicketPriority.High}
+            >
+              High
+            </BaseSelectItem>
+            <BaseSelectItem
+              key={TicketPriority.Normal}
+              value={TicketPriority.Normal}
+            >
+              Normal
+            </BaseSelectItem>
+            <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>
+              Low
+            </BaseSelectItem>
+            <BaseSelectItem
+              key={TicketPriority.None}
+              value={TicketPriority.None}
+            >
+              None
+            </BaseSelectItem>
           </BaseSelect>
         </PermissionGuard>
       </div>
 
       {/* Assignee */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Assignee
         </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
-          fallback={
-            <p className="text-sm">{assigneeDisplayName}</p>
-          }
+          fallback={<p className="text-sm">{assigneeDisplayName}</p>}
         >
           <BaseAutocomplete
             placeholder="Search assignee..."
@@ -312,7 +339,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
           >
             {usersOptions.map(user => (
-              <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
+              <BaseAutocompleteItem
+                key={user.id}
+                id={user.id}
+                textValue={user.name}
+              >
                 <div className="flex items-center gap-2.5">
                   <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
                   <div className="flex-1">
@@ -334,7 +365,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
       {/* Category */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-default-700 mb-2">
           Category
         </label>
         <PermissionGuard
@@ -389,7 +420,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                     {category.name}
                   </span>
                   {category.sectionName && (
-                    <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                    <span className="text-[10px] text-[#8C8F97] dark:text-default-400">
                       {category.sectionName}
                     </span>
                   )}
@@ -403,7 +434,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       <div className="border-t pt-6">
         {/* Requester */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Requester
           </label>
           <p className="text-sm">{requesterDisplayName}</p>
@@ -411,7 +442,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Via (Origin) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Via
           </label>
           <StatusBadge color={originConfig.color}>
@@ -421,18 +452,16 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Time Spent */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Time Spent
           </label>
-          <p className="text-sm">
-            {formatTimeSpent((ticket as any).timeSpent)}
-          </p>
+          <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
         </div>
 
         {/* Due Date */}
         {ticket.dueDate && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Due Date
             </label>
             <p className="text-sm">
@@ -442,32 +471,32 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         )}
 
         {/* Started At */}
-        {(ticket as any).startedAtUtc && (
+        {ticket.startedAtUtc && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Started At
             </label>
             <p className="text-sm">
-              {formatDateTime((ticket as any).startedAtUtc, { timezone })}
+              {formatDateTime(ticket.startedAtUtc, { timezone })}
             </p>
           </div>
         )}
 
         {/* Closed At */}
-        {(ticket as any).closedAtUtc && (
+        {ticket.closedAtUtc && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Closed At
             </label>
             <p className="text-sm">
-              {formatDateTime((ticket as any).closedAtUtc, { timezone })}
+              {formatDateTime(ticket.closedAtUtc, { timezone })}
             </p>
           </div>
         )}
 
         {/* Created */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Created
           </label>
           <p className="text-sm">
@@ -477,7 +506,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
         {/* Updated */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Updated
           </label>
           <p className="text-sm">
@@ -488,7 +517,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Subscribers */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-default-700">
               Subscribers
             </label>
             {onSubscribeToggle && (
@@ -520,13 +549,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-default-500 mt-2">
                 {ticket.subscriberIds.length} subscriber
                 {ticket.subscriberIds.length !== 1 ? 's' : ''}
               </p>
             </>
           ) : (
-            <p className="text-xs text-gray-500 mt-1">No subscribers yet.</p>
+            <p className="text-xs text-default-500 mt-1">No subscribers yet.</p>
           )}
         </div>
 
@@ -537,7 +566,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             fallback={
               ticket.tags && ticket.tags.length > 0 ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-default-700 mb-2">
                     Tags
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -550,16 +579,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }
           >
             <div className={isUpdating ? 'pointer-events-none opacity-50' : ''}>
-            <BaseTagSelect
-              label="Tags"
-              placeholder="Select tags..."
-              value={ticketTags?.map(t => t.id) ?? []}
-              onValueChange={handleTagsChange}
-            >
-              {availableTags.map(tag => (
-                <BaseTagSelectItem key={tag.id} value={tag.id}>{tag.name}</BaseTagSelectItem>
-              ))}
-            </BaseTagSelect>
+              <BaseTagSelect
+                label="Tags"
+                placeholder="Select tags..."
+                value={ticketTags?.map(t => t.id) ?? []}
+                onValueChange={handleTagsChange}
+              >
+                {availableTags.map(tag => (
+                  <BaseTagSelectItem key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </BaseTagSelectItem>
+                ))}
+              </BaseTagSelect>
             </div>
           </PermissionGuard>
         </div>
@@ -568,23 +599,23 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Recurring - Placeholder */}
       <div className="border-t pt-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-default-700 mb-1">
             Recurring
           </label>
-          <p className="text-sm text-gray-500">None</p>
+          <p className="text-sm text-default-500">None</p>
         </div>
 
         {/* Assets */}
         <LinkedAssetsSection ticketId={ticket.id ?? ''} />
 
         {/* Parent ticket */}
-        {(ticket as any).parentTicketId && (
+        {ticket.parentTicketId && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-default-700 mb-1">
               Parent Ticket
             </label>
             <p className="text-sm font-mono text-blue-600">
-              #{(ticket as any).parentTicketId?.substring(0, 8)}
+              #{ticket.parentTicketId?.substring(0, 8)}
             </p>
           </div>
         )}
@@ -593,13 +624,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Custom Fields */}
       {ticket.customFields && ticket.customFields.length > 0 && (
         <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-default-700 mb-2">
             Custom Fields
           </label>
           <div className="space-y-2">
             {ticket.customFields.map(field => (
               <div key={field.fieldId}>
-                <label className="block text-xs text-gray-500">
+                <label className="block text-xs text-default-500">
                   {field.fieldName}
                 </label>
                 <p className="text-sm">{field.value}</p>
@@ -612,7 +643,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       {/* Suggested KB Articles — seeded from ticket subject */}
       {ticket.subject && (
         <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-default-700 mb-2">
             Suggested KB Articles
           </label>
           <KbSuggestions searchText={ticket.subject} minChars={3} limit={5} />

@@ -16,7 +16,6 @@
  * very next tick and clobber every select change before it registers as dirty.
  */
 
-import { useMemo } from 'react';
 import {
   useArchiveKnowledgeBaseArticle,
   useKnowledgeBaseArticle,
@@ -40,6 +39,7 @@ import {
 } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useMemo } from 'react';
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
@@ -227,7 +227,9 @@ function EditKnowledgeBaseArticlePage() {
               }}
             >
               {(categories ?? []).map(cat => (
-                <BaseSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseSelectItem>
+                <BaseSelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </BaseSelectItem>
               ))}
             </BaseSelect>
           )}
@@ -246,7 +248,9 @@ function EditKnowledgeBaseArticlePage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {Object.entries(ACCESS_LEVEL_LABELS).map(([value, label]) => (
-                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
+                <BaseSelectItem key={value} value={value}>
+                  {label}
+                </BaseSelectItem>
               ))}
             </BaseSelect>
           )}
@@ -264,7 +268,9 @@ function EditKnowledgeBaseArticlePage() {
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
               {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                <BaseSelectItem key={value} value={value}>{label}</BaseSelectItem>
+                <BaseSelectItem key={value} value={value}>
+                  {label}
+                </BaseSelectItem>
               ))}
             </BaseSelect>
           )}

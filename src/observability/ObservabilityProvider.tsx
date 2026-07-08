@@ -33,7 +33,8 @@ import {
   useLogger,
 } from '@brainforgeau/observability';
 import { useAtomValue } from 'jotai';
-import React, { useEffect, useMemo } from 'react';
+import type React from 'react';
+import { useEffect, useMemo } from 'react';
 import { buildObservabilityConfig } from './config';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';

@@ -22,9 +22,9 @@ import {
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
+import { StatusBadge } from '@brainforgeau/components/page';
 import { useLogger } from '@brainforgeau/observability';
 import type { RuleProjectDto } from '@brainforgeau/rules-ui';
-import { StatusBadge } from '@brainforgeau/components/page';
 import { toast } from '@heroui/react';
 import { NavLink, useNavigate } from '@modern-js/runtime/router';
 import type { ColumnDef, PaginationState } from '@tanstack/react-table';

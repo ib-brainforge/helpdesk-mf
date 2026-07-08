@@ -1,12 +1,6 @@
 import { StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import {
-  ApprovalDecisionType,
-  ApprovalMode,
-  ApprovalState,
-  type TicketApprovalDto,
-} from '@/types/approval';
-import {
   BaseButton,
   BaseModal,
   BaseModalBody,
@@ -19,10 +13,13 @@ import {
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import {
+  HelpdeskDomainApprovalsEnumsApprovalDecisionType as ApprovalDecisionType,
+  HelpdeskDomainApprovalsEnumsApprovalState as ApprovalState,
+} from '@brainforgeau/helpdesk-client';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { type FC, useCallback, useState } from 'react';
 import {
-  useApprovalWorkflows,
   useCancelApproval,
   useMakeApprovalDecision,
   useRequestApproval,
@@ -38,36 +35,29 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
 }) => {
   const timezone = useTimezone();
   const { data: approval, isLoading } = useTicketApproval(ticketId);
-  const { items: workflows } = useApprovalWorkflows();
   const requestApprovalMutation = useRequestApproval();
   const makeDecisionMutation = useMakeApprovalDecision();
   const cancelApprovalMutation = useCancelApproval();
   const { confirm, dialog } = useConfirm();
 
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
   const [selectedStepId, setSelectedStepId] = useState<string>('');
   const [decision, setDecision] = useState<ApprovalDecisionType>(
     ApprovalDecisionType.Approved,
   );
   const [comment, setComment] = useState('');
 
+  // REVIEW: The generated ApprovalWorkflowsApi has no tenant-scoped list
+  // endpoint (create-only — see useApprovalWorkflows.ts), so there is no way
+  // to offer a workflow picker here. RequestApprovalCommand.workflowId is
+  // optional; omitting it lets the backend auto-resolve the applicable
+  // workflow for the ticket's category.
   const handleRequestApproval = useCallback(() => {
-    if (!selectedWorkflowId) return;
-    requestApprovalMutation.mutate(
-      { ticketId, workflowId: selectedWorkflowId },
-      {
-        onSuccess: () => {
-          setShowRequestModal(false);
-          setSelectedWorkflowId('');
-        },
-      },
-    );
-  }, [ticketId, selectedWorkflowId, requestApprovalMutation]);
+    requestApprovalMutation.mutate({ ticketId });
+  }, [ticketId, requestApprovalMutation]);
 
   const handleMakeDecision = useCallback(() => {
-    if (!approval || !selectedStepId) return;
+    if (!approval?.id || !selectedStepId) return;
     makeDecisionMutation.mutate(
       {
         approvalId: approval.id,
@@ -86,7 +76,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
   }, [approval, selectedStepId, decision, comment, makeDecisionMutation]);
 
   const handleCancelApproval = useCallback(async () => {
-    if (!approval) return;
+    if (!approval?.id) return;
     const ok = await confirm({
       title: 'Cancel Approval',
       body: 'Are you sure you want to cancel this approval? This cannot be undone.',
@@ -97,7 +87,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
     cancelApprovalMutation.mutate(approval.id);
   }, [approval, confirm, cancelApprovalMutation]);
 
-  const getStateChipColor = (state: ApprovalState) => {
+  const getStateChipColor = (state?: ApprovalState) => {
     switch (state) {
       case ApprovalState.Pending:
         return 'warning';
@@ -107,10 +97,12 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         return 'danger';
       case ApprovalState.Cancelled:
         return 'default';
+      default:
+        return 'default';
     }
   };
 
-  const getDecisionChipColor = (decisionType: ApprovalDecisionType) => {
+  const getDecisionChipColor = (decisionType?: ApprovalDecisionType) => {
     switch (decisionType) {
       case ApprovalDecisionType.Pending:
         return 'warning';
@@ -120,10 +112,12 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         return 'danger';
       case ApprovalDecisionType.Skipped:
         return 'default';
+      default:
+        return 'default';
     }
   };
 
-  const getDecisionLabel = (decisionType: ApprovalDecisionType) => {
+  const getDecisionLabel = (decisionType?: ApprovalDecisionType): string => {
     switch (decisionType) {
       case ApprovalDecisionType.Pending:
         return 'Pending';
@@ -133,6 +127,8 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         return 'Rejected';
       case ApprovalDecisionType.Skipped:
         return 'Skipped';
+      default:
+        return 'Unknown';
     }
   };
 
@@ -146,76 +142,27 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
 
   if (!approval) {
     return (
-      <>
-        <Box title="Approval">
-          <div className="flex items-center justify-between mb-3">
-            <PermissionGuard
-              requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]}
-              fallback={null}
+      <Box title="Approval">
+        <div className="flex items-center justify-between mb-3">
+          <PermissionGuard
+            requiredPermissions={[HelpdeskPermissions.ApprovalsRequest]}
+            fallback={null}
+          >
+            <BaseButton
+              size="sm"
+              color="primary"
+              onPress={handleRequestApproval}
+              isDisabled={requestApprovalMutation.isPending}
+              icon={<Icon name="check-circle" className="h-3.5 w-3.5" />}
             >
-              <BaseButton
-                size="sm"
-                color="primary"
-                onPress={() => setShowRequestModal(true)}
-                icon={<Icon name="check-circle" className="h-3.5 w-3.5" />}
-              >
-                Request Approval
-              </BaseButton>
-            </PermissionGuard>
-          </div>
-          <p className="text-sm text-gray-500">
-            No approval requested for this ticket
-          </p>
-        </Box>
-
-        {/* Request Approval Modal */}
-        <BaseModal
-          isOpen={showRequestModal}
-          onClose={() => setShowRequestModal(false)}
-        >
-          <BaseModalContent>
-            <BaseModalHeader>Request Approval</BaseModalHeader>
-            <BaseModalBody>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Select a workflow to request approval for this ticket.
-                </p>
-                <select
-                  className="w-full px-3 py-2 border rounded-lg"
-                  value={selectedWorkflowId}
-                  onChange={e => setSelectedWorkflowId(e.target.value)}
-                >
-                  <option value="">Select workflow...</option>
-                  {workflows
-                    .filter(w => w.isActive)
-                    .map(workflow => (
-                      <option key={workflow.id} value={workflow.id}>
-                        {workflow.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </BaseModalBody>
-            <BaseModalFooter>
-              <BaseButton
-                variant="bordered"
-                onPress={() => setShowRequestModal(false)}
-              >
-                Cancel
-              </BaseButton>
-              <BaseButton
-                color="primary"
-                onPress={handleRequestApproval}
-                isDisabled={
-                  requestApprovalMutation.isPending || !selectedWorkflowId
-                }
-              >
-                Request
-              </BaseButton>
-            </BaseModalFooter>
-          </BaseModalContent>
-        </BaseModal>
-      </>
+              Request Approval
+            </BaseButton>
+          </PermissionGuard>
+        </div>
+        <p className="text-sm text-default-500">
+          No approval requested for this ticket
+        </p>
+      </Box>
     );
   }
 
@@ -224,28 +171,26 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
       <Box title="Approval Status">
         <div className="flex items-center justify-end mb-4">
           <StatusBadge color={getStateChipColor(approval.overallState)}>
-            {ApprovalState[approval.overallState]}
+            {approval.overallState ?? 'Unknown'}
           </StatusBadge>
         </div>
 
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600">Workflow:</span>
+            <span className="text-default-600">Workflow:</span>
             <span className="font-medium">{approval.workflowName}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Requested by:</span>
-            <span className="font-medium">{approval.requestedByUserName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Requested at:</span>
-            <span className="font-medium">
-              {formatDateTime(approval.requestedAt, { timezone })}
-            </span>
-          </div>
+          {approval.requestedAt && (
+            <div className="flex justify-between">
+              <span className="text-default-600">Requested at:</span>
+              <span className="font-medium">
+                {formatDateTime(approval.requestedAt, { timezone })}
+              </span>
+            </div>
+          )}
           {approval.completedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600">Completed at:</span>
+              <span className="text-default-600">Completed at:</span>
               <span className="font-medium">
                 {formatDateTime(approval.completedAt, { timezone })}
               </span>
@@ -256,15 +201,15 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         <div className="border-t pt-4">
           <h4 className="font-medium mb-3">Steps</h4>
           <div className="space-y-2">
-            {approval.decisions.map((decisionItem, index) => {
+            {(approval.decisions ?? []).map((decisionItem, index) => {
               const canDecide =
                 decisionItem.decision === ApprovalDecisionType.Pending &&
                 approval.overallState === ApprovalState.Pending;
 
               return (
                 <div
-                  key={decisionItem.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  key={decisionItem.id ?? index}
+                  className="flex items-center justify-between p-3 bg-default-50 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-6 h-6 bg-white rounded-full border-2">
@@ -274,13 +219,8 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
                       <p className="font-medium text-sm">
                         {decisionItem.stepName}
                       </p>
-                      {decisionItem.approverUserName && (
-                        <p className="text-xs text-gray-500">
-                          {decisionItem.approverUserName}
-                        </p>
-                      )}
                       {decisionItem.comment && (
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-default-600 mt-1">
                           {decisionItem.comment}
                         </p>
                       )}
@@ -303,7 +243,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
                           size="sm"
                           variant="bordered"
                           onPress={() => {
-                            setSelectedStepId(decisionItem.stepId);
+                            setSelectedStepId(decisionItem.stepId ?? '');
                             setDecision(ApprovalDecisionType.Approved);
                             setShowDecisionModal(true);
                           }}

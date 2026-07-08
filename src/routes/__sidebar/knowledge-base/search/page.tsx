@@ -16,7 +16,6 @@ import {
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { useTimezone } from '@brainforgeau/security';
-import { Card } from '@heroui/react';
 import { Link, useSearchParams } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
@@ -47,7 +46,7 @@ function KnowledgeBaseSearchPage() {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       const response = await client.v1KbArticlesSearchGet(
         searchTerm,
-        selectedCategory ? Number(selectedCategory) : undefined
+        selectedCategory ? Number(selectedCategory) : undefined,
       );
       return response.data;
     },
@@ -77,7 +76,7 @@ function KnowledgeBaseSearchPage() {
         <BaseInput
           placeholder="Search articles..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
           className="flex-1"
           autoFocus
@@ -85,13 +84,13 @@ function KnowledgeBaseSearchPage() {
         <BaseSelect
           placeholder="All Categories"
           selectedKey={selectedCategory ? selectedCategory : null}
-          onSelectionChange={(keys) => {
+          onSelectionChange={keys => {
             const key = keys as string;
             setSelectedCategory(key || '');
           }}
           className="w-64"
         >
-          {categories?.map((cat) => (
+          {categories?.map(cat => (
             <BaseSelectItem key={cat.id} value={cat.id}>
               {cat.name}
             </BaseSelectItem>
@@ -104,15 +103,15 @@ function KnowledgeBaseSearchPage() {
         <div className="py-12 text-center">
           <Icon
             name="magnifying-glass"
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="mx-auto h-12 w-12 text-default-400"
           />
-          <p className="mt-4 text-gray-500">
+          <p className="mt-4 text-default-500">
             Enter at least 3 characters to search
           </p>
         </div>
       ) : isLoading ? (
         <div className="py-12 text-center">
-          <p className="text-gray-500">Searching...</p>
+          <p className="text-default-500">Searching...</p>
         </div>
       ) : !searchResults || searchResults.items?.length === 0 ? (
         <EmptyState
@@ -122,7 +121,7 @@ function KnowledgeBaseSearchPage() {
         />
       ) : (
         <div>
-          <div className="mb-4 text-sm text-gray-600">
+          <div className="mb-4 text-sm text-default-600">
             Found {searchResults.totalCount || searchResults.items?.length || 0}{' '}
             article(s)
           </div>
@@ -143,7 +142,7 @@ function KnowledgeBaseSearchPage() {
                       {/* Highlighted snippet from search */}
                       {article.highlight && (
                         <div
-                          className="mb-3 line-clamp-3 text-sm text-gray-700"
+                          className="mb-3 line-clamp-3 text-sm text-default-700"
                           dangerouslySetInnerHTML={{
                             __html: DOMPurify.sanitize(article.highlight),
                           }}
@@ -152,7 +151,7 @@ function KnowledgeBaseSearchPage() {
 
                       {/* Excerpt fallback */}
                       {!article.highlight && article.excerpt && (
-                        <p className="mb-3 line-clamp-3 text-sm text-gray-600">
+                        <p className="mb-3 line-clamp-3 text-sm text-default-600">
                           {article.excerpt}
                         </p>
                       )}
@@ -164,7 +163,7 @@ function KnowledgeBaseSearchPage() {
                             <TagChip key={tag} name={tag} size="sm" />
                           ))}
                           {article.tags.length > 5 && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-default-500">
                               +{article.tags.length - 5} more
                             </span>
                           )}
@@ -172,7 +171,7 @@ function KnowledgeBaseSearchPage() {
                       )}
 
                       {/* Metadata */}
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-default-500">
                         {article.categoryName && (
                           <span className="flex items-center gap-1">
                             <Icon name="folder" className="h-3 w-3" />
@@ -198,7 +197,7 @@ function KnowledgeBaseSearchPage() {
 
                     <Icon
                       name="arrow-right"
-                      className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400"
+                      className="mt-1 h-5 w-5 flex-shrink-0 text-default-400"
                     />
                   </div>
                 </BaseCard>

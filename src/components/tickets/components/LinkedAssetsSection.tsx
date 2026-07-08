@@ -136,7 +136,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-default-700">
           Assets
         </label>
         <BaseButton
@@ -150,7 +150,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
       </div>
 
       {isLoading ? (
-        <p className="text-xs text-gray-400">Loading assets...</p>
+        <p className="text-xs text-default-400">Loading assets...</p>
       ) : assets && assets.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {assets.map(asset => (
@@ -163,7 +163,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
               </span>
               <button
                 type="button"
-                className="ml-1 text-gray-400 hover:text-danger-600 transition-colors"
+                className="ml-1 text-default-400 hover:text-danger-600 transition-colors"
                 onClick={() => asset.assetId && handleUnlink(asset.assetId)}
                 aria-label={`Remove asset ${asset.assetId}`}
               >
@@ -173,7 +173,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
           ))}
         </div>
       ) : (
-        <p className="text-xs text-gray-400 italic">No assets linked</p>
+        <p className="text-xs text-default-400 italic">No assets linked</p>
       )}
 
       <AddAssetModal

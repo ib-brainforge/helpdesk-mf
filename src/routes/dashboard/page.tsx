@@ -5,38 +5,53 @@ import type {
   PriorityBreakdownDto,
   StatusBreakdownDto,
 } from '@/types';
-import { Box, DonutChart, PageSpinner } from '@brainforgeau/components';
+import {
+  BaseButton,
+  Box,
+  DonutChart,
+  Icon,
+  PageSpinner,
+} from '@brainforgeau/components';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
+import { useMemo, useState } from 'react';
 
+// Chart colors aligned with BrainForge theme palette (--color-* tokens)
 const STATUS_COLORS: Record<string, string> = {
-  New: '#3b82f6',
-  InProgress: '#f59e0b',
-  Closed: '#10b981',
-  Open: '#6366f1',
-  OnHold: '#8b5cf6',
-  Resolved: '#0ea5e9',
+  New: '#1868db',
+  InProgress: '#e2b203',
+  Closed: '#6a9a23',
+  Open: '#bf63f3',
+  OnHold: '#ff7f00',
+  Resolved: '#6acda4',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  None: '#9ca3af',
-  Low: '#3b82f6',
-  Normal: '#10b981',
-  High: '#f59e0b',
-  Critical: '#ef4444',
+  None: '#8c8f97',
+  Low: '#1868db',
+  Normal: '#6a9a23',
+  High: '#ff7f00',
+  Critical: '#f15050',
 };
 
 const CATEGORY_COLORS = [
-  '#6366f1',
-  '#10b981',
-  '#f59e0b',
-  '#8b5cf6',
-  '#f43f5e',
-  '#0ea5e9',
-  '#ec4899',
-  '#6b7280',
-  '#14b8a6',
-  '#f97316',
+  '#1868db',
+  '#6a9a23',
+  '#e2b203',
+  '#bf63f3',
+  '#f15050',
+  '#6acda4',
+  '#ff7f00',
+  '#59636e',
+  '#943073',
+  '#4688ec',
+];
+
+const RANGE_OPTIONS = [
+  { key: '7', label: 'Last 7 days', days: 7 },
+  { key: '30', label: 'Last 30 days', days: 30 },
+  { key: '90', label: 'Last 90 days', days: 90 },
+  { key: '365', label: 'Last 12 months', days: 365 },
 ];
 
 function toStatusDonut(
@@ -48,7 +63,7 @@ function toStatusDonut(
       label: item.name,
       value: item.count,
       color:
-        STATUS_COLORS[item.status] || STATUS_COLORS[item.name] || '#6b7280',
+        STATUS_COLORS[item.status] || STATUS_COLORS[item.name] || '#8c8f97',
     }));
 }
 
@@ -63,7 +78,7 @@ function toPriorityDonut(
       color:
         PRIORITY_COLORS[item.priority] ||
         PRIORITY_COLORS[item.name] ||
-        '#6b7280',
+        '#8c8f97',
     }));
 }
 
@@ -82,11 +97,48 @@ function toCategoryDonut(
 }
 
 function HelpdeskDashboardPage() {
-  const { data: summaryData, isLoading } = useTicketSummaryReport();
+  const [selectedRange, setSelectedRange] = useState('30');
+
+  const { startDate, endDate } = useMemo(() => {
+    const option = RANGE_OPTIONS.find(o => o.key === selectedRange);
+    const days = option?.days ?? 30;
+    const end = new Date().toISOString();
+    const start = new Date(
+      Date.now() - days * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    return { startDate: start, endDate: end };
+  }, [selectedRange]);
+
+  const {
+    data: summaryData,
+    isLoading,
+    error,
+  } = useTicketSummaryReport(startDate, endDate);
 
   if (isLoading) {
     return <PageSpinner title="Loading dashboard..." />;
   }
+
+  if (error) {
+    const status = (error as any)?.response?.status;
+    const isForbidden = status === 403 || status === 419;
+    return (
+      <DashboardPage title="Helpdesk Dashboard" breadcrumbsKey="dashboard">
+        <EmptyState
+          title={isForbidden ? 'Access denied' : 'Failed to load dashboard'}
+          description={
+            isForbidden
+              ? 'You do not have permission to view reports. Contact your administrator to request the Reports permission.'
+              : 'An error occurred while loading the dashboard data. Please try again later.'
+          }
+          live
+        />
+      </DashboardPage>
+    );
+  }
+
+  const rangeLabel =
+    RANGE_OPTIONS.find(o => o.key === selectedRange)?.label ?? 'Last 30 days';
 
   const statusDonut = Array.isArray(summaryData?.byStatus)
     ? toStatusDonut(summaryData.byStatus)
@@ -102,32 +154,48 @@ function HelpdeskDashboardPage() {
     <DashboardPage
       title="Helpdesk Dashboard"
       breadcrumbsKey="dashboard"
+      actions={
+        <div className="flex items-center gap-2">
+          {RANGE_OPTIONS.map(option => (
+            <BaseButton
+              key={option.key}
+              size="sm"
+              color="primary"
+              variant={selectedRange !== option.key ? 'bordered' : undefined}
+              onPress={() => setSelectedRange(option.key)}
+            >
+              {option.label}
+            </BaseButton>
+          ))}
+        </div>
+      }
       summary={
         <>
           <SummaryCard
-            title="Total Created"
+            title="Created"
             value={summaryData?.totalCreated ?? 0}
+            subtitle={rangeLabel}
             icon="ticket"
             variant="info"
           />
           <SummaryCard
-            title="Total Closed"
+            title="Closed"
             value={summaryData?.totalClosed ?? 0}
-            subtitle="Resolved tickets"
+            subtitle={rangeLabel}
             icon="check-circle"
             variant="success"
           />
           <SummaryCard
-            title="Total Open"
+            title="Open"
             value={summaryData?.totalOpen ?? 0}
-            subtitle="Awaiting resolution"
+            subtitle={rangeLabel}
             icon="exclamation-triangle"
             variant={(summaryData?.totalOpen ?? 0) > 0 ? 'warning' : 'default'}
           />
           <SummaryCard
             title="Avg Resolution"
             value={`${(summaryData?.averageResolutionTimeHours ?? 0).toFixed(1)}h`}
-            subtitle="Average time to close"
+            subtitle={rangeLabel}
             icon="clock"
             variant="default"
           />

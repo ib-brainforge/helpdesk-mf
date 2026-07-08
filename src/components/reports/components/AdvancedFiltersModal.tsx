@@ -117,10 +117,12 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
                 placeholder="All statuses"
                 value={values.statuses}
                 onValueChange={statuses => setValues(v => ({ ...v, statuses }))}
-                classNames={{ base: "w-full" }}
+                classNames={{ base: 'w-full' }}
               >
                 {STATUS_OPTIONS.map(opt => (
-                  <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
+                  <BaseTagSelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </BaseTagSelectItem>
                 ))}
               </BaseTagSelect>
             </div>
@@ -132,11 +134,15 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
                 label="Filter by priority"
                 placeholder="All priorities"
                 value={values.priorities}
-                onValueChange={priorities => setValues(v => ({ ...v, priorities }))}
-                classNames={{ base: "w-full" }}
+                onValueChange={priorities =>
+                  setValues(v => ({ ...v, priorities }))
+                }
+                classNames={{ base: 'w-full' }}
               >
                 {PRIORITY_OPTIONS.map(opt => (
-                  <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
+                  <BaseTagSelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </BaseTagSelectItem>
                 ))}
               </BaseTagSelect>
             </div>
@@ -148,11 +154,15 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
                 label="Filter by category"
                 placeholder="All categories"
                 value={values.categoryIds}
-                onValueChange={categoryIds => setValues(v => ({ ...v, categoryIds }))}
-                classNames={{ base: "w-full" }}
+                onValueChange={categoryIds =>
+                  setValues(v => ({ ...v, categoryIds }))
+                }
+                classNames={{ base: 'w-full' }}
               >
                 {categories.map(cat => (
-                  <BaseTagSelectItem key={cat.id} value={cat.id}>{cat.name}</BaseTagSelectItem>
+                  <BaseTagSelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </BaseTagSelectItem>
                 ))}
               </BaseTagSelect>
             </div>

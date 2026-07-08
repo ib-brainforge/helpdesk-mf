@@ -99,12 +99,6 @@ function AdministrationPage() {
           href: '/configuration/app-settings',
         },
         {
-          title: 'Email settings',
-          description: 'Configure email servers and notifications',
-          icon: 'envelope',
-          href: '/configuration/email',
-        },
-        {
           title: 'Users',
           description: 'Manage users, roles, and permissions',
           icon: 'users',
@@ -208,13 +202,13 @@ function AdministrationPage() {
       </PageHeader>
 
       <div className="space-y-8">
-        {sections.map((section) => (
+        {sections.map(section => (
           <div key={section.title}>
             <h2 className="text-default-700 mb-4 text-lg font-semibold">
               {section.title}
             </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {section.items.map((item) => (
+              {section.items.map(item => (
                 <SettingCard key={item.title} {...item} />
               ))}
             </div>

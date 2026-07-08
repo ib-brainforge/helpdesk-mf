@@ -222,15 +222,36 @@ export const NewTicketForm: FC = () => {
                   field.handleChange(value as TicketPriority);
                 }}
               >
-                <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+                <BaseSelectItem
+                  key={TicketPriority.Critical}
+                  value={TicketPriority.Critical}
+                >
                   Critical
                 </BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>
+                <BaseSelectItem
+                  key={TicketPriority.High}
+                  value={TicketPriority.High}
+                >
+                  High
+                </BaseSelectItem>
+                <BaseSelectItem
+                  key={TicketPriority.Normal}
+                  value={TicketPriority.Normal}
+                >
                   Normal
                 </BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
+                <BaseSelectItem
+                  key={TicketPriority.Low}
+                  value={TicketPriority.Low}
+                >
+                  Low
+                </BaseSelectItem>
+                <BaseSelectItem
+                  key={TicketPriority.None}
+                  value={TicketPriority.None}
+                >
+                  None
+                </BaseSelectItem>
               </BaseSelect>
             )}
           </form.Field>
@@ -285,11 +306,11 @@ export const NewTicketForm: FC = () => {
                     }
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs text-[#59636E] dark:text-white">
+                      <span className="text-xs text-gray dark:text-white">
                         {category.name}
                       </span>
                       {category.sectionName && (
-                        <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                        <span className="text-[10px] text-light-gray dark:text-default-400">
                           {category.sectionName}
                         </span>
                       )}
@@ -341,7 +362,11 @@ export const NewTicketForm: FC = () => {
               }}
             >
               {usersOptions.map(user => (
-                <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
+                <BaseAutocompleteItem
+                  key={user.id}
+                  id={user.id}
+                  textValue={user.name}
+                >
                   <div className="flex items-center gap-2.5">
                     <BaseAvatar
                       src={user.avatarUrl}
@@ -349,11 +374,11 @@ export const NewTicketForm: FC = () => {
                       size="xs"
                     />
                     <div className="flex-1">
-                      <span className="text-xs text-[#59636E] dark:text-white">
+                      <span className="text-xs text-gray dark:text-white">
                         {user.name}
                       </span>
                       {user.email && (
-                        <span className="dark:text-light block text-[10px] text-[#8C8F97]">
+                        <span className="dark:text-light block text-[10px] text-light-gray">
                           {user.email}
                         </span>
                       )}
@@ -383,7 +408,7 @@ export const NewTicketForm: FC = () => {
 
             {pendingFiles.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default-600">
                   Pending uploads ({pendingFiles.length} files):
                 </p>
                 {pendingFiles.map(file => (

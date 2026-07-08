@@ -1,13 +1,17 @@
 import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
 import { TicketPriority, TicketStatus } from '@/types';
-import { BaseTagSelect, BaseTagSelectItem } from '@brainforgeau/components';
+import {
+  BaseCheckbox,
+  BaseCheckboxGroup,
+  BaseTagSelect,
+  BaseTagSelectItem,
+} from '@brainforgeau/components';
 import { BaseTable } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { Checkbox, CheckboxGroup } from '@heroui/react';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -133,17 +137,17 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
             <label className="mb-2 block text-sm font-medium">
               Select Columns
             </label>
-            <CheckboxGroup
+            <BaseCheckboxGroup
               value={selectedColumns}
-              onChange={values => setSelectedColumns(values as string[])}
+              onValueChange={values => setSelectedColumns(values)}
               className="flex flex-row flex-wrap gap-4"
             >
               {AVAILABLE_COLUMNS.map(col => (
-                <Checkbox key={col.key} value={col.key}>
+                <BaseCheckbox key={col.key} value={col.key}>
                   {col.label}
-                </Checkbox>
+                </BaseCheckbox>
               ))}
-            </CheckboxGroup>
+            </BaseCheckboxGroup>
           </div>
 
           {/* Status Filter */}
@@ -155,10 +159,12 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
               value={selectedStatuses}
               onValueChange={setSelectedStatuses}
               placeholder="All statuses"
-              classNames={{ base: "w-full" }}
+              classNames={{ base: 'w-full' }}
             >
               {STATUS_OPTIONS.map(opt => (
-                <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
+                <BaseTagSelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </BaseTagSelectItem>
               ))}
             </BaseTagSelect>
           </div>
@@ -172,10 +178,12 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
               value={selectedPriorities}
               onValueChange={setSelectedPriorities}
               placeholder="All priorities"
-              classNames={{ base: "w-full" }}
+              classNames={{ base: 'w-full' }}
             >
               {PRIORITY_OPTIONS.map(opt => (
-                <BaseTagSelectItem key={opt.value} value={opt.value}>{opt.label}</BaseTagSelectItem>
+                <BaseTagSelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </BaseTagSelectItem>
               ))}
             </BaseTagSelect>
           </div>

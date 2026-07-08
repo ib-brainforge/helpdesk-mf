@@ -1,6 +1,10 @@
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CannedResponseDto } from '@/types/canned-response';
-import { CannedResponsesApi } from '@brainforgeau/helpdesk-client';
+import {
+  CannedResponsesApi,
+  type HelpdeskApplicationCannedResponsesCommandsCreateCannedResponseCreateCannedResponseCommand,
+  type HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand,
+} from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useCannedResponses = (
@@ -15,7 +19,7 @@ export const useCannedResponses = (
         categoryId,
         searchTerm,
       );
-      return (response.data ?? []) as CannedResponseDto[];
+      return response.data ?? [];
     },
   });
 
@@ -30,19 +34,11 @@ export const useCreateCannedResponse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (cannedResponse: {
-      title: string;
-      body: string;
-      categoryId?: string;
-      scope?: string;
-    }) => {
+    mutationFn: async (
+      command: HelpdeskApplicationCannedResponsesCommandsCreateCannedResponseCreateCannedResponseCommand,
+    ) => {
       const client = await createHelpdeskApiClient(CannedResponsesApi);
-      const response = await client.v1CannedResponsesPost({
-        title: cannedResponse.title,
-        body: cannedResponse.body,
-        categoryId: cannedResponse.categoryId,
-        scope: cannedResponse.scope as any,
-      });
+      const response = await client.v1CannedResponsesPost(command);
       return response.data;
     },
     onSuccess: () => {
@@ -62,20 +58,10 @@ export const useUpdateCannedResponse = () => {
       updates,
     }: {
       id: string;
-      updates: {
-        title?: string;
-        body?: string;
-        categoryId?: string;
-        scope?: string;
-      };
+      updates: HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand;
     }) => {
       const client = await createHelpdeskApiClient(CannedResponsesApi);
-      const response = await client.v1CannedResponsesIdPut(id, {
-        title: updates.title,
-        body: updates.body,
-        categoryId: updates.categoryId,
-        scope: updates.scope as any,
-      });
+      const response = await client.v1CannedResponsesIdPut(id, updates);
       return response.data;
     },
     onSuccess: () => {

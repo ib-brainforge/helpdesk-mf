@@ -36,7 +36,14 @@ function PieChart({
   title: string;
 }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const colors = ['#0070f3', '#7928ca', '#ff0080', '#00dfd8'];
+  const colors = [
+    '#1868db',
+    '#bf63f3',
+    '#f15050',
+    '#6acda4',
+    '#e2b203',
+    '#ff7f00',
+  ];
 
   return (
     <BaseCard>
@@ -85,10 +92,10 @@ function PieChart({
 function ReportsSummaryPage() {
   const timezone = useTimezone();
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
   const [endDate, setEndDate] = useState(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split('T')[0],
   );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -127,21 +134,21 @@ function ReportsSummaryPage() {
   ].filter(Boolean).length;
 
   const categoryChartData = useMemo(() => {
-    return (summaryData?.byCategory ?? []).map((item) => ({
+    return (summaryData?.byCategory ?? []).map(item => ({
       name: item.name,
       value: item.count,
     }));
   }, [summaryData]);
 
   const statusChartData = useMemo(() => {
-    return (summaryData?.byStatus ?? []).map((item) => ({
+    return (summaryData?.byStatus ?? []).map(item => ({
       name: item.name,
       value: item.count,
     }));
   }, [summaryData]);
 
   const priorityChartData = useMemo(() => {
-    return (summaryData?.byPriority ?? []).map((item) => ({
+    return (summaryData?.byPriority ?? []).map(item => ({
       name: item.name,
       value: item.count,
     }));
@@ -151,30 +158,28 @@ function ReportsSummaryPage() {
     let result = tickets;
 
     if (selectedCategory !== 'all') {
-      result = result.filter(
-        (ticket) => ticket.categoryId === selectedCategory
-      );
+      result = result.filter(ticket => ticket.categoryId === selectedCategory);
     }
 
     if (advancedFilters.statuses.length > 0) {
       result = result.filter(
-        (ticket) =>
+        ticket =>
           ticket.status != null &&
-          advancedFilters.statuses.includes(ticket.status)
+          advancedFilters.statuses.includes(ticket.status),
       );
     }
     if (advancedFilters.priorities.length > 0) {
       result = result.filter(
-        (ticket) =>
+        ticket =>
           ticket.priority != null &&
-          advancedFilters.priorities.includes(ticket.priority)
+          advancedFilters.priorities.includes(ticket.priority),
       );
     }
     if (advancedFilters.categoryIds.length > 0) {
       result = result.filter(
-        (ticket) =>
+        ticket =>
           ticket.categoryId != null &&
-          advancedFilters.categoryIds.includes(ticket.categoryId)
+          advancedFilters.categoryIds.includes(ticket.categoryId),
       );
     }
 
@@ -186,7 +191,7 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'ticketNumber',
         header: 'Ticket ID',
-        cell: (info) => (
+        cell: info => (
           <span className="text-primary font-medium">
             #{info.getValue() as string}
           </span>
@@ -195,17 +200,17 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'subject',
         header: 'Subject',
-        cell: (info) => info.getValue() as string,
+        cell: info => info.getValue() as string,
       },
       {
         accessorKey: 'categoryName',
         header: 'Category',
-        cell: (info) => info.getValue() as string,
+        cell: info => info.getValue() as string,
       },
       {
         accessorKey: 'status',
         header: 'Status',
-        cell: (info) => {
+        cell: info => {
           const status = info.getValue() as string;
           const colors: Record<string, string> = {
             New: 'bg-primary-100 text-primary-800',
@@ -224,7 +229,7 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'priority',
         header: 'Priority',
-        cell: (info) => {
+        cell: info => {
           const priority = info.getValue() as string;
           const colors: Record<string, string> = {
             Critical: 'bg-danger-100 text-danger-800',
@@ -245,18 +250,18 @@ function ReportsSummaryPage() {
       {
         accessorKey: 'requesterName',
         header: 'Requester',
-        cell: (info) => info.getValue() as string,
+        cell: info => info.getValue() as string,
       },
       {
         accessorKey: 'createdAt',
         header: 'Created',
-        cell: (info) => {
+        cell: info => {
           const date = info.getValue() as string;
           return formatDateTime(date, { timezone });
         },
       },
     ],
-    [timezone]
+    [timezone],
   );
 
   const table = useReactTable({
@@ -278,7 +283,7 @@ function ReportsSummaryPage() {
             label="Category"
             placeholder="All categories"
             selectedKey={selectedCategory}
-            onSelectionChange={(keys) => {
+            onSelectionChange={keys => {
               setSelectedCategory(keys as string);
             }}
             className="w-48"
@@ -287,7 +292,7 @@ function ReportsSummaryPage() {
               <BaseSelectItem key="all" value="all">
                 All categories
               </BaseSelectItem>,
-              ...categories.map((cat) => (
+              ...categories.map(cat => (
                 <BaseSelectItem key={cat.id} value={cat.id}>
                   {cat.name}
                 </BaseSelectItem>
@@ -372,7 +377,7 @@ function ReportsSummaryPage() {
       <AdvancedFiltersModal
         isOpen={isAdvancedFiltersOpen}
         initialValues={advancedFilters}
-        categories={categories as any}
+        categories={categories}
         onApply={handleApplyAdvancedFilters}
         onClose={() => setIsAdvancedFiltersOpen(false)}
       />

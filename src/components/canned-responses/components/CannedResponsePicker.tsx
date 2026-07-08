@@ -23,13 +23,9 @@ interface CannedResponsePickerProps {
 }
 
 const getScopeColor = (scope: CannedResponseScope) => {
-  const colors: Record<
-    CannedResponseScope,
-    'default' | 'primary' | 'secondary'
-  > = {
+  const colors: Record<CannedResponseScope, 'default' | 'primary'> = {
     [CannedResponseScope.Personal]: 'default',
-    [CannedResponseScope.Team]: 'primary',
-    [CannedResponseScope.Global]: 'secondary',
+    [CannedResponseScope.Shared]: 'primary',
   };
   return colors[scope] || 'default';
 };
@@ -37,8 +33,7 @@ const getScopeColor = (scope: CannedResponseScope) => {
 const getScopeName = (scope: CannedResponseScope): string => {
   const names: Record<CannedResponseScope, string> = {
     [CannedResponseScope.Personal]: 'Personal',
-    [CannedResponseScope.Team]: 'Team',
-    [CannedResponseScope.Global]: 'Global',
+    [CannedResponseScope.Shared]: 'Shared',
   };
   return names[scope] || 'Unknown';
 };
@@ -77,7 +72,12 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      className="max-w-3xl"
+    >
       <BaseModalContent>
         {modalOnClose => (
           <>
@@ -135,9 +135,13 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
                                 {response.title}
                               </span>
                               <StatusBadge
-                                color={getScopeColor(response.scope as any)}
+                                color={getScopeColor(
+                                  response.scope as CannedResponseScope,
+                                )}
                               >
-                                {getScopeName(response.scope as any)}
+                                {getScopeName(
+                                  response.scope as CannedResponseScope,
+                                )}
                               </StatusBadge>
                             </div>
                             {response.categoryName && (
@@ -165,10 +169,12 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
                             </h3>
                             <StatusBadge
                               color={getScopeColor(
-                                selectedResponse.scope as any,
+                                selectedResponse.scope as CannedResponseScope,
                               )}
                             >
-                              {getScopeName(selectedResponse.scope as any)}
+                              {getScopeName(
+                                selectedResponse.scope as CannedResponseScope,
+                              )}
                             </StatusBadge>
                           </div>
                           {selectedResponse.categoryName && (

@@ -15,7 +15,7 @@ export const useDuplicateCategory = () => {
     mutationFn: async (categoryId: string) => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const response = await client.v1CategoriesIdDuplicatePost(categoryId);
-      return response.data as unknown as string;
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
@@ -98,9 +98,9 @@ export const useCategoriesData = () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesSectionsGet();
       // API returns PagedResult, extract items
-      return ((data as any)?.items || []).map((section: any) => ({
-        id: section.id!,
-        name: section.name!,
+      return (data.items ?? []).map(section => ({
+        id: section.id ?? '',
+        name: section.name ?? '',
         sortOrder: section.sortOrder ?? 0,
         isActive: section.isActive ?? true,
       }));

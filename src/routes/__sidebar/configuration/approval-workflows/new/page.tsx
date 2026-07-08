@@ -11,9 +11,8 @@
  */
 
 import { useCreateApprovalWorkflow } from '@/components/approvals';
-import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
-import { ApprovalMode, type ApprovalWorkflowStepDto } from '@/types/approval';
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import {
   BaseButton,
   BaseCard,
@@ -25,7 +24,10 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
-import { Card, CardContent } from '@heroui/react';
+import {
+  type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowStepDto as ApprovalWorkflowStepDto,
+  HelpdeskDomainApprovalsEnumsApprovalMode,
+} from '@brainforgeau/helpdesk-client';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
@@ -37,18 +39,12 @@ import { z } from 'zod';
 const approvalWorkflowSchema = z.object({
   name: z.string().min(1, 'Workflow name is required'),
   description: z.string(),
-  approvalMode: z.nativeEnum(ApprovalMode),
+  approvalMode: z.nativeEnum(HelpdeskDomainApprovalsEnumsApprovalMode),
   isActive: z.boolean(),
   triggerOnCreation: z.boolean(),
 });
 
 type ApprovalWorkflowFormData = z.infer<typeof approvalWorkflowSchema>;
-
-const APPROVAL_MODE_OPTIONS = [
-  { value: ApprovalMode.Sequential, label: 'Sequential' },
-  { value: ApprovalMode.Parallel, label: 'Parallel' },
-  { value: ApprovalMode.AnyOne, label: 'Any One' },
-];
 
 // ---------------------------------------------------------------------------
 // Page component
@@ -60,7 +56,6 @@ function NewApprovalWorkflowPage() {
 
   // Step management lives outside useEntityForm (too complex for Zod schema)
   const [steps, setSteps] = useState<ApprovalWorkflowStepDto[]>([]);
-  const { categories } = useCategoriesData();
   const { items: users } = useUsersData();
 
   const form = useEntityForm<typeof approvalWorkflowSchema>({
@@ -68,7 +63,7 @@ function NewApprovalWorkflowPage() {
     defaultValues: {
       name: '',
       description: '',
-      approvalMode: ApprovalMode.Sequential,
+      approvalMode: HelpdeskDomainApprovalsEnumsApprovalMode.Sequential,
       isActive: true,
       triggerOnCreation: false,
     },
@@ -92,10 +87,9 @@ function NewApprovalWorkflowPage() {
 
   // Step helpers
   const handleAddStep = useCallback(() => {
-    setSteps((prev) => [
+    setSteps(prev => [
       ...prev,
       {
-        stepOrder: prev.length,
         name: '',
         approverUserId: undefined,
         isRequired: true,
@@ -106,41 +100,37 @@ function NewApprovalWorkflowPage() {
   }, []);
 
   const handleRemoveStep = useCallback((index: number) => {
-    setSteps((prev) =>
-      prev
-        .filter((_, i) => i !== index)
-        .map((step, i) => ({ ...step, stepOrder: i }))
-    );
+    setSteps(prev => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleUpdateStep = useCallback(
     (index: number, updates: Partial<ApprovalWorkflowStepDto>) => {
-      setSteps((prev) =>
-        prev.map((step, i) => (i === index ? { ...step, ...updates } : step))
+      setSteps(prev =>
+        prev.map((step, i) => (i === index ? { ...step, ...updates } : step)),
       );
     },
-    []
+    [],
   );
 
   const handleMoveStepUp = useCallback((index: number) => {
     if (index === 0) return;
-    setSteps((prev) => {
+    setSteps(prev => {
       const next = [...prev];
       [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return next.map((step, i) => ({ ...step, stepOrder: i }));
+      return next;
     });
   }, []);
 
   const handleMoveStepDown = useCallback((index: number) => {
-    setSteps((prev) => {
+    setSteps(prev => {
       if (index === prev.length - 1) return prev;
       const next = [...prev];
       [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      return next.map((step, i) => ({ ...step, stepOrder: i }));
+      return next;
     });
   }, []);
 
-  const userOptions = users.map((user: any) => ({
+  const userOptions = users.map(user => ({
     label: user.name || user.email || 'Unknown',
     value: user.id,
   }));
@@ -156,13 +146,13 @@ function NewApprovalWorkflowPage() {
     >
       <FormPage.Section title="Basic Information" columns={2}>
         <f.Field name="name">
-          {(field) => (
+          {field => (
             <BaseInput
               label="Workflow Name"
               isRequired
               placeholder="Enter workflow name"
               value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={e => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               isInvalid={field.state.meta.errors.length > 0}
               errorMessage={field.state.meta.errors.map(String).join(', ')}
@@ -171,26 +161,23 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="approvalMode">
-          {(field) => (
+          {field => (
             <BaseSelect
               label="Approval Mode"
               isRequired
-              selectedKey={String(field.state.value)}
-              onSelectionChange={(key) => {
+              selectedKey={field.state.value}
+              onSelectionChange={key => {
                 if (key)
                   field.handleChange(
-                    Number.parseInt(String(key)) as ApprovalMode
+                    String(key) as HelpdeskDomainApprovalsEnumsApprovalMode,
                   );
               }}
               isInvalid={field.state.meta.errors.length > 0}
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             >
-              {APPROVAL_MODE_OPTIONS.map((opt) => (
-                <BaseSelectItem
-                  key={String(opt.value)}
-                  value={String(opt.value)}
-                >
-                  {opt.label}
+              {Object.entries(APPROVAL_MODE_LABELS).map(([value, label]) => (
+                <BaseSelectItem key={value} value={value}>
+                  {label}
                 </BaseSelectItem>
               ))}
             </BaseSelect>
@@ -198,7 +185,7 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="description">
-          {(field) => (
+          {field => (
             <BaseTextarea
               label="Description"
               placeholder="Optional description"
@@ -212,7 +199,7 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="isActive">
-          {(field) => (
+          {field => (
             <div className="flex flex-col gap-1">
               <BaseToggle
                 isSelected={field.state.value}
@@ -228,7 +215,7 @@ function NewApprovalWorkflowPage() {
         </f.Field>
 
         <f.Field name="triggerOnCreation">
-          {(field) => (
+          {field => (
             <div className="flex flex-col gap-1">
               <BaseToggle
                 isSelected={field.state.value}
@@ -307,7 +294,7 @@ function NewApprovalWorkflowPage() {
                 <BaseInput
                   label="Step Name"
                   value={step.name}
-                  onValueChange={(v) => handleUpdateStep(index, { name: v })}
+                  onValueChange={v => handleUpdateStep(index, { name: v })}
                   isRequired
                   placeholder="e.g., Manager Approval"
                   size="sm"
@@ -316,7 +303,7 @@ function NewApprovalWorkflowPage() {
                 <BaseSelect
                   label="Approver"
                   selectedKey={step.approverUserId ?? '__none__'}
-                  onSelectionChange={(key) => {
+                  onSelectionChange={key => {
                     handleUpdateStep(index, {
                       approverUserId:
                         key === '__none__' ? undefined : (key as string),
@@ -329,7 +316,7 @@ function NewApprovalWorkflowPage() {
                     <BaseSelectItem key="__none__" id="__none__">
                       Select approver...
                     </BaseSelectItem>,
-                    ...userOptions.map((opt) => (
+                    ...userOptions.map(opt => (
                       <BaseSelectItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </BaseSelectItem>

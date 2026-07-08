@@ -93,7 +93,12 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
   }, [onClose]);
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      className="max-w-3xl"
+    >
       <BaseModalContent>
         <BaseModalHeader>
           <h2 className="text-xl font-semibold">New Article</h2>
@@ -127,7 +132,10 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
               placeholder="Select a category"
             >
               {(categories || []).map(category => (
-                <BaseSelectItem key={category.id ?? ''} value={category.id ?? ''}>
+                <BaseSelectItem
+                  key={category.id ?? ''}
+                  value={category.id ?? ''}
+                >
                   {category.name}
                 </BaseSelectItem>
               ))}

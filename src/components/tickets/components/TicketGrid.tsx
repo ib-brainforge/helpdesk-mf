@@ -58,7 +58,7 @@ export const TicketGrid: FC = () => {
   const currentUserId = user?.profile?.sub;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const mobileSidebarState = useOverlayState();
@@ -71,14 +71,14 @@ export const TicketGrid: FC = () => {
   const setSelectedTab = useCallback(
     (key: string) => {
       setSearchParams(
-        (prev) => {
+        prev => {
           prev.set('tab', key);
           return prev;
         },
-        { replace: true }
+        { replace: true },
       );
     },
-    [setSearchParams]
+    [setSearchParams],
   );
   const {
     items,
@@ -95,21 +95,21 @@ export const TicketGrid: FC = () => {
   useRealtimeTickets();
 
   // Enrich tickets with user data (avatars, names, emails)
-  const assigneeIds = items.map((t) => t.assigneeId).filter(Boolean);
-  const requesterIds = items.map((t) => t.requesterId).filter(Boolean);
+  const assigneeIds = items.map(t => t.assigneeId).filter(Boolean);
+  const requesterIds = items.map(t => t.requesterId).filter(Boolean);
   const allUserIds = [...assigneeIds, ...requesterIds];
   const { userMap, isLoading: isLoadingUsers } = useUserEnrichment(allUserIds);
 
   const enrichedItems: TicketRow[] = useMemo(
     () =>
-      items.map((ticket) => ({
+      items.map(ticket => ({
         ...ticket,
         assigneeUserInfo: ticket.assigneeId ? userMap[ticket.assigneeId] : null,
         requesterUserInfo: ticket.requesterId
           ? userMap[ticket.requesterId]
           : null,
       })),
-    [items, userMap]
+    [items, userMap],
   );
 
   const updateTicketMutation = useUpdateTicket();
@@ -125,21 +125,21 @@ export const TicketGrid: FC = () => {
     (ticketId: string, assigneeId: string) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { assigneeId } });
     },
-    [updateTicketMutation]
+    [updateTicketMutation],
   );
 
   const handleChangeStatus = useCallback(
     (ticketId: string, status: TicketStatus) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { status } });
     },
-    [updateTicketMutation]
+    [updateTicketMutation],
   );
 
   const handleChangePriority = useCallback(
     (ticketId: string, priority: TicketPriority) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { priority } });
     },
-    [updateTicketMutation]
+    [updateTicketMutation],
   );
 
   const columns = useMemo(
@@ -150,7 +150,7 @@ export const TicketGrid: FC = () => {
         onChangePriority: handleChangePriority,
         timezone,
       }),
-    [handleAssign, handleChangeStatus, handleChangePriority, timezone]
+    [handleAssign, handleChangeStatus, handleChangePriority, timezone],
   );
 
   const { table } = useTicketsTable({
@@ -189,7 +189,7 @@ export const TicketGrid: FC = () => {
   const handleBulkAssignConfirm = useCallback(
     (assigneeId: string | undefined) => {
       const ids = selectedRows
-        .map((row) => row.original.id)
+        .map(row => row.original.id)
         .filter((id): id is string => !!id);
       bulkUpdateMutation.mutate(
         { ids, updates: { assigneeId } },
@@ -201,16 +201,16 @@ export const TicketGrid: FC = () => {
             });
             table.resetRowSelection();
           },
-        }
+        },
       );
     },
-    [selectedRows, bulkUpdateMutation, table]
+    [selectedRows, bulkUpdateMutation, table],
   );
 
   const handleBulkStatusConfirm = useCallback(
     (status: TicketStatus) => {
       const ids = selectedRows
-        .map((row) => row.original.id)
+        .map(row => row.original.id)
         .filter((id): id is string => !!id);
       bulkUpdateMutation.mutate(
         { ids, updates: { status } },
@@ -222,15 +222,15 @@ export const TicketGrid: FC = () => {
             });
             table.resetRowSelection();
           },
-        }
+        },
       );
     },
-    [selectedRows, bulkUpdateMutation, table]
+    [selectedRows, bulkUpdateMutation, table],
   );
 
   const handleBulkDelete = useCallback(async () => {
     const ids = selectedRows
-      .map((row) => row.original.id)
+      .map(row => row.original.id)
       .filter((id): id is string => !!id);
     const ok = await confirm({
       title: 'Delete Tickets',
@@ -255,7 +255,7 @@ export const TicketGrid: FC = () => {
       setSearchTerm(term);
       setFilters({ ...filters, searchTerm: term });
     },
-    [filters, setFilters]
+    [filters, setFilters],
   );
 
   const handleCategorySelect = useCallback(
@@ -268,14 +268,14 @@ export const TicketGrid: FC = () => {
       // Close mobile drawer after selecting a category
       mobileSidebarState.close();
     },
-    [filters, setFilters, mobileSidebarState]
+    [filters, setFilters, mobileSidebarState],
   );
 
   const handleTagSelect = useCallback(
     (tagId: string) => {
-      setSelectedTags((prev) => {
+      setSelectedTags(prev => {
         const newTags = prev.includes(tagId)
-          ? prev.filter((t) => t !== tagId)
+          ? prev.filter(t => t !== tagId)
           : [...prev, tagId];
 
         // Update filters with tag IDs
@@ -287,7 +287,7 @@ export const TicketGrid: FC = () => {
         return newTags;
       });
     },
-    [filters, setFilters]
+    [filters, setFilters],
   );
 
   const handleTabChange = useCallback(
@@ -349,7 +349,7 @@ export const TicketGrid: FC = () => {
 
       setFilters(newFilters);
     },
-    [filters, setFilters, currentUserId, setSelectedTab]
+    [filters, setFilters, currentUserId, setSelectedTab],
   );
 
   const sidebarProps = {
@@ -436,7 +436,7 @@ export const TicketGrid: FC = () => {
 
           {/* Bulk Actions */}
           {hasSelectedRows && (
-            <div className="mt-5 flex items-center gap-4 rounded-lg bg-gray-50 p-4">
+            <div className="mt-5 flex items-center gap-4 rounded-lg bg-default-50 p-4">
               <span className="text-sm font-medium">
                 {selectedRows.length} ticket
                 {selectedRows.length !== 1 ? 's' : ''} selected
@@ -512,7 +512,7 @@ export const TicketGrid: FC = () => {
         <NewTicketModal
           isOpen={isNewTicketModalOpen}
           onClose={() => setIsNewTicketModalOpen(false)}
-          onCreated={(ticketId) => navigate(`/tickets/${ticketId}`)}
+          onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
         />
         {confirmDialog}
       </div>

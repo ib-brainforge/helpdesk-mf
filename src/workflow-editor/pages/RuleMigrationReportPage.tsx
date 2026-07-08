@@ -27,7 +27,7 @@ export function RuleMigrationReportPage() {
       const r = await apply.mutateAsync(true);
       toast(
         `Dry run complete: ${r.rulesScanned} rule(s) scanned, ${r.conditionsMigrated} condition(s) + ${r.actionsMigrated} action(s) would be migrated`,
-        { variant: 'success' }
+        { variant: 'success' },
       );
     } catch (err) {
       if (err instanceof Error) {
@@ -47,7 +47,7 @@ export function RuleMigrationReportPage() {
       const r = await apply.mutateAsync(false);
       toast(
         `Migration applied: ${r.conditionsMigrated} condition(s) and ${r.actionsMigrated} action(s) migrated`,
-        { variant: 'success' }
+        { variant: 'success' },
       );
     } catch (err) {
       if (err instanceof Error) {
@@ -70,7 +70,7 @@ export function RuleMigrationReportPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Rule Migration Report</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className="mt-0.5 text-sm text-default-500">
             Legacy automation rules using StatusCondition or status-mutating
             actions. These rules must be migrated to workflow-aware transition
             types.
@@ -103,25 +103,25 @@ export function RuleMigrationReportPage() {
             </div>
             <div className="text-warning-600 text-xs">Rules to migrate</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-center">
-            <div className="text-2xl font-bold text-gray-700">
+          <div className="rounded-lg border border-default-200 bg-default-50 px-4 py-2 text-center">
+            <div className="text-2xl font-bold text-default-700">
               {data?.reduce((acc, r) => acc + r.statusConditionCount, 0)}
             </div>
-            <div className="text-xs text-gray-600">Status conditions</div>
+            <div className="text-xs text-default-600">Status conditions</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-center">
-            <div className="text-2xl font-bold text-gray-700">
+          <div className="rounded-lg border border-default-200 bg-default-50 px-4 py-2 text-center">
+            <div className="text-2xl font-bold text-default-700">
               {data?.reduce((acc, r) => acc + r.statusMutatingActionCount, 0)}
             </div>
-            <div className="text-xs text-gray-600">Mutating actions</div>
+            <div className="text-xs text-default-600">Mutating actions</div>
           </div>
         </div>
       )}
 
       {/* Empty state */}
       {!hasRules && (
-        <BaseCard className="p-6 text-center text-gray-500">
-          <p className="mb-1 font-semibold text-gray-700">
+        <BaseCard className="p-6 text-center text-default-500">
+          <p className="mb-1 font-semibold text-default-700">
             No legacy rules found
           </p>
           <p className="text-sm">
@@ -132,13 +132,13 @@ export function RuleMigrationReportPage() {
 
       {/* Rule list */}
       <div className="space-y-2">
-        {data?.map((r) => (
+        {data?.map(r => (
           <BaseCard key={r.ruleId}>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-gray-900">{r.name}</div>
+                <div className="font-semibold text-default-900">{r.name}</div>
                 {(r.categoryName || r.categoryId) && (
-                  <div className="mt-0.5 text-xs text-gray-400">
+                  <div className="mt-0.5 text-xs text-default-400">
                     Category: {r.categoryName ?? r.categoryId}
                   </div>
                 )}
@@ -149,7 +149,7 @@ export function RuleMigrationReportPage() {
                       {r.statusConditionCount !== 1 ? 's' : ''}
                     </Chip>
                   )}
-                  {r.mutatingActionTypes.map((t) => (
+                  {r.mutatingActionTypes.map(t => (
                     <Chip key={t} size="sm" color="danger">
                       {t}
                     </Chip>
@@ -169,7 +169,7 @@ export function RuleMigrationReportPage() {
       {/* Apply Migration confirm modal */}
       <ConfirmActionModal
         isOpen={applyConfirmOpen}
-        onOpenChange={(open) => !open && setApplyConfirmOpen(false)}
+        onOpenChange={open => !open && setApplyConfirmOpen(false)}
         title="Apply legacy rule migration?"
         description={`This will convert ${data?.length ?? 0} legacy rule(s) to workflow-aware types. The change is irreversible.`}
         confirmLabel="Apply"

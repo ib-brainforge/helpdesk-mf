@@ -24,7 +24,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const validateFiles = (
-    files: File[]
+    files: File[],
   ): { valid: File[]; errors: string[] } => {
     const valid: File[] = [];
     const errors: string[] = [];
@@ -32,14 +32,14 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
     for (const file of files) {
       if (file.size > maxFileSize) {
         errors.push(
-          `${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`
+          `${file.name} exceeds maximum size of ${maxFileSize / 1024 / 1024}MB`,
         );
         continue;
       }
 
       if (
         acceptedTypes.length > 0 &&
-        !acceptedTypes.some((type) => file.type.includes(type))
+        !acceptedTypes.some(type => file.type.includes(type))
       ) {
         errors.push(`${file.name} has an unsupported file type`);
         continue;
@@ -81,7 +81,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
         onFilesSelected(valid);
       }
     },
-    [onFilesSelected, maxFileSize, acceptedTypes]
+    [onFilesSelected, maxFileSize, acceptedTypes],
   );
 
   const handleFileInputChange = useCallback(
@@ -101,7 +101,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
       // Reset input
       e.target.value = '';
     },
-    [onFilesSelected, maxFileSize, acceptedTypes]
+    [onFilesSelected, maxFileSize, acceptedTypes],
   );
 
   const formatFileSize = (bytes: number) => {
@@ -116,14 +116,14 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
         className={`border-2 border-dashed p-8 text-center transition-colors ${
           isDragOver
             ? 'border-primary bg-primary-50'
-            : 'border-gray-300 hover:border-gray-400'
+            : 'border-default-300 hover:border-default-400'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <div className="flex flex-col items-center gap-4">
-          <Icon name="cloud-arrow-up" className="h-12 w-12 text-gray-400" />
+          <Icon name="cloud-arrow-up" className="h-12 w-12 text-default-400" />
           <div>
             <p className="text-lg font-medium">
               Drop files here or{' '}
@@ -138,7 +138,7 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
                 />
               </label>
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-default-500">
               Maximum file size: {formatFileSize(maxFileSize)}
             </p>
           </div>
@@ -153,13 +153,15 @@ export const FileUploadZone: FC<FileUploadZoneProps> = ({
 
       {progress.length > 0 && (
         <div className="space-y-2">
-          {progress.map((file) => (
+          {progress.map(file => (
             <div key={file.fileName} className="rounded border p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="truncate text-sm font-medium">
                   {file.fileName}
                 </span>
-                <span className="text-xs text-gray-500">{file.progress}%</span>
+                <span className="text-xs text-default-500">
+                  {file.progress}%
+                </span>
               </div>
               <ProgressBar
                 value={file.progress}

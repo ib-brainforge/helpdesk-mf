@@ -22,14 +22,18 @@ export interface UsePrincipalResult {
   error: Error | null;
 }
 
-export function usePrincipal(principalId: string | undefined): UsePrincipalResult {
+export function usePrincipal(
+  principalId: string | undefined,
+): UsePrincipalResult {
   const query = useQuery({
     queryKey: ['principal', principalId],
     enabled: Boolean(principalId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async (): Promise<PrincipalDto> => {
       const client = await createIdentityApiClient(AdminPrincipalsApi);
-      const response = await client.v1AdminPrincipalsPrincipalIdGet(principalId!);
+      const response = await client.v1AdminPrincipalsPrincipalIdGet(
+        principalId!,
+      );
       return response.data;
     },
   });

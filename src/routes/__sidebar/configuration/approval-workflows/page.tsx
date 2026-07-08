@@ -1,78 +1,133 @@
+/**
+ * Approval Workflows list — /__sidebar/configuration/approval-workflows
+ *
+ * Tenant-scoped CRUD backed by the real generated ApprovalWorkflowsApi
+ * (GET list/detail, PUT, DELETE added alongside the pre-existing POST).
+ */
+
 import {
-  createApprovalWorkflowsColumns,
   useApprovalWorkflows,
-  useApprovalWorkflowsTable,
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
-import { BaseButton, Icon } from '@brainforgeau/components';
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { BaseButton } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
 import {
   EmptyState,
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
+import type { HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto } from '@brainforgeau/helpdesk-client';
 import { withAuthorizationRequired } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
 import { useNavigate } from '@modern-js/runtime/router';
-import { useCallback, useMemo } from 'react';
+import {
+  createColumnHelper,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useCallback } from 'react';
+
+const columnHelper =
+  createColumnHelper<HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto>();
 
 function ApprovalWorkflowsPage() {
   const navigate = useNavigate();
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
-    useApprovalWorkflows();
-
-  const deleteMutation = useDeleteApprovalWorkflow();
   const { confirm, dialog } = useConfirm();
 
-  const handleEdit = useCallback(
-    (workflowId: string) => {
-      navigate(`/configuration/approval-workflows/${workflowId}`);
-    },
-    [navigate],
-  );
+  const { data: workflows, isLoading } = useApprovalWorkflows();
+  const deleteMutation = useDeleteApprovalWorkflow();
 
   const handleDeleteRequest = useCallback(
-    async (workflowId: string) => {
+    async (id: string, name: string) => {
       const ok = await confirm({
         title: 'Delete Approval Workflow',
-        body: 'Are you sure you want to delete this approval workflow? This cannot be undone.',
+        body: `Delete approval workflow "${name}"? This cannot be undone.`,
         confirmLabel: 'Delete',
         destructive: true,
       });
       if (!ok) return;
-      deleteMutation.mutate(workflowId, {
-        onSuccess: () => {
-          toast('Deleted', {
-            description: 'Approval workflow deleted successfully.',
-            variant: 'success',
-          });
-          refetch();
-        },
-        onError: () => {
-          toast('Error', {
-            description: 'Failed to delete approval workflow.',
-            variant: 'danger',
-          });
-        },
-      });
+      deleteMutation.mutate(id);
     },
-    [confirm, deleteMutation, refetch],
+    [confirm, deleteMutation],
   );
 
-  const columns = useMemo(
-    () =>
-      createApprovalWorkflowsColumns({
-        onEdit: handleEdit,
-        onDelete: handleDeleteRequest,
-      }),
-    [handleEdit, handleDeleteRequest],
-  );
+  const columns = [
+    columnHelper.accessor('name', {
+      header: 'Name',
+      cell: info => (
+        <span className="font-medium">{info.getValue() ?? ''}</span>
+      ),
+    }),
+    columnHelper.accessor('approvalMode', {
+      header: 'Mode',
+      cell: info => {
+        const mode = info.getValue();
+        return mode ? APPROVAL_MODE_LABELS[mode] : '';
+      },
+    }),
+    columnHelper.accessor('stepCount', {
+      header: 'Steps',
+      cell: info => info.getValue() ?? 0,
+    }),
+    columnHelper.accessor('isActive', {
+      header: 'Status',
+      cell: info => (
+        <span
+          className={
+            info.getValue() ? 'font-medium text-success' : 'text-default-400'
+          }
+        >
+          {info.getValue() ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    }),
+    columnHelper.accessor('triggerOnCreation', {
+      header: 'On Create',
+      cell: info => (info.getValue() ? 'Yes' : 'No'),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <div className="-my-1.5 flex items-center justify-end gap-1">
+          <BaseButton
+            variant="link"
+            size="none"
+            className="text-dark dark:text-light hover:text-blue"
+            aria-label="Edit approval workflow"
+            onPress={() =>
+              navigate(`/configuration/approval-workflows/${row.original.id}`)
+            }
+            icon={<Icon name="pencil" className="h-4 w-4" />}
+          />
+          <BaseButton
+            variant="link"
+            size="none"
+            className="text-danger hover:text-danger-600"
+            aria-label="Delete approval workflow"
+            onPress={() =>
+              handleDeleteRequest(
+                row.original.id ?? '',
+                row.original.name ?? '',
+              )
+            }
+            isDisabled={deleteMutation.isPending}
+            icon={<Icon name="trash" className="h-4 w-4" />}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 80,
+    }),
+  ];
 
-  const { table } = useApprovalWorkflowsTable({
-    data: items,
+  const table = useReactTable({
+    data: workflows ?? [],
     columns,
-    totalCount,
-    pagination,
-    onPaginationChange: setPagination,
+    getRowId: row => row.id ?? '',
+    getCoreRowModel: getCoreRowModel(),
+    enableSorting: false,
   });
 
   return (
@@ -93,13 +148,13 @@ function ApprovalWorkflowsPage() {
       empty={
         <EmptyState
           title="No approval workflows yet"
-          description="Create your first approval workflow to require managerial sign-off on tickets."
+          description="Create an approval workflow to define multi-step sign-off processes."
           action={
             <BaseButton
               color="primary"
               onPress={() => navigate('/configuration/approval-workflows/new')}
             >
-              Create Approval Workflow
+              Approval Workflow
             </BaseButton>
           }
           live

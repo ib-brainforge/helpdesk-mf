@@ -245,15 +245,36 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
                   setPriority(value as TicketPriority);
                 }}
               >
-                <BaseSelectItem key={TicketPriority.Critical} value={TicketPriority.Critical}>
+                <BaseSelectItem
+                  key={TicketPriority.Critical}
+                  value={TicketPriority.Critical}
+                >
                   Critical
                 </BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.High} value={TicketPriority.High}>High</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>
+                <BaseSelectItem
+                  key={TicketPriority.High}
+                  value={TicketPriority.High}
+                >
+                  High
+                </BaseSelectItem>
+                <BaseSelectItem
+                  key={TicketPriority.Normal}
+                  value={TicketPriority.Normal}
+                >
                   Normal
                 </BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>Low</BaseSelectItem>
-                <BaseSelectItem key={TicketPriority.None} value={TicketPriority.None}>None</BaseSelectItem>
+                <BaseSelectItem
+                  key={TicketPriority.Low}
+                  value={TicketPriority.Low}
+                >
+                  Low
+                </BaseSelectItem>
+                <BaseSelectItem
+                  key={TicketPriority.None}
+                  value={TicketPriority.None}
+                >
+                  None
+                </BaseSelectItem>
               </BaseSelect>
 
               <BaseAutocomplete
@@ -304,7 +325,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
                         {category.name}
                       </span>
                       {category.sectionName && (
-                        <span className="text-[10px] text-[#8C8F97] dark:text-gray-400">
+                        <span className="text-[10px] text-[#8C8F97] dark:text-default-400">
                           {category.sectionName}
                         </span>
                       )}
@@ -348,7 +369,11 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
               }}
             >
               {usersOptions.map(user => (
-                <BaseAutocompleteItem key={user.id} id={user.id} textValue={user.name}>
+                <BaseAutocompleteItem
+                  key={user.id}
+                  id={user.id}
+                  textValue={user.name}
+                >
                   <div className="flex items-center gap-2.5">
                     <BaseAvatar
                       src={user.avatarUrl}

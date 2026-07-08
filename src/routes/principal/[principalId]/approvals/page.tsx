@@ -19,6 +19,7 @@ import {
   PendingCrumb,
   useConfirm,
 } from '@brainforgeau/components/page';
+import type { HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
@@ -34,19 +35,8 @@ import {
 import { useCallback } from 'react';
 import type { PrincipalOutletContext } from '../layout';
 
-// REVIEW: HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto not yet in published client.
-// Remove once helpdesk-backend republishes with approval workflow DTO exported.
-interface ApprovalWorkflowDto {
-  id?: string;
-  name?: string;
-  description?: string | null;
-  approvalMode?: string;
-  isActive?: boolean;
-  triggerOnCreation?: boolean;
-  stepCount?: number;
-}
-
-const columnHelper = createColumnHelper<ApprovalWorkflowDto>();
+const columnHelper =
+  createColumnHelper<HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto>();
 
 function PrincipalApprovalsPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -81,14 +71,16 @@ function PrincipalApprovalsPage() {
   const columns = [
     columnHelper.accessor('name', {
       header: 'Name',
-      cell: info => <span className="font-medium">{info.getValue()}</span>,
+      cell: info => (
+        <span className="font-medium">{info.getValue() ?? ''}</span>
+      ),
     }),
     columnHelper.accessor('approvalMode', {
       header: 'Mode',
-      cell: info =>
-        APPROVAL_MODE_LABELS[
-          info.getValue() as keyof typeof APPROVAL_MODE_LABELS
-        ] ?? info.getValue(),
+      cell: info => {
+        const mode = info.getValue();
+        return mode ? APPROVAL_MODE_LABELS[mode] : '';
+      },
     }),
     columnHelper.accessor('stepCount', {
       header: 'Steps',
@@ -131,7 +123,10 @@ function PrincipalApprovalsPage() {
             className="text-danger hover:text-danger-600"
             aria-label="Delete approval workflow"
             onPress={() =>
-              handleDeleteRequest(row.original.id!, row.original.name!)
+              handleDeleteRequest(
+                row.original.id ?? '',
+                row.original.name ?? '',
+              )
             }
             isDisabled={deleteMutation.isPending}
             icon={<Icon name="trash" className="h-4 w-4" />}
@@ -145,7 +140,7 @@ function PrincipalApprovalsPage() {
   ];
 
   const table = useReactTable({
-    data: (workflows ?? []) as ApprovalWorkflowDto[],
+    data: workflows ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });

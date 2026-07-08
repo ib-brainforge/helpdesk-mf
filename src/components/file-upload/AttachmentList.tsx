@@ -12,8 +12,16 @@ const getFileIcon = (contentType: string, fileName: string) => {
   const ext = fileName.split('.').pop()?.toLowerCase();
   if (contentType.startsWith('image/')) return 'img';
   if (contentType.includes('pdf') || ext === 'pdf') return 'pdf';
-  if (contentType.includes('word') || ext === 'doc' || ext === 'docx') return 'doc';
-  if (contentType.includes('excel') || contentType.includes('spreadsheet') || ext === 'xlsx' || ext === 'xls' || ext === 'csv') return 'table';
+  if (contentType.includes('word') || ext === 'doc' || ext === 'docx')
+    return 'doc';
+  if (
+    contentType.includes('excel') ||
+    contentType.includes('spreadsheet') ||
+    ext === 'xlsx' ||
+    ext === 'xls' ||
+    ext === 'csv'
+  )
+    return 'table';
   return 'blank';
 };
 
@@ -39,7 +47,7 @@ export const AttachmentList: FC<AttachmentListProps> = ({
         return (
           <div
             key={attachment.id}
-            className="group relative h-24 w-24 shrink-0 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
+            className="group relative h-24 w-24 shrink-0 rounded-lg border border-default-200 dark:border-default-700 overflow-hidden cursor-pointer"
             title={attachment.fileName}
           >
             {/* Preview content */}
@@ -50,12 +58,15 @@ export const AttachmentList: FC<AttachmentListProps> = ({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center bg-gray-50 dark:bg-gray-800">
+              <div className="flex h-full w-full flex-col items-center justify-center bg-default-50 dark:bg-default-800">
                 <Icon
-                  name={getFileIcon(attachment.contentType, attachment.fileName)}
-                  className="h-12 w-12 text-gray-400 dark:text-gray-500"
+                  name={getFileIcon(
+                    attachment.contentType,
+                    attachment.fileName,
+                  )}
+                  className="h-12 w-12 text-default-400 dark:text-default-500"
                 />
-                <span className="mt-1 text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                <span className="mt-1 text-[11px] font-bold text-default-500 dark:text-default-400">
                   {getFileExtLabel(attachment.fileName)}
                 </span>
               </div>

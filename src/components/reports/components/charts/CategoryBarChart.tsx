@@ -36,7 +36,7 @@ export const CategoryBarChart: FC<CategoryBarChartProps> = ({ data }) => {
         <YAxis dataKey="name" type="category" width={150} />
         <Tooltip formatter={(value: number) => `${value} tickets`} />
         <Legend />
-        <Bar dataKey="count" fill="#8b5cf6" name="Ticket Count" />
+        <Bar dataKey="count" fill="#1868db" name="Ticket Count" />
       </BarChart>
     </ResponsiveContainer>
   );

@@ -37,22 +37,22 @@ export function ParallelSpecEditor({
   }
 
   return (
-    <div className="space-y-4 border-t border-gray-200 pt-4 mt-4">
-      <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+    <div className="space-y-4 border-t border-default-200 pt-4 mt-4">
+      <h4 className="text-xs font-semibold text-default-600 uppercase tracking-wide">
         Parallel Spec
       </h4>
 
       {/* Branch Start States — checkbox multi-select */}
       <div>
-        <div className="text-xs font-medium text-gray-700 mb-2">
+        <div className="text-xs font-medium text-default-700 mb-2">
           Branch Start States
         </div>
         {availableStates.length === 0 ? (
-          <p className="text-xs text-gray-400 italic">
+          <p className="text-xs text-default-400 italic">
             Add more states to select branch starts.
           </p>
         ) : (
-          <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+          <div className="space-y-1 max-h-40 overflow-y-auto border border-default-200 rounded-md p-2">
             {availableStates.map(s => (
               <BaseCheckbox
                 key={s.id}
@@ -62,14 +62,14 @@ export function ParallelSpecEditor({
               >
                 {s.name}
                 {s.slug !== s.name.toLowerCase() && (
-                  <span className="text-xs text-gray-500"> ({s.slug})</span>
+                  <span className="text-xs text-default-500"> ({s.slug})</span>
                 )}
               </BaseCheckbox>
             ))}
           </div>
         )}
         {spec.branchStartStateIds.length > 0 && (
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-default-500 mt-1">
             {spec.branchStartStateIds.length} branch
             {spec.branchStartStateIds.length !== 1 ? 'es' : ''} selected
           </div>
@@ -88,7 +88,9 @@ export function ParallelSpecEditor({
         placeholder="Select join state"
       >
         {availableStates.map(s => (
-          <BaseSelectItem key={s.id} value={s.id}>{s.name}</BaseSelectItem>
+          <BaseSelectItem key={s.id} value={s.id}>
+            {s.name}
+          </BaseSelectItem>
         ))}
       </BaseSelect>
 

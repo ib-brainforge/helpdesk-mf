@@ -1,0 +1,29 @@
+name: Lint Gate
+
+# Hard Gate #3 enforcement + fleet code hygiene.
+# Runs `biome ci` (format + lint + import organization) on every PR.
+# The lint rules include the raw fetch()/axios ban (style/noRestrictedGlobals,
+# nursery/noRestrictedImports) — see .claude/knowledge/validation/frontend-patterns.md.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [develop, main]
+
+jobs:
+  biome:
+    name: Biome CI (format + lint)
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Biome is a standalone binary — no pnpm install / node_modules needed.
+      # Version pinned to match the biome.json schema fleet-wide.
+      - name: Run Biome
+        run: npx --yes @biomejs/biome@1.9.4 ci .

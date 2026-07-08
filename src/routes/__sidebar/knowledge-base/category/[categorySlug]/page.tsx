@@ -11,7 +11,7 @@ import {
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { useTimezone } from '@brainforgeau/security';
-import { Card } from '@heroui/react';
+import { Chip } from '@heroui/react';
 import { Link, useParams } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -24,9 +24,7 @@ function KnowledgeBaseCategoryPage() {
   const { data: categories } = useKnowledgeBaseCategories();
 
   // Find category by slug
-  const category = categories?.find(
-    (cat) => (cat as any).slug === categorySlug
-  );
+  const category = categories?.find(cat => cat.slug === categorySlug);
 
   // Fetch articles in this category
   const { data: articles, isLoading } = useQuery({
@@ -44,7 +42,7 @@ function KnowledgeBaseCategoryPage() {
         undefined,
         undefined,
         undefined,
-        undefined
+        undefined,
       );
       return response.data;
     },
@@ -52,7 +50,7 @@ function KnowledgeBaseCategoryPage() {
   });
 
   const getStatusColor = (
-    status: KnowledgeBaseStatus
+    status: KnowledgeBaseStatus,
   ): 'default' | 'success' | 'warning' => {
     switch (status) {
       case KnowledgeBaseStatus.Published:
@@ -83,8 +81,8 @@ function KnowledgeBaseCategoryPage() {
     return (
       <PageBody>
         <div className="py-12 text-center">
-          <Icon name="folder" className="mx-auto h-12 w-12 text-gray-400" />
-          <p className="mt-4 text-gray-500">Category not found</p>
+          <Icon name="folder" className="mx-auto h-12 w-12 text-default-400" />
+          <p className="mt-4 text-default-500">Category not found</p>
         </div>
       </PageBody>
     );
@@ -109,7 +107,7 @@ function KnowledgeBaseCategoryPage() {
       </PageHeader>
 
       {/* Article count */}
-      <p className="mb-6 text-sm text-gray-500">
+      <p className="mb-6 text-sm text-default-500">
         {category?.articleCount || 0} article(s) in this category
       </p>
 
@@ -118,7 +116,7 @@ function KnowledgeBaseCategoryPage() {
         <BaseInput
           placeholder="Search in this category..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           startContent={<Icon name="magnifying-glass" className="h-4 w-4" />}
         />
       </div>
@@ -126,15 +124,15 @@ function KnowledgeBaseCategoryPage() {
       {/* Articles List */}
       {isLoading ? (
         <div className="py-12 text-center">
-          <p className="text-gray-500">Loading articles...</p>
+          <p className="text-default-500">Loading articles...</p>
         </div>
       ) : !articles || articles.items?.length === 0 ? (
         <div className="py-12 text-center">
           <Icon
             name="document-text"
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="mx-auto h-12 w-12 text-default-400"
           />
-          <p className="mt-4 text-gray-500">
+          <p className="mt-4 text-default-500">
             No articles found in this category
           </p>
         </div>
@@ -151,18 +149,11 @@ function KnowledgeBaseCategoryPage() {
                   <h3 className="line-clamp-2 text-lg font-semibold">
                     {article.title}
                   </h3>
-                  <TagChip
-                    name={getStatusLabel(article.status)}
-                    color={
-                      getStatusColor(article.status) === 'success'
-                        ? '#10b981'
-                        : getStatusColor(article.status) === 'warning'
-                          ? '#f59e0b'
-                          : '#6b7280'
-                    }
-                  />
+                  <Chip size="sm" color={getStatusColor(article.status)}>
+                    {getStatusLabel(article.status)}
+                  </Chip>
                 </div>
-                <p className="mb-3 line-clamp-3 text-sm text-gray-600">
+                <p className="mb-3 line-clamp-3 text-sm text-default-600">
                   {article.excerpt}
                 </p>
                 <div className="mb-3 flex flex-wrap gap-1">
@@ -170,12 +161,12 @@ function KnowledgeBaseCategoryPage() {
                     <TagChip key={tag} name={tag} size="sm" />
                   ))}
                   {article.tags?.length > 3 && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-default-500">
                       +{article.tags.length - 3} more
                     </span>
                   )}
                 </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-default-500">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Icon name="eye" className="h-3 w-3" />

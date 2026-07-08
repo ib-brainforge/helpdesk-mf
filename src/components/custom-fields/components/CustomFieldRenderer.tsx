@@ -1,6 +1,7 @@
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 import { CustomFieldType } from '@/types/custom-field';
 import {
+  BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -8,7 +9,6 @@ import {
   BaseTagSelectItem,
   BaseTextarea,
 } from '@brainforgeau/components';
-import { Checkbox } from '@heroui/react';
 import { useMemo } from 'react';
 
 // REVIEW: Value type for custom field changes
@@ -138,14 +138,14 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
 
       case CustomFieldType.Checkbox:
         return (
-          <Checkbox
+          <BaseCheckbox
             isSelected={value?.booleanValue ?? false}
-            onChange={checked => onChange({ booleanValue: checked })}
+            onValueChange={checked => onChange({ booleanValue: checked })}
             isDisabled={readOnly}
             isInvalid={!!error}
           >
             {field.name}
-          </Checkbox>
+          </BaseCheckbox>
         );
 
       case CustomFieldType.Dropdown:
@@ -166,7 +166,9 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
               .filter(o => !o.isDisabled || o.id === value?.selectedOptionId)
               .sort((a, b) => a.sortOrder - b.sortOrder)
               .map(option => (
-                <BaseSelectItem key={option.id} value={option.id}>{option.value}</BaseSelectItem>
+                <BaseSelectItem key={option.id} value={option.id}>
+                  {option.value}
+                </BaseSelectItem>
               ))}
           </BaseSelect>
         );
@@ -174,25 +176,27 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
       case CustomFieldType.MultiSelect:
         return (
           <div className={readOnly ? 'pointer-events-none opacity-50' : ''}>
-          <BaseTagSelect
-            label={field.name}
-            placeholder="Select options..."
-            value={value?.selectedOptions?.map(o => o.id) ?? []}
-            onValueChange={(selectedIds: string[]) => {
-              onChange({ selectedOptionIds: selectedIds });
-            }}
-            isInvalid={!!error}
-            errorMessage={error}
-            isRequired={field.isRequired}
-          >
-            {(field.options || [])
-              .filter(o => !o.isDisabled)
-              .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map(option => (
-                <BaseTagSelectItem key={option.id} value={option.id}>{option.value}</BaseTagSelectItem>
-              ))}
-          </BaseTagSelect>
-        </div>
+            <BaseTagSelect
+              label={field.name}
+              placeholder="Select options..."
+              value={value?.selectedOptions?.map(o => o.id) ?? []}
+              onValueChange={(selectedIds: string[]) => {
+                onChange({ selectedOptionIds: selectedIds });
+              }}
+              isInvalid={!!error}
+              errorMessage={error}
+              isRequired={field.isRequired}
+            >
+              {(field.options || [])
+                .filter(o => !o.isDisabled)
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map(option => (
+                  <BaseTagSelectItem key={option.id} value={option.id}>
+                    {option.value}
+                  </BaseTagSelectItem>
+                ))}
+            </BaseTagSelect>
+          </div>
         );
 
       case CustomFieldType.Url:

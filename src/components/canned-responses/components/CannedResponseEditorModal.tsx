@@ -65,10 +65,7 @@ export function CannedResponseEditorModal({
   useEffect(() => {
     if (isOpen && cannedResponse) {
       setTitle(cannedResponse.title || '');
-      setScope(
-        (cannedResponse.scope as unknown as CannedResponseScope) ||
-          CannedResponseScope.Personal,
-      );
+      setScope(cannedResponse.scope ?? CannedResponseScope.Personal);
       setCategoryId(cannedResponse.categoryId || '');
       editor?.commands.setContent(cannedResponse.body || '');
     } else if (isOpen && !cannedResponse) {
@@ -97,7 +94,7 @@ export function CannedResponseEditorModal({
           updates: {
             title,
             body,
-            scope: scope as any,
+            scope,
             categoryId: categoryId || undefined,
           },
         });
@@ -109,7 +106,7 @@ export function CannedResponseEditorModal({
         await createMutation.mutateAsync({
           title,
           body,
-          scope: scope as any,
+          scope,
           categoryId: categoryId || undefined,
         });
         toast('Created', {
@@ -127,7 +124,12 @@ export function CannedResponseEditorModal({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-3xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      className="max-w-3xl"
+    >
       <BaseModalContent>
         <BaseModalHeader
           title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
@@ -203,22 +205,23 @@ export function CannedResponseEditorModal({
             <BaseSelect
               label="Scope"
               placeholder="Select scope"
-              selectedKey={scope.toString()}
+              selectedKey={scope}
               onSelectionChange={keys => {
-                const key = keys as string;
-                setScope(
-                  Number.parseInt(key) as unknown as CannedResponseScope,
-                );
+                const key = keys as CannedResponseScope;
+                if (key) setScope(key);
               }}
             >
-              <BaseSelectItem key={CannedResponseScope.Personal.toString()} value={CannedResponseScope.Personal.toString()}>
+              <BaseSelectItem
+                key={CannedResponseScope.Personal}
+                value={CannedResponseScope.Personal}
+              >
                 Personal - Only visible to you
               </BaseSelectItem>
-              <BaseSelectItem key={CannedResponseScope.Team.toString()} value={CannedResponseScope.Team.toString()}>
-                Team - Visible to your team
-              </BaseSelectItem>
-              <BaseSelectItem key={CannedResponseScope.Global.toString()} value={CannedResponseScope.Global.toString()}>
-                Global - Visible to everyone
+              <BaseSelectItem
+                key={CannedResponseScope.Shared}
+                value={CannedResponseScope.Shared}
+              >
+                Shared - Visible to everyone
               </BaseSelectItem>
             </BaseSelect>
 
@@ -231,7 +234,9 @@ export function CannedResponseEditorModal({
               }}
             >
               {[
-                <BaseSelectItem key="__none__" id="__none__">None</BaseSelectItem>,
+                <BaseSelectItem key="__none__" id="__none__">
+                  None
+                </BaseSelectItem>,
                 ...categories.map(cat => (
                   <BaseSelectItem key={cat.id} value={cat.id}>
                     {cat.sectionName

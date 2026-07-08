@@ -73,7 +73,7 @@ function CustomStatusesPage() {
         });
       }
     },
-    [confirm, deleteMutation]
+    [confirm, deleteMutation],
   );
 
   const columns = useMemo(
@@ -84,7 +84,7 @@ function CustomStatusesPage() {
         cell: ({ row }) => (
           <div
             className="border-light h-4 w-4 rounded-full border"
-            style={{ backgroundColor: row.original.color ?? '#6366f1' }}
+            style={{ backgroundColor: row.original.color ?? '#1868db' }}
           />
         ),
         size: 32,
@@ -163,13 +163,13 @@ function CustomStatusesPage() {
         size: 80,
       }),
     ],
-    [handleEdit, handleDeleteRequest]
+    [handleEdit, handleDeleteRequest],
   );
 
   const table = useReactTable({
     data: customStatuses,
     columns,
-    getRowId: (row) => row.id,
+    getRowId: row => row.id,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });

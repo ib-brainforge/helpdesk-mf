@@ -29,21 +29,20 @@
   },
   "packageManager": "pnpm@9.15.0",
   "lint-staged": {
-    "*.{jsonc}": [
-      "biome check --files-ignore-unknown=true"
-    ]
+    "*.{jsonc}": ["biome check --files-ignore-unknown=true"]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.4.469-develop.d6df22e",
-    "@brainforgeau/helpdesk-client": "0.1.203-develop.a5a0806",
+    "@brainforgeau/components": "0.4.506-develop.a1ef13f",
+    "@brainforgeau/helpdesk-client": "0.1.246-develop.35d969f",
     "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
     "@brainforgeau/observability": "0.4.61-develop.1e1460d",
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
     "@brainforgeau/security": "0.4.312-develop.ef83c60",
     "@brainforgeau/theme": "0.2.64-develop.3645b80",
+    "@brainforgeau/workflow-ui": "0.1.3-develop.2adced5",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
     "@heroui/react": "^3.0.4",
@@ -75,16 +74,13 @@
     "dompurify": "^3.3.1",
     "exceljs": "^4.4.0",
     "framer-motion": "12.23.12",
-    "graphql": "^16.11.0",
     "jotai": "2.13.1",
     "jotai-tanstack-query": "^0.11.0",
-    "jotai-urql": "^0.7.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-error-boundary": "^6.0.0",
     "react-oidc-context": "3.3.0",
     "recharts": "^2.15.4",
-    "urql": "^5.0.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -111,9 +107,6 @@
     "simple-git-hooks": "^2.11.1",
     "tailwindcss": "^4.3.0",
     "typescript": "~5.7.3"
-  },
-  "overrides": {
-    "@internationalized/date": "3.10.0"
   },
   "pnpm": {
     "overrides": {

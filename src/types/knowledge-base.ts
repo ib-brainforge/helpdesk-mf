@@ -20,6 +20,7 @@ export enum KnowledgeBaseAccessLevel {
 export interface KnowledgeBaseCategoryDto {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   parentId?: string;
   children?: KnowledgeBaseCategoryDto[];

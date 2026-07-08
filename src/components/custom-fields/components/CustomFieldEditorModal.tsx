@@ -184,7 +184,12 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="lg"
+      className="max-w-2xl"
+    >
       <BaseModalContent>
         <BaseModalHeader
           title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
@@ -230,7 +235,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     isInvalid={field.state.meta.errors.length > 0}
                   >
                     {FIELD_TYPE_OPTIONS.map(option => (
-                      <BaseSelectItem key={String(option.id)} value={String(option.id)}>
+                      <BaseSelectItem
+                        key={String(option.id)}
+                        value={String(option.id)}
+                      >
                         {option.name}
                       </BaseSelectItem>
                     ))}
@@ -253,7 +261,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                     isInvalid={field.state.meta.errors.length > 0}
                   >
                     {USAGE_TYPE_OPTIONS.map(option => (
-                      <BaseSelectItem key={String(option.id)} value={String(option.id)}>
+                      <BaseSelectItem
+                        key={String(option.id)}
+                        value={String(option.id)}
+                      >
                         {option.name}
                       </BaseSelectItem>
                     ))}
@@ -277,7 +288,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {ACCESS_LEVEL_OPTIONS.map(option => (
-                    <BaseSelectItem key={String(option.id)} value={String(option.id)}>
+                    <BaseSelectItem
+                      key={String(option.id)}
+                      value={String(option.id)}
+                    >
                       {option.name}
                     </BaseSelectItem>
                   ))}

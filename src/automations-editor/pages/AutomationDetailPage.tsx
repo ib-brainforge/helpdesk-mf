@@ -81,7 +81,7 @@ export function AutomationDetailPage() {
     if (!rule) return null;
     if (rule.versions.length > 0) {
       return [...rule.versions].sort(
-        (a, b) => b.versionNumber - a.versionNumber
+        (a, b) => b.versionNumber - a.versionNumber,
       )[0];
     }
     return rule.publishedVersion ?? null;
@@ -179,8 +179,11 @@ export function AutomationDetailPage() {
       }
       // Extract error detail from backend response
       const detail =
-        (err as { response?: { data?: { detail?: string; errors?: string[] } } })
-          ?.response?.data?.detail ??
+        (
+          err as {
+            response?: { data?: { detail?: string; errors?: string[] } };
+          }
+        )?.response?.data?.detail ??
         (err as { response?: { data?: { errors?: string[] } } })?.response?.data
           ?.errors?.[0] ??
         (err instanceof Error ? err.message : 'Unknown error');
@@ -207,8 +210,11 @@ export function AutomationDetailPage() {
         });
       }
       const detail =
-        (err as { response?: { data?: { detail?: string; errors?: string[] } } })
-          ?.response?.data?.detail ??
+        (
+          err as {
+            response?: { data?: { detail?: string; errors?: string[] } };
+          }
+        )?.response?.data?.detail ??
         (err as { response?: { data?: { errors?: string[] } } })?.response?.data
           ?.errors?.[0] ??
         (err instanceof Error ? err.message : 'Unknown error');
@@ -221,7 +227,7 @@ export function AutomationDetailPage() {
 
   const reversedVersions = useMemo(
     () => (rule ? [...rule.versions].reverse() : []),
-    [rule]
+    [rule],
   );
 
   const isSaving = createVersionMutation.isPending;
@@ -278,14 +284,14 @@ export function AutomationDetailPage() {
             size="sm"
             variant="bordered"
             color={showPalette ? 'primary' : undefined}
-            onPress={() => setShowPalette((p) => !p)}
+            onPress={() => setShowPalette(p => !p)}
           >
             Components
           </BaseButton>
           <BaseButton
             size="sm"
             variant="bordered"
-            onPress={() => setShowVersionsSidebar((prev) => !prev)}
+            onPress={() => setShowVersionsSidebar(prev => !prev)}
           >
             Versions
           </BaseButton>
@@ -359,7 +365,7 @@ export function AutomationDetailPage() {
                     </h3>
                   </div>
                   <ul className="divide-default-100 divide-y px-2 pb-2">
-                    {reversedVersions.map((v) => (
+                    {reversedVersions.map(v => (
                       <li key={v.id} className="flex items-center gap-3 py-2.5">
                         <div className="flex-1">
                           <span className="text-sm font-medium">

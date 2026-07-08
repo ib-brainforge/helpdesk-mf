@@ -2,17 +2,21 @@
 //
 // Backend serializes enums as strings (JsonStringEnumConverter). Frontend enums are
 // now string-backed (Task 1) so round-trips match directly.
-//
-// NOTE: The generated client types v1WorkflowsGet / v1WorkflowsIdGet response bodies as
-// `void` (the OpenAPI spec omits response schemas for those list/get endpoints).
-// We cast via `unknown` where needed; the actual runtime payload is the full DTO.
 
 import type { Configuration } from '@brainforgeau/helpdesk-client';
-// Direct path imports: the generated client's barrel (api.d.ts) does not re-export
-// WorkflowsApi / PrincipalWorkflowsApi (generator quirk — files exist on disk but
-// aren't in the index). Importing from their direct paths is functionally identical.
-import { PrincipalWorkflowsApi } from '@brainforgeau/helpdesk-client/dist/api/principal-workflows-api';
-import { WorkflowsApi } from '@brainforgeau/helpdesk-client/dist/api/workflows-api';
+import {
+  PrincipalWorkflowsApi,
+  WorkflowsApi,
+} from '@brainforgeau/helpdesk-client';
+import type {
+  HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowDefinitionDto as BackendWorkflowDefinitionDto,
+  HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowStateDto as BackendWorkflowStateDto,
+  HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionsWorkflowDefinitionSummaryDto as BackendWorkflowSummaryDto,
+  HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowTransitionDto as BackendWorkflowTransitionDto,
+  HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowVersionDto as BackendWorkflowVersionDto,
+  HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftStateInput as UpdateWorkflowDraftStateInput,
+  HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftTransitionInput as UpdateWorkflowDraftTransitionInput,
+} from '@brainforgeau/helpdesk-client';
 // REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
 // to avoid a direct `import from 'axios'` that is not in project dependencies.
 import type { authorizedAxios as _AuthorizedAxios } from '@brainforgeau/security';
@@ -45,84 +49,6 @@ import type {
   WorkflowDefinitionVersionSummaryDto,
 } from '../types/workflow';
 
-// ── Inline backend DTO shapes (as returned by the API — typed void by generator) ──
-
-interface BackendWorkflowStateDto {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  category: string;
-  type: string;
-  sortOrder: number;
-  displayMetadata?: Record<string, string> | null;
-  parallel?: {
-    branchStartStateIds?: string[];
-    joinStateId?: string;
-    mode?: string;
-  } | null;
-}
-
-interface BackendWorkflowTransitionDto {
-  id: string;
-  fromStateId: string;
-  toStateId: string;
-  trigger: string;
-  eventName?: string | null;
-  guards?: Array<{ expression?: string }> | null;
-  displayMetadata?: Record<string, string> | null;
-}
-
-interface BackendVersionSummaryDto {
-  id: string;
-  versionNumber: number;
-  status: string;
-  publishedAt: string | null;
-  publishedBy: string | null;
-}
-
-interface BackendWorkflowVersionDto extends BackendVersionSummaryDto {
-  startStateId: string | null;
-  states: BackendWorkflowStateDto[];
-  transitions: BackendWorkflowTransitionDto[];
-}
-
-// Backend returns ALL versions (each with full states+transitions) in a single
-// `versions` array. The frontend derives `latestVersion` + `draftVersion` from it
-// (see toDefinitionDto). Matches Helpdesk.Application.Workflows.Queries.GetWorkflowDefinition.WorkflowDefinitionDto.
-interface BackendWorkflowDefinitionDto {
-  id: string;
-  name: string;
-  description: string | null;
-  subjectType: string;
-  ownerScope: string;
-  isActive: boolean;
-  isDefault: boolean;
-  versions: BackendWorkflowVersionDto[];
-}
-
-/** Slim summary returned by the list endpoint (no full versions array). */
-interface BackendWorkflowSummaryDto {
-  id: string;
-  name: string;
-  description: string | null;
-  subjectType: string;
-  ownerScope: string;
-  isActive: boolean;
-  isDefault: boolean;
-  publishedVersionNumber: number | null;
-  publishedVersionId: string | null;
-  totalVersions: number;
-  latestVersionStatus: string | null;
-  publishedAt: string | null;
-  hasDraft: boolean;
-}
-
-interface BackendListResponse {
-  items: BackendWorkflowSummaryDto[];
-  totalCount?: number;
-}
-
 // ── Adapters: backend DTO → frontend DTO ────────────────────────────────────────
 
 function toStateDto(s: BackendWorkflowStateDto): WorkflowStateDto {
@@ -151,9 +77,9 @@ function toStateDto(s: BackendWorkflowStateDto): WorkflowStateDto {
   }
 
   return {
-    id: s.id,
-    name: s.name,
-    slug: s.slug,
+    id: s.id ?? '',
+    name: s.name ?? '',
+    slug: s.slug ?? '',
     description: s.description ?? null,
     category: (s.category as StateCategory) ?? StateCategory.Open,
     type: (s.type as StateType) ?? StateType.Normal,
@@ -168,14 +94,19 @@ function toStateDto(s: BackendWorkflowStateDto): WorkflowStateDto {
 function toTransitionDto(
   t: BackendWorkflowTransitionDto,
 ): WorkflowTransitionDto {
-  // Backend stores guard expression in guards[0].expression (CEL)
-  const guardExpression = t.guards?.[0]?.expression ?? null;
+  // Backend stores guard expression in guards[0].expression (CEL).
+  // REVIEW: the generated GuardSpecDto models `guardType`/`parameters`/`failureMessage`
+  // (no `expression` field) — the CEL-expression guard shape predates the current
+  // generated contract. Falling back to `parameters.expression` (if present) keeps
+  // existing behaviour without inventing a field that doesn't exist on the DTO.
+  const guardExpression =
+    (t.guards?.[0]?.parameters?.expression as string | undefined) ?? null;
   const meta = t.displayMetadata ?? {};
 
   return {
-    id: t.id,
-    fromStateId: t.fromStateId,
-    toStateId: t.toStateId,
+    id: t.id ?? '',
+    fromStateId: t.fromStateId ?? '',
+    toStateId: t.toStateId ?? '',
     triggerType: (t.trigger as TriggerType) ?? TriggerType.Manual,
     // Backend stores trigger details in displayMetadata or eventName field
     triggerSpec: t.eventName ? { eventName: t.eventName } : null,
@@ -190,14 +121,14 @@ function toTransitionDto(
 }
 
 function toVersionSummaryDto(
-  v: BackendVersionSummaryDto,
+  v: BackendWorkflowVersionDto,
 ): WorkflowDefinitionVersionSummaryDto {
   return {
-    id: v.id,
-    versionNumber: v.versionNumber,
+    id: v.id ?? '',
+    versionNumber: v.versionNumber ?? 0,
     status: (v.status as VersionStatus) ?? VersionStatus.Draft,
     publishedAt: v.publishedAt ?? null,
-    publishedBy: v.publishedBy ?? null,
+    publishedBy: v.publishedByUserId ?? null,
   };
 }
 
@@ -222,13 +153,13 @@ function toDefinitionDto(
   const latestVersion =
     publishedVersions.length > 0
       ? publishedVersions.reduce((a, b) =>
-          a.versionNumber > b.versionNumber ? a : b,
+          (a.versionNumber ?? 0) > (b.versionNumber ?? 0) ? a : b,
         )
       : null;
   const draftVersion = versions.find(v => v.status === 'Draft') ?? null;
   return {
-    id: d.id,
-    name: d.name,
+    id: d.id ?? '',
+    name: d.name ?? '',
     description: d.description ?? null,
     ownerScope: d.ownerScope as WorkflowDefinitionDto['ownerScope'],
     latestVersion: latestVersion ? toVersionDto(latestVersion) : null,
@@ -241,7 +172,7 @@ function toDefinitionDto(
 function toDefinitionDtoFromSummary(
   s: BackendWorkflowSummaryDto,
 ): WorkflowDefinitionDto {
-  const status = s.latestVersionStatus as VersionStatus | null;
+  const status = s.latestVersionStatus as VersionStatus | null | undefined;
   const isPublished = status === VersionStatus.Published;
 
   // Build a synthetic latestVersion when a published version exists
@@ -250,7 +181,7 @@ function toDefinitionDtoFromSummary(
         id: s.publishedVersionId ?? '',
         versionNumber: s.publishedVersionNumber ?? 1,
         status: VersionStatus.Published,
-        publishedAt: s.publishedAt,
+        publishedAt: s.publishedAt ?? null,
         publishedBy: null,
         startStateId: null,
         states: [],
@@ -273,8 +204,8 @@ function toDefinitionDtoFromSummary(
     : null;
 
   return {
-    id: s.id,
-    name: s.name,
+    id: s.id ?? '',
+    name: s.name ?? '',
     description: s.description ?? null,
     ownerScope: s.ownerScope as WorkflowDefinitionDto['ownerScope'],
     latestVersion,
@@ -285,7 +216,7 @@ function toDefinitionDtoFromSummary(
 
 // ── Adapters: frontend DTO → backend command DTO ────────────────────────────────
 
-function fromStateDto(s: WorkflowStateDto): Record<string, unknown> {
+function fromStateDto(s: WorkflowStateDto): UpdateWorkflowDraftStateInput {
   // Store canvas positions in displayMetadata
   const displayMetadata: Record<string, string> = {
     ...s.metadata,
@@ -304,7 +235,7 @@ function fromStateDto(s: WorkflowStateDto): Record<string, unknown> {
     requiredFieldIds: [],
     allowedHolderRoles: [],
     slaPolicyOverrideId: null,
-    entryTimer: null,
+    entryTimer: undefined,
     displayMetadata,
     parallel: s.parallelSpec
       ? {
@@ -312,12 +243,25 @@ function fromStateDto(s: WorkflowStateDto): Record<string, unknown> {
           joinStateId: s.parallelSpec.joinStateId,
           mode: s.parallelSpec.joinMode,
         }
-      : null,
+      : undefined,
   };
 }
 
-function fromTransitionDto(t: WorkflowTransitionDto): Record<string, unknown> {
-  const guards = t.guardExpression ? [{ expression: t.guardExpression }] : [];
+function fromTransitionDto(
+  t: WorkflowTransitionDto,
+): UpdateWorkflowDraftTransitionInput {
+  // REVIEW: see toTransitionDto — GuardSpecDto has no `expression` field on the
+  // generated contract; round-tripping the CEL expression via `parameters.expression`
+  // keeps the existing guard-editing UX working until the backend guard model gains
+  // a first-class expression field.
+  const guards = t.guardExpression
+    ? [
+        {
+          guardType: 'expression',
+          parameters: { expression: t.guardExpression },
+        },
+      ]
+    : [];
 
   const displayMetadata: Record<string, string> = {};
   if (t.sourceHandleId) {
@@ -360,14 +304,12 @@ export function createRealWorkflowApiClient(
 
     async listDefinitions(): Promise<WorkflowDefinitionDto[]> {
       const res = await workflows.v1WorkflowsGet();
-      const data = res.data as unknown as BackendListResponse;
-      return (data?.items ?? []).map(toDefinitionDtoFromSummary);
+      return (res.data.items ?? []).map(toDefinitionDtoFromSummary);
     },
 
     async getDefinition(id: string): Promise<WorkflowDefinitionDto> {
       const res = await workflows.v1WorkflowsIdGet(id);
-      const data = res.data as unknown as BackendWorkflowDefinitionDto;
-      return toDefinitionDto(data);
+      return toDefinitionDto(res.data);
     },
 
     async createDefinition(
@@ -412,8 +354,8 @@ export function createRealWorkflowApiClient(
           definitionId: input.definitionId,
           versionId: input.versionId,
           startStateId: input.startStateId as string | undefined,
-          states: input.states.map(fromStateDto) as never,
-          transitions: input.transitions.map(fromTransitionDto) as never,
+          states: input.states.map(fromStateDto),
+          transitions: input.transitions.map(fromTransitionDto),
         },
       );
       // Re-fetch to get the current draft state
@@ -475,8 +417,7 @@ export function createRealWorkflowApiClient(
     ): Promise<WorkflowDefinitionDto[]> {
       const res =
         await principal.v1PrincipalsPrincipalIdWorkflowsGet(principalId);
-      const data = res.data as unknown as BackendListResponse;
-      return (data?.items ?? []).map(toDefinitionDtoFromSummary);
+      return (res.data ?? []).map(toDefinitionDtoFromSummary);
     },
 
     async getPrincipalDefinition(
@@ -487,8 +428,7 @@ export function createRealWorkflowApiClient(
         principalId,
         id,
       );
-      const data = res.data as unknown as BackendWorkflowDefinitionDto;
-      return toDefinitionDto(data);
+      return toDefinitionDto(res.data);
     },
 
     async createPrincipalDefinition(
@@ -542,8 +482,8 @@ export function createRealWorkflowApiClient(
           definitionId: input.definitionId,
           versionId: input.versionId,
           startStateId: input.startStateId as string | undefined,
-          states: input.states.map(fromStateDto) as never,
-          transitions: input.transitions.map(fromTransitionDto) as never,
+          states: input.states.map(fromStateDto),
+          transitions: input.transitions.map(fromTransitionDto),
         },
       );
       const def = await this.getPrincipalDefinition(
@@ -726,8 +666,8 @@ export function createRealWorkflowApiClient(
           copyErr instanceof Error ? copyErr.message : String(copyErr);
         const err = new Error(
           `Definition created but content copy failed: ${msg}`,
-        );
-        (err as any).partialResult = partial;
+        ) as Error & { partialResult?: WorkflowDefinitionDto };
+        err.partialResult = partial;
         throw err;
       }
 

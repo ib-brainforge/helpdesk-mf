@@ -247,10 +247,9 @@ export const useMergeTickets = () => {
       ticketIdToMerge,
     }: { primaryTicketId: string; ticketIdToMerge: string }) => {
       const client = await createHelpdeskApiClient(TicketsApi);
-      // REVIEW: Backend expects mergedTicketId field based on MergeTicketsCommand
       await client.v1TicketsIdMergePost(primaryTicketId, {
         mergedTicketId: ticketIdToMerge,
-      } as any);
+      });
       return { primaryTicketId, ticketIdToMerge };
     },
     onSuccess: data => {

@@ -54,7 +54,8 @@ export function BulkCloneModal({
       onClose();
       if (err?.partialResult) {
         toast('Cloned (content copy incomplete)', {
-          description: 'The workflow was created but states could not be copied. You can manually rebuild it.',
+          description:
+            'The workflow was created but states could not be copied. You can manually rebuild it.',
           variant: 'warning',
         });
         navigate(getDetailUrl(err.partialResult.id));
@@ -85,7 +86,7 @@ export function BulkCloneModal({
             <BaseModalHeader>Clone Workflow</BaseModalHeader>
             <BaseModalBody>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-default-600">
                   Creates a new workflow definition with a draft version copied
                   from <strong>{sourceDefinitionName}</strong>.
                 </p>

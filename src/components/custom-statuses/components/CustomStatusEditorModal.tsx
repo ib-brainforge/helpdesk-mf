@@ -40,7 +40,7 @@ export function CustomStatusEditorModal({
   const [color, setColor] = useState('#6366f1');
   const [sortOrder, setSortOrder] = useState(0);
   const [mapsToStatus, setMapsToStatus] = useState<TicketStatus>(
-    TicketStatus.InProgress
+    TicketStatus.InProgress,
   );
   const [isClosed, setIsClosed] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
@@ -145,7 +145,7 @@ export function CustomStatusEditorModal({
             label="Name"
             placeholder="e.g. Awaiting Customer Reply"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={e => setName(e.target.value)}
             isInvalid={!!nameError}
             errorMessage={nameError}
             maxLength={100}
@@ -158,7 +158,7 @@ export function CustomStatusEditorModal({
                 label="Sort Order"
                 type="number"
                 value={String(sortOrder)}
-                onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
+                onChange={e => setSortOrder(Number(e.target.value) || 0)}
                 min={0}
               />
             </div>
@@ -170,7 +170,7 @@ export function CustomStatusEditorModal({
                 <input
                   type="color"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={e => setColor(e.target.value)}
                   className="border-light h-10 w-10 cursor-pointer rounded border"
                 />
                 <span className="text-default-500 text-sm">{color}</span>
@@ -181,12 +181,12 @@ export function CustomStatusEditorModal({
           <BaseSelect
             label="Maps to system status"
             selectedKey={String(mapsToStatus)}
-            onSelectionChange={(keys) => {
+            onSelectionChange={keys => {
               const key = keys as string;
               setMapsToStatus(Number(key) as TicketStatus);
             }}
           >
-            {MAPS_TO_OPTIONS.map((opt) => (
+            {MAPS_TO_OPTIONS.map(opt => (
               <BaseSelectItem key={String(opt.value)} value={String(opt.value)}>
                 {opt.label}
               </BaseSelectItem>

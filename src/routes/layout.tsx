@@ -1,4 +1,5 @@
-import React, { useState, useEffect, Suspense, useMemo } from 'react';
+import type React from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 import './index.css';
 
@@ -40,6 +41,7 @@ import {
   ErrorBoundary,
   SideNav,
   type SideNavDesktopMode,
+  lazyWithRetry,
   useNavbarAction,
 } from '@brainforgeau/components';
 import {
@@ -54,11 +56,12 @@ import {
 } from '@brainforgeau/security';
 import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
 
-const TopNavbar = React.lazy(() =>
-  import('@brainforgeau/navbar/Navbar').then((m) => ({ default: m.TopNavbar }))
+const TopNavbar = lazyWithRetry(
+  () => import('@brainforgeau/navbar/Navbar'),
+  m => m?.TopNavbar,
 );
-import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { Logo } from '@/components/Logo';
+import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
@@ -76,7 +79,7 @@ const MOBILE_BREAKPOINT = 1024;
  * REVIEW: Plain JS object lookup — no i18n library dependency needed.
  */
 const BREADCRUMB_LABELS: Record<string, string> = {
-  'helpdesk': 'Helpdesk',
+  helpdesk: 'Helpdesk',
   'helpdesk.dashboard': 'Dashboard',
   'helpdesk.satisfaction': 'Satisfaction',
   'helpdesk.ideas': 'Ideas',
@@ -89,9 +92,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.custom-priorities': 'Custom Priorities',
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
-  'helpdesk.configuration.email': 'Email Settings',
-  'helpdesk.configuration.email-templates': 'Email Templates',
-  'helpdesk.configuration.email-templates.new': 'New Template',
   'helpdesk.configuration.integrations': 'Integrations',
   'helpdesk.configuration.live-chat': 'Live Chat',
   'helpdesk.configuration.import-export': 'Import & Export',
@@ -99,7 +99,8 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.approval-workflows.new': 'New Workflow',
   'helpdesk.configuration.automations': 'Automations',
   'helpdesk.configuration.workflows': 'Workflows',
-  'helpdesk.configuration.workflows.rule-migration-report': 'Rule Migration Report',
+  'helpdesk.configuration.workflows.rule-migration-report':
+    'Rule Migration Report',
   'helpdesk.reports': 'Reports',
   'helpdesk.reports.summary': 'Summary',
   'helpdesk.reports.by-category': 'By Category',
@@ -223,20 +224,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
-        label: 'Email Templates',
-        href: '/configuration/email-templates',
-        icon: 'email',
-        testId: 'nav-configuration-email-templates',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
-      },
-      {
-        label: 'Email Settings',
-        href: '/configuration/email',
-        icon: 'builder2',
-        testId: 'nav-configuration-email',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-      },
-      {
         label: 'Integrations',
         href: '/configuration/integrations',
         icon: 'plug',
@@ -278,7 +265,7 @@ export default function Layout() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleDesktopMode = () => {
-    setDesktopMode((prev) => (prev === 'extended' ? 'collapsed' : 'extended'));
+    setDesktopMode(prev => (prev === 'extended' ? 'collapsed' : 'extended'));
   };
 
   // Handle hamburger menu click - toggle desktop mode on desktop, open drawer on mobile
@@ -304,7 +291,7 @@ export default function Layout() {
   // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
   const isPrincipalRoute = useMemo(
     () => location.pathname.startsWith('/principal/'),
-    [location.pathname]
+    [location.pathname],
   );
 
   useEffect(() => {
@@ -319,7 +306,7 @@ export default function Layout() {
       { key: 'top', items: filterNavItems(navItemsTop) },
       { key: 'bottom', items: filterNavItems(navItemsBottom) },
     ],
-    [filterNavItems, permissions]
+    [filterNavItems, permissions],
   );
 
   return (

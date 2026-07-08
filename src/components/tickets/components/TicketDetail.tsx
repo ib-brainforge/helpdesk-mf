@@ -16,9 +16,6 @@ import { useSla } from '@/components/sla/hooks/useSla';
 import {
   useAddTimeEntry,
   useDeleteTimeEntry,
-  usePauseTimer,
-  useStartTimer,
-  useStopTimer,
   useTimeTracking,
 } from '@/components/sla/hooks/useTimeTracking';
 import { HelpdeskPermissions } from '@/constants/permissions';
@@ -139,9 +136,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   // Time Tracking
   const { timeTracking } = useTimeTracking(id ?? '');
-  const startTimerMutation = useStartTimer();
-  const stopTimerMutation = useStopTimer();
-  const pauseTimerMutation = usePauseTimer();
   const addTimeEntryMutation = useAddTimeEntry();
   const deleteTimeEntryMutation = useDeleteTimeEntry();
   const mergeTicketsMutation = useMergeTickets();
@@ -211,9 +205,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   const visibleComments = showSystemLog
     ? comments
-    : comments.filter(
-        c => (c as any).commentType !== CommentType.SystemMessage,
-      );
+    : comments.filter(c => c.commentType !== CommentType.SystemMessage);
 
   const handleUpdate = useCallback(
     (updates: any) => {
@@ -352,8 +344,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     }
 
     // Copy all stylesheets from the parent page
-    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-      .map((el) => el.outerHTML)
+    const styles = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"], style'),
+    )
+      .map(el => el.outerHTML)
       .join('\n');
 
     printWindow.document.write(`
@@ -499,28 +493,13 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     [deleteAttachmentMutation],
   );
 
-  const handleStartTimer = useCallback(() => {
-    if (!id) return;
-    startTimerMutation.mutate(id);
-  }, [id, startTimerMutation]);
-
-  const handleStopTimer = useCallback(() => {
-    if (!id) return;
-    stopTimerMutation.mutate(id);
-  }, [id, stopTimerMutation]);
-
-  const handlePauseTimer = useCallback(() => {
-    if (!id) return;
-    pauseTimerMutation.mutate(id);
-  }, [id, pauseTimerMutation]);
-
   const handleAddManualEntry = useCallback(
-    (minutes: number, notes: string) => {
+    (minutes: number, description: string) => {
       if (!id) return;
       addTimeEntryMutation.mutate({
         ticketId: id,
         durationMinutes: minutes,
-        notes,
+        description,
       });
     },
     [id, addTimeEntryMutation],
@@ -742,12 +721,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <Icon
-            name="warning"
-            className="h-12 w-12 text-danger mx-auto mb-4"
-          />
+          <Icon name="warning" className="h-12 w-12 text-danger mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-default-600 mb-4">
             The ticket you are looking for does not exist.
           </p>
           <BaseButton onPress={handleBack}>Back to Tickets</BaseButton>
@@ -756,8 +732,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     );
   }
 
-  const statusConfig = getStatusConfig(ticket.status as any);
-  const priorityConfig = getPriorityConfig(ticket.priority as any);
+  const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+  const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
   const isSubscribeLoading =
     subscribeMutation.isPending || unsubscribeMutation.isPending;
 
@@ -1084,16 +1060,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <p className="whitespace-pre-wrap">{ticket.description}</p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 italic">No description yet.</p>
+                <p className="text-sm text-default-400 italic">
+                  No description yet.
+                </p>
               )}
             </Box>
 
             {/* Attachments */}
             <Box>
               {attachmentsLoading ? (
-                <div className="text-center py-4">
-                  Loading attachments...
-                </div>
+                <div className="text-center py-4">Loading attachments...</div>
               ) : attachments && attachments.length > 0 ? (
                 <div className="space-y-4">
                   <AttachmentList
@@ -1135,7 +1111,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-400 italic">No attachments yet.</p>
+                  <p className="text-sm text-default-400 italic">
+                    No attachments yet.
+                  </p>
                   <PermissionGuard
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     fallback={null}
@@ -1191,7 +1169,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   </div>
                   <div>
                     <p className="text-sm font-medium">Ticket created</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-default-500">
                       by {ticket.requesterName ?? 'Unknown'} on{' '}
                       {formatDateTime(ticket.createdAt, { timezone })}
                     </p>
@@ -1199,12 +1177,15 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 </div>
                 {ticket.updatedAt && ticket.updatedAt !== ticket.createdAt && (
                   <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Icon name="pencil" className="h-4 w-4 text-gray-600" />
+                    <div className="flex-shrink-0 w-8 h-8 bg-default-100 rounded-full flex items-center justify-center">
+                      <Icon
+                        name="pencil"
+                        className="h-4 w-4 text-default-600"
+                      />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Ticket updated</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-default-500">
                         on {formatDateTime(ticket.updatedAt, { timezone })}
                       </p>
                     </div>
@@ -1219,7 +1200,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             {/* Ticket Info */}
             <Box>
               <TicketDetailSidebar
-                ticket={ticket as any}
+                ticket={ticket}
                 onUpdate={handleUpdate}
                 isUpdating={updateTicketMutation.isPending}
                 isSubscribed={isSubscribed}
@@ -1235,9 +1216,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             <TimeTracker
               ticketId={id ?? ''}
               timeTracking={timeTracking}
-              onStartTimer={handleStartTimer}
-              onStopTimer={handleStopTimer}
-              onPauseTimer={handlePauseTimer}
               onAddManualEntry={handleAddManualEntry}
               onDeleteEntry={handleDeleteTimeEntry}
             />
@@ -1248,7 +1226,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             {/* CSAT Widget */}
             <CSATWidget
               ticketId={id ?? ''}
-              ticketStatus={ticket.status as any}
+              ticketStatus={ticket.status as TicketStatus}
             />
 
             {/* Child Tickets */}
@@ -1268,7 +1246,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                       >
                         #{child.id?.substring(0, 8)}
                       </BaseButton>
-                      <span className="text-gray-600 truncate ml-2 flex-1">
+                      <span className="text-default-600 truncate ml-2 flex-1">
                         {child.subject}
                       </span>
                     </div>

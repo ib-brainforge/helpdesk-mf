@@ -184,13 +184,22 @@ function ReportsPage() {
                 }}
                 className="w-48"
               >
-                <BaseSelectItem key={ReportGranularity.Daily} value={ReportGranularity.Daily}>
+                <BaseSelectItem
+                  key={ReportGranularity.Daily}
+                  value={ReportGranularity.Daily}
+                >
                   Daily
                 </BaseSelectItem>
-                <BaseSelectItem key={ReportGranularity.Weekly} value={ReportGranularity.Weekly}>
+                <BaseSelectItem
+                  key={ReportGranularity.Weekly}
+                  value={ReportGranularity.Weekly}
+                >
                   Weekly
                 </BaseSelectItem>
-                <BaseSelectItem key={ReportGranularity.Monthly} value={ReportGranularity.Monthly}>
+                <BaseSelectItem
+                  key={ReportGranularity.Monthly}
+                  value={ReportGranularity.Monthly}
+                >
                   Monthly
                 </BaseSelectItem>
               </BaseSelect>

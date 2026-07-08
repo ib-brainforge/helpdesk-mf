@@ -27,7 +27,7 @@ import {
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { Card, Separator } from '@heroui/react';
+import { Separator } from '@heroui/react';
 import { Link, useNavigate, useParams } from '@modern-js/runtime/router';
 import DOMPurify from 'dompurify';
 
@@ -59,7 +59,7 @@ function KnowledgeBaseArticlePage() {
       <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
         <Icon
           name="document-text"
-          className="mx-auto h-12 w-12 text-gray-400"
+          className="mx-auto h-12 w-12 text-default-400"
         />
         <p className="text-xl font-semibold">Article not found</p>
         <BaseButton variant="light" onPress={() => navigate('/knowledge-base')}>
@@ -95,7 +95,7 @@ function KnowledgeBaseArticlePage() {
       {/* Article tab — main content + rating. No formActions (read-only). */}
       <DetailPage.Tab id="article" title="Article">
         <BaseCard>
-          <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+          <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-default-600">
             <span className="flex items-center gap-1">
               <Icon name="user" className="h-4 w-4" />
               {article.authorName || 'Author unavailable'}
@@ -119,7 +119,7 @@ function KnowledgeBaseArticlePage() {
 
           {article.tags.length > 0 && (
             <div className="mb-6 flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
+              {article.tags.map(tag => (
                 <TagChip key={tag} name={tag} />
               ))}
             </div>
@@ -129,7 +129,7 @@ function KnowledgeBaseArticlePage() {
 
           {/* Article body — sanitised HTML */}
           <div
-            className="prose max-w-none"
+            className="prose dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(article.body),
             }}
@@ -138,7 +138,7 @@ function KnowledgeBaseArticlePage() {
           <Separator className="my-6" />
 
           {/* Feedback rating */}
-          <div className="rounded bg-gray-50 p-6 text-center">
+          <div className="rounded bg-default-50 p-6 text-center">
             <h3 className="mb-4 text-lg font-semibold">
               Was this article helpful?
             </h3>
@@ -149,14 +149,17 @@ function KnowledgeBaseArticlePage() {
                   variant="bordered"
                   onPress={() =>
                     article.id &&
-                    rateArticle.mutate({ articleId: article.id, isHelpful: true })
+                    rateArticle.mutate({
+                      articleId: article.id,
+                      isHelpful: true,
+                    })
                   }
                   isDisabled={rateArticle.isPending}
                   icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
                 >
                   Yes
                 </BaseButton>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-default-500">
                   {article.ratingCount || 0} ratings
                 </span>
               </div>
@@ -190,7 +193,7 @@ function KnowledgeBaseArticlePage() {
             <div className="space-y-2 text-sm">
               <div>
                 <span className="font-medium">Category:</span>{' '}
-                <span className="text-gray-600">
+                <span className="text-default-600">
                   {article.categoryName || 'Uncategorized'}
                 </span>
               </div>
@@ -204,14 +207,14 @@ function KnowledgeBaseArticlePage() {
               </div>
               <div>
                 <span className="font-medium">Last Updated:</span>{' '}
-                <span className="text-gray-600">
+                <span className="text-default-600">
                   {formatDateTime(article.updatedAt, { timezone })}
                 </span>
               </div>
               {article.publishedAt && (
                 <div>
                   <span className="font-medium">Published:</span>{' '}
-                  <span className="text-gray-600">
+                  <span className="text-default-600">
                     {formatDateTime(article.publishedAt, { timezone })}
                   </span>
                 </div>

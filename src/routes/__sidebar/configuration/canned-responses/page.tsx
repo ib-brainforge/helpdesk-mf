@@ -27,14 +27,12 @@ const columnHelper = createColumnHelper<CannedResponseDto>();
 
 const SCOPE_COLORS: Record<CannedResponseScope, string> = {
   [CannedResponseScope.Personal]: 'bg-default-100 text-default-800',
-  [CannedResponseScope.Team]: 'bg-primary-100 text-primary-800',
-  [CannedResponseScope.Global]: 'bg-secondary-100 text-secondary-800',
+  [CannedResponseScope.Shared]: 'bg-primary-100 text-primary-800',
 };
 
 const SCOPE_LABELS: Record<CannedResponseScope, string> = {
   [CannedResponseScope.Personal]: 'Personal',
-  [CannedResponseScope.Team]: 'Team',
-  [CannedResponseScope.Global]: 'Global',
+  [CannedResponseScope.Shared]: 'Shared',
 };
 
 function getScopeBadge(scope: CannedResponseScope) {
@@ -121,7 +119,7 @@ function CannedResponsesPage() {
         id: 'scope',
         header: 'Scope',
         cell: ({ row }) =>
-          getScopeBadge(row.original.scope as unknown as CannedResponseScope),
+          getScopeBadge(row.original.scope as CannedResponseScope),
         size: 120,
       }),
       columnHelper.display({

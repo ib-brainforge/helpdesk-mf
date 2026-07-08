@@ -2,7 +2,6 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
-import { Card } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';
 import type { FC } from 'react';
@@ -27,18 +26,18 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
 
       // Fetch each related article
       const promises = articleIds
-        .filter((id) => id !== currentArticleId)
+        .filter(id => id !== currentArticleId)
         .slice(0, 5)
-        .map((id) => client.v1KbArticlesIdGet(id));
+        .map(id => client.v1KbArticlesIdGet(id));
 
       const results = await Promise.allSettled(promises);
 
       return results
         .filter(
           (result): result is PromiseFulfilledResult<any> =>
-            result.status === 'fulfilled'
+            result.status === 'fulfilled',
         )
-        .map((result) => result.value.data);
+        .map(result => result.value.data);
     },
     enabled: !!articleIds && articleIds.length > 0,
   });
@@ -47,7 +46,7 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
     return (
       <BaseCard>
         <h3 className="mb-3 text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-gray-500">Loading...</p>
+        <p className="text-sm text-default-500">Loading...</p>
       </BaseCard>
     );
   }
@@ -76,7 +75,7 @@ export const RelatedArticles: FC<RelatedArticlesProps> = ({
                   {article.title}
                 </h4>
                 {article.categoryName && (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-default-500">
                     {article.categoryName}
                   </p>
                 )}

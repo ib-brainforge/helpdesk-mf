@@ -62,7 +62,7 @@ function CategoryFormModal({
         description: description || undefined,
         parentId: parentId || undefined,
         sortOrder: 0,
-      } as any);
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -82,7 +82,7 @@ function CategoryFormModal({
         id: category.id,
         name,
         description: description || undefined,
-      } as any);
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -109,7 +109,7 @@ function CategoryFormModal({
   };
 
   // Filter out the current category from parent options to avoid self-reference
-  const parentOptions = categories.filter((c) => c.id !== category?.id);
+  const parentOptions = categories.filter(c => c.id !== category?.id);
 
   return (
     <BaseModal isOpen={mode !== null} onClose={onClose} size="lg">
@@ -125,13 +125,13 @@ function CategoryFormModal({
               label="Name"
               isRequired
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               placeholder="Category name"
             />
             <BaseInput
               label="Description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Optional description"
             />
             {mode === 'create' && (
@@ -139,7 +139,7 @@ function CategoryFormModal({
                 label="Parent category (optional)"
                 placeholder="None (top-level)"
                 selectedKey={parentId || '__none__'}
-                onSelectionChange={(key) => {
+                onSelectionChange={key => {
                   setParentId(key === '__none__' ? '' : (key as string));
                 }}
               >
@@ -147,7 +147,7 @@ function CategoryFormModal({
                   <BaseSelectItem key="__none__" id="__none__">
                     None (top-level)
                   </BaseSelectItem>,
-                  ...parentOptions.map((cat) => (
+                  ...parentOptions.map(cat => (
                     <BaseSelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </BaseSelectItem>
@@ -205,10 +205,8 @@ function KbCategoriesPage() {
     },
   });
 
-  const allCategories = categories as unknown as KnowledgeBaseCategoryDto[];
-
-  const filtered = allCategories.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+  const filtered = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const openCreate = () => {
@@ -261,7 +259,7 @@ function KbCategoriesPage() {
         <BaseInput
           placeholder="Search categories..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={e => setSearch(e.target.value)}
           startContent={
             <Icon
               name="magnifying-glass"
@@ -283,7 +281,7 @@ function KbCategoriesPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((cat) => (
+          {filtered.map(cat => (
             <div
               key={cat.id}
               className="border-light bg-default-50 hover:bg-default-100 flex items-center justify-between rounded-lg border p-4 transition-colors"
@@ -340,7 +338,7 @@ function KbCategoriesPage() {
       <CategoryFormModal
         mode={formMode}
         category={editingCategory}
-        categories={allCategories}
+        categories={categories}
         onClose={closeForm}
       />
 

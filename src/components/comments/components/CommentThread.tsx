@@ -1,8 +1,8 @@
 import { StatusBadge } from '@/components/shared';
 import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
-import { formatDateTime } from '@brainforgeau/components/utils';
 import { EmptyState } from '@brainforgeau/components/page';
+import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import DOMPurify from 'dompurify';
 
@@ -72,9 +72,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
   return (
     <div className="space-y-4">
-      {comments.map((comment) => {
+      {comments.map(comment => {
         const commentType =
-          fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
+          fromApiCommentType(comment.commentType) ?? CommentType.Reply;
         return (
           <div
             key={comment.id}

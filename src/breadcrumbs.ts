@@ -42,10 +42,6 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/configuration/custom-priorities/page.tsx
 // routes/__sidebar/configuration/custom-fields/page.tsx
 // routes/__sidebar/configuration/canned-responses/page.tsx
-// routes/__sidebar/configuration/email/page.tsx
-// routes/__sidebar/configuration/email-templates/page.tsx
-// routes/__sidebar/configuration/email-templates/new/page.tsx
-// routes/__sidebar/configuration/email-templates/[id]/page.tsx
 // routes/__sidebar/configuration/integrations/page.tsx
 // routes/__sidebar/configuration/live-chat/page.tsx
 // routes/__sidebar/configuration/import-export/page.tsx
@@ -229,48 +225,6 @@ export const breadcrumbs = {
       labelKey: 'helpdesk.configuration.canned-responses',
       href: '/configuration/canned-responses',
     },
-  ],
-
-  /** routes/__sidebar/configuration/email/page.tsx */
-  'configuration.email': () => [
-    { labelKey: 'helpdesk' },
-    { labelKey: 'helpdesk.configuration', href: '/configuration' },
-    { labelKey: 'helpdesk.configuration.email', href: '/configuration/email' },
-  ],
-
-  /** routes/__sidebar/configuration/email-templates/page.tsx */
-  'configuration.email-templates.list': () => [
-    { labelKey: 'helpdesk' },
-    { labelKey: 'helpdesk.configuration', href: '/configuration' },
-    {
-      labelKey: 'helpdesk.configuration.email-templates',
-      href: '/configuration/email-templates',
-    },
-  ],
-
-  /** routes/__sidebar/configuration/email-templates/new/page.tsx */
-  'configuration.email-templates.new': () => [
-    { labelKey: 'helpdesk' },
-    { labelKey: 'helpdesk.configuration', href: '/configuration' },
-    {
-      labelKey: 'helpdesk.configuration.email-templates',
-      href: '/configuration/email-templates',
-    },
-    { labelKey: 'helpdesk.configuration.email-templates.new' },
-  ],
-
-  /** routes/__sidebar/configuration/email-templates/[id]/page.tsx */
-  'configuration.email-templates.detail': (params: {
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk' },
-    { labelKey: 'helpdesk.configuration', href: '/configuration' },
-    {
-      labelKey: 'helpdesk.configuration.email-templates',
-      href: '/configuration/email-templates',
-    },
-    { label: params.name },
   ],
 
   /** routes/__sidebar/configuration/integrations/page.tsx */

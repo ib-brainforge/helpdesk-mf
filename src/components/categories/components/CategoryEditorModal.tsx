@@ -149,7 +149,12 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} size="lg" className="max-w-2xl">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="lg"
+      className="max-w-2xl"
+    >
       <BaseModalContent>
         <BaseModalHeader
           title={isEdit ? 'Edit Category' : 'Create Category'}
@@ -213,7 +218,10 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
                   isInvalid={field.state.meta.errors.length > 0}
                 >
                   {ACCESS_LEVEL_OPTIONS.map(option => (
-                    <BaseSelectItem key={String(option.id)} value={String(option.id)}>
+                    <BaseSelectItem
+                      key={String(option.id)}
+                      value={String(option.id)}
+                    >
                       {option.name}
                     </BaseSelectItem>
                   ))}
