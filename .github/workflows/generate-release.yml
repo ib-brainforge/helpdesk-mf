@@ -21,13 +21,13 @@ jobs:
         id: version
         run: |
           RUN_NUMBER=${{ github.event.workflow_run.run_number }}
-          VERSION="0.1.${RUN_NUMBER}"
+          VERSION="${{ vars.VERSION_MAJOR || '0' }}.${{ vars.VERSION_MINOR || '1' }}.${RUN_NUMBER}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get last release tag
         id: last
         run: |
-          TAG=$(git tag --list '0.1.*' --sort=-v:refname | head -1)
+          TAG=$(git tag --list '${{ vars.VERSION_MAJOR || '0' }}.${{ vars.VERSION_MINOR || '1' }}.*' --sort=-v:refname | head -1)
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           if [ -n "$TAG" ]; then
             echo "Last release: $TAG"
