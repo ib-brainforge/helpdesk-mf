@@ -37,9 +37,11 @@ jobs:
 
       - name: Get commits since last release
         id: commits
+        env:
+          LAST_TAG: ${{ steps.last.outputs.tag }}
         run: |
-          if [ -n "${{ steps.last.outputs.tag }}" ]; then
-            COMMITS=$(git log "${{ steps.last.outputs.tag }}"..HEAD --oneline --no-merges)
+          if [ -n "$LAST_TAG" ]; then
+            COMMITS=$(git log "$LAST_TAG"..HEAD --oneline --no-merges)
           else
             COMMITS=$(git log --oneline --no-merges -20)
           fi
@@ -48,22 +50,25 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Write commits to file
+        env:
+          COMMITS: ${{ steps.commits.outputs.commits }}
         run: |
-          cat <<'COMMITS_EOF' > /tmp/commits.txt
-          ${{ steps.commits.outputs.commits }}
-          COMMITS_EOF
+          printf '%s\n' "$COMMITS" > /tmp/commits.txt
 
       - name: Generate release notes via LLM
         id: llm
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.last.outputs.tag }}
         run: |
           SERVICE_NAME=$(echo "${{ github.repository }}" | sed 's|.*/||')
-          IMAGE_TAG="ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]'):${{ steps.version.outputs.version }}"
-          LAST_TAG="${{ steps.last.outputs.tag }}"
+          IMAGE_TAG="ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]'):$VERSION"
+          LAST_TAG="$RELEASE_TAG"
           if [ -z "$LAST_TAG" ]; then LAST_TAG="beginning"; fi
 
           cp .github/prompts/release-notes-user.md /tmp/user-prompt.md
           sed -i "s|{{SERVICE_NAME}}|$SERVICE_NAME|g" /tmp/user-prompt.md
-          sed -i "s|{{VERSION}}|${{ steps.version.outputs.version }}|g" /tmp/user-prompt.md
+          sed -i "s|{{VERSION}}|$VERSION|g" /tmp/user-prompt.md
           sed -i "s|{{IMAGE_TAG}}|$IMAGE_TAG|g" /tmp/user-prompt.md
           sed -i "s|{{LAST_TAG}}|$LAST_TAG|g" /tmp/user-prompt.md
           sed -i '/{{COMMITS}}/{
@@ -120,7 +125,7 @@ jobs:
             echo "$BODY" | head -5
             echo "Falling back to commit list as release notes"
             NOTES="### Changes
-          ${{ steps.commits.outputs.commits }}"
+          $(cat /tmp/commits.txt)"
           else
             if [ "$PROVIDER" = "anthropic" ]; then
               NOTES=$(echo "$BODY" | jq -r '.content[0].text')
@@ -134,9 +139,10 @@ jobs:
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          TITLE="${{ github.event.repository.name }} $VERSION"
+          TITLE="$REPO_NAME $VERSION"
           gh release create "$VERSION" \
             --title "$TITLE" \
             --notes-file /tmp/release-notes.md \
