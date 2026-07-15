@@ -85,5 +85,24 @@ export default createModuleFederationConfig({
       singleton: true,
       requiredVersion: false,
     },
+    // pilot(shell-host): react-query + query-core MUST be shared as EAGER
+    // singletons so that @brainforgeau/components' form primitives
+    // (useQueryClient/useMutation) and helpdesk-mf's own useQuery hooks read
+    // the SAME QueryClientProvider, and so the QueryClient (query-core) and
+    // QueryObserver stay on ONE instance across the shell↔remote boundary.
+    // `eager` makes the host populate the shared scope first
+    // (load-order-independent). Without both, an embedded helpdesk-mf can
+    // double-instance react-query — QueryObserver.createResult then throws
+    // "t.isFetched is not a function". Matches identity-mf's working config.
+    '@tanstack/react-query': {
+      singleton: true,
+      requiredVersion: false,
+      eager: true,
+    },
+    '@tanstack/query-core': {
+      singleton: true,
+      requiredVersion: false,
+      eager: true,
+    },
   },
 });

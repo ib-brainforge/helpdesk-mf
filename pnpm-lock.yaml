@@ -68,11 +68,14 @@ importers:
       '@module-federation/modern-js':
         specifier: ^0.21.6
         version: 0.21.6(@rsbuild/core@1.7.3)(@rspack/core@1.7.6(@swc/helpers@0.5.18))(react-dom@19.2.6(react@19.2.6))(react-router-dom@6.30.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.7.3)(webpack@5.105.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(esbuild@0.25.5))
+      '@tanstack/query-core':
+        specifier: 5.100.9
+        version: 5.100.9
       '@tanstack/react-form':
         specifier: ^1.29.3
         version: 1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tanstack/react-query':
-        specifier: ^5.100.9
+        specifier: 5.100.9
         version: 5.100.9(react@19.2.6)
       '@tanstack/react-table':
         specifier: ^8.21.3
