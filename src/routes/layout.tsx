@@ -50,6 +50,7 @@ import {
 } from '@brainforgeau/components/page';
 import {
   type GuardedItem,
+  LicenseGuard,
   useAuth,
   usePermissions,
   useWhitelabel,
@@ -279,6 +280,36 @@ export default function Layout() {
 
   const appConfig = getAppConfig();
 
+  // pilot(shell-host): when helpdesk-mf's export-app is mounted inside the
+  // app shell, do NOT render helpdesk-mf's own TopNavbar — the shell owns
+  // the ONE persistent TopNavbar instance across every route (shell
+  // dashboard AND every embedded remote), mounted OUTSIDE this remote's
+  // tree so shell <-> /helpdesk navigation never remounts it (see app's
+  // src/routes/layout.tsx). helpdesk-mf's SideNav and all other chrome
+  // below is unaffected. Layout here is plain flexbox (no fixed/sticky top
+  // offset reserved for the navbar's height), so skipping this element
+  // simply lets the SideNav/Outlet below reflow to fill the space — no
+  // extra height/offset compensation needed, unlike a fixed-position
+  // navbar would require.
+  const isEmbedded =
+    typeof window !== 'undefined' && (window as any).__BF_SHELL_HOST__ === true;
+
+  // pilot(shell-host): when embedded, the shell's TopNavbar owns the
+  // sidenav expand/collapse button (skipping this remote's TopNavbar block
+  // below took its `onExtend` wiring with it). The shell can't reach into
+  // this remote's SideNav state, so its button broadcasts the
+  // `bf:shell-nav-extend` window CustomEvent (see app's
+  // src/routes/layout.tsx) and this embedded-only listener bridges it to
+  // the SAME handleNavExtend the standalone TopNavbar's `onExtend` prop
+  // calls. Standalone (isEmbedded false) registers nothing — behavior
+  // unchanged.
+  useEffect(() => {
+    if (!isEmbedded) return undefined;
+    window.addEventListener('bf:shell-nav-extend', handleNavExtend);
+    return () =>
+      window.removeEventListener('bf:shell-nav-extend', handleNavExtend);
+  }, [isEmbedded, handleNavExtend]);
+
   const { isAuthenticated } = useAuth();
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
@@ -324,23 +355,25 @@ export default function Layout() {
           )}
         >
           <PageTracker category="helpdesk" />
-          <ErrorBoundary>
-            <Suspense fallback={<NavbarSkeleton />}>
-              {isAuthenticated && (
-                <TopNavbar
-                  data-testid={TEST_IDS.navbar.top}
-                  config={{
-                    identityBaseUrl: appConfig?.identityBaseUrl || '',
-                    notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
-                    notificationApiUrl: appConfig?.api?.notificationUrl || '',
-                    app: 'helpdesk',
-                  }}
-                  onExtend={handleNavExtend}
-                  logoComponent={<Logo hideOnMobile />}
-                />
-              )}
-            </Suspense>
-          </ErrorBoundary>
+          {!isEmbedded && (
+            <ErrorBoundary>
+              <Suspense fallback={<NavbarSkeleton />}>
+                {isAuthenticated && (
+                  <TopNavbar
+                    data-testid={TEST_IDS.navbar.top}
+                    config={{
+                      identityBaseUrl: appConfig?.identityBaseUrl || '',
+                      notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
+                      notificationApiUrl: appConfig?.api?.notificationUrl || '',
+                      app: 'helpdesk',
+                    }}
+                    onExtend={handleNavExtend}
+                    logoComponent={<Logo hideOnMobile />}
+                  />
+                )}
+              </Suspense>
+            </ErrorBoundary>
+          )}
           <div className="flex flex-1">
             {isAuthenticated && !isPrincipalRoute && (
               <SideNav
@@ -376,12 +409,16 @@ export default function Layout() {
             )}
             {isPrincipalRoute ? (
               <ErrorBoundary>
-                <Outlet />
+                <LicenseGuard appId="helpdesk">
+                  <Outlet />
+                </LicenseGuard>
               </ErrorBoundary>
             ) : (
               <div className="flex flex-1 min-w-0">
                 <ErrorBoundary>
-                  <Outlet />
+                  <LicenseGuard appId="helpdesk">
+                    <Outlet />
+                  </LicenseGuard>
                 </ErrorBoundary>
               </div>
             )}

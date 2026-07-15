@@ -141,6 +141,20 @@ export default defineConfig({
   },
   dev: {
     port: 8087,
+    // pilot(shell-host): dev-only. When helpdesk-mf is loaded as a Module
+    // Federation remote inside the app shell (localhost:8080), the shared
+    // `@module-federation/runtime` resolves the manifest's `publicPath`
+    // relative to the CONSUMING document's origin unless it's absolute. A
+    // relative dev assetPrefix (e.g. '/') bakes `publicPath: "/"` into the
+    // dev manifest, which the shell then resolves against ITS OWN origin
+    // (8080) instead of helpdesk-mf's dev server (8087) — remote-entry
+    // fetches 404 with MF RUNTIME-008 ("Failed to load script resources",
+    // resourceUrl "/static/js/helpdesk_mf.js"). Advertising the
+    // fully-qualified dev origin here fixes that; production is
+    // unaffected — see `output.assetPrefix` above, which is untouched.
+    assetPrefix: process.env.MF_DEV_PUBLIC_ORIGIN
+      ? `${process.env.MF_DEV_PUBLIC_ORIGIN}${process.env.BASE_PATH ? `${process.env.BASE_PATH}/` : '/'}`
+      : `http://localhost:8087${process.env.BASE_PATH ? `${process.env.BASE_PATH}/` : '/'}`,
   },
   resolve: {
     alias: {
@@ -205,7 +219,18 @@ export default defineConfig({
           sideEffects: false,
           usedExports: true,
           concatenateModules: true,
-          runtimeChunk: 'single',
+          // pilot(shell-host): Do NOT set `runtimeChunk: 'single'`.
+          // helpdesk-mf is now ALSO a Module Federation producer — it
+          // exposes its whole app (`./export-app`, consumed by the app
+          // shell). `runtimeChunk: 'single'` extracts the webpack runtime
+          // into a separate chunk, leaving the MF remote entry
+          // non-self-bootstrapping: a consumer loads the entry but
+          // `window.helpdesk_mf` is never defined because the jsonp
+          // handler lives in the missing runtime chunk → MF RUNTIME-008
+          // "Failed to load script resources". The remote entry must
+          // inline its own runtime, so leave runtimeChunk at the default.
+          // Matches hr-mf/asset-mf/onboard-mf/modern.config.ts, which hit
+          // and documented this same bug when they became producers.
           moduleIds: 'deterministic',
           chunkIds: 'deterministic',
         };

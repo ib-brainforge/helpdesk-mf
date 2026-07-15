@@ -70,6 +70,10 @@ WORKDIR /app
 COPY --from=app-builder /build/.output/html/main /usr/share/nginx/html
 COPY --from=app-builder /build/.output/static /usr/share/nginx/html/static
 
+# Module Federation manifest for the app shell — served at /helpdesk/mf-manifest.json
+COPY --from=app-builder /build/.output/mf-manifest.json /usr/share/nginx/html/mf-manifest.json
+COPY --from=app-builder /build/.output/mf-stats.json /usr/share/nginx/html/mf-stats.json
+
 # Copy Node.js BFF server
 COPY --from=app-builder /build/.output ./bff
 

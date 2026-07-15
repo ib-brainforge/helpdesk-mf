@@ -37,9 +37,24 @@ export function Providers({
   const appConfig = getAppConfig();
   const identityBaseUrl = appConfig?.identityBaseUrl || '';
 
-  // Configure context token refresh for automatic 403 retry
+  // Configure context token refresh for automatic 403 retry.
+  //
+  // pilot(shell-host): skip this when embedded in the app shell.
+  // `configureContextTokenRefresh` mutates a MODULE-GLOBAL config on the
+  // shared `authorizedAxios` instance (last-writer-wins) — the host already
+  // called this for app='app'. Calling it again here for app='helpdesk'
+  // would silently steal 403-retry handling away from the host's own API
+  // calls (see the P2 per-app-context-token limitation noted in
+  // export-app.tsx — this refresh config is a SINGLE shared instance
+  // today, so the host must stay the sole owner while embedded).
   useEffect(() => {
-    if (identityBaseUrl) {
+    if (
+      identityBaseUrl &&
+      !(
+        typeof window !== 'undefined' &&
+        (window as any).__BF_SHELL_HOST__ === true
+      )
+    ) {
       configureContextTokenRefresh({
         identityBaseUrl,
         app: 'helpdesk',

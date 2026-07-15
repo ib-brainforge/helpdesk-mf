@@ -14,9 +14,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const appConfig = getAppConfig();
   const identityBaseUrl = appConfig?.identityBaseUrl || '';
 
+  // pilot(shell-host): embedded mode is now first-class in
+  // @brainforgeau/security (mf-packages PR #290). `detectEmbedded` makes
+  // FlexibleAuthProvider force microfrontend mode when the shell host has
+  // stamped window.__BF_SHELL_HOST__ === true, and AuthContextProvider now
+  // tolerates a missing OIDC provider (separate-React-root safe). This
+  // replaces the previous provider-less early-return workaround — the
+  // embedded remote mounts a real auth React context again, booting from
+  // the window auth bus owned by the shell instead of initializing its own
+  // OIDC stack. Without the shell marker, behavior is identical to before:
+  // the build-time mode logic below still decides shell vs microfrontend.
   return (
     <FlexibleAuthProvider
       mode={__HELPDESK_STANDALONE__ === true ? 'shell' : 'microfrontend'}
+      detectEmbedded
       config={config}
       identityBaseUrl={identityBaseUrl}
       app="helpdesk"

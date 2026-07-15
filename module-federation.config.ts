@@ -9,6 +9,26 @@ const mfNavbarUrl =
 export default createModuleFederationConfig({
   name: 'helpdesk_mf',
   dts: false,
+  // pilot(shell-host): helpdesk-mf is exposed in its ENTIRETY as an
+  // "app-level" Module Federation remote for the app-shell pilot.
+  // `./export-app` wraps the whole file-routed application (every
+  // src/routes/** page, helpdesk-mf's own TopNavbar/SideNav chrome, layout,
+  // providers) via bridge-react's createBridgeComponent — see
+  // src/export-app.tsx. The app shell consumes it as
+  // `helpdesk_mf/export-app` and mounts it at /helpdesk.
+  exposes: {
+    './export-app': './src/export-app.tsx',
+  },
+  // pilot(shell-host): required so bridge-react-webpack-plugin's
+  // react-router-dom alias engages for THIS build. That alias re-creates
+  // the exposed app's RouterProvider with the host-supplied `basename` at
+  // mount time, overriding this build's own BASE_PATH-derived basename.
+  // (The plugin auto-detects via `@module-federation/bridge-react` being a
+  // direct dependency — see package.json — but declaring it explicitly here
+  // avoids relying on that auto-detection and its console warning.)
+  bridge: {
+    enableBridgeRouter: true,
+  },
   remotes: {
     '@brainforgeau/navbar': `navbar@${mfNavbarUrl}/remoteEntry.js`,
   },
@@ -20,6 +40,18 @@ export default createModuleFederationConfig({
       eager: true,
     },
     'react-dom': {
+      singleton: true,
+      requiredVersion: '^19.2.5',
+      strictVersion: true,
+      eager: true,
+    },
+    // pilot(shell-host): react-dom/client (used by react-dom's createRoot
+    // API) is a separate MF share-scope entry from 'react-dom' unless the
+    // trailing-slash prefix form is also shared. Without this, the app shell
+    // and helpdesk-mf's export-app can each get a different react-dom/client,
+    // risking two React roots. Matches the official Modern.js MF docs
+    // recommendation for application-level modules.
+    'react-dom/': {
       singleton: true,
       requiredVersion: '^19.2.5',
       strictVersion: true,
