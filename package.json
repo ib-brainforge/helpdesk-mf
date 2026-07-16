@@ -38,7 +38,7 @@
     "@brainforgeau/components": "0.5.530-develop.a2a6dff",
     "@brainforgeau/helpdesk-client": "0.1.246-develop.35d969f",
     "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
-    "@brainforgeau/observability": "0.4.61-develop.1e1460d",
+    "@brainforgeau/observability": "0.5.84-develop.a796211",
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
     "@brainforgeau/security": "0.5.340-develop.d0c43eb",
     "@brainforgeau/theme": "0.2.64-develop.3645b80",
