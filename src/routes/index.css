@@ -1,13 +1,81 @@
-@import "../../node_modules/@heroui/styles/dist/index.css";
-@import "@brainforgeau/components/styles.css";
-@import "tailwindcss";
+/* css-base-split (helpdesk-mf, following the hr-mf Phase 4b template):
+ * UTILITIES-ONLY sheet.
+ *
+ * Preflight + @theme tokens (:root) + HeroUI vars (@heroui/styles) +
+ * body{}/portal/toast/dropdown/scrollbar rules used to live here via
+ * `@import "../../node_modules/@heroui/styles/dist/index.css"` +
+ * `@import "tailwindcss"` (full) + `@import "@brainforgeau/theme/theme.css"`
+ * (full) — they now come from the single `@brainforgeau/theme/base.css`
+ * import in routes/layout.tsx. Like hr-mf (and UNLIKE navbar-mf, which
+ * never runs standalone and dropped base entirely), helpdesk-mf DOES run
+ * standalone as well as embedded under the shell at `/helpdesk` — so
+ * helpdesk's `base.css` import in layout.tsx stays UNCONDITIONAL (loads in
+ * both modes) and is routed into its own named `base` chunk (see
+ * modern.config.ts's `base` splitChunks cacheGroup) so the shell's
+ * `useRemoteStylesheets` (`REMOTE_BASE_STYLESHEET_PATTERN`) can permanently
+ * disable `/helpdesk/static/css/(async/)?base.<hash>.css` while helpdesk is
+ * embedded, leaving only the shell's own base active. Standalone, nothing
+ * disables it, so base+utilities render together exactly as the old
+ * combined sheet did.
+ *
+ * This sheet must stay collision-free (no `:root`, no bare element
+ * selectors save documented exceptions) so it matches the canonical
+ * `utilities.css` shape every migrated remote ships (see
+ * @brainforgeau/theme README "Consumer usage").
+ *
+ * DO NOT re-add `@import "@heroui/styles/dist/index.css"`, `@import
+ * "tailwindcss"` (full), or `@import "@brainforgeau/theme/theme.css"`
+ * (full, non-`@reference`) here — that would re-introduce the exact
+ * `:root`/preflight duplication this split removes. Both `@reference`
+ * lines below are required, in this order, before the utilities import —
+ * neither emits any CSS at build time (see the theme package README).
+ */
+@reference "tailwindcss";
+@reference "@brainforgeau/theme/theme.css";
+
+/* `layer(utilities)` is MANDATORY here, not cosmetic — Tailwind's full
+ * `@import "tailwindcss"` expands to `@import "tailwindcss/utilities.css"
+ * layer(utilities)`, and every migrated remote (navbar-mf, hr-mf, the
+ * shell) emits its own utilities inside `@layer utilities` the same way.
+ * Unlayered normal declarations beat layered normal declarations
+ * regardless of document order or specificity — dropping `layer()` here
+ * broke navbar-mf's `sm:flex` context switcher in production during the
+ * shell's own P2 rollout (see @brainforgeau/theme README). Never remove
+ * it. */
+@import "tailwindcss/utilities" layer(utilities);
+
 @plugin './hero.ts';
 
 @source '../../node_modules/@brainforgeau/components';
-@import "@brainforgeau/theme/theme.css";
+
+/* Drawer/modal/tiptap/button HeroUI-3 overrides — all component-CLASS
+ * selectors, never `:root`/element selectors, so this stays collision-safe
+ * under the shell (mirrors hr-mf's own `@brainforgeau/components/styles.css`
+ * import). */
+@import "@brainforgeau/components/styles.css";
+
+/* Helpdesk's own TipTap editor component CSS — entirely `.ProseMirror ...`
+ * descendant-class selectors, no `:root`/bare element selectors, so it stays
+ * collision-safe as a plain @import (unchanged from the pre-split file). */
 @import "../styles/tiptap.css";
 
-/* Dropdown popover: add border in light mode so it doesn't blend into white bg */
+/* css-base-split :root decision (helpdesk-mf, unlike hr-mf's utilities.css
+ * which had NO :root at all): this file's only `:root` occurrence is the
+ * compound selector below, not a bare `:root { ... }` token block. It
+ * declares ZERO custom properties — it doesn't redeclare any
+ * @brainforgeau/theme token, and it doesn't introduce a helpdesk-own token
+ * either. It only sets `border` on `.dropdown__popover` elements, using the
+ * EXISTING `var(--border)` token (already defined once in
+ * @brainforgeau/theme/base.css — never redeclared here). `:root:not(.dark)`
+ * is used purely as a "light-mode-only" ancestor guard (equivalent to
+ * `html:not(.dark)`), scoping the rule to the `.dropdown__popover`
+ * component class exactly the way hr-mf's `.week-nav-no-builtin-arrows
+ * button:has(...)` stays in utilities.css: a component-class override, not
+ * a bare `:root`/element selector, so it carries no @theme-token collision
+ * risk under the shell and is kept here unscoped-by-app (needed in both
+ * standalone and embedded modes — the popover border fix applies
+ * everywhere helpdesk's dropdowns render). No base-promotion or
+ * `html.helpdesk-standalone` scoping needed since it declares no tokens. */
 :root:not(.dark) .dropdown__popover {
   border: 1px solid var(--border);
 }

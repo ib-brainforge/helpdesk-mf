@@ -1,6 +1,27 @@
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
+// css-base-split: helpdesk-mf's single, permanent base stylesheet —
+// precompiled Tailwind preflight + @brainforgeau/theme tokens (`:root`) +
+// HeroUI vars + body/portal/toast/dropdown/scrollbar rules (see
+// @brainforgeau/theme README "Consumer usage"). UNCONDITIONAL import (not
+// gated on `__HELPDESK_STANDALONE__`/`__BF_SHELL_HOST__`) because this same
+// layout.tsx renders BOTH helpdesk-mf's standalone entry AND its federated
+// `export-app` — both import `@modern-js/runtime/registry/main`, the same
+// route tree rooted at this layout. Standalone, this is exactly what
+// renders base+utilities together, byte-identical to the pre-split
+// combined sheet. Embedded under the shell, the shell's own
+// `useRemoteStylesheets` permanently disables this link once it identifies
+// helpdesk's `base.<hash>.css` chunk (see modern.config.ts's `base`
+// splitChunks cacheGroup, which routes this import into that dedicated,
+// positively-matchable chunk) — no `isEmbedded`/env branch needed here,
+// suppression happens entirely on the shell side. Ordered BEFORE
+// './index.css' so, in the rare case a rule in base and a rule in
+// helpdesk's own utilities/component CSS ever target the same selector,
+// helpdesk's own sheet (loaded after) wins the cascade — matching "base is
+// the floor, app CSS can layer on top" (mirrors hr-mf's own
+// routes/layout.tsx, the reference implementation of this import order).
+import '@brainforgeau/theme/base.css';
 import './index.css';
 
 import '@fontsource/inter/400.css';

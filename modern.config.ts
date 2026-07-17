@@ -3,6 +3,10 @@ import { dirname, resolve } from 'path';
 import { appTools, defineConfig } from '@modern-js/app-tools';
 import { bffPlugin } from '@modern-js/plugin-bff';
 import { moduleFederationPlugin } from '@module-federation/modern-js';
+import type {
+  OptimizationSplitChunksCacheGroup,
+  OptimizationSplitChunksOptions,
+} from '@rspack/core';
 import CompressionPlugin from 'compression-webpack-plugin';
 
 // Check if running as microfrontend (default) or standalone
@@ -208,6 +212,49 @@ export default defineConfig({
   },
   tools: {
     rspack: (config, { appendPlugins }) => {
+      // css-base-split: force helpdesk-mf's single precompiled
+      // `@brainforgeau/theme/base.css` (imported once, unconditionally, in
+      // src/routes/layout.tsx before './index.css') into its OWN named CSS
+      // chunk, named literally `base` — NOT `theme-base` (that name is the
+      // SHELL's own cache group; see app/modern.config.ts's `themeBase`
+      // comment, "remotes = `base`; shell = `theme-base`" — reusing the
+      // shell's name here would make this chunk invisible to the shell's
+      // suppression regex). The shell's `useRemoteStylesheets`
+      // (`REMOTE_BASE_STYLESHEET_PATTERN`,
+      // app/src/utils/useRemoteStylesheets.ts) permanently disables any
+      // SAME-ORIGIN link under `<prefix>/static/css/(async/)?base(.<hash>)?
+      // .css` — helpdesk is embedded at prefix `/helpdesk`, so this chunk
+      // MUST land at `/helpdesk/static/css/(async/)?base.<hash>.css` for
+      // that suppression to ever fire; without this cache group, Rspack's
+      // default behavior concatenates base.css into the same chunk as
+      // index.css's utilities (same failure mode the shell's P2 rollout hit
+      // and documented), the shell could never isolate/disable it, and
+      // helpdesk's `:root`/preflight would cascade over the shell's chrome
+      // on every /helpdesk visit — the exact bug this initiative removes.
+      // `enforce: true` bypasses the default minSize/minChunks heuristics
+      // so this cache group always produces its own chunk regardless of
+      // size. Standalone (no shell), this chunk simply loads as a second,
+      // unsuppressed `<link>` next to the utilities chunk — no functional
+      // difference from a combined sheet. Matches hr-mf's own
+      // modern.config.ts, the reference implementation of this cache group.
+      config.optimization = config.optimization || {};
+      const splitChunks: OptimizationSplitChunksOptions =
+        typeof config.optimization.splitChunks === 'object' &&
+        config.optimization.splitChunks !== null
+          ? config.optimization.splitChunks
+          : {};
+      const remoteBaseCacheGroup: OptimizationSplitChunksCacheGroup = {
+        name: 'base',
+        test: /[\\/]node_modules[\\/]@brainforgeau[\\/]theme[\\/]dist[\\/]base\.css$/,
+        chunks: 'all',
+        enforce: true,
+      };
+      splitChunks.cacheGroups = {
+        ...splitChunks.cacheGroups,
+        remoteBase: remoteBaseCacheGroup,
+      };
+      config.optimization.splitChunks = splitChunks;
+
       // Production optimizations
       if (process.env.NODE_ENV === 'production') {
         config.mode = 'production';
