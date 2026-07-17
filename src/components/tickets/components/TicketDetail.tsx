@@ -831,7 +831,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           icon={<Icon name="dotsV" className="h-4 w-4" />}
                         />
                       </DropdownTrigger>
-                      <DropdownPopover>
+                      <DropdownPopover className="helpdesk-dropdown-popover">
                         <DropdownMenu
                           aria-label="Ticket actions"
                           disabledKeys={

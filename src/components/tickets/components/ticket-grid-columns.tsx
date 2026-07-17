@@ -218,7 +218,7 @@ export const createTicketColumns = (
               icon={<Icon name="dotsV" className="h-4 w-4" />}
             />
           </DropdownTrigger>
-          <DropdownPopover>
+          <DropdownPopover className="helpdesk-dropdown-popover">
             <DropdownMenu aria-label="Ticket actions">
               <DropdownItem
                 key="assign"

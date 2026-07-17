@@ -68,15 +68,26 @@
  * EXISTING `var(--border)` token (already defined once in
  * @brainforgeau/theme/base.css — never redeclared here). `:root:not(.dark)`
  * is used purely as a "light-mode-only" ancestor guard (equivalent to
- * `html:not(.dark)`), scoping the rule to the `.dropdown__popover`
- * component class exactly the way hr-mf's `.week-nav-no-builtin-arrows
- * button:has(...)` stays in utilities.css: a component-class override, not
- * a bare `:root`/element selector, so it carries no @theme-token collision
- * risk under the shell and is kept here unscoped-by-app (needed in both
- * standalone and embedded modes — the popover border fix applies
- * everywhere helpdesk's dropdowns render). No base-promotion or
- * `html.helpdesk-standalone` scoping needed since it declares no tokens. */
-:root:not(.dark) .dropdown__popover {
+ * `html:not(.dark)`).
+ *
+ * Cross-app scope (`.helpdesk-dropdown-popover`): `.dropdown__popover` is
+ * HeroUI's shared slot class (see `dropdownVariants` in @heroui/styles —
+ * every DropdownPopover in the document gets this class, from any app).
+ * HeroUI 3's DropdownPopover portals to document.body by default
+ * (react-aria-components Popover), rendering OUTSIDE helpdesk's own DOM
+ * subtree, so an ancestor selector like `.helpdesk-root .dropdown__popover`
+ * can never match it. The only reliable per-app scope is a marker class
+ * passed via DropdownPopover's `className` prop — it gets composed with the
+ * slot class rather than replacing it (see `composeTwRenderProps` in
+ * @heroui/react's dropdown.js) — so `.helpdesk-dropdown-popover` is applied
+ * at each of helpdesk's own DropdownPopover call sites (TicketDetail,
+ * ticket-grid-columns, knowledge-base page, knowledge-base settings page).
+ * This keeps the border on helpdesk's own popovers while no longer leaking
+ * onto the shell's navbar dropdowns or other apps' popovers that share the
+ * same document once helpdesk is mounted under the shell. No base-promotion
+ * or `html.helpdesk-standalone` scoping needed since it declares no
+ * tokens. */
+:root:not(.dark) .dropdown__popover.helpdesk-dropdown-popover {
   border: 1px solid var(--border);
 }
 

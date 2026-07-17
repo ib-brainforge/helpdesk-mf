@@ -309,7 +309,7 @@ function KbCategoriesPage() {
                     <Icon name="dotsV" className="h-4 w-4" />
                   </BaseButton>
                 </DropdownTrigger>
-                <DropdownPopover>
+                <DropdownPopover className="helpdesk-dropdown-popover">
                   <DropdownMenu aria-label="Category actions">
                     <DropdownItem key="edit" onPress={() => openEdit(cat)}>
                       Edit

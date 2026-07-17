@@ -55,7 +55,7 @@ function KnowledgeBasePage() {
                 <Icon name="dotsV" className="h-4 w-4" />
               </BaseButton>
             </DropdownTrigger>
-            <DropdownPopover>
+            <DropdownPopover className="helpdesk-dropdown-popover">
               <DropdownMenu aria-label="Knowledge base actions">
                 <DropdownItem
                   key="import"
