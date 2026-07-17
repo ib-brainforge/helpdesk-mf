@@ -91,22 +91,42 @@ const config = {
   extraTokenParams: {
     app: process.env.OIDC_APP || 'helpdesk',
   },
-  api: {
-    baseUrl: process.env.API_BASE_URL || '',
-    notificationUrl: process.env.NOTIFICATION_API_URL || '',
-  },
-  signalrHubUrl: process.env.SIGNALR_HUB_URL || '',
+  // ── Runtime-config contract: named per-service keys ───────────────────────
+  // See infra docs/runtime-config/README.md. One `<service>ApiBaseUrl` per
+  // service helpdesk-mf talks to — its OWN backend included, which is not
+  // special and gets a named key like any other.
+  //
+  // This is the BAKED half of `rc ?? baked`. It is authoritative ONLY in local
+  // dev (`modern dev`), where `window.__RUNTIME_CONFIG__` does not exist. When
+  // deployed, the shell's runtime config wins and these are `""` anyway: the
+  // Dockerfile build stage deliberately pins them empty so no build-time value
+  // can be baked into an image and leak across environments.
+  //
+  // No `|| ''` semantics leak past this file: an unset var arrives at the
+  // reader as an absent key, and `resolveNamedUrl` in src/state/config says so
+  // loudly rather than substituting an empty string.
+  helpdeskApiBaseUrl: process.env.HELPDESK_API_BASE_URL || undefined,
+  notificationApiBaseUrl: process.env.NOTIFICATION_API_BASE_URL || undefined,
+  identityApiBaseUrl: process.env.IDENTITY_API_BASE_URL || undefined,
+  telemetryApiBaseUrl: process.env.TELEMETRY_API_BASE_URL || undefined,
+  // The NOTIFICATION bell hub, on notification-backend. There is no helpdesk
+  // hub key: helpdesk-backend's own hub is `helpdeskApiBaseUrl` + the path it
+  // maps itself (`/hubs/helpdesk`), joined within the one service in
+  // src/state/config. The old single `SIGNALR_HUB_URL` named helpdesk's OWN
+  // hub and was ALSO handed to the navbar as the bell hub — two services, one
+  // ambiguous name.
+  notificationSignalRHubUrl:
+    process.env.NOTIFICATION_SIGNALR_HUB_URL || undefined,
   // Docker image version passed at build time for observability
   version: process.env.APP_VERSION || 'unknown',
   // @brainforgeau package versions for observability tracking
   packageVersions,
   observability: {
     enabled: process.env.OBSERVABILITY_ENABLED === 'true',
-    // Telemetry gateway base URL (v2). Logs/traces/sessions are routed through
-    // the telemetry-gateway service; the SDK appends /v1/{sessions,logs,traces}.
-    // Defaults at runtime to the helpdesk backend API origin + /backend/telemetry;
-    // overridable per-environment via TELEMETRY_GATEWAY_URL.
-    telemetryGatewayUrl: process.env.TELEMETRY_GATEWAY_URL || '',
+    // The telemetry-gateway URL is NOT here: it is a backend URL like any other
+    // and lives in `telemetryApiBaseUrl` above. It used to be derived at runtime
+    // from the helpdesk API origin, which threw on a relative base URL and was
+    // swallowed by a bare catch — that is why helpdesk shipped zero telemetry.
     tracing: {
       enabled: process.env.TRACING_ENABLED === 'true',
       // Domains to exclude from trace header propagation (to avoid CORS issues)
@@ -188,7 +208,9 @@ export default defineConfig({
     globalVars: {
       __HELPDESK_CONFIG__: JSON.stringify(config),
       __HELPDESK_STANDALONE__: isStandalone,
-      __IDENTITY_BASE_URL__: process.env.IDENTITY_BASE_URL || '',
+      // identity-management is no longer a standalone baked define: it is a
+      // named per-service key (`identityApiBaseUrl`) inside __HELPDESK_CONFIG__
+      // like every other backend URL.
     },
   },
   // Performance optimizations

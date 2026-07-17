@@ -383,9 +383,15 @@ export default function Layout() {
                   <TopNavbar
                     data-testid={TEST_IDS.navbar.top}
                     config={{
-                      identityBaseUrl: appConfig?.identityBaseUrl || '',
-                      notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
-                      notificationApiUrl: appConfig?.api?.notificationUrl || '',
+                      // Named per-service keys, resolved `rc ?? baked` in
+                      // src/state/config (which console.errors each by name
+                      // when missing). `notificationHubUrl` is the NOTIFICATION
+                      // bell hub: it used to be handed `api.signalRHubUrl`,
+                      // which was helpdesk-backend's OWN ticket hub — the bell
+                      // was subscribing to the wrong service entirely.
+                      identityBaseUrl: appConfig.identityApiBaseUrl,
+                      notificationHubUrl: appConfig.notificationSignalRHubUrl,
+                      notificationApiUrl: appConfig.notificationApiBaseUrl,
                       app: 'helpdesk',
                     }}
                     onExtend={handleNavExtend}

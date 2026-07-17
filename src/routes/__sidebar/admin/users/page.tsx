@@ -36,10 +36,10 @@ function AdminUsersPage() {
     setIsRolesModalOpen(true);
   };
 
-  // Keycloak admin URL hint — from app config identityBaseUrl
+  // Keycloak admin URL hint — identity-management's own named key.
   const config = getAppConfig();
-  const keycloakAdminUrl = config.identityBaseUrl
-    ? `${config.identityBaseUrl}/admin`
+  const keycloakAdminUrl = config.identityApiBaseUrl
+    ? `${config.identityApiBaseUrl}/admin`
     : null;
 
   return (

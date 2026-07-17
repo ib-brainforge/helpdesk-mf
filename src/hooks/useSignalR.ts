@@ -1,4 +1,4 @@
-import { type AppConfig, configAtom, hubConnectedAtom } from '@/state/config';
+import { hubConnectedAtom, requireHelpdeskHubUrl } from '@/state/config';
 import { getAccessToken, getContextToken } from '@brainforgeau/security';
 import {
   type HubConnection,
@@ -6,7 +6,7 @@ import {
   HubConnectionState,
   LogLevel,
 } from '@microsoft/signalr';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useSetAtom } from 'jotai';
 import { useEffect, useRef, useState } from 'react';
 
 export type SignalRConnectionState =
@@ -37,10 +37,18 @@ export interface UseSignalRReturn {
 }
 
 /**
- * Hook to manage SignalR connection to a hub.
- * Passes JWT tokens via query string (same pattern as tracking-mf)
- * because WebSocket connections cannot use Authorization headers
- * after the initial handshake.
+ * Hook to manage a SignalR connection to HELPDESK-BACKEND's own hub.
+ *
+ * `hubPath` is a path on helpdesk-backend (today only `/hubs/helpdesk`, which
+ * `Helpdesk.Api/Program.cs` maps). It is joined to `helpdeskApiBaseUrl` — the
+ * base URL of the very service that serves the hub — by
+ * `requireHelpdeskHubUrl`. This is NOT the notification bell hub: that one has
+ * its own key (`notificationSignalRHubUrl`) and is passed to the navbar in
+ * routes/layout.tsx. The old ambiguous `api.signalRHubUrl` was used for both.
+ *
+ * Passes JWT tokens via query string (same pattern as tracking-mf) because
+ * WebSocket connections cannot use Authorization headers after the initial
+ * handshake.
  */
 export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
   const {
@@ -53,7 +61,6 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
     onError,
   } = options;
 
-  const config = useAtomValue(configAtom) as AppConfig;
   const setHubConnected = useSetAtom(hubConnectedAtom);
   const connectionRef = useRef<HubConnection | null>(null);
   const [connectionState, setConnectionState] =
@@ -61,15 +68,10 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
 
   useEffect(() => {
     let cancelled = false;
-    const hubBaseUrl =
-      config?.api?.signalRHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
-
-    if (!hubBaseUrl) {
-      console.warn(
-        '[useSignalR] SignalR hub URL not configured, connection will not be established',
-      );
-      return;
-    }
+    // helpdesk-backend's own hub. Throws by name (stage 2) when
+    // HELPDESK_API_BASE_URL was never configured, rather than the old
+    // `|| ''` that quietly produced an origin-relative `/hubs/helpdesk`.
+    const hubBaseUrl = requireHelpdeskHubUrl(hubPath);
 
     // Build hub URL with tokens in query string and start connection
     // WebSocket connections cannot use Authorization headers after the initial handshake,
@@ -166,7 +168,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
         });
       }
     };
-  }, [hubPath, config?.api?.signalRHubUrl, config?.api?.baseUrl, autoConnect]);
+  }, [hubPath, autoConnect]);
 
   const connect = async () => {
     const connection = connectionRef.current;

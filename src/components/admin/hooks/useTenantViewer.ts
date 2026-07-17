@@ -1,13 +1,10 @@
 import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import type { TenantTicketFilters } from '@/types/admin';
 import type { PagedResult, TicketListDto } from '@/types/ticket';
 import { useQuery } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
-import { getDefaultStore } from 'jotai';
 import { useCallback, useState } from 'react';
-
-const store = getDefaultStore();
 
 /**
  * Hook for viewing tickets from a specific tenant (for platform.admin role)
@@ -37,8 +34,7 @@ export const useTenantTicketsData = (tenantId: string | null) => {
         } as PagedResult<TicketListDto>;
       }
 
-      const config = store.get(configAtom);
-      const baseUrl = config?.api?.baseUrl ?? '';
+      const baseUrl = requireHelpdeskApiBaseUrl();
 
       const params = new URLSearchParams();
       if (filters.status) {

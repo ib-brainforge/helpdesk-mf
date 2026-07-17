@@ -1,19 +1,15 @@
-import { configAtom } from '@/state/config';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import {
   createHelpdeskApiClient,
   createHelpdeskApiConfiguration,
 } from '@/state/helpdeskApiClient';
 import type { AttachmentDto, FileUploadProgress } from '@/types';
 import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
-import type { RuntimeConfig } from '@brainforgeau/security';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getDefaultStore } from 'jotai';
 import { useCallback, useState } from 'react';
 
 const getApiBaseUrl = (): string => {
-  const store = getDefaultStore();
-  const config = store.get(configAtom) as RuntimeConfig;
-  return config?.api?.baseUrl ?? '';
+  return requireHelpdeskApiBaseUrl();
 };
 
 export const useAttachments = (ticketId?: string) => {

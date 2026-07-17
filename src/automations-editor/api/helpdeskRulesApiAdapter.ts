@@ -1,5 +1,5 @@
 import { authorizedAxios } from '@/state/authorizedAxios';
-import { configAtom } from '@/state/config';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import type {
   ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
   ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
@@ -31,8 +31,6 @@ import type {
   RuleProjectDto,
   ScheduleConfigDto,
 } from '@brainforgeau/rules-ui';
-import type { RuntimeConfig } from '@brainforgeau/security';
-import { getDefaultStore } from 'jotai';
 
 // ── Content normaliser ────────────────────────────────────────────────────────
 //
@@ -181,10 +179,11 @@ function toRuleGraphDto(g: GenRuleGraphDto): RuleGraphDto {
 // runtime config store — the same approach used for other helpdesk API clients.
 
 function buildApiInstances() {
-  const store = getDefaultStore();
-  const config = store.get(configAtom) as RuntimeConfig | undefined;
-  const basePath = config?.api?.baseUrl ?? '';
-  const configuration = new Configuration({ basePath });
+  // helpdesk-backend's own named key. Throws by name when
+  // HELPDESK_API_BASE_URL was never configured (stage 2 of failing loudly).
+  const configuration = new Configuration({
+    basePath: requireHelpdeskApiBaseUrl(),
+  });
   return {
     ruleProjects: new RuleProjectsApi(
       configuration,

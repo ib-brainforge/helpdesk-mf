@@ -12,7 +12,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const config = useAtomValue(configAtom);
   const appConfig = getAppConfig();
-  const identityBaseUrl = appConfig?.identityBaseUrl || '';
+  // identity-management's own named key, resolved `rc ?? baked` in
+  // src/state/config (which console.errors by name if it is missing).
+  const identityBaseUrl = appConfig.identityApiBaseUrl;
 
   // pilot(shell-host): embedded mode is now first-class in
   // @brainforgeau/security (mf-packages PR #290). `detectEmbedded` makes

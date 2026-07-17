@@ -1,4 +1,4 @@
-import { getAppConfig } from '@/state/config';
+import { requireIdentityApiBaseUrl } from '@/state/config';
 import { getSessionId } from '@brainforgeau/observability';
 import {
   createCrossAppAxios,
@@ -15,8 +15,6 @@ export {
   configureContextTokenRefresh,
   type CreateAuthorizedAxiosOptions,
 } from '@brainforgeau/security';
-
-declare const __IDENTITY_BASE_URL__: string | undefined;
 
 const HELPDESK_APP_ID = 'helpdesk';
 const SHARED_CONTEXT_TOKEN_STORAGE_KEY = 'X-Context-Token';
@@ -76,12 +74,17 @@ function attachObservabilityHeaders(instance: AxiosInstance): void {
 //      instance (the EXISTING @brainforgeau/security API — 'helpdesk'-scoped
 //      token cached under sessionStorage 'bf:cross-app-token:helpdesk',
 //      419-refreshing, invalidated on bf:context-token-changed).
-//      `contextIssuerBaseUrl` resolves host-first:
-//      window.__RUNTIME_CONFIG__.identityBaseUrl (the SHELL's identity — the
-//      one actually reachable in this setup) → getAppConfig().identityBaseUrl
-//      → baked __IDENTITY_BASE_URL__ define (a standalone-dev identity that
-//      is NOT running when embedded — resolving this FIRST was the P2 facade
-//      bug: token issuance died with a network error before any API call).
+//      `contextIssuerBaseUrl` is `getAppConfig().identityApiBaseUrl` —
+//      identity-management's own named runtime-config key
+//      (`IDENTITY_API_BASE_URL`), already resolved `rc ?? baked` in
+//      src/state/config. The old three-way chain (host rc → app config →
+//      baked __IDENTITY_BASE_URL__ define) existed only because there was no
+//      single key that meant "the identity service": rc and baked were
+//      DIFFERENT keys holding different values, so they had to be raced
+//      host-first. Under the contract they are the same key resolved in the
+//      one place, so the chain collapses. Note identity lives on the AUTH
+//      host — it is precisely the URL that cannot be derived from the app
+//      origin.
 //   3. DEGRADED PATH (slow-path issuance fails, e.g. identity unreachable):
 //      fall back to the shared `authorizedAxios` with a single console.warn.
 //      A wrong-app-scoped 403 is a recoverable, diagnosable failure; a dead
@@ -227,28 +230,12 @@ function buildCrossAppFacade(targetApp: string): AxiosInstance {
   const ensureReady = (): Promise<AxiosInstance> => {
     if (!readyPromise) {
       readyPromise = (async () => {
-        // Host-first resolution: when embedded, the only identity service
-        // guaranteed reachable is the SHELL's (its runtime config). The
-        // baked __IDENTITY_BASE_URL__ points at a standalone-dev identity
-        // that may not be running at all — it is the LAST resort.
-        const hostRuntimeIdentityBaseUrl =
-          typeof window !== 'undefined'
-            ? (
-                window as unknown as {
-                  __RUNTIME_CONFIG__?: { identityBaseUrl?: string };
-                }
-              ).__RUNTIME_CONFIG__?.identityBaseUrl
-            : undefined;
-        const contextIssuerBaseUrl =
-          hostRuntimeIdentityBaseUrl ||
-          getAppConfig()?.identityBaseUrl ||
-          __IDENTITY_BASE_URL__ ||
-          '';
-        if (!contextIssuerBaseUrl) {
-          throw new Error(
-            `Identity base URL is not configured; cannot mint a '${targetApp}'-scoped cross-app context token.`,
-          );
-        }
+        // identity-management's own named key: one key, resolved once
+        // (`rc ?? baked`) in src/state/config. Throws by name when
+        // IDENTITY_API_BASE_URL was never configured — inside `ensureReady`,
+        // so the DEGRADED PATH below still catches it and rides the shared
+        // token rather than killing the request.
+        const contextIssuerBaseUrl = requireIdentityApiBaseUrl();
         const instance = await createCrossAppAxios({
           contextIssuerBaseUrl,
           targetApp,

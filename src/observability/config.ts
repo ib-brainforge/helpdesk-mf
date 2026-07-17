@@ -45,33 +45,24 @@ export interface ObservabilityContextValues {
 }
 
 /**
- * Derive the telemetry-gateway base URL.
+ * The telemetry-gateway base URL is READ, never derived.
  *
- * Prefers an explicit `observability.telemetryGatewayUrl` from runtime/build
- * config. When not set, derives it from the helpdesk backend API origin: the
- * backend lives at `<origin>/backend/helpdesk`, the gateway at
- * `<origin>/backend/telemetry`.
+ * It used to be derived as `new URL(appConfig.api.baseUrl).origin +
+ * '/backend/telemetry'`. When embedded, `api.baseUrl` was forced to the
+ * relative `/backend/helpdesk`, so `new URL` threw, a bare `catch` swallowed
+ * it, the base came back undefined, `endpoints` became undefined and the SDK
+ * silently ran with no destination. That is why helpdesk has shipped zero
+ * logs, traces, metrics and sessions.
+ *
+ * `telemetryApiBaseUrl` is its own named key, published by the shell
+ * (`TELEMETRY_API_BASE_URL`), resolved `rc ?? baked` in src/state/config, which
+ * console.errors by name when it is missing. There is nothing left to throw and
+ * nothing left to swallow.
  */
-function resolveTelemetryGatewayBase(): string | undefined {
-  const explicit = appConfig?.observability?.telemetryGatewayUrl;
-  if (explicit) {
-    return explicit.replace(/\/+$/, '');
-  }
-
-  const apiBaseUrl = appConfig?.api?.baseUrl;
-  if (!apiBaseUrl) {
-    return undefined;
-  }
-
-  try {
-    const origin = new URL(apiBaseUrl).origin;
-    return `${origin}/backend/telemetry`;
-  } catch {
-    return undefined;
-  }
-}
-
-const telemetryGatewayBase = resolveTelemetryGatewayBase();
+const telemetryGatewayBase = appConfig?.telemetryApiBaseUrl?.replace(
+  /\/+$/,
+  '',
+);
 
 /**
  * Telemetry-gateway endpoints (v2). Undefined when no base URL can be

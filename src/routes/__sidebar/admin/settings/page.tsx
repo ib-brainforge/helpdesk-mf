@@ -85,8 +85,11 @@ function AdministrationPage() {
   // REVIEW: userManualUrl and apiDocsUrl can be overridden per environment via runtime config
   const userManualUrl: string =
     (config as any).userManualUrl ?? 'https://docs.brainforge.au/helpdesk';
-  const apiDocsUrl: string =
-    (config as any).apiDocsUrl ?? `${config?.api?.baseUrl ?? ''}/swagger`;
+  // helpdesk-backend's own named key. This is a display-only link, so a
+  // missing key degrades to no link rather than throwing in render.
+  const apiDocsUrl: string | null =
+    (config as any).apiDocsUrl ??
+    (config.helpdeskApiBaseUrl ? `${config.helpdeskApiBaseUrl}/swagger` : null);
 
   const sections: SettingSection[] = [
     {
@@ -181,14 +184,21 @@ function AdministrationPage() {
           href: userManualUrl,
           isExternal: true,
         },
-        {
-          title: 'API documentation',
-          description:
-            'Developer documentation and OpenAPI reference — opens in a new tab',
-          icon: 'code-bracket',
-          href: apiDocsUrl,
-          isExternal: true,
-        },
+        // Omitted entirely when helpdeskApiBaseUrl is unset: this is a
+        // display-only link, so a missing key drops the card rather than
+        // throwing in render or linking at a silently-empty ''.
+        ...(apiDocsUrl
+          ? [
+              {
+                title: 'API documentation',
+                description:
+                  'Developer documentation and OpenAPI reference — opens in a new tab',
+                icon: 'code-bracket' as const,
+                href: apiDocsUrl,
+                isExternal: true,
+              },
+            ]
+          : []),
       ],
     },
   ];
