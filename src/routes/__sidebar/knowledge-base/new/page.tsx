@@ -12,13 +12,13 @@
  * creation (not in scope here).
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import {
   useCreateKnowledgeBaseArticle,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
-  AuthSplash,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -188,5 +188,5 @@ function NewKnowledgeBaseArticlePage() {
 }
 
 export default withAuthenticationRequired(NewKnowledgeBaseArticlePage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

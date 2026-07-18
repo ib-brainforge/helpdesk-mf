@@ -4,11 +4,11 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
-  AuthSplash,
   BaseCheckbox,
   BaseInput,
   BaseSelect,
@@ -184,5 +184,5 @@ function PrincipalApprovalWorkflowNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalApprovalWorkflowNewPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

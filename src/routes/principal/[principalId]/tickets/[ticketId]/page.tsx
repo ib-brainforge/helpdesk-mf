@@ -10,6 +10,7 @@
  * Tab state is URL-synced via `?tab=` using useTabSearchParam + useDetailTabState.
  */
 
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { CommentThread, ReplyEditor, useComments } from '@/components/comments';
 import { StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -20,11 +21,9 @@ import {
 } from '@/hooks/usePrincipalTicket';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import {
-  AuthSplash,
   BaseButton,
   BaseSelect,
   BaseSelectItem,
-  LoadingSplash,
   PageSpinner,
 } from '@brainforgeau/components';
 import {
@@ -122,7 +121,7 @@ function PrincipalTicketDetailPage() {
   });
 
   if (isLoading) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   if (error || !ticket) {
@@ -302,5 +301,5 @@ function PrincipalTicketDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalTicketDetailPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

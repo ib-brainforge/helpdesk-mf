@@ -4,11 +4,11 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
 import {
-  AuthSplash,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
@@ -152,5 +152,5 @@ function PrincipalCategoryNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalCategoryNewPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

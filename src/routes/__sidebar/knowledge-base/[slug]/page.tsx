@@ -6,6 +6,7 @@
  * No form-bearing tabs — no formActions. "Edit Article" is a headerActions button.
  */
 
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
 import {
   useKnowledgeBaseArticle,
@@ -13,12 +14,7 @@ import {
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import {
-  BaseButton,
-  BaseCard,
-  Icon,
-  LoadingSplash,
-} from '@brainforgeau/components';
+import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
 import {
   DetailPage,
   PendingCrumb,
@@ -51,7 +47,7 @@ function KnowledgeBaseArticlePage() {
   });
 
   if (isLoading || (!article && !error)) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   if (error || !article) {

@@ -9,7 +9,7 @@
  * bf-template-migration: legacy / deadline: 2026-08-01
  */
 import { PrincipalAutomationDetailPage } from '@/automations-editor';
-import { AuthSplash } from '@brainforgeau/components';
+import { AppAuthSplash } from '@/components/AppSplash';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
@@ -18,5 +18,5 @@ function PrincipalAutomationDetailRoute() {
 }
 
 export default withAuthenticationRequired(PrincipalAutomationDetailRoute, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

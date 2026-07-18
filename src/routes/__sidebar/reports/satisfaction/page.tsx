@@ -1,3 +1,4 @@
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { CSATRatingDistributionChart } from '@/components/satisfaction/CSATRatingDistributionChart';
 import { StarRating } from '@/components/satisfaction/StarRating';
@@ -5,7 +6,7 @@ import { SummaryCard } from '@/components/shared';
 import { useCSATReport } from '@/hooks/useSatisfaction';
 import { CSATGroupBy } from '@/types';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { AuthSplash, Box, LoadingSplash } from '@brainforgeau/components/base';
+import { Box } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
@@ -60,7 +61,7 @@ function CSATReportPage() {
   }, [reportData]);
 
   if (isLoading) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   return (
@@ -203,5 +204,5 @@ function CSATReportPage() {
 }
 
 export default withAuthenticationRequired(CSATReportPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

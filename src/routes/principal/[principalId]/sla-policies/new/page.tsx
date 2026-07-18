@@ -4,9 +4,10 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalSlaPolicy } from '@/hooks/usePrincipalSlaPolicies';
-import { AuthSplash, BaseCheckbox, BaseInput } from '@brainforgeau/components';
+import { BaseCheckbox, BaseInput } from '@brainforgeau/components';
 import {
   FormPage,
   PendingCrumb,
@@ -131,5 +132,5 @@ function PrincipalSlaPolicyNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSlaPolicyNewPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

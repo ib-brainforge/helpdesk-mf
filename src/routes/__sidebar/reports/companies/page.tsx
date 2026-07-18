@@ -1,9 +1,10 @@
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useCompanyStatisticsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import { BaseButton } from '@brainforgeau/components';
-import { Box, Icon, LoadingSplash } from '@brainforgeau/components/base';
+import { Box, Icon } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { useState } from 'react';
 
@@ -44,7 +45,7 @@ function CompanyStatisticsPage() {
     );
   };
 
-  if (isLoading) return <LoadingSplash />;
+  if (isLoading) return <AppLoadingSplash />;
 
   if (!stats) {
     return (

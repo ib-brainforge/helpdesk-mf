@@ -1,3 +1,4 @@
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
 import { SummaryCard } from '@/components/shared';
 import type {
@@ -5,14 +6,7 @@ import type {
   PriorityBreakdownDto,
   StatusBreakdownDto,
 } from '@/types';
-import {
-  AuthSplash,
-  BaseButton,
-  Box,
-  DonutChart,
-  Icon,
-  LoadingSplash,
-} from '@brainforgeau/components';
+import { BaseButton, Box, DonutChart, Icon } from '@brainforgeau/components';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
@@ -117,7 +111,7 @@ function HelpdeskDashboardPage() {
   } = useTicketSummaryReport(startDate, endDate);
 
   if (isLoading) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   if (error) {
@@ -234,5 +228,5 @@ function HelpdeskDashboardPage() {
 }
 
 export default withAuthenticationRequired(HelpdeskDashboardPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

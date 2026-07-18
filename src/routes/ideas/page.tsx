@@ -6,9 +6,10 @@
  * REVIEW: Add voting + commenting in a future wave when the backend endpoints exist.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import type { IdeaListItem } from '@/components/tickets/hooks/useTickets';
 import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
-import { AuthSplash, PageSpinner } from '@brainforgeau/components';
+import { PageSpinner } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { EmptyState } from '@brainforgeau/components/page';
@@ -121,5 +122,5 @@ function IdeasForumPage() {
 }
 
 export default withAuthenticationRequired(IdeasForumPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

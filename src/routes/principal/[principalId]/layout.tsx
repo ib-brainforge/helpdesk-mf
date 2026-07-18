@@ -8,9 +8,10 @@
  * - Hides the tenant sidenav (top-level layout handles this via isPrincipalRoute).
  */
 
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { PrincipalSidenav } from '@/components/principal/PrincipalSidenav';
 import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
-import { ErrorBoundary, LoadingSplash } from '@brainforgeau/components';
+import { ErrorBoundary } from '@brainforgeau/components';
 import { useAuth } from '@brainforgeau/security';
 import { Navigate, Outlet, useParams } from '@modern-js/runtime/router';
 import { useMemo } from 'react';
@@ -42,7 +43,7 @@ function PrincipalLayoutContent() {
   );
 
   if (isLoading) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   if (isAuthenticated && !level) {

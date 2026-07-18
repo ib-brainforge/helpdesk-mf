@@ -1,10 +1,10 @@
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useTicketsByCategoryReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import type { TicketByCategoryDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { LoadingSplash } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
@@ -91,7 +91,7 @@ function TicketsByCategoryPage() {
     );
   };
 
-  if (isLoading) return <LoadingSplash />;
+  if (isLoading) return <AppLoadingSplash />;
 
   return (
     <DashboardPage

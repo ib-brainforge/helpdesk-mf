@@ -1,3 +1,4 @@
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { TicketApprovalPanel } from '@/components/approvals';
 import {
   useAttachments,
@@ -23,7 +24,7 @@ import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { CommentType } from '@/types/comment';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { Box, LoadingSplash } from '@brainforgeau/components/base';
+import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
@@ -714,7 +715,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   }, [id, updateTicketMutation]);
 
   if (isLoading) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   if (error || !ticket) {

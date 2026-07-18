@@ -12,6 +12,7 @@
  * Change" is enabled.
  */
 
+import { AppLoadingSplash } from '@/components/AppSplash';
 import {
   useApprovalWorkflow,
   useDeleteApprovalWorkflow,
@@ -29,7 +30,6 @@ import {
   BaseSelectItem,
   BaseTextarea,
   BaseToggle,
-  LoadingSplash,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import {
@@ -235,7 +235,7 @@ function EditApprovalWorkflowPage() {
   }));
 
   if (isLoading) {
-    return <LoadingSplash />;
+    return <AppLoadingSplash />;
   }
 
   if (!workflow) {

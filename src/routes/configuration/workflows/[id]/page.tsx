@@ -8,8 +8,8 @@
  *
  * bf-template-migration: legacy / deadline: 2026-08-01
  */
+import { AppAuthSplash } from '@/components/AppSplash';
 import { WorkflowDetailPage } from '@/workflow-editor';
-import { AuthSplash } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
@@ -18,5 +18,5 @@ function WorkflowDetailRoute() {
 }
 
 export default withAuthenticationRequired(WorkflowDetailRoute, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

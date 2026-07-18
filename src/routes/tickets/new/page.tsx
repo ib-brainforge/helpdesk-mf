@@ -8,6 +8,7 @@
  * separately after ticket creation by the existing mutation logic).
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
 import { TagInput } from '@/components/tags/TagInput';
@@ -23,7 +24,6 @@ import {
 } from '@/components/tickets/state/users-dropdown-state';
 import { TicketPriority } from '@/types/ticket';
 import {
-  AuthSplash,
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
@@ -405,5 +405,5 @@ function NewTicketPage() {
 }
 
 export default withAuthenticationRequired(NewTicketPage, {
-  OnRedirecting: () => <AuthSplash />,
+  OnRedirecting: () => <AppAuthSplash />,
 });
