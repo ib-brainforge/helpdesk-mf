@@ -5,6 +5,7 @@
  * W1-review-fixes: usePrincipal() wired; principalName resolves from identity-management.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -286,5 +287,5 @@ function PrincipalTicketsPage() {
 }
 
 export default withAuthenticationRequired(PrincipalTicketsPage, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });

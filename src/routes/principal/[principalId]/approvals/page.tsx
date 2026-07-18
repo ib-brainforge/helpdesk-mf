@@ -5,6 +5,7 @@
  * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -197,5 +198,5 @@ function PrincipalApprovalsPage() {
 }
 
 export default withAuthenticationRequired(PrincipalApprovalsPage, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });

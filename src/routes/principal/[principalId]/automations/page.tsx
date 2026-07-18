@@ -11,6 +11,7 @@
  */
 
 import { PrincipalAutomationProjectsListPage } from '@/automations-editor';
+import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { PageHeader, PendingCrumb } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
@@ -37,5 +38,5 @@ function PrincipalAutomationListRoute() {
 }
 
 export default withAuthenticationRequired(PrincipalAutomationListRoute, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });

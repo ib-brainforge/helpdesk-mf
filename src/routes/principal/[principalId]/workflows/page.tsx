@@ -10,6 +10,7 @@
  *     internal <h1>, eliminating the duplicate heading.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { PrincipalWorkflowListPage } from '@/workflow-editor';
 import { PageHeader, PendingCrumb } from '@brainforgeau/components/page';
@@ -37,5 +38,5 @@ function PrincipalWorkflowListRoute() {
 }
 
 export default withAuthenticationRequired(PrincipalWorkflowListRoute, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });
