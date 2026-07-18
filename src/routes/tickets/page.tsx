@@ -8,7 +8,7 @@
  */
 
 import { TicketGrid } from '@/components/tickets/components/TicketGrid';
-import { PageSpinner } from '@brainforgeau/components/base';
+import { AuthSplash } from '@brainforgeau/components/base';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
@@ -21,5 +21,5 @@ function TicketsPage() {
 }
 
 export default withAuthenticationRequired(TicketsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

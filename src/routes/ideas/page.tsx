@@ -8,7 +8,7 @@
 
 import type { IdeaListItem } from '@/components/tickets/hooks/useTickets';
 import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
-import { PageSpinner } from '@brainforgeau/components';
+import { AuthSplash, PageSpinner } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { EmptyState } from '@brainforgeau/components/page';
@@ -121,5 +121,5 @@ function IdeasForumPage() {
 }
 
 export default withAuthenticationRequired(IdeasForumPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

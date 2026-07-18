@@ -18,10 +18,10 @@ import {
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
+  AuthSplash,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
@@ -188,5 +188,5 @@ function NewKnowledgeBaseArticlePage() {
 }
 
 export default withAuthenticationRequired(NewKnowledgeBaseArticlePage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

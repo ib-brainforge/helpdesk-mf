@@ -8,7 +8,7 @@
  */
 
 import { usePrincipal } from '@/hooks/usePrincipal';
-import { PageSpinner } from '@brainforgeau/components';
+import { AuthSplash } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import {
   PageBody,
@@ -148,5 +148,5 @@ function PrincipalSettingsPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSettingsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

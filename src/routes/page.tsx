@@ -1,4 +1,4 @@
-import { AppLoading } from '@/components/AppLoading';
+import { AuthSplash } from '@brainforgeau/components';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { Navigate } from '@modern-js/runtime/router';
 import React from 'react';
@@ -8,7 +8,7 @@ function Page() {
 }
 
 export default withAuthenticationRequired(Page, {
-  OnRedirecting: () => <AppLoading />,
+  OnRedirecting: () => <AuthSplash />,
   signinRedirectArgs: {
     redirect_uri: window.location.href,
   },

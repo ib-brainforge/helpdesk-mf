@@ -23,6 +23,7 @@ import {
 } from '@/components/tickets/state/users-dropdown-state';
 import { TicketPriority } from '@/types/ticket';
 import {
+  AuthSplash,
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseAvatar,
@@ -32,7 +33,6 @@ import {
   BaseSelectItem,
   BaseTextarea,
   Icon,
-  PageSpinner,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
@@ -405,5 +405,5 @@ function NewTicketPage() {
 }
 
 export default withAuthenticationRequired(NewTicketPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

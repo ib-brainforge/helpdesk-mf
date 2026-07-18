@@ -11,7 +11,12 @@ import {
   useUpdatePrincipalSlaPolicy,
 } from '@/hooks/usePrincipalSlaPolicies';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { BaseCheckbox, BaseInput, PageSpinner } from '@brainforgeau/components';
+import {
+  AuthSplash,
+  BaseCheckbox,
+  BaseInput,
+  LoadingSplash,
+} from '@brainforgeau/components';
 import {
   DetailPage,
   PendingCrumb,
@@ -82,7 +87,7 @@ function PrincipalSlaPolicyDetailPage() {
   });
 
   if (isLoading || !policy) {
-    return <PageSpinner title="Loading SLA policy..." />;
+    return <LoadingSplash />;
   }
 
   if (context?.level !== 'admin') {
@@ -164,5 +169,5 @@ function PrincipalSlaPolicyDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSlaPolicyDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

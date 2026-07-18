@@ -29,7 +29,7 @@ import {
   BaseSelectItem,
   BaseTextarea,
   BaseToggle,
-  PageSpinner,
+  LoadingSplash,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import {
@@ -235,7 +235,7 @@ function EditApprovalWorkflowPage() {
   }));
 
   if (isLoading) {
-    return <PageSpinner title="Loading approval workflow..." />;
+    return <LoadingSplash />;
   }
 
   if (!workflow) {

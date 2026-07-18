@@ -8,11 +8,11 @@ import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
 import {
+  AuthSplash,
   BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import {
   FormPage,
@@ -184,5 +184,5 @@ function PrincipalApprovalWorkflowNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalApprovalWorkflowNewPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

@@ -8,7 +8,7 @@
  * bf-template-migration: legacy / deadline: 2026-08-01
  */
 import { WorkflowListPage } from '@/workflow-editor';
-import { PageSpinner } from '@brainforgeau/components';
+import { AuthSplash } from '@brainforgeau/components';
 import { PageBody } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
@@ -22,5 +22,5 @@ function WorkflowsListRoute() {
 }
 
 export default withAuthenticationRequired(WorkflowsListRoute, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

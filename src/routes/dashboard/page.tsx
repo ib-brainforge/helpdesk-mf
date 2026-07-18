@@ -6,11 +6,12 @@ import type {
   StatusBreakdownDto,
 } from '@/types';
 import {
+  AuthSplash,
   BaseButton,
   Box,
   DonutChart,
   Icon,
-  PageSpinner,
+  LoadingSplash,
 } from '@brainforgeau/components';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
@@ -116,7 +117,7 @@ function HelpdeskDashboardPage() {
   } = useTicketSummaryReport(startDate, endDate);
 
   if (isLoading) {
-    return <PageSpinner title="Loading dashboard..." />;
+    return <LoadingSplash />;
   }
 
   if (error) {
@@ -233,5 +234,5 @@ function HelpdeskDashboardPage() {
 }
 
 export default withAuthenticationRequired(HelpdeskDashboardPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

@@ -13,10 +13,11 @@ import {
 } from '@/hooks/usePrincipalCategories';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import {
+  AuthSplash,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
+  LoadingSplash,
 } from '@brainforgeau/components';
 import {
   DetailPage,
@@ -91,7 +92,7 @@ function PrincipalCategoryDetailPage() {
   });
 
   if (isLoading || !category) {
-    return <PageSpinner title="Loading category..." />;
+    return <LoadingSplash />;
   }
 
   if (context?.level !== 'admin') {
@@ -183,5 +184,5 @@ function PrincipalCategoryDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalCategoryDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

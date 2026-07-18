@@ -17,7 +17,7 @@ import {
   BaseButton,
   BaseCard,
   Icon,
-  PageSpinner,
+  LoadingSplash,
 } from '@brainforgeau/components';
 import {
   DetailPage,
@@ -51,7 +51,7 @@ function KnowledgeBaseArticlePage() {
   });
 
   if (isLoading || (!article && !error)) {
-    return <PageSpinner title="Loading article..." />;
+    return <LoadingSplash />;
   }
 
   if (error || !article) {

@@ -7,7 +7,7 @@ import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import type { SlaPolicyComplianceDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon, PageSpinner } from '@brainforgeau/components/base';
+import { Icon, LoadingSplash } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
@@ -66,7 +66,7 @@ function SlaCompliancePage() {
     );
   };
 
-  if (isLoading) return <PageSpinner title="Loading SLA report..." />;
+  if (isLoading) return <LoadingSplash />;
 
   if (!compliance) {
     return (

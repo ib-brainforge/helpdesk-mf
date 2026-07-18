@@ -4,7 +4,7 @@ import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import type { TicketByCategoryDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { PageSpinner } from '@brainforgeau/components';
+import { LoadingSplash } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
@@ -91,7 +91,7 @@ function TicketsByCategoryPage() {
     );
   };
 
-  if (isLoading) return <PageSpinner title="Loading report..." />;
+  if (isLoading) return <LoadingSplash />;
 
   return (
     <DashboardPage

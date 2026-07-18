@@ -7,7 +7,7 @@
 
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
-import { BaseInput, BaseTextarea, PageSpinner } from '@brainforgeau/components';
+import { AuthSplash, BaseInput, BaseTextarea } from '@brainforgeau/components';
 import {
   FormPage,
   PendingCrumb,
@@ -104,5 +104,5 @@ function NewPrincipalTicketPage() {
 }
 
 export default withAuthenticationRequired(NewPrincipalTicketPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

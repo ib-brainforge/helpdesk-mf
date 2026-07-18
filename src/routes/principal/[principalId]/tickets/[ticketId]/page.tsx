@@ -20,9 +20,11 @@ import {
 } from '@/hooks/usePrincipalTicket';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import {
+  AuthSplash,
   BaseButton,
   BaseSelect,
   BaseSelectItem,
+  LoadingSplash,
   PageSpinner,
 } from '@brainforgeau/components';
 import {
@@ -120,11 +122,7 @@ function PrincipalTicketDetailPage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex h-32 items-center justify-center">
-        <PageSpinner title="Loading ticket..." />
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   if (error || !ticket) {
@@ -304,5 +302,5 @@ function PrincipalTicketDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalTicketDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

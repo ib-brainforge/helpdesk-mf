@@ -8,10 +8,10 @@ import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
 import {
+  AuthSplash,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import {
   FormPage,
@@ -152,5 +152,5 @@ function PrincipalCategoryNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalCategoryNewPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

@@ -10,7 +10,7 @@
 
 import { PrincipalSidenav } from '@/components/principal/PrincipalSidenav';
 import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
-import { ErrorBoundary, PageSpinner } from '@brainforgeau/components';
+import { ErrorBoundary, LoadingSplash } from '@brainforgeau/components';
 import { useAuth } from '@brainforgeau/security';
 import { Navigate, Outlet, useParams } from '@modern-js/runtime/router';
 import { useMemo } from 'react';
@@ -42,11 +42,7 @@ function PrincipalLayoutContent() {
   );
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <PageSpinner title="Validating access..." />
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   if (isAuthenticated && !level) {

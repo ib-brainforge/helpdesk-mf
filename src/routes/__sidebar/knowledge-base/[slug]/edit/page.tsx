@@ -26,11 +26,12 @@ import {
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
+  AuthSplash,
   BaseButton,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
+  LoadingSplash,
 } from '@brainforgeau/components';
 import {
   EmptyState,
@@ -166,11 +167,7 @@ function EditKnowledgeBaseArticlePage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex h-32 items-center justify-center">
-        <PageSpinner title="Loading article..." />
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   if (error || !article) {
@@ -310,5 +307,5 @@ function EditKnowledgeBaseArticlePage() {
 }
 
 export default withAuthenticationRequired(EditKnowledgeBaseArticlePage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

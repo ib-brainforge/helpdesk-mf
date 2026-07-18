@@ -6,7 +6,7 @@
 
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalSlaPolicy } from '@/hooks/usePrincipalSlaPolicies';
-import { BaseCheckbox, BaseInput, PageSpinner } from '@brainforgeau/components';
+import { AuthSplash, BaseCheckbox, BaseInput } from '@brainforgeau/components';
 import {
   FormPage,
   PendingCrumb,
@@ -131,5 +131,5 @@ function PrincipalSlaPolicyNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSlaPolicyNewPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });

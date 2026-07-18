@@ -14,11 +14,12 @@ import {
 } from '@/hooks/usePrincipalApprovalWorkflows';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import {
+  AuthSplash,
   BaseCheckbox,
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
+  LoadingSplash,
 } from '@brainforgeau/components';
 import {
   DetailPage,
@@ -106,7 +107,7 @@ function PrincipalApprovalWorkflowDetailPage() {
   });
 
   if (isLoading || !workflow) {
-    return <PageSpinner title="Loading approval workflow..." />;
+    return <LoadingSplash />;
   }
 
   if (context?.level !== 'admin') {
@@ -244,5 +245,5 @@ function PrincipalApprovalWorkflowDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalApprovalWorkflowDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AuthSplash />,
 });
