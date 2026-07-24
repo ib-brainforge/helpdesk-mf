@@ -10,6 +10,7 @@
  * Tab state is URL-synced via `?tab=` using useTabSearchParam + useDetailTabState.
  */
 
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { CommentThread, ReplyEditor, useComments } from '@/components/comments';
 import { StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -120,11 +121,7 @@ function PrincipalTicketDetailPage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex h-32 items-center justify-center">
-        <PageSpinner title="Loading ticket..." />
-      </div>
-    );
+    return <AppLoadingSplash />;
   }
 
   if (error || !ticket) {
@@ -304,5 +301,5 @@ function PrincipalTicketDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalTicketDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

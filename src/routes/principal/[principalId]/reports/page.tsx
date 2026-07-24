@@ -6,6 +6,7 @@
  * slot (colocated controls per design doc).
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { SummaryCard } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { usePrincipalTicketVolume } from '@/hooks/usePrincipalReports';
@@ -200,5 +201,5 @@ function PrincipalReportsPage() {
 }
 
 export default withAuthenticationRequired(PrincipalReportsPage, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });

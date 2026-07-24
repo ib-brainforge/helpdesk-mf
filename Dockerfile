@@ -31,8 +31,15 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 # Copy full source code (after dependencies are installed for better caching)
 COPY . .
 
-# Build the app for production deployment with optimizations
-# Domain-agnostic: empty defaults, values injected at runtime via generate-config.sh
+# Build the app for production deployment with optimizations.
+# Domain-agnostic: empty defaults, values injected at runtime via generate-config.sh.
+# The API_BASE_URL="" family of pins below is deliberate: it stops any
+# build-time value being baked into __HELPDESK_CONFIG__ and leaking across
+# environments. The image must get config at runtime (deployed: the shell's
+# runtime config; local dev: .env). The reader in src/state/config turns a
+# missing value into a loud error, never a silent ''. The runtime-config
+# contract's named keys (HELPDESK_API_BASE_URL etc.) are pinned for the same
+# reason.
 ENV NODE_ENV=production \
     OIDC_AUTHORITY="" \
     OIDC_CLIENT_ID="" \
@@ -42,6 +49,11 @@ ENV NODE_ENV=production \
     NOTIFICATION_API_URL="" \
     MFS_PACKAGES_URL="" \
     IDENTITY_BASE_URL="" \
+    HELPDESK_API_BASE_URL="" \
+    NOTIFICATION_API_BASE_URL="" \
+    IDENTITY_API_BASE_URL="" \
+    TELEMETRY_API_BASE_URL="" \
+    NOTIFICATION_SIGNALR_HUB_URL="" \
     STANDALONE="true" \
     BASE_PATH="/helpdesk" \
     OBSERVABILITY_ENABLED="false" \
@@ -69,6 +81,10 @@ WORKDIR /app
 # Copy nginx static files
 COPY --from=app-builder /build/.output/html/main /usr/share/nginx/html
 COPY --from=app-builder /build/.output/static /usr/share/nginx/html/static
+
+# Module Federation manifest for the app shell — served at /helpdesk/mf-manifest.json
+COPY --from=app-builder /build/.output/mf-manifest.json /usr/share/nginx/html/mf-manifest.json
+COPY --from=app-builder /build/.output/mf-stats.json /usr/share/nginx/html/mf-stats.json
 
 # Copy Node.js BFF server
 COPY --from=app-builder /build/.output ./bff

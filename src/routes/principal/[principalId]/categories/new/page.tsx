@@ -4,6 +4,7 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
@@ -11,7 +12,6 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import {
   FormPage,
@@ -152,5 +152,5 @@ function PrincipalCategoryNewPage() {
 }
 
 export default withAuthenticationRequired(PrincipalCategoryNewPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

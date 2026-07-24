@@ -1,3 +1,4 @@
+import { AppLoadingSplash } from '@/components/AppSplash';
 // Template: DashboardPage — summary cards + table in children (no chart section).
 // DashboardPage is chosen over ListPage because summary KPI cards + table both
 // appear on the page; ListPage is table-primary only.
@@ -7,7 +8,7 @@ import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import type { SlaPolicyComplianceDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Icon, PageSpinner } from '@brainforgeau/components/base';
+import { Icon } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
@@ -66,7 +67,7 @@ function SlaCompliancePage() {
     );
   };
 
-  if (isLoading) return <PageSpinner title="Loading SLA report..." />;
+  if (isLoading) return <AppLoadingSplash />;
 
   if (!compliance) {
     return (

@@ -1,10 +1,11 @@
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useTicketsByPriorityReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import type { TicketByPriorityDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
-import { Box, Icon, PageSpinner } from '@brainforgeau/components/base';
+import { Box, Icon } from '@brainforgeau/components/base';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
@@ -95,7 +96,7 @@ function TicketsByPriorityPage() {
     );
   };
 
-  if (isLoading) return <PageSpinner title="Loading report..." />;
+  if (isLoading) return <AppLoadingSplash />;
 
   return (
     <DashboardPage

@@ -35,26 +35,28 @@
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.4.506-develop.a1ef13f",
+    "@brainforgeau/components": "0.5.569-develop.0c3e48c",
     "@brainforgeau/helpdesk-client": "0.1.246-develop.35d969f",
     "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
-    "@brainforgeau/observability": "0.4.61-develop.1e1460d",
+    "@brainforgeau/observability": "0.5.84-develop.a796211",
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",
-    "@brainforgeau/security": "0.4.312-develop.ef83c60",
-    "@brainforgeau/theme": "0.2.64-develop.3645b80",
+    "@brainforgeau/security": "0.5.346-develop.b922bff",
+    "@brainforgeau/theme": "0.5.85-develop.dc1f162",
     "@brainforgeau/workflow-ui": "0.1.3-develop.2adced5",
     "@fontsource/inter": "^5.2.6",
     "@heroicons/react": "2.2.0",
     "@heroui/react": "^3.0.4",
-    "@heroui/styles": "^3.0.4",
+    "@heroui/styles": "3.0.4",
     "@internationalized/date": "^3.12.1",
     "@microsoft/signalr": "^8.0.0",
     "@modern-js/plugin-bff": "^2.70.8",
     "@modern-js/runtime": "^2.70.8",
+    "@module-federation/bridge-react": "0.21.6",
     "@module-federation/enhanced": "^0.21.6",
     "@module-federation/modern-js": "^0.21.6",
+    "@tanstack/query-core": "5.100.9",
     "@tanstack/react-form": "^1.29.3",
-    "@tanstack/react-query": "^5.100.9",
+    "@tanstack/react-query": "5.100.9",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/zod-form-adapter": "^0.42.1",
     "@tiptap/extension-code-block": "^3.19.0",
@@ -71,6 +73,7 @@
     "@tiptap/react": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
     "@xyflow/react": "^12.10.0",
+    "axios": "1.13.5",
     "dompurify": "^3.3.1",
     "exceljs": "^4.4.0",
     "framer-motion": "12.23.12",
@@ -88,6 +91,7 @@
     "@modern-js/app-tools": "^2.70.8",
     "@modern-js/tsconfig": "^2.70.8",
     "@playwright/test": "^1.49.0",
+    "@rspack/core": "1.7.11",
     "@tailwindcss/postcss": "^4.3.0",
     "@tanstack/eslint-plugin-query": "^5.90.1",
     "@types/dompurify": "^3.2.0",
@@ -105,12 +109,13 @@
     "prettier-plugin-tailwindcss": "^0.6.14",
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.11.1",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "4.3.0",
     "typescript": "~5.7.3"
   },
   "pnpm": {
     "overrides": {
-      "axios": "1.13.5"
+      "axios": "1.13.5",
+      "@swc/helpers": "0.5.21"
     }
   },
   "//pendingDevDependencies": {

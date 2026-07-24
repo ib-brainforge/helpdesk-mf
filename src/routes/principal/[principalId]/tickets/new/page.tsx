@@ -5,9 +5,10 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
-import { BaseInput, BaseTextarea, PageSpinner } from '@brainforgeau/components';
+import { BaseInput, BaseTextarea } from '@brainforgeau/components';
 import {
   FormPage,
   PendingCrumb,
@@ -104,5 +105,5 @@ function NewPrincipalTicketPage() {
 }
 
 export default withAuthenticationRequired(NewPrincipalTicketPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

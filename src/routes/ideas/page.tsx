@@ -6,6 +6,7 @@
  * REVIEW: Add voting + commenting in a future wave when the backend endpoints exist.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import type { IdeaListItem } from '@/components/tickets/hooks/useTickets';
 import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
 import { PageSpinner } from '@brainforgeau/components';
@@ -121,5 +122,5 @@ function IdeasForumPage() {
 }
 
 export default withAuthenticationRequired(IdeasForumPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

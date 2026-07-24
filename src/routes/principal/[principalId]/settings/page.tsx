@@ -7,8 +7,8 @@
  * REVIEW: Replace stub cards with real API data when principal context lands in IAppContext.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
-import { PageSpinner } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import {
   PageBody,
@@ -148,5 +148,5 @@ function PrincipalSettingsPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSettingsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

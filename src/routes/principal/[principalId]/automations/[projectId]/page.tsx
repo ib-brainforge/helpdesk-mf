@@ -9,7 +9,7 @@
  * bf-template-migration: legacy / deadline: 2026-08-01
  */
 import { RuleGraphsListPage } from '@/automations-editor';
-import { PageSpinner } from '@brainforgeau/components';
+import { AppAuthSplash } from '@/components/AppSplash';
 import { PageBody } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
@@ -23,5 +23,5 @@ function PrincipalAutomationRuleGraphsRoute() {
 }
 
 export default withAuthenticationRequired(PrincipalAutomationRuleGraphsRoute, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

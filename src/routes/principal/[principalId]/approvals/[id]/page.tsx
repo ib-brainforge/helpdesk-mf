@@ -6,6 +6,7 @@
  * Steps display is read-only within the form section — step editor is future work.
  */
 
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -18,7 +19,6 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import {
   DetailPage,
@@ -106,7 +106,7 @@ function PrincipalApprovalWorkflowDetailPage() {
   });
 
   if (isLoading || !workflow) {
-    return <PageSpinner title="Loading approval workflow..." />;
+    return <AppLoadingSplash />;
   }
 
   if (context?.level !== 'admin') {
@@ -244,5 +244,5 @@ function PrincipalApprovalWorkflowDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalApprovalWorkflowDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

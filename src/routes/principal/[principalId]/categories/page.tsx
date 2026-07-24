@@ -5,6 +5,7 @@
  * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -192,5 +193,5 @@ function PrincipalCategoriesPage() {
 }
 
 export default withAuthenticationRequired(PrincipalCategoriesPage, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });

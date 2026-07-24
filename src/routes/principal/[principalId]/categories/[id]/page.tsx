@@ -5,6 +5,7 @@
  * Single "details" tab is form-bearing; formActions wired to that tab only.
  */
 
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -16,7 +17,6 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import {
   DetailPage,
@@ -91,7 +91,7 @@ function PrincipalCategoryDetailPage() {
   });
 
   if (isLoading || !category) {
-    return <PageSpinner title="Loading category..." />;
+    return <AppLoadingSplash />;
   }
 
   if (context?.level !== 'admin') {
@@ -183,5 +183,5 @@ function PrincipalCategoryDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalCategoryDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

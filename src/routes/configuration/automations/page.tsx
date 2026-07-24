@@ -8,7 +8,7 @@
  * bf-template-migration: legacy / deadline: 2026-08-01
  */
 import { AutomationProjectsListPage } from '@/automations-editor';
-import { PageSpinner } from '@brainforgeau/components';
+import { AppAuthSplash } from '@/components/AppSplash';
 import { PageBody } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
@@ -22,5 +22,5 @@ function AutomationsListRoute() {
 }
 
 export default withAuthenticationRequired(AutomationsListRoute, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

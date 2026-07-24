@@ -8,6 +8,7 @@
  * separately after ticket creation by the existing mutation logic).
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
 import { TagInput } from '@/components/tags/TagInput';
@@ -32,7 +33,6 @@ import {
   BaseSelectItem,
   BaseTextarea,
   Icon,
-  PageSpinner,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
@@ -405,5 +405,5 @@ function NewTicketPage() {
 }
 
 export default withAuthenticationRequired(NewTicketPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

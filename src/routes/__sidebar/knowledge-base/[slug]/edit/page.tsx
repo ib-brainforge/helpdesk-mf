@@ -16,6 +16,7 @@
  * very next tick and clobber every select change before it registers as dirty.
  */
 
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import {
   useArchiveKnowledgeBaseArticle,
   useKnowledgeBaseArticle,
@@ -30,7 +31,6 @@ import {
   BaseInput,
   BaseSelect,
   BaseSelectItem,
-  PageSpinner,
 } from '@brainforgeau/components';
 import {
   EmptyState,
@@ -166,11 +166,7 @@ function EditKnowledgeBaseArticlePage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex h-32 items-center justify-center">
-        <PageSpinner title="Loading article..." />
-      </div>
-    );
+    return <AppLoadingSplash />;
   }
 
   if (error || !article) {
@@ -310,5 +306,5 @@ function EditKnowledgeBaseArticlePage() {
 }
 
 export default withAuthenticationRequired(EditKnowledgeBaseArticlePage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

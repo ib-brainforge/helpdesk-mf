@@ -5,6 +5,7 @@
  * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useDeletePrincipalSlaPolicy,
@@ -184,5 +185,5 @@ function PrincipalSlaPoliciesPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSlaPoliciesPage, {
-  OnRedirecting: () => null,
+  OnRedirecting: () => <AppAuthSplash />,
 });

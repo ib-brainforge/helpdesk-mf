@@ -1,6 +1,27 @@
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
+// css-base-split: helpdesk-mf's single, permanent base stylesheet —
+// precompiled Tailwind preflight + @brainforgeau/theme tokens (`:root`) +
+// HeroUI vars + body/portal/toast/dropdown/scrollbar rules (see
+// @brainforgeau/theme README "Consumer usage"). UNCONDITIONAL import (not
+// gated on `__HELPDESK_STANDALONE__`/`__BF_SHELL_HOST__`) because this same
+// layout.tsx renders BOTH helpdesk-mf's standalone entry AND its federated
+// `export-app` — both import `@modern-js/runtime/registry/main`, the same
+// route tree rooted at this layout. Standalone, this is exactly what
+// renders base+utilities together, byte-identical to the pre-split
+// combined sheet. Embedded under the shell, the shell's own
+// `useRemoteStylesheets` permanently disables this link once it identifies
+// helpdesk's `base.<hash>.css` chunk (see modern.config.ts's `base`
+// splitChunks cacheGroup, which routes this import into that dedicated,
+// positively-matchable chunk) — no `isEmbedded`/env branch needed here,
+// suppression happens entirely on the shell side. Ordered BEFORE
+// './index.css' so, in the rare case a rule in base and a rule in
+// helpdesk's own utilities/component CSS ever target the same selector,
+// helpdesk's own sheet (loaded after) wins the cascade — matching "base is
+// the floor, app CSS can layer on top" (mirrors hr-mf's own
+// routes/layout.tsx, the reference implementation of this import order).
+import '@brainforgeau/theme/base.css';
 import './index.css';
 
 import '@fontsource/inter/400.css';
@@ -50,6 +71,7 @@ import {
 } from '@brainforgeau/components/page';
 import {
   type GuardedItem,
+  LicenseGuard,
   useAuth,
   usePermissions,
   useWhitelabel,
@@ -279,6 +301,36 @@ export default function Layout() {
 
   const appConfig = getAppConfig();
 
+  // pilot(shell-host): when helpdesk-mf's export-app is mounted inside the
+  // app shell, do NOT render helpdesk-mf's own TopNavbar — the shell owns
+  // the ONE persistent TopNavbar instance across every route (shell
+  // dashboard AND every embedded remote), mounted OUTSIDE this remote's
+  // tree so shell <-> /helpdesk navigation never remounts it (see app's
+  // src/routes/layout.tsx). helpdesk-mf's SideNav and all other chrome
+  // below is unaffected. Layout here is plain flexbox (no fixed/sticky top
+  // offset reserved for the navbar's height), so skipping this element
+  // simply lets the SideNav/Outlet below reflow to fill the space — no
+  // extra height/offset compensation needed, unlike a fixed-position
+  // navbar would require.
+  const isEmbedded =
+    typeof window !== 'undefined' && (window as any).__BF_SHELL_HOST__ === true;
+
+  // pilot(shell-host): when embedded, the shell's TopNavbar owns the
+  // sidenav expand/collapse button (skipping this remote's TopNavbar block
+  // below took its `onExtend` wiring with it). The shell can't reach into
+  // this remote's SideNav state, so its button broadcasts the
+  // `bf:shell-nav-extend` window CustomEvent (see app's
+  // src/routes/layout.tsx) and this embedded-only listener bridges it to
+  // the SAME handleNavExtend the standalone TopNavbar's `onExtend` prop
+  // calls. Standalone (isEmbedded false) registers nothing — behavior
+  // unchanged.
+  useEffect(() => {
+    if (!isEmbedded) return undefined;
+    window.addEventListener('bf:shell-nav-extend', handleNavExtend);
+    return () =>
+      window.removeEventListener('bf:shell-nav-extend', handleNavExtend);
+  }, [isEmbedded, handleNavExtend]);
+
   const { isAuthenticated } = useAuth();
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
@@ -324,23 +376,31 @@ export default function Layout() {
           )}
         >
           <PageTracker category="helpdesk" />
-          <ErrorBoundary>
-            <Suspense fallback={<NavbarSkeleton />}>
-              {isAuthenticated && (
-                <TopNavbar
-                  data-testid={TEST_IDS.navbar.top}
-                  config={{
-                    identityBaseUrl: appConfig?.identityBaseUrl || '',
-                    notificationHubUrl: appConfig?.api?.signalRHubUrl || '',
-                    notificationApiUrl: appConfig?.api?.notificationUrl || '',
-                    app: 'helpdesk',
-                  }}
-                  onExtend={handleNavExtend}
-                  logoComponent={<Logo hideOnMobile />}
-                />
-              )}
-            </Suspense>
-          </ErrorBoundary>
+          {!isEmbedded && (
+            <ErrorBoundary>
+              <Suspense fallback={<NavbarSkeleton />}>
+                {isAuthenticated && (
+                  <TopNavbar
+                    data-testid={TEST_IDS.navbar.top}
+                    config={{
+                      // Named per-service keys, resolved `rc ?? baked` in
+                      // src/state/config (which console.errors each by name
+                      // when missing). `notificationHubUrl` is the NOTIFICATION
+                      // bell hub: it used to be handed `api.signalRHubUrl`,
+                      // which was helpdesk-backend's OWN ticket hub — the bell
+                      // was subscribing to the wrong service entirely.
+                      identityBaseUrl: appConfig.identityApiBaseUrl,
+                      notificationHubUrl: appConfig.notificationSignalRHubUrl,
+                      notificationApiUrl: appConfig.notificationApiBaseUrl,
+                      app: 'helpdesk',
+                    }}
+                    onExtend={handleNavExtend}
+                    logoComponent={<Logo hideOnMobile />}
+                  />
+                )}
+              </Suspense>
+            </ErrorBoundary>
+          )}
           <div className="flex flex-1">
             {isAuthenticated && !isPrincipalRoute && (
               <SideNav
@@ -376,12 +436,16 @@ export default function Layout() {
             )}
             {isPrincipalRoute ? (
               <ErrorBoundary>
-                <Outlet />
+                <LicenseGuard appId="helpdesk">
+                  <Outlet />
+                </LicenseGuard>
               </ErrorBoundary>
             ) : (
               <div className="flex flex-1 min-w-0">
                 <ErrorBoundary>
-                  <Outlet />
+                  <LicenseGuard appId="helpdesk">
+                    <Outlet />
+                  </LicenseGuard>
                 </ErrorBoundary>
               </div>
             )}

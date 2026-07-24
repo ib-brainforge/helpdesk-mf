@@ -1,5 +1,5 @@
+import { AppAuthSplash } from '@/components/AppSplash';
 import { TEST_IDS } from '@/constants/testIds';
-import { PageSpinner } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
@@ -34,5 +34,5 @@ function ConfigurationPage() {
 }
 
 export default withAuthenticationRequired(ConfigurationPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

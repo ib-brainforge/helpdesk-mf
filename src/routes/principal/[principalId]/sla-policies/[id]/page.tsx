@@ -5,13 +5,14 @@
  * Single "details" tab is form-bearing; formActions wired to that tab only.
  */
 
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   usePrincipalSlaPolicy,
   useUpdatePrincipalSlaPolicy,
 } from '@/hooks/usePrincipalSlaPolicies';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { BaseCheckbox, BaseInput, PageSpinner } from '@brainforgeau/components';
+import { BaseCheckbox, BaseInput } from '@brainforgeau/components';
 import {
   DetailPage,
   PendingCrumb,
@@ -82,7 +83,7 @@ function PrincipalSlaPolicyDetailPage() {
   });
 
   if (isLoading || !policy) {
-    return <PageSpinner title="Loading SLA policy..." />;
+    return <AppLoadingSplash />;
   }
 
   if (context?.level !== 'admin') {
@@ -164,5 +165,5 @@ function PrincipalSlaPolicyDetailPage() {
 }
 
 export default withAuthenticationRequired(PrincipalSlaPolicyDetailPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });
