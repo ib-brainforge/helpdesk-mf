@@ -100,11 +100,10 @@ COPY generate-config.sh /generate-config.sh
 RUN chmod +x /generate-config.sh
 
 # Create entrypoint script to run generate-config.sh, nginx template processing, and BFF
-# Generates random session secret, generates runtime config, and starts services
+# Generates runtime config and starts services
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'export BF_SESSION_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d "/+=" | head -c 32)' >> /entrypoint.sh && \
     echo '/generate-config.sh' >> /entrypoint.sh && \
-    echo 'envsubst "\$BF_SESSION_SECRET" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /entrypoint.sh && \
+    echo 'cp /etc/nginx/templates/default.conf.template /etc/nginx/conf.d/default.conf' >> /entrypoint.sh && \
     echo 'cd /app/bff && node index.cjs &' >> /entrypoint.sh && \
     echo 'nginx -g "daemon off;"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
