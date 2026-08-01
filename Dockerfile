@@ -40,6 +40,15 @@ COPY . .
 # missing value into a loud error, never a silent ''. The runtime-config
 # contract's named keys (HELPDESK_API_BASE_URL etc.) are pinned for the same
 # reason.
+# load-bearing: OIDC_REDIRECT_URI and BASE_PATH below shadow the committed
+# .env at build time — this ENV block is set BEFORE `pnpm run deploy` (which
+# runs `modern build`) at the bottom of this stage, and Modern.js's loadEnv
+# does not override an already-set process.env key. Do not remove these two
+# even though .env looks like it duplicates them: BASE_PATH in particular has
+# no runtime escape hatch (it's baked into the bundle, not read from
+# window.__RUNTIME_CONFIG__ at container start), so this pin is the ONLY
+# thing that makes production build with the right values regardless of what
+# .env's local-dev defaults say.
 ENV NODE_ENV=production \
     OIDC_AUTHORITY="" \
     OIDC_CLIENT_ID="" \
