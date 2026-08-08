@@ -2,6 +2,7 @@ import { requireIdentityApiBaseUrl } from '@/state/config';
 import { getSessionId } from '@brainforgeau/observability';
 import {
   createCrossAppAxios,
+  parseAppPermissions,
   authorizedAxios as sharedAuthorizedAxios,
 } from '@brainforgeau/security';
 import type { AxiosInstance } from 'axios';
@@ -147,32 +148,19 @@ function getSharedContextTokenApp(): string | null {
   try {
     const [, payload] = token.split('.');
     if (payload) {
-      // base64url → base64, re-pad, decode.
+      // base64url → base64, re-pad, decode — gets us to the raw claims
+      // object, which is what parseAppPermissions expects (it reads
+      // `claims.app_permissions` itself, v1 array/string or v2 compact).
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
       const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-      const claims = JSON.parse(atob(padded)) as {
-        app?: unknown;
-        app_permissions?: unknown;
-      };
-      if (typeof claims.app === 'string' && claims.app) {
-        memoizedTokenApp = claims.app;
-      } else {
-        // Fallback: first app_permissions entry's app (claim may arrive as
-        // an array or a JSON-encoded string depending on issuer version).
-        let perms = claims.app_permissions;
-        if (typeof perms === 'string') {
-          try {
-            perms = JSON.parse(perms);
-          } catch {
-            perms = undefined;
-          }
-        }
-        const first = Array.isArray(perms)
-          ? (perms[0] as { app?: unknown } | undefined)
-          : undefined;
-        if (first && typeof first.app === 'string' && first.app) {
-          memoizedTokenApp = first.app;
-        }
+      const claims = JSON.parse(atob(padded)) as Record<string, unknown>;
+      // There is no top-level `app` claim on v1 or v2 tokens — the app id
+      // only ever lives inside app_permissions (v1 `app`, v2 compact `a`).
+      // parseAppPermissions handles both shapes (array or JSON-string claim)
+      // and normalizes v2's `a` to `app` on the returned AppPermission.
+      const [first] = parseAppPermissions(claims);
+      if (first?.app) {
+        memoizedTokenApp = first.app;
       }
     }
   } catch {

@@ -3,8 +3,11 @@ FROM ghcr.io/brainforgeau/node-22-alpine AS app-builder
 
 WORKDIR /build
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally — PINNED. pnpm@11.20.0 (2026-08-03) verifies its own
+# @pnpm/exe binary against pnpm-lock.yaml (via the packageManager field) and
+# fails the frozen install on lockfiles that predate the feature. Unpinned
+# "latest" broke every build the day it shipped; bump deliberately.
+RUN npm install -g pnpm@11.19.0
 
 # Set up npm authentication for GitHub Packages
 ARG NPM_TOKEN

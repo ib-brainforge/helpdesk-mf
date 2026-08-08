@@ -28,8 +28,8 @@ importers:
         specifier: 0.4.114-develop.374091a
         version: 0.4.114-develop.374091a(hh7ufxie4xk7z65qdevmlmanly)
       '@brainforgeau/security':
-        specifier: 0.5.368-develop.75b12db
-        version: 0.5.368-develop.75b12db(@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
+        specifier: 0.5.391-develop.8dfa0a5
+        version: 0.5.391-develop.8dfa0a5(@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
         specifier: 0.5.85-develop.dc1f162
         version: 0.5.85-develop.dc1f162(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
@@ -960,17 +960,14 @@ packages:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@brainforgeau/security@0.5.368-develop.75b12db':
-    resolution: {integrity: sha512-h5MCvMibXvjwYlBoxljRZesb7HpDt0GrFPMrI3HuUPs3yF5c9Q/Fr6aBL8U79QIyDedgq3rOrTMf/6kVKtVrHg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.368-develop.75b12db/871b2a0a738a490f79abdc5a14aa1d27b82267e7}
+  '@brainforgeau/security@0.5.391-develop.8dfa0a5':
+    resolution: {integrity: sha512-LEgECC8Q5d8wX1dMN6fJTCMgDmw5upZxCy2CuMcBxMlzNGtUZfFjJLxibzoMkwY/obLy793UJr4XJ7JbcCI2Fg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.391-develop.8dfa0a5/0707f76115a346f9535134af78d53103193d5802}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@brainforgeau/observability': '*'
       react: ^19.2.5
       react-dom: ^19.2.5
       react-oidc-context: 3.3.0
-    peerDependenciesMeta:
-      '@brainforgeau/observability':
-        optional: true
 
   '@brainforgeau/theme@0.5.85-develop.dc1f162':
     resolution: {integrity: sha512-QtjIJE+ZrUTfqxVSDwmmCabX9NfBFJv4eBp1Rd5QEDanBiyGv9VKqz6G77Nvf1wsTsD5AAWyugpaXSc0m3U2fw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/theme/0.5.85-develop.dc1f162/e2e725f063b79cad436f162dfb5d7acc0037bc53}
@@ -8485,15 +8482,14 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@brainforgeau/security@0.5.368-develop.75b12db(@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/security@0.5.391-develop.8dfa0a5(@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
+      '@brainforgeau/observability': 0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       axios: 1.13.5
       jwt-decode: 4.0.0
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       react-oidc-context: 3.3.0(oidc-client-ts@3.4.1)(react@19.2.6)
-    optionalDependencies:
-      '@brainforgeau/observability': 0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     transitivePeerDependencies:
       - debug
 
