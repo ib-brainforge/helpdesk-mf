@@ -28,6 +28,18 @@ export interface KnowledgeBaseCategoryDto {
   children?: KnowledgeBaseCategoryDto[];
   articleCount: number;
   order: number;
+  /**
+   * Record placement/audit metadata (DTO tenancy/scope metadata initiative).
+   * Not yet populated from `flattenCategoryTree` -- the generated
+   * `HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto` (backing
+   * `v1KbCategoriesGet`, the only source of the tree this type is flattened
+   * from) does not expose `meta` yet. helpdesk-backend PR #169
+   * (`feat/kb-category-tree-meta`) adds it but is still open/unmerged as of
+   * this change. IS populated from `useDuplicateKbCategory`'s mapping, since
+   * that endpoint (`v1KbCategoriesIdDuplicatePost`) returns the flat
+   * `KbCategoryDto`, which has always carried `meta`.
+   */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface KnowledgeBaseArticleListDto {

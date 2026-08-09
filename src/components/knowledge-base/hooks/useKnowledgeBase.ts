@@ -71,6 +71,13 @@ function flattenCategoryTree(
       parentId,
       articleCount: node.articleCount ?? 0,
       order: node.sortOrder ?? 0,
+      // `meta` intentionally omitted here, not dropped: `node` (the generated
+      // HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto backing
+      // v1KbCategoriesGet) has no `meta` property to read yet -- see
+      // KnowledgeBaseCategoryDto's own doc comment (@/types/knowledge-base)
+      // for the pending helpdesk-backend PR. Once that ships and this client
+      // regenerates, add `meta: node.meta` here so the scope strip becomes
+      // wireable on this screen the same way it already is for Sections.
     };
     const children = node.children
       ? flattenCategoryTree(node.children, flat.id)
@@ -540,6 +547,9 @@ export const useDuplicateKbCategory = () => {
         // count from v1KbCategoriesGet.
         articleCount: 0,
         order: cat.sortOrder ?? 0,
+        // Unlike flattenCategoryTree above, KbCategoryDto (this endpoint's
+        // response) has always carried `meta` -- carry it through.
+        meta: cat.meta,
       };
     },
     onSuccess: () => {

@@ -2,7 +2,12 @@ import { ScopePermissions } from '@/constants/permissions';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
-import { toScopeMeta, toScopePatch, toWireMeta } from '@/utils/scopeMeta';
+import {
+  toHelpdeskScopePatch,
+  toScopeMeta,
+  toScopePatch,
+  toWireMeta,
+} from '@/utils/scopeMeta';
 import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import type { ScopeStripPatch, SelectOption } from '@brainforgeau/components';
 import type { RecordMeta } from '@brainforgeau/components/scope-badge';
@@ -135,11 +140,7 @@ export function useEntityScopeStrip<TEntity>(
 
   const handleScopeSave = async (patch: ScopeStripPatch) => {
     const scopePatchWire = toScopePatch(patch);
-    await patchScope(
-      // See `toHelpdeskScopePatch`'s own doc comment (@/utils/scopeMeta) for
-      // why this cast is needed for helpdesk-backend specifically.
-      scopePatchWire as unknown as ServicesCoreAbstractionsScopePatch,
-    );
+    await patchScope(toHelpdeskScopePatch(scopePatchWire));
 
     const destinationOrganisationId =
       'organisationId' in scopePatchWire

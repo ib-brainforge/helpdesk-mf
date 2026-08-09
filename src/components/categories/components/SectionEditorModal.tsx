@@ -1,3 +1,4 @@
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateSectionCommand,
@@ -11,9 +12,10 @@ import {
   BaseModalContent,
   BaseModalHeader,
   BaseToggle,
+  ContextScopeStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
+import { CategoriesApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -40,6 +42,30 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const isEdit = Boolean(section);
+
+  // DTO tenancy/scope metadata initiative -- only meaningful once the
+  // section exists (has an id/meta); the create form has nothing to place
+  // yet (gated on `isEdit` below).
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+    mode: 'modal',
+    entityLabel: 'Section',
+    meta: section?.meta,
+    patchScope: async patch => {
+      if (!section) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<Section> Sections` -- `Domain.Categories.Aggregates.Section`,
+      // also the CLR type name `HelpdeskResourceGroupMapping` keys on).
+      await client.v1ScopeEntityTypeIdPatch('Section', section.id, patch);
+    },
+    onSaved: () => {
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
+      // A section move also affects the categories query's embedded
+      // sectionName join -- invalidate both, matching the mutation's own
+      // onSuccess below.
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (data: SectionFormData) => {
@@ -124,6 +150,11 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
                 />
               )}
             </form.Field>
+
+            {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
+                meaningful once the record exists (has an id/meta); the create
+                form has nothing to place yet. */}
+            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
 
             <form.Field name="sortOrder">
               {field => (

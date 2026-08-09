@@ -37,35 +37,29 @@ export function toWireMeta(
 }
 
 /**
- * Builds the scope-PATCH wire body helpdesk-backend's `OptionalJsonConverter<T>`
- * actually (de)serializes: a flat, RFC-7386-style merge patch (key absent =
- * unchanged, key present with `null` = cleared, key present with a value =
- * set) -- exactly `ScopePatchWire`'s own shape (`Services.Core.Abstractions.
- * ScopePatch` on the backend, `dotnet-core/Services.Core.Abstractions/
- * Optional.cs`).
+ * Bridges `@brainforgeau/components`'s `ScopePatchWire` onto the generated
+ * `ServicesCoreAbstractionsScopePatch` -- the flat, RFC-7386-style merge
+ * patch (key absent = unchanged, key present with `null` = cleared, key
+ * present with a value = set) helpdesk-backend's `OptionalJsonConverter<T>`
+ * actually (de)serializes.
  *
- * REVIEW: the cast to `ServicesCoreAbstractionsScopePatch` is required
- * because helpdesk-backend does NOT register `OptionalDataContractResolver`
- * (`Services.Core.OpenApi`) the way asset-backend/hr-backend do (verified:
- * neither appears in `Helpdesk.Api/Configuration/DependencyInjection.cs`,
- * unlike `AssetManagement.Api/Configuration/DependencyInjection.cs`). Without
- * it, Swashbuckle reflects over `Optional<T>`'s own CLR members and emits an
- * object schema (`{ isSet, value }`) instead of the flat wire format its
- * `[JsonConverter(typeof(OptionalJsonConverterFactory))]` actually produces
- * -- so the GENERATED type for this request body is provably wrong. Sending
- * the generated `{ isSet, value }` shape verbatim 400s at runtime:
- * `OptionalJsonConverter<T>.Read` only ever sees a raw value or an explicit
- * JSON `null`, never an object. Sending the flat shape (this function's
- * output) is what the endpoint genuinely expects; the cast only satisfies
- * the (currently inaccurate) generated type. Fix belongs in helpdesk-backend
- * (register `OptionalDataContractResolver` the same way asset-backend's/
- * hr-backend's `DependencyInjection.cs` do) -- once that ships, this cast
- * becomes unnecessary and the shapes already match structurally.
+ * No cast needed as of helpdesk-backend merge `53170c91` ("register the
+ * Optional OpenAPI filters"), which registers the same `OptionalDataContractResolver`
+ * (`Services.Core.OpenApi`) asset-backend/hr-backend already had -- Swashbuckle
+ * now reflects through `Optional<T>` to the flat wire shape instead of
+ * emitting `Optional<T>`'s own CLR members (`{ isSet, value }`), so the
+ * generated `ServicesCoreAbstractionsScopePatch` already matches
+ * `ScopePatchWire` structurally (verified: both are `{ organisationId?:
+ * string | null; divisionId?: string | null; visibility?: 'Default' |
+ * 'Tenant' | 'Organisation' | 'Division'; userId?: string | null }`, modulo
+ * the generated type's extra optional `tenantId`). Kept as a single named
+ * seam rather than inlining the assignment at each call site so there's one
+ * place to fix if a future backend field reintroduces a mismatch.
  */
 export function toHelpdeskScopePatch(
   patch: ScopePatchWire,
 ): ServicesCoreAbstractionsScopePatch {
-  return patch as unknown as ServicesCoreAbstractionsScopePatch;
+  return patch;
 }
 
 /**

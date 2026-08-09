@@ -97,12 +97,16 @@ export const useCategoriesData = () => {
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesSectionsGet();
-      // API returns PagedResult, extract items
+      // API returns PagedResult, extract items. `meta` (record placement/audit
+      // metadata -- DTO tenancy/scope metadata initiative) is carried through
+      // so SectionEditorModal can wire the scope strip; it was previously
+      // dropped here even though SectionDto has always returned it.
       return (data.items ?? []).map(section => ({
         id: section.id ?? '',
         name: section.name ?? '',
         sortOrder: section.sortOrder ?? 0,
         isActive: section.isActive ?? true,
+        meta: section.meta,
       }));
     },
   });

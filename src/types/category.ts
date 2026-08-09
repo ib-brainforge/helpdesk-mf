@@ -1,3 +1,5 @@
+import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
+
 export interface CategoryDto {
   id: string;
   name: string;
@@ -20,6 +22,8 @@ export interface SectionDto {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export enum AccessLevel {
