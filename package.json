@@ -35,8 +35,8 @@
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
-    "@brainforgeau/components": "0.5.588-develop.95d2671",
-    "@brainforgeau/helpdesk-client": "0.1.246-develop.35d969f",
+    "@brainforgeau/components": "0.5.623-develop.51cbeaa",
+    "@brainforgeau/helpdesk-client": "0.5.289-develop.5fe7d2a",
     "@brainforgeau/identity-management-client": "0.1.583-develop.22921e5",
     "@brainforgeau/observability": "0.5.84-develop.a796211",
     "@brainforgeau/rules-ui": "0.4.114-develop.374091a",

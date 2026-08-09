@@ -7,22 +7,29 @@ import {
   BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
+  ContextScopeStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
+import { useQueryClient } from '@tanstack/react-query';
 import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useEffect, useState } from 'react';
 
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { CannedResponseScope } from '@/types/canned-response';
 import type { CannedResponseDto } from '@/types/canned-response';
 import {
   useCreateCannedResponse,
   useUpdateCannedResponse,
 } from '../hooks/useCannedResponses';
+
+const CANNED_RESPONSES_QUERY_KEY = 'helpdesk-canned-responses';
 
 interface CannedResponseEditorModalProps {
   isOpen: boolean;
@@ -46,6 +53,32 @@ export function CannedResponseEditorModal({
   const { categories, isLoading: isLoadingCategories } = useCategoriesData();
   const createMutation = useCreateCannedResponse();
   const updateMutation = useUpdateCannedResponse();
+  const queryClient = useQueryClient();
+
+  // DTO tenancy/scope metadata initiative -- only meaningful once the
+  // response exists (has an id/meta); the create form has nothing to place
+  // yet (gated on `isEditing` below).
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+    mode: 'modal',
+    entityLabel: 'Canned response',
+    meta: cannedResponse?.meta,
+    patchScope: async patch => {
+      if (!cannedResponse?.id) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<CannedResponse> CannedResponses`).
+      await client.v1ScopeEntityTypeIdPatch(
+        'CannedResponse',
+        cannedResponse.id,
+        patch,
+      );
+    },
+    onSaved: () => {
+      queryClient.invalidateQueries({
+        queryKey: [CANNED_RESPONSES_QUERY_KEY],
+      });
+    },
+  });
 
   const editor = useEditor({
     extensions: [
@@ -145,6 +178,8 @@ export function CannedResponseEditorModal({
               onChange={e => setTitle(e.target.value)}
               isRequired
             />
+
+            {isEditing && <ContextScopeStrip {...scopeStripProps} />}
 
             <div>
               <label className="block text-sm font-medium mb-2">Body</label>

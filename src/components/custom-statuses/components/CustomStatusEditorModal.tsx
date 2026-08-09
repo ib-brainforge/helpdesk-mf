@@ -1,3 +1,5 @@
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { TicketStatus } from '@/types/custom-status';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
 import {
@@ -10,14 +12,19 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
+  ContextScopeStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
+import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import {
   useCreateCustomStatus,
   useUpdateCustomStatus,
 } from '../hooks/useCustomStatuses';
+
+const CUSTOM_STATUSES_QUERY_KEY = 'helpdesk-custom-statuses';
 
 interface CustomStatusEditorModalProps {
   isOpen: boolean;
@@ -51,8 +58,36 @@ export function CustomStatusEditorModal({
 
   const createMutation = useCreateCustomStatus();
   const updateMutation = useUpdateCustomStatus();
+  const queryClient = useQueryClient();
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  // DTO tenancy/scope metadata initiative -- only meaningful once the status
+  // exists (has an id/meta), so the strip below is gated on `isEditing`. The
+  // hook itself is always called (rules of hooks) with `meta: undefined` in
+  // create mode, which every downstream computation here already treats as
+  // "no scope yet" the same way a freshly-created record would.
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+    mode: 'modal',
+    entityLabel: 'Custom status',
+    meta: status?.meta,
+    patchScope: async patch => {
+      if (!status) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<CustomTicketStatus> CustomTicketStatuses`).
+      await client.v1ScopeEntityTypeIdPatch(
+        'CustomTicketStatus',
+        status.id,
+        patch,
+      );
+    },
+    onSaved: () => {
+      queryClient.invalidateQueries({
+        queryKey: [CUSTOM_STATUSES_QUERY_KEY],
+      });
+    },
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -151,6 +186,11 @@ export function CustomStatusEditorModal({
             maxLength={100}
             isRequired
           />
+
+          {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
+              meaningful once the record exists (has an id/meta); the create
+              form has nothing to place yet. */}
+          {isEditing && <ContextScopeStrip {...scopeStripProps} />}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">

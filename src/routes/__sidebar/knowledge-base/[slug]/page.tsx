@@ -7,14 +7,23 @@
  */
 
 import { AppLoadingSplash } from '@/components/AppSplash';
+import { EntityMovedScreen } from '@/components/EntityMovedScreen';
 import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
 import {
+  fetchKnowledgeBaseArticleBySlug,
   useKnowledgeBaseArticle,
   useRateKnowledgeBaseArticle,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import {
+  BaseButton,
+  BaseCard,
+  ContextScopeStrip,
+  Icon,
+} from '@brainforgeau/components';
 import {
   DetailPage,
   PendingCrumb,
@@ -22,15 +31,19 @@ import {
   useDetailTabState,
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { useTimezone } from '@brainforgeau/security';
 import { Separator } from '@heroui/react';
 import { Link, useNavigate, useParams } from '@modern-js/runtime/router';
+import { useQueryClient } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
+import { useState } from 'react';
 
 function KnowledgeBaseArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const timezone = useTimezone();
+  const queryClient = useQueryClient();
 
   const {
     data: article,
@@ -45,6 +58,41 @@ function KnowledgeBaseArticlePage() {
     getParam,
     setParam,
   });
+
+  // Set the moment a post-scope-save refetch comes back 404 -- the save
+  // succeeded, but the record just moved (or was already) outside the
+  // viewer's current context (DTO tenancy/scope metadata initiative).
+  const [articleGoneInfo, setArticleGoneInfo] = useState<{
+    destinationName: string | null;
+  } | null>(null);
+
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+    mode: 'detail',
+    entityLabel: 'Article',
+    meta: article?.meta,
+    queryClient,
+    queryKey: ['knowledge-base', 'article', slug ?? ''],
+    fetchEntity: () => fetchKnowledgeBaseArticleBySlug(slug ?? ''),
+    patchScope: async patch => {
+      if (!article?.id) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<KbArticle> KbArticles`).
+      await client.v1ScopeEntityTypeIdPatch('KbArticle', article.id, patch);
+    },
+    onGone: destinationName => setArticleGoneInfo({ destinationName }),
+  });
+
+  if (articleGoneInfo) {
+    return (
+      <EntityMovedScreen
+        entityLabel="Article"
+        destinationName={articleGoneInfo.destinationName}
+        backHref="/knowledge-base"
+        backLabel="Back to Knowledge Base"
+      />
+    );
+  }
 
   if (isLoading || (!article && !error)) {
     return <AppLoadingSplash />;
@@ -183,7 +231,12 @@ function KnowledgeBaseArticlePage() {
 
       {/* Info tab — article metadata + related articles. No formActions (read-only). */}
       <DetailPage.Tab id="info" title="Info">
-        <div className="max-w-sm space-y-6">
+        <div className="space-y-6">
+          {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
+              width, above the narrower metadata card below. */}
+          <ContextScopeStrip {...scopeStripProps} />
+        </div>
+        <div className="mt-6 max-w-sm space-y-6">
           <BaseCard>
             <h3 className="mb-3 text-lg font-semibold">Article Info</h3>
             <div className="space-y-2 text-sm">

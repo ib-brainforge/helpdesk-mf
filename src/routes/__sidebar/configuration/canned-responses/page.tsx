@@ -3,16 +3,33 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
+import { ScopePermissions } from '@/constants/permissions';
+import { selectedContextAtom } from '@/state/auth-atoms';
+import { requireIdentityApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CannedResponseDto } from '@/types/canned-response';
 import { CannedResponseScope } from '@/types/canned-response';
+import {
+  toBulkScopeSaveResult,
+  toHelpdeskScopePatch,
+  toScopeMeta,
+  toWireMeta,
+} from '@/utils/scopeMeta';
+import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import { BaseButton } from '@brainforgeau/components/button';
+import { ListScopeStrip } from '@brainforgeau/components/list-scope-strip';
 import {
   EmptyState,
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
+import { ScopeBadge } from '@brainforgeau/components/scope-badge';
+import { useScopeList } from '@brainforgeau/components/scope-list';
+import { ScopeApi } from '@brainforgeau/helpdesk-client';
+import { useAccessScope, usePermissions } from '@brainforgeau/security';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
@@ -21,6 +38,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { useAtomValue } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
 
 const columnHelper = createColumnHelper<CannedResponseDto>();
@@ -50,12 +68,55 @@ function CannedResponsesPage() {
     CannedResponseDto | undefined
   >();
 
-  const { cannedResponses, isLoading } = useCannedResponses(
+  const { cannedResponses, isLoading, refetch } = useCannedResponses(
     undefined,
     searchTerm,
   );
   const deleteMutation = useDeleteCannedResponse();
   const { confirm, dialog } = useConfirm();
+
+  // DTO tenancy/scope metadata initiative -- see useAccessScope for why this
+  // isn't @brainforgeau/security's useHierarchicalContext.
+  const selectedContext = useAtomValue(selectedContextAtom);
+  const { accessScope, organisationCount } = useAccessScope(
+    selectedContext?.tenantId,
+    { identityBaseUrl: requireIdentityApiBaseUrl() },
+  );
+  const { hasPermission } = usePermissions();
+  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const currentOrganisationId = selectedContext?.organisationId;
+  const currentDivisionId = selectedContext?.divisionId;
+
+  // See the equivalent comment on the custom-statuses list page for why
+  // this route has no selection column / ad-hoc bulk "Change scope" -- only
+  // "Change all N out-of-context records".
+  const scope = useScopeList({
+    rows: cannedResponses,
+    getMeta: row => toWireMeta(row.meta),
+    getRecordId: row => row.id ?? '',
+    getRecordLabel: row => row.title ?? '',
+    accessScope,
+    selectedContext,
+    canManageScope,
+    // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+    // (`DbSet<CannedResponse> CannedResponses`).
+    patchScope: async (ids, patch) => {
+      const client = await createHelpdeskApiClient(ScopeApi);
+      const response = await client.v1ScopeEntityTypePatch('CannedResponse', {
+        ids,
+        patch: toHelpdeskScopePatch(patch),
+      });
+      return toBulkScopeSaveResult(response.data);
+    },
+    refetch: async () => {
+      await refetch();
+    },
+    // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc comment
+    // in scopeTestingBypass.ts. Remove this line to revert.
+    bypassSingleOrganisationSuppressionForTesting:
+      SCOPE_TESTING_BYPASS_SINGLE_ORG,
+    entityLabel: { one: 'canned response', other: 'canned responses' },
+  });
 
   const handleCreate = () => {
     setEditingResponse(undefined);
@@ -123,6 +184,23 @@ function CannedResponsesPage() {
         size: 120,
       }),
       columnHelper.display({
+        id: 'placement',
+        header: 'Placement',
+        cell: ({ row }) => (
+          <ScopeBadge
+            meta={toScopeMeta(toWireMeta(row.original.meta))}
+            currentOrganisationId={currentOrganisationId}
+            currentDivisionId={currentDivisionId}
+            organisationCount={organisationCount}
+            bypassSingleOrganisationSuppressionForTesting={
+              SCOPE_TESTING_BYPASS_SINGLE_ORG
+            }
+            size="sm"
+          />
+        ),
+        size: 140,
+      }),
+      columnHelper.display({
         id: 'category',
         header: 'Category',
         cell: ({ row }) => (
@@ -165,11 +243,17 @@ function CannedResponsesPage() {
         size: 80,
       }),
     ],
-    [handleEdit, handleDeleteRequest],
+    [
+      handleEdit,
+      handleDeleteRequest,
+      currentOrganisationId,
+      currentDivisionId,
+      organisationCount,
+    ],
   );
 
   const table = useReactTable<CannedResponseDto>({
-    data: cannedResponses,
+    data: scope.filteredRows,
     columns,
     getRowId: row => row.id ?? '',
     getCoreRowModel: getCoreRowModel(),
@@ -182,6 +266,11 @@ function CannedResponsesPage() {
       breadcrumbsKey="configuration.canned-responses.list"
       table={table}
       isLoading={isLoading}
+      subheader={
+        <ListScopeStrip {...scope.bannerProps}>
+          {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+        </ListScopeStrip>
+      }
       actions={
         <div className="flex gap-2">
           <BaseButton

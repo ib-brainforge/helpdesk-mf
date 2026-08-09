@@ -13,6 +13,7 @@
  */
 
 import { AppLoadingSplash } from '@/components/AppSplash';
+import { EntityMovedScreen } from '@/components/EntityMovedScreen';
 import {
   useApprovalWorkflow,
   useDeleteApprovalWorkflow,
@@ -20,7 +21,9 @@ import {
 } from '@/components/approvals';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { TicketStatus } from '@/types/custom-status';
 import {
   BaseButton,
@@ -30,6 +33,7 @@ import {
   BaseSelectItem,
   BaseTextarea,
   BaseToggle,
+  ContextScopeStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import {
@@ -41,12 +45,26 @@ import {
 } from '@brainforgeau/components/page';
 import {
   type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowStepDto as ApprovalWorkflowStepFormDto,
+  ApprovalWorkflowsApi,
+  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDetailDto,
   HelpdeskDomainApprovalsEnumsApprovalMode,
+  ScopeApi,
 } from '@brainforgeau/helpdesk-client';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
+
+const APPROVAL_WORKFLOWS_QUERY_KEY = 'approval-workflows';
+
+const fetchApprovalWorkflow = async (
+  id: string,
+): Promise<HelpdeskApplicationApprovalsDTOsApprovalWorkflowDetailDto> => {
+  const client = await createHelpdeskApiClient(ApprovalWorkflowsApi);
+  const { data } = await client.v1ApprovalWorkflowsIdGet(id);
+  return data;
+};
 
 // REVIEW: TriggerStatusId is int? on the backend with no evaluation logic
 // consuming it yet. The only integer status concept in the helpdesk domain is
@@ -84,6 +102,7 @@ type ApprovalWorkflowFormData = z.infer<typeof approvalWorkflowSchema>;
 function EditApprovalWorkflowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { confirm, dialog } = useConfirm();
 
   const { data: workflow, isLoading } = useApprovalWorkflow(id);
@@ -91,6 +110,32 @@ function EditApprovalWorkflowPage() {
   const deleteMutation = useDeleteApprovalWorkflow();
 
   const { items: users } = useUsersData();
+
+  // Set the moment a post-scope-save refetch comes back 404 -- the save
+  // succeeded, but the record just moved (or was already) outside the
+  // viewer's current context. Checked before the loading/not-found branches
+  // below so a stale form never lingers on screen (DTO tenancy/scope
+  // metadata initiative, see `useEntityScopeStrip`'s `onGone`).
+  const [workflowGoneInfo, setWorkflowGoneInfo] = useState<{
+    destinationName: string | null;
+  } | null>(null);
+
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+    mode: 'detail',
+    entityLabel: 'Approval workflow',
+    meta: workflow?.meta,
+    queryClient,
+    queryKey: [APPROVAL_WORKFLOWS_QUERY_KEY, id],
+    fetchEntity: () => fetchApprovalWorkflow(id as string),
+    patchScope: async patch => {
+      if (!id) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<ApprovalWorkflow> ApprovalWorkflows`).
+      await client.v1ScopeEntityTypeIdPatch('ApprovalWorkflow', id, patch);
+    },
+    onGone: destinationName => setWorkflowGoneInfo({ destinationName }),
+  });
 
   // Step management lives outside useEntityForm (too complex for Zod schema),
   // seeded from the loaded workflow once it arrives.
@@ -234,6 +279,17 @@ function EditApprovalWorkflowPage() {
     value: user.id,
   }));
 
+  if (workflowGoneInfo) {
+    return (
+      <EntityMovedScreen
+        entityLabel="Approval workflow"
+        destinationName={workflowGoneInfo.destinationName}
+        backHref="/configuration/approval-workflows"
+        backLabel="Back to Approval Workflows"
+      />
+    );
+  }
+
   if (isLoading) {
     return <AppLoadingSplash />;
   }
@@ -280,6 +336,11 @@ function EditApprovalWorkflowPage() {
           formActions={detailsForm.formActions}
         >
           <div className="flex flex-col gap-6">
+            {/* Scope strip (DTO tenancy/scope metadata initiative) -- sits
+                above the form fields, same relative placement as asset-mf's/
+                hr-mf's detail pages (between header and content). */}
+            <ContextScopeStrip {...scopeStripProps} />
+
             <BaseCard>
               <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
                 <f.Field name="name">

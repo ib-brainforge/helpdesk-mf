@@ -2,6 +2,8 @@
 // (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
 // This allows direct comparison against values returned from the backend without any casting.
 
+import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
+
 export enum KnowledgeBaseStatus {
   Draft = 'Draft',
   Published = 'Published',
@@ -48,6 +50,8 @@ export interface KnowledgeBaseArticleListDto {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface KnowledgeBaseArticleDto extends KnowledgeBaseArticleListDto {

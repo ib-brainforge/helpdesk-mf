@@ -1,0 +1,95 @@
+import type { BulkScopeSaveResult } from '@brainforgeau/components/bulk-scope-editor';
+import type {
+  ScopePatchWire,
+  WireRecordMeta,
+} from '@brainforgeau/components/scope-list';
+import type {
+  ServicesCoreAbstractionsRecordMeta,
+  ServicesCoreAbstractionsScopePatch,
+  ServicesCoreScopeAspNetCoreControllersBulkScopePatchResponse,
+} from '@brainforgeau/helpdesk-client';
+
+export {
+  toScopeMeta,
+  toClientVisibility,
+  toScopePatch,
+} from '@brainforgeau/components/scope-list';
+
+/**
+ * Bridges helpdesk-client's generated `ServicesCoreAbstractionsRecordMeta`
+ * onto `@brainforgeau/components`'s `WireRecordMeta` -- the shape `toScopeMeta`
+ * (and `useScopeList`'s `getMeta`) actually accept.
+ *
+ * A straight structural assignment isn't enough here, unlike asset-mf's/
+ * hr-mf's backends: those register `RequiredMemberSchemaFilter`, so their
+ * generated `RecordMeta.visibility`/`accessLevel`/`createdBy.userId` etc. are
+ * correctly `required`. helpdesk-backend has not registered that filter yet,
+ * so its generated `RecordMeta` still marks every nested field optional even
+ * though they are always populated server-side (see `ScopeMetadataBuilder`)
+ * -- the exact generator gap `WireRecordMeta`'s own doc comment describes
+ * fleet-wide, just not yet closed for this backend. This is a cast, not a
+ * runtime transform -- the wire values ARE always present.
+ */
+export function toWireMeta(
+  meta: ServicesCoreAbstractionsRecordMeta | null | undefined,
+): WireRecordMeta | null | undefined {
+  return meta as unknown as WireRecordMeta | null | undefined;
+}
+
+/**
+ * Builds the scope-PATCH wire body helpdesk-backend's `OptionalJsonConverter<T>`
+ * actually (de)serializes: a flat, RFC-7386-style merge patch (key absent =
+ * unchanged, key present with `null` = cleared, key present with a value =
+ * set) -- exactly `ScopePatchWire`'s own shape (`Services.Core.Abstractions.
+ * ScopePatch` on the backend, `dotnet-core/Services.Core.Abstractions/
+ * Optional.cs`).
+ *
+ * REVIEW: the cast to `ServicesCoreAbstractionsScopePatch` is required
+ * because helpdesk-backend does NOT register `OptionalDataContractResolver`
+ * (`Services.Core.OpenApi`) the way asset-backend/hr-backend do (verified:
+ * neither appears in `Helpdesk.Api/Configuration/DependencyInjection.cs`,
+ * unlike `AssetManagement.Api/Configuration/DependencyInjection.cs`). Without
+ * it, Swashbuckle reflects over `Optional<T>`'s own CLR members and emits an
+ * object schema (`{ isSet, value }`) instead of the flat wire format its
+ * `[JsonConverter(typeof(OptionalJsonConverterFactory))]` actually produces
+ * -- so the GENERATED type for this request body is provably wrong. Sending
+ * the generated `{ isSet, value }` shape verbatim 400s at runtime:
+ * `OptionalJsonConverter<T>.Read` only ever sees a raw value or an explicit
+ * JSON `null`, never an object. Sending the flat shape (this function's
+ * output) is what the endpoint genuinely expects; the cast only satisfies
+ * the (currently inaccurate) generated type. Fix belongs in helpdesk-backend
+ * (register `OptionalDataContractResolver` the same way asset-backend's/
+ * hr-backend's `DependencyInjection.cs` do) -- once that ships, this cast
+ * becomes unnecessary and the shapes already match structurally.
+ */
+export function toHelpdeskScopePatch(
+  patch: ScopePatchWire,
+): ServicesCoreAbstractionsScopePatch {
+  return patch as unknown as ServicesCoreAbstractionsScopePatch;
+}
+
+/**
+ * Maps the generated `BulkScopePatchResponse` (`PATCH v1/scope/{entityType}`)
+ * onto `BulkScopeEditor`'s `BulkScopeSaveResult` -- drops the per-record
+ * `previous`/`current` snapshots (`BulkScopeEditor` derives its own current/
+ * new preview from `getMeta` plus the pending edit, it doesn't need the
+ * server to echo them back). Ported from asset-mf's/hr-mf's identical helper.
+ *
+ * Unlike hr-backend, helpdesk-backend has not registered
+ * `RequiredMemberSchemaFilter` yet, so `results[].id`/`.outcome` are still
+ * typed optional even though the backend always populates them -- defensive
+ * fallbacks here (never actually hit) keep this assignable without a cast.
+ */
+export const toBulkScopeSaveResult = (
+  response: ServicesCoreScopeAspNetCoreControllersBulkScopePatchResponse,
+): BulkScopeSaveResult => ({
+  results: (response.results ?? []).map(r => ({
+    id: r.id ?? '',
+    outcome: r.outcome ?? 'Unchanged',
+    reason: r.reason ?? undefined,
+  })),
+  movedCount: response.movedCount ?? 0,
+  unchangedCount: response.unchangedCount ?? 0,
+  skippedCount: response.skippedCount ?? 0,
+  notFoundCount: response.notFoundCount ?? 0,
+});

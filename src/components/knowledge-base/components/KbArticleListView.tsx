@@ -1,10 +1,28 @@
+import { ScopePermissions } from '@/constants/permissions';
+import { selectedContextAtom } from '@/state/auth-atoms';
+import { requireIdentityApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseArticleListDto } from '@/types';
 import { KnowledgeBaseStatus } from '@/types';
+import {
+  toBulkScopeSaveResult,
+  toHelpdeskScopePatch,
+  toWireMeta,
+} from '@/utils/scopeMeta';
+import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import { BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
+import { ListScopeStrip } from '@brainforgeau/components/list-scope-strip';
 import { EmptyState } from '@brainforgeau/components/page';
+import { useScopeList } from '@brainforgeau/components/scope-list';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
+import { ScopeApi } from '@brainforgeau/helpdesk-client';
+import {
+  useAccessScope,
+  usePermissions,
+  useTimezone,
+} from '@brainforgeau/security';
 import { Chip } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import {
@@ -13,12 +31,15 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 
 type KbArticleListViewProps = {
   articles: KnowledgeBaseArticleListDto[];
   categories: { id: string; name: string; articleCount: number }[];
   isLoading?: boolean;
+  /** Re-fetches the article list -- awaited by `useScopeList` before a bulk scope save resolves. */
+  refetch: () => Promise<unknown>;
 };
 
 const getStatusColor = (
@@ -55,8 +76,50 @@ export function KbArticleListView({
   articles,
   categories,
   isLoading,
+  refetch,
 }: KbArticleListViewProps) {
   const timezone = useTimezone();
+
+  // DTO tenancy/scope metadata initiative -- see useAccessScope for why this
+  // isn't @brainforgeau/security's useHierarchicalContext. This component
+  // (unlike the `<ListPage>`-templated config-entity list pages) owns its
+  // own `useReactTable`/`<BaseTable>` call directly, so it gets the full
+  // `tableProps.rowMarker`/`selectionColumn` treatment (per-row border +
+  // real checkbox multi-select), same as asset-mf's/hr-mf's raw `<BaseTable>`
+  // usage -- not just the "Change all N" banner action.
+  const selectedContext = useAtomValue(selectedContextAtom);
+  const { accessScope, organisationCount } = useAccessScope(
+    selectedContext?.tenantId,
+    { identityBaseUrl: requireIdentityApiBaseUrl() },
+  );
+  const { hasPermission } = usePermissions();
+  const canManageScope = hasPermission(ScopePermissions.Manage);
+
+  const scope = useScopeList({
+    rows: articles,
+    getMeta: row => toWireMeta(row.meta),
+    getRecordId: row => row.id ?? row.slug,
+    getRecordLabel: row => row.title,
+    accessScope,
+    selectedContext,
+    canManageScope,
+    // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+    // (`DbSet<KbArticle> KbArticles`).
+    patchScope: async (ids, patch) => {
+      const client = await createHelpdeskApiClient(ScopeApi);
+      const response = await client.v1ScopeEntityTypePatch('KbArticle', {
+        ids,
+        patch: toHelpdeskScopePatch(patch),
+      });
+      return toBulkScopeSaveResult(response.data);
+    },
+    refetch,
+    // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc comment
+    // in scopeTestingBypass.ts. Remove this line to revert.
+    bypassSingleOrganisationSuppressionForTesting:
+      SCOPE_TESTING_BYPASS_SINGLE_ORG,
+    entityLabel: { one: 'article', other: 'articles' },
+  });
 
   const columns = useMemo(
     (): ColumnDef<KnowledgeBaseArticleListDto, any>[] => [
@@ -108,11 +171,14 @@ export function KbArticleListView({
   );
 
   const table = useReactTable({
-    data: articles,
+    data: scope.filteredRows,
     columns,
     getRowId: row => row.id ?? row.slug,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
+    state: { rowSelection: scope.rowSelection },
+    onRowSelectionChange: scope.onRowSelectionChange,
+    enableRowSelection: true,
   });
 
   if (isLoading) {
@@ -123,16 +189,25 @@ export function KbArticleListView({
     );
   }
 
-  if (articles.length === 0) {
-    return <EmptyState title="No articles found" live />;
-  }
-
   return (
-    <BaseTable
-      table={table}
-      showInfo={false}
-      isLoading={isLoading}
-      loading={{ title: 'Loading articles...' }}
-    />
+    <div className="flex flex-col gap-3">
+      {/* Out-of-context banner + bulk re-scoping (DTO tenancy/scope metadata
+          initiative) -- entirely driven by `useScopeList`. */}
+      <ListScopeStrip {...scope.bannerProps}>
+        {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+      </ListScopeStrip>
+
+      {articles.length === 0 ? (
+        <EmptyState title="No articles found" live />
+      ) : (
+        <BaseTable
+          table={table}
+          showInfo={false}
+          isLoading={isLoading}
+          loading={{ title: 'Loading articles...' }}
+          {...scope.tableProps}
+        />
+      )}
+    </div>
   );
 }
