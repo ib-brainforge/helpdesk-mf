@@ -212,7 +212,13 @@ function ApprovalWorkflowsPage() {
   const table = useReactTable({
     data: scope.filteredRows,
     columns,
+    // Keys row selection by the record's own id, matching `useScopeList`'s
+    // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
+    // and the table's own selection checkboxes agree on the same keys.
     getRowId: row => row.id ?? '',
+    state: { rowSelection: scope.rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: scope.onRowSelectionChange,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });
@@ -223,9 +229,11 @@ function ApprovalWorkflowsPage() {
       breadcrumbsKey="configuration.approval-workflows.list"
       table={table}
       isLoading={isLoading}
-      // REVIEW: see the equivalent comment on the custom-statuses list page --
-      // `selectionColumn` renders uncontrolled/inert here (no bulk toolbar
-      // consumes it); `rowMarker` is the change actually motivating this.
+      // `selectionColumn`'s checkboxes are now wired to `scope.rowSelection`/
+      // `onRowSelectionChange` (see `useReactTable()` above) -- selecting
+      // rows here feeds `editorProps.selectedRecords`, so "Change scope"
+      // (rendered inside `ListScopeStrip`'s `subheader` below) bulk-edits the
+      // selection, same as `rowMarker`'s per-row scope border.
       tableProps={scope.tableProps}
       subheader={
         <ListScopeStrip {...scope.bannerProps}>

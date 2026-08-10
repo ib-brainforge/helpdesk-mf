@@ -205,6 +205,11 @@ function CustomFieldsPage() {
     totalCount: selectedTab === 'tickets' ? totalCount : 0,
     pagination,
     onPaginationChange: setPagination,
+    // Keys row selection by the record's own id, matching `useScopeList`'s
+    // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
+    // and the table's own selection checkboxes agree on the same keys.
+    rowSelection: scope.rowSelection,
+    onRowSelectionChange: scope.onRowSelectionChange,
   });
 
   const sidebar = (
@@ -234,9 +239,12 @@ function CustomFieldsPage() {
       breadcrumbsKey="configuration.custom-fields.list"
       table={table}
       isLoading={selectedTab === 'tickets' ? isLoading : false}
-      // REVIEW: see the equivalent comment on the custom-statuses list page --
-      // `selectionColumn` renders uncontrolled/inert here (no bulk toolbar
-      // consumes it); `rowMarker` is the change actually motivating this.
+      // `selectionColumn`'s checkboxes are now wired to `scope.rowSelection`/
+      // `onRowSelectionChange` (via `useCustomFieldsTable`'s new
+      // `rowSelection`/`onRowSelectionChange` params above) -- selecting
+      // rows here feeds `editorProps.selectedRecords`, so "Change scope"
+      // (rendered inside `ListScopeStrip`'s `subheader` below) bulk-edits the
+      // selection, same as `rowMarker`'s per-row scope border.
       tableProps={scope.tableProps}
       actions={
         <BaseButton

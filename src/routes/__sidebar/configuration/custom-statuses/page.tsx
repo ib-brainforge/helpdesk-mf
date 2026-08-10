@@ -260,7 +260,13 @@ function CustomStatusesPage() {
   const table = useReactTable({
     data: scope.filteredRows,
     columns,
+    // Keys row selection by the record's own id, matching `useScopeList`'s
+    // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
+    // and the table's own selection checkboxes agree on the same keys.
     getRowId: row => row.id,
+    state: { rowSelection: scope.rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: scope.onRowSelectionChange,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });
@@ -271,12 +277,11 @@ function CustomStatusesPage() {
       breadcrumbsKey="configuration.custom-statuses.list"
       table={table}
       isLoading={isLoading}
-      // REVIEW: `scope.tableProps.selectionColumn`'s checkboxes render in
-      // TanStack's uncontrolled mode here (this table has no `rowSelection`
-      // state/`onRowSelectionChange` wired, matching `createSelectionColumn`'s
-      // documented fallback) -- there is no bulk-action toolbar reading them,
-      // so they're a harmless no-op. `rowMarker` (the per-row scope border)
-      // is the change actually motivating this passthrough.
+      // `selectionColumn`'s checkboxes are now wired to `scope.rowSelection`/
+      // `onRowSelectionChange` (see `useReactTable()` above) -- selecting
+      // rows here feeds `editorProps.selectedRecords`, so "Change scope"
+      // (rendered inside `ListScopeStrip`'s `subheader` below) bulk-edits the
+      // selection, same as `rowMarker`'s per-row scope border.
       tableProps={scope.tableProps}
       actions={
         <BaseButton
