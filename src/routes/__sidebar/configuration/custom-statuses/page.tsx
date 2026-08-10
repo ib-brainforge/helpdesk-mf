@@ -73,15 +73,12 @@ function CustomStatusesPage() {
 
   // `useScopeList` owns the scope filter, out-of-context counting, and the
   // "Change all N" bulk re-scope editor -- see the entityType note on
-  // `patchScope` below. No selection column is wired here: this route uses
-  // the shared `<ListPage>` template, whose own internal `<BaseTable>` call
-  // doesn't forward `rowMarker`/`selectionColumn` (verified against
-  // `ListPage.js` -- unlike asset-mf/hr-mf's raw `<BaseTable>` usage). List-
-  // side re-scoping here is limited to "Change all N out-of-context
-  // records" (which selects internally, no checkboxes needed); ad-hoc
-  // multi-select re-scoping is not available from this list. Per-record
-  // scope editing (any target, in or out of context) is always available
-  // from the edit modal's own `ContextScopeStrip`.
+  // `patchScope` below. Its `tableProps` is forwarded to `<ListPage>` below,
+  // which wires `rowMarker` through to `<BaseTable>` for the per-row scope
+  // border (see the REVIEW note by the `<ListPage>` call re: the
+  // `selectionColumn` half of `tableProps`). List-side re-scoping remains
+  // "Change all N out-of-context records" only; per-record scope editing is
+  // always available from the edit modal's own `ContextScopeStrip`.
   const scope = useScopeList({
     rows: customStatuses,
     getMeta: row => toWireMeta(row.meta),
@@ -274,6 +271,13 @@ function CustomStatusesPage() {
       breadcrumbsKey="configuration.custom-statuses.list"
       table={table}
       isLoading={isLoading}
+      // REVIEW: `scope.tableProps.selectionColumn`'s checkboxes render in
+      // TanStack's uncontrolled mode here (this table has no `rowSelection`
+      // state/`onRowSelectionChange` wired, matching `createSelectionColumn`'s
+      // documented fallback) -- there is no bulk-action toolbar reading them,
+      // so they're a harmless no-op. `rowMarker` (the per-row scope border)
+      // is the change actually motivating this passthrough.
+      tableProps={scope.tableProps}
       actions={
         <BaseButton
           color="primary"

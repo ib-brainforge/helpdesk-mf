@@ -234,6 +234,10 @@ function CustomFieldsPage() {
       breadcrumbsKey="configuration.custom-fields.list"
       table={table}
       isLoading={selectedTab === 'tickets' ? isLoading : false}
+      // REVIEW: see the equivalent comment on the custom-statuses list page --
+      // `selectionColumn` renders uncontrolled/inert here (no bulk toolbar
+      // consumes it); `rowMarker` is the change actually motivating this.
+      tableProps={scope.tableProps}
       actions={
         <BaseButton
           icon={<Icon name="plus" className="h-3.5 w-3.5" />}

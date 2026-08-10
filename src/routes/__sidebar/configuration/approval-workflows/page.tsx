@@ -223,6 +223,10 @@ function ApprovalWorkflowsPage() {
       breadcrumbsKey="configuration.approval-workflows.list"
       table={table}
       isLoading={isLoading}
+      // REVIEW: see the equivalent comment on the custom-statuses list page --
+      // `selectionColumn` renders uncontrolled/inert here (no bulk toolbar
+      // consumes it); `rowMarker` is the change actually motivating this.
+      tableProps={scope.tableProps}
       subheader={
         <ListScopeStrip {...scope.bannerProps}>
           {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}

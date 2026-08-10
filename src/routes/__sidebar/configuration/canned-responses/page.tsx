@@ -87,9 +87,6 @@ function CannedResponsesPage() {
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
 
-  // See the equivalent comment on the custom-statuses list page for why
-  // this route has no selection column / ad-hoc bulk "Change scope" -- only
-  // "Change all N out-of-context records".
   const scope = useScopeList({
     rows: cannedResponses,
     getMeta: row => toWireMeta(row.meta),
@@ -266,6 +263,10 @@ function CannedResponsesPage() {
       breadcrumbsKey="configuration.canned-responses.list"
       table={table}
       isLoading={isLoading}
+      // REVIEW: see the equivalent comment on the custom-statuses list page --
+      // `selectionColumn` renders uncontrolled/inert here (no bulk toolbar
+      // consumes it); `rowMarker` is the change actually motivating this.
+      tableProps={scope.tableProps}
       subheader={
         <ListScopeStrip {...scope.bannerProps}>
           {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
