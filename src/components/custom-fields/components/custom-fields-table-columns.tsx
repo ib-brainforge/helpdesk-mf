@@ -16,7 +16,8 @@ interface CreateColumnsOptions {
   /** Scope-badge context -- see the DTO tenancy/scope metadata initiative. */
   currentOrganisationId?: string | null;
   currentDivisionId?: string | null;
-  organisationCount?: number;
+  /** `null`/`undefined` means UNKNOWN -- see `ScopeBadgeProps.organisationCount`. Never collapse to 0. */
+  organisationCount?: number | null;
 }
 
 // REVIEW: Helper function to get field type display name
@@ -59,7 +60,7 @@ export const createCustomFieldsColumns = (
         meta={toScopeMeta(toWireMeta(row.original.meta))}
         currentOrganisationId={options.currentOrganisationId}
         currentDivisionId={options.currentDivisionId}
-        organisationCount={options.organisationCount ?? 0}
+        organisationCount={options.organisationCount}
         bypassSingleOrganisationSuppressionForTesting={
           SCOPE_TESTING_BYPASS_SINGLE_ORG
         }
