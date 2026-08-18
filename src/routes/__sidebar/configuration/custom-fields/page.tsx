@@ -1,5 +1,8 @@
 import { Icon } from '@brainforgeau/components/base';
+import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import { BaseButton } from '@brainforgeau/components/button';
+import { ListScopeStrip } from '@brainforgeau/components/list-scope-strip';
+import { useScopeList } from '@brainforgeau/components/scope-list';
 import {
   CustomFieldEditorModal,
   createCustomFieldsColumns,
@@ -7,18 +10,29 @@ import {
   useCustomFieldsTable,
 } from '@components/custom-fields';
 
+import { ScopePermissions } from '@/constants/permissions';
+import { selectedContextAtom } from '@/state/auth-atoms';
+import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
+import {
+  toBulkScopeSaveResult,
+  toHelpdeskScopePatch,
+  toWireMeta,
+} from '@/utils/scopeMeta';
+import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import {
   EmptyState,
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
+import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
+import { useAccessScope, usePermissions } from '@brainforgeau/security';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { useMutation } from '@tanstack/react-query';
+import { useAtomValue } from 'jotai';
 import { useCallback, useMemo, useState } from 'react';
 
 type CustomFieldTabType = 'tickets' | 'users' | 'companies' | 'assets';
@@ -57,13 +71,64 @@ function CustomFieldsPage() {
       { replace: true },
     );
   };
-  const { items, totalCount, pagination, setPagination, isLoading, refetch } =
-    useCustomFieldsData();
+  const {
+    items,
+    allItems,
+    totalCount,
+    pagination,
+    setPagination,
+    isLoading,
+    refetch,
+  } = useCustomFieldsData();
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<
     CustomFieldDefinitionDto | undefined
   >(undefined);
   const { confirm, dialog } = useConfirm();
+
+  // DTO tenancy/scope metadata initiative -- see useAccessScope for why this
+  // isn't @brainforgeau/security's useHierarchicalContext. Fed `allItems`
+  // (the full unpaginated set), NOT `items` (the current client-side-
+  // paginated page) -- see `useCustomFieldsData`'s own doc comment on
+  // `allItems`. Only the "tickets" tab has real data (see `selectedTab`
+  // below); the other tabs are placeholders with nothing to scope.
+  const selectedContext = useAtomValue(selectedContextAtom);
+  const { accessScope, organisationCount } = useAccessScope(
+    selectedContext?.tenantId,
+    { identityBaseUrl: requireIdentityApiBaseUrl() },
+  );
+  const { hasPermission } = usePermissions();
+  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const currentOrganisationId = selectedContext?.organisationId;
+  const currentDivisionId = selectedContext?.divisionId;
+
+  const scope = useScopeList({
+    rows: allItems,
+    getMeta: row => toWireMeta(row.meta),
+    getRecordId: row => row.id,
+    getRecordLabel: row => row.name,
+    accessScope,
+    selectedContext,
+    canManageScope,
+    // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+    // (`DbSet<CustomFieldDefinition> CustomFieldDefinitions`).
+    patchScope: async (ids, patch) => {
+      const client = await createHelpdeskApiClient(ScopeApi);
+      const response = await client.v1ScopeEntityTypePatch(
+        'CustomFieldDefinition',
+        { ids, patch: toHelpdeskScopePatch(patch) },
+      );
+      return toBulkScopeSaveResult(response.data);
+    },
+    refetch: async () => {
+      refetch();
+    },
+    // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc comment
+    // in scopeTestingBypass.ts. Remove this line to revert.
+    bypassSingleOrganisationSuppressionForTesting:
+      SCOPE_TESTING_BYPASS_SINGLE_ORG,
+    entityLabel: { one: 'custom field', other: 'custom fields' },
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async (fieldId: string) => {
@@ -117,8 +182,20 @@ function CustomFieldsPage() {
 
   const columns = useMemo(
     () =>
-      createCustomFieldsColumns({ onEdit: handleEdit, onDelete: handleDelete }),
-    [handleEdit, handleDelete],
+      createCustomFieldsColumns({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+        currentOrganisationId,
+        currentDivisionId,
+        organisationCount,
+      }),
+    [
+      handleEdit,
+      handleDelete,
+      currentOrganisationId,
+      currentDivisionId,
+      organisationCount,
+    ],
   );
 
   const { table } = useCustomFieldsTable({
@@ -128,6 +205,11 @@ function CustomFieldsPage() {
     totalCount: selectedTab === 'tickets' ? totalCount : 0,
     pagination,
     onPaginationChange: setPagination,
+    // Keys row selection by the record's own id, matching `useScopeList`'s
+    // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
+    // and the table's own selection checkboxes agree on the same keys.
+    rowSelection: scope.rowSelection,
+    onRowSelectionChange: scope.onRowSelectionChange,
   });
 
   const sidebar = (
@@ -157,6 +239,13 @@ function CustomFieldsPage() {
       breadcrumbsKey="configuration.custom-fields.list"
       table={table}
       isLoading={selectedTab === 'tickets' ? isLoading : false}
+      // `selectionColumn`'s checkboxes are now wired to `scope.rowSelection`/
+      // `onRowSelectionChange` (via `useCustomFieldsTable`'s new
+      // `rowSelection`/`onRowSelectionChange` params above) -- selecting
+      // rows here feeds `editorProps.selectedRecords`, so "Change scope"
+      // (rendered inside `ListScopeStrip`'s `subheader` below) bulk-edits the
+      // selection, same as `rowMarker`'s per-row scope border.
+      tableProps={scope.tableProps}
       actions={
         <BaseButton
           icon={<Icon name="plus" className="h-3.5 w-3.5" />}
@@ -166,6 +255,13 @@ function CustomFieldsPage() {
         </BaseButton>
       }
       sidebar={sidebar}
+      subheader={
+        selectedTab === 'tickets' ? (
+          <ListScopeStrip {...scope.bannerProps}>
+            {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+          </ListScopeStrip>
+        ) : undefined
+      }
       empty={
         <EmptyState
           title="No custom fields yet"

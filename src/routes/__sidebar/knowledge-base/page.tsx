@@ -26,8 +26,11 @@ function KnowledgeBasePage() {
 
   const { data: categories, isLoading: loadingCategories } =
     useKnowledgeBaseCategories();
-  const { data: articles, isLoading: loadingArticles } =
-    useKnowledgeBaseArticles('', searchTerm);
+  const {
+    data: articles,
+    isLoading: loadingArticles,
+    refetch: refetchArticles,
+  } = useKnowledgeBaseArticles('', searchTerm);
   const exportMutation = useExportKb();
 
   return (
@@ -94,6 +97,9 @@ function KnowledgeBasePage() {
         articles={articles?.items || []}
         categories={categories || []}
         isLoading={loadingArticles}
+        refetch={async () => {
+          await refetchArticles();
+        }}
       />
 
       {/* Quick Create Modal */}

@@ -32,6 +32,31 @@ export default createModuleFederationConfig({
   remotes: {
     '@brainforgeau/navbar': `navbar@${mfNavbarUrl}/remoteEntry.js`,
   },
+  // remote-resilience: `@module-federation/enhanced` defaults the
+  // instance-level shareStrategy to 'version-first' when unset (see the
+  // installed
+  // `@module-federation/enhanced/dist/src/lib/container/runtime/utils.js` —
+  // `shareStrategy: options.shareStrategy || 'version-first'`). Under
+  // 'version-first', the share-scope init that runs at BOOT
+  // (`__webpack_require__.I` → runtime-core's `initializeSharing`) eagerly
+  // initializes EVERY registered remote — here, just navbar — to collect
+  // shared versions, which means fetching/injecting navbar's remoteEntry.js
+  // before React ever mounts. If navbar's remoteEntry.js is unreachable
+  // (bad deploy behind ingress, returns HTML, 404s, or hangs), that
+  // boot-time init rejects and blanks the WHOLE helpdesk-mf app, not just the
+  // nav chrome. 'loaded-first' skips that eager boot-time loop entirely —
+  // navbar's remoteEntry.js is then only fetched when its expose is
+  // actually imported, i.e. at the `lazyWithRetry(() =>
+  // import('@brainforgeau/navbar/Navbar'), ...)` call in
+  // src/routes/layout.tsx, on the render path behind an `<ErrorBoundary>`,
+  // not the boot path. Paired with `runtimePlugins` below, which makes a
+  // navbar load failure observable instead of silently propagating.
+  shareStrategy: 'loaded-first',
+  // remote-resilience: registers src/mf-runtime-plugin.ts so a navbar load
+  // failure (post `shareStrategy: 'loaded-first'` above) is logged and
+  // surfaced as a `bf:mf-remote-error` window event rather than an
+  // unhandled rejection — see that file's docblock for the full rationale.
+  runtimePlugins: ['./src/mf-runtime-plugin.ts'],
   shared: {
     react: {
       singleton: true,

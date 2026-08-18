@@ -30,6 +30,7 @@ export const useCustomFieldsData = () => {
           value: opt.value!,
           sortOrder: opt.sortOrder ?? 0,
         })),
+        meta: field.meta,
       }));
     },
   });
@@ -45,6 +46,13 @@ export const useCustomFieldsData = () => {
 
   return {
     items,
+    /**
+     * The full, unpaginated set -- needed by `useScopeList` (DTO tenancy/
+     * scope metadata initiative), whose out-of-context counting and
+     * "Change all N" bulk editor must consider every loaded record, not
+     * just the current client-side-paginated page.
+     */
+    allItems: data ?? [],
     totalCount,
     pagination,
     setPagination,

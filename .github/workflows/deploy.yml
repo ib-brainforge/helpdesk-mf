@@ -10,7 +10,6 @@ on:
         options:
           - au
           - staging
-          - security-upgrade-2
       tag:
         description: 'Release/version tag to deploy (e.g. 0.1.42)'
         required: true

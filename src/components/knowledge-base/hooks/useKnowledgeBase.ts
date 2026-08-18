@@ -71,6 +71,13 @@ function flattenCategoryTree(
       parentId,
       articleCount: node.articleCount ?? 0,
       order: node.sortOrder ?? 0,
+      // `meta` intentionally omitted here, not dropped: `node` (the generated
+      // HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto backing
+      // v1KbCategoriesGet) has no `meta` property to read yet -- see
+      // KnowledgeBaseCategoryDto's own doc comment (@/types/knowledge-base)
+      // for the pending helpdesk-backend PR. Once that ships and this client
+      // regenerates, add `meta: node.meta` here so the scope strip becomes
+      // wireable on this screen the same way it already is for Sections.
     };
     const children = node.children
       ? flattenCategoryTree(node.children, flat.id)
@@ -150,6 +157,7 @@ function mapKbArticleListToDto(
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
+    meta: dto.meta,
   };
 }
 
@@ -189,25 +197,44 @@ function mapKbArticleDetailToDto(
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
     relatedArticleIds: [],
+    meta: dto.meta,
   };
 }
+
+/**
+ * Fetches a single article by slug and maps it to the local DTO. Exported
+ * (not just the `useKnowledgeBaseArticle` hook below) so
+ * `useEntityScopeStrip`'s post-scope-save re-fetch (DTO tenancy/scope
+ * metadata initiative -- `/knowledge-base/[slug]/page.tsx`) can call the
+ * exact same fetch outside of React Query's hook rules.
+ * `incrementViewCount` defaults to `false` for that reason -- a scope-save
+ * refetch must not inflate the article's view count the way the page's own
+ * initial load (which passes `true`) intentionally does.
+ */
+export const fetchKnowledgeBaseArticleBySlug = async (
+  slug: string,
+  incrementViewCount = false,
+): Promise<KnowledgeBaseArticleDto> => {
+  if (!slug) {
+    throw new Error('Article slug is required');
+  }
+  const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+  const response = await client.v1KbArticlesBySlugSlugGet(
+    slug,
+    incrementViewCount,
+  );
+  if (!response.data) {
+    throw new Error('Article not found');
+  }
+  return mapKbArticleDetailToDto(response.data);
+};
 
 export const useKnowledgeBaseArticle = (slug: string) => {
   return useQuery<KnowledgeBaseArticleDto>({
     queryKey: ['knowledge-base', 'article', slug],
-    queryFn: async () => {
-      if (!slug) {
-        throw new Error('Article slug is required');
-      }
-      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      // Pass incrementViewCount: true so each page visit increments the counter.
-      // The backend defaults this param to false which is why views always showed 0.
-      const response = await client.v1KbArticlesBySlugSlugGet(slug, true);
-      if (!response.data) {
-        throw new Error('Article not found');
-      }
-      return mapKbArticleDetailToDto(response.data);
-    },
+    // Pass incrementViewCount: true so each page visit increments the counter.
+    // The backend defaults this param to false which is why views always showed 0.
+    queryFn: () => fetchKnowledgeBaseArticleBySlug(slug, true),
     enabled: !!slug,
   });
 };
@@ -520,6 +547,9 @@ export const useDuplicateKbCategory = () => {
         // count from v1KbCategoriesGet.
         articleCount: 0,
         order: cat.sortOrder ?? 0,
+        // Unlike flattenCategoryTree above, KbCategoryDto (this endpoint's
+        // response) has always carried `meta` -- carry it through.
+        meta: cat.meta,
       };
     },
     onSuccess: () => {

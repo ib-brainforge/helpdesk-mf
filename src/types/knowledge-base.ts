@@ -2,6 +2,8 @@
 // (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
 // This allows direct comparison against values returned from the backend without any casting.
 
+import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
+
 export enum KnowledgeBaseStatus {
   Draft = 'Draft',
   Published = 'Published',
@@ -26,6 +28,18 @@ export interface KnowledgeBaseCategoryDto {
   children?: KnowledgeBaseCategoryDto[];
   articleCount: number;
   order: number;
+  /**
+   * Record placement/audit metadata (DTO tenancy/scope metadata initiative).
+   * Not yet populated from `flattenCategoryTree` -- the generated
+   * `HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto` (backing
+   * `v1KbCategoriesGet`, the only source of the tree this type is flattened
+   * from) does not expose `meta` yet. helpdesk-backend PR #169
+   * (`feat/kb-category-tree-meta`) adds it but is still open/unmerged as of
+   * this change. IS populated from `useDuplicateKbCategory`'s mapping, since
+   * that endpoint (`v1KbCategoriesIdDuplicatePost`) returns the flat
+   * `KbCategoryDto`, which has always carried `meta`.
+   */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface KnowledgeBaseArticleListDto {
@@ -48,6 +62,8 @@ export interface KnowledgeBaseArticleListDto {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface KnowledgeBaseArticleDto extends KnowledgeBaseArticleListDto {

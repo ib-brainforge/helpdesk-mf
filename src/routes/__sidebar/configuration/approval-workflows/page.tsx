@@ -10,14 +10,33 @@ import {
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { ScopePermissions } from '@/constants/permissions';
+import { selectedContextAtom } from '@/state/auth-atoms';
+import { requireIdentityApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import {
+  toBulkScopeSaveResult,
+  toHelpdeskScopePatch,
+  toScopeMeta,
+  toWireMeta,
+} from '@/utils/scopeMeta';
+import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
+import { ListScopeStrip } from '@brainforgeau/components/list-scope-strip';
 import {
   EmptyState,
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import type { HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto } from '@brainforgeau/helpdesk-client';
+import { ScopeBadge } from '@brainforgeau/components/scope-badge';
+import { useScopeList } from '@brainforgeau/components/scope-list';
+import {
+  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
+  ScopeApi,
+} from '@brainforgeau/helpdesk-client';
+import { useAccessScope, usePermissions } from '@brainforgeau/security';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import {
@@ -25,7 +44,8 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback } from 'react';
+import { useAtomValue } from 'jotai';
+import { useCallback, useMemo } from 'react';
 
 const columnHelper =
   createColumnHelper<HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto>();
@@ -34,8 +54,48 @@ function ApprovalWorkflowsPage() {
   const navigate = useNavigate();
   const { confirm, dialog } = useConfirm();
 
-  const { data: workflows, isLoading } = useApprovalWorkflows();
+  const { data: workflows, isLoading, refetch } = useApprovalWorkflows();
   const deleteMutation = useDeleteApprovalWorkflow();
+
+  // DTO tenancy/scope metadata initiative -- see useAccessScope for why this
+  // isn't @brainforgeau/security's useHierarchicalContext.
+  const selectedContext = useAtomValue(selectedContextAtom);
+  const { accessScope, organisationCount } = useAccessScope(
+    selectedContext?.tenantId,
+    { identityBaseUrl: requireIdentityApiBaseUrl() },
+  );
+  const { hasPermission } = usePermissions();
+  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const currentOrganisationId = selectedContext?.organisationId;
+  const currentDivisionId = selectedContext?.divisionId;
+
+  const scope = useScopeList({
+    rows: workflows ?? [],
+    getMeta: row => toWireMeta(row.meta),
+    getRecordId: row => row.id ?? '',
+    getRecordLabel: row => row.name ?? '',
+    accessScope,
+    selectedContext,
+    canManageScope,
+    // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+    // (`DbSet<ApprovalWorkflow> ApprovalWorkflows`).
+    patchScope: async (ids, patch) => {
+      const client = await createHelpdeskApiClient(ScopeApi);
+      const response = await client.v1ScopeEntityTypePatch('ApprovalWorkflow', {
+        ids,
+        patch: toHelpdeskScopePatch(patch),
+      });
+      return toBulkScopeSaveResult(response.data);
+    },
+    refetch: async () => {
+      await refetch();
+    },
+    // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc comment
+    // in scopeTestingBypass.ts. Remove this line to revert.
+    bypassSingleOrganisationSuppressionForTesting:
+      SCOPE_TESTING_BYPASS_SINGLE_ORG,
+    entityLabel: { one: 'approval workflow', other: 'approval workflows' },
+  });
 
   const handleDeleteRequest = useCallback(
     async (id: string, name: string) => {
@@ -51,81 +111,114 @@ function ApprovalWorkflowsPage() {
     [confirm, deleteMutation],
   );
 
-  const columns = [
-    columnHelper.accessor('name', {
-      header: 'Name',
-      cell: info => (
-        <span className="font-medium">{info.getValue() ?? ''}</span>
-      ),
-    }),
-    columnHelper.accessor('approvalMode', {
-      header: 'Mode',
-      cell: info => {
-        const mode = info.getValue();
-        return mode ? APPROVAL_MODE_LABELS[mode] : '';
-      },
-    }),
-    columnHelper.accessor('stepCount', {
-      header: 'Steps',
-      cell: info => info.getValue() ?? 0,
-    }),
-    columnHelper.accessor('isActive', {
-      header: 'Status',
-      cell: info => (
-        <span
-          className={
-            info.getValue() ? 'font-medium text-success' : 'text-default-400'
-          }
-        >
-          {info.getValue() ? 'Active' : 'Inactive'}
-        </span>
-      ),
-    }),
-    columnHelper.accessor('triggerOnCreation', {
-      header: 'On Create',
-      cell: info => (info.getValue() ? 'Yes' : 'No'),
-    }),
-    columnHelper.display({
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <div className="-my-1.5 flex items-center justify-end gap-1">
-          <BaseButton
-            variant="link"
-            size="none"
-            className="text-dark dark:text-light hover:text-blue"
-            aria-label="Edit approval workflow"
-            onPress={() =>
-              navigate(`/configuration/approval-workflows/${row.original.id}`)
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('name', {
+        header: 'Name',
+        cell: info => (
+          <span className="font-medium">{info.getValue() ?? ''}</span>
+        ),
+      }),
+      columnHelper.display({
+        id: 'scope',
+        header: 'Scope',
+        cell: ({ row }) => (
+          <ScopeBadge
+            meta={toScopeMeta(toWireMeta(row.original.meta))}
+            currentOrganisationId={currentOrganisationId}
+            currentDivisionId={currentDivisionId}
+            organisationCount={organisationCount}
+            bypassSingleOrganisationSuppressionForTesting={
+              SCOPE_TESTING_BYPASS_SINGLE_ORG
             }
-            icon={<Icon name="pencil" className="h-4 w-4" />}
+            size="sm"
           />
-          <BaseButton
-            variant="link"
-            size="none"
-            className="text-danger hover:text-danger-600"
-            aria-label="Delete approval workflow"
-            onPress={() =>
-              handleDeleteRequest(
-                row.original.id ?? '',
-                row.original.name ?? '',
-              )
+        ),
+        size: 140,
+      }),
+      columnHelper.accessor('approvalMode', {
+        header: 'Mode',
+        cell: info => {
+          const mode = info.getValue();
+          return mode ? APPROVAL_MODE_LABELS[mode] : '';
+        },
+      }),
+      columnHelper.accessor('stepCount', {
+        header: 'Steps',
+        cell: info => info.getValue() ?? 0,
+      }),
+      columnHelper.accessor('isActive', {
+        header: 'Status',
+        cell: info => (
+          <span
+            className={
+              info.getValue() ? 'font-medium text-success' : 'text-default-400'
             }
-            isDisabled={deleteMutation.isPending}
-            icon={<Icon name="trash" className="h-4 w-4" />}
-          />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      size: 80,
-    }),
-  ];
+          >
+            {info.getValue() ? 'Active' : 'Inactive'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('triggerOnCreation', {
+        header: 'On Create',
+        cell: info => (info.getValue() ? 'Yes' : 'No'),
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="-my-1.5 flex items-center justify-end gap-1">
+            <BaseButton
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
+              aria-label="Edit approval workflow"
+              onPress={() =>
+                navigate(`/configuration/approval-workflows/${row.original.id}`)
+              }
+              icon={<Icon name="pencil" className="h-4 w-4" />}
+            />
+            <BaseButton
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
+              aria-label="Delete approval workflow"
+              onPress={() =>
+                handleDeleteRequest(
+                  row.original.id ?? '',
+                  row.original.name ?? '',
+                )
+              }
+              isDisabled={deleteMutation.isPending}
+              icon={<Icon name="trash" className="h-4 w-4" />}
+            />
+          </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 80,
+      }),
+    ],
+    [
+      currentOrganisationId,
+      currentDivisionId,
+      organisationCount,
+      navigate,
+      handleDeleteRequest,
+      deleteMutation.isPending,
+    ],
+  );
 
   const table = useReactTable({
-    data: workflows ?? [],
+    data: scope.filteredRows,
     columns,
+    // Keys row selection by the record's own id, matching `useScopeList`'s
+    // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
+    // and the table's own selection checkboxes agree on the same keys.
     getRowId: row => row.id ?? '',
+    state: { rowSelection: scope.rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: scope.onRowSelectionChange,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
   });
@@ -136,6 +229,17 @@ function ApprovalWorkflowsPage() {
       breadcrumbsKey="configuration.approval-workflows.list"
       table={table}
       isLoading={isLoading}
+      // `selectionColumn`'s checkboxes are now wired to `scope.rowSelection`/
+      // `onRowSelectionChange` (see `useReactTable()` above) -- selecting
+      // rows here feeds `editorProps.selectedRecords`, so "Change scope"
+      // (rendered inside `ListScopeStrip`'s `subheader` below) bulk-edits the
+      // selection, same as `rowMarker`'s per-row scope border.
+      tableProps={scope.tableProps}
+      subheader={
+        <ListScopeStrip {...scope.bannerProps}>
+          {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+        </ListScopeStrip>
+      }
       actions={
         <BaseButton
           color="primary"

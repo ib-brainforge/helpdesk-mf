@@ -1,3 +1,4 @@
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AccessLevel } from '@/types/category';
 import type {
@@ -16,15 +17,18 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
+  ContextScopeStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
+import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { z } from 'zod';
+
+const CUSTOM_FIELDS_QUERY_KEY = 'helpdesk-custom-fields';
 
 const customFieldFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -72,6 +76,29 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const isEdit = Boolean(field);
+
+  // DTO tenancy/scope metadata initiative -- only meaningful once the field
+  // exists (has an id/meta); the create form has nothing to place yet
+  // (gated on `isEdit` below).
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+    mode: 'modal',
+    entityLabel: 'Custom field',
+    meta: field?.meta,
+    patchScope: async patch => {
+      if (!field) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<CustomFieldDefinition> CustomFieldDefinitions`).
+      await client.v1ScopeEntityTypeIdPatch(
+        'CustomFieldDefinition',
+        field.id,
+        patch,
+      );
+    },
+    onSaved: () => {
+      queryClient.invalidateQueries({ queryKey: [CUSTOM_FIELDS_QUERY_KEY] });
+    },
+  });
 
   // State for managing options (for Dropdown/MultiSelect fields)
   const [options, setOptions] = useState<CustomFieldOptionDto[]>(
@@ -217,6 +244,8 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                 />
               )}
             </form.Field>
+
+            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
 
             <div className="grid grid-cols-2 gap-4">
               <form.Field name="fieldType">
