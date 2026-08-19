@@ -27,7 +27,7 @@
 
 import { getAppConfig } from '@/state/config';
 import type { ObservabilityConfig } from '@brainforgeau/observability';
-import { getAccessToken, getAuthState } from '@brainforgeau/security';
+import { getAccessToken, getContextToken } from '@brainforgeau/security';
 
 const appConfig = getAppConfig();
 
@@ -82,8 +82,15 @@ const endpoints = telemetryGatewayBase
  *
  * - `bearer`       — the current Keycloak access token.
  * - `contextToken` — the BrainForge context token for the active tenant /
- *   organization / division, exposed by `@brainforgeau/security` on
- *   `getAuthState().contextToken`.
+ *   organization / division, via `getContextToken()`.
+ *
+ * `getContextToken()` (not `getAuthState().contextToken`) is load-bearing:
+ * when helpdesk-mf runs embedded in the shell, this module instance's auth
+ * state has no context token — only the sessionStorage 'X-Context-Token'
+ * fallback inside `getContextToken()` reaches the shell-minted token. Reading
+ * the state directly sent an empty X-Context-Token header, and the
+ * telemetry-gateway 403s every session mint it can't resolve a tenant for
+ * (the Keycloak bearer carries no tenant claim).
  *
  * Read fresh on every mint so a re-mint after a tenant switch picks up the
  * new tenant's context token.
@@ -95,7 +102,7 @@ const getCredentials = async (): Promise<{
   const bearer = await getAccessToken();
   let contextToken = '';
   try {
-    contextToken = getAuthState().contextToken ?? '';
+    contextToken = getContextToken() ?? '';
   } catch {
     contextToken = '';
   }
