@@ -4,12 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target environment'
+        description: 'Target environment: au or brainforge (release tags only). dev/staging are automation-owned — do not dispatch.'
         required: true
-        type: choice
-        options:
-          - au
-          - staging
+        type: string
+        default: au
       tag:
         description: 'Release/version tag to deploy (e.g. 0.1.42)'
         required: true
