@@ -406,6 +406,19 @@ export default function Layout() {
               <SideNav
                 data-testid={TEST_IDS.navbar.side}
                 sections={navSections}
+                // SideNav renders this as the version label pinned at the
+                // bottom of the nav, the same "x.y.z-develop.<sha>" line the
+                // other apps show. It lives in the nav rather than the page so
+                // it costs no vertical space in any route's content area.
+                //
+                // Suppressed when the build injected no version: local dev
+                // leaves it as the literal string "unknown", and a nav footer
+                // reading "unknown" looks like a defect rather than a build id.
+                version={
+                  appConfig.version && appConfig.version !== 'unknown'
+                    ? appConfig.version
+                    : undefined
+                }
                 desktopMode={desktopMode}
                 onDesktopModeChange={setDesktopMode}
                 isMobileOpen={isMobileOpen}
