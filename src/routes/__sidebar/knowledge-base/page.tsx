@@ -34,7 +34,14 @@ function KnowledgeBasePage() {
   const exportMutation = useExportKb();
 
   return (
-    <PageBody>
+    // h-full + min-h-0 so the article table can grow to the bottom of the
+    // viewport instead of collapsing to its content height. PageBody's default
+    // classes are `flex w-0 min-w-full flex-col p-5 md:py-5` with no height, so
+    // without this the table's internal scroller sizes to a few rows and the
+    // list appears cut off with empty space beneath it. min-h-0 is required
+    // because a flex child defaults to min-height:auto and would otherwise
+    // refuse to shrink, pushing the scrollbar onto the page instead of the table.
+    <PageBody className="h-full min-h-0">
       <PageHeader title="Knowledge Base" breadcrumbsKey="knowledge-base.list">
         <PageHeader.Actions>
           <BaseButton

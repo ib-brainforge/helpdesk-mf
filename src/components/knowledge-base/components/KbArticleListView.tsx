@@ -190,7 +190,10 @@ export function KbArticleListView({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    // flex-1 + min-h-0 lets this claim the height the page gives it, matching
+    // how TicketGrid fills the tickets page. Without it the column is content
+    // sized and the table below scrolls inside a few rows' worth of space.
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* Out-of-context banner + bulk re-scoping (DTO tenancy/scope metadata
           initiative) -- entirely driven by `useScopeList`. */}
       <ListScopeStrip {...scope.bannerProps}>
@@ -200,13 +203,17 @@ export function KbArticleListView({
       {articles.length === 0 ? (
         <EmptyState title="No articles found" live />
       ) : (
-        <BaseTable
-          table={table}
-          showInfo={false}
-          isLoading={isLoading}
-          loading={{ title: 'Loading articles...' }}
-          {...scope.tableProps}
-        />
+        // The scope strip above is fixed height; this takes the remainder so the
+        // table's own scroll area ends at the bottom of the viewport.
+        <div className="flex min-h-0 flex-1 flex-col">
+          <BaseTable
+            table={table}
+            showInfo={false}
+            isLoading={isLoading}
+            loading={{ title: 'Loading articles...' }}
+            {...scope.tableProps}
+          />
+        </div>
       )}
     </div>
   );

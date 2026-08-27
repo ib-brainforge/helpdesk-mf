@@ -19,7 +19,14 @@ import {
   useOverlayState,
 } from '@heroui/react';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
-import { type FC, useCallback, useMemo, useState } from 'react';
+import {
+  type FC,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTicketsData } from '../hooks/useTickets';
 import {
   useBulkDeleteTickets,
@@ -33,6 +40,7 @@ import { NewTicketModal } from './NewTicketModal';
 import { TicketFilters } from './TicketFilters';
 import { createTicketColumns } from './ticket-grid-columns';
 
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
@@ -57,11 +65,62 @@ export const TicketGrid: FC = () => {
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
-  );
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const mobileSidebarState = useOverlayState();
+
+  /*
+   * Locks this page to the visible viewport so it never scrolls as a whole.
+   *
+   * This has to be measured rather than expressed in CSS. Nothing above this
+   * component has a height: the chain is html > body > div#root >
+   * div.flex.flex-1, and every one of those is a plain block box sized by its
+   * content. So `h-full` resolves to auto and `flex-1` has no free space to
+   * distribute — a tall sidebar simply grows the page. (The theme ships a
+   * [data-overlay-container] rule with min-height:100dvh that would have given
+   * us a floor, but that element is not rendered in this app — verified by
+   * walking the live ancestor chain, not assumed.)
+   *
+   * `100dvh - <our distance from the top>` is not expressible in CSS either,
+   * and hardcoding the navbar height is what the workflow and automation
+   * editors were explicitly changed away from (see their REVIEW comments) —
+   * it broke the moment the navbar's height changed. Measuring is exact in
+   * both the standalone and shell-embedded layouts.
+   *
+   * The ResizeObserver on <body> is what makes it self-correcting: the navbar
+   * mounts lazily via Suspense, which shifts our top edge down, and that
+   * changes body's height, which re-triggers the measurement. The 1px
+   * threshold stops the observer feeding back into itself forever.
+   */
+  const gridRootRef = useRef<HTMLDivElement>(null);
+  const [gridHeight, setGridHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    const el = gridRootRef.current;
+    if (!el) return undefined;
+
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        // scrollY keeps this correct even if the page is scrolled when we run.
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        const next = Math.max(320, Math.round(window.innerHeight - top));
+        setGridHeight(prev =>
+          prev !== undefined && Math.abs(prev - next) <= 1 ? prev : next,
+        );
+      });
+    };
+
+    measure();
+    window.addEventListener('resize', measure);
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', measure);
+      observer.disconnect();
+    };
+  }, []);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTab = (() => {
@@ -91,6 +150,18 @@ export const TicketGrid: FC = () => {
     refetch,
   } = useTicketsData();
 
+  /*
+   * The sidebar's highlight is DERIVED from `filters`, not stored alongside it.
+   *
+   * These used to be their own useState, which meant "Clear Filters" could wipe
+   * `filters` while the sidebar went on highlighting a category and the tag
+   * chips stayed lit — two sources of truth for one piece of state. Deriving
+   * them makes that desync unrepresentable: clearing the filters returns the
+   * sidebar to "All categories" on its own, with nothing left to keep in sync.
+   */
+  const selectedCategoryId = filters.categoryId?.[0] ?? null;
+  const selectedTags = useMemo(() => filters.tagIds ?? [], [filters.tagIds]);
+
   // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
   useRealtimeTickets();
 
@@ -100,16 +171,43 @@ export const TicketGrid: FC = () => {
   const allUserIds = [...assigneeIds, ...requesterIds];
   const { userMap, isLoading: isLoadingUsers } = useUserEnrichment(allUserIds);
 
+  /*
+   * Resolve the Category column's label.
+   *
+   * /v1/tickets returns `categoryId` but no `categoryName` — TicketListDto
+   * documents `categoryName` as "a UI-only enrichment field", but nothing ever
+   * populated it, so every row rendered the "—" fallback even though all the
+   * tickets are categorised. This fills it in the same way assignee and
+   * requester names are already enriched above.
+   *
+   * No extra request: TicketSidebar on this page already fetches this hook's
+   * ['helpdesk-categories'] query, so this reads the same React Query cache.
+   *
+   * Deliberately NOT filtered by isActive — a ticket filed under a category
+   * that was later deactivated still needs its name shown.
+   */
+  const { categories } = useCategoriesData();
+  const categoryNameById = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const category of categories) {
+      if (category.id) byId.set(category.id, category.name);
+    }
+    return byId;
+  }, [categories]);
+
   const enrichedItems: TicketRow[] = useMemo(
     () =>
       items.map(ticket => ({
         ...ticket,
+        categoryName: ticket.categoryId
+          ? categoryNameById.get(ticket.categoryId)
+          : undefined,
         assigneeUserInfo: ticket.assigneeId ? userMap[ticket.assigneeId] : null,
         requesterUserInfo: ticket.requesterId
           ? userMap[ticket.requesterId]
           : null,
       })),
-    [items, userMap],
+    [items, userMap, categoryNameById],
   );
 
   const updateTicketMutation = useUpdateTicket();
@@ -161,6 +259,137 @@ export const TicketGrid: FC = () => {
     searchTerm,
     onPaginationChange: setPagination,
   });
+
+  /*
+   * Shed columns, least load-bearing first, when the grid is too narrow to hold
+   * them all.
+   *
+   * The grid is `table-layout: fixed` and the column `size` values behave as a
+   * MINIMUM total (1208px with every column in). Wider than that, columns scale
+   * up and nothing scrolls; narrower, the shortfall becomes horizontal scroll
+   * no matter how the widths are shuffled — so something has to give.
+   *
+   * Order, and why:
+   *   Requester — Assignee is what agents triage by, and Requester is on the
+   *               ticket itself.
+   *   ID        — Subject is already the link; a truncated GUID is rarely what
+   *               anyone scans for.
+   *   Updated   — the last to go and the first to come back, since Created
+   *               answers "how old is this?" on its own.
+   *
+   * The thresholds ARE the running totals, so each one is the width at which
+   * that column's own budget stops fitting:
+   *   1208 everything · 1076 without Requester · 1006 also without ID ·
+   *   906 also without Updated.
+   *
+   * Below ~906px — a 1280 screen with the left nav expanded — it still scrolls
+   * sideways. Shedding a fourth column would start costing information people
+   * actually use.
+   */
+  useLayoutEffect(() => {
+    const el = tableAreaRef.current;
+    if (!el) return undefined;
+
+    const apply = () => {
+      const width = el.clientWidth;
+      table.setColumnVisibility({
+        requester: width >= 1208,
+        id: width >= 1076,
+        updatedAt: width >= 1006,
+      });
+    };
+
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [table]);
+
+  /*
+   * Trim the scroll region so it ends on a row boundary instead of slicing the
+   * next row in half.
+   *
+   * The region's height comes from `flex-1`, so it lands wherever the layout
+   * puts it, leaving a sliver of the following row visible under the last full
+   * one. Row heights vary (Subject and Category wrap), so there is no row-height
+   * multiple to snap to in CSS; it has to be measured.
+   *
+   * Three things this has to get right, each of which broke a previous attempt:
+   *
+   * 1. Measure from RECTS, not offsetTop. A <tr>'s offsetParent is the <table>,
+   *    so offsetTop excludes the <thead> and every row reads a header-height too
+   *    high — the "last row that fits" was really 38px past the edge.
+   * 2. Release the previous cap BEFORE measuring. Reading a wrapper already
+   *    capped by the last pass means the value can only ever shrink, so it
+   *    ratcheted down a row at a time and never grew back on a taller window.
+   * 3. Observe the PARENT, not the wrapper. Observing the element we resize is
+   *    a feedback loop; the parent's height is fixed by the page-height chain
+   *    above and is unaffected by this cap, while still changing on window and
+   *    nav resize, which is exactly when a re-snap is needed.
+   *
+   * Applied imperatively rather than through state: the measurement has to
+   * clear and re-apply the value within a single frame, which a render cycle
+   * cannot do without flashing the untrimmed height.
+   */
+  const tableAreaRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const wrapper = tableAreaRef.current;
+    const parent = wrapper?.parentElement;
+    if (!wrapper || !parent) return undefined;
+
+    let frame = 0;
+    const snapToRow = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        // Release any previous cap so this measures the natural height.
+        wrapper.style.maxHeight = '';
+
+        const scroller = wrapper.querySelector<HTMLElement>(
+          '[class*="overflow-auto"]',
+        );
+        const rows = wrapper.querySelectorAll<HTMLElement>('tbody tr');
+        if (!scroller || rows.length === 0) return;
+
+        const style = getComputedStyle(scroller);
+        const scrollerRect = scroller.getBoundingClientRect();
+        const contentTop =
+          scrollerRect.top +
+          Number.parseFloat(style.borderTopWidth) +
+          Number.parseFloat(style.paddingTop);
+
+        const available = scroller.clientHeight;
+        let used = 0;
+        // Indexed loop: NodeList is not iterable under this tsconfig.
+        for (let i = 0; i < rows.length; i++) {
+          const bottom =
+            rows[i].getBoundingClientRect().bottom -
+            contentTop +
+            scroller.scrollTop;
+          // Half-pixel tolerance: rects are sub-pixel and an exact `>` drops a
+          // row that does in fact fit.
+          if (bottom > available + 0.5) break;
+          used = bottom;
+        }
+
+        // Nothing worth trimming, or not even one row fits — leave it alone.
+        const leftover = available - used;
+        if (used === 0 || leftover <= 1) return;
+
+        // Ceil so the last fitting row still fits after the cap is applied.
+        wrapper.style.maxHeight = `${Math.ceil(wrapper.clientHeight - leftover)}px`;
+      });
+    };
+
+    snapToRow();
+    const observer = new ResizeObserver(snapToRow);
+    observer.observe(parent);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+    // Re-snap when the rows themselves change (new page, page size, filter).
+  }, [enrichedItems, pagination.pageSize]);
 
   const paginationTemplate = useCallback(() => {
     const totalPages = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
@@ -250,44 +479,46 @@ export const TicketGrid: FC = () => {
     });
   }, [selectedRows, confirm, bulkDeleteMutation, table]);
 
+  /*
+   * Functional update, not `{ ...filters, ... }`.
+   *
+   * "Clear Filters" calls onFiltersChange({}) and then onSearch(''). Both ran
+   * in the same batch, and this one rebuilt from the `filters` value captured
+   * when the callback was created — so it put every filter that had just been
+   * cleared straight back, and Clear Filters did nothing at all. Reading from
+   * `prev` makes the two calls compose instead of race.
+   */
   const handleSearch = useCallback(
     (term: string) => {
       setSearchTerm(term);
-      setFilters({ ...filters, searchTerm: term });
+      setFilters(prev => ({ ...prev, searchTerm: term }));
     },
-    [filters, setFilters],
+    [setFilters],
   );
 
   const handleCategorySelect = useCallback(
     (categoryId: string | null) => {
-      setSelectedCategoryId(categoryId);
-      setFilters({
-        ...filters,
+      setFilters(prev => ({
+        ...prev,
         categoryId: categoryId ? [categoryId] : undefined,
-      });
+      }));
       // Close mobile drawer after selecting a category
       mobileSidebarState.close();
     },
-    [filters, setFilters, mobileSidebarState],
+    [setFilters, mobileSidebarState],
   );
 
   const handleTagSelect = useCallback(
     (tagId: string) => {
-      setSelectedTags(prev => {
-        const newTags = prev.includes(tagId)
-          ? prev.filter(t => t !== tagId)
-          : [...prev, tagId];
-
-        // Update filters with tag IDs
-        setFilters({
-          ...filters,
-          tagIds: newTags.length > 0 ? newTags : undefined,
-        });
-
-        return newTags;
+      setFilters(prev => {
+        const current = prev.tagIds ?? [];
+        const newTags = current.includes(tagId)
+          ? current.filter(t => t !== tagId)
+          : [...current, tagId];
+        return { ...prev, tagIds: newTags.length > 0 ? newTags : undefined };
       });
     },
-    [filters, setFilters],
+    [setFilters],
   );
 
   const handleTabChange = useCallback(
@@ -356,12 +587,34 @@ export const TicketGrid: FC = () => {
     onCategorySelect: handleCategorySelect,
     onTagSelect: handleTagSelect,
     selectedTags,
+    // Lets the sidebar highlight the active category and show "All categories"
+    // as selected when no filter is applied.
+    selectedCategoryId,
   };
 
   return (
-    <div className="flex h-full gap-0">
+    <div
+      ref={gridRootRef}
+      style={{ height: gridHeight }}
+      // No `flex-1` here on purpose: `flex: 1 1 0%` makes the flex algorithm
+      // resolve this item's main size and overrides the measured `height`
+      // above, so the row grew right back to its content. `shrink-0` keeps the
+      // measured height authoritative.
+      className="flex min-h-0 shrink-0 gap-0 overflow-hidden"
+    >
       {/* Desktop sidebar — always visible, hidden on mobile */}
-      <aside className="border-light bg-default-50 hidden h-full w-64 flex-shrink-0 flex-col border-r md:flex">
+      {/*
+        No height of its own — it stretches to the row, which is now sized by the
+        flex chain above. An earlier attempt used `h-screen self-start`, but the
+        row starts BELOW the top navbar, so a 100vh sidebar hung roughly a
+        navbar-height past the bottom of the viewport: that alone made the page
+        scrollable and stretched the ticket column, which then rendered one extra
+        row.
+
+        `min-h-0` + `overflow-hidden` keep the category list from pushing the row
+        taller; the scroll region inside TicketSidebar absorbs it instead.
+      */}
+      <aside className="border-light bg-default-50 hidden min-h-0 w-64 flex-shrink-0 flex-col overflow-hidden border-r md:flex">
         <TicketSidebar {...sidebarProps} />
       </aside>
 
@@ -382,7 +635,7 @@ export const TicketGrid: FC = () => {
       </DrawerRoot>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-auto px-4 pt-4 md:px-6 md:pt-6">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto px-4 py-4 md:px-6 md:py-6">
         <div className="shrink-0">
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
@@ -486,13 +739,28 @@ export const TicketGrid: FC = () => {
         </div>
 
         {/* Table */}
-        <div className="flex flex-1 flex-col">
+        {/* min-h-0 lets BaseTable's own scroll region take the overflow. Without
+            it this flex child sizes to its content and the page scrolls instead. */}
+        <div ref={tableAreaRef} className="flex min-h-0 flex-1 flex-col">
+          {/*
+            pageSizeOptions + onPageSizeChange together are what render the
+            "per page" dropdown (BaseTable derives showPageSizeSelector from
+            both being present). It sits bottom-right, opposite the page
+            numbers, matching the asset list.
+
+            pageIndex resets to 0 on change: at 25/page you can be on page 81,
+            which does not exist at 100/page, and the grid would come back empty.
+          */}
           <BaseTable
             table={table}
             fullHeight
             isLoading={isLoading || isLoadingUsers}
             showInfo={false}
             paginationTemplate={paginationTemplate}
+            pageSizeOptions={[10, 25, 50, 100]}
+            onPageSizeChange={size =>
+              setPagination({ pageIndex: 0, pageSize: size })
+            }
           />
         </div>
 

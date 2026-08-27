@@ -29,9 +29,7 @@
   },
   "packageManager": "pnpm@9.15.0",
   "lint-staged": {
-    "*.{jsonc}": [
-      "biome check --files-ignore-unknown=true"
-    ]
+    "*.{jsonc}": ["biome check --files-ignore-unknown=true"]
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"

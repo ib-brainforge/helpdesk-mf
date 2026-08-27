@@ -19,6 +19,77 @@ import type { TicketRow } from '../types';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
+/** One day in seconds — the cutoff between relative and absolute display. */
+const RELATIVE_CUTOFF_SECONDS = 24 * 60 * 60;
+
+/**
+ * Renders one timestamp: an age for the first 24 hours, an absolute date after.
+ *
+ * Within a day "20m ago" answers the question directly, whereas a clock time
+ * makes you work out the difference yourself. Past 24 hours the age stops being
+ * useful ("37h ago" is not meaningfully easier than a date) and the calendar
+ * date is what people actually reference, so it switches over.
+ *
+ * The exact timestamp is always available via the title attribute, including
+ * during the relative window, so nothing is hidden.
+ *
+ * Anything unparseable, or dated in the future (clock skew), falls back to the
+ * absolute format rather than rendering a nonsensical age.
+ */
+const formatAge = (
+  date: string | Date | null | undefined,
+  timezone?: string | null,
+) => {
+  const absolute = formatDateTime(date, { timezone });
+  const parsed = date ? new Date(date) : null;
+
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return { label: absolute, absolute };
+  }
+
+  const seconds = Math.floor((Date.now() - parsed.getTime()) / 1000);
+
+  if (seconds < 0 || seconds >= RELATIVE_CUTOFF_SECONDS) {
+    return { label: absolute, absolute };
+  }
+
+  const label =
+    seconds < 60
+      ? 'just now'
+      : seconds < 3600
+        ? `${Math.floor(seconds / 60)}m ago`
+        : `${Math.floor(seconds / 3600)}h ago`;
+
+  return { label, absolute };
+};
+
+/**
+ * One timestamp, in its own column.
+ *
+ * An earlier attempt stacked Created and Updated in a single cell to save
+ * width. It read as two identical unlabelled times ("20h ago" over "20h ago")
+ * with only the shared "Created / Updated" header to tell you which was which
+ * — compact, but a puzzle. A column header sitting directly above its value is
+ * what anyone expects of a table and needs no decoding, so the width is spent
+ * and the narrow-window rules in TicketGrid give it back.
+ */
+const TimeCell = ({
+  date,
+  timezone,
+}: {
+  date: string | Date | null | undefined;
+  // Matches createTicketColumns' options.timezone, which is nullable.
+  timezone?: string | null;
+}) => {
+  if (!date) return <span className="text-default-400 text-sm">—</span>;
+  const { label, absolute } = formatAge(date, timezone);
+  return (
+    <span title={absolute} className="text-sm">
+      {label}
+    </span>
+  );
+};
+
 // Helper functions for status and priority display
 const getStatusConfig = (status: TicketStatus) => {
   switch (status) {
@@ -81,7 +152,7 @@ export const createTicketColumns = (
     ),
     enableSorting: false,
     enableHiding: false,
-    size: 50,
+    size: 44,
   }),
   columnHelper.accessor('id', {
     header: 'ID',
@@ -91,7 +162,7 @@ export const createTicketColumns = (
       const shortId = value?.substring(0, 8) ?? '—';
       return <span className="font-mono text-xs">{shortId}</span>;
     },
-    size: 100,
+    size: 70,
   }),
   columnHelper.accessor('subject', {
     header: 'Subject',
@@ -115,7 +186,7 @@ export const createTicketColumns = (
         </div>
       );
     },
-    size: 300,
+    size: 260,
   }),
   columnHelper.accessor('status', {
     header: 'Status',
@@ -124,7 +195,7 @@ export const createTicketColumns = (
       const config = getStatusConfig(status);
       return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
-    size: 120,
+    size: 104,
   }),
   columnHelper.accessor('priority', {
     header: 'Priority',
@@ -133,12 +204,12 @@ export const createTicketColumns = (
       const config = getPriorityConfig(priority);
       return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
-    size: 120,
+    size: 96,
   }),
   columnHelper.accessor('categoryName', {
     header: 'Category',
     cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
-    size: 150,
+    size: 110,
   }),
   columnHelper.display({
     id: 'assignee',
@@ -157,7 +228,7 @@ export const createTicketColumns = (
         />
       );
     },
-    size: 200,
+    size: 132,
   }),
   columnHelper.display({
     id: 'requester',
@@ -174,31 +245,21 @@ export const createTicketColumns = (
         />
       );
     },
-    size: 200,
+    size: 132,
   }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
-    cell: ({ getValue }) => {
-      const date = getValue();
-      return (
-        <span className="text-sm">
-          {formatDateTime(date, { timezone: options.timezone })}
-        </span>
-      );
-    },
-    size: 120,
+    cell: ({ getValue }) => (
+      <TimeCell date={getValue()} timezone={options.timezone} />
+    ),
+    size: 100,
   }),
   columnHelper.accessor('updatedAt', {
     header: 'Updated',
-    cell: ({ getValue }) => {
-      const date = getValue();
-      return (
-        <span className="text-sm">
-          {formatDateTime(date, { timezone: options.timezone })}
-        </span>
-      );
-    },
-    size: 120,
+    cell: ({ getValue }) => (
+      <TimeCell date={getValue()} timezone={options.timezone} />
+    ),
+    size: 100,
   }),
   columnHelper.display({
     id: 'actions',
@@ -210,13 +271,32 @@ export const createTicketColumns = (
       >
         <Dropdown>
           <DropdownTrigger>
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-foreground hover:text-blue"
+            {/*
+              The icon must be a CHILD with isIconOnly, not the `icon` prop.
+              `icon` is a LEADING-icon slot intended to sit beside children; with
+              no children and size="none" the button collapsed to zero size, so
+              the glyph had nowhere to render and every row's Actions cell looked
+              empty (only the focus ring on the focused row gave it away).
+              This matches the working call sites in the knowledge-base pages.
+            */}
+            {/*
+              A plain <button>, not BaseButton.
+              BaseButton's variant styles kept fighting any className passed in:
+              "link" rendered nothing at all, and "light" resolved its own text
+              colour which beat the override, leaving a white glyph on a white
+              row that only appeared on hover. Three attempts at winning that
+              specificity battle all regressed.
+              This mirrors the sidebar's close button — the same plain-button +
+              Icon pattern that renders reliably elsewhere in this codebase — so
+              the colour is stated once, here, with nothing competing.
+            */}
+            <button
+              type="button"
               aria-label="Quick actions"
-              icon={<Icon name="dotsV" className="h-4 w-4" />}
-            />
+              className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
+            >
+              <Icon name="dotsV" className="h-4 w-4" />
+            </button>
           </DropdownTrigger>
           <DropdownPopover className="helpdesk-dropdown-popover">
             <DropdownMenu aria-label="Ticket actions">
@@ -307,6 +387,6 @@ export const createTicketColumns = (
     ),
     enableSorting: false,
     enableHiding: false,
-    size: 80,
+    size: 60,
   }),
 ];
