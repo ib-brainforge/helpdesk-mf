@@ -15,8 +15,8 @@ import {
 import {
   CHART_COLORS,
   CHART_GRID,
-  gradientStops,
   axisProps,
+  gradientStops,
   tooltipProps,
 } from './chartTheme';
 

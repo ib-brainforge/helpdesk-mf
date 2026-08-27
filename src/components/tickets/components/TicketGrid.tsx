@@ -345,8 +345,9 @@ export const TicketGrid: FC = () => {
         // Release any previous cap so this measures the natural height.
         wrapper.style.maxHeight = '';
 
-        const scroller =
-          wrapper.querySelector<HTMLElement>('[class*="overflow-auto"]');
+        const scroller = wrapper.querySelector<HTMLElement>(
+          '[class*="overflow-auto"]',
+        );
         const rows = wrapper.querySelectorAll<HTMLElement>('tbody tr');
         if (!scroller || rows.length === 0) return;
 
@@ -757,7 +758,9 @@ export const TicketGrid: FC = () => {
             showInfo={false}
             paginationTemplate={paginationTemplate}
             pageSizeOptions={[10, 25, 50, 100]}
-            onPageSizeChange={size => setPagination({ pageIndex: 0, pageSize: size })}
+            onPageSizeChange={size =>
+              setPagination({ pageIndex: 0, pageSize: size })
+            }
           />
         </div>
 

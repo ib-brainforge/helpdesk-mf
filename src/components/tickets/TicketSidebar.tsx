@@ -229,53 +229,52 @@ export function TicketSidebar({
           long category list never pushes the page itself into a scrollbar. The
           mobile close button above stays pinned. */}
       <div className="min-h-0 flex-1 overflow-y-auto px-4">
-
-      {/* Categories Section */}
-      <div className="mb-6">
-        {/*
+        {/* Categories Section */}
+        <div className="mb-6">
+          {/*
           "All categories" replaces the old static heading + separate "Clear"
           link. It does the same job as Clear, but as the first row of the list
           it reads as part of the filter rather than a disconnected action, and
           it shows the unfiltered state as a real selection instead of leaving
           nothing highlighted.
         */}
-        <button
-          type="button"
-          onClick={() => onCategorySelect?.(null)}
-          aria-pressed={!selectedCategoryId}
-          className={`mb-1 flex w-full items-center rounded-md py-1.5 pr-2 text-left text-sm transition-colors ${
-            selectedCategoryId
-              ? 'text-default-700 hover:bg-default-100'
-              : 'bg-lighter-blue text-blue font-medium'
-          }`}
-        >
-          <span className="w-5 flex-shrink-0" aria-hidden="true" />
-          All categories
-        </button>
+          <button
+            type="button"
+            onClick={() => onCategorySelect?.(null)}
+            aria-pressed={!selectedCategoryId}
+            className={`mb-1 flex w-full items-center rounded-md py-1.5 pr-2 text-left text-sm transition-colors ${
+              selectedCategoryId
+                ? 'text-default-700 hover:bg-default-100'
+                : 'bg-lighter-blue text-blue font-medium'
+            }`}
+          >
+            <span className="w-5 flex-shrink-0" aria-hidden="true" />
+            All categories
+          </button>
 
-        {isLoadingCategories ? (
-          <div className="flex justify-center py-4">
-            <Spinner size="sm" />
-          </div>
-        ) : (
-          <CategoryTree
-            categories={categoryTree}
-            onSelect={onCategorySelect || (() => {})}
-            selectedId={selectedCategoryId}
-          />
-        )}
-      </div>
+          {isLoadingCategories ? (
+            <div className="flex justify-center py-4">
+              <Spinner size="sm" />
+            </div>
+          ) : (
+            <CategoryTree
+              categories={categoryTree}
+              onSelect={onCategorySelect || (() => {})}
+              selectedId={selectedCategoryId}
+            />
+          )}
+        </div>
 
-      {/* Tags Section */}
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-default-700">Tags</h3>
-        {isLoadingTags ? (
-          <div className="flex justify-center py-4">
-            <Spinner size="sm" />
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {/*
+        {/* Tags Section */}
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-default-700">Tags</h3>
+          {isLoadingTags ? (
+            <div className="flex justify-center py-4">
+              <Spinner size="sm" />
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {/*
               Tags now use the app's primary blue instead of each tag's stored
               `tag.color`. Those per-tag colours are arbitrary (the seed data
               renders them red/orange), which made a filter control look like a
@@ -286,35 +285,35 @@ export function TicketSidebar({
               tag.color is untouched in the data — this only changes how the
               filter chips render.
             */}
-            {tags.slice(0, 10).map(tag => {
-              const isSelected = selectedTags.includes(tag.id!);
-              return (
-                <Chip
-                  key={tag.id}
-                  size="sm"
-                  // variant/color pinned to a neutral outline for both states so
-                  // the component does not inject its own palette; the exact
-                  // colours come from the className below.
-                  variant="tertiary"
-                  color="default"
-                  aria-pressed={isSelected}
-                  // `blue` is the theme's --color-blue (#1868db) — the same blue
-                  // as the New Ticket button. The earlier attempt used `primary`,
-                  // which maps to a different token and rendered off-colour.
-                  className={`cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-blue border-blue text-white'
-                      : 'border-light-blue text-blue hover:bg-lighter-blue bg-transparent'
-                  }`}
-                  onClick={() => onTagSelect?.(tag.id!)}
-                >
-                  {tag.name}
-                </Chip>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              {tags.slice(0, 10).map(tag => {
+                const isSelected = selectedTags.includes(tag.id!);
+                return (
+                  <Chip
+                    key={tag.id}
+                    size="sm"
+                    // variant/color pinned to a neutral outline for both states so
+                    // the component does not inject its own palette; the exact
+                    // colours come from the className below.
+                    variant="tertiary"
+                    color="default"
+                    aria-pressed={isSelected}
+                    // `blue` is the theme's --color-blue (#1868db) — the same blue
+                    // as the New Ticket button. The earlier attempt used `primary`,
+                    // which maps to a different token and rendered off-colour.
+                    className={`cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-blue border-blue text-white'
+                        : 'border-light-blue text-blue hover:bg-lighter-blue bg-transparent'
+                    }`}
+                    onClick={() => onTagSelect?.(tag.id!)}
+                  >
+                    {tag.name}
+                  </Chip>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
