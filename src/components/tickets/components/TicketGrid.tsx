@@ -27,6 +27,10 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  type TicketTabKey,
+  useTicketTabCounts,
+} from '../hooks/useTicketTabCounts';
 import { useTicketsData } from '../hooks/useTickets';
 import {
   useBulkDeleteTickets,
@@ -42,6 +46,7 @@ import { createTicketColumns } from './ticket-grid-columns';
 
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import type { TicketFilters as TicketFiltersType } from '@/types/ticket';
 import { useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
 import { TicketSidebar } from '../TicketSidebar';
@@ -58,6 +63,49 @@ const TICKET_VALID_TABS = new Set([
   'all',
 ]);
 const TICKET_DEFAULT_TAB = 'unanswered';
+
+/**
+ * The filters a tab means. Pure, and the single definition of each tab.
+ *
+ * Previously this lived inside handleTabChange, which only runs on click. The
+ * tab itself is read from the URL, so opening /tickets?tab=overdue (or any
+ * bookmark, or the default landing view) highlighted the right tab while the
+ * list stayed unfiltered underneath it. Hoisting it lets the same mapping seed
+ * the first fetch.
+ *
+ * `base` carries the filters the sidebar and filter bar own. Tab-specific
+ * fields (status, assigneeId, unassignedOnly, overdueOnly) are always rebuilt
+ * from scratch so a previous tab's flags cannot leak into the next one.
+ */
+const filtersForTab = (
+  tabKey: string,
+  base: TicketFiltersType,
+  currentUserId?: string,
+): TicketFiltersType => {
+  switch (tabKey) {
+    case 'unanswered':
+      // Backend has no "unanswered" status; New is the closest proxy.
+      return { ...base, status: [TicketStatus.New] };
+    case 'unclosed':
+      return {
+        ...base,
+        status: [TicketStatus.New, TicketStatus.InProgress],
+      };
+    case 'unassigned':
+      // The dedicated unassignedOnly param; a magic assigneeId string is not
+      // recognised by the endpoint.
+      return { ...base, unassignedOnly: true };
+    case 'overdue':
+      return { ...base, overdueOnly: true };
+    case 'assigned-to-you':
+      return {
+        ...base,
+        assigneeId: currentUserId ? [currentUserId] : undefined,
+      };
+    default:
+      return { ...base };
+  }
+};
 
 export const TicketGrid: FC = () => {
   const navigate = useNavigate();
@@ -148,7 +196,19 @@ export const TicketGrid: FC = () => {
     setFilters,
     isLoading,
     refetch,
-  } = useTicketsData();
+  } = useTicketsData(
+    // Seeded from the URL so the very first request matches the highlighted tab.
+    filtersForTab(
+      (() => {
+        const param = searchParams.get('tab');
+        return param && TICKET_VALID_TABS.has(param)
+          ? param
+          : TICKET_DEFAULT_TAB;
+      })(),
+      {},
+      user?.profile?.sub,
+    ),
+  );
 
   /*
    * The sidebar's highlight is DERIVED from `filters`, not stored alongside it.
@@ -246,9 +306,16 @@ export const TicketGrid: FC = () => {
         onAssign: handleAssign,
         onChangeStatus: handleChangeStatus,
         onChangePriority: handleChangePriority,
+        currentUserId,
         timezone,
       }),
-    [handleAssign, handleChangeStatus, handleChangePriority, timezone],
+    [
+      handleAssign,
+      handleChangeStatus,
+      handleChangePriority,
+      currentUserId,
+      timezone,
+    ],
   );
 
   const { table } = useTicketsTable({
@@ -270,16 +337,16 @@ export const TicketGrid: FC = () => {
    * no matter how the widths are shuffled — so something has to give.
    *
    * Order, and why:
-   *   Requester — Assignee is what agents triage by, and Requester is on the
-   *               ticket itself.
-   *   ID        — Subject is already the link; a truncated GUID is rarely what
-   *               anyone scans for.
+   *   ID        — goes first. It is eight characters of a GUID; Subject is
+   *               already the link to the ticket, so nobody scans for it.
+   *   Requester — next. Who asked is worth more than the id, which is why it
+   *               outranks it here, but Assignee is what agents triage by.
    *   Updated   — the last to go and the first to come back, since Created
    *               answers "how old is this?" on its own.
    *
    * The thresholds ARE the running totals, so each one is the width at which
    * that column's own budget stops fitting:
-   *   1208 everything · 1076 without Requester · 1006 also without ID ·
+   *   1208 everything · 1138 without ID · 1006 also without Requester ·
    *   906 also without Updated.
    *
    * Below ~906px — a 1280 screen with the left nav expanded — it still scrolls
@@ -293,8 +360,8 @@ export const TicketGrid: FC = () => {
     const apply = () => {
       const width = el.clientWidth;
       table.setColumnVisibility({
-        requester: width >= 1208,
-        id: width >= 1076,
+        id: width >= 1208,
+        requester: width >= 1138,
         updatedAt: width >= 1006,
       });
     };
@@ -390,6 +457,32 @@ export const TicketGrid: FC = () => {
     };
     // Re-snap when the rows themselves change (new page, page size, filter).
   }, [enrichedItems, pagination.pageSize]);
+
+  const { counts } = useTicketTabCounts(currentUserId);
+
+  /*
+   * Tab label with its count beside it.
+   *
+   * The badge is omitted entirely until the counts arrive, rather than showing
+   * a 0 or a spinner: a queue tab that reads "0" is a statement about the data,
+   * and it should never say that while it simply does not know yet.
+   */
+  const tabTitle = useCallback(
+    (label: string, key: TicketTabKey) => {
+      const count = counts?.[key];
+      return (
+        <span className="flex items-center gap-1.5">
+          {label}
+          {count !== undefined && (
+            <span className="bg-lighter-blue text-blue rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
+              {count}
+            </span>
+          )}
+        </span>
+      );
+    },
+    [counts],
+  );
 
   const paginationTemplate = useCallback(() => {
     const totalPages = Math.max(1, Math.ceil(totalCount / pagination.pageSize));
@@ -525,62 +618,22 @@ export const TicketGrid: FC = () => {
     (key: string | number) => {
       const tabKey = String(key);
       setSelectedTab(tabKey);
-
-      // Build a clean base from filters that the sidebar/filter-bar owns.
-      // Tab-specific fields (status, assigneeId, unassignedOnly, overdueOnly) are
-      // ALWAYS reset fresh per tab so stale flags never leak across tab switches.
-      // E.g. switching overdue → all must clear overdueOnly; unassigned → all must
-      // clear unassignedOnly.  Spreading the previous filters without resetting
-      // these fields caused every subsequent tab to inherit the previous tab's
-      // backend params and return an empty result.
-      const crossTabBase: typeof filters = {
-        searchTerm: filters.searchTerm,
-        categoryId: filters.categoryId,
-        tagIds: filters.tagIds,
-        priority: filters.priority,
-        customStatusId: filters.customStatusId,
-      };
-
-      let newFilters: typeof filters;
-
-      switch (tabKey) {
-        case 'unanswered':
-          // Backend doesn't have an "unanswered" status — New is the closest proxy.
-          newFilters = { ...crossTabBase, status: [TicketStatus.New] };
-          break;
-        case 'unclosed':
-          // Unclosed = everything that is not Closed.
-          newFilters = {
-            ...crossTabBase,
-            status: [TicketStatus.New, TicketStatus.InProgress],
-          };
-          break;
-        case 'unassigned':
-          // Use the dedicated unassignedOnly param; passing a magic string as
-          // assigneeId is not recognised by the backend endpoint.
-          newFilters = {
-            ...crossTabBase,
-            unassignedOnly: true,
-          };
-          break;
-        case 'overdue':
-          newFilters = { ...crossTabBase, overdueOnly: true };
-          break;
-        case 'assigned-to-you':
-          newFilters = {
-            ...crossTabBase,
-            assigneeId: currentUserId ? [currentUserId] : undefined,
-          };
-          break;
-        case 'all':
-        default:
-          newFilters = { ...crossTabBase };
-          break;
-      }
-
-      setFilters(newFilters);
+      setFilters(prev =>
+        filtersForTab(
+          tabKey,
+          // Carry over only what the sidebar and filter bar own.
+          {
+            searchTerm: prev.searchTerm,
+            categoryId: prev.categoryId,
+            tagIds: prev.tagIds,
+            priority: prev.priority,
+            customStatusId: prev.customStatusId,
+          },
+          currentUserId,
+        ),
+      );
     },
-    [filters, setFilters, currentUserId, setSelectedTab],
+    [setFilters, currentUserId, setSelectedTab],
   );
 
   const sidebarProps = {
@@ -671,12 +724,24 @@ export const TicketGrid: FC = () => {
               onSelectionChange={handleTabChange}
               classNames={{ tabList: 'mb-5', panel: 'empty:hidden' }}
             >
-              <BaseTab key="unanswered" title="Unanswered" />
-              <BaseTab key="unclosed" title="Unclosed" />
-              <BaseTab key="unassigned" title="Unassigned" />
-              <BaseTab key="overdue" title="Overdue" />
-              <BaseTab key="assigned-to-you" title="Assigned to you" />
-              <BaseTab key="all" title="All" />
+              <BaseTab
+                key="unanswered"
+                title={tabTitle('Unanswered', 'unanswered')}
+              />
+              <BaseTab
+                key="unclosed"
+                title={tabTitle('Unclosed', 'unclosed')}
+              />
+              <BaseTab
+                key="unassigned"
+                title={tabTitle('Unassigned', 'unassigned')}
+              />
+              <BaseTab key="overdue" title={tabTitle('Overdue', 'overdue')} />
+              <BaseTab
+                key="assigned-to-you"
+                title={tabTitle('Assigned to you', 'assigned-to-you')}
+              />
+              <BaseTab key="all" title={tabTitle('All', 'all')} />
             </BaseTabs>
             {/* Filters */}
             <TicketFilters

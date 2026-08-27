@@ -15,7 +15,10 @@ import {
 import { NavLink } from '@modern-js/runtime/router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
+import { getPriorityConfig } from '../ticket-priority-config';
+import { getStatusConfig } from '../ticket-status-config';
 import type { TicketRow } from '../types';
+import { QuickAssignCell } from './QuickAssignCell';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
@@ -76,53 +79,48 @@ const formatAge = (
 const TimeCell = ({
   date,
   timezone,
+  isOverdue = false,
 }: {
   date: string | Date | null | undefined;
   // Matches createTicketColumns' options.timezone, which is nullable.
   timezone?: string | null;
+  /** Marks the ticket as past its due date and still open. */
+  isOverdue?: boolean;
 }) => {
   if (!date) return <span className="text-default-400 text-sm">—</span>;
   const { label, absolute } = formatAge(date, timezone);
   return (
-    <span title={absolute} className="text-sm">
+    <span
+      title={isOverdue ? `${absolute} — overdue` : absolute}
+      className={`text-sm ${isOverdue ? 'text-red-dark font-semibold' : ''}`}
+    >
       {label}
     </span>
   );
 };
 
-// Helper functions for status and priority display
-const getStatusConfig = (status: TicketStatus) => {
-  switch (status) {
-    case TicketStatus.New:
-      return { label: 'New', color: 'primary' as const };
-    case TicketStatus.InProgress:
-      return { label: 'In Progress', color: 'warning' as const };
-    case TicketStatus.Closed:
-      return { label: 'Closed', color: 'success' as const };
-    default:
-      return { label: 'Unknown', color: 'default' as const };
-  }
-};
+/**
+ * Past its due date and not yet closed.
+ *
+ * Reads dueDate rather than measuring the ticket's age, so it agrees with the
+ * backend: the Overdue tab, the Overdue report and the OverdueCondition
+ * automation trigger all key off the same field. Computing an age here instead
+ * would have produced a second, competing definition of overdue that silently
+ * disagreed with the tab claiming to list them.
+ *
+ * A closed ticket is never overdue, however late it was.
+ */
+const isTicketOverdue = (row: TicketRow) =>
+  !!row.dueDate &&
+  row.status !== TicketStatus.Closed &&
+  new Date(row.dueDate).getTime() < Date.now();
 
-const getPriorityConfig = (priority: TicketPriority) => {
-  switch (priority) {
-    case TicketPriority.Critical:
-      return { label: 'Critical', color: 'danger' as const };
-    case TicketPriority.High:
-      return { label: 'High', color: 'warning' as const };
-    case TicketPriority.Normal:
-      return { label: 'Normal', color: 'primary' as const };
-    case TicketPriority.Low:
-      return { label: 'Low', color: 'default' as const };
-    case TicketPriority.None:
-      return { label: 'None', color: 'default' as const };
-    default:
-      return { label: 'Unknown', color: 'default' as const };
-  }
-};
+// Helper functions for status and priority display
 
 interface CreateColumnsOptions {
   onAssign?: (ticketId: string, assigneeId: string) => void;
+  /** Signed in user, so the assignee cell can offer "Assign to me" first. */
+  currentUserId?: string;
   onChangeStatus?: (ticketId: string, status: TicketStatus) => void;
   onChangePriority?: (ticketId: string, priority: TicketPriority) => void;
   timezone?: string | null;
@@ -186,7 +184,7 @@ export const createTicketColumns = (
         </div>
       );
     },
-    size: 260,
+    size: 230,
   }),
   columnHelper.accessor('status', {
     header: 'Status',
@@ -209,7 +207,7 @@ export const createTicketColumns = (
   columnHelper.accessor('categoryName', {
     header: 'Category',
     cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
-    size: 110,
+    size: 100,
   }),
   columnHelper.display({
     id: 'assignee',
@@ -217,18 +215,26 @@ export const createTicketColumns = (
     cell: ({ row }) => {
       const { assigneeUserInfo, assigneeName } = row.original;
       if (!row.original.assigneeId) {
-        return (
+        // "Unassigned" was a dead label sitting exactly where someone would
+        // click to fix it. It is now the assign control itself.
+        return options.onAssign && row.original.id ? (
+          <QuickAssignCell
+            ticketId={row.original.id}
+            currentUserId={options.currentUserId}
+            onAssign={options.onAssign}
+          />
+        ) : (
           <span className="text-sm text-muted-foreground">Unassigned</span>
         );
       }
+      // No 'Assigned' literal: the API returns assigneeName null whenever the
+      // id cannot be resolved, and passing a stand-in made a lookup failure
+      // render as a person's name. UserCell states it plainly instead.
       return (
-        <UserCell
-          userInfo={assigneeUserInfo}
-          fallbackName={assigneeName ?? 'Assigned'}
-        />
+        <UserCell userInfo={assigneeUserInfo} fallbackName={assigneeName} />
       );
     },
-    size: 132,
+    size: 152,
   }),
   columnHelper.display({
     id: 'requester',
@@ -239,18 +245,19 @@ export const createTicketColumns = (
         return <span className="text-sm text-muted-foreground">—</span>;
       }
       return (
-        <UserCell
-          userInfo={requesterUserInfo}
-          fallbackName={requesterName ?? 'Unknown'}
-        />
+        <UserCell userInfo={requesterUserInfo} fallbackName={requesterName} />
       );
     },
-    size: 132,
+    size: 152,
   }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
-    cell: ({ getValue }) => (
-      <TimeCell date={getValue()} timezone={options.timezone} />
+    cell: ({ getValue, row }) => (
+      <TimeCell
+        date={getValue()}
+        timezone={options.timezone}
+        isOverdue={isTicketOverdue(row.original)}
+      />
     ),
     size: 100,
   }),

@@ -39,30 +39,40 @@ export const useUserEnrichment = (
     queryFn: async () => {
       const client = await createIdentityApiClient(UsersApi);
 
-      // Fetch users one by one (like useAssetEnrichment)
-      const results = await Promise.all(
-        uniqueIds.map(async id => {
-          try {
-            const { data } = await client.v1UsersIdGet(id);
-            const user = data as UserDto | null;
-            if (user) {
-              const userInfo: UserInfo = {
-                id: user.keycloakUserId ?? id,
-                name: getUserName(user),
-                email: user.email ?? undefined,
-                avatarUrl: user.avatarUrl ?? undefined,
-              };
-              return [id, userInfo] as const;
-            }
-            return [id, null] as const;
-          } catch (error) {
-            console.warn('Failed to fetch user detail', id, error);
-            return [id, null] as const;
-          }
-        }),
-      );
+      /*
+       * One request for the whole page, not one per user.
+       *
+       * This used to fan out `uniqueIds.map(id => v1UsersIdGet(id))`, so a
+       * grid of 25 tickets fired roughly 40 identity requests on every load,
+       * one per distinct requester and assignee. `v1UsersBulkPost` takes the
+       * ids together and returns the matching users in a single round trip.
+       *
+       * Ids that do not resolve are simply absent from the response rather
+       * than being an error, which is the normal case for a deleted account or
+       * imported data. They are mapped to null below so UserCell can say so.
+       */
+      const { data } = await client.v1UsersBulkPost({
+        keycloakUserIds: uniqueIds,
+      });
 
-      return Object.fromEntries(results) as Record<string, UserInfo | null>;
+      const byId = new Map<string, UserInfo>();
+      for (const user of (data ?? []) as UserDto[]) {
+        const id = user.keycloakUserId ?? user.id;
+        if (!id) continue;
+        byId.set(id, {
+          id,
+          name: getUserName(user),
+          email: user.email ?? undefined,
+          avatarUrl: user.avatarUrl ?? undefined,
+        });
+      }
+
+      // Keyed on every id we asked about, so an unresolved user is a present
+      // null rather than a missing key. Callers can tell "not found" from
+      // "not fetched yet".
+      return Object.fromEntries(
+        uniqueIds.map(id => [id, byId.get(id) ?? null]),
+      ) as Record<string, UserInfo | null>;
     },
   });
 

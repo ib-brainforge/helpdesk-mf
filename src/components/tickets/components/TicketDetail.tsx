@@ -22,7 +22,7 @@ import {
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { CommentType } from '@/types/comment';
-import { TicketPriority, TicketStatus } from '@/types/ticket';
+import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
@@ -61,6 +61,8 @@ import {
   useUnsubscribeFromTicket,
   useUpdateTicket,
 } from '../hooks/useTickets';
+import { getPriorityConfig } from '../ticket-priority-config';
+import { getStatusConfig } from '../ticket-status-config';
 import { AddParentTicketModal } from './AddParentTicketModal';
 import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
@@ -76,36 +78,6 @@ import { NewTicketModal } from './NewTicketModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 
 const SYSTEM_LOG_PREF_KEY = 'helpdesk:show-system-log';
-
-const getStatusConfig = (status: TicketStatus) => {
-  switch (status) {
-    case TicketStatus.New:
-      return { label: 'New', color: 'primary' as const };
-    case TicketStatus.InProgress:
-      return { label: 'In Progress', color: 'warning' as const };
-    case TicketStatus.Closed:
-      return { label: 'Closed', color: 'success' as const };
-    default:
-      return { label: 'Unknown', color: 'default' as const };
-  }
-};
-
-const getPriorityConfig = (priority: TicketPriority) => {
-  switch (priority) {
-    case TicketPriority.Critical:
-      return { label: 'Critical', color: 'danger' as const };
-    case TicketPriority.High:
-      return { label: 'High', color: 'warning' as const };
-    case TicketPriority.Normal:
-      return { label: 'Normal', color: 'primary' as const };
-    case TicketPriority.Low:
-      return { label: 'Low', color: 'default' as const };
-    case TicketPriority.None:
-      return { label: 'None', color: 'default' as const };
-    default:
-      return { label: 'Unknown', color: 'default' as const };
-  }
-};
 
 export interface TicketDetailProps {
   ticketId?: string;

@@ -1,6 +1,6 @@
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { TicketStatus } from '@/types/custom-status';
+import { TicketStatus, toTicketStatus } from '@/types/custom-status';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
 import {
   BaseInput,
@@ -95,7 +95,11 @@ export function CustomStatusEditorModal({
         setName(status.name);
         setColor(status.color ?? '#6366f1');
         setSortOrder(status.sortOrder);
-        setMapsToStatus(status.mapsToStatus);
+        // Coerced: the API sends the enum NAME ("Closed"), while this select
+        // binds numeric keys. Assigning the raw value left selectedKey as
+        // "Closed", which matched no option, so the field looked empty and the
+        // saved mapping looked lost.
+        setMapsToStatus(toTicketStatus(status.mapsToStatus));
         setIsClosed(status.isClosed);
         setIsDefault(status.isDefault);
         setIsActive(status.isActive);
