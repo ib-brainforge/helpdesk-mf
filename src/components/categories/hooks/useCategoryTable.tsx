@@ -14,11 +14,13 @@ import { BaseButton } from '@brainforgeau/components/button';
 import { toast } from '@heroui/react';
 import {
   type ColumnDef,
+  type PaginationState,
   createColumnHelper,
   getCoreRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 export type CategoryRow = CategoryDto & { sectionName?: string };
 
@@ -193,13 +195,45 @@ export function useCategoryTable({
     return rows.filter(row => row.name?.toLowerCase().includes(lower));
   }, [rows, searchTerm]);
 
+  /*
+   * Paginated, because this table had no pagination model at all and therefore
+   * rendered every category it was given.
+   *
+   * On a tenant with 1,100 categories that meant 1,100 rows and ~4,400 buttons
+   * in the DOM at once (~21,000 nodes), none of it virtualised. Every render
+   * walked the lot, so opening the Create Category dialog -- which adds about
+   * 100 nodes of its own -- took 18 seconds cold and 10 warm. The dialog was
+   * never the problem; the list re-rendering behind it was.
+   *
+   * Client side rather than server side: the categories endpoint returns the
+   * whole hierarchy in one call and the page's search box filters across all
+   * of it, so paging here is purely about what reaches the DOM. ListPage
+   * derives its pagination controls straight from the table instance, so
+   * adding the row model is all that is needed to get the footer.
+   */
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
+
   const table = useReactTable<CategoryRow>({
     data: filteredRows,
     columns,
     getRowId: row => row.id,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    state: { pagination },
+    onPaginationChange: setPagination,
     enableSorting: false,
   });
+
+  // Searching shrinks the result set, so a page index carried over from the
+  // previous one can land past the end and show an empty table. Snap to the
+  // first page when that happens.
+  const pageCount = table.getPageCount();
+  if (pagination.pageIndex > 0 && pagination.pageIndex >= pageCount) {
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+  }
 
   return { table };
 }

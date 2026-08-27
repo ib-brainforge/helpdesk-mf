@@ -17,10 +17,6 @@ import {
 import { useAtom } from 'jotai';
 import { type FC, useCallback, useEffect, useMemo } from 'react';
 import {
-  categoriesMutationAtom,
-  mapCategoryToOption,
-} from '../state/categories-dropdown-state';
-import {
   mapUserToOption,
   usersMutationAtom,
 } from '../state/users-dropdown-state';
@@ -54,19 +50,9 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
   ] = useAtom(usersMutationAtom);
 
-  // Categories search mutation for category autocomplete
-  const [
-    {
-      mutate: searchCategories,
-      data: categoriesData,
-      isPending: isSearchingCategories,
-    },
-  ] = useAtom(categoriesMutationAtom);
-
   // Load initial data when component mounts
   useEffect(() => {
     searchUsers({ query: '' });
-    searchCategories({ query: '' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,11 +60,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
     [usersData],
-  );
-
-  const categoriesOptions = useMemo(
-    () => (categoriesData ?? []).map(mapCategoryToOption),
-    [categoriesData],
   );
 
   const handleStatusChange = useCallback(
@@ -107,16 +88,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       onFiltersChange({
         ...filters,
         priority: value.length > 0 ? value : undefined,
-      });
-    },
-    [filters, onFiltersChange],
-  );
-
-  const handleCategoryChange = useCallback(
-    (value: string[]) => {
-      onFiltersChange({
-        ...filters,
-        categoryId: value.length > 0 ? value : undefined,
       });
     },
     [filters, onFiltersChange],
@@ -225,72 +196,18 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           >
             Low
           </BaseTagSelectItem>
-          <BaseTagSelectItem
-            key={TicketPriority.None}
-            value={TicketPriority.None}
-          >
-            None
-          </BaseTagSelectItem>
+          {/* No "None" filter: None is no longer selectable anywhere a ticket is
+              created or edited, so filtering by it can only ever return legacy
+              rows. The enum member is kept in the render mappings so those
+              still display their label rather than falling through to
+              "Unknown". */}
         </BaseTagSelect>
       </div>
 
-      <div className="min-w-40">
-        <BaseAutocomplete
-          label="Category"
-          placeholder="Filter by category"
-          className="w-full"
-          isClearable
-          selectedKey={filters.categoryId?.[0] ?? null}
-          onSelectionChange={key => {
-            const newKey = key as string | null;
-            handleCategoryChange(newKey ? [newKey] : []);
-          }}
-          onClear={() => handleCategoryChange([])}
-          onValueChange={(value: string) => {
-            searchCategories({ query: value });
-          }}
-          onOpenChange={open => {
-            if (open && !isSearchingCategories) {
-              searchCategories({ query: '' });
-            }
-          }}
-          isLoading={isSearchingCategories}
-          renderSelectedItem={selectedKey => {
-            const category = categoriesOptions.find(c => c.id === selectedKey);
-            if (!category) return null;
-            return (
-              <span className="truncate text-xs font-medium">
-                {category.sectionName
-                  ? `${category.sectionName} / ${category.name}`
-                  : category.name}
-              </span>
-            );
-          }}
-        >
-          {categoriesOptions.map(category => (
-            <BaseAutocompleteItem
-              key={category.id}
-              id={category.id}
-              textValue={
-                category.sectionName
-                  ? `${category.sectionName} / ${category.name}`
-                  : category.name
-              }
-            >
-              <div className="flex flex-col">
-                <span className="text-xs text-gray dark:text-white">
-                  {category.name}
-                </span>
-                {category.sectionName && (
-                  <span className="text-[10px] text-light-gray dark:text-default-400">
-                    {category.sectionName}
-                  </span>
-                )}
-              </div>
-            </BaseAutocompleteItem>
-          ))}
-        </BaseAutocomplete>
-      </div>
+      {/* No Category filter here: the sidebar lists every category and is the
+          single place to pick one. Two controls writing the same
+          filters.categoryId meant the toolbar could show a category the
+          sidebar had not highlighted, and vice versa. */}
 
       <div className="min-w-40">
         <BaseAutocomplete

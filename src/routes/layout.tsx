@@ -40,15 +40,20 @@ registerStatusColors({
     Published: 'success',
     Archived: 'warning',
   },
+  // Kept in step with getStatusConfig in components/tickets/ticket-status-config.
+  // This registry entry has no consumer today (ticket badges pass an explicit
+  // colour), but it disagreed with the real mapping on Closed, so anyone who
+  // did start using it would have got a different colour than the grid shows.
   'ticket.status': {
-    New: 'primary',
-    InProgress: 'warning',
+    New: 'warning',
+    InProgress: 'success',
     Closed: 'default',
   },
+  // Kept in step with getPriorityConfig in components/tickets/ticket-priority-config.
   'ticket.priority': {
     None: 'default',
     Low: 'default',
-    Normal: 'primary',
+    Normal: 'success',
     High: 'warning',
     Critical: 'danger',
   },
@@ -187,13 +192,12 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     icon: 'analytics',
     testId: 'nav-reports',
   },
-  {
-    label: 'Ideas Forum',
-    href: '/ideas',
-    icon: 'lamp',
-    testId: 'nav-ideas',
-    requiredPermissions: [HelpdeskPermissions.TicketRead],
-  },
+  // Ideas Forum is deliberately NOT linked here. The publish/unpublish path and
+  // the /ideas feed both work, but voting and commenting do not exist at any
+  // layer: GetIdeasQueryHandler returns a hardcoded 0 for VoteCount and there
+  // is no vote table. Giving a read-only list the same prominence as Tickets
+  // made a half-built feature look broken. The route is left in place, so the
+  // page is still reachable directly and nothing is deleted.
 ];
 
 const navItemsBottom: GuardedItem<NavItem>[] = [

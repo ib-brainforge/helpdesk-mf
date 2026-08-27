@@ -15,12 +15,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 
-export const useTicketsData = () => {
+/**
+ * @param initialFilters Applied on the FIRST render only.
+ *
+ * Exists so the caller can seed the tab's filters before the first fetch. The
+ * tickets page reads its tab from the URL, and starting at `{}` meant the very
+ * first request always asked for every ticket regardless of which tab was
+ * selected, then corrected itself. That was both a wasted round trip and, until
+ * the correction landed, a list that disagreed with its own highlighted tab.
+ */
+export const useTicketsData = (initialFilters?: TicketFilters) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
   });
-  const [filters, setFilters] = useState<TicketFilters>({});
+  // Lazy initialiser: `initialFilters` is a seed, not a controlled value, so
+  // later renders must not reset what the user has since changed.
+  const [filters, setFilters] = useState<TicketFilters>(
+    () => initialFilters ?? {},
+  );
 
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
     queryKey: ['tickets', pagination, filters],

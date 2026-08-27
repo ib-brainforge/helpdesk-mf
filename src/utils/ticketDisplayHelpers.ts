@@ -27,13 +27,17 @@ export const getStatusConfig = (status?: string): StatusConfig => {
   }
 
   switch (status) {
-    // Regular tickets: New, InProgress, Closed
+    // Regular tickets: New, InProgress, Closed.
+    // Kept in step with components/tickets/ticket-status-config, which is the
+    // mapping the ticket UI actually renders. This helper has no importers
+    // today, but it is close enough to the real thing to be picked up by
+    // mistake, and it previously disagreed on all three.
     case 'New':
-      return { label: 'New', color: 'primary' };
+      return { label: 'New', color: 'warning' };
     case 'InProgress':
-      return { label: 'In Progress', color: 'warning' };
+      return { label: 'In Progress', color: 'success' };
     case 'Closed':
-      return { label: 'Closed', color: 'success' };
+      return { label: 'Closed', color: 'default' };
 
     // Platform tickets: Open, InProgress, Resolved, Closed
     case 'Open':

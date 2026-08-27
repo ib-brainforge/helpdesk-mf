@@ -8,7 +8,7 @@ import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
-import { TicketStatus } from '@/types/custom-status';
+import { TicketStatus, toTicketStatus } from '@/types/custom-status';
 import {
   toBulkScopeSaveResult,
   toHelpdeskScopePatch,
@@ -203,7 +203,11 @@ function CustomStatusesPage() {
         header: 'Maps To',
         cell: ({ row }) => (
           <span className="text-default-600 text-sm">
-            {MAPS_TO_LABELS[row.original.mapsToStatus] ?? 'Unknown'}
+            {/* Coerced: the API sends the enum NAME, MAPS_TO_LABELS is keyed
+                by the numeric enum, so the raw value missed every key and this
+                column read "Unknown" for every row. */}
+            {MAPS_TO_LABELS[toTicketStatus(row.original.mapsToStatus)] ??
+              'Unknown'}
           </span>
         ),
         size: 130,

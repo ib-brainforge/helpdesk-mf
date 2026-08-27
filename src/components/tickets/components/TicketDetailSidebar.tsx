@@ -32,6 +32,8 @@ import {
   mapUserToOption,
   usersMutationAtom,
 } from '../state/users-dropdown-state';
+import { getPriorityConfig } from '../ticket-priority-config';
+import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
 
 interface TicketDetailSidebarProps {
@@ -42,36 +44,6 @@ interface TicketDetailSidebarProps {
   isSubscribeLoading?: boolean;
   onSubscribeToggle?: () => void;
 }
-
-const getStatusConfig = (status: TicketStatus) => {
-  switch (status) {
-    case TicketStatus.New:
-      return { label: 'New', color: 'primary' as const };
-    case TicketStatus.InProgress:
-      return { label: 'In Progress', color: 'warning' as const };
-    case TicketStatus.Closed:
-      return { label: 'Closed', color: 'success' as const };
-    default:
-      return { label: 'Unknown', color: 'default' as const };
-  }
-};
-
-const getPriorityConfig = (priority: TicketPriority) => {
-  switch (priority) {
-    case TicketPriority.Critical:
-      return { label: 'Critical', color: 'danger' as const };
-    case TicketPriority.High:
-      return { label: 'High', color: 'warning' as const };
-    case TicketPriority.Normal:
-      return { label: 'Normal', color: 'primary' as const };
-    case TicketPriority.Low:
-      return { label: 'Low', color: 'default' as const };
-    case TicketPriority.None:
-      return { label: 'None', color: 'default' as const };
-    default:
-      return { label: 'Unknown', color: 'default' as const };
-  }
-};
 
 const getOriginConfig = (origin: string) => {
   switch (origin) {
@@ -287,12 +259,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             <BaseSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>
               Low
             </BaseSelectItem>
-            <BaseSelectItem
-              key={TicketPriority.None}
-              value={TicketPriority.None}
-            >
-              None
-            </BaseSelectItem>
+            {/* No "None" option: it means nothing that Low does not already
+                mean, and both rendered as the same grey badge, so it was a
+                choice with no distinct meaning. The enum member is kept so any
+                historical or imported ticket still renders. */}
           </BaseSelect>
         </PermissionGuard>
       </div>
