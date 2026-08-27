@@ -45,6 +45,27 @@ export const useTicketsData = () => {
         pagination.pageSize,
         undefined, // sortBy
         undefined, // sortDirection
+        /*
+         * Tag filter, sent through the raw axios config rather than as a named
+         * argument. The backend now accepts `tagIds` (see GetTicketsQuery), but
+         * @brainforgeau/helpdesk-client is generated from the OpenAPI spec by
+         * CI, so the generated `v1TicketsGet` signature will not carry the
+         * parameter until generate-client.yml runs against the merged backend
+         * change. Until then this appends it to the same request.
+         *
+         * `indexes: null` makes axios emit `tagIds=a&tagIds=b` rather than its
+         * default `tagIds[]=a`, which is the form ASP.NET Core model binding
+         * expects for a `Guid[]` query parameter.
+         *
+         * REPLACE WITH the generated named argument once the client is
+         * regenerated, and drop this options object.
+         */
+        filters.tagIds?.length
+          ? {
+              params: { tagIds: filters.tagIds },
+              paramsSerializer: { indexes: null },
+            }
+          : undefined,
       );
 
       const result = response.data;
