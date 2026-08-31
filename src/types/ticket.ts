@@ -48,9 +48,29 @@ export type TicketListDto = GeneratedTicketListDto & {
   // requesterName / assigneeName are now provided natively by the generated
   // client; categoryName remains a UI-only enrichment field.
   categoryName?: string;
+  /**
+   * Tenancy of the ticket, used by the principal console's Scope column.
+   * Declared here because the generated client is rebuilt from the OpenAPI
+   * spec by CI and will not carry these until that runs against the merged
+   * backend change. Drop them from here once it does.
+   */
+  tenantId?: string | null;
+  organisationId?: string | null;
 };
 
 export type TicketDto = GeneratedTicketDto & {
+  /**
+   * Who raised and who last changed the ticket.
+   *
+   * Stamped by the backend's audit interceptor onto every entity, but not
+   * previously projected onto the DTO, which is why the activity timeline
+   * had nothing to show and fell back to "Unknown". Null when the row was
+   * written without a user context (seed data, imports, background jobs);
+   * the backend normalises Guid.Empty to null so there is one meaning of
+   * "unknown" rather than two.
+   */
+  createdById?: string | null;
+  updatedById?: string | null;
   // requesterName / assigneeName / isProblem / isPublishedAsIdea /
   // publishedAsIdeaAt are now provided natively by the generated client.
   // categoryName remains a UI-only enrichment field.
@@ -101,8 +121,29 @@ export interface UpdateTicketDto {
   subject?: string;
   description?: string;
   status?: string;
+  /**
+   * Tenant-defined status, sent alongside `status` on the same status patch.
+   *
+   * A custom status does not replace the system status, it refines it: the
+   * ticket still has to be New, In Progress or Closed for every count, filter
+   * and SLA rule in the product to keep working, so a custom status carries a
+   * `mapsToStatus` and the caller sends both.
+   *
+   * `null` clears it. That matters: picking a plain built-in status has to
+   * detach whatever custom status was set, and omitting the field would leave
+   * it attached.
+   */
+  customStatusId?: string | null;
   priority?: string;
   categoryId?: string;
-  assigneeId?: string;
+  /**
+   * `null` unassigns; `undefined` leaves the assignee untouched.
+   *
+   * The distinction is load-bearing. This was plain `string | undefined`, so
+   * clearing the field produced `undefined`, the mutation's `if (updates
+   * .assigneeId)` guard read it as "no change", and no request was sent at
+   * all. The clear button looked like it worked until the page refreshed.
+   */
+  assigneeId?: string | null;
   tags?: string[];
 }

@@ -52,3 +52,33 @@ export const StatusBadge = ({
     {children}
   </div>
 );
+
+/**
+ * The same hues as a solid swatch, for dots and bars.
+ *
+ * Exported so a picker can colour-code its options with the exact colour the
+ * badge would have used, rather than a second palette that drifts from this one.
+ */
+export const badgeSwatchClasses: Record<BadgeColor, string> = colorClasses;
+
+/**
+ * Status/priority colour applied to a form control rather than a badge.
+ *
+ * A solid fill works on a 12px badge and is far too loud on a full-width
+ * select, where it would also fight the chevron for contrast. This keeps the
+ * field reading as a control: a left accent bar carries the colour, and a 5%
+ * wash of the same hue tints the field enough to be seen at a glance without
+ * touching the legibility of the value.
+ *
+ * The accent is deliberately the heavier signal. It survives dark mode, where
+ * a light wash all but disappears, so the colour is never carried by the tint
+ * alone.
+ */
+export const badgeFieldClasses: Record<BadgeColor, string> = {
+  default: 'border-l-4 border-l-slate-500 bg-slate-500/5',
+  primary: 'border-l-4 border-l-sky-500 bg-sky-500/5',
+  success: 'border-l-4 border-l-green bg-green/5',
+  warning: 'border-l-4 border-l-amber-500 bg-amber-500/5',
+  danger: 'border-l-4 border-l-red-dark bg-red-dark/5',
+  secondary: 'border-l-4 border-l-purple-500 bg-purple-500/5',
+};

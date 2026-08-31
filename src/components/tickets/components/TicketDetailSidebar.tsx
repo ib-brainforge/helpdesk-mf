@@ -1,5 +1,12 @@
+import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggestions';
-import { StatusBadge } from '@/components/shared';
+import {
+  type BadgeColor,
+  StatusBadge,
+  UserOptionRow,
+  badgeFieldClasses,
+  badgeSwatchClasses,
+} from '@/components/shared';
 import {
   useAddTagToTicket,
   useRemoveTagFromTicket,
@@ -8,7 +15,17 @@ import {
 } from '@/components/tags/hooks/useTags';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { type TicketDto, TicketPriority, TicketStatus } from '@/types/ticket';
+import {
+  buildStatusOptions,
+  encodeCustomStatusKey,
+  resolveStatusKey,
+  toTicketStatusName,
+} from '@/types/custom-status';
+import {
+  type TicketDto,
+  TicketPriority,
+  type TicketStatus,
+} from '@/types/ticket';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -72,6 +89,25 @@ const formatTimeSpent = (timeSpan: string | undefined) => {
   return timeSpan || '0h 0m';
 };
 
+/**
+ * Colour dot for a status or priority option.
+ *
+ * The header used to carry a coloured badge for both fields. It was removed as
+ * a duplicate of the controls here, so the colour has to live in the controls
+ * or it is lost: the dropdown list is where someone compares options, and a
+ * plain list of words makes "Critical" look like any other choice.
+ *
+ * `hex` is for tenant-defined statuses, which bring their own colour and have
+ * no place in the fixed badge palette.
+ */
+const OptionDot = ({ color, hex }: { color?: BadgeColor; hex?: string }) => (
+  <span
+    aria-hidden
+    className={`inline-block h-2 w-2 shrink-0 rounded-full ${hex ? '' : badgeSwatchClasses[color ?? 'default']}`}
+    style={hex ? { backgroundColor: hex } : undefined}
+  />
+);
+
 export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   ticket,
   onUpdate,
@@ -82,6 +118,42 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 }) => {
   const timezone = useTimezone();
   const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+
+  /*
+   * Tenant-defined statuses belong in this picker alongside the three built-in
+   * ones. They were reachable from Configuration and from the grid's status
+   * filter, but never from the ticket itself, so one could be defined and
+   * filtered on yet never actually applied to anything.
+   *
+   * Inactive ones are excluded: retiring a status should stop it being chosen
+   * without rewriting the tickets already on it, which is why the ticket's
+   * current status is added back below even when inactive.
+   */
+  const { customStatuses } = useCustomStatuses();
+  const statusOptions = useMemo(
+    () => buildStatusOptions(customStatuses, ticket.customStatusId),
+    [customStatuses, ticket.customStatusId],
+  );
+
+  // A custom status wins the display: it is the more specific of the two, and
+  // showing "In Progress" for a ticket the tenant calls something else is the
+  // bug this picker had in the first place.
+  const currentCustomStatus = customStatuses.find(
+    cs => cs.id === ticket.customStatusId,
+  );
+
+  const handleStatusChange = useCallback(
+    (key: string) => {
+      const resolved = resolveStatusKey(key, customStatuses);
+      // null means the custom status vanished between render and click.
+      if (!resolved) return;
+      onUpdate?.({
+        status: resolved.status as TicketStatus,
+        customStatusId: resolved.customStatusId,
+      });
+    },
+    [customStatuses, onUpdate],
+  );
   const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
   const originConfig = getOriginConfig(ticket.origin ?? '');
 
@@ -181,37 +253,49 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           requiredPermissions={[HelpdeskPermissions.TicketWrite]}
           fallback={
             <StatusBadge color={statusConfig.color}>
-              {statusConfig.label}
+              {currentCustomStatus?.name ?? statusConfig.label}
             </StatusBadge>
           }
         >
           <BaseSelect
-            selectedKey={ticket.status?.toString() ?? ''}
+            classNames={{ trigger: badgeFieldClasses[statusConfig.color] }}
+            selectedKey={
+              ticket.customStatusId
+                ? encodeCustomStatusKey(ticket.customStatusId)
+                : (ticket.status?.toString() ?? '')
+            }
             onSelectionChange={keys => {
               if (typeof keys === 'string') {
-                onUpdate?.({ status: keys as TicketStatus });
+                handleStatusChange(keys);
               }
             }}
             isDisabled={isUpdating}
           >
-            <BaseSelectItem
-              key={TicketStatus.New.toString()}
-              value={TicketStatus.New.toString()}
-            >
-              New
-            </BaseSelectItem>
-            <BaseSelectItem
-              key={TicketStatus.InProgress.toString()}
-              value={TicketStatus.InProgress.toString()}
-            >
-              In Progress
-            </BaseSelectItem>
-            <BaseSelectItem
-              key={TicketStatus.Closed.toString()}
-              value={TicketStatus.Closed.toString()}
-            >
-              Closed
-            </BaseSelectItem>
+            {statusOptions.map(opt => {
+              const custom = customStatuses.find(
+                cs => encodeCustomStatusKey(cs.id) === opt.key,
+              );
+              return (
+                <BaseSelectItem key={opt.key} value={opt.key}>
+                  <span className="flex items-center gap-2">
+                    <OptionDot
+                      hex={custom?.color}
+                      color={
+                        getStatusConfig(
+                          // mapsToStatus lives in the NUMERIC enum space while
+                          // getStatusConfig takes the string one; see the
+                          // two-enum note on toTicketStatusName.
+                          (custom
+                            ? toTicketStatusName(custom.mapsToStatus)
+                            : opt.key) as TicketStatus,
+                        ).color
+                      }
+                    />
+                    {opt.label}
+                  </span>
+                </BaseSelectItem>
+              );
+            })}
           </BaseSelect>
         </PermissionGuard>
       </div>
@@ -230,6 +314,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           }
         >
           <BaseSelect
+            classNames={{ trigger: badgeFieldClasses[priorityConfig.color] }}
             selectedKey={ticket.priority?.toString() ?? ''}
             onSelectionChange={keys => {
               if (typeof keys === 'string') {
@@ -282,9 +367,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             selectedKey={ticket.assigneeId ?? null}
             onSelectionChange={key => {
               const newKey = key as string | null;
-              onUpdate?.({ assigneeId: newKey ?? undefined });
+              // null, never undefined: undefined means "leave the assignee
+              // alone" and the update is skipped entirely.
+              onUpdate?.({ assigneeId: newKey ?? null });
             }}
-            onClear={() => onUpdate?.({ assigneeId: undefined })}
+            onClear={() => onUpdate?.({ assigneeId: null })}
             onValueChange={(value: string) => {
               searchUsers({ query: value });
             }}
@@ -314,19 +401,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                 id={user.id}
                 textValue={user.name}
               >
-                <div className="flex items-center gap-2.5">
-                  <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
-                  <div className="flex-1">
-                    <span className="text-xs text-[#59636E] dark:text-white">
-                      {user.name}
-                    </span>
-                    {user.email && (
-                      <span className="dark:text-light block text-[10px] text-[#8C8F97]">
-                        {user.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <UserOptionRow
+                  name={user.name}
+                  email={user.email}
+                  avatarUrl={user.avatarUrl}
+                />
               </BaseAutocompleteItem>
             ))}
           </BaseAutocomplete>

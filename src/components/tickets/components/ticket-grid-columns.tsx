@@ -1,6 +1,12 @@
-import { StatusBadge, UserCell } from '@/components/shared';
+import { ScopeCell, StatusBadge, UserCell } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import type { UseScopeNamesResult } from '@/hooks/useScopeNames';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
+import {
+  type CustomTicketStatusDto,
+  buildStatusOptions,
+  resolveStatusKey,
+} from '@/types/custom-status';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { formatDateTime } from '@brainforgeau/components/utils';
@@ -118,12 +124,28 @@ const isTicketOverdue = (row: TicketRow) =>
 // Helper functions for status and priority display
 
 interface CreateColumnsOptions {
-  onAssign?: (ticketId: string, assigneeId: string) => void;
+  /** `null` unassigns. */
+  onAssign?: (ticketId: string, assigneeId: string | null) => void;
   /** Signed in user, so the assignee cell can offer "Assign to me" first. */
   currentUserId?: string;
-  onChangeStatus?: (ticketId: string, status: TicketStatus) => void;
+  /**
+   * `customStatusId` is null for a built-in status, which detaches whatever
+   * custom status the ticket was on.
+   */
+  onChangeStatus?: (
+    ticketId: string,
+    status: TicketStatus,
+    customStatusId: string | null,
+  ) => void;
+  /** Tenant-defined statuses to offer alongside the built-in three. */
+  customStatuses?: CustomTicketStatusDto[];
   onChangePriority?: (ticketId: string, priority: TicketPriority) => void;
   timezone?: string | null;
+  /**
+   * Resolved tenant and organisation names. Omit to leave the Scope column out
+   * entirely, which is what callers without a `useScopeNames()` result get.
+   */
+  scopeNames?: UseScopeNamesResult;
 }
 
 export const createTicketColumns = (
@@ -209,6 +231,30 @@ export const createTicketColumns = (
     cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
     size: 100,
   }),
+  /*
+   * Where the ticket sits: tenant above, organisation below.
+   *
+   * Both are shown even though this grid is pinned to one tenant by a global
+   * query filter, so the tenant line repeats down the column. That is the
+   * point: scope is one fact and it is read whole, and matching the principal
+   * console means the column means the same thing wherever it appears.
+   */
+  ...(options.scopeNames
+    ? [
+        columnHelper.display({
+          id: 'scope',
+          header: 'Scope',
+          cell: ({ row }) => (
+            <ScopeCell
+              tenantId={row.original.tenantId}
+              organisationId={row.original.organisationId}
+              names={options.scopeNames as UseScopeNamesResult}
+            />
+          ),
+          size: 160,
+        }),
+      ]
+    : []),
   columnHelper.display({
     id: 'assignee',
     header: 'Assignee',
@@ -319,48 +365,42 @@ export const createTicketColumns = (
                     options.onAssign &&
                     row.original.id
                   ) {
-                    options.onAssign(row.original.id, assigneeId);
+                    // An empty prompt means unassign, which has to be null:
+                    // an empty string is falsy and was silently dropped.
+                    options.onAssign(row.original.id, assigneeId || null);
                   }
                 }}
               >
                 Assign
               </DropdownItem>
-              <DropdownItem
-                key="status-new"
-                onPress={() => {
-                  if (options.onChangeStatus && row.original.id) {
-                    options.onChangeStatus(row.original.id, TicketStatus.New);
-                  }
-                }}
-              >
-                Mark as New
-              </DropdownItem>
-              <DropdownItem
-                key="status-inprogress"
-                onPress={() => {
-                  if (options.onChangeStatus && row.original.id) {
+              {/*
+                Built-in statuses and tenant-defined ones in one list. This
+                menu offered only the built-in three, so a custom status could
+                be applied from the ticket page but not from the grid.
+              */}
+              {buildStatusOptions(
+                options.customStatuses ?? [],
+                row.original.customStatusId,
+              ).map(opt => (
+                <DropdownItem
+                  key={`status-${opt.key}`}
+                  onPress={() => {
+                    if (!options.onChangeStatus || !row.original.id) return;
+                    const resolved = resolveStatusKey(
+                      opt.key,
+                      options.customStatuses ?? [],
+                    );
+                    if (!resolved) return;
                     options.onChangeStatus(
                       row.original.id,
-                      TicketStatus.InProgress,
+                      resolved.status as TicketStatus,
+                      resolved.customStatusId,
                     );
-                  }
-                }}
-              >
-                Mark as In Progress
-              </DropdownItem>
-              <DropdownItem
-                key="status-closed"
-                onPress={() => {
-                  if (options.onChangeStatus && row.original.id) {
-                    options.onChangeStatus(
-                      row.original.id,
-                      TicketStatus.Closed,
-                    );
-                  }
-                }}
-              >
-                Close Ticket
-              </DropdownItem>
+                  }}
+                >
+                  {opt.isCustom ? opt.label : `Mark as ${opt.label}`}
+                </DropdownItem>
+              ))}
               <DropdownItem
                 key="priority-critical"
                 onPress={() => {

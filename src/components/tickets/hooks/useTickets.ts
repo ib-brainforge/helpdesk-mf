@@ -160,10 +160,17 @@ export const useUpdateTicket = () => {
         });
       }
 
-      // Status change
+      // Status change.
+      //
+      // `customStatusId` is sent on every status patch, not only when one is
+      // set. The command assigns it unconditionally, so passing null is how a
+      // custom status gets detached when someone picks a plain built-in status;
+      // omitting the field would leave the old one attached to a ticket whose
+      // system status had moved on.
       if (updates.status) {
         await client.v1TicketsIdStatusPatch(id, {
           newStatus: toApiTicketStatus(updates.status),
+          customStatusId: updates.customStatusId ?? null,
         });
       }
 
@@ -181,10 +188,15 @@ export const useUpdateTicket = () => {
         });
       }
 
-      // Assignment change
-      if (updates.assigneeId) {
+      // Assignment change.
+      //
+      // Tested against undefined, not truthiness: `null` is a deliberate
+      // unassign and the endpoint accepts it (AssigneeId is Guid? and the
+      // domain's Assign(null) clears it). A truthy test swallowed the clear
+      // silently, so the cross on the assignee picker did nothing.
+      if (updates.assigneeId !== undefined) {
         await client.v1TicketsIdAssignPatch(id, {
-          assigneeId: updates.assigneeId,
+          assigneeId: updates.assigneeId ?? null,
         });
       }
 
@@ -216,10 +228,13 @@ export const useBulkUpdateTickets = () => {
           });
         }
 
-        // Status change
+        // Status change. Same contract as the single-ticket path: the custom
+        // id is always sent, so null detaches one from every selected ticket
+        // that had it.
         if (updates.status) {
           await client.v1TicketsIdStatusPatch(id, {
             newStatus: toApiTicketStatus(updates.status),
+            customStatusId: updates.customStatusId ?? null,
           });
         }
 
@@ -237,10 +252,11 @@ export const useBulkUpdateTickets = () => {
           });
         }
 
-        // Assignment change
+        // Assignment change. Same null-vs-undefined contract as the
+        // single-ticket path, so a bulk unassign reaches the API.
         if (updates.assigneeId !== undefined) {
           await client.v1TicketsIdAssignPatch(id, {
-            assigneeId: updates.assigneeId,
+            assigneeId: updates.assigneeId ?? null,
           });
         }
       });
