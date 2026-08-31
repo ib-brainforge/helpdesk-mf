@@ -17,6 +17,7 @@ import {
 import { toast } from '@heroui/react';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { UserOptionRow } from '@/components/shared';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags } from '@/components/tags/hooks/useTags';
 import { type CreateTicketDto, TicketPriority } from '@/types/ticket';
@@ -26,7 +27,6 @@ import {
   categoriesMutationAtom,
   mapCategoryToOption,
 } from '../state/categories-dropdown-state';
-import { UserOptionRow } from '@/components/shared';
 import {
   mapUserToOption,
   usersMutationAtom,
@@ -374,10 +374,10 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
                   textValue={user.name}
                 >
                   <UserOptionRow
-  name={user.name}
-  email={user.email}
-  avatarUrl={user.avatarUrl}
-/>
+                    name={user.name}
+                    email={user.email}
+                    avatarUrl={user.avatarUrl}
+                  />
                 </BaseAutocompleteItem>
               ))}
             </BaseAutocomplete>

@@ -24,12 +24,12 @@ import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { useCreateTicket } from '../hooks/useTickets';
 
+import { UserOptionRow } from '@/components/shared';
 import { useAtom } from 'jotai';
 import {
   categoriesMutationAtom,
   mapCategoryToOption,
 } from '../state/categories-dropdown-state';
-import { UserOptionRow } from '@/components/shared';
 import {
   mapUserToOption,
   usersMutationAtom,
@@ -367,10 +367,10 @@ export const NewTicketForm: FC = () => {
                   textValue={user.name}
                 >
                   <UserOptionRow
-  name={user.name}
-  email={user.email}
-  avatarUrl={user.avatarUrl}
-/>
+                    name={user.name}
+                    email={user.email}
+                    avatarUrl={user.avatarUrl}
+                  />
                 </BaseAutocompleteItem>
               ))}
             </BaseAutocomplete>
