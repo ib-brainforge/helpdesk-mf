@@ -1,4 +1,6 @@
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
+import { UserOptionRow } from '@/components/shared';
+import { CUSTOM_STATUS_PREFIX } from '@/types/custom-status';
 import {
   type TicketFilters as TicketFiltersType,
   TicketPriority,
@@ -16,6 +18,7 @@ import {
 } from '@brainforgeau/components';
 import { useAtom } from 'jotai';
 import { type FC, useCallback, useEffect, useMemo } from 'react';
+import { useAssigneeOpenCounts } from '../hooks/useAssigneeOpenCounts';
 import {
   mapUserToOption,
   usersMutationAtom,
@@ -43,7 +46,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
 
   // Custom-status option values are prefixed so they can be told apart from
   // built-in TicketStatus enum values when routing to the backend.
-  const CUSTOM_STATUS_PREFIX = 'custom:';
 
   // Users search mutation for assignee autocomplete
   const [
@@ -57,6 +59,10 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   }, []);
 
   // Map data to options
+  // Live open-ticket counts, so the picker doubles as a view of who has
+  // capacity rather than just a list of names.
+  const { countsByUserId: openCounts } = useAssigneeOpenCounts();
+
   const usersOptions = useMemo(
     () => (usersData ?? []).map(mapUserToOption),
     [usersData],
@@ -209,7 +215,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           filters.categoryId meant the toolbar could show a category the
           sidebar had not highlighted, and vice versa. */}
 
-      <div className="min-w-40">
+      {/* Wider than the other filters on purpose. BaseAutocomplete pins its
+          popover to w-[var(--trigger-width)], so the dropdown can never be
+          broader than this field. At min-w-40 the list was ~160px and every
+          address clipped ("kim-tenant@netcorp.c"). min-w-72 leaves room for
+          the avatar, the name and a full email. */}
+      <div className="min-w-72">
         <BaseAutocomplete
           label="Assignee"
           placeholder="Filter by assignee"
@@ -249,19 +260,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
               id={user.id}
               textValue={user.name}
             >
-              <div className="flex items-center gap-2.5">
-                <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
-                <div className="flex-1">
-                  <span className="text-xs text-gray dark:text-white">
-                    {user.name}
-                  </span>
-                  {user.email && (
-                    <span className="dark:text-light block text-[10px] text-light-gray">
-                      {user.email}
-                    </span>
-                  )}
-                </div>
-              </div>
+              <UserOptionRow
+                name={user.name}
+                email={user.email}
+                avatarUrl={user.avatarUrl}
+                openTicketCount={openCounts.get(user.id)}
+              />
             </BaseAutocompleteItem>
           ))}
         </BaseAutocomplete>

@@ -1,5 +1,7 @@
+import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
+import { useScopeNames } from '@/hooks/useScopeNames';
 import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import {
   BaseButton,
@@ -280,15 +282,18 @@ export const TicketGrid: FC = () => {
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
 
   const handleAssign = useCallback(
-    (ticketId: string, assigneeId: string) => {
+    (ticketId: string, assigneeId: string | null) => {
       updateTicketMutation.mutate({ id: ticketId, updates: { assigneeId } });
     },
     [updateTicketMutation],
   );
 
   const handleChangeStatus = useCallback(
-    (ticketId: string, status: TicketStatus) => {
-      updateTicketMutation.mutate({ id: ticketId, updates: { status } });
+    (ticketId: string, status: TicketStatus, customStatusId: string | null) => {
+      updateTicketMutation.mutate({
+        id: ticketId,
+        updates: { status, customStatusId },
+      });
     },
     [updateTicketMutation],
   );
@@ -300,6 +305,13 @@ export const TicketGrid: FC = () => {
     [updateTicketMutation],
   );
 
+  // Tenant-defined statuses, offered by the row menu alongside the built-in
+  // three and applied through the same status patch.
+  const { customStatuses } = useCustomStatuses();
+
+  // Tenant and organisation names for the Scope column; tickets carry ids only.
+  const scopeNames = useScopeNames();
+
   const columns = useMemo(
     () =>
       createTicketColumns({
@@ -308,6 +320,8 @@ export const TicketGrid: FC = () => {
         onChangePriority: handleChangePriority,
         currentUserId,
         timezone,
+        scopeNames,
+        customStatuses,
       }),
     [
       handleAssign,
@@ -315,6 +329,8 @@ export const TicketGrid: FC = () => {
       handleChangePriority,
       currentUserId,
       timezone,
+      scopeNames,
+      customStatuses,
     ],
   );
 
@@ -332,7 +348,7 @@ export const TicketGrid: FC = () => {
    * them all.
    *
    * The grid is `table-layout: fixed` and the column `size` values behave as a
-   * MINIMUM total (1208px with every column in). Wider than that, columns scale
+   * MINIMUM total (1368px with every column in). Wider than that, columns scale
    * up and nothing scrolls; narrower, the shortfall becomes horizontal scroll
    * no matter how the widths are shuffled — so something has to give.
    *
@@ -341,16 +357,19 @@ export const TicketGrid: FC = () => {
    *               already the link to the ticket, so nobody scans for it.
    *   Requester — next. Who asked is worth more than the id, which is why it
    *               outranks it here, but Assignee is what agents triage by.
-   *   Updated   — the last to go and the first to come back, since Created
-   *               answers "how old is this?" on its own.
+   *   Updated   then Updated, since Created answers "how old is this?" on
+   *               its own.
+   *   Scope     last to go and first to come back. It was asked for, and on
+   *               a grid where every other column describes the ticket it is
+   *               the only one saying which organisation owns it.
    *
    * The thresholds ARE the running totals, so each one is the width at which
    * that column's own budget stops fitting:
-   *   1208 everything · 1138 without ID · 1006 also without Requester ·
-   *   906 also without Updated.
+   *   1368 everything · 1298 without ID · 1146 also without Requester ·
+   *   1046 also without Updated · 886 also without Scope.
    *
    * Below ~906px — a 1280 screen with the left nav expanded — it still scrolls
-   * sideways. Shedding a fourth column would start costing information people
+   * sideways. Shedding a fifth column would start costing information people
    * actually use.
    */
   useLayoutEffect(() => {
@@ -360,9 +379,10 @@ export const TicketGrid: FC = () => {
     const apply = () => {
       const width = el.clientWidth;
       table.setColumnVisibility({
-        id: width >= 1208,
-        requester: width >= 1138,
-        updatedAt: width >= 1006,
+        id: width >= 1368,
+        requester: width >= 1298,
+        updatedAt: width >= 1146,
+        scope: width >= 1046,
       });
     };
 
@@ -509,7 +529,7 @@ export const TicketGrid: FC = () => {
   }, []);
 
   const handleBulkAssignConfirm = useCallback(
-    (assigneeId: string | undefined) => {
+    (assigneeId: string | null) => {
       const ids = selectedRows
         .map(row => row.original.id)
         .filter((id): id is string => !!id);
@@ -530,12 +550,12 @@ export const TicketGrid: FC = () => {
   );
 
   const handleBulkStatusConfirm = useCallback(
-    (status: TicketStatus) => {
+    (status: TicketStatus, customStatusId: string | null) => {
       const ids = selectedRows
         .map(row => row.original.id)
         .filter((id): id is string => !!id);
       bulkUpdateMutation.mutate(
-        { ids, updates: { status } },
+        { ids, updates: { status, customStatusId } },
         {
           onSuccess: () => {
             toast('Status updated', {

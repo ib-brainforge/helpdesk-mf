@@ -17,7 +17,7 @@ interface QuickAssignCellProps {
   ticketId: string;
   /** Signed in user, so "Assign to me" can be offered first. */
   currentUserId?: string;
-  onAssign: (ticketId: string, assigneeId: string) => void;
+  onAssign: (ticketId: string, assigneeId: string | null) => void;
 }
 
 /**

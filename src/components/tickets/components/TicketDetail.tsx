@@ -21,13 +21,19 @@ import {
 } from '@/components/sla/hooks/useTimeTracking';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { CommentType } from '@/types/comment';
-import { type TicketPriority, TicketStatus } from '@/types/ticket';
+import { TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
+import {
+  PermissionGuard,
+  useAuth,
+  usePermissions,
+  useTimezone,
+} from '@brainforgeau/security';
 import {
   Dropdown,
   DropdownItem,
@@ -61,8 +67,6 @@ import {
   useUnsubscribeFromTicket,
   useUpdateTicket,
 } from '../hooks/useTickets';
-import { getPriorityConfig } from '../ticket-priority-config';
-import { getStatusConfig } from '../ticket-status-config';
 import { AddParentTicketModal } from './AddParentTicketModal';
 import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
@@ -71,6 +75,7 @@ import { ConvertToReplyModal } from './ConvertToReplyModal';
 import { DuplicateTicketModal } from './DuplicateTicketModal';
 import { EditTicketModal } from './EditTicketModal';
 import { ForwardTicketModal } from './ForwardTicketModal';
+import { InlineEditable } from './InlineEditable';
 import { LinkTicketModal } from './LinkTicketModal';
 import { MarkSpamModal } from './MarkSpamModal';
 import { MergeTicketModal } from './MergeTicketModal';
@@ -98,6 +103,49 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   useRealtimeComments(id ?? '');
 
   const { comments, isLoading: commentsLoading } = useComments(id ?? '');
+
+  /*
+   * Inline editing needs the permission as a boolean rather than as a wrapper:
+   * PermissionGuard swaps out a whole subtree, but the subject and description
+   * must still render for everyone, just without the double-click affordance.
+   *
+   * Declared up here with the other hooks, NOT next to the JSX that uses it.
+   * This component returns early while the ticket loads, so a hook placed after
+   * that point is called on some renders and not others, and React fails the
+   * whole page with "rendered more hooks than during the previous render".
+   */
+  const { hasPermission } = usePermissions();
+  const canWriteTicket = hasPermission(HelpdeskPermissions.TicketWrite);
+
+  /*
+   * Names for the activity timeline.
+   *
+   * The ticket carries ids, not names, so both have to be resolved through the
+   * identity lookup the rest of the page already uses. Declared here with the
+   * other hooks for the same reason as the permission check above: this
+   * component returns early while the ticket loads.
+   */
+  const { userMap } = useUserEnrichment([
+    ticket?.createdById,
+    ticket?.updatedById,
+    ticket?.requesterId,
+  ]);
+
+  // Falls back to the requester when the creator is unknown, which is every row
+  // written without a user context: seed data, imports and background jobs all
+  // stamp an empty id. That was already this line's behaviour before the real
+  // creator was available, so the fallback loses nothing and the common case
+  // now shows the person who actually raised it.
+  const createdByName =
+    (ticket?.createdById ? userMap[ticket.createdById]?.name : undefined) ??
+    ticket?.requesterName ??
+    (ticket?.requesterId ? userMap[ticket.requesterId]?.name : undefined);
+
+  // No equivalent fallback exists for the editor, so an unknown one drops the
+  // "by ..." clause entirely rather than naming someone who may not have done it.
+  const updatedByName = ticket?.updatedById
+    ? userMap[ticket.updatedById]?.name
+    : undefined;
 
   // Attachments
   const { attachments, isLoading: attachmentsLoading } = useAttachments(id);
@@ -206,6 +254,39 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       );
     },
     [id, updateTicketMutation],
+  );
+
+  /*
+   * Inline subject/description saves.
+   *
+   * Both fields go on every call, deliberately. The API's update is a full
+   * replace (Ticket.UpdateContent assigns `Description = description?.Trim()`),
+   * so sending a subject alone would null the description, and a blank subject
+   * is rejected outright by the domain.
+   */
+  const handleInlineSave = useCallback(
+    (field: 'subject' | 'description', next: string) => {
+      if (!id) return;
+      updateTicketMutation.mutate(
+        {
+          id,
+          updates: {
+            subject: field === 'subject' ? next : (ticket?.subject ?? ''),
+            description:
+              field === 'description' ? next : (ticket?.description ?? ''),
+          },
+        },
+        {
+          onError: () => {
+            toast('Save failed', {
+              description: `Could not update the ticket ${field}. Please try again.`,
+              variant: 'danger',
+            });
+          },
+        },
+      );
+    },
+    [id, ticket?.subject, ticket?.description, updateTicketMutation],
   );
 
   const handleBack = useCallback(() => {
@@ -705,8 +786,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     );
   }
 
-  const statusConfig = getStatusConfig(ticket.status as TicketStatus);
-  const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
   const isSubscribeLoading =
     subscribeMutation.isPending || unsubscribeMutation.isPending;
 
@@ -758,13 +837,26 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <h1 className="text-2xl font-semibold">{ticket.subject}</h1>
-                    <StatusBadge color={statusConfig.color}>
-                      {statusConfig.label}
-                    </StatusBadge>
-                    <StatusBadge color={priorityConfig.color}>
-                      {priorityConfig.label}
-                    </StatusBadge>
+                    <div className="min-w-0 flex-1">
+                      <InlineEditable
+                        variant="heading"
+                        value={ticket.subject ?? ''}
+                        onSave={next => handleInlineSave('subject', next)}
+                        isSaving={updateTicketMutation.isPending}
+                        canEdit={!actionsDisabled && canWriteTicket}
+                        emptyLabel="Untitled ticket"
+                      />
+                    </div>
+                    {/*
+                      Status and priority are NOT badged here. They are editable
+                      fields in the sidebar, and showing them twice meant the
+                      read-only copy sat directly above the control that changes
+                      them. The sidebar fields now carry the same colours, so
+                      nothing is lost by dropping the duplicate.
+
+                      The badges below stay: they are exceptional states with no
+                      control of their own on this page.
+                    */}
                     {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
                     {ticket.isProblem && (
                       <StatusBadge color="danger">Problem</StatusBadge>
@@ -1028,15 +1120,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
             {/* Description */}
             <Box>
-              {ticket.description ? (
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap">{ticket.description}</p>
-                </div>
-              ) : (
-                <p className="text-sm text-default-400 italic">
-                  No description yet.
-                </p>
-              )}
+              <InlineEditable
+                variant="richText"
+                value={ticket.description ?? ''}
+                onSave={next => handleInlineSave('description', next)}
+                isSaving={updateTicketMutation.isPending}
+                canEdit={!actionsDisabled && canWriteTicket}
+                emptyLabel="No description yet."
+              />
             </Box>
 
             {/* Attachments */}
@@ -1143,7 +1234,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   <div>
                     <p className="text-sm font-medium">Ticket created</p>
                     <p className="text-xs text-default-500">
-                      by {ticket.requesterName ?? 'Unknown'} on{' '}
+                      {createdByName ? `by ${createdByName} on ` : 'on '}
                       {formatDateTime(ticket.createdAt, { timezone })}
                     </p>
                   </div>
@@ -1159,7 +1250,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     <div>
                       <p className="text-sm font-medium">Ticket updated</p>
                       <p className="text-xs text-default-500">
-                        on {formatDateTime(ticket.updatedAt, { timezone })}
+                        {updatedByName ? `by ${updatedByName} on ` : 'on '}
+                        {formatDateTime(ticket.updatedAt, { timezone })}
                       </p>
                     </div>
                   </div>
