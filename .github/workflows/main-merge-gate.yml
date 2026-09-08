@@ -5,9 +5,13 @@ on:
     branches: [main]
 
 jobs:
+  pick-runner:
+    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
+    secrets: inherit
   check-source-branch:
+    needs: pick-runner
     if: github.base_ref == 'main'
-    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    runs-on: ${{ needs.pick-runner.outputs.label }}
     steps:
       - name: Verify source branch
         run: |

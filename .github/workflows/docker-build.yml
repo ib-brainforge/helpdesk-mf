@@ -14,10 +14,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  pick-runner:
+    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
+    secrets: inherit
   build:
     name: Build and Push
+    needs: pick-runner
     uses: BrainForgeAU/.github/.github/workflows/docker-build.yml@main
     with:
+      runner_label: ${{ needs.pick-runner.outputs.label }}
       image_name: ${{ github.repository }}
       dockerfile_path: ./Dockerfile
     secrets: inherit

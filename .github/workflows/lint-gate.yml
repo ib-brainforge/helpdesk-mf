@@ -11,9 +11,13 @@ on:
     branches: [develop, main]
 
 jobs:
+  pick-runner:
+    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
+    secrets: inherit
   biome:
     name: Biome CI (format + lint)
-    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    needs: pick-runner
+    runs-on: ${{ needs.pick-runner.outputs.label }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
