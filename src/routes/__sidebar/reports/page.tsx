@@ -1,5 +1,4 @@
 import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import {
   ResolutionTimeChart,
   TrendLineChart,
@@ -26,6 +25,7 @@ import {
 } from '@brainforgeau/components';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
@@ -64,9 +64,11 @@ function ReportsPage() {
   );
 
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString());
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
 
   const handleDateRangeChange = (start: string, end: string) => {
     setStartDate(start);
@@ -159,10 +161,14 @@ function ReportsPage() {
           >
             CSAT Report
           </BaseButton>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={handleDateRangeChange}
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) =>
+              handleDateRangeChange(
+                start.toISOString().split('T')[0],
+                end.toISOString().split('T')[0],
+              )
+            }
           />
         </>
       }

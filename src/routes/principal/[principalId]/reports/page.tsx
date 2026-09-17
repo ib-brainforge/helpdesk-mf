@@ -10,7 +10,8 @@ import { AppAuthSplash } from '@/components/AppSplash';
 import { SummaryCard } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { usePrincipalTicketVolume } from '@/hooks/usePrincipalReports';
-import { BaseButton, BaseInput, BaseTable } from '@brainforgeau/components';
+import { BaseButton, BaseTable } from '@brainforgeau/components';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import {
   DashboardPage,
   EmptyState,
@@ -120,19 +121,12 @@ function PrincipalReportsPage() {
       }}
       actions={
         <div className="flex flex-wrap items-end gap-3">
-          <BaseInput
-            label="From"
-            type="date"
-            value={from}
-            onValueChange={setFrom}
-            className="w-40"
-          />
-          <BaseInput
-            label="To"
-            type="date"
-            value={to}
-            onValueChange={setTo}
-            className="w-40"
+          <BaseDateRangePicker
+            value={{ start: new Date(from), end: new Date(to) }}
+            onChange={({ start, end }) => {
+              setFrom(start.toISOString().split('T')[0]);
+              setTo(end.toISOString().split('T')[0]);
+            }}
           />
           <BaseButton onPress={handleApply}>Apply</BaseButton>
         </div>

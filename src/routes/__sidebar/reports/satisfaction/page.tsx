@@ -1,5 +1,4 @@
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { CSATRatingDistributionChart } from '@/components/satisfaction/CSATRatingDistributionChart';
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { SummaryCard } from '@/components/shared';
@@ -7,6 +6,7 @@ import { useCSATReport } from '@/hooks/useSatisfaction';
 import { CSATGroupBy } from '@/types';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
@@ -14,9 +14,11 @@ import { useMemo, useState } from 'react';
 // REVIEW: Following DashboardPage pattern — summary cards + chart grid
 function CSATReportPage() {
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString());
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
   const [groupBy, setGroupBy] = useState<CSATGroupBy | undefined>(undefined);
 
   const handleDateRangeChange = (start: string, end: string) => {
@@ -69,10 +71,14 @@ function CSATReportPage() {
       title="Customer Satisfaction (CSAT)"
       breadcrumbsKey="reports.satisfaction"
       actions={
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onChange={handleDateRangeChange}
+        <BaseDateRangePicker
+          value={{ start: new Date(startDate), end: new Date(endDate) }}
+          onChange={({ start, end }) =>
+            handleDateRangeChange(
+              start.toISOString().split('T')[0],
+              end.toISOString().split('T')[0],
+            )
+          }
         />
       }
       summary={

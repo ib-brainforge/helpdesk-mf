@@ -1,14 +1,14 @@
 import { AppLoadingSplash } from '@/components/AppSplash';
-// Template: DashboardPage — summary cards + table in children (no chart section).
-// DashboardPage is chosen over ListPage because summary KPI cards + table both
-// appear on the page; ListPage is table-primary only.
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useSlaComplianceReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
 import type { SlaPolicyComplianceDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+// Template: DashboardPage — summary cards + table in children (no chart section).
+// DashboardPage is chosen over ListPage because summary KPI cards + table both
+// appear on the page; ListPage is table-primary only.
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
@@ -75,12 +75,11 @@ function SlaCompliancePage() {
         title="SLA Compliance"
         breadcrumbsKey="reports.sla"
         actions={
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) => {
+              setStartDate(start.toISOString().split('T')[0]);
+              setEndDate(end.toISOString().split('T')[0]);
             }}
           />
         }
@@ -96,12 +95,11 @@ function SlaCompliancePage() {
       breadcrumbsKey="reports.sla"
       actions={
         <>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) => {
+              setStartDate(start.toISOString().split('T')[0]);
+              setEndDate(end.toISOString().split('T')[0]);
             }}
           />
           <BaseButton

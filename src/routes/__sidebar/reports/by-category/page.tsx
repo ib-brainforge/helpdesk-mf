@@ -1,5 +1,4 @@
 import { AppLoadingSplash } from '@/components/AppSplash';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useTicketsByCategoryReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import { SummaryCard } from '@/components/shared';
@@ -7,6 +6,7 @@ import type { TicketByCategoryDto } from '@/types';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
 import {
   type ColumnDef,
@@ -99,12 +99,11 @@ function TicketsByCategoryPage() {
       breadcrumbsKey="reports.by-category"
       actions={
         <>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) => {
+              setStartDate(start.toISOString().split('T')[0]);
+              setEndDate(end.toISOString().split('T')[0]);
             }}
           />
           <BaseButton

@@ -9,8 +9,8 @@ import {
   BaseTagSelect,
   BaseTagSelectItem,
 } from '@brainforgeau/components';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { type FC, useState } from 'react';
-import { DateRangeSelector } from './DateRangeSelector';
 
 export interface AdvancedFilterValues {
   startDate: string;
@@ -102,10 +102,17 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
             {/* Date Range */}
             <div>
               <p className="text-sm font-medium mb-2">Date range</p>
-              <DateRangeSelector
-                startDate={values.startDate}
-                endDate={values.endDate}
-                onChange={handleDateChange}
+              <BaseDateRangePicker
+                value={{
+                  start: new Date(values.startDate),
+                  end: new Date(values.endDate),
+                }}
+                onChange={({ start, end }) =>
+                  handleDateChange(
+                    start.toISOString().split('T')[0],
+                    end.toISOString().split('T')[0],
+                  )
+                }
               />
             </div>
 
