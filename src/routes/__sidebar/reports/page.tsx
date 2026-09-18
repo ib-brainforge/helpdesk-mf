@@ -1,5 +1,4 @@
 import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import {
   ResolutionTimeChart,
   TrendLineChart,
@@ -26,6 +25,7 @@ import {
 } from '@brainforgeau/components';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
@@ -64,9 +64,11 @@ function ReportsPage() {
   );
 
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString());
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
 
   const handleDateRangeChange = (start: string, end: string) => {
     setStartDate(start);
@@ -159,21 +161,54 @@ function ReportsPage() {
           >
             CSAT Report
           </BaseButton>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={handleDateRangeChange}
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) =>
+              handleDateRangeChange(
+                start.toISOString().split('T')[0],
+                end.toISOString().split('T')[0],
+              )
+            }
           />
         </>
       }
     >
+      {/*
+        The tabs root and each panel have to be flex columns that FILL, or the
+        table inside collapses.
+
+        PageBody (`main`) already stretches to the viewport, but the tabs root
+        sat at `flex: 0 1 auto` and stopped at its content height — 332px — and
+        every wrapper below inherited that, so BaseTable's scroll region fell
+        back to its 232px `min-h` floor and left ~500px of dead space beneath.
+        (`fullHeight` on BaseTable does not help: in this version of the
+        component the prop is destructured and never used.)
+
+        min-h-0 on both, because a flex child defaults to min-height:auto and
+        would otherwise refuse to shrink, pushing the overflow onto the page.
+      */}
       <BaseTabs
+        className="flex min-h-0 flex-1 flex-col"
+        classNames={{ panel: 'flex min-h-0 flex-1 flex-col' }}
         selectedKey={selectedTab}
         onSelectionChange={key => setSelectedTab(key as string)}
       >
         {/* Dynamics Tab */}
         <BaseTab key="dynamics" title="Dynamics">
-          <div className="mt-4 space-y-6">
+          {/*
+            NOTE: these three utilities are correct but currently INERT on this
+            tab. The chart stack (fixed 400px + 300px plus box chrome) is taller
+            than the space PageBody stretches to, so `main` grows to fit it and
+            this tab still scrolls the PAGE, exactly as it did before. `flex-1`
+            has no definite parent height to divide and `overflow-auto` has no
+            bound to scroll against.
+
+            They are left in place because they are what makes the stack scroll
+            inside the panel the moment something above caps the height — the
+            way TicketGrid measures `innerHeight - top`. Unchanged behaviour
+            here, not a fix.
+          */}
+          <div className="mt-4 min-h-0 flex-1 space-y-6 overflow-auto">
             <div className="flex gap-4">
               <BaseSelect
                 label="Granularity"
@@ -221,7 +256,7 @@ function ReportsPage() {
 
         {/* Tech Performance Tab */}
         <BaseTab key="tech-performance" title="Tech Performance">
-          <div className="mt-4">
+          <div className="mt-4 flex min-h-0 flex-1 flex-col">
             <BaseTable
               table={techTable}
               isLoading={loadingTechPerf}
@@ -233,7 +268,7 @@ function ReportsPage() {
 
         {/* Custom Tab */}
         <BaseTab key="custom" title="Custom">
-          <div className="mt-4">
+          <div className="mt-4 min-h-0 flex-1 overflow-auto">
             <CustomReportBuilder onExport={handleExportCustom} />
           </div>
         </BaseTab>

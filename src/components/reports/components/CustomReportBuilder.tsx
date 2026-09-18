@@ -49,8 +49,9 @@ const STATUS_OPTIONS = [
   { value: TicketStatus.Closed, label: 'Closed' },
 ];
 
+// None is omitted: it is no longer selectable anywhere a ticket is created or
+// edited, so reporting on it can only ever surface legacy rows.
 const PRIORITY_OPTIONS = [
-  { value: TicketPriority.None, label: 'None' },
   { value: TicketPriority.Low, label: 'Low' },
   { value: TicketPriority.Normal, label: 'Normal' },
   { value: TicketPriority.High, label: 'High' },

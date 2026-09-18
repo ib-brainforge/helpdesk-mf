@@ -220,12 +220,9 @@ function NewTicketPage() {
               >
                 Low
               </BaseSelectItem>
-              <BaseSelectItem
-                key={TicketPriority.None}
-                value={TicketPriority.None}
-              >
-                None
-              </BaseSelectItem>
+              {/* No "None" option: it means nothing that Low does not already
+                  mean, and both rendered as the same grey badge. The enum member
+                  is kept so any historical or imported ticket still renders. */}
             </BaseSelect>
           )}
         </f.Field>

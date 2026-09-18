@@ -24,6 +24,7 @@ import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { useCreateTicket } from '../hooks/useTickets';
 
+import { UserOptionRow } from '@/components/shared';
 import { useAtom } from 'jotai';
 import {
   categoriesMutationAtom,
@@ -246,12 +247,10 @@ export const NewTicketForm: FC = () => {
                 >
                   Low
                 </BaseSelectItem>
-                <BaseSelectItem
-                  key={TicketPriority.None}
-                  value={TicketPriority.None}
-                >
-                  None
-                </BaseSelectItem>
+                {/* No "None" option: it means nothing that Low does not already
+                    mean, and both rendered as the same grey badge, so it was a
+                    choice with no distinct meaning. The enum member is kept so any
+                    historical or imported ticket still renders. */}
               </BaseSelect>
             )}
           </form.Field>
@@ -367,23 +366,11 @@ export const NewTicketForm: FC = () => {
                   id={user.id}
                   textValue={user.name}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <BaseAvatar
-                      src={user.avatarUrl}
-                      name={user.name}
-                      size="xs"
-                    />
-                    <div className="flex-1">
-                      <span className="text-xs text-gray dark:text-white">
-                        {user.name}
-                      </span>
-                      {user.email && (
-                        <span className="dark:text-light block text-[10px] text-light-gray">
-                          {user.email}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <UserOptionRow
+                    name={user.name}
+                    email={user.email}
+                    avatarUrl={user.avatarUrl}
+                  />
                 </BaseAutocompleteItem>
               ))}
             </BaseAutocomplete>

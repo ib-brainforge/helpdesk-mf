@@ -14,7 +14,16 @@ import React from 'react';
 
 function TicketsPage() {
   return (
-    <div className="flex flex-col h-full w-full">
+    // `flex-1 min-h-0`, not `h-full`: `h-full` resolved against a parent with
+    // no definite height and collapsed to auto.
+    //
+    // This alone does NOT bound the page — measured in the browser, the whole
+    // ancestor chain (html > body > div#root > div.flex.flex-1) is plain block
+    // boxes sized by their content, so there is no height for `flex-1` to
+    // divide up. TicketGrid measures its own viewport height for that reason;
+    // see the comment on its useLayoutEffect. This keeps the wrapper from
+    // adding a second, conflicting sizing rule on top of it.
+    <div className="flex w-full min-h-0 flex-1 flex-col">
       <TicketGrid />
     </div>
   );

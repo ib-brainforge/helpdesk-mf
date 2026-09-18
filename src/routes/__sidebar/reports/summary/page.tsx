@@ -3,7 +3,6 @@ import {
   type AdvancedFilterValues,
   AdvancedFiltersModal,
 } from '@/components/reports/components/AdvancedFiltersModal';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
 import { SummaryCard } from '@/components/shared';
 import { useTicketsData } from '@/components/tickets/hooks/useTickets';
@@ -15,6 +14,7 @@ import {
   BaseTable,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
@@ -299,10 +299,14 @@ function ReportsSummaryPage() {
               )),
             ]}
           </BaseSelect>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={handleDateRangeChange}
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) =>
+              handleDateRangeChange(
+                start.toISOString().split('T')[0],
+                end.toISOString().split('T')[0],
+              )
+            }
           />
           <BaseButton
             variant="bordered"

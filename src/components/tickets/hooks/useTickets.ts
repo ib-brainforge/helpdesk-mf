@@ -15,12 +15,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 
-export const useTicketsData = () => {
+/**
+ * @param initialFilters Applied on the FIRST render only.
+ *
+ * Exists so the caller can seed the tab's filters before the first fetch. The
+ * tickets page reads its tab from the URL, and starting at `{}` meant the very
+ * first request always asked for every ticket regardless of which tab was
+ * selected, then corrected itself. That was both a wasted round trip and, until
+ * the correction landed, a list that disagreed with its own highlighted tab.
+ */
+export const useTicketsData = (initialFilters?: TicketFilters) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
   });
-  const [filters, setFilters] = useState<TicketFilters>({});
+  // Lazy initialiser: `initialFilters` is a seed, not a controlled value, so
+  // later renders must not reset what the user has since changed.
+  const [filters, setFilters] = useState<TicketFilters>(
+    () => initialFilters ?? {},
+  );
 
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
     queryKey: ['tickets', pagination, filters],
@@ -45,6 +58,27 @@ export const useTicketsData = () => {
         pagination.pageSize,
         undefined, // sortBy
         undefined, // sortDirection
+        /*
+         * Tag filter, sent through the raw axios config rather than as a named
+         * argument. The backend now accepts `tagIds` (see GetTicketsQuery), but
+         * @brainforgeau/helpdesk-client is generated from the OpenAPI spec by
+         * CI, so the generated `v1TicketsGet` signature will not carry the
+         * parameter until generate-client.yml runs against the merged backend
+         * change. Until then this appends it to the same request.
+         *
+         * `indexes: null` makes axios emit `tagIds=a&tagIds=b` rather than its
+         * default `tagIds[]=a`, which is the form ASP.NET Core model binding
+         * expects for a `Guid[]` query parameter.
+         *
+         * REPLACE WITH the generated named argument once the client is
+         * regenerated, and drop this options object.
+         */
+        filters.tagIds?.length
+          ? {
+              params: { tagIds: filters.tagIds },
+              paramsSerializer: { indexes: null },
+            }
+          : undefined,
       );
 
       const result = response.data;
@@ -126,10 +160,17 @@ export const useUpdateTicket = () => {
         });
       }
 
-      // Status change
+      // Status change.
+      //
+      // `customStatusId` is sent on every status patch, not only when one is
+      // set. The command assigns it unconditionally, so passing null is how a
+      // custom status gets detached when someone picks a plain built-in status;
+      // omitting the field would leave the old one attached to a ticket whose
+      // system status had moved on.
       if (updates.status) {
         await client.v1TicketsIdStatusPatch(id, {
           newStatus: toApiTicketStatus(updates.status),
+          customStatusId: updates.customStatusId ?? null,
         });
       }
 
@@ -147,10 +188,15 @@ export const useUpdateTicket = () => {
         });
       }
 
-      // Assignment change
-      if (updates.assigneeId) {
+      // Assignment change.
+      //
+      // Tested against undefined, not truthiness: `null` is a deliberate
+      // unassign and the endpoint accepts it (AssigneeId is Guid? and the
+      // domain's Assign(null) clears it). A truthy test swallowed the clear
+      // silently, so the cross on the assignee picker did nothing.
+      if (updates.assigneeId !== undefined) {
         await client.v1TicketsIdAssignPatch(id, {
-          assigneeId: updates.assigneeId,
+          assigneeId: updates.assigneeId ?? null,
         });
       }
 
@@ -182,10 +228,13 @@ export const useBulkUpdateTickets = () => {
           });
         }
 
-        // Status change
+        // Status change. Same contract as the single-ticket path: the custom
+        // id is always sent, so null detaches one from every selected ticket
+        // that had it.
         if (updates.status) {
           await client.v1TicketsIdStatusPatch(id, {
             newStatus: toApiTicketStatus(updates.status),
+            customStatusId: updates.customStatusId ?? null,
           });
         }
 
@@ -203,10 +252,11 @@ export const useBulkUpdateTickets = () => {
           });
         }
 
-        // Assignment change
+        // Assignment change. Same null-vs-undefined contract as the
+        // single-ticket path, so a bulk unassign reaches the API.
         if (updates.assigneeId !== undefined) {
           await client.v1TicketsIdAssignPatch(id, {
-            assigneeId: updates.assigneeId,
+            assigneeId: updates.assigneeId ?? null,
           });
         }
       });

@@ -6,12 +6,14 @@
  */
 
 import { AppAuthSplash } from '@/components/AppSplash';
-import { StatusBadge } from '@/components/shared';
+import { ScopeCell, StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useCreatePrincipalTicket,
   usePrincipalTickets,
 } from '@/hooks/usePrincipalTickets';
+import { useScopeNames } from '@/hooks/useScopeNames';
+import type { TicketListDto } from '@/types/ticket';
 import {
   BaseButton,
   BaseInput,
@@ -44,8 +46,13 @@ import {
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 
-const columnHelper =
-  createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
+/*
+ * Bound to the local TicketListDto, not the generated one. The local type is
+ * the generated shape plus tenantId and organisationId, which the backend now
+ * returns but the generated client will not declare until CI regenerates it
+ * from the merged OpenAPI spec.
+ */
+const columnHelper = createColumnHelper<TicketListDto>();
 
 function PrincipalTicketsPage() {
   const { principalId } = useParams<{ principalId: string }>();
@@ -74,6 +81,10 @@ function PrincipalTicketsPage() {
   const [newDescription, setNewDescription] = useState('');
 
   const pid = principalId ?? '';
+
+  // Tenant and organisation names for the Scope column; ids come on the
+  // ticket, names come from the context list the switcher already fetches.
+  const scopeNames = useScopeNames();
 
   const columns = useMemo(
     () => [
@@ -149,6 +160,24 @@ function PrincipalTicketsPage() {
         ),
         size: 150,
       }),
+      /*
+       * The principal console is the one view that returns tickets from more
+       * than one tenant (TicketScope.Principal), so both halves of the scope
+       * are shown here. The tenant grid renders the organisation alone, since
+       * its tenant never varies.
+       */
+      columnHelper.display({
+        id: 'scope',
+        header: 'Scope',
+        cell: ({ row }) => (
+          <ScopeCell
+            tenantId={row.original.tenantId}
+            organisationId={row.original.organisationId}
+            names={scopeNames}
+          />
+        ),
+        size: 160,
+      }),
       columnHelper.accessor('createdAt', {
         header: 'Created',
         cell: ({ getValue }) => (
@@ -159,7 +188,7 @@ function PrincipalTicketsPage() {
         size: 150,
       }),
     ],
-    [pid, timezone],
+    [pid, timezone, scopeNames],
   );
 
   const table = useReactTable({

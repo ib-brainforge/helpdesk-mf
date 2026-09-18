@@ -43,23 +43,21 @@ export function toWireMeta(
  * present with a value = set) helpdesk-backend's `OptionalJsonConverter<T>`
  * actually (de)serializes.
  *
- * No cast needed as of helpdesk-backend merge `53170c91` ("register the
- * Optional OpenAPI filters"), which registers the same `OptionalDataContractResolver`
- * (`Services.Core.OpenApi`) asset-backend/hr-backend already had -- Swashbuckle
- * now reflects through `Optional<T>` to the flat wire shape instead of
- * emitting `Optional<T>`'s own CLR members (`{ isSet, value }`), so the
- * generated `ServicesCoreAbstractionsScopePatch` already matches
- * `ScopePatchWire` structurally (verified: both are `{ organisationId?:
- * string | null; divisionId?: string | null; visibility?: 'Default' |
- * 'Tenant' | 'Organisation' | 'Division'; userId?: string | null }`, modulo
- * the generated type's extra optional `tenantId`). Kept as a single named
- * seam rather than inlining the assignment at each call site so there's one
- * place to fix if a future backend field reintroduces a mismatch.
+ * Cast needed again as of `@brainforgeau/components` widening `ScopePatchWire.
+ * visibility` to include `'Own'` (`Services.Core.Abstractions.Visibility.Own`,
+ * restricts to `UserId == caller`) ahead of helpdesk-backend's own generated
+ * `ServicesCoreAbstractionsScopePatch`, whose `visibility` is still the
+ * 4-value enum from its last OpenAPI regeneration. Both remain the same wire
+ * shape on the byte level (a string), so this is a cast, not a runtime
+ * transform -- nothing in this repo's scope UI currently offers `'Own'` as a
+ * selectable value, so the gap is unreachable today. Re-generate
+ * `@brainforgeau/helpdesk-client` (which will add `'Own'` to
+ * `ServicesCoreAbstractionsVisibility`) to close it and drop this cast.
  */
 export function toHelpdeskScopePatch(
   patch: ScopePatchWire,
 ): ServicesCoreAbstractionsScopePatch {
-  return patch;
+  return patch as unknown as ServicesCoreAbstractionsScopePatch;
 }
 
 /**

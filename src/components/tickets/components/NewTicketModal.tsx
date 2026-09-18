@@ -17,6 +17,7 @@ import {
 import { toast } from '@heroui/react';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { UserOptionRow } from '@/components/shared';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags } from '@/components/tags/hooks/useTags';
 import { type CreateTicketDto, TicketPriority } from '@/types/ticket';
@@ -269,12 +270,10 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
                 >
                   Low
                 </BaseSelectItem>
-                <BaseSelectItem
-                  key={TicketPriority.None}
-                  value={TicketPriority.None}
-                >
-                  None
-                </BaseSelectItem>
+                {/* No "None" option: it means nothing that Low does not already
+                    mean, and both rendered as the same grey badge, so it was a
+                    choice with no distinct meaning. The enum member is kept so any
+                    historical or imported ticket still renders. */}
               </BaseSelect>
 
               <BaseAutocomplete
@@ -374,23 +373,11 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
                   id={user.id}
                   textValue={user.name}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <BaseAvatar
-                      src={user.avatarUrl}
-                      name={user.name}
-                      size="xs"
-                    />
-                    <div className="flex-1">
-                      <span className="text-xs text-[#59636E] dark:text-white">
-                        {user.name}
-                      </span>
-                      {user.email && (
-                        <span className="dark:text-light block text-[10px] text-[#8C8F97]">
-                          {user.email}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <UserOptionRow
+                    name={user.name}
+                    email={user.email}
+                    avatarUrl={user.avatarUrl}
+                  />
                 </BaseAutocompleteItem>
               ))}
             </BaseAutocomplete>

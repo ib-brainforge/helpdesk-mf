@@ -7,9 +7,13 @@ on:
     branches: [main]
 
 jobs:
+  pick-runner:
+    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
+    secrets: inherit
   generate-release:
+    needs: pick-runner
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
+    runs-on: ${{ needs.pick-runner.outputs.label }}
     permissions:
       contents: write
     steps:

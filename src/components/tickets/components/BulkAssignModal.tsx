@@ -1,3 +1,4 @@
+import { UserOptionRow } from '@/components/shared';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -19,7 +20,8 @@ import {
 interface BulkAssignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (assigneeId: string | undefined) => void;
+  /** `null` unassigns the selected tickets. */
+  onConfirm: (assigneeId: string | null) => void;
   ticketCount: number;
 }
 
@@ -53,7 +55,7 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
   );
 
   const handleConfirm = () => {
-    onConfirm(selectedAssigneeId ?? undefined);
+    onConfirm(selectedAssigneeId ?? null);
     setSelectedAssigneeId(null);
     onClose();
   };
@@ -111,19 +113,11 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
                 id={user.id}
                 textValue={user.name}
               >
-                <div className="flex items-center gap-2.5">
-                  <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
-                  <div className="flex-1">
-                    <span className="text-xs text-[#59636E] dark:text-white">
-                      {user.name}
-                    </span>
-                    {user.email && (
-                      <span className="dark:text-light block text-[10px] text-[#8C8F97]">
-                        {user.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <UserOptionRow
+                  name={user.name}
+                  email={user.email}
+                  avatarUrl={user.avatarUrl}
+                />
               </BaseAutocompleteItem>
             ))}
           </BaseAutocomplete>

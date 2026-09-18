@@ -1,10 +1,10 @@
-// Template: ListPage — table is the dominant content with no summary cards/charts.
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
 import { useOverdueTicketsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { OverdueTicketDto } from '@/types';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+// Template: ListPage — table is the dominant content with no summary cards/charts.
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { ListPage } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
@@ -122,12 +122,11 @@ function OverdueTicketsPage() {
       isLoading={isLoading}
       actions={
         <>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
+          <BaseDateRangePicker
+            value={{ start: new Date(startDate), end: new Date(endDate) }}
+            onChange={({ start, end }) => {
+              setStartDate(start.toISOString().split('T')[0]);
+              setEndDate(end.toISOString().split('T')[0]);
             }}
           />
           <BaseButton
