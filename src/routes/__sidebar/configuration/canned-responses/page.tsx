@@ -3,7 +3,6 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
-import { ScopePermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -29,7 +28,11 @@ import {
 import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import { useAccessScope, usePermissions } from '@brainforgeau/security';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
@@ -82,8 +85,10 @@ function CannedResponsesPage() {
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
 
@@ -95,6 +100,7 @@ function CannedResponsesPage() {
     accessScope,
     selectedContext,
     canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
     // entityType verified against helpdesk-backend's `HelpdeskDbContext`
     // (`DbSet<CannedResponse> CannedResponses`).
     patchScope: async (ids, patch) => {

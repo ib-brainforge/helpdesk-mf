@@ -15,6 +15,7 @@ import {
   ContextScopeStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -67,7 +68,12 @@ export function CustomStatusEditorModal({
   // hook itself is always called (rules of hooks) with `meta: undefined` in
   // create mode, which every downstream computation here already treats as
   // "no scope yet" the same way a freshly-created record would.
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom status',
     meta: status?.meta,
@@ -195,6 +201,13 @@ export function CustomStatusEditorModal({
               meaningful once the record exists (has an id/meta); the create
               form has nothing to place yet. */}
           {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+          {isEditing && (
+            <MetadataPanel
+              meta={metaForPanel}
+              scopeBadge={scopeBadge}
+              canViewMetadata={canViewMetadata}
+            />
+          )}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">

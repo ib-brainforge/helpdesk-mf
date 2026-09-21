@@ -21,6 +21,7 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
@@ -80,7 +81,12 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   // DTO tenancy/scope metadata initiative -- only meaningful once the field
   // exists (has an id/meta); the create form has nothing to place yet
   // (gated on `isEdit` below).
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom field',
     meta: field?.meta,
@@ -246,6 +252,13 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             </form.Field>
 
             {isEdit && <ContextScopeStrip {...scopeStripProps} />}
+            {isEdit && (
+              <MetadataPanel
+                meta={metaForPanel}
+                scopeBadge={scopeBadge}
+                canViewMetadata={canViewMetadata}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <form.Field name="fieldType">

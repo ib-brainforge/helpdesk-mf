@@ -24,6 +24,7 @@ import {
   ContextScopeStrip,
   Icon,
 } from '@brainforgeau/components';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import {
   DetailPage,
   PendingCrumb,
@@ -66,7 +67,12 @@ function KnowledgeBaseArticlePage() {
     destinationName: string | null;
   } | null>(null);
 
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Article',
     meta: article?.meta,
@@ -235,6 +241,11 @@ function KnowledgeBaseArticlePage() {
           {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
               width, above the narrower metadata card below. */}
           <ContextScopeStrip {...scopeStripProps} />
+          <MetadataPanel
+            meta={metaForPanel}
+            scopeBadge={scopeBadge}
+            canViewMetadata={canViewMetadata}
+          />
         </div>
         <div className="mt-6 max-w-sm space-y-6">
           <BaseCard>

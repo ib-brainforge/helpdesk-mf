@@ -36,6 +36,7 @@ import {
   ContextScopeStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import {
   DetailPage,
   EmptyState,
@@ -120,7 +121,12 @@ function EditApprovalWorkflowPage() {
     destinationName: string | null;
   } | null>(null);
 
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Approval workflow',
     meta: workflow?.meta,
@@ -340,6 +346,11 @@ function EditApprovalWorkflowPage() {
                 above the form fields, same relative placement as asset-mf's/
                 hr-mf's detail pages (between header and content). */}
             <ContextScopeStrip {...scopeStripProps} />
+            <MetadataPanel
+              meta={metaForPanel}
+              scopeBadge={scopeBadge}
+              canViewMetadata={canViewMetadata}
+            />
 
             <BaseCard>
               <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">

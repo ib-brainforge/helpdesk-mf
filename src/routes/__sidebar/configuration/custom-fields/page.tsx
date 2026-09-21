@@ -10,7 +10,6 @@ import {
   useCustomFieldsTable,
 } from '@components/custom-fields';
 
-import { ScopePermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -27,7 +26,11 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
-import { useAccessScope, usePermissions } from '@brainforgeau/security';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useSearchParams } from '@modern-js/runtime/router';
@@ -97,8 +100,10 @@ function CustomFieldsPage() {
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
 
@@ -110,6 +115,7 @@ function CustomFieldsPage() {
     accessScope,
     selectedContext,
     canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
     // entityType verified against helpdesk-backend's `HelpdeskDbContext`
     // (`DbSet<CustomFieldDefinition> CustomFieldDefinitions`).
     patchScope: async (ids, patch) => {
