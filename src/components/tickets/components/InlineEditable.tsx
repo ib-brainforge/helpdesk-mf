@@ -109,6 +109,17 @@ export const InlineEditable: FC<InlineEditableProps> = ({
       );
     }
 
+    /*
+     * `prose` is inert: @tailwindcss/typography is not installed, so it styles
+     * nothing, and Tailwind's preflight has already stripped the margins off
+     * <p> and the bullets off <ul>. A structured description (the kind the
+     * request wizard writes) therefore rendered as one unbroken block of bold
+     * and plain text.
+     *
+     * The child selectors on that container restore just enough rhythm to
+     * read: spacing between blocks, real bullets, an indent. Scoped there so
+     * they cannot leak into the rest of the app.
+     */
     return (
       <div
         className={`${hoverable} -mx-2 px-2 py-1`}
@@ -116,7 +127,7 @@ export const InlineEditable: FC<InlineEditableProps> = ({
         title={title}
       >
         {value ? (
-          <div className="prose max-w-none">
+          <div className="prose max-w-none [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
             {looksLikeHtml(value) ? (
               <div
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: the value is passed through DOMPurify.sanitize on this same line. Ticket descriptions are untrusted (any requester, or an inbound email, controls the string) and the backend sanitiser is currently wired to knowledge-base articles only, so this is the gate.

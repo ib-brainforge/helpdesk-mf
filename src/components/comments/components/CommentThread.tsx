@@ -1,4 +1,5 @@
 import { StatusBadge } from '@/components/shared';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
 import { EmptyState } from '@brainforgeau/components/page';
@@ -51,6 +52,22 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   isLoading,
 }) => {
   const timezone = useTimezone();
+
+  /*
+   * Author names.
+   *
+   * The DTO carries `createdByUserName`, but nothing populates it for a comment
+   * written through the API or by a background job, and the fallback was
+   * `authorId`, so those rows printed a raw GUID where a person's name belongs.
+   * This is the same identity lookup the grid and the ticket sidebar already
+   * use, reading the same cache, so it costs no extra request for ids they have
+   * already resolved.
+   *
+   * Declared before the isLoading early-return: a hook after it would be called
+   * on some renders and not others.
+   */
+  const { userMap } = useUserEnrichment(comments.map(c => c.authorId));
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -83,9 +100,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold">
-                  {comment.createdByUserName ||
-                    comment.authorId ||
-                    'Unknown User'}
+                  {comment.createdByUserName?.trim() ||
+                    (comment.authorId
+                      ? userMap[comment.authorId]?.name
+                      : undefined) ||
+                    'Unknown user'}
                 </span>
                 <StatusBadge color={getCommentTypeColor(commentType)}>
                   {getCommentTypeName(commentType)}

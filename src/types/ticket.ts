@@ -106,6 +106,15 @@ export interface TicketFilters {
   overdueOnly?: boolean;
   /** Filter by a custom (tenant-defined) ticket status — maps to the backend CustomStatusId param. */
   customStatusId?: string;
+  /*
+   * Scope narrowing, for a service admin whose rows span tenants.
+   *
+   * Ignored on the tenant-scoped endpoint, which already answers for exactly
+   * one tenant and one organisation, so there is nothing for these to narrow.
+   */
+  tenantId?: string;
+  organisationId?: string;
+  divisionId?: string;
 }
 
 export interface CreateTicketDto {

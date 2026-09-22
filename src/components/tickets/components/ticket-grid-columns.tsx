@@ -323,33 +323,11 @@ export const createTicketColumns = (
         fallback={null}
       >
         <Dropdown>
-          <DropdownTrigger>
-            {/*
-              The icon must be a CHILD with isIconOnly, not the `icon` prop.
-              `icon` is a LEADING-icon slot intended to sit beside children; with
-              no children and size="none" the button collapsed to zero size, so
-              the glyph had nowhere to render and every row's Actions cell looked
-              empty (only the focus ring on the focused row gave it away).
-              This matches the working call sites in the knowledge-base pages.
-            */}
-            {/*
-              A plain <button>, not BaseButton.
-              BaseButton's variant styles kept fighting any className passed in:
-              "link" rendered nothing at all, and "light" resolved its own text
-              colour which beat the override, leaving a white glyph on a white
-              row that only appeared on hover. Three attempts at winning that
-              specificity battle all regressed.
-              This mirrors the sidebar's close button — the same plain-button +
-              Icon pattern that renders reliably elsewhere in this codebase — so
-              the colour is stated once, here, with nothing competing.
-            */}
-            <button
-              type="button"
-              aria-label="Quick actions"
-              className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
-            >
-              <Icon name="dotsV" className="h-4 w-4" />
-            </button>
+          <DropdownTrigger
+            aria-label="Quick actions"
+            className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
+          >
+            <Icon name="dotsV" className="h-4 w-4" />
           </DropdownTrigger>
           <DropdownPopover className="helpdesk-dropdown-popover">
             <DropdownMenu aria-label="Ticket actions">
@@ -398,7 +376,14 @@ export const createTicketColumns = (
                     );
                   }}
                 >
-                  {opt.isCustom ? opt.label : `Mark as ${opt.label}`}
+                  {/*
+                    Every status reads the same way. Custom ones used to render
+                    bare, so a tenant status sat among "Mark as New" / "Mark as
+                    In Progress" as just "try it out", which looks like a
+                    different kind of thing entirely rather than the fourth
+                    option in the same list.
+                  */}
+                  {`Mark as ${opt.label}`}
                 </DropdownItem>
               ))}
               <DropdownItem

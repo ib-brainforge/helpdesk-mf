@@ -39,8 +39,10 @@ import {
 import { Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
 import { type FC, useCallback, useEffect, useMemo } from 'react';
+import { useTicketDetail } from '../hooks/useTickets';
 import {
   categoriesMutationAtom,
   mapCategoryToOption,
@@ -118,6 +120,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 }) => {
   const timezone = useTimezone();
   const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+
+  /*
+   * The parent's subject, for the Parent Ticket link below.
+   *
+   * `useTicketDetail` is gated on a truthy id, so this costs nothing for the
+   * common case of a ticket with no parent. It also shares the ['ticket', id]
+   * query key, so navigating to the parent reuses this instead of refetching.
+   */
+  const { data: parentTicket } = useTicketDetail(ticket.parentTicketId ?? '');
 
   /*
    * Tenant-defined statuses belong in this picker alongside the three built-in
@@ -276,7 +287,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                 cs => encodeCustomStatusKey(cs.id) === opt.key,
               );
               return (
-                <BaseSelectItem key={opt.key} value={opt.key}>
+                /*
+                  textValue is what the closed trigger renders. These children
+                  are a JSX span (colour dot + label), not a plain string, so
+                  without it the trigger falls back to the item's key and a
+                  custom status showed as the raw wire token
+                  "custom:0971f548-fd73-4bfe-8029-346e432baeef".
+                */
+                <BaseSelectItem
+                  key={opt.key}
+                  value={opt.key}
+                  textValue={opt.label}
+                >
                   <span className="flex items-center gap-2">
                     <OptionDot
                       hex={custom?.color}
@@ -383,14 +405,36 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             isLoading={isSearchingUsers}
             isDisabled={isUpdating}
             renderSelectedItem={selectedKey => {
+              /*
+               * Falls back to the enriched user when the options list has not
+               * been fetched.
+               *
+               * usersOptions is filled by a search that only runs when the
+               * dropdown is opened, so on a freshly loaded ticket it is empty.
+               * Returning null then rendered an empty control, which read as
+               * "unassigned" on a ticket that was in fact assigned. Taking a
+               * ticket over looked like it had done nothing: the write
+               * succeeded, the button correctly disabled itself, and the field
+               * beside it still showed nobody.
+               *
+               * userMap is the same identity lookup the read-only fallback
+               * below already uses, so the name is available without opening
+               * anything.
+               */
               const user = usersOptions.find(u => u.id === selectedKey);
-              if (!user) return null;
+              const enriched = selectedKey
+                ? userMap[selectedKey as string]
+                : undefined;
+              const name = user?.name ?? enriched?.name;
+              if (!name) return null;
               return (
                 <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-                  <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
-                  <span className="truncate text-xs font-medium">
-                    {user.name}
-                  </span>
+                  <BaseAvatar
+                    src={user?.avatarUrl ?? enriched?.avatarUrl}
+                    name={name}
+                    size="xs"
+                  />
+                  <span className="truncate text-xs font-medium">{name}</span>
                 </div>
               );
             }}
@@ -660,12 +704,34 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         {/* Parent ticket */}
         {ticket.parentTicketId && (
           <div className="mb-4">
+            {/*
+              "Subtask of", not "Parent Ticket". Parent is no longer a field
+              anyone sets: the only way a ticket gets one is by being created as
+              a subtask, so this is a statement about what this ticket IS rather
+              than a relationship someone chose, and it reads as the way back up
+              rather than as an editable property.
+            */}
             <label className="block text-sm font-medium text-default-700 mb-1">
-              Parent Ticket
+              Subtask of
             </label>
-            <p className="text-sm font-mono text-blue-600">
-              #{ticket.parentTicketId?.substring(0, 8)}
-            </p>
+            {/*
+              A link, not blue text. This rendered the first 8 characters of the
+              parent's GUID styled like a link but with no behaviour: it named
+              nothing a reader recognises and could not be followed. The subject
+              is what identifies a ticket to a person, so it leads, and the short
+              id stays alongside it for anyone matching against a URL or a log.
+            */}
+            <Link
+              to={`/tickets/${ticket.parentTicketId}`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {parentTicket?.subject ?? `#${ticket.parentTicketId.slice(0, 8)}`}
+              {parentTicket?.subject && (
+                <span className="ml-1.5 font-mono text-xs text-default-400">
+                  #{ticket.parentTicketId.slice(0, 8)}
+                </span>
+              )}
+            </Link>
           </div>
         )}
       </div>
@@ -695,7 +761,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <label className="block text-sm font-medium text-default-700 mb-2">
             Suggested KB Articles
           </label>
-          <KbSuggestions searchText={ticket.subject} minChars={3} limit={5} />
+          <KbSuggestions
+            searchText={ticket.subject}
+            minChars={3}
+            limit={5}
+            emptyMessage="No related articles found for this ticket."
+          />
         </div>
       )}
     </div>

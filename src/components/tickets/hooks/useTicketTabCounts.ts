@@ -1,17 +1,14 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { TicketStatus } from '@/types/ticket';
-import { toApiTicketStatus } from '@/utils/typeMappers';
-import { TicketsApi } from '@brainforgeau/helpdesk-client';
+import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import type { TicketFilters } from '@/types/ticket';
 import { useQuery } from '@tanstack/react-query';
+import {
+  TICKET_TAB_KEYS,
+  type TicketTabKey,
+  filtersForTab,
+} from './ticketTabs';
+import { fetchTicketCount } from './useTickets';
 
-/** Tab keys, matching TICKET_VALID_TABS in TicketGrid. */
-export type TicketTabKey =
-  | 'unanswered'
-  | 'unclosed'
-  | 'unassigned'
-  | 'overdue'
-  | 'assigned-to-you'
-  | 'all';
+export type { TicketTabKey };
 
 /**
  * Counts for the badge on each ticket tab.
@@ -26,77 +23,64 @@ export type TicketTabKey =
  *
  * HOW
  * One request per tab, asking for pageSize 1 and reading `totalCount` off the
- * paged envelope. The row itself is discarded; the count is the point. Six
- * fixed requests, not a fan-out that grows with the data, and they run in
- * parallel under a single React Query entry so the whole set is cached and
- * refetched together.
+ * paged envelope. Six fixed requests, not a fan-out that grows with the data,
+ * and they run in parallel under a single React Query entry so the whole set is
+ * cached and refetched together.
  *
- * The filters below MUST mirror handleTabChange in TicketGrid. If a tab's
- * definition changes there and not here, the badge quietly disagrees with the
- * list it labels.
+ * EVERY BADGE IS SCOPED BY THE ACTIVE FILTERS
+ * `filters` is whatever the sidebar and filter bar have selected. Each count is
+ * that selection plus its own tab's definition, taken from the same
+ * `filtersForTab` the grid uses, so a badge always describes the list you get
+ * by clicking it. Without this, choosing an assignee narrowed the rows to that
+ * person while all six badges carried on reporting the whole queue.
+ *
+ * The tab-owned fields (status, unassignedOnly, overdueOnly) are stripped
+ * before the key is built, so switching tabs does not invalidate the counts:
+ * the six numbers do not depend on which tab is currently open.
  */
-export const useTicketTabCounts = (currentUserId?: string) => {
+export const useTicketTabCounts = (
+  currentUserId?: string,
+  filters: TicketFilters = {},
+) => {
+  /*
+   * Same branch as useTicketsData. The counts must come from the endpoint the
+   * rows come from, or they describe a different population: a service admin
+   * reads the principal scope, everyone else the tenant scope.
+   */
+  const { isServiceAdmin, principalId } = useHelpdeskAccess();
+  const scopedPrincipalId =
+    isServiceAdmin && principalId ? principalId : undefined;
+
+  const {
+    status: _status,
+    unassignedOnly: _unassignedOnly,
+    overdueOnly: _overdueOnly,
+    ...base
+  } = filters;
+
   const query = useQuery({
-    queryKey: ['ticket-tab-counts', currentUserId],
+    queryKey: [
+      'ticket-tab-counts',
+      currentUserId,
+      scopedPrincipalId ?? 'tenant',
+      base,
+    ],
     // A count that is a few seconds stale is fine; re-counting on every focus
     // change is not.
     staleTime: 30 * 1000,
     queryFn: async (): Promise<Record<TicketTabKey, number>> => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const counts = await Promise.all(
+        TICKET_TAB_KEYS.map(key =>
+          fetchTicketCount(
+            filtersForTab(key, base, currentUserId),
+            scopedPrincipalId,
+          ),
+        ),
+      );
 
-      /** Reads only totalCount; pageSize 1 keeps the payload to one row. */
-      const countOf = async (
-        args: {
-          status?: TicketStatus;
-          assigneeId?: string;
-          unassignedOnly?: boolean;
-          overdueOnly?: boolean;
-        } = {},
-      ) => {
-        const response = await client.v1TicketsGet(
-          args.status ? toApiTicketStatus(args.status) : undefined,
-          undefined, // customStatusId
-          undefined, // priority
-          undefined, // categoryId
-          args.assigneeId,
-          undefined, // requesterId
-          undefined, // searchTerm
-          undefined, // unreadOnly
-          args.overdueOnly ? true : undefined,
-          undefined, // spamOnly
-          args.unassignedOnly ? true : undefined,
-          1, // page
-          1, // pageSize
-        );
-        return response.data.totalCount ?? 0;
-      };
-
-      // Five requests, not six: Unanswered and the New half of Unclosed are the
-      // same query, so it is counted once and used twice.
-      const [newCount, inProgress, unassigned, overdue, all, mine] =
-        await Promise.all([
-          countOf({ status: TicketStatus.New }),
-          countOf({ status: TicketStatus.InProgress }),
-          countOf({ unassignedOnly: true }),
-          countOf({ overdueOnly: true }),
-          countOf(),
-          currentUserId
-            ? countOf({ assigneeId: currentUserId })
-            : Promise.resolve(0),
-        ]);
-
-      return {
-        // The backend has no "unanswered" status; New is the proxy the tab
-        // filter uses, so the count has to use the same proxy.
-        unanswered: newCount,
-        // The endpoint takes a single status, and Unclosed means New OR
-        // In Progress, so it is the sum of the two rather than its own query.
-        unclosed: newCount + inProgress,
-        unassigned,
-        overdue,
-        'assigned-to-you': mine,
-        all,
-      };
+      return Object.fromEntries(
+        TICKET_TAB_KEYS.map((key, i) => [key, counts[i]]),
+      ) as Record<TicketTabKey, number>;
     },
   });
 

@@ -1,4 +1,8 @@
 import {
+  TICKET_LINK_OPTIONS,
+  type TicketLinkSemantic,
+} from '@/types/ticket-links';
+import {
   BaseButton,
   BaseInput,
   BaseModal,
@@ -14,17 +18,9 @@ import { type FC, useState } from 'react';
 interface LinkTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (targetTicketId: string, linkType: string) => void;
+  onConfirm: (targetTicketId: string, linkType: TicketLinkSemantic) => void;
   currentTicketId: string;
 }
-
-const LINK_TYPES = [
-  { value: 'relates-to', label: 'Relates To' },
-  { value: 'blocks', label: 'Blocks' },
-  { value: 'is-blocked-by', label: 'Is Blocked By' },
-  { value: 'duplicates', label: 'Duplicates' },
-  { value: 'is-duplicated-by', label: 'Is Duplicated By' },
-];
 
 export const LinkTicketModal: FC<LinkTicketModalProps> = ({
   isOpen,
@@ -33,7 +29,10 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
   currentTicketId,
 }) => {
   const [targetTicketId, setTargetTicketId] = useState('');
-  const [linkType, setLinkType] = useState('relates-to');
+  // The phrases live with the wire mapping in @/types/ticket-links, so the
+  // options a person sees and the (source, target, type) they turn into cannot
+  // drift apart. They previously lived here and matched nothing the API knew.
+  const [linkType, setLinkType] = useState<TicketLinkSemantic>('relates-to');
 
   const handleConfirm = () => {
     if (targetTicketId.trim()) {
@@ -55,11 +54,15 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
               selectedKey={linkType}
               onSelectionChange={keys => {
                 const value = keys as string;
-                setLinkType(value);
+                setLinkType(value as TicketLinkSemantic);
               }}
             >
-              {LINK_TYPES.map(type => (
-                <BaseSelectItem key={type.value} value={type.value}>
+              {TICKET_LINK_OPTIONS.map(type => (
+                <BaseSelectItem
+                  key={type.value}
+                  value={type.value}
+                  textValue={type.label}
+                >
                   {type.label}
                 </BaseSelectItem>
               ))}

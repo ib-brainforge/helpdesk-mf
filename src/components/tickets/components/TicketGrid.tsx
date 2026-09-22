@@ -2,7 +2,11 @@ import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomS
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { type TicketPriority, TicketStatus } from '@/types/ticket';
+import type {
+  TicketFilters as TicketFiltersType,
+  TicketPriority,
+  TicketStatus,
+} from '@/types/ticket';
 import {
   BaseButton,
   BaseTable,
@@ -30,9 +34,12 @@ import {
   useState,
 } from 'react';
 import {
+  TICKET_DEFAULT_TAB,
+  TICKET_VALID_TABS,
   type TicketTabKey,
-  useTicketTabCounts,
-} from '../hooks/useTicketTabCounts';
+  filtersForTab,
+} from '../hooks/ticketTabs';
+import { useTicketTabCounts } from '../hooks/useTicketTabCounts';
 import { useTicketsData } from '../hooks/useTickets';
 import {
   useBulkDeleteTickets,
@@ -40,74 +47,19 @@ import {
   useUpdateTicket,
 } from '../hooks/useTickets';
 import { useTicketsTable } from '../hooks/useTicketsTable';
+import { NewRequestModal } from '../new-request/NewRequestModal';
 import { BulkAssignModal } from './BulkAssignModal';
 import { BulkStatusModal } from './BulkStatusModal';
-import { NewTicketModal } from './NewTicketModal';
 import { TicketFilters } from './TicketFilters';
 import { createTicketColumns } from './ticket-grid-columns';
 
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import type { TicketFilters as TicketFiltersType } from '@/types/ticket';
 import { useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
 import { TicketSidebar } from '../TicketSidebar';
 import type { TicketRow } from '../types';
-
-// URL query-param tab persistence: ?tab=<key> synced to selected tab.
-// Falls back to the first tab (TICKET_DEFAULT_TAB) when the param is absent or unknown.
-const TICKET_VALID_TABS = new Set([
-  'unanswered',
-  'unclosed',
-  'unassigned',
-  'overdue',
-  'assigned-to-you',
-  'all',
-]);
-const TICKET_DEFAULT_TAB = 'unanswered';
-
-/**
- * The filters a tab means. Pure, and the single definition of each tab.
- *
- * Previously this lived inside handleTabChange, which only runs on click. The
- * tab itself is read from the URL, so opening /tickets?tab=overdue (or any
- * bookmark, or the default landing view) highlighted the right tab while the
- * list stayed unfiltered underneath it. Hoisting it lets the same mapping seed
- * the first fetch.
- *
- * `base` carries the filters the sidebar and filter bar own. Tab-specific
- * fields (status, assigneeId, unassignedOnly, overdueOnly) are always rebuilt
- * from scratch so a previous tab's flags cannot leak into the next one.
- */
-const filtersForTab = (
-  tabKey: string,
-  base: TicketFiltersType,
-  currentUserId?: string,
-): TicketFiltersType => {
-  switch (tabKey) {
-    case 'unanswered':
-      // Backend has no "unanswered" status; New is the closest proxy.
-      return { ...base, status: [TicketStatus.New] };
-    case 'unclosed':
-      return {
-        ...base,
-        status: [TicketStatus.New, TicketStatus.InProgress],
-      };
-    case 'unassigned':
-      // The dedicated unassignedOnly param; a magic assigneeId string is not
-      // recognised by the endpoint.
-      return { ...base, unassignedOnly: true };
-    case 'overdue':
-      return { ...base, overdueOnly: true };
-    case 'assigned-to-you':
-      return {
-        ...base,
-        assigneeId: currentUserId ? [currentUserId] : undefined,
-      };
-    default:
-      return { ...base };
-  }
-};
 
 export const TicketGrid: FC = () => {
   const navigate = useNavigate();
@@ -222,7 +174,26 @@ export const TicketGrid: FC = () => {
    * sidebar to "All categories" on its own, with nothing left to keep in sync.
    */
   const selectedCategoryId = filters.categoryId?.[0] ?? null;
-  const selectedTags = useMemo(() => filters.tagIds ?? [], [filters.tagIds]);
+
+  /*
+   * WHO OWNS THE ASSIGNEE FILTER.
+   *
+   * "Assigned to you" is an assignee filter wearing a tab's clothes: opening it
+   * sets `filters.assigneeId` to the current user. So a non-empty assigneeId
+   * means one of two completely different things, and almost everything on this
+   * screen has to tell them apart:
+   *
+   *   - the TAB set it for itself  -> not a selection, must not narrow anything
+   *     beyond its own tab, and must not survive leaving that tab
+   *   - YOU picked it from the rail -> a real filter that narrows the badges and
+   *     travels with you across tabs
+   *
+   * Conflating the two caused three separate bugs: a dead-end where the tab
+   * disabled itself, badges that scoped the whole strip to your own queue
+   * (All reading 179 against a real 2001), and clicking All afterwards leaving
+   * the list still filtered to you.
+   */
+  const tabOwnsAssignee = selectedTab === 'assigned-to-you';
 
   // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
   useRealtimeTickets();
@@ -245,17 +216,25 @@ export const TicketGrid: FC = () => {
    * No extra request: TicketSidebar on this page already fetches this hook's
    * ['helpdesk-categories'] query, so this reads the same React Query cache.
    *
-   * Deliberately NOT filtered by isActive — a ticket filed under a category
+   * Deliberately NOT filtered by isActive: a ticket filed under a category
    * that was later deactivated still needs its name shown.
+   *
+   * The presets are merged in for the same reason the sidebar merges them.
+   * /v1/categories returns only Audience=Tenant rows, and tickets raised
+   * through the request form sit in the Netcorp categories, which are
+   * Audience=Principal. Reading the tenant list alone put every one of those
+   * rows back on the "—" fallback, which is exactly the bug this block was
+   * written to fix.
    */
-  const { categories } = useCategoriesData();
+  const { categories: ownedCategories } = useCategoriesData();
+  const { presets } = usePresetCategories(ownedCategories.map(c => c.id));
   const categoryNameById = useMemo(() => {
     const byId = new Map<string, string>();
-    for (const category of categories) {
+    for (const category of [...ownedCategories, ...presets]) {
       if (category.id) byId.set(category.id, category.name);
     }
     return byId;
-  }, [categories]);
+  }, [ownedCategories, presets]);
 
   const enrichedItems: TicketRow[] = useMemo(
     () =>
@@ -277,8 +256,8 @@ export const TicketGrid: FC = () => {
   const bulkDeleteMutation = useBulkDeleteTickets();
 
   const { confirm, dialog: confirmDialog } = useConfirm();
-  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
+  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
 
   const handleAssign = useCallback(
@@ -391,94 +370,43 @@ export const TicketGrid: FC = () => {
     observer.observe(el);
     return () => observer.disconnect();
   }, [table]);
-
   /*
-   * Trim the scroll region so it ends on a row boundary instead of slicing the
-   * next row in half.
+   * The table area fills whatever height the page-height chain gives it, and
+   * the rows scroll inside it. Page size stays a fixed, user-chosen number.
    *
-   * The region's height comes from `flex-1`, so it lands wherever the layout
-   * puts it, leaving a sliver of the following row visible under the last full
-   * one. Row heights vary (Subject and Category wrap), so there is no row-height
-   * multiple to snap to in CSS; it has to be measured.
+   * THERE IS DELIBERATELY NO HEIGHT MEASUREMENT HERE.
+   * A previous version capped this wrapper's maxHeight so the scroll region
+   * ended on a whole row rather than slicing the next one in half. BaseTable
+   * renders the pagination INSIDE this wrapper, so the cap shrank the footer
+   * along with the table and the trimmed remainder reappeared as dead space
+   * UNDER the pagination: 89px on a 945px viewport, 63px at 900px. Row heights
+   * vary (Subject and Category wrap), so the trim varied too and the gap
+   * changed size as you paged.
    *
-   * Three things this has to get right, each of which broke a previous attempt:
-   *
-   * 1. Measure from RECTS, not offsetTop. A <tr>'s offsetParent is the <table>,
-   *    so offsetTop excludes the <thead> and every row reads a header-height too
-   *    high — the "last row that fits" was really 38px past the edge.
-   * 2. Release the previous cap BEFORE measuring. Reading a wrapper already
-   *    capped by the last pass means the value can only ever shrink, so it
-   *    ratcheted down a row at a time and never grew back on a taller window.
-   * 3. Observe the PARENT, not the wrapper. Observing the element we resize is
-   *    a feedback loop; the parent's height is fixed by the page-height chain
-   *    above and is unaffected by this cap, while still changing on window and
-   *    nav resize, which is exactly when a re-snap is needed.
-   *
-   * Applied imperatively rather than through state: the measurement has to
-   * clear and re-apply the value within a single frame, which a render cycle
-   * cannot do without flashing the untrimmed height.
+   * `flex-1` alone reaches the bottom edge exactly. A partially visible last
+   * row is ordinary scrolling and is what the other platform grids do; the gap
+   * it was trying to avoid was worse than the sliver it avoided.
    */
   const tableAreaRef = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
-    const wrapper = tableAreaRef.current;
-    const parent = wrapper?.parentElement;
-    if (!wrapper || !parent) return undefined;
-
-    let frame = 0;
-    const snapToRow = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        // Release any previous cap so this measures the natural height.
-        wrapper.style.maxHeight = '';
-
-        const scroller = wrapper.querySelector<HTMLElement>(
-          '[class*="overflow-auto"]',
-        );
-        const rows = wrapper.querySelectorAll<HTMLElement>('tbody tr');
-        if (!scroller || rows.length === 0) return;
-
-        const style = getComputedStyle(scroller);
-        const scrollerRect = scroller.getBoundingClientRect();
-        const contentTop =
-          scrollerRect.top +
-          Number.parseFloat(style.borderTopWidth) +
-          Number.parseFloat(style.paddingTop);
-
-        const available = scroller.clientHeight;
-        let used = 0;
-        // Indexed loop: NodeList is not iterable under this tsconfig.
-        for (let i = 0; i < rows.length; i++) {
-          const bottom =
-            rows[i].getBoundingClientRect().bottom -
-            contentTop +
-            scroller.scrollTop;
-          // Half-pixel tolerance: rects are sub-pixel and an exact `>` drops a
-          // row that does in fact fit.
-          if (bottom > available + 0.5) break;
-          used = bottom;
-        }
-
-        // Nothing worth trimming, or not even one row fits — leave it alone.
-        const leftover = available - used;
-        if (used === 0 || leftover <= 1) return;
-
-        // Ceil so the last fitting row still fits after the cap is applied.
-        wrapper.style.maxHeight = `${Math.ceil(wrapper.clientHeight - leftover)}px`;
-      });
-    };
-
-    snapToRow();
-    const observer = new ResizeObserver(snapToRow);
-    observer.observe(parent);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-    // Re-snap when the rows themselves change (new page, page size, filter).
-  }, [enrichedItems, pagination.pageSize]);
-
-  const { counts } = useTicketTabCounts(currentUserId);
+  /*
+   * The badges are scoped by whatever YOU filtered, so each one counts the list
+   * you would get by clicking it. The hook strips the tab-owned status fields
+   * itself, so passing the live filters does not make the counts refetch on
+   * every tab change.
+   *
+   * The assignee has to be stripped here rather than in the hook, because only
+   * this component knows where it came from. On "Assigned to you" the tab sets
+   * the assignee for itself, and leaving it in scoped every other badge to your
+   * own queue: All read 179 against a real total of 2001, and Overdue 68
+   * against 814. The tab you are standing on must not narrow the tabs beside
+   * it, or the strip stops being a way to see what else is there.
+   */
+  const countsFilters = useMemo(
+    () => (tabOwnsAssignee ? { ...filters, assigneeId: undefined } : filters),
+    [filters, tabOwnsAssignee],
+  );
+  const { counts } = useTicketTabCounts(currentUserId, countsFilters);
 
   /*
    * Tab label with its count beside it.
@@ -487,11 +415,65 @@ export const TicketGrid: FC = () => {
    * a 0 or a spinner: a queue tab that reads "0" is a statement about the data,
    * and it should never say that while it simply does not know yet.
    */
+  /*
+   * Tabs that cannot coexist with a chosen assignee.
+   *
+   * Both define themselves in terms of a person, so picking one from the rail
+   * leaves them asking a contradictory or a redundant question: "unassigned"
+   * and "assigned to Zeljko" match nothing together, and "assigned to you" is
+   * already an assignee filter that would simply overwrite the choice. Their
+   * badges reflect this today by ignoring the rail, which is correct but reads
+   * as though the number is stale.
+   *
+   * Every other tab narrows cleanly by assignee and stays enabled: Unclosed for
+   * Zeljko is his New plus In Progress, which is a question worth asking.
+   */
+  const railAssigneeId = tabOwnsAssignee ? undefined : filters.assigneeId?.[0];
+
+  const isTabDisabled = useCallback(
+    (key: TicketTabKey) => {
+      // Never dim where you already are: a disabled selected tab is a dead end.
+      if (key === selectedTab || !railAssigneeId) return false;
+      // "Unassigned" contradicts any chosen person.
+      if (key === 'unassigned') return true;
+      /*
+       * Dimmed for ANY chosen person, your own name included. The rail is
+       * already applying an assignee, and this tab would only overwrite it, so
+       * offering it would mean two controls fighting over one field. Treating
+       * your name as a special case made the rail behave differently depending
+       * on whose name you clicked, which is harder to predict than a rule that
+       * holds for everyone.
+       */
+      if (key === 'assigned-to-you') return true;
+      return false;
+    },
+    [railAssigneeId, selectedTab],
+  );
+
   const tabTitle = useCallback(
     (label: string, key: TicketTabKey) => {
       const count = counts?.[key];
+      const disabled = isTabDisabled(key);
       return (
-        <span className="flex items-center gap-1.5">
+        <span
+          /*
+           * pointer-events-auto is what makes the tooltip appear at all.
+           *
+           * HeroUI gives a disabled tab `pointer-events: none`, so the browser
+           * never hit-tests it, never fires a hover, and a `title` on it is
+           * silently dead. A child may re-enable hit-testing even when its
+           * parent has it off, so the label opts back in while the tab itself
+           * stays disabled and still refuses the click.
+           */
+          className={`flex items-center gap-1.5 ${
+            disabled ? 'pointer-events-auto cursor-not-allowed opacity-40' : ''
+          }`}
+          title={
+            disabled
+              ? `${label} ignores the assignee filter. Clear the assignee to use this tab.`
+              : undefined
+          }
+        >
           {label}
           {count !== undefined && (
             <span className="bg-lighter-blue text-blue rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
@@ -501,7 +483,7 @@ export const TicketGrid: FC = () => {
         </span>
       );
     },
-    [counts],
+    [counts, isTabDisabled],
   );
 
   const paginationTemplate = useCallback(() => {
@@ -609,6 +591,28 @@ export const TicketGrid: FC = () => {
     [setFilters],
   );
 
+  /*
+   * "Clear Filters" clears what YOU chose, not which tab you are on.
+   *
+   * TicketFilters signals a clear by sending `{}`, and this was wired straight
+   * to setFilters, so the tab's own definition went with it: on Assigned to you
+   * the assignee was dropped while the tab stayed lit, and the rail fell back to
+   * "All assignees" beside a header still claiming to show your queue. The same
+   * applied everywhere, Unanswered losing its New filter and so on.
+   *
+   * Re-seeding the tab keeps the highlighted tab an accurate description of the
+   * rows under it, which is the invariant the whole tab strip rests on.
+   */
+  const handleFiltersChange = useCallback(
+    (next: TicketFiltersType) => {
+      const isClear = Object.keys(next).length === 0;
+      setFilters(
+        isClear ? filtersForTab(selectedTab, {}, currentUserId) : next,
+      );
+    },
+    [setFilters, selectedTab, currentUserId],
+  );
+
   const handleCategorySelect = useCallback(
     (categoryId: string | null) => {
       setFilters(prev => ({
@@ -621,45 +625,99 @@ export const TicketGrid: FC = () => {
     [setFilters, mobileSidebarState],
   );
 
-  const handleTagSelect = useCallback(
-    (tagId: string) => {
-      setFilters(prev => {
-        const current = prev.tagIds ?? [];
-        const newTags = current.includes(tagId)
-          ? current.filter(t => t !== tagId)
-          : [...current, tagId];
-        return { ...prev, tagIds: newTags.length > 0 ? newTags : undefined };
-      });
-    },
-    [setFilters],
-  );
-
   const handleTabChange = useCallback(
     (key: string | number) => {
       const tabKey = String(key);
       setSelectedTab(tabKey);
+      // filtersForTab strips the fields a tab owns and keeps the rest, so the
+      // whole filter set is handed over rather than an allowlist of five
+      // fields. That allowlist silently dropped the chosen assignee, tenant,
+      // organisation and division on every tab click.
       setFilters(prev =>
         filtersForTab(
           tabKey,
-          // Carry over only what the sidebar and filter bar own.
-          {
-            searchTerm: prev.searchTerm,
-            categoryId: prev.categoryId,
-            tagIds: prev.tagIds,
-            priority: prev.priority,
-            customStatusId: prev.customStatusId,
-          },
+          // Drop a tab-owned assignee on the way out. filtersForTab carries
+          // assigneeId so a rail choice survives a tab change, but the one
+          // "Assigned to you" set for itself belongs to that tab: leaving it in
+          // meant clicking All next still listed only your own tickets, under a
+          // badge saying 2001.
+          tabOwnsAssignee ? { ...prev, assigneeId: undefined } : prev,
           currentUserId,
         ),
       );
     },
-    [setFilters, currentUserId, setSelectedTab],
+    [setFilters, currentUserId, setSelectedTab, tabOwnsAssignee],
+  );
+
+  /*
+   * Assignee is one filter with two ways in: this rail for the busiest few,
+   * and the toolbar autocomplete for anyone else, including people with
+   * nothing open. Both write `filters.assigneeId` and the rail's highlight is
+   * DERIVED from it, so they cannot disagree the way the old category pair
+   * could.
+   */
+  const handleAssigneeSelect = useCallback(
+    (assigneeId?: string) => {
+      /*
+       * Your own name is treated exactly like anyone else's: the rail is a
+       * filter, not navigation. Picking yourself narrows the tab you are on,
+       * the same as picking Zeljko, which keeps combinations like "mine, and
+       * overdue" reachable in one click.
+       *
+       * The two person-defined tabs dim while any name is selected, including
+       * your own: "Unassigned" contradicts having an assignee, and "Assigned to
+       * you" is an assignee filter that would overwrite the choice. Clearing the
+       * rail brings both back.
+       */
+      const contradictsTab =
+        selectedTab === 'assigned-to-you'
+          ? true
+          : selectedTab === 'unassigned'
+            ? Boolean(assigneeId)
+            : false;
+
+      if (contradictsTab) {
+        // The tab's own meaning no longer holds, so land on All rather than
+        // leave a header describing a filter it is not applying.
+        setSelectedTab('all');
+        setFilters(prev =>
+          filtersForTab(
+            'all',
+            { ...prev, assigneeId: assigneeId ? [assigneeId] : undefined },
+            currentUserId,
+          ),
+        );
+        return;
+      }
+
+      setFilters(prev => ({
+        ...prev,
+        assigneeId: assigneeId ? [assigneeId] : undefined,
+        // Picking a person contradicts "unassigned only", so it clears it
+        // rather than sending both and getting nothing back.
+        unassignedOnly: assigneeId ? undefined : prev.unassignedOnly,
+      }));
+    },
+    [setFilters, selectedTab, setSelectedTab, currentUserId],
   );
 
   const sidebarProps = {
     onCategorySelect: handleCategorySelect,
-    onTagSelect: handleTagSelect,
-    selectedTags,
+    /*
+     * The rail highlights what YOU chose, so it reads railAssigneeId rather
+     * than the raw filter.
+     *
+     * On "Assigned to you" the tab sets the assignee itself, which lit your row
+     * even though you had not touched the rail. Rows toggle, so clicking your
+     * own name there deselected instead of selecting and dumped you back to an
+     * unfiltered All. Now that tab leaves the rail on "All assignees", and
+     * clicking any name, including your own, selects it and behaves identically.
+     */
+    selectedAssigneeId: railAssigneeId,
+    onAssigneeSelect: handleAssigneeSelect,
+    // So each person's count in the rail is the same figure the All tab shows
+    // once that person is selected.
+    ticketFilters: filters,
     // Lets the sidebar highlight the active category and show "All categories"
     // as selected when no filter is applied.
     selectedCategoryId,
@@ -729,7 +787,7 @@ export const TicketGrid: FC = () => {
               fallback={null}
             >
               <BaseButton
-                onPress={() => setIsNewTicketModalOpen(true)}
+                onPress={() => setIsNewRequestOpen(true)}
                 icon={<Icon name="plus" className="h-4 w-4" />}
               >
                 New Ticket
@@ -755,18 +813,20 @@ export const TicketGrid: FC = () => {
               <BaseTab
                 key="unassigned"
                 title={tabTitle('Unassigned', 'unassigned')}
+                isDisabled={isTabDisabled('unassigned')}
               />
               <BaseTab key="overdue" title={tabTitle('Overdue', 'overdue')} />
               <BaseTab
                 key="assigned-to-you"
                 title={tabTitle('Assigned to you', 'assigned-to-you')}
+                isDisabled={isTabDisabled('assigned-to-you')}
               />
               <BaseTab key="all" title={tabTitle('All', 'all')} />
             </BaseTabs>
             {/* Filters */}
             <TicketFilters
               filters={filters}
-              onFiltersChange={setFilters}
+              onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}
             />
@@ -862,9 +922,9 @@ export const TicketGrid: FC = () => {
           onConfirm={handleBulkStatusConfirm}
           ticketCount={selectedRows.length}
         />
-        <NewTicketModal
-          isOpen={isNewTicketModalOpen}
-          onClose={() => setIsNewTicketModalOpen(false)}
+        <NewRequestModal
+          isOpen={isNewRequestOpen}
+          onClose={() => setIsNewRequestOpen(false)}
           onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
         />
         {confirmDialog}

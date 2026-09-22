@@ -1,11 +1,13 @@
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
-import { useTags } from '@/components/tags/hooks/useTags';
+import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import type { CategoryDto, SectionDto } from '@/types/category';
+import type { TicketFilters } from '@/types/ticket';
 import { Icon } from '@brainforgeau/components/base';
-import { Chip, Spinner } from '@heroui/react';
+import { Spinner } from '@heroui/react';
 import { useMemo, useState } from 'react';
+import { AssigneeFilterList } from './components/AssigneeFilterList';
 
-type Category = {
+export type Category = {
   id: string;
   name: string;
   children?: Category[];
@@ -13,15 +15,18 @@ type Category = {
 
 type TicketSidebarProps = {
   onCategorySelect?: (categoryId: string | null) => void;
-  onTagSelect?: (tagId: string) => void;
-  selectedTags?: string[];
+  /** Currently filtered assignee, or undefined for everyone. */
+  selectedAssigneeId?: string;
+  onAssigneeSelect?: (assigneeId?: string) => void;
+  /** Active filters, so each assignee's count matches the grid for that person. */
+  ticketFilters?: TicketFilters;
   /** Drives the highlighted row; null/undefined means "All categories". */
   selectedCategoryId?: string | null;
   /** Called when user wants to close the sidebar (mobile drawer close button) */
   onClose?: () => void;
 };
 
-function CategoryTree({
+export function CategoryTree({
   categories,
   onSelect,
   selectedId,
@@ -78,7 +83,7 @@ function CategoryTree({
                 onClick={() => toggleExpand(category.id)}
                 aria-expanded={isExpanded}
                 title={category.name}
-                className="hover:bg-default-100 group flex w-full items-center rounded-md transition-colors"
+                className="hover:bg-light group flex w-full items-center rounded-md transition-colors"
                 style={{ marginLeft: `${level * 12}px` }}
               >
                 <span className="flex h-7 w-5 flex-shrink-0 items-center justify-center">
@@ -93,7 +98,7 @@ function CategoryTree({
                   */}
                   <Icon
                     name="chevron-right"
-                    className={`text-default-400 h-3 w-3 transition-transform duration-150 ${
+                    className={`text-light-gray h-3 w-3 transition-transform duration-150 ${
                       isExpanded ? '-rotate-90' : ''
                     }`}
                   />
@@ -105,9 +110,7 @@ function CategoryTree({
             ) : (
               <div
                 className={`group flex items-center rounded-md transition-colors ${
-                  isSelected
-                    ? 'bg-lighter-blue text-blue'
-                    : 'hover:bg-default-100'
+                  isSelected ? 'bg-lighter-blue text-blue' : 'hover:bg-light'
                 }`}
                 style={{ marginLeft: `${level * 12}px` }}
               >
@@ -145,17 +148,35 @@ function CategoryTree({
 
 export function TicketSidebar({
   onCategorySelect,
-  onTagSelect,
-  selectedTags = [],
+  selectedAssigneeId,
+  onAssigneeSelect,
+  ticketFilters,
   selectedCategoryId = null,
   onClose,
 }: TicketSidebarProps) {
   const {
-    categories,
+    categories: ownedCategories,
     sections,
     isLoading: isLoadingCategories,
   } = useCategoriesData();
-  const { tags, isLoading: isLoadingTags } = useTags();
+
+  /*
+   * The filter tree lists the Netcorp presets alongside the tenant's own.
+   *
+   * useCategoriesData reads /v1/categories, which filters to
+   * `Audience == Tenant && TenantId == caller's tenant`. The standard Netcorp
+   * categories are Audience=Principal with no TenantId, so they are invisible
+   * to it. Tickets are filed under them, which left the sidebar empty while the
+   * grid beside it was full of categorised tickets.
+   */
+  const { presets, isLoading: isLoadingPresets } = usePresetCategories(
+    ownedCategories.map(c => c.id),
+  );
+
+  const categories = useMemo(
+    () => [...ownedCategories, ...presets],
+    [ownedCategories, presets],
+  );
 
   // Group categories by section to build hierarchy
   const categoryTree: Category[] = useMemo(() => {
@@ -213,14 +234,14 @@ export function TicketSidebar({
       {/* Mobile close button — only visible when onClose is provided (inside drawer) */}
       {onClose && (
         <div className="mb-3 flex items-center justify-between px-4">
-          <span className="text-sm font-semibold text-default-700">Filter</span>
+          <span className="text-sm font-semibold text-dark">Filter</span>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close filter sidebar"
-            className="flex items-center justify-center rounded-md p-1 hover:bg-default-100 transition-colors"
+            className="flex items-center justify-center rounded-md p-1 hover:bg-light transition-colors"
           >
-            <Icon name="XMarkIcon" className="h-5 w-5 text-default-500" />
+            <Icon name="XMarkIcon" className="h-5 w-5 text-gray" />
           </button>
         </div>
       )}
@@ -229,6 +250,21 @@ export function TicketSidebar({
           long category list never pushes the page itself into a scrollbar. The
           mobile close button above stays pinned. */}
       <div className="min-h-0 flex-1 overflow-y-auto px-4">
+        {/*
+          Assignees first, then Categories: the order the work is read in, who
+          is holding it before what kind of thing it is.
+        */}
+        {onAssigneeSelect && (
+          <div className="mb-6">
+            <h3 className="text-dark mb-2 text-sm font-semibold">Assignees</h3>
+            <AssigneeFilterList
+              value={selectedAssigneeId}
+              onChange={onAssigneeSelect}
+              filters={ticketFilters}
+            />
+          </div>
+        )}
+
         {/* Categories Section */}
         <div className="mb-6">
           {/*
@@ -244,7 +280,7 @@ export function TicketSidebar({
             aria-pressed={!selectedCategoryId}
             className={`mb-1 flex w-full items-center rounded-md py-1.5 pr-2 text-left text-sm transition-colors ${
               selectedCategoryId
-                ? 'text-default-700 hover:bg-default-100'
+                ? 'text-dark hover:bg-light'
                 : 'bg-lighter-blue text-blue font-medium'
             }`}
           >
@@ -252,7 +288,7 @@ export function TicketSidebar({
             All categories
           </button>
 
-          {isLoadingCategories ? (
+          {isLoadingCategories || isLoadingPresets ? (
             <div className="flex justify-center py-4">
               <Spinner size="sm" />
             </div>
@@ -262,56 +298,6 @@ export function TicketSidebar({
               onSelect={onCategorySelect || (() => {})}
               selectedId={selectedCategoryId}
             />
-          )}
-        </div>
-
-        {/* Tags Section */}
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-default-700">Tags</h3>
-          {isLoadingTags ? (
-            <div className="flex justify-center py-4">
-              <Spinner size="sm" />
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {/*
-              Tags now use the app's primary blue instead of each tag's stored
-              `tag.color`. Those per-tag colours are arbitrary (the seed data
-              renders them red/orange), which made a filter control look like a
-              row of warnings and pulled attention away from the ticket list.
-              Selected reads as a solid blue chip, unselected as a quiet
-              outline, so selection is obvious at a glance.
-
-              tag.color is untouched in the data — this only changes how the
-              filter chips render.
-            */}
-              {tags.slice(0, 10).map(tag => {
-                const isSelected = selectedTags.includes(tag.id!);
-                return (
-                  <Chip
-                    key={tag.id}
-                    size="sm"
-                    // variant/color pinned to a neutral outline for both states so
-                    // the component does not inject its own palette; the exact
-                    // colours come from the className below.
-                    variant="tertiary"
-                    color="default"
-                    aria-pressed={isSelected}
-                    // `blue` is the theme's --color-blue (#1868db) — the same blue
-                    // as the New Ticket button. The earlier attempt used `primary`,
-                    // which maps to a different token and rendered off-colour.
-                    className={`cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-blue border-blue text-white'
-                        : 'border-light-blue text-blue hover:bg-lighter-blue bg-transparent'
-                    }`}
-                    onClick={() => onTagSelect?.(tag.id!)}
-                  >
-                    {tag.name}
-                  </Chip>
-                );
-              })}
-            </div>
           )}
         </div>
       </div>

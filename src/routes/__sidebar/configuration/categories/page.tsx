@@ -6,6 +6,7 @@ import {
   SectionEditorModal,
   useCategoriesData,
   useCategoryTable,
+  usePresetCategories,
 } from '@components/categories';
 
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -19,11 +20,29 @@ import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 function CategoriesPage() {
   const queryClient = useQueryClient();
   const { categories, sections, isLoading } = useCategoriesData();
+
+  /*
+   * The Netcorp presets are listed alongside the tenant's own categories. They
+   * are what the request form offers, so leaving them out of Configuration
+   * would make the screen contradict the form. They are marked and made read
+   * only rather than hidden, because "you may use this but not change it" is
+   * the true state and hiding it just raises the question elsewhere.
+   */
+  const {
+    presets,
+    presetIds,
+    isLoading: isLoadingPresets,
+  } = usePresetCategories(categories.map(c => c.id));
+
+  const allCategories = useMemo(
+    () => [...categories, ...presets],
+    [categories, presets],
+  );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<
@@ -110,12 +129,13 @@ function CategoriesPage() {
   };
 
   const { table } = useCategoryTable({
-    categories,
+    categories: allCategories,
     sections,
     searchTerm,
-    isLoading,
+    isLoading: isLoading || isLoadingPresets,
     onEditCategory: handleEditCategory,
     onDeleteCategory: handleDeleteCategory,
+    presetIds,
   });
 
   return (

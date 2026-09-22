@@ -60,10 +60,11 @@ function KnowledgeBasePage() {
             </BaseButton>
           </Link>
           <Dropdown>
-            <DropdownTrigger>
-              <BaseButton variant="bordered" isIconOnly>
-                <Icon name="dotsV" className="h-4 w-4" />
-              </BaseButton>
+            <DropdownTrigger
+              aria-label="Knowledge base actions"
+              className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-9 w-9"
+            >
+              <Icon name="dotsV" className="h-4 w-4" />
             </DropdownTrigger>
             <DropdownPopover className="helpdesk-dropdown-popover">
               <DropdownMenu aria-label="Knowledge base actions">

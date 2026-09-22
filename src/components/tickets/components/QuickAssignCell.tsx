@@ -67,20 +67,12 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
         }
       }}
     >
-      <DropdownTrigger>
-        {/*
-          A plain button, not BaseButton: BaseButton's variants resolve their
-          own text colour and beat a className override, which is what made the
-          row actions glyph render white on white. Stated once, here.
-        */}
-        <button
-          type="button"
-          aria-label="Assign this ticket"
-          className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue -ml-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm transition-colors focus:outline-none focus:ring-2"
-        >
-          <span className="text-muted-foreground">Unassigned</span>
-          <Icon name="plus" className="h-3 w-3" />
-        </button>
+      <DropdownTrigger
+        aria-label="Assign this ticket"
+        className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue -ml-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm transition-colors focus:outline-none focus:ring-2"
+      >
+        <span className="text-muted-foreground">Unassigned</span>
+        <Icon name="plus" className="h-3 w-3" />
       </DropdownTrigger>
       <DropdownPopover className="helpdesk-dropdown-popover">
         <DropdownMenu aria-label="Assign ticket to">
