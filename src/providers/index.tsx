@@ -10,12 +10,35 @@ import {
   buildWorkflowApiClient,
 } from '@/workflow-editor';
 import { ErrorBoundary } from '@brainforgeau/components';
+import { ScopeVisibilityProvider } from '@brainforgeau/components/scope-visibility';
 import { Configuration } from '@brainforgeau/helpdesk-client';
+import { PlatformPermissions, usePermissions } from '@brainforgeau/security';
 import type React from 'react';
 import { useEffect } from 'react';
 import { AuthProvider } from './AuthProvider';
 import { HeroProvider } from './HeroProvider';
 import QueryProvider from './QueryProvider';
+
+// Resolves the viewer's real platform permissions once, under `AuthProvider`
+// (where `usePermissions()` has a context to read from), and feeds them to
+// `ScopeVisibilityProvider` as the ambient default for every scope-aware
+// component in `@brainforgeau/components` (`ScopeBadge`, `ContextScopeStrip`,
+// `ListScopeStrip`, `useScopeList`, `MetadataPanel`, `BaseTable`'s row
+// marker). Explicit `canViewScope`/`canManageScope`/`canViewMetadata` props
+// passed directly to those components still override this context.
+function ScopeVisibilityMount({ children }: { children: React.ReactNode }) {
+  const { hasPlatformPermission } = usePermissions();
+
+  return (
+    <ScopeVisibilityProvider
+      canViewScope={hasPlatformPermission(PlatformPermissions.Scope.Read)}
+      canManageScope={hasPlatformPermission(PlatformPermissions.Scope.Manage)}
+      canViewMetadata={hasPlatformPermission(PlatformPermissions.Metadata.Read)}
+    >
+      {children}
+    </ScopeVisibilityProvider>
+  );
+}
 
 // Lazily-built, memoized singleton — persists across renders, survives HMR
 // navigation. Real WorkflowsApi backed by authorizedAxios, on helpdesk-backend's
@@ -80,13 +103,15 @@ export function Providers({
     <ObservabilityProvider>
       <ErrorBoundary>
         <AuthProvider>
-          <HeroProvider>
-            <QueryProvider>
-              <WorkflowApiProvider client={getWorkflowApiClient()}>
-                {children}
-              </WorkflowApiProvider>
-            </QueryProvider>
-          </HeroProvider>
+          <ScopeVisibilityMount>
+            <HeroProvider>
+              <QueryProvider>
+                <WorkflowApiProvider client={getWorkflowApiClient()}>
+                  {children}
+                </WorkflowApiProvider>
+              </QueryProvider>
+            </HeroProvider>
+          </ScopeVisibilityMount>
         </AuthProvider>
       </ErrorBoundary>
     </ObservabilityProvider>
