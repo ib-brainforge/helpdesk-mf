@@ -1,8 +1,7 @@
 import { useAgentUtilizationReport } from '@/components/reports/hooks/useReports';
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import type { TicketFilters } from '@/types/ticket';
-import { useQuery } from '@tanstack/react-query';
-import { fetchTicketCount } from './useTickets';
+import { useMemo } from 'react';
+import { useTicketCounts } from './useTicketCounts';
 
 /**
  * How many tickets each agent holds, keyed by user id.
@@ -52,53 +51,56 @@ export const useAssigneeTicketCounts = (base: TicketFilters = {}) => {
   const { data: agents, isLoading: isLoadingRoster } =
     useAgentUtilizationReport(WIDE_RANGE_START, undefined);
 
-  /*
-   * Same branch as useTicketsData and useTicketTabCounts. Counting in the
-   * tenant scope while the grid reads the principal scope is the exact defect
-   * this hook exists to stop repeating.
-   */
-  const { isServiceAdmin, principalId } = useHelpdeskAccess();
-  const scopedPrincipalId =
-    isServiceAdmin && principalId ? principalId : undefined;
-
+  // The tenant/principal scope branch now lives in useTicketCounts, so the
+  // counts still come from the same scope the grid reads without this hook
+  // having its own copy of the rule.
   const agentIds = (agents ?? [])
     .map(agent => agent.agentId)
     .filter((id): id is string => Boolean(id));
 
   /*
-   * The tab-owned fields are dropped, and so is any assignee already chosen:
-   * each row counts ITS OWN person, and picking someone must not renumber
-   * everybody else in the list.
+   * Only the tab-owned fields are dropped here, and a selected assignee is
+   * deliberately KEPT.
+   *
+   * That looks wrong for a rail where each row counts its own person, and it
+   * used to be stripped for exactly that reason. The server now drops it for
+   * the rail and applies it only to the tab badges, so the rail is unaffected
+   * either way. Passing it through is what lets this hook and
+   * useTicketTabCounts build an identical query key, which is what makes React
+   * Query serve both from ONE request instead of two.
    */
   const {
     status: _status,
     unassignedOnly: _unassignedOnly,
     overdueOnly: _overdueOnly,
-    assigneeId: _assigneeId,
     ...carried
   } = base;
 
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      'assignee-ticket-counts',
-      agentIds,
-      scopedPrincipalId ?? 'tenant',
-      carried,
-    ],
-    enabled: agentIds.length > 0,
-    staleTime: 30 * 1000,
-    queryFn: async () => {
-      const counts = await Promise.all(
-        agentIds.map(id =>
-          fetchTicketCount({ ...carried, assigneeId: [id] }, scopedPrincipalId),
-        ),
-      );
-      return new Map(agentIds.map((id, i) => [id, counts[i]]));
-    },
-  });
+  const { data, isLoading } = useTicketCounts(carried);
+
+  /*
+   * The roster still decides WHO appears; the endpoint decides how many.
+   *
+   * The response only names people who currently hold a matching ticket, so
+   * driving the list from it would silently drop an agent whose queue is empty.
+   * Keeping the roster preserves the rail exactly as it was, counts included:
+   * an agent absent from the response holds nothing and reads zero.
+   *
+   * It also leaves the KNOWN LIMIT above untouched rather than quietly changing
+   * who is listed. The response does carry assignees the tenant-scoped roster
+   * misses, so unioning the two would fix it, but that is a visible change to
+   * the rail and belongs in its own piece of work.
+   */
+  const countsByUserId = useMemo(() => {
+    const byId = new Map<string, number>();
+    for (const row of data?.assignees ?? []) {
+      byId.set(row.assigneeId, row.count);
+    }
+    return new Map(agentIds.map(id => [id, byId.get(id) ?? 0]));
+  }, [data, agentIds]);
 
   return {
-    countsByUserId: data ?? new Map<string, number>(),
+    countsByUserId,
     isLoading: isLoadingRoster || isLoading,
   };
 };

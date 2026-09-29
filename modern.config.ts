@@ -14,6 +14,41 @@ const isStandalone = process.env.STANDALONE === 'true';
 const basePath = process.env.BASE_PATH || '';
 
 /**
+ * Where the HMR websocket should connect when the dev server is reached
+ * THROUGH THE EDGE PROXY rather than directly.
+ *
+ * THE PROBLEM
+ * The local stack serves the app over HTTPS at https://dev.netcorp360.com (the
+ * one origin the dev realm's Keycloak client whitelists), with nginx proxying
+ * to this dev server on plain HTTP at :8087. Left to itself the HMR client
+ * takes the protocol and host from the page, but the PORT from `dev.port`, and
+ * builds `wss://dev.netcorp360.com:8087/webpack-hmr`. Nothing speaks TLS on
+ * 8087, so every attempt fails with ERR_SSL_PROTOCOL_ERROR and hot reload is
+ * silently dead — the app still works, so it reads as "HMR is just broken here"
+ * rather than a misaddressed socket.
+ *
+ * THE FIX
+ * Point the socket at the edge's own origin and port (443), not the dev
+ * server's. nginx's `location /` already sets the Upgrade and Connection
+ * headers, so it carries the websocket through to 8087 like any other request.
+ *
+ * Only applied when MF_DEV_PUBLIC_ORIGIN is set, which is exactly when the edge
+ * is in front. A bare `pnpm dev` on http://localhost:8087 is left alone, where
+ * the default behaviour is already correct.
+ */
+const devClient = (() => {
+  const origin = process.env.MF_DEV_PUBLIC_ORIGIN;
+  if (!origin) return undefined;
+  const url = new URL(origin);
+  const secure = url.protocol === 'https:';
+  return {
+    protocol: secure ? ('wss' as const) : ('ws' as const),
+    host: url.hostname,
+    port: Number(url.port || (secure ? 443 : 80)),
+  };
+})();
+
+/**
  * Resolve a package's ESM entry from its `exports["."].import.default` field.
  *
  * @tanstack/* packages ship dual ESM + CJS builds, each of which creates its
@@ -165,6 +200,9 @@ export default defineConfig({
   },
   dev: {
     port: 8087,
+    // See `devClient` above: undefined (and so omitted) unless the edge proxy
+    // is in front, which is the only case where the default is wrong.
+    ...(devClient ? { client: devClient } : {}),
     // pilot(shell-host): dev-only. When helpdesk-mf is loaded as a Module
     // Federation remote inside the app shell (localhost:8080), the shared
     // `@module-federation/runtime` resolves the manifest's `publicPath`

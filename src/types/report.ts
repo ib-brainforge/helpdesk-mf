@@ -98,6 +98,12 @@ export interface CustomReportResultDto {
 
 export interface TechPerformanceDto {
   technicianId: string;
+  /**
+   * Resolved server-side from the tenant's helpdesk contacts. Null when the
+   * technician is not a known contact, in which case the column falls back to
+   * the id rather than inventing a name.
+   */
+  technicianName?: string | null;
   ticketsAssigned: number;
   ticketsResolved: number;
   avgResolutionMinutes: number | null;

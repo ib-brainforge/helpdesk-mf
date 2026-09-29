@@ -1,12 +1,6 @@
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import type { TicketFilters } from '@/types/ticket';
-import { useQuery } from '@tanstack/react-query';
-import {
-  TICKET_TAB_KEYS,
-  type TicketTabKey,
-  filtersForTab,
-} from './ticketTabs';
-import { fetchTicketCount } from './useTickets';
+import type { TicketTabKey } from './ticketTabs';
+import { tabCountsFrom, useTicketCounts } from './useTicketCounts';
 
 export type { TicketTabKey };
 
@@ -43,14 +37,18 @@ export const useTicketTabCounts = (
   filters: TicketFilters = {},
 ) => {
   /*
-   * Same branch as useTicketsData. The counts must come from the endpoint the
-   * rows come from, or they describe a different population: a service admin
-   * reads the principal scope, everyone else the tenant scope.
+   * All six badges now come from one request, shared with the assignee rail.
+   *
+   * This used to issue one request per tab, and the rail one per person: about
+   * fifteen calls per page load to return fifteen integers. useTicketCounts
+   * explains what that cost and why the server answers it in a single grouped
+   * query instead. Both hooks pass the same filters and so build the same query
+   * key, which is what makes React Query serve them from one call.
+   *
+   * The tab-owned fields are still stripped here. Each tab defines status,
+   * unassignedOnly and overdueOnly for itself server-side, so sending them
+   * would make every badge depend on whichever tab happened to be open.
    */
-  const { isServiceAdmin, principalId } = useHelpdeskAccess();
-  const scopedPrincipalId =
-    isServiceAdmin && principalId ? principalId : undefined;
-
   const {
     status: _status,
     unassignedOnly: _unassignedOnly,
@@ -58,31 +56,8 @@ export const useTicketTabCounts = (
     ...base
   } = filters;
 
-  const query = useQuery({
-    queryKey: [
-      'ticket-tab-counts',
-      currentUserId,
-      scopedPrincipalId ?? 'tenant',
-      base,
-    ],
-    // A count that is a few seconds stale is fine; re-counting on every focus
-    // change is not.
-    staleTime: 30 * 1000,
-    queryFn: async (): Promise<Record<TicketTabKey, number>> => {
-      const counts = await Promise.all(
-        TICKET_TAB_KEYS.map(key =>
-          fetchTicketCount(
-            filtersForTab(key, base, currentUserId),
-            scopedPrincipalId,
-          ),
-        ),
-      );
+  const { data, isLoading } = useTicketCounts(base);
 
-      return Object.fromEntries(
-        TICKET_TAB_KEYS.map((key, i) => [key, counts[i]]),
-      ) as Record<TicketTabKey, number>;
-    },
-  });
-
-  return { counts: query.data, isLoading: query.isLoading };
+  return { counts: tabCountsFrom(data, currentUserId), isLoading };
 };
+
