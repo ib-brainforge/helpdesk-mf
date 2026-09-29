@@ -137,6 +137,31 @@ export const useKnowledgeBaseArticles = (
   });
 };
 
+/**
+ * The article's author, taken from the audit metadata every record carries.
+ *
+ * WHERE IT WAS HIDING
+ * Both mappers used to hardcode `authorId: ''` under a TODO saying the backend
+ * did not expose an author, so every article in every environment rendered
+ * "Author unavailable". The backend does expose it, and always has: `meta` is
+ * the shared RecordMeta envelope, and it carries `createdBy` and `modifiedBy`
+ * as `{ userId, name }`. Nothing needed adding server-side, only reading.
+ *
+ * `createdBy` is null on records written outside the application (a SQL seed,
+ * an import), because the audit interceptor only stamps rows that pass through
+ * EF. Those articles fall back to the id-less empty string and the page shows
+ * its "Author unavailable" text, which is now an accurate statement about that
+ * row rather than a blanket default.
+ */
+function mapAuthor(meta: unknown): { authorId: string; authorName?: string } {
+  const createdBy = (meta as { createdBy?: { userId?: string; name?: string } })
+    ?.createdBy;
+  return {
+    authorId: createdBy?.userId ?? '',
+    authorName: createdBy?.name ?? undefined,
+  };
+}
+
 function mapKbArticleListToDto(
   dto: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
 ): KnowledgeBaseArticleListDto {
@@ -153,7 +178,7 @@ function mapKbArticleListToDto(
     averageRating: undefined,
     ratingCount: 0,
     tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
-    authorId: '',
+    ...mapAuthor(dto.meta),
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
@@ -187,12 +212,7 @@ function mapKbArticleDetailToDto(
         : undefined,
     ratingCount: (dto.helpfulCount ?? 0) + (dto.notHelpfulCount ?? 0),
     tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
-    // authorName is not returned by KbArticleDetailDto — only authorId would be available
-    // if the backend exposed it. For now we omit the field so the UI can show a graceful
-    // fallback (e.g. "Author unavailable") rather than a misleading "Unknown".
-    // TODO(D25-follow-up): once the backend exposes authorId on KbArticleDetailDto,
-    // look up the user display name from the identity service.
-    authorId: '',
+    ...mapAuthor(dto.meta),
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,

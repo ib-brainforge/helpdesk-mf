@@ -14,6 +14,17 @@ export interface ScopeOption {
   name: string;
   /** Present on organisations, so the picker can show which tenant they sit under. */
   parentName?: string;
+  /**
+   * The id of the level above: an organisation's tenant, a division's
+   * organisation.
+   *
+   * This is what lets the pickers cascade. Choosing a tenant should leave the
+   * Organisation list showing only that tenant's organisations, the way the
+   * tracker pool's filters behave, rather than every organisation in the
+   * estate with a hint about which tenant it belongs to. Without a parent id
+   * the list can only be labelled, not narrowed.
+   */
+  parentId?: string;
 }
 
 export interface UseScopeNamesResult {
@@ -118,6 +129,7 @@ export const useScopeNames = (): UseScopeNamesResult => {
             id: orgId,
             name: orgName ?? orgId,
             parentName: tenantName,
+            parentId: tenantId,
           });
         }
 
@@ -128,6 +140,11 @@ export const useScopeNames = (): UseScopeNamesResult => {
             id: divId,
             name: divName ?? divId,
             parentName: orgName ?? tenantName,
+            // A division hangs off an organisation, so that is its parent for
+            // cascading. Falls back to the tenant for the same reason
+            // parentName does: an org-less context still has a place in the
+            // tree.
+            parentId: orgId ?? tenantId,
           });
         }
       }

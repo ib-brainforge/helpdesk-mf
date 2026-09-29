@@ -19,9 +19,6 @@ import {
 } from '@brainforgeau/components';
 import { type FC, useCallback, useMemo, useState } from 'react';
 
-/** The "no narrowing" row. A real id can never collide with it. */
-const SCOPE_ANY = '__any__';
-
 const scopeLabel = (option: ScopeOption) =>
   option.parentName ? `${option.name} (${option.parentName})` : option.name;
 
@@ -62,8 +59,22 @@ const ScopeLevel: FC<{
     );
   }, [options, query]);
 
-  // After the hooks, never before: a picker offering one value narrows nothing.
-  if (options.length < 2) return null;
+  /*
+   * After the hooks, never before.
+   *
+   * Hidden only when there is genuinely nothing to show: no options AND
+   * nothing currently chosen.
+   *
+   * This used to hide at fewer than two options, on the reasoning that a picker
+   * offering one value narrows nothing. That held while every level listed the
+   * whole estate and so never had fewer than two. Once the levels cascade it is
+   * actively wrong: choosing a tenant that owns a single organisation would
+   * drop this list to one and make the Organisation control disappear, so the
+   * filter bar reshuffled as you picked a tenant, and a selection already made
+   * could no longer be seen or cleared. A control that stays put and offers one
+   * value is better than one that comes and goes.
+   */
+  if (options.length === 0 && !value) return null;
 
   const anyLabel = `All ${label.toLowerCase()}s`;
   const selected = options.find(option => option.id === value);
@@ -74,10 +85,13 @@ const ScopeLevel: FC<{
         label={label}
         placeholder={anyLabel}
         className="w-full"
-        selectedKey={value ?? SCOPE_ANY}
+        // null, not a sentinel key: "All tenants" is the empty state, so
+        // nothing is selected when no scope is chosen. Pointing selectedKey at
+        // a key the list no longer contains would leave the control believing
+        // in an item that is not there.
+        selectedKey={value ?? null}
         onSelectionChange={key => {
-          const next = typeof key === 'string' ? key : SCOPE_ANY;
-          onChange(next === SCOPE_ANY ? undefined : next);
+          onChange(typeof key === 'string' ? key : undefined);
         }}
         // Typing narrows the list; closing forgets it, so reopening always
         // starts from the full set rather than the last search.
@@ -91,24 +105,23 @@ const ScopeLevel: FC<{
           </span>
         )}
       >
-        {[
+        {/*
+          Only real scopes are listed. "All tenants" is the placeholder shown
+          while nothing is chosen, not a row you pick, which is how the tracker
+          pool's tenant and organisation filters read. Offering it as an item
+          made the empty state look like a choice among the others and put a
+          synthetic entry at the top of every list. Resetting is what the Clear
+          Filters button is for.
+        */}
+        {visible.map(option => (
           <BaseAutocompleteItem
-            key={SCOPE_ANY}
-            id={SCOPE_ANY}
-            textValue={anyLabel}
+            key={option.id}
+            id={option.id}
+            textValue={scopeLabel(option)}
           >
-            {anyLabel}
-          </BaseAutocompleteItem>,
-          ...visible.map(option => (
-            <BaseAutocompleteItem
-              key={option.id}
-              id={option.id}
-              textValue={scopeLabel(option)}
-            >
-              {scopeLabel(option)}
-            </BaseAutocompleteItem>
-          )),
-        ]}
+            {scopeLabel(option)}
+          </BaseAutocompleteItem>
+        ))}
       </BaseAutocomplete>
     </div>
   );
@@ -133,6 +146,47 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   const { isServiceAdmin } = useHelpdeskAccess();
   const { tenantOptions, organisationOptions, divisionOptions } =
     useScopeNames();
+
+  /*
+   * The scope pickers cascade: each list shows only what sits under the level
+   * chosen above it, the same way the tracker pool's tenant and organisation
+   * filters behave.
+   *
+   * WHY. These three used to list the whole estate regardless of each other,
+   * so the Organisation dropdown offered every organisation under every tenant
+   * while a tenant was already selected. Most of what it offered could only
+   * ever return nothing, and picking one of those silently emptied the grid.
+   * Labelling each option with its tenant name made that legible but still left
+   * the work of avoiding the impossible combinations to the person reading it.
+   *
+   * With no tenant chosen the full list is correct and stays.
+   */
+  const scopedOrganisations = useMemo(
+    () =>
+      filters.tenantId
+        ? organisationOptions.filter(o => o.parentId === filters.tenantId)
+        : organisationOptions,
+    [organisationOptions, filters.tenantId],
+  );
+
+  const scopedDivisions = useMemo(
+    () =>
+      filters.organisationId
+        ? divisionOptions.filter(d => d.parentId === filters.organisationId)
+        : // No organisation chosen, but a tenant might be: fall back to every
+          // division under that tenant's organisations rather than the estate.
+          filters.tenantId
+          ? divisionOptions.filter(d =>
+              scopedOrganisations.some(o => o.id === d.parentId),
+            )
+          : divisionOptions,
+    [
+      divisionOptions,
+      scopedOrganisations,
+      filters.organisationId,
+      filters.tenantId,
+    ],
+  );
   const activeCustomStatuses = useMemo(
     () => customStatuses.filter(s => s.isActive),
     [customStatuses],
@@ -306,17 +360,35 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             label="Tenant"
             options={tenantOptions}
             value={filters.tenantId}
-            onChange={id => onFiltersChange({ ...filters, tenantId: id })}
+            // Changing the tenant drops the organisation and division with it.
+            // They sit underneath the old tenant, so keeping them would leave a
+            // combination that describes nothing: "this tenant, and an
+            // organisation belonging to a different one" matches no ticket, and
+            // the grid would read empty for a reason nothing on screen explains.
+            onChange={id =>
+              onFiltersChange({
+                ...filters,
+                tenantId: id,
+                organisationId: undefined,
+                divisionId: undefined,
+              })
+            }
           />
           <ScopeLevel
             label="Organisation"
-            options={organisationOptions}
+            options={scopedOrganisations}
             value={filters.organisationId}
-            onChange={id => onFiltersChange({ ...filters, organisationId: id })}
+            onChange={id =>
+              onFiltersChange({
+                ...filters,
+                organisationId: id,
+                divisionId: undefined,
+              })
+            }
           />
           <ScopeLevel
             label="Division"
-            options={divisionOptions}
+            options={scopedDivisions}
             value={filters.divisionId}
             onChange={id => onFiltersChange({ ...filters, divisionId: id })}
           />

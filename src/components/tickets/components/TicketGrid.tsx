@@ -476,7 +476,21 @@ export const TicketGrid: FC = () => {
         >
           {label}
           {count !== undefined && (
-            <span className="bg-lighter-blue text-blue rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
+            /*
+             * Fixed width, not shrink-to-fit.
+             *
+             * tabular-nums already makes every DIGIT the same width, but not
+             * every NUMBER: 2001 is four digits and 179 is three, so the badge
+             * narrowed and every tab after it slid left. Choosing an assignee
+             * changes all six counts at once, so the whole bar jumped sideways
+             * at the moment you were reading it.
+             *
+             * min-w reserves room for the widest count this will realistically
+             * show, so the row keeps its geometry whatever the numbers do. The
+             * cost is a slightly wide pill around a small number, which is a
+             * fair trade for a bar that stays still.
+             */
+            <span className="bg-lighter-blue text-blue inline-block min-w-[3rem] rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums">
               {count}
             </span>
           )}

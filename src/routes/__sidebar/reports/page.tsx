@@ -8,10 +8,18 @@ import {
   useTechPerformanceReport,
 } from '@/components/reports/hooks/useReports';
 import {
+  REPORT_DEFAULT_RANGE,
+  REPORT_RANGE_OPTIONS,
+  type ReportRangeKey,
+  resolveReportRange,
+} from '@/components/reports/utils/dateRangePresets';
+import {
   exportToCSV,
   exportToExcel,
   formatReportData,
 } from '@/components/reports/utils/exportReport';
+import { UserCell } from '@/components/shared';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import {
   type CustomReportResultDto,
   ReportGranularity,
@@ -25,7 +33,6 @@ import {
 } from '@brainforgeau/components';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
@@ -63,17 +70,15 @@ function ReportsPage() {
     ReportGranularity.Daily,
   );
 
-  const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  // The header offers named ranges rather than two calendars: see
+  // dateRangePresets.ts for why, and for the local-vs-UTC boundary handling.
+  // Resolved on render so a preset keeps meaning what it says over time.
+  const [rangeKey, setRangeKey] =
+    useState<ReportRangeKey>(REPORT_DEFAULT_RANGE);
+  const { startDate, endDate } = useMemo(
+    () => resolveReportRange(rangeKey),
+    [rangeKey],
   );
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().split('T')[0],
-  );
-
-  const handleDateRangeChange = (start: string, end: string) => {
-    setStartDate(start);
-    setEndDate(end);
-  };
 
   const { data: dynamicsData, isLoading: loadingDynamics } = useDynamicsReport(
     startDate,
@@ -83,12 +88,48 @@ function ReportsPage() {
   const { data: techPerformance, isLoading: loadingTechPerf } =
     useTechPerformanceReport(startDate, endDate);
 
+  /*
+   * Technician names, from two sources in order of preference.
+   *
+   * 1. `technicianName` on the row, resolved server-side from the tenant's
+   *    helpdesk contacts. Free, but null whenever the technician is not a
+   *    contact — and HelpdeskContacts is empty in some environments, in which
+   *    case this is null for everyone.
+   * 2. identity-management, via the bulk lookup the ticket grid already uses.
+   *
+   * Both, rather than either: the server field costs nothing and covers the
+   * common case without a round trip, while enrichment covers technicians who
+   * were never contacts. Falling back to the id only when both miss.
+   */
+  const { userMap: technicianUsers } = useUserEnrichment(
+    (techPerformance ?? []).map(row => row.technicianId),
+  );
+
   const techColumns: ColumnDef<TechPerformanceDto, any>[] = useMemo(
     () => [
       {
         accessorKey: 'technicianId',
         header: 'Technician',
-        cell: info => (info.getValue() as string)?.slice(0, 8) ?? '-',
+        cell: info => {
+          const id = info.getValue() as string | undefined;
+          const name = info.row.original.technicianName;
+          if (!id) return <span className="text-muted-foreground">—</span>;
+          const user = technicianUsers[id];
+          if (user || name) {
+            return <UserCell userInfo={user} fallbackName={name} />;
+          }
+          // Neither source has a name yet. Show the id rather than a stand-in:
+          // it is still traceable in the database and in the logs, which
+          // "Unknown user" is not.
+          return (
+            <span
+              className="font-mono text-muted-foreground text-xs"
+              title={id}
+            >
+              {id.slice(0, 8)}
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'ticketsAssigned',
@@ -125,7 +166,9 @@ function ReportsPage() {
           `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
       },
     ],
-    [],
+    // technicianUsers: the Technician cell closes over it, so the columns have
+    // to be rebuilt when enrichment lands or every row stays on its id.
+    [technicianUsers],
   );
 
   const techTable = useReactTable({
@@ -161,15 +204,18 @@ function ReportsPage() {
           >
             CSAT Report
           </BaseButton>
-          <BaseDateRangePicker
-            value={{ start: new Date(startDate), end: new Date(endDate) }}
-            onChange={({ start, end }) =>
-              handleDateRangeChange(
-                start.toISOString().split('T')[0],
-                end.toISOString().split('T')[0],
-              )
-            }
-          />
+          <BaseSelect
+            aria-label="Date range"
+            selectedKey={rangeKey}
+            onSelectionChange={keys => setRangeKey(keys as ReportRangeKey)}
+            className="w-48"
+          >
+            {REPORT_RANGE_OPTIONS.map(option => (
+              <BaseSelectItem key={option.key} value={option.key}>
+                {option.label}
+              </BaseSelectItem>
+            ))}
+          </BaseSelect>
         </>
       }
     >
