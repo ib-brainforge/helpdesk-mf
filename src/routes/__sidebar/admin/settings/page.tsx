@@ -119,12 +119,6 @@ function AdministrationPage() {
           href: '/configuration/categories',
         },
         {
-          title: 'Custom fields',
-          description: 'Add custom fields to tickets, users, and companies',
-          icon: 'variable',
-          href: '/configuration/custom-fields',
-        },
-        {
           title: 'Custom statuses',
           description: 'Define custom ticket statuses beyond open/closed',
           icon: 'flag',

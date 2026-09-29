@@ -229,13 +229,6 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
-        label: 'Custom Fields',
-        href: '/configuration/custom-fields',
-        icon: 'f-field',
-        testId: 'nav-configuration-custom-fields',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
-      },
-      {
         label: 'Automation',
         href: '/configuration/automations',
         icon: 'cube',
