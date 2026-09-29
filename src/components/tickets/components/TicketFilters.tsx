@@ -34,9 +34,15 @@ const scopeLabel = (option: ScopeOption) =>
 const ScopeLevel: FC<{
   label: string;
   options: ScopeOption[];
+  /**
+   * Whether this level exists anywhere in the estate, before the cascade
+   * narrows it. Decides whether the control is shown at all; `options` only
+   * decides what it offers.
+   */
+  levelExists: boolean;
   value?: string;
   onChange: (id?: string) => void;
-}> = ({ label, options, value, onChange }) => {
+}> = ({ label, options, levelExists, value, onChange }) => {
   /*
    * Typeable rather than a plain select. A principal can hold hundreds of
    * tenants, and a list that long can only be found by scrolling, which is the
@@ -62,10 +68,16 @@ const ScopeLevel: FC<{
   /*
    * After the hooks, never before.
    *
-   * Hidden only when there is genuinely nothing to show: no options AND
-   * nothing currently chosen.
+   * Hidden only when the level does not exist in the estate at all and nothing
+   * is chosen, so the control is either always there or never there.
    *
-   * This used to hide at fewer than two options, on the reasoning that a picker
+   * It used to hide whenever the CASCADED list was empty. Picking a tenant that
+   * owns no organisations then removed the Organisation control, the search
+   * box grew into the gap, and every filter to its right slid across by one
+   * control's width under the pointer. A tenant with nothing beneath it now
+   * keeps the control in place, disabled and saying so.
+   *
+   * Before that it hid at fewer than two options, on the reasoning that a picker
    * offering one value narrows nothing. That held while every level listed the
    * whole estate and so never had fewer than two. Once the levels cascade it is
    * actively wrong: choosing a tenant that owns a single organisation would
@@ -74,9 +86,12 @@ const ScopeLevel: FC<{
    * could no longer be seen or cleared. A control that stays put and offers one
    * value is better than one that comes and goes.
    */
-  if (options.length === 0 && !value) return null;
+  if (!levelExists && !value) return null;
 
-  const anyLabel = `All ${label.toLowerCase()}s`;
+  const isEmpty = options.length === 0 && !value;
+  const anyLabel = isEmpty
+    ? `No ${label.toLowerCase()}s`
+    : `All ${label.toLowerCase()}s`;
   const selected = options.find(option => option.id === value);
 
   return (
@@ -84,6 +99,7 @@ const ScopeLevel: FC<{
       <BaseAutocomplete
         label={label}
         placeholder={anyLabel}
+        isDisabled={isEmpty}
         className="w-full"
         // null, not a sentinel key: "All tenants" is the empty state, so
         // nothing is selected when no scope is chosen. Pointing selectedKey at
@@ -359,6 +375,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           <ScopeLevel
             label="Tenant"
             options={tenantOptions}
+            levelExists={tenantOptions.length > 0}
             value={filters.tenantId}
             // Changing the tenant drops the organisation and division with it.
             // They sit underneath the old tenant, so keeping them would leave a
@@ -377,6 +394,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           <ScopeLevel
             label="Organisation"
             options={scopedOrganisations}
+            levelExists={organisationOptions.length > 0}
             value={filters.organisationId}
             onChange={id =>
               onFiltersChange({
@@ -389,6 +407,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           <ScopeLevel
             label="Division"
             options={scopedDivisions}
+            levelExists={divisionOptions.length > 0}
             value={filters.divisionId}
             onChange={id => onFiltersChange({ ...filters, divisionId: id })}
           />
