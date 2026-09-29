@@ -13,15 +13,16 @@ import { useUploadAttachment } from '@/components/attachments/hooks/useAttachmen
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags } from '@/components/tags/hooks/useTags';
+import {
+  filterAssignees,
+  useScopedAssignees,
+} from '@/components/tickets/hooks/useScopedAssignees';
 import { useCreateTicket } from '@/components/tickets/hooks/useTickets';
 import {
   categoriesMutationAtom,
   mapCategoryToOption,
 } from '@/components/tickets/state/categories-dropdown-state';
-import {
-  mapUserToOption,
-  usersMutationAtom,
-} from '@/components/tickets/state/users-dropdown-state';
+import { selectedContextAtom } from '@/state/auth-atoms';
 import { TicketPriority } from '@/types/ticket';
 import {
   BaseAutocomplete,
@@ -37,7 +38,7 @@ import {
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 
@@ -72,10 +73,18 @@ function NewTicketPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const { uploadFiles, uploadProgress } = useUploadAttachment();
 
+  // The form has no scope field: the backend places a new ticket in the
+  // caller's selected context, so that is the scope whose people can take it.
+  const selectedContext = useAtomValue(selectedContextAtom);
+  const scopedAssignees = useScopedAssignees({
+    tenantId: selectedContext?.tenantId,
+    organisationId: selectedContext?.organisationId,
+    divisionId: selectedContext?.divisionId,
+  });
+  const [assigneeQuery, setAssigneeQuery] = useState('');
+  const usersOptions = filterAssignees(scopedAssignees.options, assigneeQuery);
+
   // Autocomplete state via Jotai atoms (mirrors existing NewTicketForm pattern)
-  const [
-    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
-  ] = useAtom(usersMutationAtom);
   const [
     {
       mutate: searchCategories,
@@ -85,14 +94,9 @@ function NewTicketPage() {
   ] = useAtom(categoriesMutationAtom);
 
   useEffect(() => {
-    searchUsers({ query: '' });
     searchCategories({ query: '' });
-  }, [searchUsers, searchCategories]);
+  }, [searchCategories]);
 
-  const usersOptions = useMemo(
-    () => (usersData ?? []).map(mapUserToOption),
-    [usersData],
-  );
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
     [categoriesData],
@@ -300,17 +304,15 @@ function NewTicketPage() {
                 field.handleChange((key as string | null) ?? undefined);
               }}
               onClear={() => field.handleChange(undefined)}
-              onValueChange={(value: string) => {
-                searchUsers({ query: value });
-              }}
+              onValueChange={setAssigneeQuery}
               onOpenChange={open => {
-                if (open && !isSearchingUsers) {
-                  searchUsers({ query: '' });
-                }
+                if (!open) setAssigneeQuery('');
               }}
-              isLoading={isSearchingUsers}
+              isLoading={scopedAssignees.isLoading}
               renderSelectedItem={selectedKey => {
-                const user = usersOptions.find(u => u.id === selectedKey);
+                const user = scopedAssignees.options.find(
+                  u => u.id === selectedKey,
+                );
                 if (!user) return null;
                 return (
                   <div className="flex w-full min-w-0 flex-1 items-center gap-2">

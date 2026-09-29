@@ -75,21 +75,20 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
   return params;
 };
 
-export const useTicketCounts = (filters: TicketFilters = {}) => {
-  /*
-   * Same scope branch as the grid and as the hooks this replaces. Counting in
-   * the tenant scope while the rows come from the principal scope is the exact
-   * defect useAssigneeTicketCounts was written to stop repeating, so the
-   * principal has its own counts route rather than a tenant-scoped
-   * approximation.
-   */
-  const { isServiceAdmin, principalId } = useHelpdeskAccess();
-  const scopedPrincipalId =
-    isServiceAdmin && principalId ? principalId : undefined;
-
+/**
+ * The counts query for one set of filters, as options rather than a hook.
+ *
+ * Exported so a caller that needs counts for SEVERAL scopes at once (the bulk
+ * assignee picker intersects one per selected organisation) can pass these to
+ * useQueries and share the exact cache entries useTicketCounts reads, instead
+ * of a second copy of the key and fetch that could drift from this one.
+ */
+export const ticketCountsQueryOptions = (
+  filters: TicketFilters,
+  scopedPrincipalId: string | undefined,
+) => {
   const params = countsParams(filters);
-
-  const query = useQuery({
+  return {
     // Prefixed with 'tickets' so the invalidateQueries({ queryKey: ['tickets'] })
     // that every ticket mutation and every realtime event already fires reaches
     // these badges too. TanStack matches by prefix.
@@ -116,7 +115,29 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
       });
       return data;
     },
-  });
+  };
+};
+
+/**
+ * Whether counts read the principal route, and for which principal. The same
+ * rule the grid uses, so a badge and the rows beneath it always come from the
+ * same population.
+ */
+export const useCountsPrincipal = (): string | undefined => {
+  const { isServiceAdmin, principalId } = useHelpdeskAccess();
+  return isServiceAdmin && principalId ? principalId : undefined;
+};
+
+export const useTicketCounts = (filters: TicketFilters = {}) => {
+  /*
+   * Same scope branch as the grid and as the hooks this replaces. Counting in
+   * the tenant scope while the rows come from the principal scope is the exact
+   * defect useAssigneeTicketCounts was written to stop repeating, so the
+   * principal has its own counts route rather than a tenant-scoped
+   * approximation.
+   */
+  const scopedPrincipalId = useCountsPrincipal();
+  const query = useQuery(ticketCountsQueryOptions(filters, scopedPrincipalId));
 
   return { data: query.data, isLoading: query.isLoading };
 };

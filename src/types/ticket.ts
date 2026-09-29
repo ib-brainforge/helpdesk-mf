@@ -56,9 +56,26 @@ export type TicketListDto = GeneratedTicketListDto & {
    */
   tenantId?: string | null;
   organisationId?: string | null;
+  /**
+   * The ticket's division, so a row can be assigned within its own division
+   * without fetching the whole ticket. Same generated-client caveat as above.
+   */
+  divisionId?: string | null;
 };
 
 export type TicketDto = GeneratedTicketDto & {
+  /**
+   * The ticket's own scope, used to decide who it can be assigned to.
+   *
+   * Not the viewer's context: a service admin reads tickets from every tenant
+   * under the principal, while their context names only their own tenant. The
+   * assignee picker lists the people in the ticket's scope, so it has to ask
+   * the ticket. Declared here until CI regenerates the client from the backend
+   * change that added them; drop them from here once it does.
+   */
+  tenantId?: string | null;
+  organisationId?: string | null;
+  divisionId?: string | null;
   /**
    * Who raised and who last changed the ticket.
    *

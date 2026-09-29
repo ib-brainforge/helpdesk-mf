@@ -515,6 +515,19 @@ export const TicketGrid: FC = () => {
 
   const selectedRows = table.getSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
+  // Keyed on the selected ids, not the rows array, which is rebuilt every
+  // render and would otherwise hand the bulk picker a new scope list each time.
+  const selectedIdsKey = selectedRows.map(r => r.original.id).join(',');
+  const selectedScopes = useMemo(
+    () =>
+      selectedRows.map(r => ({
+        tenantId: r.original.tenantId,
+        organisationId: r.original.organisationId,
+        divisionId: r.original.divisionId,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedIdsKey],
+  );
 
   const handleBulkAssign = useCallback(() => {
     setIsBulkAssignModalOpen(true);
@@ -929,6 +942,7 @@ export const TicketGrid: FC = () => {
           onClose={() => setIsBulkAssignModalOpen(false)}
           onConfirm={handleBulkAssignConfirm}
           ticketCount={selectedRows.length}
+          scopes={selectedScopes}
         />
         <BulkStatusModal
           isOpen={isBulkStatusModalOpen}
