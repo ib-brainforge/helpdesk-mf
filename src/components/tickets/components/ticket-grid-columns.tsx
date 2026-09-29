@@ -267,6 +267,9 @@ export const createTicketColumns = (
           <QuickAssignCell
             ticketId={row.original.id}
             currentUserId={options.currentUserId}
+            tenantId={row.original.tenantId}
+            organisationId={row.original.organisationId}
+            divisionId={row.original.divisionId}
             onAssign={options.onAssign}
           />
         ) : (

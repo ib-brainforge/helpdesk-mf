@@ -41,16 +41,16 @@ import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
-import { type FC, useCallback, useEffect, useMemo } from 'react';
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  filterAssignees,
+  useScopedAssignees,
+} from '../hooks/useScopedAssignees';
 import { useTicketDetail } from '../hooks/useTickets';
 import {
   categoriesMutationAtom,
   mapCategoryToOption,
 } from '../state/categories-dropdown-state';
-import {
-  mapUserToOption,
-  usersMutationAtom,
-} from '../state/users-dropdown-state';
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
@@ -193,10 +193,19 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   const addTagMutation = useAddTagToTicket();
   const removeTagMutation = useRemoveTagFromTicket();
 
-  // Users search mutation for assignee autocomplete
-  const [
-    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
-  ] = useAtom(usersMutationAtom);
+  /*
+   * Everyone this ticket can be assigned to: people whose helpdesk role reaches
+   * the ticket's own tenant, organisation or division, plus anyone already
+   * holding tickets there. Scoped to the TICKET, not the viewer's context, so a
+   * service admin looking at another tenant's ticket sees that tenant's people.
+   * See useScopedAssignees for why both sources are needed.
+   */
+  const scopedAssignees = useScopedAssignees({
+    tenantId: ticket.tenantId,
+    organisationId: ticket.organisationId,
+    divisionId: ticket.divisionId,
+  });
+  const [assigneeQuery, setAssigneeQuery] = useState('');
 
   // Categories search mutation for category autocomplete
   const [
@@ -209,15 +218,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
   // Load initial data when component mounts
   useEffect(() => {
-    searchUsers({ query: '' });
     searchCategories({ query: '' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Map data to options
+  // The scope is loaded once and searched here: neither source behind it has
+  // a text search, and BaseAutocomplete never filters its own items.
   const usersOptions = useMemo(
-    () => (usersData ?? []).map(mapUserToOption),
-    [usersData],
+    () => filterAssignees(scopedAssignees.options, assigneeQuery),
+    [scopedAssignees.options, assigneeQuery],
   );
 
   const categoriesOptions = useMemo(
@@ -394,15 +403,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               onUpdate?.({ assigneeId: newKey ?? null });
             }}
             onClear={() => onUpdate?.({ assigneeId: null })}
-            onValueChange={(value: string) => {
-              searchUsers({ query: value });
-            }}
+            onValueChange={setAssigneeQuery}
+            // Closing forgets the search, so reopening starts from everyone.
             onOpenChange={open => {
-              if (open && !isSearchingUsers) {
-                searchUsers({ query: '' });
-              }
+              if (!open) setAssigneeQuery('');
             }}
-            isLoading={isSearchingUsers}
+            isLoading={scopedAssignees.isLoading}
             isDisabled={isUpdating}
             renderSelectedItem={selectedKey => {
               /*
@@ -421,7 +427,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                * below already uses, so the name is available without opening
                * anything.
                */
-              const user = usersOptions.find(u => u.id === selectedKey);
+              // The unfiltered list: a search that happens to exclude the
+              // current assignee must not blank out their name.
+              const user = scopedAssignees.options.find(
+                u => u.id === selectedKey,
+              );
               const enriched = selectedKey
                 ? userMap[selectedKey as string]
                 : undefined;
