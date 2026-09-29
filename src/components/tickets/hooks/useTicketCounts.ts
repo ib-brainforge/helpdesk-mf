@@ -93,12 +93,7 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
     // Prefixed with 'tickets' so the invalidateQueries({ queryKey: ['tickets'] })
     // that every ticket mutation and every realtime event already fires reaches
     // these badges too. TanStack matches by prefix.
-    queryKey: [
-      'tickets',
-      'counts',
-      scopedPrincipalId ?? 'tenant',
-      params,
-    ],
+    queryKey: ['tickets', 'counts', scopedPrincipalId ?? 'tenant', params],
     // A count that is a few seconds stale is fine; re-counting on every focus
     // change is not. This is the ceiling when nothing invalidates, not the
     // normal path.

@@ -180,7 +180,12 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
               scopedOrganisations.some(o => o.id === d.parentId),
             )
           : divisionOptions,
-    [divisionOptions, scopedOrganisations, filters.organisationId, filters.tenantId],
+    [
+      divisionOptions,
+      scopedOrganisations,
+      filters.organisationId,
+      filters.tenantId,
+    ],
   );
   const activeCustomStatuses = useMemo(
     () => customStatuses.filter(s => s.isActive),
@@ -413,6 +418,3 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     </div>
   );
 };
-
-
-

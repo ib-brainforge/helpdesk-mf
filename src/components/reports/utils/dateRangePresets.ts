@@ -105,7 +105,9 @@ export const resolveReportRange = (
     case 'this-quarter': {
       const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
       return {
-        startDate: toLocalDay(new Date(now.getFullYear(), quarterStartMonth, 1)),
+        startDate: toLocalDay(
+          new Date(now.getFullYear(), quarterStartMonth, 1),
+        ),
         endDate: today,
       };
     }

@@ -1,4 +1,3 @@
-import { UserCell } from '@/components/shared';
 import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
 import {
   ResolutionTimeChart,
@@ -19,6 +18,7 @@ import {
   exportToExcel,
   formatReportData,
 } from '@/components/reports/utils/exportReport';
+import { UserCell } from '@/components/shared';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import {
   type CustomReportResultDto,
@@ -73,9 +73,8 @@ function ReportsPage() {
   // The header offers named ranges rather than two calendars: see
   // dateRangePresets.ts for why, and for the local-vs-UTC boundary handling.
   // Resolved on render so a preset keeps meaning what it says over time.
-  const [rangeKey, setRangeKey] = useState<ReportRangeKey>(
-    REPORT_DEFAULT_RANGE,
-  );
+  const [rangeKey, setRangeKey] =
+    useState<ReportRangeKey>(REPORT_DEFAULT_RANGE);
   const { startDate, endDate } = useMemo(
     () => resolveReportRange(rangeKey),
     [rangeKey],

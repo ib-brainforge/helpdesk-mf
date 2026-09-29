@@ -60,4 +60,3 @@ export const useTicketTabCounts = (
 
   return { counts: tabCountsFrom(data, currentUserId), isLoading };
 };
-

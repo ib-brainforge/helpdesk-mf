@@ -946,4 +946,3 @@ export const TicketGrid: FC = () => {
     </div>
   );
 };
-
