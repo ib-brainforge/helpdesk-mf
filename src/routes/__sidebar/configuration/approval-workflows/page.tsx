@@ -10,7 +10,6 @@ import {
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -41,7 +40,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import {
   createColumnHelper,
@@ -276,6 +274,4 @@ function ApprovalWorkflowsPage() {
   );
 }
 
-export default withAuthorizationRequired(ApprovalWorkflowsPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default ApprovalWorkflowsPage;

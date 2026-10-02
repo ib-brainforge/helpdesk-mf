@@ -3,7 +3,6 @@ import {
   useDeleteIntegration,
   useIntegrations,
 } from '@/components/integrations/hooks/useIntegrations';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type {
   IntegrationConfigDto,
@@ -15,7 +14,6 @@ import {
   PageHeader,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, Chip, Spinner, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -206,6 +204,4 @@ function IntegrationsPage() {
   );
 }
 
-export default withAuthorizationRequired(IntegrationsPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default IntegrationsPage;

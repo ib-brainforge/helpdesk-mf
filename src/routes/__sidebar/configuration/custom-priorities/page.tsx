@@ -1,4 +1,3 @@
-import { HelpdeskPermissions } from '@/constants/permissions';
 import {
   BaseButton,
   BaseCard,
@@ -6,7 +5,6 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { EmptyState, ListPage } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -106,6 +104,4 @@ function CustomPrioritiesPage() {
   );
 }
 
-export default withAuthorizationRequired(CustomPrioritiesPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default CustomPrioritiesPage;

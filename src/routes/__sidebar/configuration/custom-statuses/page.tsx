@@ -3,7 +3,6 @@ import {
   useCustomStatuses,
   useDeleteCustomStatus,
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -34,7 +33,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Chip, toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -352,6 +350,4 @@ function CustomStatusesPage() {
   );
 }
 
-export default withAuthorizationRequired(CustomStatusesPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default CustomStatusesPage;

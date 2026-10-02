@@ -3,7 +3,6 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -34,7 +33,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -350,6 +348,4 @@ function CannedResponsesPage() {
   );
 }
 
-export default withAuthorizationRequired(CannedResponsesPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default CannedResponsesPage;

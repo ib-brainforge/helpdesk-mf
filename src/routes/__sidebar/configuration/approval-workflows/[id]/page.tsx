@@ -21,7 +21,6 @@ import {
 } from '@/components/approvals';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -52,7 +51,6 @@ import {
   HelpdeskDomainApprovalsEnumsApprovalMode,
   ScopeApi,
 } from '@brainforgeau/helpdesk-client';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
@@ -628,6 +626,4 @@ function EditApprovalWorkflowPage() {
   );
 }
 
-export default withAuthorizationRequired(EditApprovalWorkflowPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default EditApprovalWorkflowPage;

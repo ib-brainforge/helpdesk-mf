@@ -3,7 +3,6 @@ import {
   useGetLiveChatEmbedScript,
   useUpdateLiveChatConfig,
 } from '@/components/live-chat/hooks/useLiveChat';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import {
   type BusinessHoursDay,
   type BusinessHoursDayConfig,
@@ -20,7 +19,6 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -497,6 +495,4 @@ function LiveChatPage() {
   );
 }
 
-export default withAuthorizationRequired(LiveChatPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default LiveChatPage;

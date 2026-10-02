@@ -1,4 +1,3 @@
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { Icon } from '@brainforgeau/components/base';
 import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -32,7 +31,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { useMutation } from '@tanstack/react-query';
@@ -301,6 +299,4 @@ function CustomFieldsPage() {
   );
 }
 
-export default withAuthorizationRequired(CustomFieldsPage, {
-  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-});
+export default CustomFieldsPage;
