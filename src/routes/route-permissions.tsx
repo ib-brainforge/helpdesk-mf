@@ -44,7 +44,11 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
   // Tickets
   { path: /^\/tickets\/new\/?$/, anyOf: [P.Tickets.Create] },
   { path: /^\/tickets(\/|$)/, anyOf: [P.Tickets.Read] },
-  { path: /^\/(dashboard)?\/?$/, anyOf: [P.Tickets.Read] },
+  // The dashboard's figures come from the reports API (useTicketSummaryReport),
+  // so it needs reports.read like the reports themselves. "/" only redirects
+  // (to the dashboard, or to Tickets for people without reports) and needs no
+  // rule of its own.
+  { path: /^\/dashboard\/?$/, anyOf: [P.Reports.Read] },
   { path: /^\/ideas(\/|$)/, anyOf: [P.Tickets.Read] },
 
   // Knowledge base
