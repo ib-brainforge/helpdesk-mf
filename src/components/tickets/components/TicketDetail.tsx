@@ -119,6 +119,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
    */
   const { hasPermission } = usePermissions();
   const canWriteTicket = hasPermission(HelpdeskPermissions.TicketWrite);
+  /*
+   * The ticket actions menu needs edit access to open at all, but several of
+   * its actions need more than that. These mirror what each endpoint requires
+   * (TicketsController): subtask and duplicate create a ticket, forward,
+   * moderation and delete each have their own permission. Without them a
+   * Technician saw Delete, which the API then refused.
+   */
+  const canCreateTickets = hasPermission(HelpdeskPermissions.Tickets.Create);
+  const canForwardTickets = hasPermission(HelpdeskPermissions.Tickets.Forward);
+  const canModerateTickets = hasPermission(
+    HelpdeskPermissions.Tickets.Moderate,
+  );
+  const canDeleteTickets = hasPermission(HelpdeskPermissions.Tickets.Delete);
 
   /*
    * Names for the activity timeline.
@@ -772,7 +785,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const isDeleted = !!ticket.isDeleted;
   const isSpam = !!ticket.isSpam;
   // Tickets that are spam or deleted cannot be moderated further
-  const canModerate = !isDeleted && !isSpam;
+  const canModerate = !isDeleted && !isSpam && canModerateTickets;
   // All actions are disabled when ticket is deleted
   const actionsDisabled = isDeleted;
 
@@ -937,6 +950,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="subtask"
                               onPress={() => setIsAddSubtaskModalOpen(true)}
+                              isDisabled={!canCreateTickets}
                             >
                               Add Subtask
                             </DropdownItem>
@@ -965,6 +979,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="duplicate"
                               onPress={() => setIsDuplicateModalOpen(true)}
+                              isDisabled={!canCreateTickets}
                             >
                               Duplicate
                             </DropdownItem>
@@ -975,6 +990,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="forward"
                               onPress={() => setIsForwardModalOpen(true)}
+                              isDisabled={!canForwardTickets}
                             >
                               Forward by Email
                             </DropdownItem>
@@ -1020,6 +1036,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             )}
                             <DropdownItem
                               key="spam"
+                              isDisabled={!canModerateTickets}
                               onPress={
                                 isSpam
                                   ? handleUnmarkSpam
@@ -1036,6 +1053,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                               key="delete"
                               className="text-danger"
                               onPress={handleDeleteTicket}
+                              isDisabled={!canDeleteTickets}
                             >
                               Delete
                             </DropdownItem>

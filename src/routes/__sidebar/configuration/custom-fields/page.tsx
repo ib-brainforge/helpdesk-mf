@@ -1,3 +1,4 @@
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { Icon } from '@brainforgeau/components/base';
 import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -301,5 +302,5 @@ function CustomFieldsPage() {
 }
 
 export default withAuthorizationRequired(CustomFieldsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

@@ -1,5 +1,6 @@
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { BaseButton, BaseInput } from '@brainforgeau/components';
-import { useAuth } from '@brainforgeau/security';
+import { useAuth, usePermissions } from '@brainforgeau/security';
 import { type FC, useMemo, useState } from 'react';
 import { useCreateTicket, useLinkAsset } from '../hooks/useTickets';
 import type { PickedAsset } from './AssetPicker';
@@ -84,6 +85,11 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const { user } = useAuth();
   const createTicket = useCreateTicket();
   const linkAsset = useLinkAsset();
+  // Linking needs tickets.update, which a Customer raising a request does not
+  // have. They still get their vehicles named in the description; the link is
+  // only attempted when it can succeed.
+  const { hasPermission } = usePermissions();
+  const canLinkAssets = hasPermission(HelpdeskPermissions.Tickets.Update);
   const { categories, isLoading: categoriesLoading } = useRequestCategories();
   // Why the last create failed, shown on the review step. Cleared as soon as
   // the requester moves, so a stale message never sits over a fixed form.
@@ -216,7 +222,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         onSuccess: async id => {
           setIsFinishing(true);
           try {
-            await linkPickedAssets(String(id));
+            if (canLinkAssets) await linkPickedAssets(String(id));
           } finally {
             setIsFinishing(false);
           }

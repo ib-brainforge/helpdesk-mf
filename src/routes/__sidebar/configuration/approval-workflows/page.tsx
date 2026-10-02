@@ -10,6 +10,7 @@ import {
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -276,5 +277,5 @@ function ApprovalWorkflowsPage() {
 }
 
 export default withAuthorizationRequired(ApprovalWorkflowsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

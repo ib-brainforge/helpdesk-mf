@@ -1,3 +1,4 @@
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
@@ -251,5 +252,5 @@ function ImportExportPage() {
 }
 
 export default withAuthorizationRequired(ImportExportPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

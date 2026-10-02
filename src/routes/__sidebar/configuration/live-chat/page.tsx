@@ -3,6 +3,7 @@ import {
   useGetLiveChatEmbedScript,
   useUpdateLiveChatConfig,
 } from '@/components/live-chat/hooks/useLiveChat';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import {
   type BusinessHoursDay,
   type BusinessHoursDayConfig,
@@ -497,5 +498,5 @@ function LiveChatPage() {
 }
 
 export default withAuthorizationRequired(LiveChatPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

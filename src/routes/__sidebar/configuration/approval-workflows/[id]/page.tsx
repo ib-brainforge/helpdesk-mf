@@ -21,6 +21,7 @@ import {
 } from '@/components/approvals';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -628,5 +629,5 @@ function EditApprovalWorkflowPage() {
 }
 
 export default withAuthorizationRequired(EditApprovalWorkflowPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

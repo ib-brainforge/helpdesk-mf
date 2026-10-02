@@ -1,3 +1,4 @@
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -219,5 +220,5 @@ function CategoriesPage() {
 }
 
 export default withAuthorizationRequired(CategoriesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

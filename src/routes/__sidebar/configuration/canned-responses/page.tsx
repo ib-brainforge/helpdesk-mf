@@ -3,6 +3,7 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -350,5 +351,5 @@ function CannedResponsesPage() {
 }
 
 export default withAuthorizationRequired(CannedResponsesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

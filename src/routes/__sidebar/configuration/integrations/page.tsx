@@ -3,6 +3,7 @@ import {
   useDeleteIntegration,
   useIntegrations,
 } from '@/components/integrations/hooks/useIntegrations';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type {
   IntegrationConfigDto,
@@ -206,5 +207,5 @@ function IntegrationsPage() {
 }
 
 export default withAuthorizationRequired(IntegrationsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });

@@ -1,3 +1,4 @@
+import { HelpdeskPermissions } from '@/constants/permissions';
 import {
   BaseButton,
   BaseCard,
@@ -106,5 +107,5 @@ function CustomPrioritiesPage() {
 }
 
 export default withAuthorizationRequired(CustomPrioritiesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
+  requiredPermissions: [HelpdeskPermissions.Settings.Manage],
 });
