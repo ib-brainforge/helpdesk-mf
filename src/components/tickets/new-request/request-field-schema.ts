@@ -44,6 +44,10 @@ export interface FieldSpec {
 export interface CategorySpec {
   key: string;
   label: string;
+  /** Heroicons name shown on the category card. */
+  icon: string;
+  /** One line under the label on the category card: what this is for. */
+  summary: string;
   /** Shown above the questions. Used for the pre-logging reminders. */
   note?: string;
   /** Section heading, for categories that read as a booking rather than a fault. */
@@ -157,6 +161,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'vehicle',
     label: "Issue with a vehicle's GPS tracking hardware or ability to track",
+    icon: 'TruckIcon',
+    summary: 'A tracker is offline, misreporting or not tracking.',
     note: PRE_LOG_REMINDER,
     fields: [
       vehicles,
@@ -195,6 +201,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'system',
     label: 'Problems with the web interface or portal',
+    icon: 'ComputerDesktopIcon',
+    summary: 'Something in the portal is broken or not loading.',
     note: PRE_LOG_REMINDER,
     fields: [
       {
@@ -218,16 +226,22 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'hardware',
     label: 'Hardware related repair',
+    icon: 'WrenchScrewdriverIcon',
+    summary: 'Installed equipment needs repairing.',
     fields: [vehicles, urgency, preferredTime, recentService, description()],
   },
   {
     key: 'maintenance',
     label: 'Maintenance or update',
+    icon: 'ArrowPathIcon',
+    summary: 'Scheduled servicing or a firmware update.',
     fields: [vehicles, urgency, preferredTime, recentService, description()],
   },
   {
     key: 'install',
     label: 'New installation or onsite service',
+    icon: 'WrenchIcon',
+    summary: 'Fit new equipment or book a technician on site.',
     section: 'New installation or onsite service',
     fields: [
       { key: 'additional', label: 'Additional information', kind: 'text' },
@@ -239,6 +253,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'removal',
     label: 'Device or hardware removal',
+    icon: 'ArchiveBoxXMarkIcon',
+    summary: 'Take a device or hardware out of a vehicle.',
     section: 'Device or hardware removal',
     fields: [
       ...scheduleFields('Preferred removal date'),
@@ -257,6 +273,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'account',
     label: 'Accounts or sales enquiry',
+    icon: 'BanknotesIcon',
+    summary: 'Billing, your account, or a sales question.',
     fields: [
       {
         key: 'accountTopic',
@@ -277,6 +295,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'health',
     label: 'Health check',
+    icon: 'HeartIcon',
+    summary: "Check a vehicle's installed equipment is healthy.",
     fields: [
       vehicles,
       urgency,
@@ -288,6 +308,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'obm',
     label: 'OBM calibration or maintenance',
+    icon: 'ScaleIcon',
+    summary: 'Calibrate or service on-board mass equipment.',
     fields: [
       vehicles,
       urgency,
@@ -299,6 +321,8 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   {
     key: 'other',
     label: 'Problem with apps or something else',
+    icon: 'QuestionMarkCircleIcon',
+    summary: 'App problems, or anything not listed here.',
     section: 'Tell us in your own words',
     note: 'Not sure which category fits? Describe the problem here and our team will route it.',
     fields: [
