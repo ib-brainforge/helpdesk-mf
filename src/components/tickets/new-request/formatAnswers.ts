@@ -22,7 +22,7 @@ import {
  *
  * What that costs, stated plainly so nobody discovers it later: these answers
  * cannot be filtered, grouped or reported on. "Show me every Critical GPS fault
- * on Truck 01" is not answerable from this data. If that becomes a
+ * on one vehicle" is not answerable from this data. If that becomes a
  * requirement, the questions move into CustomFieldDefinition rows and the
  * answers into CustomFieldValue, and this function goes away.
  *
@@ -34,7 +34,10 @@ import {
 const DETAILS_KEY = 'details';
 
 const renderValue = (spec: FieldSpec, value: unknown): string => {
-  if (spec.kind === 'checklist' && Array.isArray(value)) {
+  if (
+    (spec.kind === 'checklist' || spec.kind === 'asset') &&
+    Array.isArray(value)
+  ) {
     return value.join(', ');
   }
   return String(value ?? '').trim();

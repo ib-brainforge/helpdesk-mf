@@ -6,6 +6,7 @@ import {
   BaseTextarea,
 } from '@brainforgeau/components';
 import type { FC } from 'react';
+import { AssetPicker, type PickedAsset } from './AssetPicker';
 import type { AnswerValue, FieldSpec } from './request-field-schema';
 
 /**
@@ -23,6 +24,13 @@ interface Props {
   onChange: (value: AnswerValue) => void;
   /** Shown after a failed submit attempt, not while the user is still typing. */
   showError?: boolean;
+  /**
+   * asset fields only. The chosen vehicles as objects, because the answer
+   * value holds only their labels and the ticket also needs their ids to link
+   * them.
+   */
+  assets?: PickedAsset[];
+  onAssetsChange?: (assets: PickedAsset[]) => void;
 }
 
 const ChecklistField: FC<Props> = ({ spec, value, onChange }) => {
@@ -88,6 +96,21 @@ export const RequestFieldRenderer: FC<Props> = props => {
     );
   }
 
+  if (spec.kind === 'asset') {
+    return (
+      <AssetPicker
+        label={spec.label}
+        placeholder={spec.placeholder}
+        value={props.assets ?? []}
+        onChange={assets => {
+          props.onAssetsChange?.(assets);
+          onChange(assets.map(a => a.label));
+        }}
+        showError={showError}
+      />
+    );
+  }
+
   if (spec.kind === 'textarea') {
     return (
       <BaseTextarea
@@ -103,17 +126,27 @@ export const RequestFieldRenderer: FC<Props> = props => {
   }
 
   if (spec.kind === 'select') {
+    /*
+     * The first option is the prompt ("Select"), shown as the placeholder and
+     * never listed. It used to be an ordinary item: picking it looked like an
+     * answer but counted as none, so Next refused to move with no visible
+     * reason. A placeholder cannot be picked.
+     */
+    const [prompt, ...choices] = spec.options ?? [];
     return (
       <BaseSelect
         label={spec.label}
         isRequired
-        selectedKey={typeof value === 'string' ? value : ''}
+        placeholder={prompt}
+        // null, not '', when unanswered: the placeholder only shows when
+        // nothing is selected, and '' is a key that matches no item.
+        selectedKey={typeof value === 'string' && value ? value : null}
         onSelectionChange={key => {
           if (typeof key === 'string') onChange(key);
         }}
         {...errorProps}
       >
-        {(spec.options ?? []).map(opt => (
+        {choices.map(opt => (
           <BaseSelectItem key={opt} value={opt}>
             {opt}
           </BaseSelectItem>

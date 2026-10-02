@@ -29,6 +29,17 @@ export interface AppConfig extends Omit<RuntimeConfig, 'api'> {
   identityApiBaseUrl?: string;
   /** telemetry-gateway. `TELEMETRY_API_BASE_URL`. */
   telemetryApiBaseUrl?: string;
+  /**
+   * asset-backend, for the vehicle picker on a new request and a ticket's
+   * linked assets. `ASSET_API_BASE_URL`. The shell already publishes this key
+   * for the Asset app, so deployed helpdesk reads the same value.
+   */
+  assetApiBaseUrl?: string;
+  /**
+   * tracking-backend, to show whether an asset exists in Tracking.
+   * `TRACKING_API_BASE_URL`. Published by the shell, like assetApiBaseUrl.
+   */
+  trackingApiBaseUrl?: string;
   /** notification-backend's bell hub. `NOTIFICATION_SIGNALR_HUB_URL`. */
   notificationSignalRHubUrl?: string;
 
@@ -146,6 +157,18 @@ export function getAppConfig(): AppConfig {
     'telemetryApiBaseUrl',
     'TELEMETRY_API_BASE_URL',
   );
+  const assetApiBaseUrl = resolveNamedUrl(
+    rc,
+    baked,
+    'assetApiBaseUrl',
+    'ASSET_API_BASE_URL',
+  );
+  const trackingApiBaseUrl = resolveNamedUrl(
+    rc,
+    baked,
+    'trackingApiBaseUrl',
+    'TRACKING_API_BASE_URL',
+  );
   const notificationSignalRHubUrl = resolveNamedUrl(
     rc,
     baked,
@@ -160,6 +183,8 @@ export function getAppConfig(): AppConfig {
     notificationApiBaseUrl,
     identityApiBaseUrl,
     telemetryApiBaseUrl,
+    assetApiBaseUrl,
+    trackingApiBaseUrl,
     notificationSignalRHubUrl,
   } as AppConfig;
 
@@ -197,6 +222,20 @@ export const requireIdentityApiBaseUrl = (): string =>
     getAppConfig().identityApiBaseUrl,
     'IDENTITY_API_BASE_URL',
     'identity-management',
+  );
+
+export const requireAssetApiBaseUrl = (): string =>
+  requireUrl(
+    getAppConfig().assetApiBaseUrl,
+    'ASSET_API_BASE_URL',
+    'asset-backend',
+  );
+
+export const requireTrackingApiBaseUrl = (): string =>
+  requireUrl(
+    getAppConfig().trackingApiBaseUrl,
+    'TRACKING_API_BASE_URL',
+    'tracking-backend',
   );
 
 export const requireNotificationSignalRHubUrl = (): string =>

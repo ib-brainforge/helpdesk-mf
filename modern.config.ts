@@ -144,6 +144,8 @@ const config = {
   notificationApiBaseUrl: process.env.NOTIFICATION_API_BASE_URL || undefined,
   identityApiBaseUrl: process.env.IDENTITY_API_BASE_URL || undefined,
   telemetryApiBaseUrl: process.env.TELEMETRY_API_BASE_URL || undefined,
+  assetApiBaseUrl: process.env.ASSET_API_BASE_URL || undefined,
+  trackingApiBaseUrl: process.env.TRACKING_API_BASE_URL || undefined,
   // The NOTIFICATION bell hub, on notification-backend. There is no helpdesk
   // hub key: helpdesk-backend's own hub is `helpdeskApiBaseUrl` + the path it
   // maps itself (`/hubs/helpdesk`), joined within the one service in

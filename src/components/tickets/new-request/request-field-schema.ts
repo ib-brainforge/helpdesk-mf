@@ -18,7 +18,14 @@
  * source rather than a rewrite.
  */
 
-export type FieldKind = 'text' | 'textarea' | 'select' | 'date' | 'checklist';
+export type FieldKind =
+  | 'text'
+  | 'textarea'
+  | 'select'
+  | 'date'
+  | 'checklist'
+  /** Vehicles and other assets, searched live in the Asset app. */
+  | 'asset';
 
 export interface FieldSpec {
   /** Stable key. Used as the answer's key and must not change casually: it is what a saved draft and the description block are keyed by. */
@@ -53,11 +60,17 @@ const urgency: FieldSpec = {
   options: ['Select', 'Low', 'Medium', 'High', 'Critical'],
 };
 
+/**
+ * The requester's real vehicles, searched in the Asset app rather than a
+ * fixed list. This used to offer 'Truck 01', 'Truck 02' and 'Trailer A', which
+ * were placeholders: no requester owns them, so every answer was either wrong
+ * or meaningless to whoever picked the ticket up.
+ */
 const vehicles: FieldSpec = {
   key: 'vehicles',
   label: 'Choose vehicle(s)',
-  kind: 'select',
-  options: ['Select', 'Truck 01', 'Truck 02', 'Trailer A'],
+  kind: 'asset',
+  placeholder: 'Search by name or registration',
 };
 
 const preferredTime: FieldSpec = {
@@ -307,13 +320,74 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
  */
 export const REQUEST_CATEGORIES = NETCORP_CATEGORIES;
 
-/** Answer values. A checklist answer is the list of ticked labels. */
+/**
+ * Which helpdesk category each request type is filed under, as names to try in
+ * order.
+ *
+ * WHY THIS EXISTS
+ * The request types above are defined in code, but a ticket must carry a real
+ * Category row: the create command rejects one without. They were matched by
+ * their own label, and when that failed the wizard took whichever category came
+ * first. Neither dev nor local has categories named after these request types,
+ * so every request was quietly filed under one arbitrary category ("fnfnf" on
+ * dev, "Building Maintenance" locally).
+ *
+ * HOW IT RESOLVES
+ * The request type's own label is always tried first, so creating a category
+ * with exactly that name takes over with no code change. After it come the
+ * closest general categories: the "... and ..." names are dev's, the
+ * "... Issues" names are the local seed's. If none of them exists the wizard
+ * says so and does not submit, rather than guessing.
+ */
+export const CATEGORY_NAME_CANDIDATES: Record<string, string[]> = {
+  vehicle: ['Hardware and Devices', 'Hardware Issues'],
+  system: ['Software and Applications', 'Software Issues'],
+  hardware: ['Hardware and Devices', 'Hardware Issues'],
+  maintenance: ['Hardware and Devices', 'Hardware Issues'],
+  install: ['Hardware and Devices', 'Hardware Issues'],
+  removal: ['Hardware and Devices', 'Hardware Issues'],
+  account: ['Billing and Licensing', 'Accounts and Access', 'Access Requests'],
+  health: ['Hardware and Devices', 'Hardware Issues'],
+  obm: ['Hardware and Devices', 'Hardware Issues'],
+  other: ['Software and Applications', 'Software Issues'],
+};
+
+const normaliseName = (name: string | null | undefined) =>
+  (name ?? '').trim().toLowerCase();
+
+/**
+ * The real category a request type is filed under, or undefined when none of
+ * its candidate names exists for this requester. Never a guess.
+ */
+export const resolveRequestCategory = <
+  C extends { id?: string | null; name?: string | null },
+>(
+  spec: CategorySpec,
+  available: C[] | undefined,
+): C | undefined => {
+  const byName = new Map(
+    (available ?? []).map(c => [normaliseName(c.name), c] as const),
+  );
+  for (const name of [
+    spec.label,
+    ...(CATEGORY_NAME_CANDIDATES[spec.key] ?? []),
+  ]) {
+    const match = byName.get(normaliseName(name));
+    if (match?.id) return match;
+  }
+  return undefined;
+};
+
+/**
+ * Answer values. A checklist answer is the list of ticked labels; an asset
+ * answer is the list of chosen vehicles' labels, as they read in the ticket.
+ */
 export type AnswerValue = string | string[] | undefined;
 export type Answers = Record<string, AnswerValue>;
 
 /** The prompt entry of a select is a placeholder, never a real answer. */
 export const isAnswered = (spec: FieldSpec, value: AnswerValue): boolean => {
-  if (spec.kind === 'checklist')
+  if (spec.kind === 'checklist' || spec.kind === 'asset')
     return Array.isArray(value) && value.length > 0;
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
@@ -359,6 +433,9 @@ const FIELD_WEIGHT: Record<FieldKind, number> = {
   date: 1,
   textarea: 2,
   checklist: 5,
+  // One search box. Chosen vehicles wrap beneath it as chips, which a page can
+  // absorb; weighting it higher would push questions onto extra pages.
+  asset: 1,
 };
 
 const BUDGET = 4;
