@@ -1,5 +1,5 @@
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { BaseButton, BaseInput } from '@brainforgeau/components';
+import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
 import { useAuth, usePermissions } from '@brainforgeau/security';
 import { type FC, useMemo, useState } from 'react';
 import { useCreateTicket, useLinkAsset } from '../hooks/useTickets';
@@ -273,18 +273,22 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         were a different dialect of the same idea; sharing the pattern means a
         user who has met one wizard already knows how far through they are.
       */}
+      {/*
+        Every step is drawn the same way, a segment of the bar, blue once
+        reached and grey before. Upcoming steps used to be a small dot with a
+        nudge to centre it, so their labels sat lower than the reached ones and
+        the row looked broken.
+      */}
       <div className="mb-6 flex justify-center">
-        <ol className="flex w-full max-w-md items-start">
+        <ol className="flex w-full max-w-md items-start gap-1.5">
           {STEPS.map((s, i) => {
             const reached = i <= stepIndex;
             return (
               <li key={s.id} className="flex flex-1 flex-col items-center">
                 <span
-                  className={
-                    reached
-                      ? 'bg-blue h-1 w-full rounded-full'
-                      : 'bg-light mt-[3px] h-1.5 w-1.5 rounded-full'
-                  }
+                  className={`h-1 w-full rounded-full transition-colors ${
+                    reached ? 'bg-blue' : 'bg-light'
+                  }`}
                 />
                 <span
                   className={`mt-2 text-[13px] ${
@@ -311,26 +315,63 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               Pick a category. The questions on the next steps are tailored to
               your choice.
             </p>
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-              {REQUEST_CATEGORIES.map(c => (
-                <button
-                  key={c.key}
-                  type="button"
-                  onClick={() => {
-                    setCategoryKey(c.key);
-                    setAnswers({});
-                    setPickedAssets({});
-                    setQuestionPage(0);
-                  }}
-                  className={`block h-full w-full rounded-lg border p-2 text-left text-[13px] leading-snug transition-colors ${
-                    categoryKey === c.key
-                      ? 'border-blue bg-lighter-blue'
-                      : 'border-light hover:border-light-gray'
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
+            {/*
+              Cards rather than bare text buttons: an icon to scan by, the
+              request type, and one line on what it is for, so the choice can
+              be made without reading every label in full. One choice only, so
+              they are a radio group to assistive technology.
+            */}
+            <div
+              role="radiogroup"
+              aria-label="Request category"
+              className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+            >
+              {REQUEST_CATEGORIES.map(c => {
+                const selected = categoryKey === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => {
+                      setCategoryKey(c.key);
+                      setAnswers({});
+                      setPickedAssets({});
+                      setQuestionPage(0);
+                    }}
+                    className={`flex h-full min-h-[72px] w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
+                      selected
+                        ? 'border-blue bg-lighter-blue'
+                        : 'border-light hover:border-light-gray hover:bg-light/40'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
+                        selected
+                          ? 'bg-blue text-white'
+                          : 'bg-lighter-blue text-blue'
+                      }`}
+                    >
+                      <Icon name={c.icon} className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
+                        {c.label}
+                      </span>
+                      <span className="text-light-gray mt-0.5 block text-xs leading-snug">
+                        {c.summary}
+                      </span>
+                    </span>
+                    {selected && (
+                      <Icon
+                        name="CheckCircleIcon"
+                        className="text-blue h-5 w-5 shrink-0"
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
             {showErrors && !category && (
               <p className="text-red-dark mt-2 text-sm">Choose a category.</p>
