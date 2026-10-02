@@ -1,10 +1,10 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
 } from '@brainforgeau/components';
 
 interface MarkSpamModalProps {
@@ -23,7 +23,7 @@ export const MarkSpamModal: React.FC<MarkSpamModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="sm">
       <BaseModalContent>
-        <BaseModalHeader>Mark As Spam</BaseModalHeader>
+        <ModalHeader>Mark As Spam</ModalHeader>
         <BaseModalBody>
           <p className="text-default-600">
             This ticket will be marked as spam and removed from normal ticket

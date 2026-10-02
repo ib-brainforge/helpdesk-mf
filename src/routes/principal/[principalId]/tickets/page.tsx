@@ -6,7 +6,7 @@
  */
 
 import { AppAuthSplash } from '@/components/AppSplash';
-import { ScopeCell, StatusBadge } from '@/components/shared';
+import { ModalHeader, ScopeCell, StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
   useCreatePrincipalTicket,
@@ -21,7 +21,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTextarea,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
@@ -279,7 +278,7 @@ function PrincipalTicketsPage() {
           <BaseModalContent>
             {onClose => (
               <>
-                <BaseModalHeader>New Ticket</BaseModalHeader>
+                <ModalHeader>New Ticket</ModalHeader>
                 <BaseModalBody>
                   <BaseInput
                     label="Subject"

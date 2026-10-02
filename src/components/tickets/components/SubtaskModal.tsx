@@ -1,4 +1,4 @@
-import { StatusBadge } from '@/components/shared';
+import { ModalHeader, StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import {
@@ -7,7 +7,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
 } from '@brainforgeau/components';
 import { PermissionGuard } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
@@ -66,9 +65,7 @@ export const SubtaskModal: FC<SubtaskModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="2xl">
       <BaseModalContent>
-        <BaseModalHeader title="Subtask">
-          {subtask?.subject ?? 'Subtask'}
-        </BaseModalHeader>
+        <ModalHeader>{subtask?.subject ?? 'Subtask'}</ModalHeader>
         <BaseModalBody>
           {isLoading || !subtask ? (
             <p className="text-sm text-default-400">Loading…</p>

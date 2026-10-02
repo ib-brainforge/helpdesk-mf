@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Rule graphs list page for a given automation project.
@@ -13,7 +14,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTable,
   Icon,
   TablePagination,
@@ -283,7 +283,7 @@ export function RuleGraphsListPage() {
         <BaseModalContent>
           {onClose => (
             <>
-              <BaseModalHeader>New Rule Graph</BaseModalHeader>
+              <ModalHeader>New Rule Graph</ModalHeader>
               <BaseModalBody>
                 <BaseInput
                   label="Graph Name"

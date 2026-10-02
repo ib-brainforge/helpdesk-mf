@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { TicketStatus, toTicketStatus } from '@/types/custom-status';
@@ -8,7 +9,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
@@ -182,9 +182,9 @@ export function CustomStatusEditorModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader>
+        <ModalHeader>
           {isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
-        </BaseModalHeader>
+        </ModalHeader>
         <BaseModalBody className="space-y-4">
           <BaseInput
             label="Name"

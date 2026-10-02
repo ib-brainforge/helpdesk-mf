@@ -1,10 +1,10 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   ContextScopeStrip,
@@ -170,11 +170,9 @@ export function CannedResponseEditorModal({
       className="max-w-3xl"
     >
       <BaseModalContent>
-        <BaseModalHeader
-          title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
-        >
+        <ModalHeader>
           {isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
-        </BaseModalHeader>
+        </ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput

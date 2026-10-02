@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import type { CategoryDto } from '@/types/category';
 import {
   BaseButton,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTagSelect,
   BaseTagSelectItem,
 } from '@brainforgeau/components';
@@ -87,16 +87,16 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="lg" className="max-w-xl">
       <BaseModalContent>
-        <BaseModalHeader>
-          <div className="flex items-center gap-2">
+        <ModalHeader>
+          <span className="inline-flex items-center gap-2">
             <span>Advanced Filters</span>
             {activeFilterCount > 0 && (
               <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
                 {activeFilterCount} active
               </span>
             )}
-          </div>
-        </BaseModalHeader>
+          </span>
+        </ModalHeader>
         <BaseModalBody>
           <div className="space-y-5">
             {/* Date Range */}
