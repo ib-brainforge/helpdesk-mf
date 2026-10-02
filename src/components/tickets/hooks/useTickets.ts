@@ -23,7 +23,8 @@ import {
 } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchMatches } from './useSearchMatches';
 
 /**
  * @param initialFilters Applied on the FIRST render only.
@@ -49,9 +50,27 @@ import { useCallback, useState } from 'react';
  * REPLACE WITH the generated named arguments once the client is regenerated,
  * and drop this helper.
  */
+/** The filters with the search box's name matches added (see useSearchMatches). */
+export const withSearchMatches = (
+  filters: TicketFilters,
+  userIds: string[],
+  scopeIds: string[],
+): TicketFilters => ({
+  ...filters,
+  searchUserIds: userIds.length > 0 ? userIds : undefined,
+  searchScopeIds: scopeIds.length > 0 ? scopeIds : undefined,
+});
+
 const extraParams = (filters: TicketFilters, includeScope: boolean) => {
   const params: Record<string, unknown> = {};
   if (filters.tagIds?.length) params.tagIds = filters.tagIds;
+  // Name matches for the search box, resolved by useSearchMatches.
+  if (filters.searchUserIds?.length) {
+    params.searchUserIds = filters.searchUserIds;
+  }
+  if (filters.searchScopeIds?.length) {
+    params.searchScopeIds = filters.searchScopeIds;
+  }
   /*
    * A tab that means a SET of statuses, sent as repeated `statuses=` params.
    *
@@ -198,12 +217,26 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
   const { isServiceAdmin, principalId } = useHelpdeskAccess();
   const usePrincipalScope = isServiceAdmin && Boolean(principalId);
 
+  /*
+   * The search box also matches people and places by name. Those names are not
+   * in helpdesk's database, so they are turned into ids here and sent with the
+   * search (see useSearchMatches). `filters` itself stays as the user set it.
+   */
+  const search = useSearchMatches(filters.searchTerm);
+  const queryFilters = useMemo(
+    () => withSearchMatches(filters, search.userIds, search.scopeIds),
+    [filters, search.userIds, search.scopeIds],
+  );
+
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
-    queryKey: ['tickets', pagination, filters, principalId ?? 'tenant'],
+    // Held while a name lookup the search depends on is running, so the grid
+    // asks once with the full search rather than once without it and again.
+    enabled: search.ready,
+    queryKey: ['tickets', pagination, queryFilters, principalId ?? 'tenant'],
     queryFn: async () => {
       // The same mapping fetchTicketCount uses. Written once so the rows and
       // the badge above them cannot ask different questions.
-      const v = ticketQueryValues(filters);
+      const v = ticketQueryValues(queryFilters);
 
       if (usePrincipalScope) {
         const principalClient =
@@ -225,7 +258,7 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
             pagination.pageSize,
             undefined, // sortBy
             undefined, // sortDirection
-            extraParams(filters, true),
+            extraParams(queryFilters, true),
           );
         const principalResult = principalResponse.data;
         return {
@@ -253,7 +286,7 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
         pagination.pageSize,
         undefined, // sortBy
         undefined, // sortDirection
-        extraParams(filters, false),
+        extraParams(queryFilters, false),
       );
 
       const result = response.data;

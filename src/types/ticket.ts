@@ -117,6 +117,13 @@ export interface TicketFilters {
   categoryId?: string[];
   assigneeId?: string[];
   searchTerm?: string;
+  /**
+   * People and places whose NAME matched searchTerm, resolved on this side
+   * because the names live in identity-management (see useSearchMatches).
+   * Never set by the user; derived from searchTerm just before querying.
+   */
+  searchUserIds?: string[];
+  searchScopeIds?: string[];
   tagIds?: string[]; // Filter by tag IDs
   unassignedOnly?: boolean;
   /** When true, only tickets past their due date are returned (backend OverdueOnly param). */

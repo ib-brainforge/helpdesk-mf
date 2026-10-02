@@ -4,7 +4,10 @@ import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import type { TicketFilters } from '@/types/ticket';
 import { toApiTicketPriority } from '@/utils/typeMappers';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
+import { useSearchMatches } from './useSearchMatches';
+import { withSearchMatches } from './useTickets';
 
 /**
  * Every badge on the ticket list, from one request.
@@ -68,6 +71,12 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
   if (filters.categoryId?.[0]) params.categoryId = filters.categoryId[0];
   if (filters.assigneeId?.[0]) params.assigneeId = filters.assigneeId[0];
   if (filters.searchTerm) params.searchTerm = filters.searchTerm;
+  // Name matches for the search box, resolved by useSearchMatches.
+  if (filters.searchUserIds?.length)
+    params.searchUserIds = filters.searchUserIds;
+  if (filters.searchScopeIds?.length) {
+    params.searchScopeIds = filters.searchScopeIds;
+  }
   if (filters.tagIds?.length) params.tagIds = filters.tagIds;
   if (filters.tenantId) params.tenantId = filters.tenantId;
   if (filters.organisationId) params.organisationId = filters.organisationId;
@@ -137,7 +146,17 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
    * approximation.
    */
   const scopedPrincipalId = useCountsPrincipal();
-  const query = useQuery(ticketCountsQueryOptions(filters, scopedPrincipalId));
+  // Same name matching as the grid, so a badge counts exactly the rows the
+  // search lists.
+  const search = useSearchMatches(filters.searchTerm);
+  const searched = useMemo(
+    () => withSearchMatches(filters, search.userIds, search.scopeIds),
+    [filters, search.userIds, search.scopeIds],
+  );
+  const query = useQuery({
+    ...ticketCountsQueryOptions(searched, scopedPrincipalId),
+    enabled: search.ready,
+  });
 
   return { data: query.data, isLoading: query.isLoading };
 };

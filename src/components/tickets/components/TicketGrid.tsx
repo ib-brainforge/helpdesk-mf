@@ -318,7 +318,6 @@ export const TicketGrid: FC = () => {
     columns,
     totalCount,
     pagination,
-    searchTerm,
     onPaginationChange: setPagination,
   });
 
