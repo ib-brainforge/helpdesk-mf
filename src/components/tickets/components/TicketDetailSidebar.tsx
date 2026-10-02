@@ -709,7 +709,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
 
         {/* Assets */}
-        <LinkedAssetsSection ticketId={ticket.id ?? ''} />
+        <LinkedAssetsSection
+          ticketId={ticket.id ?? ''}
+          tenantId={ticket.tenantId}
+          organisationId={ticket.organisationId}
+        />
 
         {/* Parent ticket */}
         {ticket.parentTicketId && (

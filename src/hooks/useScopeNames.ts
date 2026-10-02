@@ -47,6 +47,12 @@ export interface UseScopeNamesResult {
   tenantOptions: ScopeOption[];
   organisationOptions: ScopeOption[];
   divisionOptions: ScopeOption[];
+  /**
+   * Tenants the user can act on as a whole (a context of type "tenant"), as
+   * opposed to only through some of its organisations. Decides whether a
+   * scope picker may offer "all organisations" or must name one.
+   */
+  tenantWideIds: Set<string>;
 }
 
 /**
@@ -158,6 +164,16 @@ export const useScopeNames = (): UseScopeNamesResult => {
       };
     }, [data]);
 
+  const tenantWideIds = useMemo(
+    () =>
+      new Set(
+        ((data ?? []) as Array<Record<string, unknown>>)
+          .filter(c => c.contextType === 'tenant' && c.tenantId)
+          .map(c => c.tenantId as string),
+      ),
+    [data],
+  );
+
   // Memoised as one object, not returned as a fresh literal: callers put this
   // straight into a useMemo dependency list to build table columns, and a new
   // object every render would rebuild every column on every render.
@@ -169,6 +185,7 @@ export const useScopeNames = (): UseScopeNamesResult => {
       tenantOptions,
       organisationOptions,
       divisionOptions,
+      tenantWideIds,
     }),
     [
       byTenantId,
@@ -177,6 +194,7 @@ export const useScopeNames = (): UseScopeNamesResult => {
       tenantOptions,
       organisationOptions,
       divisionOptions,
+      tenantWideIds,
     ],
   );
 };

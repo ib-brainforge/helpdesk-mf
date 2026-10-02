@@ -1,7 +1,8 @@
 import { BaseButton, BaseInput } from '@brainforgeau/components';
 import { useAuth } from '@brainforgeau/security';
 import { type FC, useMemo, useState } from 'react';
-import { useCreateTicket } from '../hooks/useTickets';
+import { useCreateTicket, useLinkAsset } from '../hooks/useTickets';
+import type { PickedAsset } from './AssetPicker';
 import { RequestFieldRenderer } from './RequestFieldRenderer';
 import { buildDescription, urgencyToPriority } from './formatAnswers';
 import {
@@ -10,6 +11,7 @@ import {
   REQUEST_CATEGORIES,
   missingRequired,
   paginateFields,
+  resolveRequestCategory,
 } from './request-field-schema';
 import { useRequestCategories } from './useRequestCategories';
 
@@ -32,6 +34,40 @@ import { useRequestCategories } from './useRequestCategories';
 
 type StepId = 'category' | 'details' | 'questions' | 'review';
 
+const normalise = (name: string) => name.trim().toLowerCase();
+
+/**
+ * A failed create, in words the requester can act on.
+ *
+ * The API answers a rejected request with a ProblemDetails body: field errors
+ * under `errors`, otherwise a `detail` or `title`. Those are shown as they come,
+ * since they name the actual problem ("Category is required"). With no
+ * response at all the request never reached the server.
+ */
+const describeCreateError = (error: unknown): string => {
+  const response = (
+    error as { response?: { status?: number; data?: unknown } } | undefined
+  )?.response;
+  if (!response) {
+    return "Your request wasn't sent: Helpdesk couldn't be reached. Check your connection and try again.";
+  }
+  const data = response.data as
+    | { errors?: Record<string, unknown>; detail?: string; title?: string }
+    | string
+    | undefined;
+  const fieldErrors =
+    data && typeof data === 'object' && data.errors
+      ? Object.values(data.errors)
+          .flat()
+          .filter((m): m is string => typeof m === 'string')
+      : [];
+  const reason =
+    fieldErrors.join(' ') ||
+    (typeof data === 'object' ? data?.detail || data?.title : data) ||
+    'Please try again.';
+  return `Your request wasn't created (error ${response.status ?? 'unknown'}). ${reason}`;
+};
+
 const STEPS: Array<{ id: StepId; title: string }> = [
   { id: 'category', title: 'Category' },
   { id: 'details', title: 'Details' },
@@ -47,11 +83,25 @@ interface Props {
 export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const { user } = useAuth();
   const createTicket = useCreateTicket();
-  const { categories } = useRequestCategories();
+  const linkAsset = useLinkAsset();
+  const { categories, isLoading: categoriesLoading } = useRequestCategories();
+  // Why the last create failed, shown on the review step. Cleared as soon as
+  // the requester moves, so a stale message never sits over a fixed form.
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // Covers the vehicle links made after the ticket exists, so Create cannot be
+  // pressed a second time while they finish.
+  const [isFinishing, setIsFinishing] = useState(false);
+  const isBusy = createTicket.isPending || isFinishing;
 
   const [stepIndex, setStepIndex] = useState(0);
   const [categoryKey, setCategoryKey] = useState<string>('');
   const [answers, setAnswers] = useState<Answers>({});
+  // Chosen vehicles per asset question, as objects. `answers` keeps only their
+  // labels, which is what the description shows; these keep the ids needed to
+  // link them to the ticket once it exists.
+  const [pickedAssets, setPickedAssets] = useState<
+    Record<string, PickedAsset[]>
+  >({});
   const [subject, setSubject] = useState('');
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState('');
@@ -79,22 +129,20 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const isLastQuestionPage = questionPage >= questionPages.length - 1;
 
   /*
-   * The wizard's categories are defined in code, but the API requires a real
-   * Category row: CreateTicketCommandHandler rejects a ticket with no
-   * CategoryId. The label is matched against the configured categories, which
-   * are seeded with these exact names, falling back to the first available one
-   * so a renamed category costs a mis-filed ticket rather than a failed submit.
+   * The real category this request is filed under. See
+   * CATEGORY_NAME_CANDIDATES for how it is chosen. There is no fallback to
+   * "the first category": that filed every request somewhere arbitrary.
+   * Undefined means none of the candidates exists for this requester, and the
+   * review step says so instead of submitting.
    *
    * This is the seam that disappears once the questions themselves are
    * configured in the database rather than listed here.
    */
-  const resolvedCategoryId = useMemo(() => {
-    if (!category) return undefined;
-    const byName = categories?.find(
-      c => c.name?.trim().toLowerCase() === category.label.trim().toLowerCase(),
-    );
-    return byName?.id ?? categories?.[0]?.id;
-  }, [category, categories]);
+  const resolvedCategory = useMemo(
+    () => (category ? resolveRequestCategory(category, categories) : undefined),
+    [category, categories],
+  );
+  const resolvedCategoryId = resolvedCategory?.id ?? undefined;
 
   const canAdvance = (): boolean => {
     if (step.id === 'category') return !!category;
@@ -116,6 +164,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   };
 
   const next = () => {
+    setSubmitError(null);
     if (!canAdvance()) {
       setShowErrors(true);
       return;
@@ -133,6 +182,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
 
   const back = () => {
     setShowErrors(false);
+    setSubmitError(null);
     if (step.id === 'questions' && questionPage > 0) {
       setQuestionPage(p => p - 1);
       return;
@@ -144,7 +194,8 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   };
 
   const submit = () => {
-    if (!category) return;
+    if (!category || !resolvedCategoryId) return;
+    setSubmitError(null);
     createTicket.mutate(
       {
         subject: subject.trim(),
@@ -161,8 +212,51 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         priority: urgencyToPriority(answers.urgency),
         categoryId: resolvedCategoryId,
       },
-      { onSuccess: id => onCreated?.(String(id)) },
+      {
+        onSuccess: async id => {
+          setIsFinishing(true);
+          try {
+            await linkPickedAssets(String(id));
+          } finally {
+            setIsFinishing(false);
+          }
+          onCreated?.(String(id));
+        },
+        // The dialog stays open with everything as entered, so the requester
+        // can fix the cause and press Create again rather than start over.
+        onError: error => setSubmitError(describeCreateError(error)),
+      },
     );
+  };
+
+  /*
+   * Links each chosen vehicle to the new ticket, so it shows under the ticket's
+   * linked assets rather than only as a name in the description. The picker
+   * lists Asset app records, so every chosen vehicle has an id to link.
+   *
+   * Best effort, and deliberately so: the ticket already exists and already
+   * names every vehicle, so a link that fails (for example a requester without
+   * permission to edit links) loses nothing the agent needs. Failing the whole
+   * request over it would be worse.
+   */
+  const linkPickedAssets = async (ticketId: string) => {
+    const assetIds = [
+      ...new Set(
+        Object.values(pickedAssets)
+          .flat()
+          .map(a => a.assetId)
+          .filter((x): x is string => !!x),
+      ),
+    ];
+    const results = await Promise.allSettled(
+      assetIds.map(assetId => linkAsset.mutateAsync({ ticketId, assetId })),
+    );
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (failed > 0) {
+      console.warn(
+        `New request ${ticketId}: ${failed} of ${assetIds.length} vehicle links failed; the vehicles are still named in the description.`,
+      );
+    }
   };
 
   return (
@@ -219,6 +313,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                   onClick={() => {
                     setCategoryKey(c.key);
                     setAnswers({});
+                    setPickedAssets({});
                     setQuestionPage(0);
                   }}
                   className={`block h-full w-full rounded-lg border p-2 text-left text-[13px] leading-snug transition-colors ${
@@ -318,6 +413,10 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                     spec={f}
                     value={answers[f.key]}
                     onChange={v => setAnswers(a => ({ ...a, [f.key]: v }))}
+                    assets={pickedAssets[f.key]}
+                    onAssetsChange={assets =>
+                      setPickedAssets(p => ({ ...p, [f.key]: assets }))
+                    }
                     showError={
                       showErrors && missingRequired([f], answers).length > 0
                     }
@@ -345,6 +444,16 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 <dt className="text-light-gray w-32 shrink-0">Category</dt>
                 <dd>{category.label}</dd>
               </div>
+              {resolvedCategory?.name &&
+                normalise(resolvedCategory.name) !==
+                  normalise(category.label) && (
+                  <div className="flex gap-2">
+                    <dt className="text-light-gray w-32 shrink-0">
+                      Filed under
+                    </dt>
+                    <dd>{resolvedCategory.name}</dd>
+                  </div>
+                )}
               <div className="flex gap-2">
                 <dt className="text-light-gray w-32 shrink-0">Subject</dt>
                 <dd>{subject}</dd>
@@ -354,6 +463,21 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 <dd>{urgencyToPriority(answers.urgency)}</dd>
               </div>
             </dl>
+            {!categoriesLoading && !resolvedCategory && (
+              <p className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm">
+                This request type can't be submitted yet: Helpdesk has no
+                category for "{category.label}". Ask a Helpdesk admin to add a
+                category with that name, then try again.
+              </p>
+            )}
+            {submitError && (
+              <p
+                role="alert"
+                className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm"
+              >
+                {submitError}
+              </p>
+            )}
             <p className="text-light-gray mt-4 mb-1 text-xs font-semibold">
               What the ticket will say
             </p>
@@ -380,20 +504,12 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         together rather than at opposite ends of the dialog.
       */}
       <div className="border-light mt-5 flex items-center justify-between border-t pt-4">
-        <BaseButton
-          variant="bordered"
-          onPress={onCancel}
-          isDisabled={createTicket.isPending}
-        >
+        <BaseButton variant="bordered" onPress={onCancel} isDisabled={isBusy}>
           Cancel
         </BaseButton>
         <div className="flex items-center gap-2">
           {stepIndex > 0 && (
-            <BaseButton
-              variant="bordered"
-              onPress={back}
-              isDisabled={createTicket.isPending}
-            >
+            <BaseButton variant="bordered" onPress={back} isDisabled={isBusy}>
               Back
             </BaseButton>
           )}
@@ -401,9 +517,9 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
             <BaseButton
               color="primary"
               onPress={submit}
-              isDisabled={createTicket.isPending}
+              isDisabled={isBusy || !resolvedCategoryId}
             >
-              {createTicket.isPending ? 'Creating...' : 'Create request'}
+              {isBusy ? 'Creating...' : 'Create request'}
             </BaseButton>
           ) : (
             <BaseButton color="primary" onPress={next}>
