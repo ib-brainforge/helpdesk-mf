@@ -14,7 +14,6 @@ import {
   PageHeader,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, Chip, Spinner, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -205,6 +204,4 @@ function IntegrationsPage() {
   );
 }
 
-export default withAuthorizationRequired(IntegrationsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default IntegrationsPage;

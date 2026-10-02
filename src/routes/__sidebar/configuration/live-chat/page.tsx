@@ -19,7 +19,6 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -496,6 +495,4 @@ function LiveChatPage() {
   );
 }
 
-export default withAuthorizationRequired(LiveChatPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default LiveChatPage;

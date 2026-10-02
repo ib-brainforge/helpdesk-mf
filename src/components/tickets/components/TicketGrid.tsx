@@ -14,7 +14,11 @@ import {
   TablePagination,
 } from '@brainforgeau/components';
 import { BaseTab, BaseTabs } from '@brainforgeau/components';
-import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import {
+  PermissionGuard,
+  usePermissions,
+  useTimezone,
+} from '@brainforgeau/security';
 import {
   DrawerBackdrop,
   DrawerBody,
@@ -291,10 +295,16 @@ export const TicketGrid: FC = () => {
   // Tenant and organisation names for the Scope column; tickets carry ids only.
   const scopeNames = useScopeNames();
 
+  // Quick assign on an unassigned row, and assign in the row menu, are both
+  // driven by onAssign. Withholding it from people without the assign
+  // permission removes both, rather than showing controls the API refuses.
+  const { hasPermission } = usePermissions();
+  const canAssign = hasPermission(HelpdeskPermissions.TicketAssign);
+
   const columns = useMemo(
     () =>
       createTicketColumns({
-        onAssign: handleAssign,
+        onAssign: canAssign ? handleAssign : undefined,
         onChangeStatus: handleChangeStatus,
         onChangePriority: handleChangePriority,
         currentUserId,
@@ -303,6 +313,7 @@ export const TicketGrid: FC = () => {
         customStatuses,
       }),
     [
+      canAssign,
       handleAssign,
       handleChangeStatus,
       handleChangePriority,

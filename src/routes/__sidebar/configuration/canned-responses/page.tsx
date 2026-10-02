@@ -33,7 +33,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -349,6 +348,4 @@ function CannedResponsesPage() {
   );
 }
 
-export default withAuthorizationRequired(CannedResponsesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default CannedResponsesPage;

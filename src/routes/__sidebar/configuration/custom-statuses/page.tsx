@@ -33,7 +33,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Chip, toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -351,6 +350,4 @@ function CustomStatusesPage() {
   );
 }
 
-export default withAuthorizationRequired(CustomStatusesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default CustomStatusesPage;

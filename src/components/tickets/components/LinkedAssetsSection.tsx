@@ -13,6 +13,8 @@ import {
   Icon,
 } from '@brainforgeau/components';
 
+import { HelpdeskPermissions } from '@/constants/permissions';
+import { usePermissions } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { type FC, useEffect, useMemo, useState } from 'react';
 import {
@@ -375,6 +377,10 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
 }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { data: assets, isLoading } = useLinkedAssets(ticketId);
+  // Linking and unlinking need tickets.update, as their endpoints do. Without
+  // it the list is still shown, read only.
+  const { hasPermission } = usePermissions();
+  const canEditLinks = hasPermission(HelpdeskPermissions.Tickets.Update);
   const linkAssetMutation = useLinkAsset();
   const unlinkAssetMutation = useUnlinkAsset();
 
@@ -448,14 +454,16 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
         <label className="block text-sm font-medium text-default-700">
           Assets
         </label>
-        <BaseButton
-          size="sm"
-          variant="light"
-          icon={<Icon name="plus" className="h-3 w-3" />}
-          onPress={() => setIsAddModalOpen(true)}
-        >
-          Add
-        </BaseButton>
+        {canEditLinks && (
+          <BaseButton
+            size="sm"
+            variant="light"
+            icon={<Icon name="plus" className="h-3 w-3" />}
+            onPress={() => setIsAddModalOpen(true)}
+          >
+            Add
+          </BaseButton>
+        )}
       </div>
 
       {isLoading ? (
@@ -514,15 +522,17 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
                   isLoading={linkedTrackingLoading}
                   isError={linkedTrackingError}
                 />
-                <button
-                  type="button"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-default-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  onClick={() => link.assetId && handleUnlink(link.assetId)}
-                  aria-label={`Unlink ${name}`}
-                  title="Unlink asset"
-                >
-                  <Icon name="XMarkIcon" className="h-4 w-4" />
-                </button>
+                {canEditLinks && (
+                  <button
+                    type="button"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-default-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    onClick={() => link.assetId && handleUnlink(link.assetId)}
+                    aria-label={`Unlink ${name}`}
+                    title="Unlink asset"
+                  >
+                    <Icon name="XMarkIcon" className="h-4 w-4" />
+                  </button>
+                )}
               </li>
             );
           })}

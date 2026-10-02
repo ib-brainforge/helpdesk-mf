@@ -38,6 +38,7 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { usePermissions } from '@brainforgeau/security';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
@@ -118,6 +119,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   isSubscribeLoading = false,
   onSubscribeToggle,
 }) => {
+  const { hasPermission: hasKbPermission } = usePermissions();
+  const canSeeKnowledgeBase = hasKbPermission(
+    HelpdeskPermissions.KnowledgeBase.Manage,
+  );
   const timezone = useTimezone();
   const statusConfig = getStatusConfig(ticket.status as TicketStatus);
 
@@ -769,8 +774,10 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested KB Articles — seeded from ticket subject */}
-      {ticket.subject && (
+      {/* Suggested KB Articles — seeded from ticket subject. The knowledge
+          base is internal (kb.manage, the same rule as its pages), so the
+          suggestions are only shown to people who may open them. */}
+      {ticket.subject && canSeeKnowledgeBase && (
         <div className="border-t pt-6">
           <label className="block text-sm font-medium text-default-700 mb-2">
             Suggested KB Articles

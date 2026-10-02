@@ -17,7 +17,6 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -218,6 +217,4 @@ function CategoriesPage() {
   );
 }
 
-export default withAuthorizationRequired(CategoriesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default CategoriesPage;

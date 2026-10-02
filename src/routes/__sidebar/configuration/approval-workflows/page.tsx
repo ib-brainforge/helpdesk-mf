@@ -40,7 +40,6 @@ import {
   useAccessScope,
   usePermissions,
 } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import {
   createColumnHelper,
@@ -275,6 +274,4 @@ function ApprovalWorkflowsPage() {
   );
 }
 
-export default withAuthorizationRequired(ApprovalWorkflowsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default ApprovalWorkflowsPage;
