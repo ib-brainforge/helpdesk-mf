@@ -371,6 +371,25 @@ export default function Layout() {
     [filterNavItems, permissions],
   );
 
+  // Someone whose role reaches only the Tickets page (a Customer, Platform
+  // Support, a Principal Agent) gets no side menu at all: a menu with one
+  // entry is just a frame around the page they are already on.
+  // Counted by destination, not by entry: a group such as Configuration can
+  // survive filtering with none of its pages left in it.
+  const countDestinations = (items: unknown[]): number =>
+    items.reduce<number>((n, item) => {
+      const { href, children } = item as {
+        href?: string;
+        children?: unknown[];
+      };
+      return n + (href ? 1 : 0) + (children ? countDestinations(children) : 0);
+    }, 0);
+  const hasSideMenu =
+    navSections.reduce(
+      (n, section) => n + countDestinations(section.items),
+      0,
+    ) > 1;
+
   return (
     <Providers>
       <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
@@ -412,7 +431,7 @@ export default function Layout() {
             </ErrorBoundary>
           )}
           <div className="flex flex-1">
-            {isAuthenticated && !isPrincipalRoute && (
+            {isAuthenticated && !isPrincipalRoute && hasSideMenu && (
               <SideNav
                 data-testid={TEST_IDS.navbar.side}
                 sections={navSections}

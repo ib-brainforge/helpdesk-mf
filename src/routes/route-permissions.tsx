@@ -38,8 +38,6 @@ interface RouteRule {
   anyOf: string[];
 }
 
-const seg = '[^/]+';
-
 export const ROUTE_PERMISSIONS: RouteRule[] = [
   // Tickets
   { path: /^\/tickets\/new\/?$/, anyOf: [P.Tickets.Create] },
@@ -51,17 +49,12 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
   { path: /^\/dashboard\/?$/, anyOf: [P.Reports.Read] },
   { path: /^\/ideas(\/|$)/, anyOf: [P.Tickets.Read] },
 
-  // Knowledge base
-  { path: /^\/knowledge-base\/new\/?$/, anyOf: [P.KnowledgeBase.Create] },
-  {
-    path: new RegExp(`^/knowledge-base/${seg}/edit/?$`),
-    anyOf: [P.KnowledgeBase.Update],
-  },
-  {
-    path: /^\/knowledge-base\/settings\/?$/,
-    anyOf: [P.KnowledgeBase.Manage],
-  },
-  { path: /^\/knowledge-base(\/|$)/, anyOf: [P.KnowledgeBase.Read] },
+  // Knowledge base: internal, for the people who manage it (kb.manage, held by
+  // Manager and Admin). Reading, writing and settings alike. Note identity
+  // still grants kb.read to Customer and Technician, so the API itself would
+  // answer them; making the knowledge base truly internal means removing that
+  // from those roles in identity.
+  { path: /^\/knowledge-base(\/|$)/, anyOf: [P.KnowledgeBase.Manage] },
 
   // Reports, including the satisfaction report under /reports/satisfaction.
   // NOT /satisfaction: that is the public survey a customer opens from the
@@ -132,11 +125,15 @@ export const RouteGuard: FC<{ pathname: string; children: ReactNode }> = ({
   if (!rule) return <>{children}</>;
   if (isLoading) return null;
   if (!hasAnyPermission(rule.anyOf)) {
+    // Centred in the page area: the outlet sits in a flex row, so on its own
+    // the panel hugged the left edge.
     return (
-      <AccessDenied
-        title="You don't have access to this page"
-        message="Your role doesn't include the permission this page needs. Ask a Helpdesk admin if you think you should have it."
-      />
+      <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
+        <AccessDenied
+          title="You don't have access to this page"
+          message="Your role doesn't include the permission this page needs. Ask a Helpdesk admin if you think you should have it."
+        />
+      </div>
     );
   }
   return <>{children}</>;
