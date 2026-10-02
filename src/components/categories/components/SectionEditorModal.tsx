@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -10,7 +11,6 @@ import {
   BaseModal,
   BaseModalBody,
   BaseModalContent,
-  BaseModalHeader,
   BaseToggle,
   ContextScopeStrip,
 } from '@brainforgeau/components';
@@ -130,7 +130,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader
+        <ModalHeader
           title={isEdit ? 'Edit Section' : 'Create Section'}
           onClose={handleClose}
         />

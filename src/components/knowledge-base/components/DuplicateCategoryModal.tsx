@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import type { KnowledgeBaseCategoryDto } from '@/types';
 import {
   BaseButton,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseToggle,
 } from '@brainforgeau/components';
 import { type FC, useState } from 'react';
@@ -43,7 +43,7 @@ export const DuplicateCategoryModal: FC<DuplicateCategoryModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader>Duplicate Category</BaseModalHeader>
+        <ModalHeader>Duplicate Category</ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <p className="text-sm text-default-600">

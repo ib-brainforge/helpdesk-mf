@@ -1,4 +1,4 @@
-import { UserOptionRow } from '@/components/shared';
+import { ModalHeader, UserOptionRow } from '@/components/shared';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -8,7 +8,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
 } from '@brainforgeau/components';
 import { type FC, useMemo, useState } from 'react';
 import {
@@ -76,7 +75,7 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose}>
       <BaseModalContent>
-        <BaseModalHeader title="Assign Tickets">Assign Tickets</BaseModalHeader>
+        <ModalHeader>Assign Tickets</ModalHeader>
         <BaseModalBody>
           <p className="mb-4">
             Assign {ticketCount} ticket{ticketCount !== 1 ? 's' : ''} to:

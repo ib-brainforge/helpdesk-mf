@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTable,
   Icon,
   TablePagination,
@@ -267,7 +267,7 @@ export function WorkflowListPage() {
         <BaseModalContent>
           {onClose => (
             <>
-              <BaseModalHeader>New Workflow</BaseModalHeader>
+              <ModalHeader>New Workflow</ModalHeader>
               <BaseModalBody>
                 <BaseInput
                   label="Workflow Name"

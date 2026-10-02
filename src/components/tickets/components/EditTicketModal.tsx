@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
 } from '@brainforgeau/components';
 
 import { toast } from '@heroui/react';
@@ -69,7 +69,7 @@ export const EditTicketModal: FC<EditTicketModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <BaseModalHeader title="Edit Ticket">Edit Ticket</BaseModalHeader>
+        <ModalHeader>Edit Ticket</ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput

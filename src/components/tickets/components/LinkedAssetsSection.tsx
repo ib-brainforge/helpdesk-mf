@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   Icon,
 } from '@brainforgeau/components';
 
@@ -46,7 +46,7 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="sm">
       <BaseModalContent>
-        <BaseModalHeader title="Link Asset">Link Asset</BaseModalHeader>
+        <ModalHeader>Link Asset</ModalHeader>
         <BaseModalBody>
           <BaseInput
             label="Asset ID"

@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTextarea,
 } from '@brainforgeau/components';
 
@@ -83,7 +83,7 @@ export function BulkCloneModal({
       <BaseModalContent>
         {onClose => (
           <>
-            <BaseModalHeader>Clone Workflow</BaseModalHeader>
+            <ModalHeader>Clone Workflow</ModalHeader>
             <BaseModalBody>
               <div className="space-y-4">
                 <p className="text-sm text-default-600">

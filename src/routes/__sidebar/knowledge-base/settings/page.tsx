@@ -3,6 +3,7 @@ import {
   useDuplicateKbCategory,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { ModalHeader } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseCategoryDto } from '@/types';
 import { BaseInput } from '@brainforgeau/components';
@@ -11,7 +12,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
@@ -114,11 +114,9 @@ function CategoryFormModal({
   return (
     <BaseModal isOpen={mode !== null} onClose={onClose} size="lg">
       <BaseModalContent>
-        <BaseModalHeader>
-          <h2 className="text-xl font-semibold">
-            {mode === 'create' ? 'Create Category' : 'Edit Category'}
-          </h2>
-        </BaseModalHeader>
+        <ModalHeader>
+          {mode === 'create' ? 'Create Category' : 'Edit Category'}
+        </ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput
