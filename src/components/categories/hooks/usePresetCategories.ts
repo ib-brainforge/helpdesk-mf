@@ -2,6 +2,7 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AccessLevel, type CategoryDto } from '@/types/category';
 import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 /**
  * The ids of categories the tenant can use but does not own.
@@ -48,30 +49,42 @@ export const usePresetCategories = (ownedIds: string[]) => {
     },
   });
 
-  const owned = new Set(ownedIds);
+  /*
+   * Memoised, and keyed on the ids' CONTENT rather than the array, which the
+   * caller rebuilds on every render.
+   *
+   * These rows feed a TanStack table with pagination, which resets its page
+   * index (a state update) whenever its data changes identity. Built fresh on
+   * each render, the presets made every render look like new data, so the
+   * reset caused a render, which rebuilt them, which caused another reset. Page
+   * load got away with it; the first re-render after it, such as opening the
+   * Delete confirmation or typing in the search, froze the tab.
+   */
+  const ownedKey = ownedIds.join(',');
 
   // Mapped into the local CategoryDto the table expects. The generated DTO
   // makes every field optional, so the required ones are defaulted here rather
   // than leaving the table to cope with half a row.
-  const presets: CategoryDto[] = (data ?? [])
-    .filter(c => c.id && !owned.has(c.id))
-    .map(c => ({
-      id: c.id as string,
-      name: c.name ?? '',
-      sectionId: c.sectionId ?? undefined,
-      sectionName: c.sectionName ?? undefined,
-      accessLevel: toAccessLevel(c.accessLevel),
-      fromEmailAddress: c.fromEmailAddress ?? undefined,
-      fromEmailName: c.fromEmailName ?? undefined,
-      useFromAddressAsReplyTo: c.useFromAddressAsReplyTo ?? false,
-      isActive: c.isActive ?? true,
-      sortOrder: c.sortOrder ?? 0,
-      customFieldIds: c.customFieldIds ?? undefined,
-    }));
+  const presets: CategoryDto[] = useMemo(() => {
+    const owned = new Set(ownedKey ? ownedKey.split(',') : []);
+    return (data ?? [])
+      .filter(c => c.id && !owned.has(c.id))
+      .map(c => ({
+        id: c.id as string,
+        name: c.name ?? '',
+        sectionId: c.sectionId ?? undefined,
+        sectionName: c.sectionName ?? undefined,
+        accessLevel: toAccessLevel(c.accessLevel),
+        fromEmailAddress: c.fromEmailAddress ?? undefined,
+        fromEmailName: c.fromEmailName ?? undefined,
+        useFromAddressAsReplyTo: c.useFromAddressAsReplyTo ?? false,
+        isActive: c.isActive ?? true,
+        sortOrder: c.sortOrder ?? 0,
+        customFieldIds: c.customFieldIds ?? undefined,
+      }));
+  }, [data, ownedKey]);
 
-  return {
-    presets,
-    presetIds: new Set(presets.map(c => c.id)),
-    isLoading,
-  };
+  const presetIds = useMemo(() => new Set(presets.map(c => c.id)), [presets]);
+
+  return { presets, presetIds, isLoading };
 };
