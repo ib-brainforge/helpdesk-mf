@@ -21,12 +21,18 @@ import { NewRequestWizard } from './NewRequestWizard';
  * dialog is already sized to fit. A single close cross is the only control the
  * chrome needs.
  *
- * scrollBehavior="inside" is a safety net only. Every step is sized to fit the
- * body without scrolling, including the eleven question category, which is why
- * the questions are paged. It keeps the
- * questions step runs to eleven fields for the GPS category, which is taller
- * than most screens; scrolling the page instead would move the dialog itself
- * and push its own Continue button off the bottom.
+ * The dialog takes the screen's full height, less 16px each side, rather than
+ * the 104px above and below every other modal gets (64px of margin on the
+ * dialog plus 40px of padding on its container). On a laptop that space is
+ * the difference between the ten request types fitting and the first step
+ * scrolling. The `!` classes beat the container's own max-height rule, and the
+ * padding is set in the scoped style rule below for the same reason as the
+ * backdrop: BaseModal has no class hook for that element.
+ *
+ * scrollBehavior="inside" is a safety net only. Every step is sized to fit
+ * without scrolling, which is why the questions are paged. Should a step still
+ * outgrow a very short screen, scrolling inside keeps the footer's buttons in
+ * view, where scrolling the page would push them off the bottom.
  *
  * isDismissable is off. A stray click on the backdrop part way through a five
  * field questionnaire would discard the lot with no warning, and the dialog
@@ -49,8 +55,9 @@ export const NewRequestModal: FC<Props> = ({ isOpen, onClose, onCreated }) => (
   <BaseModal
     isOpen={isOpen}
     onClose={onClose}
-    size="3xl"
+    size="4xl"
     scrollBehavior="inside"
+    className="!my-auto !max-h-full"
     isDismissable={false}
     backdrop="opaque"
     aria-label="New request"
@@ -62,11 +69,15 @@ export const NewRequestModal: FC<Props> = ({ isOpen, onClose, onCreated }) => (
         than a state change. BaseModal exposes no class hook for that slot
         (className lands on the dialog), so the rule is scoped with :has() to
         the marker below and darkens this dialog's backdrop only, leaving every
-        other modal in the app exactly as it was.
+        other modal in the app exactly as it was. The container's padding is
+        trimmed the same way, so the dialog can use the screen's height.
       */}
       <style>{`
         body:has([data-new-request-dialog]) [data-slot='modal-backdrop'] {
           background-color: rgb(0 0 0 / 0.55);
+        }
+        body:has([data-new-request-dialog]) .modal__container {
+          padding: 16px;
         }
       `}</style>
       <div data-new-request-dialog hidden />

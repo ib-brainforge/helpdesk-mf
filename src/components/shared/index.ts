@@ -1,5 +1,6 @@
 export { ModalHeader } from './ModalHeader';
 export { ScopeCell } from './ScopeCell';
+export { ScopeSelect } from './ScopeSelect';
 export {
   badgeFieldClasses,
   badgeSwatchClasses,
