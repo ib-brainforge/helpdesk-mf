@@ -81,8 +81,6 @@ export const AssigneeFilterList: FC<Props> = ({
     );
   }
 
-  if (rows.length === 0) return null;
-
   return (
     <div className="space-y-0.5">
       {/*
@@ -103,6 +101,17 @@ export const AssigneeFilterList: FC<Props> = ({
       >
         All assignees
       </button>
+
+      {/*
+        Nobody holds a ticket in this view (a category with no tickets, say).
+        The list used to vanish entirely, leaving the "Assignees" heading
+        sitting on the category list below it with nothing underneath.
+      */}
+      {rows.length === 0 && (
+        <p className="text-light-gray px-2 py-1.5 text-xs">
+          No assigned tickets here
+        </p>
+      )}
 
       {rows.map(([userId, count]) => {
         const selected = value === userId;
