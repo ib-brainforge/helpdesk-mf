@@ -13,6 +13,7 @@ import {
   useAssetSearch,
   useTrackedAssetIds,
 } from '../hooks/useAssets';
+import { useRequestScope } from './requestScope';
 
 /** A vehicle the requester has chosen. */
 export interface PickedAsset {
@@ -40,8 +41,8 @@ interface Props {
  *
  * From the Asset app, the same source as a ticket's linked assets, so every
  * vehicle picked here can be linked to the ticket once it exists. The search
- * covers the requester's current context, which is where the ticket itself is
- * created.
+ * covers the tenant and organisation chosen for the request, which is where the
+ * ticket itself is created.
  *
  * A search box rather than a fixed dropdown: a fleet runs to hundreds of
  * vehicles (443 for Remondis), and asset-backend searches and pages them, so
@@ -56,7 +57,11 @@ export const AssetPicker: FC<Props> = ({
   onChange,
   showError,
 }) => {
-  const context = useAtomValue(selectedContextAtom);
+  // The tenant and organisation chosen on the wizard's Details step, else the
+  // app's own context.
+  const requestScope = useRequestScope();
+  const appContext = useAtomValue(selectedContextAtom);
+  const context = requestScope ?? appContext;
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   // Nothing is fetched until the picker is first opened.
@@ -102,7 +107,7 @@ export const AssetPicker: FC<Props> = ({
       : choices.length === 0
         ? query.trim()
           ? `No vehicles match "${query.trim()}"`
-          : 'No vehicles in this context'
+          : 'No vehicles in this organisation'
         : null;
 
   /*

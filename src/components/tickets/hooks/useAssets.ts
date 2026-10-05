@@ -69,6 +69,24 @@ const useDebounced = <T>(value: T, ms: number): T => {
 };
 
 /**
+ * Asks identity for a context token for one tenant and organisation. Calls
+ * made with it are answered for that scope rather than the app's own context.
+ */
+export const issueScopeToken = async (
+  scope: AssetScope,
+  app: 'asset' | 'tracking' | 'helpdesk',
+): Promise<string> => {
+  const client = await createIdentityApiClient(ContextsApi);
+  const { data } = await client.v1ContextsIssuePost({
+    tenantId: scope.tenantId as string,
+    organisationId: scope.organisationId ?? null,
+    app,
+  });
+  if (!data?.token) throw new Error('No context token issued');
+  return data.token;
+};
+
+/**
  * A context token for one scope, for asset-backend calls only. Cached per
  * scope until shortly before it expires.
  */
@@ -88,16 +106,7 @@ const useScopeToken = (
     enabled: enabled && !!scope.tenantId,
     // Tokens last hours; refresh well before expiry rather than on a failed call.
     staleTime: 30 * 60 * 1000,
-    queryFn: async (): Promise<string> => {
-      const client = await createIdentityApiClient(ContextsApi);
-      const { data } = await client.v1ContextsIssuePost({
-        tenantId: scope.tenantId as string,
-        organisationId: scope.organisationId ?? null,
-        app,
-      });
-      if (!data?.token) throw new Error('No context token issued');
-      return data.token;
-    },
+    queryFn: () => issueScopeToken(scope, app),
   });
 
 /**

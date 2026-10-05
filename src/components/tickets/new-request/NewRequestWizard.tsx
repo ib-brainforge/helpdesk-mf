@@ -1,7 +1,14 @@
+import { ScopeSelect } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useScopeNames } from '@/hooks/useScopeNames';
+import { selectedContextAtom } from '@/state/auth-atoms';
 import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
 import { useAuth, usePermissions } from '@brainforgeau/security';
-import { type FC, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAtomValue } from 'jotai';
+import { type FC, useEffect, useMemo, useState } from 'react';
+import { TicketDescriptionContent } from '../components/TicketDescriptionContent';
+import { issueScopeToken } from '../hooks/useAssets';
 import { useCreateTicket, useLinkAsset } from '../hooks/useTickets';
 import type { PickedAsset } from './AssetPicker';
 import { RequestFieldRenderer } from './RequestFieldRenderer';
@@ -14,6 +21,7 @@ import {
   paginateFields,
   resolveRequestCategory,
 } from './request-field-schema';
+import { RequestScopeContext, createTicketInScope } from './requestScope';
 import { useRequestCategories } from './useRequestCategories';
 
 /**
@@ -34,8 +42,6 @@ import { useRequestCategories } from './useRequestCategories';
  */
 
 type StepId = 'category' | 'details' | 'questions' | 'review';
-
-const normalise = (name: string) => name.trim().toLowerCase();
 
 /**
  * A failed create, in words the requester can act on.
@@ -109,6 +115,80 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
     Record<string, PickedAsset[]>
   >({});
   const [subject, setSubject] = useState('');
+
+  /*
+   * Which company (tenant) and organisation the request is for.
+   *
+   * Someone who works across several tenants picks the company; someone with
+   * one has it filled in and locked. The organisation works the same way
+   * within the chosen company: a dropdown when there are several, locked when
+   * there is one. Both start from the context the app is in, which is nearly
+   * always the right answer.
+   *
+   * An organisation is required whenever the company has any. A request is
+   * raised by someone at a site, and a ticket left at company level is not
+   * visible to the organisation it belongs to.
+   */
+  const appContext = useAtomValue(selectedContextAtom);
+  const { tenantOptions, organisationOptions } = useScopeNames();
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [organisationId, setOrganisationId] = useState<string | null>(null);
+  const orgsForTenant = useMemo(
+    () => organisationOptions.filter(o => o.parentId === tenantId),
+    [organisationOptions, tenantId],
+  );
+  const tenantLocked = tenantOptions.length <= 1;
+  const orgLocked = orgsForTenant.length <= 1;
+  const tenantName = tenantOptions.find(t => t.id === tenantId)?.name;
+  const organisationName = orgsForTenant.find(
+    o => o.id === organisationId,
+  )?.name;
+
+  useEffect(() => {
+    if (tenantId && tenantOptions.some(t => t.id === tenantId)) return;
+    setTenantId(
+      tenantOptions.find(t => t.id === appContext?.tenantId)?.id ??
+        (tenantOptions.length === 1 ? tenantOptions[0].id : null),
+    );
+  }, [tenantOptions, appContext?.tenantId, tenantId]);
+
+  useEffect(() => {
+    if (organisationId && orgsForTenant.some(o => o.id === organisationId))
+      return;
+    setOrganisationId(
+      orgsForTenant.find(o => o.id === appContext?.organisationId)?.id ??
+        (orgsForTenant.length === 1 ? orgsForTenant[0].id : null),
+    );
+  }, [orgsForTenant, appContext?.organisationId, organisationId]);
+
+  const scopeComplete =
+    !!tenantId && (orgsForTenant.length === 0 || !!organisationId);
+  const requestScope = useMemo(
+    () => ({ tenantId, organisationId }),
+    [tenantId, organisationId],
+  );
+  const queryClient = useQueryClient();
+
+  // When the chosen scope is the app's own context, the normal client already
+  // serves it. Anything else needs a token issued for that scope.
+  const inAppContext =
+    tenantId === (appContext?.tenantId ?? null) &&
+    organisationId === (appContext?.organisationId ?? null);
+
+  /*
+   * A ticket can only be raised where Helpdesk is licensed, and identity
+   * refuses a token anywhere else. Asked as soon as the scope is chosen, so
+   * the requester learns it on the Details step instead of after answering
+   * every question. The token it returns is the one Create then uses.
+   */
+  const scopeToken = useQuery({
+    queryKey: ['new-request', 'scope-token', tenantId, organisationId],
+    enabled: scopeComplete && !inAppContext,
+    staleTime: 30 * 60 * 1000,
+    retry: false,
+    queryFn: () => issueScopeToken(requestScope, 'helpdesk'),
+  });
+  const scopeUnavailable = !inAppContext && scopeToken.isError;
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState('');
   const [showErrors, setShowErrors] = useState(false);
@@ -158,6 +238,8 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
       // Name and email are not checked because they come from the account and
       // are read only.
       return (
+        scopeComplete &&
+        !scopeUnavailable &&
         subject.trim().length > 0 &&
         phone.trim().length > 0 &&
         location.trim().length > 0
@@ -199,30 +281,60 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
     setStepIndex(i => Math.max(i - 1, 0));
   };
 
-  const submit = () => {
+  const contact = {
+    location,
+    name: contactName,
+    phone,
+    email: contactEmail,
+  };
+
+  /**
+   * Vehicles picked for the previous organisation are not this one's, so a
+   * change of company or organisation clears them.
+   */
+  const changeScope = (next: {
+    tenantId?: string | null;
+    organisationId?: string | null;
+  }) => {
+    if ('tenantId' in next) {
+      setTenantId(next.tenantId ?? null);
+      setOrganisationId(null);
+    }
+    if ('organisationId' in next) {
+      setOrganisationId(next.organisationId ?? null);
+    }
+    const assetKeys = new Set(
+      (category?.fields ?? []).filter(f => f.kind === 'asset').map(f => f.key),
+    );
+    if (assetKeys.size === 0) return;
+    setPickedAssets({});
+    setAnswers(prev =>
+      Object.fromEntries(
+        Object.entries(prev).filter(([k]) => !assetKeys.has(k)),
+      ),
+    );
+  };
+
+  const submit = async () => {
     if (!category || !resolvedCategoryId) return;
     setSubmitError(null);
-    createTicket.mutate(
-      {
-        subject: subject.trim(),
-        description: buildDescription({
-          category,
-          answers,
-          contact: {
-            location,
-            name: contactName,
-            phone,
-            email: contactEmail,
-          },
-        }),
-        priority: urgencyToPriority(answers.urgency),
-        categoryId: resolvedCategoryId,
-      },
-      {
+    const ticket = {
+      subject: subject.trim(),
+      description: buildDescription({ category, answers, contact }),
+      priority: urgencyToPriority(answers.urgency),
+      categoryId: resolvedCategoryId,
+    };
+
+    if (inAppContext) {
+      createTicket.mutate(ticket, {
         onSuccess: async id => {
           setIsFinishing(true);
           try {
-            if (canLinkAssets) await linkPickedAssets(String(id));
+            if (canLinkAssets) {
+              await linkPickedAssets(String(id), assetId =>
+                linkAsset.mutateAsync({ ticketId: String(id), assetId }),
+              );
+            }
           } finally {
             setIsFinishing(false);
           }
@@ -231,8 +343,27 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         // The dialog stays open with everything as entered, so the requester
         // can fix the cause and press Create again rather than start over.
         onError: error => setSubmitError(describeCreateError(error)),
-      },
-    );
+      });
+      return;
+    }
+
+    setIsFinishing(true);
+    try {
+      const created = await createTicketInScope(
+        requestScope,
+        ticket,
+        scopeToken.data,
+      );
+      if (canLinkAssets) {
+        await linkPickedAssets(created.id, created.linkAsset);
+      }
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      onCreated?.(created.id);
+    } catch (error) {
+      setSubmitError(describeCreateError(error));
+    } finally {
+      setIsFinishing(false);
+    }
   };
 
   /*
@@ -245,7 +376,10 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
    * permission to edit links) loses nothing the agent needs. Failing the whole
    * request over it would be worse.
    */
-  const linkPickedAssets = async (ticketId: string) => {
+  const linkPickedAssets = async (
+    ticketId: string,
+    link: (assetId: string) => Promise<unknown>,
+  ) => {
     const assetIds = [
       ...new Set(
         Object.values(pickedAssets)
@@ -255,7 +389,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
       ),
     ];
     const results = await Promise.allSettled(
-      assetIds.map(assetId => linkAsset.mutateAsync({ ticketId, assetId })),
+      assetIds.map(assetId => link(assetId)),
     );
     const failed = results.filter(r => r.status === 'rejected').length;
     if (failed > 0) {
@@ -266,315 +400,366 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl pb-6">
-      {/*
+    <RequestScopeContext.Provider value={requestScope}>
+      <div className="mx-auto w-full pb-4">
+        {/*
         Progress reads as one bar that fills, with the step names beneath it,
         matching the Create Asset wizard in the sibling app. Numbered circles
         were a different dialect of the same idea; sharing the pattern means a
         user who has met one wizard already knows how far through they are.
       */}
-      {/*
+        {/*
         Every step is drawn the same way, a segment of the bar, blue once
         reached and grey before. Upcoming steps used to be a small dot with a
         nudge to centre it, so their labels sat lower than the reached ones and
         the row looked broken.
       */}
-      <div className="mb-6 flex justify-center">
-        <ol className="flex w-full max-w-md items-start gap-1.5">
-          {STEPS.map((s, i) => {
-            const reached = i <= stepIndex;
-            return (
-              <li key={s.id} className="flex flex-1 flex-col items-center">
-                <span
-                  className={`h-1 w-full rounded-full transition-colors ${
-                    reached ? 'bg-blue' : 'bg-light'
-                  }`}
-                />
-                <span
-                  className={`mt-2 text-[13px] ${
-                    i === stepIndex
-                      ? 'text-blue font-medium'
-                      : 'text-light-gray'
-                  }`}
-                >
-                  {s.title}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
+        <div className="mb-3 flex justify-center">
+          <ol className="flex w-full max-w-md items-start gap-1.5">
+            {STEPS.map((s, i) => {
+              const reached = i <= stepIndex;
+              return (
+                <li key={s.id} className="flex flex-1 flex-col items-center">
+                  <span
+                    className={`h-1 w-full rounded-full transition-colors ${
+                      reached ? 'bg-blue' : 'bg-light'
+                    }`}
+                  />
+                  <span
+                    className={`mt-2 text-[13px] ${
+                      i === stepIndex
+                        ? 'text-blue font-medium'
+                        : 'text-light-gray'
+                    }`}
+                  >
+                    {s.title}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
 
-      <div className="min-h-[240px]">
-        {step.id === 'category' && (
-          <div>
-            <p className="mb-0.5 text-[15px] font-semibold">
-              What is your request about?
-            </p>
-            <p className="text-light-gray mb-3 text-[13px]">
-              Pick a category. The questions on the next steps are tailored to
-              your choice.
-            </p>
-            {/*
+        <div className="min-h-[240px]">
+          {step.id === 'category' && (
+            <div>
+              <p className="mb-0.5 text-[15px] font-semibold">
+                What is your request about?
+              </p>
+              <p className="text-light-gray mb-3 text-[13px]">
+                Pick a category. The questions on the next steps are tailored to
+                your choice.
+              </p>
+              {/*
               Cards rather than bare text buttons: an icon to scan by, the
               request type, and one line on what it is for, so the choice can
               be made without reading every label in full. One choice only, so
               they are a radio group to assistive technology.
+
+              All ten fit without scrolling on a laptop screen. The dialog is
+              wide enough for most labels and summaries to sit on one line, and
+              on a screen too short for that (under 620px of page height) the
+              summaries drop out and the labels alone carry the choice.
             */}
-            <div
-              role="radiogroup"
-              aria-label="Request category"
-              className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-            >
-              {REQUEST_CATEGORIES.map(c => {
-                const selected = categoryKey === c.key;
-                return (
-                  <button
-                    key={c.key}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => {
-                      setCategoryKey(c.key);
-                      setAnswers({});
-                      setPickedAssets({});
-                      setQuestionPage(0);
-                    }}
-                    className={`flex h-full min-h-[72px] w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
-                      selected
-                        ? 'border-blue bg-lighter-blue'
-                        : 'border-light hover:border-light-gray hover:bg-light/40'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
+              <div
+                role="radiogroup"
+                aria-label="Request category"
+                className="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
+              >
+                {REQUEST_CATEGORIES.map(c => {
+                  const selected = categoryKey === c.key;
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => {
+                        setCategoryKey(c.key);
+                        setAnswers({});
+                        setPickedAssets({});
+                        setQuestionPage(0);
+                      }}
+                      className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                         selected
-                          ? 'bg-blue text-white'
-                          : 'bg-lighter-blue text-blue'
+                          ? 'border-blue bg-lighter-blue'
+                          : 'border-light hover:border-light-gray hover:bg-light/40'
                       }`}
                     >
-                      <Icon name={c.icon} className="h-5 w-5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
-                        {c.label}
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                          selected
+                            ? 'bg-blue text-white'
+                            : 'bg-lighter-blue text-blue'
+                        }`}
+                      >
+                        <Icon name={c.icon} className="h-5 w-5" />
                       </span>
-                      <span className="text-light-gray mt-0.5 block text-xs leading-snug">
-                        {c.summary}
+                      <span className="min-w-0 flex-1">
+                        <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
+                          {c.label}
+                        </span>
+                        <span className="text-light-gray mt-0.5 block text-xs leading-snug [@media(max-height:620px)]:hidden">
+                          {c.summary}
+                        </span>
                       </span>
-                    </span>
-                    {selected && (
-                      <Icon
-                        name="CheckCircleIcon"
-                        className="text-blue h-5 w-5 shrink-0"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            {showErrors && !category && (
-              <p className="text-red-dark mt-2 text-sm">Choose a category.</p>
-            )}
-          </div>
-        )}
-
-        {step.id === 'details' && (
-          <div>
-            <p className="mb-0.5 text-[15px] font-semibold">
-              Tell us who and where
-            </p>
-            <p className="text-light-gray mb-3 text-[13px]">
-              Your name and email come from your account. The rest helps us
-              reach you and find the site.
-            </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <BaseInput
-                  label="Subject"
-                  isRequired
-                  placeholder="Short summary of your request"
-                  value={subject}
-                  onValueChange={setSubject}
-                  isInvalid={showErrors && !subject.trim()}
-                  errorMessage="A subject is required"
-                />
+                      {selected && (
+                        <Icon
+                          name="CheckCircleIcon"
+                          className="text-blue h-5 w-5 shrink-0"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-              {/* Identity comes from the signed in account and is shown read only:
-                editing it here would not change who the ticket is actually from. */}
-              <BaseInput label="Contact name" value={contactName} isReadOnly />
-              <BaseInput
-                label="Contact email"
-                value={contactEmail}
-                isReadOnly
-              />
-              <BaseInput
-                label="Contact phone"
-                isRequired
-                placeholder="Enter a phone number"
-                value={phone}
-                onValueChange={setPhone}
-                isInvalid={showErrors && !phone.trim()}
-                errorMessage="A phone number is required"
-              />
-              <BaseInput
-                label="Location"
-                isRequired
-                placeholder="Enter a location"
-                value={location}
-                onValueChange={setLocation}
-                isInvalid={showErrors && !location.trim()}
-                errorMessage="A location is required"
-              />
-            </div>
-          </div>
-        )}
-
-        {step.id === 'questions' && category && (
-          <div>
-            <div className="mb-3 flex items-baseline justify-between gap-3">
-              <div>
-                <p className="text-[15px] font-semibold">
-                  {category.section ?? 'A few details about the problem'}
-                </p>
-                <p className="text-light-gray text-[13px]">
-                  All answers are required. They save a round trip before anyone
-                  can start on it.
-                </p>
-              </div>
-              {questionPages.length > 1 && (
-                <span className="text-light-gray shrink-0 text-xs">
-                  Page {questionPage + 1} of {questionPages.length}
-                </span>
+              {showErrors && !category && (
+                <p className="text-red-dark mt-2 text-sm">Choose a category.</p>
               )}
             </div>
-            {questionPage === 0 && category.note && (
-              <div className="bg-lighter-blue text-blue mb-4 rounded-lg p-3 text-sm">
-                {category.note}
-              </div>
-            )}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {currentQuestions.map(f => (
-                <div key={f.key} className={f.full ? 'sm:col-span-2' : ''}>
-                  <RequestFieldRenderer
-                    spec={f}
-                    value={answers[f.key]}
-                    onChange={v => setAnswers(a => ({ ...a, [f.key]: v }))}
-                    assets={pickedAssets[f.key]}
-                    onAssetsChange={assets =>
-                      setPickedAssets(p => ({ ...p, [f.key]: assets }))
-                    }
-                    showError={
-                      showErrors && missingRequired([f], answers).length > 0
-                    }
+          )}
+
+          {step.id === 'details' && (
+            <div>
+              <p className="mb-0.5 text-[15px] font-semibold">
+                Tell us who and where
+              </p>
+              <p className="text-light-gray mb-3 text-[13px]">
+                Who the request is for, and how to reach you. Your name and
+                email come from your account.
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {tenantLocked ? (
+                  <BaseInput
+                    label="Company"
+                    value={tenantName ?? ''}
+                    isReadOnly
+                  />
+                ) : (
+                  <ScopeSelect
+                    label="Company"
+                    options={tenantOptions}
+                    value={tenantId}
+                    onChange={id => changeScope({ tenantId: id })}
+                    placeholder="Choose a company"
+                  />
+                )}
+                {orgLocked ? (
+                  <BaseInput
+                    label="Organisation"
+                    value={organisationName ?? (tenantId ? 'None' : '')}
+                    isReadOnly
+                  />
+                ) : (
+                  <ScopeSelect
+                    label="Organisation"
+                    options={orgsForTenant}
+                    value={organisationId}
+                    onChange={id => changeScope({ organisationId: id })}
+                    placeholder="Choose an organisation"
+                    isDisabled={!tenantId}
+                  />
+                )}
+                {scopeUnavailable && (
+                  <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
+                    Helpdesk isn't enabled for {tenantName ?? 'this company'},
+                    so requests can't be raised there. Choose another company,
+                    or ask an admin to enable Helpdesk for it.
+                  </p>
+                )}
+                {showErrors && !scopeComplete && (
+                  <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
+                    {tenantId
+                      ? 'Choose the organisation this request is for.'
+                      : 'Choose the company this request is for.'}
+                  </p>
+                )}
+                <div className="sm:col-span-2">
+                  <BaseInput
+                    label="Subject"
+                    isRequired
+                    placeholder="Short summary of your request"
+                    value={subject}
+                    onValueChange={setSubject}
+                    isInvalid={showErrors && !subject.trim()}
+                    errorMessage="A subject is required"
                   />
                 </div>
-              ))}
+                {/* Identity comes from the signed in account and is shown read only:
+                editing it here would not change who the ticket is actually from. */}
+                <BaseInput
+                  label="Contact name"
+                  value={contactName}
+                  isReadOnly
+                />
+                <BaseInput
+                  label="Contact email"
+                  value={contactEmail}
+                  isReadOnly
+                />
+                <BaseInput
+                  label="Contact phone"
+                  isRequired
+                  placeholder="Enter a phone number"
+                  value={phone}
+                  onValueChange={setPhone}
+                  isInvalid={showErrors && !phone.trim()}
+                  errorMessage="A phone number is required"
+                />
+                <BaseInput
+                  label="Location"
+                  isRequired
+                  placeholder="Enter a location"
+                  value={location}
+                  onValueChange={setLocation}
+                  isInvalid={showErrors && !location.trim()}
+                  errorMessage="A location is required"
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {step.id === 'review' && category && (
-          <div>
-            <p className="mb-0.5 text-[15px] font-semibold">
-              Review your request
-            </p>
-            <p className="text-light-gray mb-3 text-[13px]">
-              This is what Netcorp support will receive.
-            </p>
-            <dl className="space-y-2 text-sm">
-              <div className="flex gap-2">
-                <dt className="text-light-gray w-32 shrink-0">Goes to</dt>
-                <dd className="font-medium">Netcorp support</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-light-gray w-32 shrink-0">Category</dt>
-                <dd>{category.label}</dd>
-              </div>
-              {resolvedCategory?.name &&
-                normalise(resolvedCategory.name) !==
-                  normalise(category.label) && (
-                  <div className="flex gap-2">
-                    <dt className="text-light-gray w-32 shrink-0">
-                      Filed under
-                    </dt>
-                    <dd>{resolvedCategory.name}</dd>
-                  </div>
+          {step.id === 'questions' && category && (
+            <div>
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <div>
+                  <p className="text-[15px] font-semibold">
+                    {category.section ?? 'A few details about the problem'}
+                  </p>
+                  <p className="text-light-gray text-[13px]">
+                    All answers are required. They save a round trip before
+                    anyone can start on it.
+                  </p>
+                </div>
+                {questionPages.length > 1 && (
+                  <span className="text-light-gray shrink-0 text-xs">
+                    Page {questionPage + 1} of {questionPages.length}
+                  </span>
                 )}
-              <div className="flex gap-2">
-                <dt className="text-light-gray w-32 shrink-0">Subject</dt>
-                <dd>{subject}</dd>
               </div>
-              <div className="flex gap-2">
-                <dt className="text-light-gray w-32 shrink-0">Priority</dt>
-                <dd>{urgencyToPriority(answers.urgency)}</dd>
+              {questionPage === 0 && category.note && (
+                <div className="bg-lighter-blue text-blue mb-4 rounded-lg p-3 text-sm">
+                  {category.note}
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {currentQuestions.map(f => (
+                  <div key={f.key} className={f.full ? 'sm:col-span-2' : ''}>
+                    <RequestFieldRenderer
+                      spec={f}
+                      value={answers[f.key]}
+                      onChange={v => setAnswers(a => ({ ...a, [f.key]: v }))}
+                      assets={pickedAssets[f.key]}
+                      onAssetsChange={assets =>
+                        setPickedAssets(p => ({ ...p, [f.key]: assets }))
+                      }
+                      showError={
+                        showErrors && missingRequired([f], answers).length > 0
+                      }
+                    />
+                  </div>
+                ))}
               </div>
-            </dl>
-            {!categoriesLoading && !resolvedCategory && (
-              <p className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm">
-                This request type can't be submitted yet: Helpdesk has no
-                category for "{category.label}". Ask a Helpdesk admin to add a
-                category with that name, then try again.
-              </p>
-            )}
-            {submitError && (
-              <p
-                role="alert"
-                className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm"
-              >
-                {submitError}
-              </p>
-            )}
-            <p className="text-light-gray mt-4 mb-1 text-xs font-semibold">
-              What the ticket will say
-            </p>
-            <pre className="bg-light/40 max-h-56 overflow-auto rounded-lg p-3 text-xs whitespace-pre-wrap">
-              {buildDescription({
-                category,
-                answers,
-                contact: {
-                  location,
-                  name: contactName,
-                  phone,
-                  email: contactEmail,
-                },
-              })}
-            </pre>
-          </div>
-        )}
-      </div>
+            </div>
+          )}
 
-      {/*
+          {step.id === 'review' && category && (
+            <div>
+              <p className="mb-0.5 text-[15px] font-semibold">
+                Review your request
+              </p>
+              <p className="text-light-gray mb-3 text-[13px]">
+                This is how your ticket will look to Netcorp support.
+              </p>
+              {/*
+              A preview of the ticket itself rather than a summary of the form:
+              the subject as its heading, the facts it is filed with as chips,
+              and the description drawn by the same component as the ticket
+              page. It used to print the description's raw HTML, which showed
+              the requester markup instead of their request.
+            */}
+              <div className="border-light overflow-hidden rounded-lg border">
+                <div className="border-light border-b px-4 py-3">
+                  <p className="text-gray text-base font-semibold break-words dark:text-light">
+                    {subject}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                    <span className="bg-lighter-blue text-blue inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium">
+                      <Icon name={category.icon} className="h-3.5 w-3.5" />
+                      {resolvedCategory?.name ?? category.label}
+                    </span>
+                    <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
+                      Priority: {urgencyToPriority(answers.urgency)}
+                    </span>
+                    {tenantName && (
+                      <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
+                        {[tenantName, organisationName]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    )}
+                    <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
+                      Goes to Netcorp support
+                    </span>
+                  </div>
+                </div>
+                <div className="max-h-[min(36vh,320px)] overflow-y-auto px-4 py-1 text-sm">
+                  <TicketDescriptionContent
+                    value={buildDescription({ category, answers, contact })}
+                  />
+                </div>
+              </div>
+              {!categoriesLoading && !resolvedCategory && (
+                <p className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm">
+                  This request type can't be submitted yet: Helpdesk has no
+                  category for "{category.label}". Ask a Helpdesk admin to add a
+                  category with that name, then try again.
+                </p>
+              )}
+              {submitError && (
+                <p
+                  role="alert"
+                  className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm"
+                >
+                  {submitError}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/*
         Footer laid out like the Create Asset wizard: a rule separating it from
         the content, Cancel alone on the left as the way out, and Back beside
         the primary action on the right so the two navigation controls sit
         together rather than at opposite ends of the dialog.
       */}
-      <div className="border-light mt-5 flex items-center justify-between border-t pt-4">
-        <BaseButton variant="bordered" onPress={onCancel} isDisabled={isBusy}>
-          Cancel
-        </BaseButton>
-        <div className="flex items-center gap-2">
-          {stepIndex > 0 && (
-            <BaseButton variant="bordered" onPress={back} isDisabled={isBusy}>
-              Back
-            </BaseButton>
-          )}
-          {step.id === 'review' ? (
-            <BaseButton
-              color="primary"
-              onPress={submit}
-              isDisabled={isBusy || !resolvedCategoryId}
-            >
-              {isBusy ? 'Creating...' : 'Create request'}
-            </BaseButton>
-          ) : (
-            <BaseButton color="primary" onPress={next}>
-              Next
-            </BaseButton>
-          )}
+        <div className="border-light mt-4 flex items-center justify-between border-t pt-4">
+          <BaseButton variant="bordered" onPress={onCancel} isDisabled={isBusy}>
+            Cancel
+          </BaseButton>
+          <div className="flex items-center gap-2">
+            {stepIndex > 0 && (
+              <BaseButton variant="bordered" onPress={back} isDisabled={isBusy}>
+                Back
+              </BaseButton>
+            )}
+            {step.id === 'review' ? (
+              <BaseButton
+                color="primary"
+                onPress={submit}
+                isDisabled={isBusy || !resolvedCategoryId}
+              >
+                {isBusy ? 'Creating...' : 'Create request'}
+              </BaseButton>
+            ) : (
+              <BaseButton color="primary" onPress={next}>
+                Next
+              </BaseButton>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </RequestScopeContext.Provider>
   );
 };
