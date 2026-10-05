@@ -339,40 +339,60 @@ export const TicketGrid: FC = () => {
    * The grid is `table-layout: fixed` and the column `size` values behave as a
    * MINIMUM total (1368px with every column in). Wider than that, columns scale
    * up and nothing scrolls; narrower, the shortfall becomes horizontal scroll
-   * no matter how the widths are shuffled — so something has to give.
+   * no matter how the widths are shuffled, so something has to give.
+   *
+   * Columns go in SHED_ORDER until the rest fit, measured from the columns
+   * actually present (Scope exists only for service admins), so the order is
+   * the whole rule and there are no hand-kept pixel thresholds to drift.
    *
    * Order, and why:
-   *   ID        — goes first. It is eight characters of a GUID; Subject is
-   *               already the link to the ticket, so nobody scans for it.
-   *   Requester — next. Who asked is worth more than the id, which is why it
-   *               outranks it here, but Assignee is what agents triage by.
-   *   Updated   then Updated, since Created answers "how old is this?" on
-   *               its own.
-   *   Scope     last to go and first to come back. It was asked for, and on
-   *               a grid where every other column describes the ticket it is
-   *               the only one saying which organisation owns it.
-   *
-   * The thresholds ARE the running totals, so each one is the width at which
-   * that column's own budget stops fitting:
-   *   1368 everything · 1298 without ID · 1146 also without Requester ·
-   *   1046 also without Updated · 886 also without Scope.
-   *
-   * Below ~906px — a 1280 screen with the left nav expanded — it still scrolls
-   * sideways. Shedding a fifth column would start costing information people
-   * actually use.
+   *   ID        first. Eight characters of a GUID; Subject is already the link.
+   *   Updated   Created answers "how old is this?" on its own.
+   *   Scope     which organisation owns it; worth keeping, but not over people.
+   *   Created   the date, before the people on the ticket.
+   *   Category  before Requester.
+   *   Requester last of the optional columns. It used to go second, so on a
+   *             laptop (a table area of roughly 900 to 1000px) nobody could see
+   *             who raised a ticket while Created and Category stayed.
+   * Subject, Status, Priority, Assignee and the actions never go; below their
+   * total the grid scrolls sideways rather than lose them.
    */
   useLayoutEffect(() => {
     const el = tableAreaRef.current;
     if (!el) return undefined;
 
+    const SHED_ORDER = [
+      'id',
+      'updatedAt',
+      'scope',
+      'createdAt',
+      'categoryName',
+      'requester',
+    ];
+
     const apply = () => {
       const width = el.clientWidth;
-      table.setColumnVisibility({
-        id: width >= 1368,
-        requester: width >= 1298,
-        updatedAt: width >= 1146,
-        scope: width >= 1046,
-      });
+      const columns = table.getAllLeafColumns();
+      let total = columns.reduce((sum, c) => sum + c.getSize(), 0);
+      const visibility: Record<string, boolean> = {};
+      for (const id of SHED_ORDER) {
+        const column = columns.find(c => c.id === id);
+        if (!column) continue;
+        const fits = total <= width;
+        visibility[id] = fits;
+        if (!fits) total -= column.getSize();
+      }
+      // A column is hidden only while everything shed before it still did not
+      // make room, so re-check in reverse: give back anything that fits now.
+      for (const id of [...SHED_ORDER].reverse()) {
+        const column = columns.find(c => c.id === id);
+        if (!column || visibility[id]) continue;
+        if (total + column.getSize() <= width) {
+          visibility[id] = true;
+          total += column.getSize();
+        }
+      }
+      table.setColumnVisibility(visibility);
     };
 
     apply();
