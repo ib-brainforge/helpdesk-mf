@@ -60,7 +60,7 @@ import { createTicketColumns } from './ticket-grid-columns';
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { useConfirm } from '@brainforgeau/components/page';
+import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
 import { TicketSidebar } from '../TicketSidebar';
 import type { TicketRow } from '../types';
@@ -943,7 +943,10 @@ export const TicketGrid: FC = () => {
         {/* Table */}
         {/* min-h-0 lets BaseTable's own scroll region take the overflow. Without
             it this flex child sizes to its content and the page scrolls instead. */}
-        <div ref={tableAreaRef} className="flex min-h-0 flex-1 flex-col">
+        <div
+          ref={tableAreaRef}
+          className="relative flex min-h-0 flex-1 flex-col"
+        >
           {/*
             pageSizeOptions + onPageSizeChange together are what render the
             "per page" dropdown (BaseTable derives showPageSizeSelector from
@@ -953,7 +956,21 @@ export const TicketGrid: FC = () => {
             pageIndex resets to 0 on change: at 25/page you can be on page 81,
             which does not exist at 100/page, and the grid would come back empty.
           */}
+          {/*
+            Keyed by the visible columns. BaseTable's body is a React.memo
+            whose props do not include column visibility, so when the effect
+            above hides columns the header updates and the body does not: the
+            rows keep every cell and slide out from under their headings.
+            That shows on returning to this page, when the tickets come from
+            cache and render before the columns are fitted; a full reload got
+            away with it only because the data arrived after the fit. A new
+            key redraws the body whenever the set of columns changes.
+          */}
           <BaseTable
+            key={table
+              .getVisibleLeafColumns()
+              .map(c => c.id)
+              .join(',')}
             table={table}
             fullHeight
             isLoading={isLoading || isLoadingUsers}
@@ -964,6 +981,22 @@ export const TicketGrid: FC = () => {
               setPagination({ pageIndex: 0, pageSize: size })
             }
           />
+          {/*
+            BaseTable draws nothing for an empty page on desktop (its
+            emptyContent is for the mobile card list only), so a filter that
+            matched no tickets left a lone header row over a blank area. Laid
+            over the table body, below the header, so the columns stay visible.
+          */}
+          {!isLoading &&
+            !isLoadingUsers &&
+            table.getRowModel().rows.length === 0 && (
+              <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center px-4 pt-10">
+                <EmptyState
+                  title="No tickets here"
+                  description="Nothing matches this tab and these filters. Try another category or tab, or clear the filters."
+                />
+              </div>
+            )}
         </div>
 
         {/* Bulk Action Modals */}
