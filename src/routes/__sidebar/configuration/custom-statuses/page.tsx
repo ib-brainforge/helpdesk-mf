@@ -3,7 +3,12 @@ import {
   useCustomStatuses,
   useDeleteCustomStatus,
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { IconTip, PresetPill, badgeSwatchClasses } from '@/components/shared';
+import {
+  IconTip,
+  PresetPill,
+  ScopeLabel,
+  badgeSwatchClasses,
+} from '@/components/shared';
 import { getStatusConfig } from '@/components/tickets/ticket-status-config';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
@@ -28,7 +33,6 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
@@ -192,16 +196,7 @@ function CustomStatusesPage() {
           isPreset(row.original) ? (
             <span className="text-default-600 text-sm">All tenants</span>
           ) : (
-            <ScopeBadge
-              meta={toScopeMeta(toWireMeta(row.original.meta))}
-              currentOrganisationId={currentOrganisationId}
-              currentDivisionId={currentDivisionId}
-              organisationCount={organisationCount}
-              bypassSingleOrganisationSuppressionForTesting={
-                SCOPE_TESTING_BYPASS_SINGLE_ORG
-              }
-              size="sm"
-            />
+            <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
           ),
         size: 140,
       }),
