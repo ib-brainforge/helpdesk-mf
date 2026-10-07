@@ -311,7 +311,12 @@ function CustomStatusesPage() {
   );
 
   const rows = useMemo(
-    () => [...scope.filteredRows, ...PRESET_STATUSES],
+    // One list in sort order, built-in and custom together. Array.sort is
+    // stable, so on a tie a built-in status stays ahead of a custom one.
+    () =>
+      [...PRESET_STATUSES, ...scope.filteredRows].sort(
+        (a, b) => a.sortOrder - b.sortOrder,
+      ),
     [scope.filteredRows],
   );
 
