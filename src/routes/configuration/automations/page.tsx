@@ -9,6 +9,7 @@
  */
 import { AutomationProjectsListPage } from '@/automations-editor';
 import { AppAuthSplash } from '@/components/AppSplash';
+import { PageBreadcrumbs } from '@/components/Breadcrumbs';
 import { PageBody } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
@@ -16,6 +17,7 @@ import React from 'react';
 function AutomationsListRoute() {
   return (
     <PageBody>
+      <PageBreadcrumbs breadcrumbsKey="configuration.automations.list" />
       <AutomationProjectsListPage />
     </PageBody>
   );

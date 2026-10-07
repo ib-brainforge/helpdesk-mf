@@ -1,4 +1,5 @@
 import { BaseBreadcrumbs as BaseBreadcrumbsComponent } from '@brainforgeau/components/breadcrumbs';
+import { useBreadcrumbs } from '@brainforgeau/components/page';
 import { NavLink } from '@modern-js/runtime/router';
 import type { ComponentProps, ReactNode } from 'react';
 
@@ -54,4 +55,31 @@ export const Breadcrumbs = (
   } as any;
 
   return <BaseBreadcrumbsComponent {...componentProps} />;
+};
+
+/**
+ * Registry breadcrumbs for a page that does not use PageHeader, such as the
+ * automation and workflow editors' list pages, which draw their own title.
+ * Same registry, same renderer, so the trail matches every other page.
+ */
+export const PageBreadcrumbs = ({
+  breadcrumbsKey,
+}: {
+  breadcrumbsKey: string;
+}) => {
+  const { items } = useBreadcrumbs(breadcrumbsKey);
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <Breadcrumbs
+        items={items.map((item, index) => ({
+          label: item.label as string,
+          // Empty when the crumb has nowhere to go; renderBreadcrumbLink then
+          // draws it as plain text.
+          href: item.href ?? '',
+          isCurrent: index === items.length - 1,
+        }))}
+      />
+    </div>
+  );
 };
