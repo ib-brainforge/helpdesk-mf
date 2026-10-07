@@ -1,4 +1,4 @@
-import { IconTip } from '@/components/shared';
+import { IconTip, ScopeLabel } from '@/components/shared';
 /**
  * Approval Workflows list — /__sidebar/configuration/approval-workflows
  *
@@ -30,7 +30,6 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import {
   type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
@@ -129,16 +128,7 @@ function ApprovalWorkflowsPage() {
         id: 'scope',
         header: 'Scope',
         cell: ({ row }) => (
-          <ScopeBadge
-            meta={toScopeMeta(toWireMeta(row.original.meta))}
-            currentOrganisationId={currentOrganisationId}
-            currentDivisionId={currentDivisionId}
-            organisationCount={organisationCount}
-            bypassSingleOrganisationSuppressionForTesting={
-              SCOPE_TESTING_BYPASS_SINGLE_ORG
-            }
-            size="sm"
-          />
+          <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
         ),
         size: 140,
       }),

@@ -1,3 +1,6 @@
+import { PresetPill, StatusBadge } from '@/components/shared';
+import { getPriorityConfig } from '@/components/tickets/ticket-priority-config';
+import { TicketPriority } from '@/types/ticket';
 import {
   BaseButton,
   BaseCard,
@@ -19,13 +22,62 @@ import { useMemo, useState } from 'react';
 interface CustomPriority {
   id: string;
   name: string;
+  /** Set on the built-in priorities, which are listed but read only. */
+  preset?: TicketPriority;
+  meaning?: string;
 }
 
-const EMPTY_COLUMNS: ColumnDef<CustomPriority, any>[] = [
+/*
+ * The built-in priorities every ticket uses, highest first. Custom priorities
+ * have no backend yet, so these are the whole set; listing them shows what a
+ * ticket can actually be given instead of an empty table.
+ */
+const PRESET_PRIORITIES: CustomPriority[] = [
+  {
+    preset: TicketPriority.Critical,
+    meaning: 'Drop everything',
+  },
+  { preset: TicketPriority.High, meaning: 'Wants attention soon' },
+  { preset: TicketPriority.Normal, meaning: 'The expected case' },
+  { preset: TicketPriority.Low, meaning: 'No urgency' },
+].map(p => ({
+  ...p,
+  id: `preset-priority-${p.preset}`,
+  name: getPriorityConfig(p.preset).label,
+}));
+
+const COLUMNS: ColumnDef<CustomPriority, any>[] = [
   {
     id: 'name',
     header: 'Name',
-    cell: ({ row }) => <span>{row.original.name}</span>,
+    cell: ({ row }) =>
+      row.original.preset ? (
+        <StatusBadge color={getPriorityConfig(row.original.preset).color}>
+          {row.original.name}
+        </StatusBadge>
+      ) : (
+        <span>{row.original.name}</span>
+      ),
+  },
+  {
+    id: 'meaning',
+    header: 'Meaning',
+    cell: ({ row }) => (
+      <span className="text-default-600 text-sm">
+        {row.original.meaning ?? ''}
+      </span>
+    ),
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) =>
+      row.original.preset ? (
+        <div className="-my-1.5 flex items-center justify-end">
+          <PresetPill hint="Built into Helpdesk. It can't be edited or deleted." />
+        </div>
+      ) : null,
+    size: 80,
   },
 ];
 
@@ -48,11 +100,11 @@ function CustomPrioritiesPage() {
     setPriorityName('');
   };
 
-  const columns = useMemo(() => EMPTY_COLUMNS, []);
+  const columns = useMemo(() => COLUMNS, []);
 
-  // REVIEW: Replace with real data hook when backend is ready
+  // REVIEW: Append the tenant's own priorities here once the backend exists.
   const table = useReactTable<CustomPriority>({
-    data: [],
+    data: PRESET_PRIORITIES,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });

@@ -3,12 +3,19 @@ import {
   useCustomStatuses,
   useDeleteCustomStatus,
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { IconTip } from '@/components/shared';
+import {
+  IconTip,
+  PresetPill,
+  ScopeLabel,
+  badgeSwatchClasses,
+} from '@/components/shared';
+import { getStatusConfig } from '@/components/tickets/ticket-status-config';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
 import { TicketStatus, toTicketStatus } from '@/types/custom-status';
+import { TicketStatus as TicketStatusName } from '@/types/ticket';
 import {
   toBulkScopeSaveResult,
   toHelpdeskScopePatch,
@@ -26,7 +33,6 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
@@ -49,6 +55,37 @@ const MAPS_TO_LABELS: Record<TicketStatus, string> = {
   [TicketStatus.InProgress]: 'In Progress',
   [TicketStatus.Closed]: 'Closed',
 };
+
+/*
+ * The built-in statuses every ticket starts from, listed under the tenant's
+ * own so the page shows the whole set a ticket can be in. A custom status
+ * maps onto one of these, so leaving them out made "Maps To" refer to things
+ * the page never showed. They are marked Preset and are read only: they are
+ * not records, so they cannot be edited, deleted or re-scoped.
+ */
+const PRESET_PREFIX = 'preset-status-';
+const isPreset = (status: CustomTicketStatusDto) =>
+  status.id.startsWith(PRESET_PREFIX);
+const PRESET_STATUS_NAMES = [
+  [TicketStatus.New, TicketStatusName.New],
+  [TicketStatus.InProgress, TicketStatusName.InProgress],
+  [TicketStatus.Closed, TicketStatusName.Closed],
+] as const;
+const PRESET_STATUSES: CustomTicketStatusDto[] = PRESET_STATUS_NAMES.map(
+  ([status, name], index) => ({
+    id: `${PRESET_PREFIX}${name}`,
+    name: MAPS_TO_LABELS[status],
+    sortOrder: index + 1,
+    mapsToStatus: name as unknown as CustomTicketStatusDto['mapsToStatus'],
+    isClosed: status === TicketStatus.Closed,
+    isDefault: false,
+    isActive: true,
+    createdAt: '',
+    modifiedAt: '',
+  }),
+);
+const presetStatusName = (status: CustomTicketStatusDto) =>
+  status.id.slice(PRESET_PREFIX.length) as TicketStatusName;
 
 const columnHelper = createColumnHelper<CustomTicketStatusDto>();
 
@@ -155,29 +192,28 @@ function CustomStatusesPage() {
       columnHelper.display({
         id: 'scope',
         header: 'Scope',
-        cell: ({ row }) => (
-          <ScopeBadge
-            meta={toScopeMeta(toWireMeta(row.original.meta))}
-            currentOrganisationId={currentOrganisationId}
-            currentDivisionId={currentDivisionId}
-            organisationCount={organisationCount}
-            bypassSingleOrganisationSuppressionForTesting={
-              SCOPE_TESTING_BYPASS_SINGLE_ORG
-            }
-            size="sm"
-          />
-        ),
+        cell: ({ row }) =>
+          isPreset(row.original) ? (
+            <span className="text-default-600 text-sm">All tenants</span>
+          ) : (
+            <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
+          ),
         size: 140,
       }),
       columnHelper.display({
         id: 'color',
         header: '',
-        cell: ({ row }) => (
-          <div
-            className="border-light h-4 w-4 rounded-full border"
-            style={{ backgroundColor: row.original.color ?? '#1868db' }}
-          />
-        ),
+        cell: ({ row }) =>
+          isPreset(row.original) ? (
+            <div
+              className={`h-4 w-4 rounded-full ${badgeSwatchClasses[getStatusConfig(presetStatusName(row.original)).color]}`}
+            />
+          ) : (
+            <div
+              className="border-light h-4 w-4 rounded-full border"
+              style={{ backgroundColor: row.original.color ?? '#1868db' }}
+            />
+          ),
         size: 32,
       }),
       columnHelper.display({
@@ -185,13 +221,17 @@ function CustomStatusesPage() {
         header: 'Name',
         cell: ({ row }) => (
           <div className="flex flex-wrap items-center gap-2">
+            {/* Marks the row so index.css hides its selection checkbox:
+                a preset has nothing to select, and ListPage offers no
+                per-cell hook to leave the box out. */}
+            {isPreset(row.original) && <span data-preset-row hidden />}
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.isDefault && (
               <Chip size="sm" color="accent">
                 Default
               </Chip>
             )}
-            {row.original.isClosed && (
+            {row.original.isClosed && !isPreset(row.original) && (
               <Chip size="sm" color="success">
                 Counts as Closed
               </Chip>
@@ -231,32 +271,37 @@ function CustomStatusesPage() {
       columnHelper.display({
         id: 'actions',
         header: '',
-        cell: ({ row }) => (
-          <div className="-my-1.5 flex items-center justify-end gap-1">
-            <IconTip label={'Edit status'}>
-              <BaseButton
-                variant="link"
-                size="none"
-                className="text-dark dark:text-light hover:text-blue"
-                aria-label="Edit status"
-                onPress={() => handleEdit(row.original)}
-                icon={<Icon name="pencil" className="h-4 w-4" />}
-              />
-            </IconTip>
-            <IconTip label={'Delete status'}>
-              <BaseButton
-                variant="link"
-                size="none"
-                className="text-danger hover:text-danger-600"
-                aria-label="Delete status"
-                onPress={() =>
-                  handleDeleteRequest(row.original.id, row.original.name)
-                }
-                icon={<Icon name="trash" className="h-4 w-4" />}
-              />
-            </IconTip>
-          </div>
-        ),
+        cell: ({ row }) =>
+          isPreset(row.original) ? (
+            <div className="-my-1.5 flex items-center justify-end">
+              <PresetPill hint="Built into Helpdesk. Custom statuses map onto it; it can't be edited or deleted." />
+            </div>
+          ) : (
+            <div className="-my-1.5 flex items-center justify-end gap-1">
+              <IconTip label={'Edit status'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-dark dark:text-light hover:text-blue"
+                  aria-label="Edit status"
+                  onPress={() => handleEdit(row.original)}
+                  icon={<Icon name="pencil" className="h-4 w-4" />}
+                />
+              </IconTip>
+              <IconTip label={'Delete status'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-danger hover:text-danger-600"
+                  aria-label="Delete status"
+                  onPress={() =>
+                    handleDeleteRequest(row.original.id, row.original.name)
+                  }
+                  icon={<Icon name="trash" className="h-4 w-4" />}
+                />
+              </IconTip>
+            </div>
+          ),
         enableSorting: false,
         enableHiding: false,
         size: 80,
@@ -271,15 +316,21 @@ function CustomStatusesPage() {
     ],
   );
 
+  const rows = useMemo(
+    () => [...scope.filteredRows, ...PRESET_STATUSES],
+    [scope.filteredRows],
+  );
+
   const table = useReactTable({
-    data: scope.filteredRows,
+    data: rows,
     columns,
     // Keys row selection by the record's own id, matching `useScopeList`'s
     // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
     // and the table's own selection checkboxes agree on the same keys.
     getRowId: row => row.id,
     state: { rowSelection: scope.rowSelection },
-    enableRowSelection: true,
+    // Presets are not records, so there is nothing to re-scope.
+    enableRowSelection: row => !isPreset(row.original),
     onRowSelectionChange: scope.onRowSelectionChange,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
