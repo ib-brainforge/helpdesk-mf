@@ -127,6 +127,30 @@
   border: 1px solid var(--border);
 }
 
+/* Tooltips above everything, and wrapped between words.
+ *
+ * A tooltip portals into a React Aria overlay container, which the shared
+ * theme's base.css pins at `#root ~ [data-overlay-container] { z-index: 10 }`.
+ * The tooltip's own z-index cannot escape that, so anything above 10 painted
+ * over it: the ticket and category tables' sticky headers (z-39) hid tooltips
+ * near them. Only containers holding a tooltip are raised, so modals and
+ * popovers keep their stacking.
+ *
+ * HeroUI's `.tooltip` sets `word-break: break-all`, which split words at any
+ * letter ("Move t / hem"). Normal wrapping breaks between words and still
+ * splits a word too long for the line.
+ *
+ * Both rules are class and attribute selectors with no custom properties, in
+ * keeping with the :root rule above. They also apply to other apps' tooltips
+ * on the same page, which can only help them. */
+#root ~ [data-overlay-container]:has(> .tooltip) {
+  z-index: 100000;
+}
+.tooltip[role="tooltip"] {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
 /* ReactFlow dark-mode overrides (Controls, MiniMap, Background) */
 .dark .react-flow {
   --xy-background-color: #18181b;
