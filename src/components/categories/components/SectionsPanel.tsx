@@ -1,6 +1,8 @@
 import type { SectionDto } from '@/types/category';
+import { BaseTooltip } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { toast } from '@heroui/react';
 import type { FC } from 'react';
 
 /** Filter value for categories that belong to no section. */
@@ -47,11 +49,11 @@ const Count: FC<{ value: number; className?: string }> = ({
  * deleted: the edit and delete handlers existed with nothing on screen to
  * reach them, and an empty section did not appear anywhere at all.
  *
- * Delete is offered only for an empty section. The backend soft-deletes the
+ * Delete works only for an empty section. The backend soft-deletes the
  * section and leaves its categories pointing at it, and the category list
  * shows neither deleted sections nor their categories, so deleting a section
  * that still held categories would make them vanish from Configuration while
- * tickets kept using them. The disabled button says why instead.
+ * tickets kept using them. The button says why instead, on hover and on press.
  */
 export const SectionsPanel: FC<SectionsPanelProps> = ({
   sections,
@@ -88,6 +90,10 @@ export const SectionsPanel: FC<SectionsPanelProps> = ({
     {sections.map(section => {
       const count = countsBySection.get(section.id) ?? 0;
       const selected = value === section.id;
+      const blockedReason =
+        count > 0
+          ? `Can't delete: ${section.name} still has ${count} ${count === 1 ? 'category' : 'categories'}. Move ${count === 1 ? 'it' : 'them'} to another section first.`
+          : null;
       return (
         <div key={section.id} className="group relative">
           <button
@@ -108,31 +114,53 @@ export const SectionsPanel: FC<SectionsPanelProps> = ({
             the time and every count lines up.
           */}
           <div className="invisible absolute inset-y-0 right-2 flex items-center gap-2.5 group-hover:visible group-focus-within:visible">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label={`Rename section ${section.name}`}
-              onPress={() => onEdit(section)}
-              icon={<Icon name="pencil" className="h-3.5 w-3.5" />}
-            />
-            <span
-              title={
-                count > 0
-                  ? `Move its ${count} ${count === 1 ? 'category' : 'categories'} to another section first`
-                  : undefined
-              }
+            <BaseTooltip content="Rename section" delay={200}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label={`Rename section ${section.name}`}
+                onPress={() => onEdit(section)}
+                icon={<Icon name="pencil" className="h-3.5 w-3.5" />}
+              />
+            </BaseTooltip>
+            {/*
+              Not truly disabled when the section has categories: a disabled
+              button gets no hover or focus, so no tooltip could ever explain
+              it and a click silently did nothing. It looks muted, says why on
+              hover or focus, and repeats the reason if pressed anyway.
+            */}
+            <BaseTooltip
+              content={blockedReason ?? 'Delete section'}
+              delay={200}
             >
               <BaseButton
                 variant="link"
                 size="none"
-                className="text-danger hover:text-danger-600 disabled:opacity-40"
-                aria-label={`Delete section ${section.name}`}
-                isDisabled={count > 0}
-                onPress={() => onDelete(section)}
+                className={
+                  blockedReason
+                    ? 'text-danger cursor-not-allowed opacity-40'
+                    : 'text-danger hover:text-danger-600'
+                }
+                // No aria-disabled: HeroUI gives it pointer-events: none, which
+                // swallowed the hover and the press, so the reason never
+                // showed. The accessible name carries it instead.
+                aria-label={
+                  blockedReason
+                    ? `Delete section ${section.name} (unavailable). ${blockedReason}`
+                    : `Delete section ${section.name}`
+                }
+                onPress={() =>
+                  blockedReason
+                    ? toast(`Can't delete "${section.name}"`, {
+                        description: `It still has ${count} ${count === 1 ? 'category' : 'categories'}. Move ${count === 1 ? 'it' : 'them'} to another section first, then delete the empty section.`,
+                        variant: 'warning',
+                      })
+                    : onDelete(section)
+                }
                 icon={<Icon name="trash" className="h-3.5 w-3.5" />}
               />
-            </span>
+            </BaseTooltip>
           </div>
         </div>
       );
