@@ -11,6 +11,7 @@ import {
 
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
+import { extractErrorMessage, isServerError } from '@/utils/error-handling';
 import {
   EmptyState,
   ListPage,
@@ -64,9 +65,25 @@ function CategoriesPage() {
       // and the section's category count should also reflect the change.
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
+      // And the presets. A row is marked Preset when it is in the list of
+      // categories the tenant may use but not in the list it owns. Refreshing
+      // only the owned list left the deleted category in the other, cached one,
+      // so for up to ten minutes it came back as a Preset row instead of going.
+      queryClient.invalidateQueries({ queryKey: ['preset-categories'] });
     },
-    onError: () => {
-      // Error handled by global axios interceptor
+    onError: (error, categoryId) => {
+      // The shell's error banner covers server failures. A refusal, such as a
+      // category that still has tickets, comes back as a 400 that nothing
+      // showed, so pressing Delete appeared to do nothing at all.
+      if (isServerError(error)) return;
+      const name = categories.find(c => c.id === categoryId)?.name;
+      toast(`Couldn't delete ${name ? `"${name}"` : 'this category'}`, {
+        description: extractErrorMessage(
+          error,
+          'Helpdesk refused to delete it. Try again, or reload the page.',
+        ),
+        variant: 'danger',
+      });
     },
   });
 
@@ -81,8 +98,16 @@ function CategoriesPage() {
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
     },
-    onError: () => {
-      // Error handled by global axios interceptor
+    onError: error => {
+      // As for categories: show a refusal rather than leave it silent.
+      if (isServerError(error)) return;
+      toast("Couldn't delete this section", {
+        description: extractErrorMessage(
+          error,
+          'Helpdesk refused to delete it. Try again, or reload the page.',
+        ),
+        variant: 'danger',
+      });
     },
   });
 
