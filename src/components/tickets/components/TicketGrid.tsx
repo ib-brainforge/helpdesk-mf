@@ -43,6 +43,7 @@ import {
   TICKET_VALID_TABS,
   type TicketTabKey,
   filtersForTab,
+  tabForFilters,
 } from '../hooks/ticketTabs';
 import { useTicketTabCounts } from '../hooks/useTicketTabCounts';
 import { useTicketsData } from '../hooks/useTickets';
@@ -664,11 +665,18 @@ export const TicketGrid: FC = () => {
   const handleFiltersChange = useCallback(
     (next: TicketFiltersType) => {
       const isClear = Object.keys(next).length === 0;
-      setFilters(
-        isClear ? filtersForTab(selectedTab, {}, currentUserId) : next,
-      );
+      if (isClear) {
+        setFilters(filtersForTab(selectedTab, {}, currentUserId));
+        return;
+      }
+      // Any other change may stop matching the tab (clearing New from Status
+      // on Unanswered, say), so the tab is re-chosen from the filters rather
+      // than left lit over rows it no longer describes. See tabForFilters.
+      const tab = tabForFilters(next, selectedTab, currentUserId);
+      if (tab !== selectedTab) setSelectedTab(tab);
+      setFilters(next);
     },
-    [setFilters, selectedTab, currentUserId],
+    [setFilters, selectedTab, setSelectedTab, currentUserId],
   );
 
   const handleCategorySelect = useCallback(
