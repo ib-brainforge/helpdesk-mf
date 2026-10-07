@@ -32,19 +32,22 @@ import { useCallback, useMemo, useState } from 'react';
  * ones every ticket can be given. Built-ins are listed so the page shows the
  * whole set; they are marked Preset and read only.
  */
-type PriorityRow =
-  | { kind: 'custom'; id: string; name: string; priority: CustomPriorityDto }
-  | { kind: 'preset'; id: string; name: string; preset: TicketPriority };
+type PriorityRow = { id: string; name: string; sortOrder: number } & (
+  | { kind: 'custom'; priority: CustomPriorityDto }
+  | { kind: 'preset'; preset: TicketPriority }
+);
 
 const PRESET_ROWS: PriorityRow[] = [
   TicketPriority.Critical,
   TicketPriority.High,
   TicketPriority.Normal,
   TicketPriority.Low,
-].map(preset => ({
+].map((preset, index) => ({
   kind: 'preset',
   id: `preset-priority-${preset}`,
   name: getPriorityConfig(preset).label,
+  // Highest first, the order the ticket priority picker shows them in.
+  sortOrder: index + 1,
   preset,
 }));
 
@@ -93,17 +96,20 @@ function CustomPrioritiesPage() {
   );
 
   const rows = useMemo<PriorityRow[]>(
-    () => [
-      ...[...customPriorities]
-        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-        .map(priority => ({
+    () =>
+      // One list in sort order, built-in and custom together, so the table
+      // shows the order they come in. Array.sort is stable, so on a tie a
+      // built-in stays ahead of a custom priority.
+      [
+        ...PRESET_ROWS,
+        ...customPriorities.map(priority => ({
           kind: 'custom' as const,
           id: priority.id ?? '',
           name: priority.name ?? '',
+          sortOrder: priority.sortOrder ?? 0,
           priority,
         })),
-      ...PRESET_ROWS,
-    ],
+      ].sort((a, b) => a.sortOrder - b.sortOrder),
     [customPriorities],
   );
 
@@ -152,9 +158,7 @@ function CustomPrioritiesPage() {
         header: 'Sort Order',
         cell: ({ row }) => (
           <span className="text-default-600 text-sm">
-            {row.original.kind === 'custom'
-              ? row.original.priority.sortOrder
-              : '—'}
+            {row.original.sortOrder}
           </span>
         ),
         size: 100,
