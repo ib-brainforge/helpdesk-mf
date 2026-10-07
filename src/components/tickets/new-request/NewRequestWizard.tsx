@@ -8,7 +8,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { type FC, useEffect, useMemo, useState } from 'react';
 import { TicketDescriptionContent } from '../components/TicketDescriptionContent';
-import { issueScopeToken } from '../hooks/useAssets';
 import { useCreateTicket, useLinkAsset } from '../hooks/useTickets';
 import type { PickedAsset } from './AssetPicker';
 import { RequestFieldRenderer } from './RequestFieldRenderer';
@@ -21,7 +20,11 @@ import {
   paginateFields,
   resolveRequestCategory,
 } from './request-field-schema';
-import { RequestScopeContext, createTicketInScope } from './requestScope';
+import {
+  RequestScopeContext,
+  createTicketInScope,
+  ensureRequestScopeAvailable,
+} from './requestScope';
 import { useRequestCategories } from './useRequestCategories';
 
 /**
@@ -179,16 +182,19 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
    * A ticket can only be raised where Helpdesk is licensed, and identity
    * refuses a token anywhere else. Asked as soon as the scope is chosen, so
    * the requester learns it on the Details step instead of after answering
-   * every question. The token it returns is the one Create then uses.
+   * every question. Create then reuses the token this issued.
    */
-  const scopeToken = useQuery({
+  const scopeAvailable = useQuery({
     queryKey: ['new-request', 'scope-token', tenantId, organisationId],
     enabled: scopeComplete && !inAppContext,
     staleTime: 30 * 60 * 1000,
     retry: false,
-    queryFn: () => issueScopeToken(requestScope, 'helpdesk'),
+    queryFn: async () => {
+      await ensureRequestScopeAvailable(requestScope);
+      return true;
+    },
   });
-  const scopeUnavailable = !inAppContext && scopeToken.isError;
+  const scopeUnavailable = !inAppContext && scopeAvailable.isError;
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState('');
   const [showErrors, setShowErrors] = useState(false);
@@ -349,11 +355,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
 
     setIsFinishing(true);
     try {
-      const created = await createTicketInScope(
-        requestScope,
-        ticket,
-        scopeToken.data,
-      );
+      const created = await createTicketInScope(requestScope, ticket);
       if (canLinkAssets) {
         await linkPickedAssets(created.id, created.linkAsset);
       }

@@ -1,7 +1,10 @@
-import { getAccessToken } from '@/state/authorizedAxios';
-import { requireHelpdeskApiBaseUrl } from '@/state/config';
+import { requireIdentityApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiConfiguration } from '@/state/helpdeskApiClient';
+import { createScopedApiClient } from '@/state/scopedApiClient';
+import { toApiTicketPriority } from '@/utils/typeMappers';
+import { TicketsApi } from '@brainforgeau/helpdesk-client';
+import { ensureCrossAppToken } from '@brainforgeau/security';
 import { createContext, useContext } from 'react';
-import { issueScopeToken } from '../hooks/useAssets';
 
 /**
  * The tenant and organisation a new request is raised for, chosen on the
@@ -30,63 +33,26 @@ interface NewTicket {
 }
 
 /**
- * POST to the Helpdesk API as the given scope.
- *
- * The backend stamps a new ticket's tenant and organisation from the context
- * token, not from the body, so raising a request for an organisation other
- * than the one the app is in means sending a token issued for that
- * organisation. fetch, not authorizedAxios, for the reason given in
- * useAssets' scopedGet: its interceptor always replaces X-Context-Token with
- * the app's own.
- *
- * A failure is thrown in the shape of an axios error ({ response: { status,
- * data } }) so the wizard explains it the same way whichever path was taken.
+ * Confirms Helpdesk can be used for `scope` by issuing (and caching) a context
+ * token for it. Identity refuses one where Helpdesk is not licensed, and an
+ * embedding host whose security package predates the `context` override mints
+ * for the wrong context (CrossAppTargetContextMismatchError); both are
+ * reported as the same failure, in the axios-error shape the wizard reads
+ * ({ response: { status, data } }).
  */
-const scopedPost = async <T>(
-  token: string,
-  path: string,
-  body: unknown,
-): Promise<T> => {
-  // biome-ignore lint/style/noRestrictedGlobals: authorizedAxios cannot send a scope-specific context token (see above)
-  const res = await fetch(`${requireHelpdeskApiBaseUrl()}${path}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${await getAccessToken()}`,
-      'X-Context-Token': token,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  let data: unknown = text || undefined;
-  try {
-    data = text ? JSON.parse(text) : undefined;
-  } catch {
-    // Not JSON; keep the text.
-  }
-  if (!res.ok) {
-    throw Object.assign(new Error(`${res.status} for ${path}`), {
-      response: { status: res.status, data },
-    });
-  }
-  return data as T;
-};
-
-/**
- * Creates the ticket in `scope` and returns its id, plus a function that links
- * vehicles to it under the same scope (the app's own context may not be able
- * to see a ticket raised in another tenant).
- */
-export const createTicketInScope = async (
+export const ensureRequestScopeAvailable = async (
   scope: RequestScope,
-  ticket: NewTicket,
-  /** A token already issued for `scope`, when the caller has one. */
-  issuedToken?: string,
-): Promise<{ id: string; linkAsset: (assetId: string) => Promise<void> }> => {
-  let token: string;
+): Promise<void> => {
   try {
-    token = issuedToken ?? (await issueScopeToken(scope, 'helpdesk'));
+    if (!scope.tenantId) throw new Error('No tenant chosen');
+    await ensureCrossAppToken({
+      contextIssuerBaseUrl: requireIdentityApiBaseUrl(),
+      targetApp: 'helpdesk',
+      context: {
+        tenantId: scope.tenantId,
+        organisationId: scope.organisationId,
+      },
+    });
   } catch {
     throw Object.assign(new Error('scope token'), {
       response: {
@@ -98,11 +64,38 @@ export const createTicketInScope = async (
       },
     });
   }
-  const id = await scopedPost<string>(token, '/v1/tickets', ticket);
+};
+
+/**
+ * Creates the ticket in `scope` and returns its id, plus a function that links
+ * vehicles to it under the same scope (the app's own context may not be able
+ * to see a ticket raised in another tenant).
+ *
+ * The backend stamps a new ticket's tenant and organisation from the context
+ * token, not from the body, so raising a request for an organisation other
+ * than the one the app is in means sending a token issued for it.
+ */
+export const createTicketInScope = async (
+  scope: RequestScope,
+  ticket: NewTicket,
+): Promise<{ id: string; linkAsset: (assetId: string) => Promise<void> }> => {
+  await ensureRequestScopeAvailable(scope);
+  const client = await createScopedApiClient(
+    TicketsApi,
+    createHelpdeskApiConfiguration(),
+    'helpdesk',
+    scope,
+  );
+  const { data: id } = await client.v1TicketsPost({
+    subject: ticket.subject,
+    description: ticket.description,
+    priority: toApiTicketPriority(ticket.priority),
+    categoryId: ticket.categoryId,
+  });
   return {
     id: String(id),
     linkAsset: async assetId => {
-      await scopedPost(token, `/v1/tickets/${id}/linked-assets`, { assetId });
+      await client.v1TicketsIdLinkedAssetsPost(String(id), { assetId });
     },
   };
 };

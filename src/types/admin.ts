@@ -69,13 +69,6 @@ export interface PlatformTicketComment {
   createdAt: string;
 }
 
-export interface TenantTicketFilters {
-  status?: string;
-  priority?: string;
-  categoryId?: string;
-  searchTerm?: string;
-}
-
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;
