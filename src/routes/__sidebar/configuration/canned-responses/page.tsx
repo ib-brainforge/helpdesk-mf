@@ -3,7 +3,7 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
-import { IconTip } from '@/components/shared';
+import { IconTip, ScopeLabel } from '@/components/shared';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -26,7 +26,6 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
@@ -190,16 +189,7 @@ function CannedResponsesPage() {
         id: 'placement',
         header: 'Placement',
         cell: ({ row }) => (
-          <ScopeBadge
-            meta={toScopeMeta(toWireMeta(row.original.meta))}
-            currentOrganisationId={currentOrganisationId}
-            currentDivisionId={currentDivisionId}
-            organisationCount={organisationCount}
-            bypassSingleOrganisationSuppressionForTesting={
-              SCOPE_TESTING_BYPASS_SINGLE_ORG
-            }
-            size="sm"
-          />
+          <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
         ),
         size: 140,
       }),
