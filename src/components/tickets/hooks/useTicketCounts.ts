@@ -54,7 +54,8 @@ export interface TicketCountsResponse {
 /**
  * The filters the endpoint accepts.
  *
- * status, statuses, overdueOnly and unassignedOnly are deliberately absent:
+ * status, statuses, custom statuses, overdueOnly and unassignedOnly are
+ * deliberately absent:
  * each tab defines those for itself server-side. Sending them would make every
  * badge depend on whichever tab happened to be open, which is the bug
  * ticketTabs.ts exists to prevent.
@@ -64,7 +65,6 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
   // Same shapes as ticketQueryValues/extraParams in useTickets.ts: priority and
   // category are single-valued arrays in the filter state, while the scope ids
   // are passed through whole.
-  if (filters.customStatusId) params.customStatusId = filters.customStatusId;
   if (filters.priority?.[0]) {
     params.priority = toApiTicketPriority(filters.priority[0]);
   }

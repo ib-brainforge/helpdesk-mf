@@ -83,6 +83,11 @@ const extraParams = (filters: TicketFilters, includeScope: boolean) => {
   if ((filters.status?.length ?? 0) > 1) {
     params.statuses = filters.status?.map(toApiTicketStatus);
   }
+  // Custom statuses, matched with the built-in ones above as "any of". Sent
+  // here because the generated client predates the parameter.
+  if (filters.customStatusIds?.length) {
+    params.customStatusIds = filters.customStatusIds;
+  }
   if (includeScope) {
     if (filters.tenantId) params.tenantId = filters.tenantId;
     if (filters.organisationId) params.organisationId = filters.organisationId;
@@ -109,8 +114,9 @@ const ticketQueryValues = (filters: TicketFilters) => ({
     filters.status?.length === 1
       ? toApiTicketStatus(filters.status[0])
       : undefined,
-  // Tenant-defined custom status.
-  customStatusId: filters.customStatusId,
+  // The single custom-status argument is no longer used: custom statuses go
+  // out as a set via extraParams (customStatusIds), so ticking several works.
+  customStatusId: undefined,
   priority: filters.priority?.[0]
     ? toApiTicketPriority(filters.priority[0])
     : undefined,

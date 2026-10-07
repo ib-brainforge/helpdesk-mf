@@ -128,8 +128,12 @@ export interface TicketFilters {
   unassignedOnly?: boolean;
   /** When true, only tickets past their due date are returned (backend OverdueOnly param). */
   overdueOnly?: boolean;
-  /** Filter by a custom (tenant-defined) ticket status — maps to the backend CustomStatusId param. */
-  customStatusId?: string;
+  /**
+   * Custom (tenant-defined) statuses to include, sent as repeated
+   * `customStatusIds=`. Matched together with `status` as "any of": ticking
+   * New and a custom status lists tickets in either, not only those in both.
+   */
+  customStatusIds?: string[];
   /*
    * Scope narrowing, for a service admin whose rows span tenants.
    *

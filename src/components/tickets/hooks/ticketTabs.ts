@@ -56,7 +56,11 @@ export const TICKET_DEFAULT_TAB: TicketTabKey = 'all';
  * filter. The two tabs that define themselves in terms of a person override it
  * explicitly below.
  */
-type TabOwnedField = 'status' | 'unassignedOnly' | 'overdueOnly';
+type TabOwnedField =
+  | 'status'
+  | 'customStatusIds'
+  | 'unassignedOnly'
+  | 'overdueOnly';
 
 /**
  * The filters a tab means, layered on whatever the sidebar and filter bar have
@@ -77,6 +81,8 @@ export const filtersForTab = (
 ): TicketFilters => {
   const {
     status: _status,
+    // Custom statuses are part of the status selection, which a tab owns.
+    customStatusIds: _customStatusIds,
     unassignedOnly: _unassignedOnly,
     overdueOnly: _overdueOnly,
     ...carried
@@ -153,6 +159,7 @@ export const tabForFilters = (
     const definition = filtersForTab(key, filters, currentUserId);
     const ownFieldsMatch =
       sameSet(definition.status, filters.status) &&
+      sameSet(definition.customStatusIds, filters.customStatusIds) &&
       Boolean(definition.unassignedOnly) === Boolean(filters.unassignedOnly) &&
       Boolean(definition.overdueOnly) === Boolean(filters.overdueOnly);
     if (!ownFieldsMatch) return false;

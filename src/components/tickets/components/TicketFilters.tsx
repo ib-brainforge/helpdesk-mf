@@ -214,8 +214,9 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   const handleStatusChange = useCallback(
     (value: string[]) => {
       // Selections are a mix of built-in TicketStatus enum values and
-      // prefixed custom-status ids. Built-in values route to `status`,
-      // custom ids route to `customStatusId`.
+      // prefixed custom-status ids. Built-in values route to `status`, custom
+      // ids to `customStatusIds`, and the list matches them as one selection
+      // ("any of"). Every custom id is kept: only the first used to be sent.
       const builtInStatuses = value.filter(
         v => !v.startsWith(CUSTOM_STATUS_PREFIX),
       );
@@ -226,7 +227,8 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       onFiltersChange({
         ...filters,
         status: builtInStatuses.length > 0 ? builtInStatuses : undefined,
-        customStatusId: customStatusIds[0],
+        customStatusIds:
+          customStatusIds.length > 0 ? customStatusIds : undefined,
       });
     },
     [filters, onFiltersChange],
@@ -269,9 +271,9 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           classNames={{ base: 'w-full [&_svg]:my-0' }}
           value={[
             ...(filters.status?.map(s => s.toString()) ?? []),
-            ...(filters.customStatusId
-              ? [`${CUSTOM_STATUS_PREFIX}${filters.customStatusId}`]
-              : []),
+            ...(filters.customStatusIds ?? []).map(
+              id => `${CUSTOM_STATUS_PREFIX}${id}`,
+            ),
           ]}
           onValueChange={handleStatusChange}
         >
