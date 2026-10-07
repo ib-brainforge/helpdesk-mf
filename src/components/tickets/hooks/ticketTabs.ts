@@ -124,3 +124,49 @@ export const filtersForTab = (
       return { ...carried };
   }
 };
+
+const sameSet = (a?: readonly unknown[], b?: readonly unknown[]) => {
+  const x = [...(a ?? [])].map(String).sort();
+  const y = [...(b ?? [])].map(String).sort();
+  return x.length === y.length && x.every((v, i) => v === y[i]);
+};
+
+/**
+ * The tab that describes these filters, so the highlighted tab follows the
+ * filter bar as well as the other way round.
+ *
+ * Clicking a tab writes its fields into the filters (Unanswered sets Status to
+ * New), but editing those fields afterwards left the tab lit: clear New from
+ * Status and the list showed every status under a tab still saying Unanswered.
+ *
+ * The current tab is kept while the filters still match its definition.
+ * Otherwise the first tab whose definition they match exactly is chosen, and
+ * All when none does. Assigned to you is never chosen this way: picking
+ * yourself as assignee is a filter like picking anyone else, not that tab.
+ */
+export const tabForFilters = (
+  filters: TicketFilters,
+  currentTab: string,
+  currentUserId?: string,
+): TicketTabKey => {
+  const matches = (key: TicketTabKey) => {
+    const definition = filtersForTab(key, filters, currentUserId);
+    const ownFieldsMatch =
+      sameSet(definition.status, filters.status) &&
+      Boolean(definition.unassignedOnly) === Boolean(filters.unassignedOnly) &&
+      Boolean(definition.overdueOnly) === Boolean(filters.overdueOnly);
+    if (!ownFieldsMatch) return false;
+    return key === 'assigned-to-you' || key === 'unassigned'
+      ? sameSet(definition.assigneeId, filters.assigneeId)
+      : true;
+  };
+  if (TICKET_VALID_TABS.has(currentTab) && matches(currentTab as TicketTabKey))
+    return currentTab as TicketTabKey;
+  const candidates: TicketTabKey[] = [
+    'unanswered',
+    'unclosed',
+    'unassigned',
+    'overdue',
+  ];
+  return candidates.find(matches) ?? 'all';
+};
