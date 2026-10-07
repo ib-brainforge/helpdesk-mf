@@ -5,6 +5,7 @@ import {
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import {
   IconTip,
+  PageHint,
   PresetPill,
   ScopeLabel,
   badgeSwatchClasses,
@@ -23,7 +24,6 @@ import {
   toWireMeta,
 } from '@/utils/scopeMeta';
 import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
-import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -307,17 +307,16 @@ function CustomStatusesPage() {
         size: 80,
       }),
     ],
-    [
-      handleEdit,
-      handleDeleteRequest,
-      currentOrganisationId,
-      currentDivisionId,
-      organisationCount,
-    ],
+    [handleEdit, handleDeleteRequest],
   );
 
   const rows = useMemo(
-    () => [...scope.filteredRows, ...PRESET_STATUSES],
+    // One list in sort order, built-in and custom together. Array.sort is
+    // stable, so on a tie a built-in status stays ahead of a custom one.
+    () =>
+      [...PRESET_STATUSES, ...scope.filteredRows].sort(
+        (a, b) => a.sortOrder - b.sortOrder,
+      ),
     [scope.filteredRows],
   );
 
@@ -359,14 +358,11 @@ function CustomStatusesPage() {
       }
       subheader={
         <>
-          <BaseCard className="max-w-3xl">
-            <p className="text-default-700 text-sm">
-              Custom statuses appear in the ticket status selector alongside the
-              built-in statuses (New, In Progress, Closed). Each custom status
-              maps to a built-in lifecycle state for SLA and reporting
-              calculations.
-            </p>
-          </BaseCard>
+          <PageHint>
+            Custom statuses appear in the ticket status selector alongside the
+            built-in New, In Progress and Closed. Each one maps to a built-in
+            state, which is what SLAs and reports count.
+          </PageHint>
           {/* Out-of-context banner + bulk re-scoping (DTO tenancy/scope
               metadata initiative) -- entirely driven by `useScopeList`
               (`scope.bannerProps`/`scope.editorProps`/`scope.isExpanded`). */}
