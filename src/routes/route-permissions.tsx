@@ -87,20 +87,6 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
     path: /^\/configuration\/(custom-statuses|custom-priorities|custom-fields|integrations|live-chat|import-export)(\/|$)/,
     anyOf: [P.Settings.Manage],
   },
-  // The Configuration landing page lists every screen above; anyone who can
-  // reach at least one of them may see it.
-  {
-    path: /^\/configuration\/?$/,
-    anyOf: [
-      P.Settings.Read,
-      P.Categories.Manage,
-      P.Comments.Manage,
-      P.Approvals.Manage,
-      P.Workflows.Read,
-      P.RuleGraphs.Read,
-      P.Automation.Read,
-    ],
-  },
 ];
 
 /** The rule for a pathname, or undefined when the page is not restricted. */
