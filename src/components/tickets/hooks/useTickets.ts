@@ -26,30 +26,6 @@ import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchMatches } from './useSearchMatches';
 
-/**
- * @param initialFilters Applied on the FIRST render only.
- *
- * Exists so the caller can seed the tab's filters before the first fetch. The
- * tickets page reads its tab from the URL, and starting at `{}` meant the very
- * first request always asked for every ticket regardless of which tab was
- * selected, then corrected itself. That was both a wasted round trip and, until
- * the correction landed, a list that disagreed with its own highlighted tab.
- */
-/**
- * Extra query parameters the generated client does not declare yet.
- *
- * The backend accepts tenantId, organisationId, divisionId and tagIds (see
- * GetTicketsQuery), but @brainforgeau/helpdesk-client is generated from the
- * OpenAPI spec by CI, so the signatures will not carry them until
- * generate-client.yml runs against the merged backend change.
- *
- * `indexes: null` makes axios emit `tagIds=a&tagIds=b` rather than its default
- * `tagIds[]=a`, which is the form ASP.NET Core model binding expects for a
- * Guid[] query parameter.
- *
- * REPLACE WITH the generated named arguments once the client is regenerated,
- * and drop this helper.
- */
 /** The filters with the search box's name matches added (see useSearchMatches). */
 export const withSearchMatches = (
   filters: TicketFilters,
@@ -61,62 +37,38 @@ export const withSearchMatches = (
   searchScopeIds: scopeIds.length > 0 ? scopeIds : undefined,
 });
 
-const extraParams = (filters: TicketFilters, includeScope: boolean) => {
-  const params: Record<string, unknown> = {};
-  if (filters.tagIds?.length) params.tagIds = filters.tagIds;
-  // Name matches for the search box, resolved by useSearchMatches.
-  if (filters.searchUserIds?.length) {
-    params.searchUserIds = filters.searchUserIds;
-  }
-  if (filters.searchScopeIds?.length) {
-    params.searchScopeIds = filters.searchScopeIds;
-  }
-  /*
-   * A tab that means a SET of statuses, sent as repeated `statuses=` params.
-   *
-   * The single `status` argument the generated client declares holds one value,
-   * so Unclosed and Unassigned (both New OR In Progress) used to send only the
-   * first and silently listed New alone: the Unassigned tab showed 161 rows
-   * under a badge reading 388. `statuses` is the backend's set form and takes
-   * precedence over `status` there, so only one of the two is ever sent.
-   */
-  if ((filters.status?.length ?? 0) > 1) {
-    params.statuses = filters.status?.map(toApiTicketStatus);
-  }
-  // Custom statuses, matched with the built-in ones above as "any of". Sent
-  // here because the generated client predates the parameter.
-  if (filters.customStatusIds?.length) {
-    params.customStatusIds = filters.customStatusIds;
-  }
-  if (includeScope) {
-    if (filters.tenantId) params.tenantId = filters.tenantId;
-    if (filters.organisationId) params.organisationId = filters.organisationId;
-    if (filters.divisionId) params.divisionId = filters.divisionId;
-  }
-  return Object.keys(params).length > 0
-    ? { params, paramsSerializer: { indexes: null as null } }
-    : undefined;
-};
-
 /**
- * The scalar filter values both ticket endpoints take, mapped once.
+ * The filter values both ticket endpoints take, mapped once.
  *
  * The grid and the tab badges have to ask the same question or a badge stops
  * being a statement about the list it labels, so the mapping lives here instead
  * of being written out twice. The two endpoints still take these positionally
- * and their signatures differ (the principal one has no spamOnly), so the calls
- * themselves stay separate below.
+ * and their signatures differ (the principal one has no spamOnly and takes
+ * tenantId), so the calls themselves stay separate below.
  */
 const ticketQueryValues = (filters: TicketFilters) => ({
-  // Exactly one status goes in the declared `status` argument; a set goes out
-  // as repeated `statuses=` via extraParams instead, never both.
+  /*
+   * A single status goes in `status`; a tab that means a SET of statuses goes
+   * in `statuses` (sent as repeated `statuses=` params), never both. Unclosed
+   * and Unassigned are both New OR In Progress, and `status` holds one value,
+   * so sending only that listed New alone: the Unassigned tab showed 161 rows
+   * under a badge reading 388. `statuses` takes precedence over `status`
+   * server-side.
+   */
   status:
     filters.status?.length === 1
       ? toApiTicketStatus(filters.status[0])
       : undefined,
+  statuses:
+    (filters.status?.length ?? 0) > 1
+      ? filters.status?.map(toApiTicketStatus)
+      : undefined,
   // The single custom-status argument is no longer used: custom statuses go
-  // out as a set via extraParams (customStatusIds), so ticking several works.
+  // out as a set (customStatusIds), so ticking several works.
   customStatusId: undefined,
+  customStatusIds: filters.customStatusIds?.length
+    ? filters.customStatusIds
+    : undefined,
   priority: filters.priority?.[0]
     ? toApiTicketPriority(filters.priority[0])
     : undefined,
@@ -127,6 +79,14 @@ const ticketQueryValues = (filters: TicketFilters) => ({
   searchTerm: filters.searchTerm,
   overdueOnly: filters.overdueOnly ? true : undefined,
   unassignedOnly: filters.unassignedOnly ? true : undefined,
+  tagIds: filters.tagIds?.length ? filters.tagIds : undefined,
+  // Name matches for the search box, resolved by useSearchMatches.
+  searchUserIds: filters.searchUserIds?.length
+    ? filters.searchUserIds
+    : undefined,
+  searchScopeIds: filters.searchScopeIds?.length
+    ? filters.searchScopeIds
+    : undefined,
 });
 
 /**
@@ -152,6 +112,7 @@ export const fetchTicketCount = async (
     const { data } = await principalClient.v1PrincipalsPrincipalIdTicketsGet(
       principalId,
       v.status,
+      v.statuses,
       v.customStatusId,
       v.priority,
       v.categoryId,
@@ -161,11 +122,17 @@ export const fetchTicketCount = async (
       undefined, // unreadOnly
       v.overdueOnly,
       v.unassignedOnly,
+      filters.tenantId || undefined,
+      filters.organisationId || undefined,
+      filters.divisionId || undefined,
+      v.tagIds,
       1, // page
       1, // pageSize
       undefined, // sortBy
       undefined, // sortDirection
-      extraParams(filters, true),
+      v.searchUserIds,
+      v.searchScopeIds,
+      v.customStatusIds,
     );
     return data.totalCount ?? 0;
   }
@@ -173,12 +140,16 @@ export const fetchTicketCount = async (
   const client = await createHelpdeskApiClient(TicketsApi);
   const { data } = await client.v1TicketsGet(
     v.status,
+    v.statuses,
     v.customStatusId,
     v.priority,
     v.categoryId,
     v.assigneeId,
     undefined, // requesterId
     v.searchTerm,
+    v.tagIds,
+    undefined, // organisationId: scope narrowing is principal-endpoint only
+    undefined, // divisionId
     undefined, // unreadOnly
     v.overdueOnly,
     undefined, // spamOnly
@@ -187,11 +158,22 @@ export const fetchTicketCount = async (
     1, // pageSize
     undefined, // sortBy
     undefined, // sortDirection
-    extraParams(filters, false),
+    v.searchUserIds,
+    v.searchScopeIds,
+    v.customStatusIds,
   );
   return data.totalCount ?? 0;
 };
 
+/**
+ * @param initialFilters Applied on the FIRST render only.
+ *
+ * Exists so the caller can seed the tab's filters before the first fetch. The
+ * tickets page reads its tab from the URL, and starting at `{}` meant the very
+ * first request always asked for every ticket regardless of which tab was
+ * selected, then corrected itself. That was both a wasted round trip and, until
+ * the correction landed, a list that disagreed with its own highlighted tab.
+ */
 export const useTicketsData = (initialFilters?: TicketFilters) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -251,6 +233,7 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
           await principalClient.v1PrincipalsPrincipalIdTicketsGet(
             principalId as string,
             v.status,
+            v.statuses,
             v.customStatusId,
             v.priority,
             v.categoryId,
@@ -260,11 +243,17 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
             undefined, // unreadOnly
             v.overdueOnly,
             v.unassignedOnly,
+            queryFilters.tenantId || undefined,
+            queryFilters.organisationId || undefined,
+            queryFilters.divisionId || undefined,
+            v.tagIds,
             pagination.pageIndex + 1,
             pagination.pageSize,
             undefined, // sortBy
             undefined, // sortDirection
-            extraParams(queryFilters, true),
+            v.searchUserIds,
+            v.searchScopeIds,
+            v.customStatusIds,
           );
         const principalResult = principalResponse.data;
         return {
@@ -278,12 +267,16 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
       const client = await createHelpdeskApiClient(TicketsApi);
       const response = await client.v1TicketsGet(
         v.status,
+        v.statuses,
         v.customStatusId,
         v.priority,
         v.categoryId,
         v.assigneeId,
         undefined, // requesterId
         v.searchTerm,
+        v.tagIds,
+        undefined, // organisationId: scope narrowing is principal-endpoint only
+        undefined, // divisionId
         undefined, // unreadOnly
         v.overdueOnly,
         undefined, // spamOnly — default view excludes spam
@@ -292,7 +285,9 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
         pagination.pageSize,
         undefined, // sortBy
         undefined, // sortDirection
-        extraParams(queryFilters, false),
+        v.searchUserIds,
+        v.searchScopeIds,
+        v.customStatusIds,
       );
 
       const result = response.data;

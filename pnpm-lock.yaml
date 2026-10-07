@@ -13,29 +13,29 @@ importers:
   .:
     dependencies:
       '@brainforgeau/components':
-        specifier: 0.5.685-develop.63e0d94
-        version: 0.5.685-develop.63e0d94(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
+        specifier: 0.5.717-develop.40ab0fc
+        version: 0.5.717-develop.40ab0fc(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
       '@brainforgeau/helpdesk-client':
-        specifier: 0.5.291-develop.53170c9
-        version: 0.5.291-develop.53170c9
+        specifier: 0.5.362-develop.ece19c2
+        version: 0.5.362-develop.ece19c2
       '@brainforgeau/identity-management-client':
-        specifier: 0.1.583-develop.22921e5
-        version: 0.1.583-develop.22921e5
+        specifier: 0.5.1226-develop.328ec43
+        version: 0.5.1226-develop.328ec43
       '@brainforgeau/observability':
-        specifier: 0.5.84-develop.a796211
-        version: 0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: 0.5.111-develop.f2ce982
+        version: 0.5.111-develop.f2ce982(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@brainforgeau/rules-ui':
-        specifier: 0.4.114-develop.374091a
-        version: 0.4.114-develop.374091a(mulw76az7jhibkuyz6zzx2b6rm)
+        specifier: 0.5.180-develop.e3f91ec
+        version: 0.5.180-develop.e3f91ec(bftrjhhrl5j3la2xbe7sksc2bi)
       '@brainforgeau/security':
-        specifier: 0.5.422-develop.6431b1f
-        version: 0.5.422-develop.6431b1f(@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
+        specifier: 0.5.433-develop.6b01b86
+        version: 0.5.433-develop.6b01b86(@brainforgeau/observability@0.5.111-develop.f2ce982(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
-        specifier: 0.5.85-develop.dc1f162
-        version: 0.5.85-develop.dc1f162(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
+        specifier: 0.5.106-develop.16a02ca
+        version: 0.5.106-develop.16a02ca(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
       '@brainforgeau/workflow-ui':
-        specifier: 0.1.3-develop.2adced5
-        version: 0.1.3-develop.2adced5(ugopfhabfvdqwdprm3v7a52x2a)
+        specifier: 0.5.23-develop.f2ce982
+        version: 0.5.23-develop.f2ce982(jrc7lneouv7pivmip7fhesvoaa)
       '@fontsource/inter':
         specifier: ^5.2.6
         version: 5.2.8
@@ -919,8 +919,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@brainforgeau/components@0.5.685-develop.63e0d94':
-    resolution: {integrity: sha512-A4iXNXdoDlPOMrtQ1v4/9ubrzGZ1P55Z08LIF8qus8CrarVj/C6yvZBMoknfk+KoQlP7dxakFqGMWZaMby2JMw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/components/0.5.685-develop.63e0d94/41c821a53eeda0c9106f9c121a214a99bd7eb8c5}
+  '@brainforgeau/components@0.5.717-develop.40ab0fc':
+    resolution: {integrity: sha512-uJ5FXvIUN0hHpbWuR690WwiZFst6bKGueZ+umWeOYmCpe0X27ctWdKSaCWGgMkBU5KSIpptOZ83t9+XiOzCLiA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/components/0.5.717-develop.40ab0fc/df2498d51d2f88d4ebb8ae97e8052153f026dc57}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@heroicons/react': ^2.1.1
@@ -939,22 +939,22 @@ packages:
   '@brainforgeau/core-time@0.5.32-develop.f2ce982':
     resolution: {integrity: sha512-XWsXvrB99aGQwuAn3UQMwzsGPkNFca1VK29TgjNGk3GEJh8vCPc/5EHSDb4wEJbjjdZQz3LoqxI0/28rct9GWA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/core-time/0.5.32-develop.f2ce982/3899ca4c11fcfb2f6d98ca53c509bd4044063827}
 
-  '@brainforgeau/helpdesk-client@0.5.291-develop.53170c9':
-    resolution: {integrity: sha512-H2HU8ZNlZwAQgHimqLwaum21l94mpYB8JzzosVSc75peKa0lIf4lzfi0aFXwY88BfrY2Rs/zXN1jw0IxeTrc1w==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.5.291-develop.53170c9/e3e173f3a37fbbdc826e706d1f34897055218e83}
+  '@brainforgeau/helpdesk-client@0.5.362-develop.ece19c2':
+    resolution: {integrity: sha512-i6aXXTbFVw2AZZ1N8jbC3Ezgtm4D81gAe0gPvuximHHD9a8ue6FWd1Wn4dv1RsyzN3Pmgg7LwBjuZjT/iauEgg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/helpdesk-client/0.5.362-develop.ece19c2/95ecda078a4d2342455f4e0698da314da80c7c45}
     engines: {node: '>=18.0.0'}
 
-  '@brainforgeau/identity-management-client@0.1.583-develop.22921e5':
-    resolution: {integrity: sha512-KqCnAOGxqsD/mL+OM9hfGGOe+na8Wwefef0pSpryWaW8yhEtchWKcYYBHEvETAd1lT5OPmHECBPU/sLJO7m4EQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.1.583-develop.22921e5/70dc1560552c9fb01a6a224e8b47e1ff0c0b5e47}
+  '@brainforgeau/identity-management-client@0.5.1226-develop.328ec43':
+    resolution: {integrity: sha512-2K9jBk6W2XhnstMSh9sEnJNaLtfWSE9+eQs1sxTwgI7onTdFwteiqjCBWbY5+tn3jUp/0LqlwIIITaZ16obinA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.5.1226-develop.328ec43/9950e1ec329ffc622ff3f52ed7b5f1dce1da2c15}
     engines: {node: '>=18.0.0'}
 
-  '@brainforgeau/observability@0.5.84-develop.a796211':
-    resolution: {integrity: sha512-kJ7CoJ5C3LrhZMzT5YcFo9HY709/KBCp1q1EBdxfaxkKfrYHx2nRQaHeJ5lZJmBWYie5VsQxu5xOsup0ZxttWQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/observability/0.5.84-develop.a796211/02f9a6b66746094049f094c6c542c8bb616dd652}
+  '@brainforgeau/observability@0.5.111-develop.f2ce982':
+    resolution: {integrity: sha512-tQ3sNkceBJ00wyrcCZQ3Hgr0XcIT/Wr+mi9QtlB+JOpIYrYrnYniIxawL7VURBjMGrD3EVuP7+mIRLyQg7djHA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/observability/0.5.111-develop.f2ce982/d58a0ba3c5922a11d5495998a373da570d4100ae}
     peerDependencies:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@brainforgeau/rules-ui@0.4.114-develop.374091a':
-    resolution: {integrity: sha512-fHRU0cGBX3DH+/+2Cq6nGHIGB2JCY6kdurbD+eixTFDOjQATeC7q6eTDgZ9/fENxV5oVLAJeB+29byAts3PcOQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/rules-ui/0.4.114-develop.374091a/a77ef6b8861dc9f665b011fa193b0ce71bcd439c}
+  '@brainforgeau/rules-ui@0.5.180-develop.e3f91ec':
+    resolution: {integrity: sha512-VuCJ7mIT4SxviDr8X1dQtFCKSGQAnd9cKXcQLGulCkdbKG7wgfCCEBwJgrOtcYroWbDjUd8lqJfueq1+XkuaHw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/rules-ui/0.5.180-develop.e3f91ec/84ea9b13039125b75ff38724aa0340368799b310}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@brainforgeau/components': '*'
@@ -965,8 +965,8 @@ packages:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@brainforgeau/security@0.5.422-develop.6431b1f':
-    resolution: {integrity: sha512-p00HBvxxCRFumtk8RFfU/6bPotPMc8bpz0ANFdopfK5TzB3gSLcUyMFhLgHzgn+B0t1zoJrm7pAdnyyQsqfhvA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.422-develop.6431b1f/dbf403c3e244365240110eae1ac42576600a0708}
+  '@brainforgeau/security@0.5.433-develop.6b01b86':
+    resolution: {integrity: sha512-XnRmjAhWYHLhcy8ENoG+068I6XAP3m/+wfeG9uyhtYrcC2x5/VTYUxV7HIjiHnlfUih9oeRJYXe/b+gu6jL9kA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.433-develop.6b01b86/193ff793c94c71ff009a639dbd8c84cb92387bee}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@brainforgeau/observability': '*'
@@ -980,8 +980,9 @@ packages:
       '@tanstack/react-query':
         optional: true
 
-  '@brainforgeau/theme@0.5.85-develop.dc1f162':
-    resolution: {integrity: sha512-QtjIJE+ZrUTfqxVSDwmmCabX9NfBFJv4eBp1Rd5QEDanBiyGv9VKqz6G77Nvf1wsTsD5AAWyugpaXSc0m3U2fw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/theme/0.5.85-develop.dc1f162/e2e725f063b79cad436f162dfb5d7acc0037bc53}
+  '@brainforgeau/theme@0.5.106-develop.16a02ca':
+    resolution: {integrity: sha512-jQ3EVqi4H9McWnF2rXUpafsCrrh0h1muYJ2jIf9arTJ4dAKhPZRXjL0OPvKZSpE9d4NQ7ssqokpmDAVQYN7QlQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/theme/0.5.106-develop.16a02ca/f6dfb5340b31f3169186f1bfce31ec79e3439a76}
+    hasBin: true
     peerDependencies:
       '@heroui/react': ^3.0.4
       '@heroui/styles': ^3.0.4
@@ -989,8 +990,8 @@ packages:
       react-dom: ^19.2.5
       tailwindcss: ^4.1.0
 
-  '@brainforgeau/workflow-ui@0.1.3-develop.2adced5':
-    resolution: {integrity: sha512-09KfNZps7vLZEMSbOkSstUkMoqnzivOCqFPp+MlNAPzuFEeD7gH22rgAjGd5cQugJqZLk2cHX/2UbM2a3NmG/w==, tarball: https://npm.pkg.github.com/download/@brainforgeau/workflow-ui/0.1.3-develop.2adced5/7b1810f8098d0d7c84f68c2c959fa9f639577e23}
+  '@brainforgeau/workflow-ui@0.5.23-develop.f2ce982':
+    resolution: {integrity: sha512-EAy6ihc1MtsvRzH7Ha2rdBcWK4Vqvsig2r6TZ59ZMlPoihYhCdP0Gb83fgMfjah13wbtMuNuIOWdh+sUcjNxww==, tarball: https://npm.pkg.github.com/download/@brainforgeau/workflow-ui/0.5.23-develop.f2ce982/d5c413595fe230197b8f84c38e944025691c56d3}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@brainforgeau/components': '*'
@@ -8456,7 +8457,7 @@ snapshots:
   '@biomejs/cli-win32-x64@1.9.4':
     optional: true
 
-  '@brainforgeau/components@0.5.685-develop.63e0d94(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)':
+  '@brainforgeau/components@0.5.717-develop.40ab0fc(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)':
     dependencies:
       '@brainforgeau/core-time': 0.5.32-develop.f2ce982
       '@heroicons/react': 2.2.0(react@19.2.6)
@@ -8493,19 +8494,19 @@ snapshots:
     dependencies:
       '@js-temporal/polyfill': 0.4.4
 
-  '@brainforgeau/helpdesk-client@0.5.291-develop.53170c9':
+  '@brainforgeau/helpdesk-client@0.5.362-develop.ece19c2':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/identity-management-client@0.1.583-develop.22921e5':
+  '@brainforgeau/identity-management-client@0.5.1226-develop.328ec43':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/observability@0.5.111-develop.f2ce982(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/context-zone': 1.30.1(@opentelemetry/api@1.9.0)
@@ -8524,9 +8525,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@brainforgeau/rules-ui@0.4.114-develop.374091a(mulw76az7jhibkuyz6zzx2b6rm)':
+  '@brainforgeau/rules-ui@0.5.180-develop.e3f91ec(bftrjhhrl5j3la2xbe7sksc2bi)':
     dependencies:
-      '@brainforgeau/components': 0.5.685-develop.63e0d94(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
+      '@brainforgeau/components': 0.5.717-develop.40ab0fc(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
       '@heroui/react': 3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
       '@heroui/styles': 3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0)
       '@tanstack/react-table': 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -8534,7 +8535,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@brainforgeau/security@0.5.422-develop.6431b1f(@brainforgeau/observability@0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/security@0.5.433-develop.6b01b86(@brainforgeau/observability@0.5.111-develop.f2ce982(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
       axios: 1.13.5
       jwt-decode: 4.0.0
@@ -8542,12 +8543,12 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       react-oidc-context: 3.3.0(oidc-client-ts@3.4.1)(react@19.2.6)
     optionalDependencies:
-      '@brainforgeau/observability': 0.5.84-develop.a796211(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@brainforgeau/observability': 0.5.111-develop.f2ce982(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tanstack/react-query': 5.100.9(react@19.2.6)
     transitivePeerDependencies:
       - debug
 
-  '@brainforgeau/theme@0.5.85-develop.dc1f162(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)':
+  '@brainforgeau/theme@0.5.106-develop.16a02ca(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)':
     dependencies:
       '@heroui/react': 3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
       '@heroui/styles': 3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0)
@@ -8555,9 +8556,9 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       tailwindcss: 4.3.0
 
-  '@brainforgeau/workflow-ui@0.1.3-develop.2adced5(ugopfhabfvdqwdprm3v7a52x2a)':
+  '@brainforgeau/workflow-ui@0.5.23-develop.f2ce982(jrc7lneouv7pivmip7fhesvoaa)':
     dependencies:
-      '@brainforgeau/components': 0.5.685-develop.63e0d94(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
+      '@brainforgeau/components': 0.5.717-develop.40ab0fc(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
       '@heroui/react': 3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
       '@heroui/styles': 3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0)
       '@xyflow/react': 12.10.2(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)

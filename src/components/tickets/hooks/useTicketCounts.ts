@@ -1,8 +1,12 @@
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { requireHelpdeskApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { TicketFilters } from '@/types/ticket';
 import { toApiTicketPriority } from '@/utils/typeMappers';
+import {
+  type HelpdeskApplicationTicketsDTOsTicketCountsDto,
+  PrincipalTicketsApi,
+  TicketsApi,
+} from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
@@ -36,20 +40,8 @@ import { withSearchMatches } from './useTickets';
  * part of a second.
  */
 
-export interface TicketCountsResponse {
-  tabs: {
-    unanswered: number;
-    unclosed: number;
-    unassigned: number;
-    overdue: number;
-    /** Null when the caller has no user id, so the tab can be hidden rather than read zero. */
-    assignedToMe: number | null;
-    all: number;
-  };
-  assignees: { assigneeId: string; count: number }[];
-  /** Tickets matching the filters with nobody assigned, in any status. */
-  unassigned: number;
-}
+export type TicketCountsResponse =
+  HelpdeskApplicationTicketsDTOsTicketCountsDto;
 
 /**
  * The filters the endpoint accepts.
@@ -60,29 +52,33 @@ export interface TicketCountsResponse {
  * badge depend on whichever tab happened to be open, which is the bug
  * ticketTabs.ts exists to prevent.
  */
-const countsParams = (filters: TicketFilters): Record<string, unknown> => {
-  const params: Record<string, unknown> = {};
-  // Same shapes as ticketQueryValues/extraParams in useTickets.ts: priority and
+const countsParams = (
+  filters: TicketFilters,
+  scopedPrincipalId: string | undefined,
+) => ({
+  // Same shapes as ticketQueryValues in useTickets.ts: priority and
   // category are single-valued arrays in the filter state, while the scope ids
   // are passed through whole.
-  if (filters.priority?.[0]) {
-    params.priority = toApiTicketPriority(filters.priority[0]);
-  }
-  if (filters.categoryId?.[0]) params.categoryId = filters.categoryId[0];
-  if (filters.assigneeId?.[0]) params.assigneeId = filters.assigneeId[0];
-  if (filters.searchTerm) params.searchTerm = filters.searchTerm;
+  priority: filters.priority?.[0]
+    ? toApiTicketPriority(filters.priority[0])
+    : undefined,
+  categoryId: filters.categoryId?.[0],
+  assigneeId: filters.assigneeId?.[0],
+  searchTerm: filters.searchTerm || undefined,
   // Name matches for the search box, resolved by useSearchMatches.
-  if (filters.searchUserIds?.length)
-    params.searchUserIds = filters.searchUserIds;
-  if (filters.searchScopeIds?.length) {
-    params.searchScopeIds = filters.searchScopeIds;
-  }
-  if (filters.tagIds?.length) params.tagIds = filters.tagIds;
-  if (filters.tenantId) params.tenantId = filters.tenantId;
-  if (filters.organisationId) params.organisationId = filters.organisationId;
-  if (filters.divisionId) params.divisionId = filters.divisionId;
-  return params;
-};
+  searchUserIds: filters.searchUserIds?.length
+    ? filters.searchUserIds
+    : undefined,
+  searchScopeIds: filters.searchScopeIds?.length
+    ? filters.searchScopeIds
+    : undefined,
+  tagIds: filters.tagIds?.length ? filters.tagIds : undefined,
+  // Only the principal route takes tenantId; the tenant route reads its tenant
+  // from the token, so it is left out there and cannot split the cache key.
+  tenantId: scopedPrincipalId ? filters.tenantId || undefined : undefined,
+  organisationId: filters.organisationId || undefined,
+  divisionId: filters.divisionId || undefined,
+});
 
 /**
  * The counts query for one set of filters, as options rather than a hook.
@@ -96,7 +92,7 @@ export const ticketCountsQueryOptions = (
   filters: TicketFilters,
   scopedPrincipalId: string | undefined,
 ) => {
-  const params = countsParams(filters);
+  const params = countsParams(filters, scopedPrincipalId);
   return {
     // Prefixed with 'tickets' so the invalidateQueries({ queryKey: ['tickets'] })
     // that every ticket mutation and every realtime event already fires reaches
@@ -107,21 +103,46 @@ export const ticketCountsQueryOptions = (
     // normal path.
     staleTime: 30 * 1000,
     queryFn: async (): Promise<TicketCountsResponse> => {
-      const base = requireHelpdeskApiBaseUrl();
-      const url = scopedPrincipalId
-        ? `${base}/v1/principals/${scopedPrincipalId}/tickets/counts`
-        : `${base}/v1/tickets/counts`;
+      if (scopedPrincipalId) {
+        const principalClient =
+          await createHelpdeskApiClient(PrincipalTicketsApi);
+        const { data } =
+          await principalClient.v1PrincipalsPrincipalIdTicketsCountsGet(
+            scopedPrincipalId,
+            undefined, // customStatusId
+            params.priority,
+            params.categoryId,
+            params.assigneeId,
+            undefined, // requesterId
+            params.searchTerm,
+            params.tagIds,
+            params.tenantId,
+            params.organisationId,
+            params.divisionId,
+            undefined, // unreadOnly
+            undefined, // spamOnly
+            params.searchUserIds,
+            params.searchScopeIds,
+          );
+        return data;
+      }
 
-      // authorizedAxios rather than the generated client: this endpoint is
-      // newer than the checked-in OpenAPI spec, so helpdesk-client has no
-      // method for it yet. Swap to the generated call once the client is
-      // regenerated; the shape below already matches the DTO.
-      const { data } = await authorizedAxios.get<TicketCountsResponse>(url, {
-        params,
-        // tagIds goes out as repeated `tagIds=` rather than `tagIds[0]=`,
-        // matching how the ticket list serialises the same filter.
-        paramsSerializer: { indexes: null },
-      });
+      const client = await createHelpdeskApiClient(TicketsApi);
+      const { data } = await client.v1TicketsCountsGet(
+        undefined, // customStatusId
+        params.priority,
+        params.categoryId,
+        params.assigneeId,
+        undefined, // requesterId
+        params.searchTerm,
+        params.tagIds,
+        params.organisationId,
+        params.divisionId,
+        undefined, // unreadOnly
+        undefined, // spamOnly
+        params.searchUserIds,
+        params.searchScopeIds,
+      );
       return data;
     },
   };

@@ -48,46 +48,9 @@ export type TicketListDto = GeneratedTicketListDto & {
   // requesterName / assigneeName are now provided natively by the generated
   // client; categoryName remains a UI-only enrichment field.
   categoryName?: string;
-  /**
-   * Tenancy of the ticket, used by the principal console's Scope column.
-   * Declared here because the generated client is rebuilt from the OpenAPI
-   * spec by CI and will not carry these until that runs against the merged
-   * backend change. Drop them from here once it does.
-   */
-  tenantId?: string | null;
-  organisationId?: string | null;
-  /**
-   * The ticket's division, so a row can be assigned within its own division
-   * without fetching the whole ticket. Same generated-client caveat as above.
-   */
-  divisionId?: string | null;
 };
 
 export type TicketDto = GeneratedTicketDto & {
-  /**
-   * The ticket's own scope, used to decide who it can be assigned to.
-   *
-   * Not the viewer's context: a service admin reads tickets from every tenant
-   * under the principal, while their context names only their own tenant. The
-   * assignee picker lists the people in the ticket's scope, so it has to ask
-   * the ticket. Declared here until CI regenerates the client from the backend
-   * change that added them; drop them from here once it does.
-   */
-  tenantId?: string | null;
-  organisationId?: string | null;
-  divisionId?: string | null;
-  /**
-   * Who raised and who last changed the ticket.
-   *
-   * Stamped by the backend's audit interceptor onto every entity, but not
-   * previously projected onto the DTO, which is why the activity timeline
-   * had nothing to show and fell back to "Unknown". Null when the row was
-   * written without a user context (seed data, imports, background jobs);
-   * the backend normalises Guid.Empty to null so there is one meaning of
-   * "unknown" rather than two.
-   */
-  createdById?: string | null;
-  updatedById?: string | null;
   // requesterName / assigneeName / isProblem / isPublishedAsIdea /
   // publishedAsIdeaAt are now provided natively by the generated client.
   // categoryName remains a UI-only enrichment field.
