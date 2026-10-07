@@ -1,5 +1,6 @@
 export { IconTip } from './IconTip';
 export { ModalHeader } from './ModalHeader';
+export { PresetPill } from './PresetPill';
 export { ScopeCell } from './ScopeCell';
 export { ScopeSelect } from './ScopeSelect';
 export {
