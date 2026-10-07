@@ -3,7 +3,9 @@ import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import {
   CategoryEditorModal,
+  NO_SECTION,
   SectionEditorModal,
+  SectionsPanel,
   useCategoriesData,
   useCategoryTable,
   usePresetCategories,
@@ -42,6 +44,27 @@ function CategoriesPage() {
   const allCategories = useMemo(
     () => [...categories, ...presets],
     [categories, presets],
+  );
+
+  // Which section the table shows: null for every category, NO_SECTION for
+  // those in none, or a section id. Chosen in the Sections panel.
+  const [sectionFilter, setSectionFilter] = useState<string | null>(null);
+  const countsBySection = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of categories) {
+      if (c.sectionId)
+        counts.set(c.sectionId, (counts.get(c.sectionId) ?? 0) + 1);
+    }
+    return counts;
+  }, [categories]);
+  const visibleCategories = useMemo(
+    () =>
+      sectionFilter === null
+        ? allCategories
+        : sectionFilter === NO_SECTION
+          ? allCategories.filter(c => !c.sectionId)
+          : allCategories.filter(c => c.sectionId === sectionFilter),
+    [allCategories, sectionFilter],
   );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
@@ -152,8 +175,23 @@ function CategoriesPage() {
     if (ok) deleteCategoryMutation.mutate(categoryId);
   };
 
+  const handleDeleteSection = async (section: SectionDto) => {
+    const ok = await confirm({
+      title: 'Delete section?',
+      body: `Delete "${section.name}"? It has no categories, so nothing else changes.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    deleteSectionMutation.mutate(section.id, {
+      onSuccess: () => {
+        if (sectionFilter === section.id) setSectionFilter(null);
+      },
+    });
+  };
+
   const { table } = useCategoryTable({
-    categories: allCategories,
+    categories: visibleCategories,
     sections,
     searchTerm,
     isLoading: isLoading || isLoadingPresets,
@@ -165,9 +203,25 @@ function CategoriesPage() {
   return (
     <ListPage
       title="Ticket Categories and Permissions"
+      // ListPage wraps its main column in a plain block when it has a
+      // sidebar, so <main> no longer stretches and the table stopped after
+      // about five rows. Full height lets it run to the bottom of the page.
+      className="lg:h-full"
       breadcrumbsKey="configuration.categories.list"
       table={table}
       isLoading={isLoading}
+      sidebar={
+        <SectionsPanel
+          sections={sections}
+          countsBySection={countsBySection}
+          unsectionedCount={allCategories.filter(c => !c.sectionId).length}
+          totalCount={allCategories.length}
+          value={sectionFilter}
+          onChange={setSectionFilter}
+          onEdit={handleEditSection}
+          onDelete={handleDeleteSection}
+        />
+      }
       actions={
         <div className="flex gap-2.5">
           <BaseButton

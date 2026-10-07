@@ -48,6 +48,42 @@
 
 @source '../../node_modules/@brainforgeau/components';
 
+/* HeroUI 3's `danger` colour as Tailwind utilities.
+ *
+ * HeroUI 3 themes in CSS: @heroui/styles defines `--danger`, but Tailwind
+ * only generates `text-danger`, `bg-danger-50` and the like for colours
+ * registered in its own theme, and nothing registers them. Helpdesk uses
+ * those classes in about eighty places (every delete icon, error banners,
+ * destructive buttons), and none of them were generated here. Under the
+ * deployed shell they happened to resolve from the shell's stylesheet; on
+ * their own they fell back to the button's near-white default, so delete
+ * icons were invisible.
+ *
+ * `@utility` rather than an `@theme` block, keeping to the rule above that
+ * this file declares no custom properties at :root. The shades are mixed
+ * from `--danger` itself, so they follow the theme, dark mode included. */
+@utility text-danger {
+  color: var(--danger);
+}
+@utility text-danger-600 {
+  color: color-mix(in oklab, var(--danger) 85%, black);
+}
+@utility text-danger-800 {
+  color: color-mix(in oklab, var(--danger) 60%, black);
+}
+@utility bg-danger {
+  background-color: var(--danger);
+}
+@utility bg-danger-50 {
+  background-color: color-mix(in oklab, var(--danger) 8%, transparent);
+}
+@utility bg-danger-100 {
+  background-color: color-mix(in oklab, var(--danger) 15%, transparent);
+}
+@utility border-danger-200 {
+  border-color: color-mix(in oklab, var(--danger) 35%, transparent);
+}
+
 /* Drawer/modal/tiptap/button HeroUI-3 overrides — all component-CLASS
  * selectors, never `:root`/element selectors, so this stays collision-safe
  * under the shell (mirrors hr-mf's own `@brainforgeau/components/styles.css`
@@ -89,6 +125,30 @@
  * tokens. */
 :root:not(.dark) .dropdown__popover.helpdesk-dropdown-popover {
   border: 1px solid var(--border);
+}
+
+/* Tooltips above everything, and wrapped between words.
+ *
+ * A tooltip portals into a React Aria overlay container, which the shared
+ * theme's base.css pins at `#root ~ [data-overlay-container] { z-index: 10 }`.
+ * The tooltip's own z-index cannot escape that, so anything above 10 painted
+ * over it: the ticket and category tables' sticky headers (z-39) hid tooltips
+ * near them. Only containers holding a tooltip are raised, so modals and
+ * popovers keep their stacking.
+ *
+ * HeroUI's `.tooltip` sets `word-break: break-all`, which split words at any
+ * letter ("Move t / hem"). Normal wrapping breaks between words and still
+ * splits a word too long for the line.
+ *
+ * Both rules are class and attribute selectors with no custom properties, in
+ * keeping with the :root rule above. They also apply to other apps' tooltips
+ * on the same page, which can only help them. */
+#root ~ [data-overlay-container]:has(> .tooltip) {
+  z-index: 100000;
+}
+.tooltip[role="tooltip"] {
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 /* ReactFlow dark-mode overrides (Controls, MiniMap, Background) */

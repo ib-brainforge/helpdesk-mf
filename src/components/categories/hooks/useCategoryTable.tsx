@@ -1,4 +1,3 @@
-import { useDuplicateCategory } from '@/components/categories/hooks/useCategoriesData';
 /**
  * useCategoryTable — lifts the TanStack table instance out of CategoryList so
  * the categories page can pass it directly to <ListPage>.
@@ -11,7 +10,6 @@ import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { toast } from '@heroui/react';
 import {
   type ColumnDef,
   type PaginationState,
@@ -20,7 +18,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export type CategoryRow = CategoryDto & { sectionName?: string };
 
@@ -68,28 +66,6 @@ export function useCategoryTable({
   onDeleteCategory,
   presetIds,
 }: UseCategoryTableOptions) {
-  const duplicateCategoryMutation = useDuplicateCategory();
-
-  const handleDuplicate = useCallback(
-    (category: CategoryDto) => {
-      duplicateCategoryMutation.mutate(category.id, {
-        onSuccess: () => {
-          toast('Category duplicated', {
-            description: `"${category.name} (copy)" has been created.`,
-            variant: 'success',
-          });
-        },
-        onError: () => {
-          toast('Duplication failed', {
-            description: 'Could not duplicate the category. Please try again.',
-            variant: 'danger',
-          });
-        },
-      });
-    },
-    [duplicateCategoryMutation],
-  );
-
   const columns = useMemo(
     (): ColumnDef<CategoryRow, any>[] => [
       columnHelper.display({
@@ -134,8 +110,6 @@ export function useCategoryTable({
         cell: ({ row }) => {
           const isPreset = presetIds?.has(row.original.id) ?? false;
           if (isPreset) {
-            // Duplicate stays available: copying a preset into a category of
-            // the tenant's own is the supported way to adapt one.
             return (
               <div className="-my-1.5 flex items-center justify-end gap-2">
                 <span
@@ -144,27 +118,11 @@ export function useCategoryTable({
                 >
                   Preset
                 </span>
-                <BaseButton
-                  variant="link"
-                  size="none"
-                  className="text-dark dark:text-light hover:text-blue"
-                  aria-label="Duplicate category"
-                  onPress={() => handleDuplicate(row.original)}
-                  icon={<Icon name="document-duplicate" className="h-4 w-4" />}
-                />
               </div>
             );
           }
           return (
             <div className="-my-1.5 flex items-center justify-end gap-1">
-              <BaseButton
-                variant="link"
-                size="none"
-                className="text-dark dark:text-light hover:text-blue"
-                aria-label="Duplicate category"
-                onPress={() => handleDuplicate(row.original)}
-                icon={<Icon name="document-duplicate" className="h-4 w-4" />}
-              />
               <BaseButton
                 variant="link"
                 size="none"
@@ -189,7 +147,7 @@ export function useCategoryTable({
         size: 100,
       }),
     ],
-    [onEditCategory, onDeleteCategory, handleDuplicate, presetIds],
+    [onEditCategory, onDeleteCategory, presetIds],
   );
 
   // Build flat rows with section grouping info
