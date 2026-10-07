@@ -64,6 +64,7 @@ registerStatusColors({
     Archived: 'default',
   },
 });
+import { renderBreadcrumbLink } from '@/components/Breadcrumbs';
 import {
   ErrorBoundary,
   SideNav,
@@ -398,11 +399,7 @@ export default function Layout() {
           // REVIEW: i18nResolver maps each full labelKey to its intended leaf label so
           // breadcrumbs show "Email Settings" not "Helpdesk Configuration Email Settings".
           i18nResolver={breadcrumbI18nResolver}
-          renderLink={({ item, className, children }) => (
-            <NavLink to={item.href} className={className}>
-              {children}
-            </NavLink>
-          )}
+          renderLink={renderBreadcrumbLink}
         >
           <PageTracker category="helpdesk" />
           {!isEmbedded && (
