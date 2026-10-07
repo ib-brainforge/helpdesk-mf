@@ -3,6 +3,7 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
+import { IconTip } from '@/components/shared';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -217,27 +218,31 @@ function CannedResponsesPage() {
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit canned response"
-              onPress={() => handleEdit(row.original)}
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete canned response"
-              onPress={() =>
-                handleDeleteRequest(
-                  row.original.id ?? '',
-                  row.original.title ?? '',
-                )
-              }
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Edit canned response'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit canned response"
+                onPress={() => handleEdit(row.original)}
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete canned response'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete canned response"
+                onPress={() =>
+                  handleDeleteRequest(
+                    row.original.id ?? '',
+                    row.original.title ?? '',
+                  )
+                }
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,

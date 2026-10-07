@@ -1,4 +1,4 @@
-import { StatusBadge } from '@/components/shared';
+import { IconTip, StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { BaseInput, BaseTable } from '@brainforgeau/components';
@@ -109,30 +109,36 @@ export const CategoryList: React.FC<CategoryListProps> = ({
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Duplicate category"
-              onPress={() => handleDuplicate(row.original)}
-              icon={<Icon name="document-duplicate" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit category"
-              onPress={() => onEditCategory(row.original)}
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete category"
-              onPress={() => onDeleteCategory(row.original.id)}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Duplicate category'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Duplicate category"
+                onPress={() => handleDuplicate(row.original)}
+                icon={<Icon name="document-duplicate" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Edit category'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit category"
+                onPress={() => onEditCategory(row.original)}
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete category'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete category"
+                onPress={() => onDeleteCategory(row.original.id)}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,

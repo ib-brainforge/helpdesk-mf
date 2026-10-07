@@ -1,4 +1,4 @@
-import { ModalHeader } from '@/components/shared';
+import { IconTip, ModalHeader } from '@/components/shared';
 import {
   BaseInput,
   BaseModal,
@@ -197,50 +197,56 @@ export function CannedResponseEditorModal({
               <div className="border rounded-lg overflow-hidden">
                 {/* Toolbar */}
                 <div className="flex gap-1 p-2 border-b bg-default-50">
-                  <button
-                    type="button"
-                    onClick={() => editor?.chain().focus().toggleBold().run()}
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('bold') ? 'bg-default-200' : ''
-                    }`}
-                    title="Bold"
-                  >
-                    <Icon name="bold" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => editor?.chain().focus().toggleItalic().run()}
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('italic') ? 'bg-default-200' : ''
-                    }`}
-                    title="Italic"
-                  >
-                    <Icon name="italic" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      editor?.chain().focus().toggleBulletList().run()
-                    }
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('bulletList') ? 'bg-default-200' : ''
-                    }`}
-                    title="Bullet List"
-                  >
-                    <Icon name="list-bullet" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      editor?.chain().focus().toggleOrderedList().run()
-                    }
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('orderedList') ? 'bg-default-200' : ''
-                    }`}
-                    title="Numbered List"
-                  >
-                    <Icon name="numbered-list" className="h-4 w-4" />
-                  </button>
+                  <IconTip label={'Bold'}>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().toggleBold().run()}
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('bold') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="bold" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
+                  <IconTip label={'Italic'}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        editor?.chain().focus().toggleItalic().run()
+                      }
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('italic') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="italic" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
+                  <IconTip label={'Bullet List'}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        editor?.chain().focus().toggleBulletList().run()
+                      }
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('bulletList') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="list-bullet" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
+                  <IconTip label={'Numbered List'}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        editor?.chain().focus().toggleOrderedList().run()
+                      }
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('orderedList') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="numbered-list" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
                 </div>
 
                 {/* Editor */}

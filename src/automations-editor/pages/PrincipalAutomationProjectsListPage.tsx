@@ -1,4 +1,4 @@
-import { ModalHeader } from '@/components/shared';
+import { IconTip, ModalHeader } from '@/components/shared';
 import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Principal-scoped automation rule-projects list page.
@@ -195,14 +195,16 @@ export function PrincipalAutomationProjectsListPage({
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete automation project"
-              onPress={() => setPendingDeleteId(row.original.id)}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Delete automation project'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete automation project"
+                onPress={() => setPendingDeleteId(row.original.id)}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,

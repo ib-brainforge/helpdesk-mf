@@ -1,4 +1,5 @@
 import { useAttachmentBlobUrl } from '@/components/attachments/hooks/useAttachmentBlobUrl';
+import { IconTip } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AttachmentDto } from '@/types';
 import { Icon } from '@brainforgeau/components/base';
@@ -97,29 +98,31 @@ const AttachmentTile: FC<{
 
       {/* Hover overlay with actions */}
       <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
-          type="button"
-          onClick={e => {
-            e.stopPropagation();
-            void downloadAttachment(attachment);
-          }}
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-          title="Download"
-        >
-          <Icon name="download" className="h-4 w-4" />
-        </button>
-        {canDelete && onDelete && (
+        <IconTip label={'Download'}>
           <button
             type="button"
             onClick={e => {
               e.stopPropagation();
-              onDelete(attachment.id);
+              void downloadAttachment(attachment);
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-red-500/80 transition-colors"
-            title="Delete"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
           >
-            <Icon name="trash" className="h-4 w-4" />
+            <Icon name="download" className="h-4 w-4" />
           </button>
+        </IconTip>
+        {canDelete && onDelete && (
+          <IconTip label={'Delete'}>
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onDelete(attachment.id);
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-red-500/80 transition-colors"
+            >
+              <Icon name="trash" className="h-4 w-4" />
+            </button>
+          </IconTip>
         )}
       </div>
     </div>
