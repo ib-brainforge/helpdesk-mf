@@ -213,6 +213,7 @@ export function CustomStatusEditorModal({
             <div className="flex-1">
               <BaseInput
                 label="Sort Order"
+                description="Where it appears in the status list. Lower numbers come first."
                 type="number"
                 value={String(sortOrder)}
                 onChange={e => setSortOrder(Number(e.target.value) || 0)}
@@ -220,15 +221,19 @@ export function CustomStatusEditorModal({
               />
             </div>
             <div className="flex-1">
-              <label className="text-foreground mb-1.5 block text-sm font-medium">
+              <label
+                htmlFor="custom-status-color"
+                className="text-gray block pb-1 text-xs font-bold leading-5 dark:text-light"
+              >
                 Color
               </label>
               <div className="flex items-center gap-2">
                 <input
+                  id="custom-status-color"
                   type="color"
                   value={color}
                   onChange={e => setColor(e.target.value)}
-                  className="border-light h-10 w-10 cursor-pointer rounded border"
+                  className="border-light h-8 w-8 cursor-pointer rounded border"
                 />
                 <span className="text-default-500 text-sm">{color}</span>
               </div>
