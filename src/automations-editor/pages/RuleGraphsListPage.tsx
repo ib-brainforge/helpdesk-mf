@@ -1,4 +1,4 @@
-import { ModalHeader } from '@/components/shared';
+import { IconTip, ModalHeader } from '@/components/shared';
 import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Rule graphs list page for a given automation project.
@@ -159,14 +159,16 @@ export function RuleGraphsListPage() {
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete rule graph"
-              onPress={() => setPendingDeleteId(row.original.id)}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Delete rule graph'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete rule graph"
+                onPress={() => setPendingDeleteId(row.original.id)}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,

@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 /**
  * Principal approval workflows list page — /principal/[principalId]/approvals
  *
@@ -108,30 +109,36 @@ function PrincipalApprovalsPage() {
       header: '',
       cell: ({ row }) => (
         <div className="-my-1.5 flex items-center justify-end gap-1">
-          <BaseButton
-            variant="link"
-            size="none"
-            className="text-dark dark:text-light hover:text-blue"
-            aria-label="Edit approval workflow"
-            onPress={() =>
-              navigate(`/principal/${principalId}/approvals/${row.original.id}`)
-            }
-            icon={<Icon name="pencil" className="h-4 w-4" />}
-          />
-          <BaseButton
-            variant="link"
-            size="none"
-            className="text-danger hover:text-danger-600"
-            aria-label="Delete approval workflow"
-            onPress={() =>
-              handleDeleteRequest(
-                row.original.id ?? '',
-                row.original.name ?? '',
-              )
-            }
-            isDisabled={deleteMutation.isPending}
-            icon={<Icon name="trash" className="h-4 w-4" />}
-          />
+          <IconTip label={'Edit approval workflow'}>
+            <BaseButton
+              variant="link"
+              size="none"
+              className="text-dark dark:text-light hover:text-blue"
+              aria-label="Edit approval workflow"
+              onPress={() =>
+                navigate(
+                  `/principal/${principalId}/approvals/${row.original.id}`,
+                )
+              }
+              icon={<Icon name="pencil" className="h-4 w-4" />}
+            />
+          </IconTip>
+          <IconTip label={'Delete approval workflow'}>
+            <BaseButton
+              variant="link"
+              size="none"
+              className="text-danger hover:text-danger-600"
+              aria-label="Delete approval workflow"
+              onPress={() =>
+                handleDeleteRequest(
+                  row.original.id ?? '',
+                  row.original.name ?? '',
+                )
+              }
+              isDisabled={deleteMutation.isPending}
+              icon={<Icon name="trash" className="h-4 w-4" />}
+            />
+          </IconTip>
         </div>
       ),
       enableSorting: false,

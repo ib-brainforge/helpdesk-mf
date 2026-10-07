@@ -1,3 +1,4 @@
+export { IconTip } from './IconTip';
 export { ModalHeader } from './ModalHeader';
 export { ScopeCell } from './ScopeCell';
 export { ScopeSelect } from './ScopeSelect';

@@ -3,6 +3,7 @@ import {
   useDeleteIntegration,
   useIntegrations,
 } from '@/components/integrations/hooks/useIntegrations';
+import { IconTip } from '@/components/shared';
 import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type {
   IntegrationConfigDto,
@@ -149,26 +150,30 @@ function IntegrationsPage() {
                           </span>
                         </div>
                         <div className="ml-2 flex flex-shrink-0 items-center gap-1">
-                          <BaseButton
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            onPress={() => openEdit(instance)}
-                            aria-label="Edit integration"
-                          >
-                            <Icon name="pencil" className="h-4 w-4" />
-                          </BaseButton>
-                          <BaseButton
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => handleDeleteRequest(instance)}
-                            isDisabled={deleteMutation.isPending}
-                            aria-label="Remove integration"
-                          >
-                            <Icon name="trash" className="h-4 w-4" />
-                          </BaseButton>
+                          <IconTip label={'Edit integration'}>
+                            <BaseButton
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              onPress={() => openEdit(instance)}
+                              aria-label="Edit integration"
+                            >
+                              <Icon name="pencil" className="h-4 w-4" />
+                            </BaseButton>
+                          </IconTip>
+                          <IconTip label={'Remove integration'}>
+                            <BaseButton
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              color="danger"
+                              onPress={() => handleDeleteRequest(instance)}
+                              isDisabled={deleteMutation.isPending}
+                              aria-label="Remove integration"
+                            >
+                              <Icon name="trash" className="h-4 w-4" />
+                            </BaseButton>
+                          </IconTip>
                         </div>
                       </li>
                     ))}

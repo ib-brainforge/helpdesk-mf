@@ -1,4 +1,5 @@
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
+import { IconTip } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
@@ -829,14 +830,16 @@ export const TicketGrid: FC = () => {
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {/* Hamburger button — mobile only */}
-              <button
-                type="button"
-                className="hover:bg-default-100 flex items-center justify-center rounded-md p-1.5 transition-colors md:hidden"
-                aria-label="Open filter sidebar"
-                onClick={() => mobileSidebarState.open()}
-              >
-                <Icon name="Bars3Icon" className="text-default-600 h-5 w-5" />
-              </button>
+              <IconTip label={'Open filter sidebar'}>
+                <button
+                  type="button"
+                  className="hover:bg-default-100 flex items-center justify-center rounded-md p-1.5 transition-colors md:hidden"
+                  aria-label="Open filter sidebar"
+                  onClick={() => mobileSidebarState.open()}
+                >
+                  <Icon name="Bars3Icon" className="text-default-600 h-5 w-5" />
+                </button>
+              </IconTip>
               <h1 className="text-2xl font-semibold">Tickets</h1>
             </div>
             <PermissionGuard

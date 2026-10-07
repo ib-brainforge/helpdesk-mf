@@ -1,4 +1,4 @@
-import { ModalHeader } from '@/components/shared';
+import { IconTip, ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -147,23 +147,27 @@ export function WorkflowListPage() {
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Clone workflow"
-              onPress={() => setCloneTarget(row.original)}
-              icon={<Icon name="copy" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete workflow"
-              onPress={() => setPendingDeleteId(row.original.id)}
-              isDisabled={!isTenantOwned(row.original)}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Clone workflow'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Clone workflow"
+                onPress={() => setCloneTarget(row.original)}
+                icon={<Icon name="copy" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete workflow'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete workflow"
+                onPress={() => setPendingDeleteId(row.original.id)}
+                isDisabled={!isTenantOwned(row.original)}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,

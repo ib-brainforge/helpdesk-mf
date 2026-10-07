@@ -1,4 +1,4 @@
-import { ModalHeader, ScopeSelect } from '@/components/shared';
+import { IconTip, ModalHeader, ScopeSelect } from '@/components/shared';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import {
   BaseAutocomplete,
@@ -473,15 +473,16 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
                   isError={linkedTrackingError}
                 />
                 {canEditLinks && (
-                  <button
-                    type="button"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-default-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    onClick={() => link.assetId && handleUnlink(link.assetId)}
-                    aria-label={`Unlink ${name}`}
-                    title="Unlink asset"
-                  >
-                    <Icon name="XMarkIcon" className="h-4 w-4" />
-                  </button>
+                  <IconTip label={`Unlink ${name}`}>
+                    <button
+                      type="button"
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-default-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      onClick={() => link.assetId && handleUnlink(link.assetId)}
+                      aria-label={`Unlink ${name}`}
+                    >
+                      <Icon name="XMarkIcon" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
                 )}
               </li>
             );

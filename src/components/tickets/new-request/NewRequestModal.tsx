@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 import {
   BaseModal,
   BaseModalBody,
@@ -88,25 +89,27 @@ export const NewRequestModal: FC<Props> = ({ isOpen, onClose, onCreated }) => (
           empty at size="none" here, leaving a clickable but invisible control,
           which is worse than no close button at all.
         */}
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
-          className="text-light-gray hover:text-dark -mr-1 flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
+        <IconTip label={'Close'}>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="text-light-gray hover:text-dark -mr-1 flex h-8 w-8 items-center justify-center rounded-md transition-colors"
           >
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </IconTip>
       </div>
       <BaseModalBody>
         {/*

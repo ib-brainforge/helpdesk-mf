@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 /**
  * Configuration approval workflow detail page —
  * /__sidebar/configuration/approval-workflows/[id]
@@ -554,31 +555,43 @@ function EditApprovalWorkflowPage() {
                         Step {index + 1}
                       </span>
                       <div className="flex items-center gap-1">
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          onPress={() => handleMoveStepUp(index)}
-                          isDisabled={index === 0}
-                          icon={
-                            <Icon name="chevron-up" className="h-3.5 w-3.5" />
-                          }
-                        />
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          onPress={() => handleMoveStepDown(index)}
-                          isDisabled={index === steps.length - 1}
-                          icon={
-                            <Icon name="chevron-down" className="h-3.5 w-3.5" />
-                          }
-                        />
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => handleRemoveStep(index)}
-                          icon={<Icon name="trash" className="h-3.5 w-3.5" />}
-                        />
+                        <IconTip label={'Move step up'}>
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            aria-label="Move step up"
+                            onPress={() => handleMoveStepUp(index)}
+                            isDisabled={index === 0}
+                            icon={
+                              <Icon name="chevron-up" className="h-3.5 w-3.5" />
+                            }
+                          />
+                        </IconTip>
+                        <IconTip label={'Move step down'}>
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            aria-label="Move step down"
+                            onPress={() => handleMoveStepDown(index)}
+                            isDisabled={index === steps.length - 1}
+                            icon={
+                              <Icon
+                                name="chevron-down"
+                                className="h-3.5 w-3.5"
+                              />
+                            }
+                          />
+                        </IconTip>
+                        <IconTip label={'Remove step'}>
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            color="danger"
+                            aria-label="Remove step"
+                            onPress={() => handleRemoveStep(index)}
+                            icon={<Icon name="trash" className="h-3.5 w-3.5" />}
+                          />
+                        </IconTip>
                       </div>
                     </div>
 

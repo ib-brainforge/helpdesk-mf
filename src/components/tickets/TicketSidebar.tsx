@@ -1,5 +1,6 @@
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
+import { IconTip } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import type { TicketFilters } from '@/types/ticket';
 import { Icon } from '@brainforgeau/components/base';
@@ -235,14 +236,16 @@ export function TicketSidebar({
       {onClose && (
         <div className="mb-3 flex items-center justify-between px-4">
           <span className="text-sm font-semibold text-dark">Filter</span>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close filter sidebar"
-            className="flex items-center justify-center rounded-md p-1 hover:bg-light transition-colors"
-          >
-            <Icon name="XMarkIcon" className="h-5 w-5 text-gray" />
-          </button>
+          <IconTip label={'Close filter sidebar'}>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close filter sidebar"
+              className="flex items-center justify-center rounded-md p-1 hover:bg-light transition-colors"
+            >
+              <Icon name="XMarkIcon" className="h-5 w-5 text-gray" />
+            </button>
+          </IconTip>
         </div>
       )}
 

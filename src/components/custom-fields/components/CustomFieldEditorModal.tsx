@@ -1,4 +1,4 @@
-import { ModalHeader } from '@/components/shared';
+import { IconTip, ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AccessLevel } from '@/types/category';
@@ -395,34 +395,45 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                       className="flex items-center gap-2 p-2 bg-content1 rounded border"
                     >
                       <div className="flex flex-col gap-1">
-                        <BaseButton
-                          type="button"
-                          variant="link"
-                          size="none"
-                          isDisabled={index === 0}
-                          onPress={() => handleMoveOption(index, 'up')}
-                          icon={<Icon name="chevron-up" className="h-3 w-3" />}
-                        />
-                        <BaseButton
-                          type="button"
-                          variant="link"
-                          size="none"
-                          isDisabled={index === options.length - 1}
-                          onPress={() => handleMoveOption(index, 'down')}
-                          icon={
-                            <Icon name="chevron-down" className="h-3 w-3" />
-                          }
-                        />
+                        <IconTip label={'Move option up'}>
+                          <BaseButton
+                            type="button"
+                            variant="link"
+                            size="none"
+                            isDisabled={index === 0}
+                            aria-label="Move option up"
+                            onPress={() => handleMoveOption(index, 'up')}
+                            icon={
+                              <Icon name="chevron-up" className="h-3 w-3" />
+                            }
+                          />
+                        </IconTip>
+                        <IconTip label={'Move option down'}>
+                          <BaseButton
+                            type="button"
+                            variant="link"
+                            size="none"
+                            isDisabled={index === options.length - 1}
+                            aria-label="Move option down"
+                            onPress={() => handleMoveOption(index, 'down')}
+                            icon={
+                              <Icon name="chevron-down" className="h-3 w-3" />
+                            }
+                          />
+                        </IconTip>
                       </div>
                       <span className="flex-1 text-sm">{option.value}</span>
-                      <BaseButton
-                        type="button"
-                        variant="link"
-                        size="none"
-                        className="text-danger"
-                        onPress={() => handleRemoveOption(option.id)}
-                        icon={<Icon name="trash" className="h-4 w-4" />}
-                      />
+                      <IconTip label={'Remove option'}>
+                        <BaseButton
+                          type="button"
+                          variant="link"
+                          size="none"
+                          className="text-danger"
+                          aria-label="Remove option"
+                          onPress={() => handleRemoveOption(option.id)}
+                          icon={<Icon name="trash" className="h-4 w-4" />}
+                        />
+                      </IconTip>
                     </div>
                   ))}
                 </div>

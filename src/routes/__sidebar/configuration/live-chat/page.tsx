@@ -3,6 +3,7 @@ import {
   useGetLiveChatEmbedScript,
   useUpdateLiveChatConfig,
 } from '@/components/live-chat/hooks/useLiveChat';
+import { IconTip } from '@/components/shared';
 import {
   type BusinessHoursDay,
   type BusinessHoursDayConfig,
@@ -394,17 +395,19 @@ function LiveChatForm({
                 className="bg-default-50 border-light flex items-center justify-between rounded-lg border px-3 py-2"
               >
                 <span className="font-mono text-sm">{domain}</span>
-                <BaseButton
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  color="danger"
-                  onPress={() => handleRemoveDomain(domain)}
-                  isDisabled={!isEnabled}
-                  aria-label={`Remove ${domain}`}
-                >
-                  <Icon name="x-mark" className="h-4 w-4" />
-                </BaseButton>
+                <IconTip label={`Remove ${domain}`}>
+                  <BaseButton
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    color="danger"
+                    onPress={() => handleRemoveDomain(domain)}
+                    isDisabled={!isEnabled}
+                    aria-label={`Remove ${domain}`}
+                  >
+                    <Icon name="x-mark" className="h-4 w-4" />
+                  </BaseButton>
+                </IconTip>
               </li>
             ))}
           </ul>

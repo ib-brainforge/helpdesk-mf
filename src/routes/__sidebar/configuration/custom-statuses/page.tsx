@@ -3,6 +3,7 @@ import {
   useCustomStatuses,
   useDeleteCustomStatus,
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
+import { IconTip } from '@/components/shared';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -232,24 +233,28 @@ function CustomStatusesPage() {
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit status"
-              onPress={() => handleEdit(row.original)}
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete status"
-              onPress={() =>
-                handleDeleteRequest(row.original.id, row.original.name)
-              }
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Edit status'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit status"
+                onPress={() => handleEdit(row.original)}
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete status'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete status"
+                onPress={() =>
+                  handleDeleteRequest(row.original.id, row.original.name)
+                }
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,
