@@ -151,6 +151,14 @@
   overflow-wrap: break-word;
 }
 
+/* Built-in (Preset) rows in a selectable Configuration table carry a
+ * `data-preset-row` marker. They cannot be selected, and the table's own
+ * selection column would otherwise draw a disabled checkbox that reads as an
+ * error. Scoped to rows with the marker, so no other table is affected. */
+tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
+  visibility: hidden;
+}
+
 /* ReactFlow dark-mode overrides (Controls, MiniMap, Background) */
 .dark .react-flow {
   --xy-background-color: #18181b;
