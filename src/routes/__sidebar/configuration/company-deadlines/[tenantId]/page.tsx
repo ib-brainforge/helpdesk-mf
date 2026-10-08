@@ -118,16 +118,25 @@ function CompanyDeadlinePage() {
       confirmLabel: 'Use default deadlines',
     });
     if (!ok) return;
+    const done = () => {
+      toast(`${name} now uses the default deadlines`, { variant: 'success' });
+      navigate('/configuration/company-deadlines');
+    };
     revert.mutate(tenantId, {
-      onSuccess: () => {
-        toast(`${name} now uses the default deadlines`, { variant: 'success' });
-        navigate('/configuration/company-deadlines');
-      },
-      onError: error =>
+      onSuccess: done,
+      onError: error => {
+        // 404: the company had no policy of its own, so it is already on the default.
+        if (
+          (error as { response?: { status?: number } }).response?.status === 404
+        ) {
+          done();
+          return;
+        }
         toast("Couldn't switch to the default deadlines", {
           description: extractErrorMessage(error, 'Try again.'),
           variant: 'danger',
-        }),
+        });
+      },
     });
   };
 
