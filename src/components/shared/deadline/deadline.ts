@@ -125,22 +125,35 @@ export const formatDeadlineDay = (
   return `${p.weekday} ${p.day}/${p.month}`;
 };
 
+const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+};
+
+const joinDateTime = (p: Record<string, string>): string =>
+  `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute} ${p.dayPeriod?.toLowerCase() ?? ''}`.trim();
+
 /** "Thu 08/10/2026 4:12 pm": the full due date and time. */
 export const formatDeadlineDateTime = (
   iso: string,
   timezone?: string | null,
 ): string => {
-  const p = parts(iso, timezone, {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-  return `${p.weekday} ${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute} ${p.dayPeriod?.toLowerCase() ?? ''}`.trim();
+  const p = parts(iso, timezone, { ...DATE_TIME_OPTIONS, weekday: 'short' });
+  return `${p.weekday} ${joinDateTime(p)}`;
 };
+
+/**
+ * "08/10/2026 4:12 pm": a date and time the way Netcorp reads them, for an
+ * instant that is not a target (a History row, for example).
+ */
+export const formatDateTimeAmPm = (
+  iso: string,
+  timezone?: string | null,
+): string => joinDateTime(parts(iso, timezone, DATE_TIME_OPTIONS));
 
 /**
  * The chip's words: "Reply in 22m", "Fix in 1h 42m", "Overdue 2h", or
