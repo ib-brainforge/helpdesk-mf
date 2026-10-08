@@ -1,3 +1,11 @@
+/**
+ * Integrations configuration page, HIDDEN for now (design v3: Live Chat and
+ * Integrations are not offered yet). It used to be the route
+ * routes/__sidebar/configuration/integrations/page.tsx. The code, hooks, types and
+ * breadcrumb key are kept so it can come back. To restore it, recreate that
+ * page.tsx as `export { default } from '@/components/...';` and uncomment
+ * the nav entry in routes/layout.tsx.
+ */
 import { IntegrationEditorModal } from '@/components/integrations/components/IntegrationEditorModal';
 import {
   useDeleteIntegration,

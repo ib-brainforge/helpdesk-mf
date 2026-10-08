@@ -42,10 +42,12 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/configuration/categories/page.tsx
 // routes/__sidebar/configuration/custom-statuses/page.tsx
 // routes/__sidebar/configuration/custom-priorities/page.tsx
+// routes/__sidebar/configuration/company-deadlines/page.tsx
+// routes/__sidebar/configuration/company-deadlines/[tenantId]/page.tsx
 // routes/__sidebar/configuration/custom-fields/page.tsx
 // routes/__sidebar/configuration/canned-responses/page.tsx
-// routes/__sidebar/configuration/integrations/page.tsx
-// routes/__sidebar/configuration/live-chat/page.tsx
+// components/integrations/IntegrationsConfigPage.tsx (hidden, no route)
+// components/live-chat/LiveChatConfigPage.tsx (hidden, no route)
 // routes/__sidebar/configuration/import-export/page.tsx
 // routes/__sidebar/configuration/approval-workflows/page.tsx
 // routes/__sidebar/configuration/approval-workflows/new/page.tsx
@@ -208,6 +210,27 @@ export const breadcrumbs = {
     },
   ],
 
+  /** routes/__sidebar/configuration/company-deadlines/page.tsx */
+  'configuration.company-deadlines.list': () => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.configuration' },
+    {
+      labelKey: 'helpdesk.configuration.company-deadlines',
+      href: '/configuration/company-deadlines',
+    },
+  ],
+
+  /** routes/__sidebar/configuration/company-deadlines/[tenantId]/page.tsx (also "default") */
+  'configuration.company-deadlines.detail': (params: { name: string }) => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.configuration' },
+    {
+      labelKey: 'helpdesk.configuration.company-deadlines',
+      href: '/configuration/company-deadlines',
+    },
+    { label: params.name },
+  ],
+
   /** routes/__sidebar/configuration/custom-fields/page.tsx */
   'configuration.custom-fields.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
@@ -228,7 +251,7 @@ export const breadcrumbs = {
     },
   ],
 
-  /** routes/__sidebar/configuration/integrations/page.tsx */
+  /** components/integrations/IntegrationsConfigPage.tsx (hidden, no route; kept for its return) */
   'configuration.integrations.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.configuration' },
@@ -238,7 +261,7 @@ export const breadcrumbs = {
     },
   ],
 
-  /** routes/__sidebar/configuration/live-chat/page.tsx */
+  /** components/live-chat/LiveChatConfigPage.tsx (hidden, no route; kept for its return) */
   'configuration.live-chat': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.configuration' },
