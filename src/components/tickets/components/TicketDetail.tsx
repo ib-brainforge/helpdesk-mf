@@ -1045,39 +1045,38 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               />
             </Box>
 
-            {/* Conversation: the thread, with the composer at its foot. */}
+            {/*
+              Attachments sit under the description: they are what the
+              requester sent for us to look at, so they belong with the ask,
+              not after the conversation. The drop zone opens on demand so an
+              empty ticket does not carry a large box above the thread.
+            */}
             <Box>
-              <h3 className="mb-3 text-base font-semibold">Conversation</h3>
-              <div className="space-y-4">
-                <CommentThread
-                  comments={comments}
-                  isLoading={commentsLoading}
-                  ticketId={id}
-                />
-                <div className="border-t border-divider pt-4 helpdesk-print-hide">
-                  <ReplyEditor
-                    ticketId={id ?? ''}
-                    categoryId={ticket.categoryId ?? undefined}
-                    email={{
-                      recipient: ticket.emailRecipient ?? null,
-                      onEditSignature: () => setIsSignatureOpen(true),
-                    }}
-                  />
-                </div>
-              </div>
-            </Box>
-
-            {/* Attachments */}
-            <Box>
+              <h3 className="mb-3 text-base font-semibold">
+                Attachments
+                {attachments && attachments.length > 0 && (
+                  <span className="ml-1.5 font-normal text-default-400">
+                    {attachments.length}
+                  </span>
+                )}
+              </h3>
               {attachmentsLoading ? (
-                <div className="text-center py-4">Loading attachments...</div>
-              ) : attachments && attachments.length > 0 ? (
-                <div className="space-y-4">
-                  <AttachmentList
-                    attachments={attachments}
-                    onDelete={handleDeleteAttachment}
-                    canDelete={true}
-                  />
+                <p className="text-sm text-default-400">
+                  Loading attachments...
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {attachments && attachments.length > 0 ? (
+                    <AttachmentList
+                      attachments={attachments}
+                      onDelete={handleDeleteAttachment}
+                      canDelete={true}
+                    />
+                  ) : (
+                    <p className="text-sm text-default-400 italic">
+                      No attachments yet.
+                    </p>
+                  )}
                   <PermissionGuard
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     fallback={null}
@@ -1110,24 +1109,29 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     </div>
                   </PermissionGuard>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-default-400 italic">
-                    No attachments yet.
-                  </p>
-                  <PermissionGuard
-                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                    fallback={null}
-                  >
-                    <div className="helpdesk-print-hide">
-                      <FileUploadZone
-                        onFilesSelected={handleFilesSelected}
-                        progress={uploadProgress}
-                      />
-                    </div>
-                  </PermissionGuard>
-                </div>
               )}
+            </Box>
+
+            {/* Conversation: the thread, with the composer at its foot. */}
+            <Box>
+              <h3 className="mb-3 text-base font-semibold">Conversation</h3>
+              <div className="space-y-4">
+                <CommentThread
+                  comments={comments}
+                  isLoading={commentsLoading}
+                  ticketId={id}
+                />
+                <div className="border-t border-divider pt-4 helpdesk-print-hide">
+                  <ReplyEditor
+                    ticketId={id ?? ''}
+                    categoryId={ticket.categoryId ?? undefined}
+                    email={{
+                      recipient: ticket.emailRecipient ?? null,
+                      onEditSignature: () => setIsSignatureOpen(true),
+                    }}
+                  />
+                </div>
+              </div>
             </Box>
 
             {/*
