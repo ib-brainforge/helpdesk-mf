@@ -26,8 +26,9 @@ export const HELPDESK_ACTION_TYPES: ActionTypeOption[] = [
   { value: 'SendNotification', label: 'Send Notification' },
   { value: 'SendEmail', label: 'Send Email' },
 
-  // ── Sub-tasks / workflow ────────────────────────────────────────────────────
-  { value: 'CreateSubtask', label: 'Create Subtask' },
+  // ── Workflow ────────────────────────────────────────────────────────────────
+  // CreateSubtask is switched off with the rest of subtasks (SUBTASKS_ENABLED).
+  // { value: 'CreateSubtask', label: 'Create Subtask' },
   { value: 'InvokeWorkflowTransition', label: 'Invoke Workflow Transition' },
 
   // No SLA actions: the backend ActionType enum has none, and deadlines come

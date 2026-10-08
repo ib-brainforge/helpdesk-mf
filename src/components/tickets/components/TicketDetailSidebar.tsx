@@ -14,6 +14,7 @@ import {
   useTags,
   useTicketTags,
 } from '@/components/tags/hooks/useTags';
+import { SUBTASKS_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import {
@@ -139,7 +140,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
    * common case of a ticket with no parent. It also shares the ['ticket', id]
    * query key, so navigating to the parent reuses this instead of refetching.
    */
-  const { data: parentTicket } = useTicketDetail(ticket.parentTicketId ?? '');
+  const { data: parentTicket } = useTicketDetail(
+    SUBTASKS_ENABLED ? (ticket.parentTicketId ?? '') : '',
+  );
 
   /*
    * Tenant-defined statuses belong in this picker alongside the three built-in
@@ -774,7 +777,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
 
         {/* Parent ticket */}
-        {ticket.parentTicketId && (
+        {SUBTASKS_ENABLED && ticket.parentTicketId && (
           <div className="mb-4">
             {/*
               "Subtask of", not "Parent Ticket". Parent is no longer a field

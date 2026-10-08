@@ -1,3 +1,4 @@
+import { SUBTASKS_ENABLED } from '@/constants/features';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -788,7 +789,7 @@ export const useTicketChildren = (ticketId: string) => {
       const response = await client.v1TicketsIdChildrenGet(ticketId, 1, 50);
       return response.data?.items ?? [];
     },
-    enabled: !!ticketId,
+    enabled: SUBTASKS_ENABLED && !!ticketId,
   });
 };
 

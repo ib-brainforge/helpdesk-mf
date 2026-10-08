@@ -18,6 +18,7 @@ import {
   useDeleteTimeEntry,
   useTimeTracking,
 } from '@/components/sla/hooks/useTimeTracking';
+import { SUBTASKS_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
@@ -927,13 +928,16 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
                           {/* Relate */}
                           <DropdownSection>
-                            <DropdownItem
-                              key="subtask"
-                              onPress={() => setIsAddSubtaskModalOpen(true)}
-                              isDisabled={!canCreateTickets}
-                            >
-                              Add Subtask
-                            </DropdownItem>
+                            {/* Subtasks are switched off (SUBTASKS_ENABLED). */}
+                            {SUBTASKS_ENABLED ? (
+                              <DropdownItem
+                                key="subtask"
+                                onPress={() => setIsAddSubtaskModalOpen(true)}
+                                isDisabled={!canCreateTickets}
+                              >
+                                Add Subtask
+                              </DropdownItem>
+                            ) : null}
                             {/*
                               Was "Add Parent". Parent is no longer something a
                               caller assigns: nesting comes from creating a
@@ -1198,7 +1202,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               one, and a permanent "No subtasks yet" panel is furniture on every
               ticket describing the absence of a feature they do not use.
             */}
-            {children && children.length > 0 && (
+            {SUBTASKS_ENABLED && children && children.length > 0 && (
               <Box>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold">
@@ -1440,18 +1444,22 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           isLoading={convertToReplyMutation.isPending}
           currentTicketId={id ?? ''}
         />
-        <SubtaskModal
-          isOpen={!!openSubtaskId}
-          subtaskId={openSubtaskId}
-          onClose={() => setOpenSubtaskId('')}
-        />
-        <AddSubtaskModal
-          isOpen={isAddSubtaskModalOpen}
-          parentTicketId={id ?? ''}
-          onClose={() => setIsAddSubtaskModalOpen(false)}
-          onSubmit={handleAddSubtaskSubmit}
-          isLoading={createSubtaskMutation.isPending}
-        />
+        {SUBTASKS_ENABLED && (
+          <>
+            <SubtaskModal
+              isOpen={!!openSubtaskId}
+              subtaskId={openSubtaskId}
+              onClose={() => setOpenSubtaskId('')}
+            />
+            <AddSubtaskModal
+              isOpen={isAddSubtaskModalOpen}
+              parentTicketId={id ?? ''}
+              onClose={() => setIsAddSubtaskModalOpen(false)}
+              onSubmit={handleAddSubtaskSubmit}
+              isLoading={createSubtaskMutation.isPending}
+            />
+          </>
+        )}
 
         <MergeTicketModal
           isOpen={isMergeModalOpen}
