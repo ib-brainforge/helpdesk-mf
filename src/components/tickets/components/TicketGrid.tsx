@@ -9,6 +9,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
+import { customStatusesApply } from '@/types/custom-status';
 import type {
   TicketFilters as TicketFiltersType,
   TicketPriority,
@@ -966,8 +967,9 @@ export const TicketGrid: FC = () => {
           onClose={() => setIsBulkStatusModalOpen(false)}
           onConfirm={handleBulkStatusConfirm}
           ticketCount={selectedRows.length}
-          allowCustomStatuses={selectedRows.every(
-            r => r.original.tenantId === viewerTenantId,
+          allowCustomStatuses={customStatusesApply(
+            viewerTenantId,
+            selectedRows.map(r => r.original.tenantId),
           )}
         />
         <NewRequestModal

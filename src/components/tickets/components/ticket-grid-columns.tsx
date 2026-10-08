@@ -1,5 +1,6 @@
 import {
   DeadlineChip,
+  IconTip,
   StatusBadge,
   UserCell,
   getDeadlineState,
@@ -10,6 +11,7 @@ import type { UserInfo } from '@/hooks/useUserEnrichment';
 import {
   type CustomTicketStatusDto,
   buildStatusOptions,
+  customStatusesApply,
   resolveStatusKey,
 } from '@/types/custom-status';
 import { TicketPriority, type TicketStatus } from '@/types/ticket';
@@ -478,12 +480,14 @@ export const createTicketColumns = (
         fallback={null}
       >
         <Dropdown>
-          <DropdownTrigger
-            aria-label="Quick actions"
-            className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
-          >
-            <Icon name="dotsV" className="h-4 w-4" />
-          </DropdownTrigger>
+          <IconTip label="Ticket actions">
+            <DropdownTrigger
+              aria-label="Ticket actions"
+              className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
+            >
+              <Icon name="dotsV" className="h-4 w-4" />
+            </DropdownTrigger>
+          </IconTip>
           <DropdownPopover className="helpdesk-dropdown-popover">
             <DropdownMenu aria-label="Ticket actions">
               {/*
@@ -505,7 +509,9 @@ export const createTicketColumns = (
                 be applied from the ticket page but not from the grid.
               */}
               {buildStatusOptions(
-                row.original.tenantId === options.customStatusTenantId
+                customStatusesApply(options.customStatusTenantId, [
+                  row.original.tenantId,
+                ])
                   ? (options.customStatuses ?? [])
                   : [],
                 row.original.customStatusId,
