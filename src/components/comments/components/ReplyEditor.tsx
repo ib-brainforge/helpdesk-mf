@@ -4,6 +4,7 @@ import {
   FileUploadZone,
   InlineImageButton,
 } from '@/components/file-upload';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AttachmentDto } from '@/types';
 import type { CannedResponseDto } from '@/types/canned-response';
@@ -13,6 +14,7 @@ import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { RichTextEditor } from '@brainforgeau/components/text-editor';
 import { CommentsApi } from '@brainforgeau/helpdesk-client';
+import { usePermissions } from '@brainforgeau/security';
 import { CannedResponsePicker } from '@components/canned-responses';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,7 +31,12 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   categoryId,
   onCommentAdded,
 }) => {
-  const [isInternalNote, setIsInternalNote] = useState(false);
+  // Posting an internal note needs tickets.update, as its endpoint does.
+  // Without it the toggle is hidden so the request is never made.
+  const { hasPermission } = usePermissions();
+  const canPostInternalNote = hasPermission(HelpdeskPermissions.Tickets.Update);
+  const [internalNoteSelected, setIsInternalNote] = useState(false);
+  const isInternalNote = canPostInternalNote && internalNoteSelected;
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<AttachmentDto[]>(
@@ -163,9 +170,14 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           >
             Canned Response
           </BaseButton>
-          <BaseToggle isSelected={isInternalNote} onChange={setIsInternalNote}>
-            Internal Note
-          </BaseToggle>
+          {canPostInternalNote && (
+            <BaseToggle
+              isSelected={isInternalNote}
+              onChange={setIsInternalNote}
+            >
+              Internal Note
+            </BaseToggle>
+          )}
         </div>
       </div>
 
@@ -207,7 +219,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           disabled={isUploading}
         />
         {pendingAttachments.length > 0 && (
-          <span className="text-xs text-default-500">
+          <span className="text-default-500 text-xs">
             {pendingAttachments.length} file(s) attached
           </span>
         )}
@@ -223,7 +235,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           />
           {pendingAttachments.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-default-600">
+              <p className="text-default-600 text-xs font-medium">
                 Pending Attachments:
               </p>
               <AttachmentList
@@ -237,9 +249,9 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
       )}
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-default-400">
+        <span className="text-default-400 text-xs">
           Press{' '}
-          <kbd className="px-1 py-0.5 text-xs rounded bg-default-100">
+          <kbd className="bg-default-100 rounded px-1 py-0.5 text-xs">
             {/* REVIEW: navigator.userAgentData?.platform is the modern API; fall back to
                 navigator.platform for browsers that don't support it (Firefox, Safari).
                 Both return a string containing "Mac" on macOS. */}
