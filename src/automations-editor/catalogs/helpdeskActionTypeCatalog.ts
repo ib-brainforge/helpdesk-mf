@@ -7,6 +7,7 @@
  *
  * Source: Helpdesk.Domain/Automation/Enums/ActionType.cs
  */
+import { APPROVALS_ENABLED } from '@/constants/features';
 import type { ActionTypeOption } from '@brainforgeau/rules-ui';
 
 export const HELPDESK_ACTION_TYPES: ActionTypeOption[] = [
@@ -30,6 +31,10 @@ export const HELPDESK_ACTION_TYPES: ActionTypeOption[] = [
   // CreateSubtask is switched off with the rest of subtasks (SUBTASKS_ENABLED).
   // { value: 'CreateSubtask', label: 'Create Subtask' },
   { value: 'InvokeWorkflowTransition', label: 'Invoke Workflow Transition' },
+  // RequestApproval is offered only while approvals are on (APPROVALS_ENABLED).
+  ...(APPROVALS_ENABLED
+    ? [{ value: 'RequestApproval', label: 'Request Approval' }]
+    : []),
 
   // No SLA actions: the backend ActionType enum has none, and deadlines come
   // from the company's policy, with a clock that never pauses.

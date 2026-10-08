@@ -18,7 +18,11 @@ import {
   useDeleteTimeEntry,
   useTimeTracking,
 } from '@/components/sla/hooks/useTimeTracking';
-import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
+import {
+  APPROVALS_ENABLED,
+  SUBTASKS_ENABLED,
+  TICKET_LINKS_ENABLED,
+} from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
@@ -1411,8 +1415,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               onDeleteEntry={handleDeleteTimeEntry}
             />
 
-            {/* Approval Panel */}
-            <TicketApprovalPanel ticketId={id ?? ''} />
+            {/* Approvals are switched off (APPROVALS_ENABLED), and the panel
+                fetches only once mounted. */}
+            {APPROVALS_ENABLED && <TicketApprovalPanel ticketId={id ?? ''} />}
 
             {/* CSAT Widget */}
             <CSATWidget

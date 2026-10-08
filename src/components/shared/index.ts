@@ -1,5 +1,6 @@
 export * from './deadline';
 export { IconTip } from './IconTip';
+export { FeatureOutlet } from './FeatureOutlet';
 export { ModalHeader } from './ModalHeader';
 export { PageHint } from './PageHint';
 export { PresetPill } from './PresetPill';

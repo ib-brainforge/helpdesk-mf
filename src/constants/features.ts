@@ -17,3 +17,13 @@ export const SUBTASKS_ENABLED = false;
  * While off, the ticket page also skips fetching links.
  */
 export const TICKET_LINKS_ENABLED = false;
+
+/**
+ * Approvals: the Approval card on a ticket, the Approvals pages (/approvals,
+ * Configuration's /configuration/approval-workflows and the principal
+ * console's /principal/:id/approvals) with their menu entry, the "Request
+ * Approval" automation action and the "Require approval" step on a workflow
+ * transition. Off by product decision: Helpdesk does not need approvals.
+ * While off, the routes redirect away and nothing fetches approval data.
+ */
+export const APPROVALS_ENABLED = false;
