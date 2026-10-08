@@ -30,10 +30,8 @@ export const HELPDESK_ACTION_TYPES: ActionTypeOption[] = [
   { value: 'CreateSubtask', label: 'Create Subtask' },
   { value: 'InvokeWorkflowTransition', label: 'Invoke Workflow Transition' },
 
-  // ── SLA ─────────────────────────────────────────────────────────────────────
-  { value: 'ApplySlaPolicy', label: 'Apply SLA Policy' },
-  { value: 'PauseSla', label: 'Pause SLA' },
-  { value: 'ResumeSla', label: 'Resume SLA' },
+  // No SLA actions: the backend ActionType enum has none, and deadlines come
+  // from the company's policy, with a clock that never pauses.
 
   // ── Knowledge base / canned responses ───────────────────────────────────────
   { value: 'AttachCannedResponse', label: 'Attach Canned Response' },
