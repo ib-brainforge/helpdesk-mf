@@ -21,11 +21,17 @@ import {
 import {
   useCompanyDeadlinePolicy,
   useDeadlinesPrincipal,
+  useRevertCompanyDeadlinePolicy,
   useSaveCompanyDeadlinePolicy,
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { extractErrorMessage } from '@/utils/error-handling';
-import { FormPage, useEntityForm } from '@brainforgeau/components/page';
+import { BaseButton } from '@brainforgeau/components/button';
+import {
+  FormPage,
+  useConfirm,
+  useEntityForm,
+} from '@brainforgeau/components/page';
 import { AccessDenied } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
@@ -50,6 +56,8 @@ function CompanyDeadlinePage() {
     key,
   );
   const save = useSaveCompanyDeadlinePolicy(enabledPrincipal, key);
+  const revert = useRevertCompanyDeadlinePolicy(enabledPrincipal);
+  const { confirm, dialog } = useConfirm();
 
   const { byTenantId, organisationOptions } = useScopeNames();
   const name = isDefault
@@ -102,6 +110,27 @@ function CompanyDeadlinePage() {
     },
   });
 
+  const handleUseDefault = async () => {
+    if (!tenantId) return;
+    const ok = await confirm({
+      title: 'Use the default deadlines?',
+      body: `${name} will use the default deadlines. Open tickets keep their current due dates.`,
+      confirmLabel: 'Use default deadlines',
+    });
+    if (!ok) return;
+    revert.mutate(tenantId, {
+      onSuccess: () => {
+        toast(`${name} now uses the default deadlines`, { variant: 'success' });
+        navigate('/configuration/company-deadlines');
+      },
+      onError: error =>
+        toast("Couldn't switch to the default deadlines", {
+          description: extractErrorMessage(error, 'Try again.'),
+          variant: 'danger',
+        }),
+    });
+  };
+
   if (!loadingAccess && !isAdmin) {
     return (
       <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
@@ -125,7 +154,20 @@ function CompanyDeadlinePage() {
       documentTitle={`Deadlines: ${name}`}
       form={entityForm}
       onCancel={() => navigate('/configuration/company-deadlines')}
+      headerActions={
+        policy.isCustom &&
+        !isDefault && (
+          <BaseButton
+            variant="bordered"
+            onPress={handleUseDefault}
+            isDisabled={revert.isPending}
+          >
+            Use default deadlines
+          </BaseButton>
+        )
+      }
     >
+      {dialog}
       <div className="text-default-600 -mt-2 mb-6 flex flex-wrap items-center gap-2 text-sm">
         {isDefault ? (
           <span>Used by every company that has no deadlines of its own.</span>

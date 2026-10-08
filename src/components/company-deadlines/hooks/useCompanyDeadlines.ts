@@ -4,6 +4,7 @@ import {
   getCompanyDeadlinePolicy,
   getCompanyDeadlineSummaries,
   getHolidays,
+  revertCompanyDeadlinePolicy,
   saveCompanyDeadlinePolicy,
 } from '@/api/local/company-deadlines';
 import {
@@ -77,6 +78,21 @@ export const useSaveCompanyDeadlinePolicy = (
         queryKey: [COMPANY_DEADLINES_QUERY_KEY, principalId],
       });
       // Report figures and ticket deadlines change with the policy.
+      queryClient.invalidateQueries({ queryKey: ['reports', 'kpi'] });
+    },
+  });
+};
+
+/** Drops a company's own policy, so it follows the default again. */
+export const useRevertCompanyDeadlinePolicy = (principalId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: tenantId =>
+      revertCompanyDeadlinePolicy(principalId as string, tenantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [COMPANY_DEADLINES_QUERY_KEY, principalId],
+      });
       queryClient.invalidateQueries({ queryKey: ['reports', 'kpi'] });
     },
   });
