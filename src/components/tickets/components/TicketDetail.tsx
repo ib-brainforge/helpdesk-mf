@@ -1,3 +1,4 @@
+import { isNotLicensedError } from '@/api/local/scoped';
 import { AppLoadingSplash } from '@/components/AppSplash';
 import { TicketApprovalPanel } from '@/components/approvals';
 import {
@@ -25,6 +26,7 @@ import {
   TIME_TRACKING_ENABLED,
 } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
@@ -89,6 +91,7 @@ import {
 import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { TicketHistory } from './TicketHistory';
+import { TicketNotEnabled } from './TicketScopeProvider';
 
 export interface TicketDetailProps {
   ticketId?: string;
@@ -98,6 +101,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const { id: urlId } = useParams<{ id: string }>();
   const id = ticketId ?? urlId;
   const navigate = useNavigate();
+  // The ticket's company, when it is not the viewer's (TicketScopeProvider).
+  const scope = useHelpdeskScope();
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   const updateTicketMutation = useUpdateTicket();
 
@@ -700,6 +705,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   if (isLoading) {
     return <AppLoadingSplash />;
+  }
+
+  // The company's token was accepted by identity but the API refused it for
+  // the licence: the same message as when identity refuses it.
+  if (isNotLicensedError(error)) {
+    return <TicketNotEnabled tenantId={scope?.tenantId} />;
   }
 
   if (error || !ticket) {

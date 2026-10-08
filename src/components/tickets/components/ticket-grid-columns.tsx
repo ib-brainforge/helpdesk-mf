@@ -276,6 +276,8 @@ export const createTicketColumns = (
             )}
             <NavLink
               to={`/tickets/${row.original.id}`}
+              // The ticket page runs in the ticket's own company.
+              state={{ tenantId: row.original.tenantId }}
               title={value}
               className="min-w-0 truncate text-[13px] leading-[18px] font-medium text-foreground hover:text-blue hover:underline"
             >

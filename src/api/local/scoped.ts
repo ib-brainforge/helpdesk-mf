@@ -88,7 +88,7 @@ const tokenAxios = createScopedAxios();
 
 /** Re-issued this long before expiry rather than on a failed call. */
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
-/** A refusal is remembered this long, so a page does not ask on every render. */
+/** A licence refusal is remembered this long, so pages do not keep asking. */
 const REFUSAL_TTL_MS = 5 * 60 * 1000;
 
 interface CachedToken {
@@ -140,7 +140,12 @@ export const getHelpdeskScopeToken = (
       return token;
     },
     error => {
-      tokens.set(scope.tenantId, { error, failedAt: Date.now() });
+      // Only a licence refusal is remembered; anything else is retried.
+      if (isNotLicensedError(error)) {
+        tokens.set(scope.tenantId, { error, failedAt: Date.now() });
+      } else {
+        tokens.delete(scope.tenantId);
+      }
       throw error;
     },
   );
