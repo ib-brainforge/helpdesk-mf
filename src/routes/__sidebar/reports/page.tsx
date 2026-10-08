@@ -1,12 +1,5 @@
 import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
-import {
-  ResolutionTimeChart,
-  TrendLineChart,
-} from '@/components/reports/components/charts';
-import {
-  useDynamicsReport,
-  useTechPerformanceReport,
-} from '@/components/reports/hooks/useReports';
+import { useTechPerformanceReport } from '@/components/reports/hooks/useReports';
 import {
   REPORT_DEFAULT_RANGE,
   REPORT_RANGE_OPTIONS,
@@ -20,18 +13,14 @@ import {
 } from '@/components/reports/utils/exportReport';
 import { UserCell } from '@/components/shared';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import {
-  type CustomReportResultDto,
-  ReportGranularity,
-  type TechPerformanceDto,
-} from '@/types';
+import type { CustomReportResultDto, TechPerformanceDto } from '@/types';
 import { BaseTab, BaseTabs } from '@brainforgeau/components';
 import {
   BaseSelect,
   BaseSelectItem,
   BaseTable,
 } from '@brainforgeau/components';
-import { Box, Icon } from '@brainforgeau/components/base';
+import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
@@ -44,8 +33,8 @@ import {
 import { useMemo, useState } from 'react';
 
 // URL query-param tab persistence: ?tab=<key> synced to selected tab.
-const REPORT_VALID_TABS = new Set(['dynamics', 'tech-performance', 'custom']);
-const REPORT_DEFAULT_TAB = 'dynamics';
+const REPORT_VALID_TABS = new Set(['tech-performance', 'custom']);
+const REPORT_DEFAULT_TAB = 'tech-performance';
 
 function ReportsPage() {
   const navigate = useNavigate();
@@ -66,9 +55,6 @@ function ReportsPage() {
       { replace: true },
     );
   };
-  const [granularity, setGranularity] = useState<ReportGranularity>(
-    ReportGranularity.Daily,
-  );
 
   // The header offers named ranges rather than two calendars: see
   // dateRangePresets.ts for why, and for the local-vs-UTC boundary handling.
@@ -80,11 +66,6 @@ function ReportsPage() {
     [rangeKey],
   );
 
-  const { data: dynamicsData, isLoading: loadingDynamics } = useDynamicsReport(
-    startDate,
-    endDate,
-    granularity,
-  );
   const { data: techPerformance, isLoading: loadingTechPerf } =
     useTechPerformanceReport(startDate, endDate);
 
@@ -239,67 +220,6 @@ function ReportsPage() {
         selectedKey={selectedTab}
         onSelectionChange={key => setSelectedTab(key as string)}
       >
-        {/* Dynamics Tab */}
-        <BaseTab key="dynamics" title="Dynamics">
-          {/*
-            NOTE: these three utilities are correct but currently INERT on this
-            tab. The chart stack (fixed 400px + 300px plus box chrome) is taller
-            than the space PageBody stretches to, so `main` grows to fit it and
-            this tab still scrolls the PAGE, exactly as it did before. `flex-1`
-            has no definite parent height to divide and `overflow-auto` has no
-            bound to scroll against.
-
-            They are left in place because they are what makes the stack scroll
-            inside the panel the moment something above caps the height — the
-            way TicketGrid measures `innerHeight - top`. Unchanged behaviour
-            here, not a fix.
-          */}
-          <div className="mt-4 min-h-0 flex-1 space-y-6 overflow-auto">
-            <div className="flex gap-4">
-              <BaseSelect
-                label="Granularity"
-                selectedKey={granularity}
-                onSelectionChange={keys => {
-                  const key = keys as ReportGranularity;
-                  setGranularity(key);
-                }}
-                className="w-48"
-              >
-                <BaseSelectItem
-                  key={ReportGranularity.Daily}
-                  value={ReportGranularity.Daily}
-                >
-                  Daily
-                </BaseSelectItem>
-                <BaseSelectItem
-                  key={ReportGranularity.Weekly}
-                  value={ReportGranularity.Weekly}
-                >
-                  Weekly
-                </BaseSelectItem>
-                <BaseSelectItem
-                  key={ReportGranularity.Monthly}
-                  value={ReportGranularity.Monthly}
-                >
-                  Monthly
-                </BaseSelectItem>
-              </BaseSelect>
-            </div>
-
-            <Box title="Ticket Trends">
-              {dynamicsData?.dataPoints && (
-                <TrendLineChart data={dynamicsData.dataPoints} />
-              )}
-            </Box>
-
-            <Box title="Average Resolution Time">
-              {dynamicsData?.dataPoints && (
-                <ResolutionTimeChart data={dynamicsData.dataPoints} />
-              )}
-            </Box>
-          </div>
-        </BaseTab>
-
         {/* Tech Performance Tab */}
         <BaseTab key="tech-performance" title="Tech Performance">
           <div className="mt-4 flex min-h-0 flex-1 flex-col">

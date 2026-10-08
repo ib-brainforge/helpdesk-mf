@@ -3,18 +3,10 @@ import type {
   AgentUtilizationDto,
   AssetsReportDto,
   AuditLogReportDto,
-  CompanyStatisticsDto,
   CustomReportRequestDto,
   CustomReportResultDto,
   DeletedTicketDto,
-  DynamicsReportDto,
-  OverdueTicketDto,
-  ReportGranularity,
-  SlaComplianceDto,
   TechPerformanceDto,
-  TicketByCategoryDto,
-  TicketByPriorityDto,
-  TicketByStatusDto,
   TicketSummaryReportDto,
 } from '@/types';
 import { ReportsApi } from '@brainforgeau/helpdesk-client';
@@ -70,26 +62,6 @@ export const useTicketSummaryReport = (
   });
 };
 
-export const useDynamicsReport = (
-  startDate: string,
-  endDate: string,
-  granularity: ReportGranularity,
-) => {
-  return useQuery<DynamicsReportDto>({
-    queryKey: ['reports', 'dynamics', startDate, endDate, granularity],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      // REVIEW: Granularity type may need conversion to generated enum
-      const { data } = await client.v1ReportsDynamicsGet(
-        startDate,
-        endDate,
-        granularity as any,
-      );
-      return data as unknown as DynamicsReportDto;
-    },
-  });
-};
-
 export const useTechPerformanceReport = (
   startDate?: string,
   endDate?: string,
@@ -138,161 +110,7 @@ export const useExportReport = () => {
 // Method names follow the OpenAPI generator typescript-axios naming convention:
 //   v1Reports{EndpointCamelCase}Get
 
-export const useOverdueTicketsReport = (fromDate?: string, toDate?: string) => {
-  return useQuery<OverdueTicketDto[]>({
-    queryKey: ['reports', 'overdue-tickets', fromDate, toDate],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsOverdueTicketsGet(
-        fromDate,
-        toDate,
-      );
-      return (data ?? []).map(item => ({
-        id: item.id ?? '',
-        subject: item.subject ?? '',
-        assigneeId: item.assigneeId ?? null,
-        priority: item.priority ?? '',
-        daysOverdue: item.daysOverdue ?? 0,
-        createdAt: item.createdAt ?? '',
-        dueDate: item.dueDate ?? '',
-        status: item.status ?? '',
-      }));
-    },
-  });
-};
-
-export const useTicketsByCategoryReport = (
-  fromDate?: string,
-  toDate?: string,
-) => {
-  return useQuery<TicketByCategoryDto[]>({
-    queryKey: ['reports', 'tickets-by-category', fromDate, toDate],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsTicketsByCategoryGet(
-        fromDate,
-        toDate,
-      );
-      return (data ?? []).map(item => ({
-        categoryId: item.categoryId ?? null,
-        categoryName: item.categoryName ?? '',
-        total: item.total ?? 0,
-        byStatus: item.byStatus ?? {},
-      }));
-    },
-  });
-};
-
-export const useTicketsByPriorityReport = (
-  fromDate?: string,
-  toDate?: string,
-) => {
-  return useQuery<TicketByPriorityDto[]>({
-    queryKey: ['reports', 'tickets-by-priority', fromDate, toDate],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsTicketsByPriorityGet(
-        fromDate,
-        toDate,
-      );
-      return (data ?? []).map(item => ({
-        priority: item.priority ?? '',
-        total: item.total ?? 0,
-        byStatus: item.byStatus ?? {},
-      }));
-    },
-  });
-};
-
-export const useTicketsByStatusReport = (
-  fromDate?: string,
-  toDate?: string,
-) => {
-  return useQuery<TicketByStatusDto[]>({
-    queryKey: ['reports', 'tickets-by-status', fromDate, toDate],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsTicketsByStatusGet(
-        fromDate,
-        toDate,
-      );
-      return (data ?? []).map(item => ({
-        status: item.status ?? '',
-        total: item.total ?? 0,
-        byPriority: item.byPriority ?? {},
-      }));
-    },
-  });
-};
-
-export const useSlaComplianceReport = (
-  fromDate?: string,
-  toDate?: string,
-  policyId?: string,
-) => {
-  return useQuery<SlaComplianceDto>({
-    queryKey: ['reports', 'sla-compliance', fromDate, toDate, policyId],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsSlaComplianceGet(
-        fromDate,
-        toDate,
-        policyId,
-      );
-      return {
-        fromDate: data.fromDate ?? '',
-        toDate: data.toDate ?? '',
-        totalTickets: data.totalTickets ?? 0,
-        withinSla: data.withinSla ?? 0,
-        breachedSla: data.breachedSla ?? 0,
-        compliancePercentage: data.compliancePercentage ?? 0,
-        byPolicy: (data.byPolicy ?? []).map(p => ({
-          policyId: p.policyId ?? '',
-          policyName: p.policyName ?? '',
-          totalBreaches: p.totalBreaches ?? 0,
-          responseBreaches: p.responseBreaches ?? 0,
-          resolutionBreaches: p.resolutionBreaches ?? 0,
-        })),
-      };
-    },
-  });
-};
-
-export const useCompanyStatisticsReport = (
-  fromDate?: string,
-  toDate?: string,
-) => {
-  return useQuery<CompanyStatisticsDto>({
-    queryKey: ['reports', 'company-statistics', fromDate, toDate],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsCompanyStatisticsGet(
-        fromDate,
-        toDate,
-      );
-      return {
-        fromDate: data.fromDate ?? '',
-        toDate: data.toDate ?? '',
-        totalTickets: data.totalTickets ?? 0,
-        openTickets: data.openTickets ?? 0,
-        closedTickets: data.closedTickets ?? 0,
-        avgResolutionMinutes: data.avgResolutionMinutes ?? null,
-        avgFirstResponseMinutes: data.avgFirstResponseMinutes ?? null,
-        topCategories: (data.topCategories ?? []).map(c => ({
-          categoryId: c.categoryId ?? '',
-          categoryName: c.categoryName ?? '',
-          ticketCount: c.ticketCount ?? 0,
-        })),
-        topAssignees: (data.topAssignees ?? []).map(a => ({
-          assigneeId: a.assigneeId ?? '',
-          ticketCount: a.ticketCount ?? 0,
-          resolvedCount: a.resolvedCount ?? 0,
-        })),
-      };
-    },
-  });
-};
-
+// Still read by the Tickets list's assignee counts (useAssigneeTicketCounts).
 export const useAgentUtilizationReport = (
   fromDate?: string,
   toDate?: string,

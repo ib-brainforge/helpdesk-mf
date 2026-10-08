@@ -63,23 +63,6 @@ export interface TechnicianBreakdownDto {
   percentage: number;
 }
 
-export interface DynamicsReportDto {
-  granularity: ReportGranularity;
-  fromDate?: string;
-  toDate?: string;
-  dataPoints: DynamicsDataPointDto[];
-}
-
-export interface DynamicsDataPointDto {
-  periodStart: string;
-  periodEnd: string;
-  createdCount: number;
-  closedCount: number;
-  reopenedCount: number;
-  netOpen: number;
-  avgResolutionMinutes: number | null;
-}
-
 export interface CustomReportRequestDto {
   startDate?: string;
   endDate?: string;
@@ -124,78 +107,6 @@ export interface ReportFilters {
 }
 
 // Wave 4 report DTOs — mirror the backend DTOs in Helpdesk.Application.Reporting.DTOs
-
-export interface OverdueTicketDto {
-  id: string;
-  subject: string;
-  assigneeId: string | null;
-  priority: string;
-  daysOverdue: number;
-  createdAt: string;
-  dueDate: string;
-  status: string;
-}
-
-export interface TicketByCategoryDto {
-  categoryId: string | null;
-  categoryName: string;
-  total: number;
-  byStatus: Record<string, number>;
-}
-
-export interface TicketByPriorityDto {
-  priority: string;
-  total: number;
-  byStatus: Record<string, number>;
-}
-
-export interface TicketByStatusDto {
-  status: string;
-  total: number;
-  byPriority: Record<string, number>;
-}
-
-export interface SlaPolicyComplianceDto {
-  policyId: string;
-  policyName: string;
-  totalBreaches: number;
-  responseBreaches: number;
-  resolutionBreaches: number;
-}
-
-export interface SlaComplianceDto {
-  fromDate: string;
-  toDate: string;
-  totalTickets: number;
-  withinSla: number;
-  breachedSla: number;
-  compliancePercentage: number;
-  byPolicy: SlaPolicyComplianceDto[];
-}
-
-export interface CategoryStatDto {
-  categoryId: string;
-  categoryName: string;
-  ticketCount: number;
-}
-
-export interface AssigneeStatDto {
-  assigneeId: string;
-  ticketCount: number;
-  resolvedCount: number;
-}
-
-export interface CompanyStatisticsDto {
-  fromDate: string;
-  toDate: string;
-  totalTickets: number;
-  openTickets: number;
-  closedTickets: number;
-  avgResolutionMinutes: number | null;
-  avgFirstResponseMinutes: number | null;
-  topCategories: CategoryStatDto[];
-  topAssignees: AssigneeStatDto[];
-}
 
 export interface AgentUtilizationDto {
   agentId: string;

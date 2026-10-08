@@ -65,19 +65,10 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // ---------------------------------------------------------------------------
 
 // routes/__sidebar/reports/page.tsx
-// routes/__sidebar/reports-hub/page.tsx
-// routes/__sidebar/reports/summary/page.tsx
-// routes/__sidebar/reports/by-category/page.tsx
-// routes/__sidebar/reports/by-priority/page.tsx
-// routes/__sidebar/reports/by-status/page.tsx
-// routes/__sidebar/reports/sla/page.tsx
 // routes/__sidebar/reports/satisfaction/page.tsx
-// routes/__sidebar/reports/utilization/page.tsx
-// routes/__sidebar/reports/overdue/page.tsx
 // routes/__sidebar/reports/deleted/page.tsx
 // routes/__sidebar/reports/audit/page.tsx
 // routes/__sidebar/reports/assets/page.tsx
-// routes/__sidebar/reports/companies/page.tsx
 
 // ---------------------------------------------------------------------------
 // Approvals (tenant-scoped)
@@ -406,66 +397,11 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk.reports', href: '/reports' },
   ],
 
-  /** routes/__sidebar/reports-hub/page.tsx */
-  'reports.hub': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-  ],
-
-  /** routes/__sidebar/reports/summary/page.tsx */
-  'reports.summary': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.summary' },
-  ],
-
-  /** routes/__sidebar/reports/by-category/page.tsx */
-  'reports.by-category': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-category' },
-  ],
-
-  /** routes/__sidebar/reports/by-priority/page.tsx */
-  'reports.by-priority': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-priority' },
-  ],
-
-  /** routes/__sidebar/reports/by-status/page.tsx */
-  'reports.by-status': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-status' },
-  ],
-
-  /** routes/__sidebar/reports/sla/page.tsx — "SLA" is an acronym, use label not labelKey */
-  'reports.sla': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { label: 'SLA' },
-  ],
-
   /** routes/__sidebar/reports/satisfaction/page.tsx */
   'reports.satisfaction': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.reports', href: '/reports' },
     { labelKey: 'helpdesk.reports.satisfaction' },
-  ],
-
-  /** routes/__sidebar/reports/utilization/page.tsx */
-  'reports.utilization': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.utilization' },
-  ],
-
-  /** routes/__sidebar/reports/overdue/page.tsx */
-  'reports.overdue': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.overdue' },
   ],
 
   /** routes/__sidebar/reports/deleted/page.tsx */
@@ -487,13 +423,6 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.reports', href: '/reports' },
     { labelKey: 'helpdesk.reports.assets' },
-  ],
-
-  /** routes/__sidebar/reports/companies/page.tsx */
-  'reports.companies': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.companies' },
   ],
 
   // -------------------------------------------------------------------------
