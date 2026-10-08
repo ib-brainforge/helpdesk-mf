@@ -10,3 +10,10 @@
  * off, the ticket page also skips fetching children and the parent ticket.
  */
 export const SUBTASKS_ENABLED = false;
+
+/**
+ * Linked work items (ticket to ticket links): the "Link Ticket" action, the
+ * Linked Work Items panel on a ticket and its picker. Off by product decision.
+ * While off, the ticket page also skips fetching links.
+ */
+export const TICKET_LINKS_ENABLED = false;

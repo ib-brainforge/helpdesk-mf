@@ -18,7 +18,7 @@ import {
   useDeleteTimeEntry,
   useTimeTracking,
 } from '@/components/sla/hooks/useTimeTracking';
-import { SUBTASKS_ENABLED } from '@/constants/features';
+import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
@@ -945,9 +945,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                               independent tickets is a link. This slot now opens
                               the link picker, which existed but had no way in.
                             */}
-                            <DropdownItem key="link" onPress={handleLink}>
-                              Link Ticket
-                            </DropdownItem>
+                            {/* Linked work items are switched off (TICKET_LINKS_ENABLED). */}
+                            {TICKET_LINKS_ENABLED ? (
+                              <DropdownItem key="link" onPress={handleLink}>
+                                Link Ticket
+                              </DropdownItem>
+                            ) : null}
                             <DropdownItem
                               key="convert"
                               onPress={() => setIsConvertToReplyModalOpen(true)}
@@ -1270,83 +1273,85 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               directional, so the same row reads "Blocks" on one ticket and
               "Is blocked by" on the other; see describeLink.
             */}
-            <Box>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">
-                  Linked Work Items
-                  {ticketLinks && ticketLinks.length > 0 && (
-                    <span className="ml-1.5 font-normal text-default-400">
-                      {ticketLinks.length}
-                    </span>
-                  )}
-                </h3>
-                <PermissionGuard
-                  requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                >
-                  <button
-                    type="button"
-                    onClick={handleLink}
-                    disabled={actionsDisabled}
-                    className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+            {TICKET_LINKS_ENABLED && (
+              <Box>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">
+                    Linked Work Items
+                    {ticketLinks && ticketLinks.length > 0 && (
+                      <span className="ml-1.5 font-normal text-default-400">
+                        {ticketLinks.length}
+                      </span>
+                    )}
+                  </h3>
+                  <PermissionGuard
+                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                   >
-                    + Link ticket
-                  </button>
-                </PermissionGuard>
-              </div>
-
-              {ticketLinks && ticketLinks.length > 0 ? (
-                <div className="divide-default-200 divide-y">
-                  {ticketLinks.map(link => {
-                    const { label, otherTicketId, otherSubject } = describeLink(
-                      link,
-                      id ?? '',
-                    );
-                    return (
-                      <div
-                        key={link.id}
-                        className="flex items-center gap-3 py-2"
-                      >
-                        <span className="w-28 shrink-0 text-xs text-default-500">
-                          {label}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/tickets/${otherTicketId}`)}
-                          className="min-w-0 flex-1 truncate text-left text-sm text-blue-600 hover:underline"
-                        >
-                          {otherSubject || `#${otherTicketId?.slice(0, 8)}`}
-                        </button>
-                        <PermissionGuard
-                          requiredPermissions={[
-                            HelpdeskPermissions.TicketWrite,
-                          ]}
-                        >
-                          <BaseButton
-                            variant="link"
-                            size="sm"
-                            className="p-0 h-auto min-h-0 shrink-0 text-default-400"
-                            onPress={() =>
-                              id &&
-                              link.id &&
-                              unlinkTicketsMutation.mutate({
-                                ticketId: id,
-                                linkId: link.id,
-                              })
-                            }
-                          >
-                            Remove
-                          </BaseButton>
-                        </PermissionGuard>
-                      </div>
-                    );
-                  })}
+                    <button
+                      type="button"
+                      onClick={handleLink}
+                      disabled={actionsDisabled}
+                      className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+                    >
+                      + Link ticket
+                    </button>
+                  </PermissionGuard>
                 </div>
-              ) : (
-                <p className="text-sm text-default-400 italic">
-                  No linked tickets.
-                </p>
-              )}
-            </Box>
+
+                {ticketLinks && ticketLinks.length > 0 ? (
+                  <div className="divide-default-200 divide-y">
+                    {ticketLinks.map(link => {
+                      const { label, otherTicketId, otherSubject } =
+                        describeLink(link, id ?? '');
+                      return (
+                        <div
+                          key={link.id}
+                          className="flex items-center gap-3 py-2"
+                        >
+                          <span className="w-28 shrink-0 text-xs text-default-500">
+                            {label}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(`/tickets/${otherTicketId}`)
+                            }
+                            className="min-w-0 flex-1 truncate text-left text-sm text-blue-600 hover:underline"
+                          >
+                            {otherSubject || `#${otherTicketId?.slice(0, 8)}`}
+                          </button>
+                          <PermissionGuard
+                            requiredPermissions={[
+                              HelpdeskPermissions.TicketWrite,
+                            ]}
+                          >
+                            <BaseButton
+                              variant="link"
+                              size="sm"
+                              className="p-0 h-auto min-h-0 shrink-0 text-default-400"
+                              onPress={() =>
+                                id &&
+                                link.id &&
+                                unlinkTicketsMutation.mutate({
+                                  ticketId: id,
+                                  linkId: link.id,
+                                })
+                              }
+                            >
+                              Remove
+                            </BaseButton>
+                          </PermissionGuard>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-default-400 italic">
+                    No linked tickets.
+                  </p>
+                )}
+              </Box>
+            )}
 
             {/* Activity Timeline - Placeholder */}
             <Box>
@@ -1467,12 +1472,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onConfirm={handleMergeConfirm}
           currentTicketId={id ?? ''}
         />
-        <LinkTicketModal
-          isOpen={isLinkModalOpen}
-          onClose={() => setIsLinkModalOpen(false)}
-          onConfirm={handleLinkConfirm}
-          currentTicketId={id ?? ''}
-        />
+        {TICKET_LINKS_ENABLED && (
+          <LinkTicketModal
+            isOpen={isLinkModalOpen}
+            onClose={() => setIsLinkModalOpen(false)}
+            onConfirm={handleLinkConfirm}
+            currentTicketId={id ?? ''}
+          />
+        )}
         <AiAssistantModal
           isOpen={isAiAssistantOpen}
           onClose={() => setIsAiAssistantOpen(false)}

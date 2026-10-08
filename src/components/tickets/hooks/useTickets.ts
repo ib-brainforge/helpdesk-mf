@@ -1,4 +1,4 @@
-import { SUBTASKS_ENABLED } from '@/constants/features';
+import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -604,7 +604,7 @@ export const useTicketLinks = (ticketId: string) => {
       const response = await client.v1TicketsIdLinksGet(ticketId);
       return (response.data ?? []) as TicketLink[];
     },
-    enabled: !!ticketId,
+    enabled: TICKET_LINKS_ENABLED && !!ticketId,
   });
 };
 
