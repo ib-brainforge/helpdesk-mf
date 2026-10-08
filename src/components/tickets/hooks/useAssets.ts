@@ -1,4 +1,4 @@
-import { authorizedAxios, getAccessToken } from '@/state/authorizedAxios';
+import { scopedRequest } from '@/api/local/scoped';
 import {
   requireAssetApiBaseUrl,
   requireTrackingApiBaseUrl,
@@ -114,35 +114,13 @@ const useScopeToken = (
  * answered for that scope; without one it falls back to the app's own context,
  * for tickets that carry no tenant.
  */
-const scopedGet = async <T>(
+const scopedGet = <T>(
   baseUrl: string,
   path: string,
   scopeToken: string | undefined,
   params?: Record<string, string | number | undefined>,
-): Promise<T> => {
-  const url = new URL(`${baseUrl}${path}`);
-  for (const [k, v] of Object.entries(params ?? {})) {
-    if (v !== undefined && v !== '') url.searchParams.set(k, String(v));
-  }
-  if (!scopeToken) {
-    const { data } = await authorizedAxios.get<T>(url.toString());
-    return data;
-  }
-  // fetch, not authorizedAxios, on purpose: authorizedAxios's request
-  // interceptor always overwrites X-Context-Token with the app's own token, so
-  // it cannot carry a token for a different scope, which is the whole point of
-  // this call. Authorization still comes from the same session.
-  // biome-ignore lint/style/noRestrictedGlobals: authorizedAxios cannot send a scope-specific context token (see above)
-  const res = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${await getAccessToken()}`,
-      'X-Context-Token': scopeToken,
-      Accept: 'application/json',
-    },
-  });
-  if (!res.ok) throw new Error(`${res.status} for ${path}`);
-  return (await res.json()) as T;
-};
+): Promise<T> =>
+  scopedRequest<T>({ url: `${baseUrl}${path}`, token: scopeToken, params });
 
 /**
  * One page of the scope's assets matching `search`, searched and paged by
