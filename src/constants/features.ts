@@ -27,3 +27,11 @@ export const TICKET_LINKS_ENABLED = false;
  * While off, the routes redirect away and nothing fetches approval data.
  */
 export const APPROVALS_ENABLED = false;
+
+/**
+ * Time tracking: the time tracker panel on a ticket (timer and manual time
+ * entries), the "Time Spent" field and the Time Spent column in custom
+ * reports. Off by product decision. While off, the ticket page also skips
+ * fetching time entries.
+ */
+export const TIME_TRACKING_ENABLED = false;

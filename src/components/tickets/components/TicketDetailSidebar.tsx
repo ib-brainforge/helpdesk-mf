@@ -14,7 +14,7 @@ import {
   useTags,
   useTicketTags,
 } from '@/components/tags/hooks/useTags';
-import { SUBTASKS_ENABLED } from '@/constants/features';
+import { SUBTASKS_ENABLED, TIME_TRACKING_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import {
@@ -621,13 +621,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           </StatusBadge>
         </div>
 
-        {/* Time Spent */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-default-700 mb-1">
-            Time Spent
-          </label>
-          <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
-        </div>
+        {/* Time Spent, switched off with time tracking (TIME_TRACKING_ENABLED). */}
+        {TIME_TRACKING_ENABLED && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-default-700 mb-1">
+              Time Spent
+            </label>
+            <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
+          </div>
+        )}
 
         {/* Due Date, only while the backend sends no deadline block. */}
         {!ticket.deadline && ticket.dueDate && (

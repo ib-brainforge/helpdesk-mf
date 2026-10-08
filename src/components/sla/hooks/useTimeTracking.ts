@@ -1,3 +1,4 @@
+import { TIME_TRACKING_ENABLED } from '@/constants/features';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationTimeTrackingDTOsTimeEntryDto,
@@ -33,7 +34,7 @@ export const useTimeTracking = (ticketId: string) => {
         entries,
       };
     },
-    enabled: Boolean(ticketId),
+    enabled: TIME_TRACKING_ENABLED && Boolean(ticketId),
   });
 
   return {

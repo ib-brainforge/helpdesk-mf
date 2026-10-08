@@ -22,6 +22,7 @@ import {
   APPROVALS_ENABLED,
   SUBTASKS_ENABLED,
   TICKET_LINKS_ENABLED,
+  TIME_TRACKING_ENABLED,
 } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
@@ -1310,13 +1311,15 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               />
             </Box>
 
-            {/* Time Tracker */}
-            <TimeTracker
-              ticketId={id ?? ''}
-              timeTracking={timeTracking}
-              onAddManualEntry={handleAddManualEntry}
-              onDeleteEntry={handleDeleteTimeEntry}
-            />
+            {/* Time tracking is switched off (TIME_TRACKING_ENABLED). */}
+            {TIME_TRACKING_ENABLED && (
+              <TimeTracker
+                ticketId={id ?? ''}
+                timeTracking={timeTracking}
+                onAddManualEntry={handleAddManualEntry}
+                onDeleteEntry={handleDeleteTimeEntry}
+              />
+            )}
 
             {/* Approvals are switched off (APPROVALS_ENABLED), and the panel
                 fetches only once mounted. */}

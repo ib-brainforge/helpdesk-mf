@@ -1,3 +1,4 @@
+import { TIME_TRACKING_ENABLED } from '@/constants/features';
 import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
 import { TicketPriority, TicketStatus } from '@/types';
 import {
@@ -39,7 +40,8 @@ const AVAILABLE_COLUMNS = [
   { key: 'dueDate', label: 'Due Date' },
   { key: 'firstResponseTime', label: 'First Response Time' },
   { key: 'resolutionTime', label: 'Resolution Time' },
-  { key: 'timeSpent', label: 'Time Spent' },
+  // Time Spent is switched off with time tracking (TIME_TRACKING_ENABLED).
+  ...(TIME_TRACKING_ENABLED ? [{ key: 'timeSpent', label: 'Time Spent' }] : []),
   { key: 'tags', label: 'Tags' },
 ];
 
