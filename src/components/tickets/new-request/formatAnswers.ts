@@ -1,3 +1,4 @@
+import { formatDate } from '@brainforgeau/components/utils';
 import {
   type Answers,
   type CategorySpec,
@@ -40,6 +41,9 @@ const renderValue = (spec: FieldSpec, value: unknown): string => {
   ) {
     return value.join(', ');
   }
+  // Dates as DD/MM/YYYY, the way Netcorp reads them, not the picker's ISO value.
+  if (spec.kind === 'date')
+    return formatDate(String(value ?? ''), { emptyLabel: '' });
   return String(value ?? '').trim();
 };
 

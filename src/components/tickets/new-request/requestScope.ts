@@ -1,4 +1,5 @@
-import { getAccessToken } from '@/state/authorizedAxios';
+import { scopedRequest } from '@/api/local/scoped';
+import type { CreateTicketContactFields } from '@/api/local/tickets';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { createContext, useContext } from 'react';
 import { issueScopeToken } from '../hooks/useAssets';
@@ -22,7 +23,7 @@ export const RequestScopeContext = createContext<RequestScope | null>(null);
 export const useRequestScope = (): RequestScope | null =>
   useContext(RequestScopeContext);
 
-interface NewTicket {
+interface NewTicket extends CreateTicketContactFields {
   subject: string;
   description: string;
   priority: string;
@@ -30,79 +31,57 @@ interface NewTicket {
 }
 
 /**
- * POST to the Helpdesk API as the given scope.
+ * Creates the ticket in `scope` and returns its id, plus a function that links
+ * vehicles to it under the same scope (the app's own context may not be able
+ * to see a ticket raised in another tenant).
  *
  * The backend stamps a new ticket's tenant and organisation from the context
  * token, not from the body, so raising a request for an organisation other
  * than the one the app is in means sending a token issued for that
- * organisation. fetch, not authorizedAxios, for the reason given in
- * useAssets' scopedGet: its interceptor always replaces X-Context-Token with
- * the app's own.
+ * organisation. Pass `issuedToken: null` when the scope IS the app's own
+ * context; the request then goes out in it, with no token to issue.
  *
  * A failure is thrown in the shape of an axios error ({ response: { status,
  * data } }) so the wizard explains it the same way whichever path was taken.
  */
-const scopedPost = async <T>(
-  token: string,
-  path: string,
-  body: unknown,
-): Promise<T> => {
-  // biome-ignore lint/style/noRestrictedGlobals: authorizedAxios cannot send a scope-specific context token (see above)
-  const res = await fetch(`${requireHelpdeskApiBaseUrl()}${path}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${await getAccessToken()}`,
-      'X-Context-Token': token,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  let data: unknown = text || undefined;
-  try {
-    data = text ? JSON.parse(text) : undefined;
-  } catch {
-    // Not JSON; keep the text.
-  }
-  if (!res.ok) {
-    throw Object.assign(new Error(`${res.status} for ${path}`), {
-      response: { status: res.status, data },
-    });
-  }
-  return data as T;
-};
-
-/**
- * Creates the ticket in `scope` and returns its id, plus a function that links
- * vehicles to it under the same scope (the app's own context may not be able
- * to see a ticket raised in another tenant).
- */
 export const createTicketInScope = async (
   scope: RequestScope,
   ticket: NewTicket,
-  /** A token already issued for `scope`, when the caller has one. */
-  issuedToken?: string,
+  /** A token already issued for `scope`; null for the app's own context. */
+  issuedToken?: string | null,
 ): Promise<{ id: string; linkAsset: (assetId: string) => Promise<void> }> => {
-  let token: string;
-  try {
-    token = issuedToken ?? (await issueScopeToken(scope, 'helpdesk'));
-  } catch {
-    throw Object.assign(new Error('scope token'), {
-      response: {
-        status: 403,
-        data: {
-          detail:
-            "Helpdesk isn't available for the chosen organisation. Choose another, or ask an admin to enable Helpdesk for it.",
+  let token: string | undefined;
+  if (issuedToken !== null) {
+    try {
+      token = issuedToken ?? (await issueScopeToken(scope, 'helpdesk'));
+    } catch {
+      throw Object.assign(new Error('scope token'), {
+        response: {
+          status: 403,
+          data: {
+            detail:
+              "Helpdesk isn't available for the chosen organisation. Choose another, or ask an admin to enable Helpdesk for it.",
+          },
         },
-      },
-    });
+      });
+    }
   }
-  const id = await scopedPost<string>(token, '/v1/tickets', ticket);
+  const base = requireHelpdeskApiBaseUrl();
+  const id = await scopedRequest<string>({
+    method: 'POST',
+    url: `${base}/v1/tickets`,
+    token,
+    body: ticket,
+  });
   return {
     id: String(id),
     linkAsset: async assetId => {
-      await scopedPost(token, `/v1/tickets/${id}/linked-assets`, { assetId });
+      await scopedRequest({
+        method: 'POST',
+        url: `${base}/v1/tickets/${id}/linked-assets`,
+        token,
+        body: { assetId },
+      });
     },
   };
 };
