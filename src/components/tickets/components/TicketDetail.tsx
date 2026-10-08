@@ -6,24 +6,24 @@ import {
   useUploadAttachment,
 } from '@/components/attachments/hooks/useAttachments';
 import { CommentThread } from '@/components/comments/components/CommentThread';
+import { EditSignatureModal } from '@/components/comments/components/EditSignatureModal';
 import { ReplyEditor } from '@/components/comments/components/ReplyEditor';
 import { useComments } from '@/components/comments/hooks/useComments';
 import { AttachmentList } from '@/components/file-upload/AttachmentList';
 import { FileUploadZone } from '@/components/file-upload/FileUploadZone';
-import { StatusBadge } from '@/components/shared';
-import { SlaIndicator } from '@/components/sla/SlaIndicator';
+import { DeadlineChip, IconTip, StatusBadge } from '@/components/shared';
 import { TimeTracker } from '@/components/sla/TimeTracker';
-import { useSla } from '@/components/sla/hooks/useSla';
 import {
   useAddTimeEntry,
   useDeleteTimeEntry,
   useTimeTracking,
 } from '@/components/sla/hooks/useTimeTracking';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { CommentType } from '@/types/comment';
-import { TicketStatus } from '@/types/ticket';
+import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
@@ -31,7 +31,6 @@ import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import {
   PermissionGuard,
-  useAuth,
   usePermissions,
   useTimezone,
 } from '@brainforgeau/security';
@@ -46,7 +45,7 @@ import {
 } from '@heroui/react';
 
 import { useNavigate, useParams } from '@modern-js/runtime/router';
-import { type FC, useCallback, useRef, useState } from 'react';
+import { type FC, useCallback, useEffect, useState } from 'react';
 import {
   useConvertToReply,
   useCreateSubtask,
@@ -69,7 +68,7 @@ import {
   useUnsubscribeFromTicket,
   useUpdateTicket,
 } from '../hooks/useTickets';
-import { NewRequestModal } from '../new-request/NewRequestModal';
+import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
@@ -82,6 +81,11 @@ import { InlineEditable } from './InlineEditable';
 import { LinkTicketModal } from './LinkTicketModal';
 import { MarkSpamModal } from './MarkSpamModal';
 import { MergeTicketModal } from './MergeTicketModal';
+import {
+  CompanyPill,
+  OrganisationPill,
+  useTicketScopeNames,
+} from './ScopePills';
 import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 
@@ -96,9 +100,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const id = ticketId ?? urlId;
   const navigate = useNavigate();
   const timezone = useTimezone();
-  const { user } = useAuth();
-  const currentUserId = user?.profile?.sub;
-  const replyEditorRef = useRef<HTMLDivElement>(null);
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   const updateTicketMutation = useUpdateTicket();
 
@@ -168,8 +169,29 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const { uploadFiles, uploadProgress } = useUploadAttachment();
   const deleteAttachmentMutation = useDeleteAttachment();
 
-  // SLA
-  const { slaData } = useSla(id ?? '');
+  // Company and organisation names for the header pills and the deadline line.
+  const { companyName, organisationName } = useTicketScopeNames(
+    ticket?.tenantId,
+    ticket?.organisationId,
+  );
+
+  /*
+   * The signature and mailbox dialog (screen 08). Opened from the composer,
+   * and on its own when Microsoft sends the browser back from a failed
+   * mailbox connect, so the reason is shown where it can be fixed.
+   */
+  const [isSignatureOpen, setIsSignatureOpen] = useState(false);
+  const { result: connectResult, clear: clearConnectResult } =
+    useMailboxConnectResult();
+  useEffect(() => {
+    if (!connectResult) return;
+    if (connectResult.ok) {
+      toast('Mailbox connected', { variant: 'success' });
+      clearConnectResult();
+    } else {
+      setIsSignatureOpen(true);
+    }
+  }, [connectResult, clearConnectResult]);
 
   // Time Tracking
   const { timeTracking } = useTimeTracking(id ?? '');
@@ -207,7 +229,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   /** Empty when no subtask dialog is open; doubles as the id to fetch. */
   const [openSubtaskId, setOpenSubtaskId] = useState('');
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
-  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isMarkSpamModalOpen, setIsMarkSpamModalOpen] = useState(false);
 
   // Wave 3 modal state
@@ -702,37 +723,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     }
   }, [id, ticket, publishAsIdeaMutation, unpublishAsIdeaMutation]);
 
-  const handleReply = useCallback(() => {
-    // Scroll to reply editor
-    replyEditorRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    });
-    // Focus the editor after scroll
-    setTimeout(() => {
-      const editorElement =
-        replyEditorRef.current?.querySelector('[contenteditable]');
-      if (editorElement) {
-        (editorElement as HTMLElement).focus();
-      }
-    }, 300);
-  }, []);
-
-  const handleTakeover = useCallback(() => {
-    if (!id || !currentUserId) return;
-    updateTicketMutation.mutate(
-      { id, updates: { assigneeId: currentUserId } },
-      {
-        onSuccess: () => {
-          toast('Ticket assigned', {
-            description: 'Ticket has been assigned to you',
-            variant: 'success',
-          });
-        },
-      },
-    );
-  }, [id, currentUserId, updateTicketMutation]);
-
   const handleCloseTicket = useCallback(() => {
     if (!id) return;
     updateTicketMutation.mutate(
@@ -780,6 +770,11 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   const isSubscribeLoading =
     subscribeMutation.isPending || unsubscribeMutation.isPending;
+  const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+  const priorityConfig = getPriorityConfig(ticket.priority as TicketPriority);
+  const requesterName =
+    ticket.requesterName ??
+    (ticket.requesterId ? userMap[ticket.requesterId]?.name : undefined);
 
   // State-conflict derived flags — fields are extended on TicketDto until helpdesk-client is regenerated
   const isDeleted = !!ticket.isDeleted;
@@ -831,57 +826,40 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               </div>
             )}
 
-            {/* Header */}
-            <Box title={`Ticket #${ticket.id?.substring(0, 8)}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <div className="min-w-0 flex-1">
-                      <InlineEditable
-                        variant="heading"
-                        value={ticket.subject ?? ''}
-                        onSave={next => handleInlineSave('subject', next)}
-                        isSaving={updateTicketMutation.isPending}
-                        canEdit={!actionsDisabled && canWriteTicket}
-                        emptyLabel="Untitled ticket"
-                      />
-                    </div>
-                    {/*
-                      Status and priority are NOT badged here. They are editable
-                      fields in the sidebar, and showing them twice meant the
-                      read-only copy sat directly above the control that changes
-                      them. The sidebar fields now carry the same colours, so
-                      nothing is lost by dropping the duplicate.
-
-                      The badges below stay: they are exceptional states with no
-                      control of their own on this page.
-                    */}
-                    {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
-                    {ticket.isProblem && (
-                      <StatusBadge color="danger">Problem</StatusBadge>
-                    )}
-                    {ticket.isPublishedAsIdea && (
-                      <StatusBadge color="success">
-                        Published to Ideas Forum
-                      </StatusBadge>
-                    )}
-                  </div>
-                </div>
-
+            {/*
+              Header card: the ticket id with its actions, then the title and
+              the facts about the ticket in one line of chips.
+            */}
+            <Box>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-lg font-semibold">
+                  Ticket #{ticket.id?.substring(0, 8)}
+                </h2>
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 helpdesk-print-hide">
-                  {/* AI Assistant */}
                   <PermissionGuard
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     fallback={null}
                   >
                     <BaseButton
                       variant="bordered"
+                      color="light"
                       onPress={handleAiAssistant}
                       isDisabled={actionsDisabled}
                       icon={<Icon name="flash" className="h-4 w-4" />}
                     >
                       AI Assistant
+                    </BaseButton>
+                    <BaseButton
+                      variant="bordered"
+                      color="light"
+                      onPress={handleCloseTicket}
+                      icon={<Icon name="check-o" className="h-4 w-4" />}
+                      isDisabled={
+                        actionsDisabled || ticket.status === TicketStatus.Closed
+                      }
+                    >
+                      Close ticket
                     </BaseButton>
                   </PermissionGuard>
                   <PermissionGuard
@@ -889,12 +867,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     fallback={null}
                   >
                     <Dropdown>
-                      <DropdownTrigger
-                        aria-label="Ticket actions"
-                        className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-9 w-9"
-                      >
-                        <Icon name="dotsV" className="h-4 w-4" />
-                      </DropdownTrigger>
+                      <IconTip label="More ticket actions">
+                        <DropdownTrigger
+                          aria-label="More ticket actions"
+                          className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 h-8 w-8"
+                        >
+                          <Icon name="dotsV" className="h-4 w-4" />
+                        </DropdownTrigger>
+                      </IconTip>
                       <DropdownPopover className="helpdesk-dropdown-popover">
                         <DropdownMenu
                           aria-label="Ticket actions"
@@ -1064,65 +1044,45 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   </PermissionGuard>
                 </div>
               </div>
-            </Box>
 
-            {/* Action Button Row */}
-            <Box>
-              <div className="flex items-center gap-3 helpdesk-print-hide">
-                <PermissionGuard
-                  requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                  fallback={null}
-                >
-                  <BaseButton
-                    onPress={() => setIsNewRequestOpen(true)}
-                    icon={<Icon name="plus" className="h-4 w-4" />}
-                  >
-                    New Ticket
-                  </BaseButton>
-                </PermissionGuard>
-                <PermissionGuard
-                  requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                  fallback={null}
-                >
-                  <BaseButton
-                    color="primary"
-                    onPress={handleReply}
-                    isDisabled={actionsDisabled}
-                    icon={<Icon name="chat" className="h-4 w-4" />}
-                  >
-                    Reply
-                  </BaseButton>
-                </PermissionGuard>
-                <PermissionGuard
-                  requiredPermissions={[HelpdeskPermissions.TicketAssign]}
-                  fallback={null}
-                >
-                  <BaseButton
-                    variant="bordered"
-                    onPress={handleTakeover}
-                    icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
-                    isDisabled={
-                      actionsDisabled || ticket.assigneeId === currentUserId
-                    }
-                  >
-                    Takeover
-                  </BaseButton>
-                </PermissionGuard>
-                <PermissionGuard
-                  requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                  fallback={null}
-                >
-                  <BaseButton
-                    variant="bordered"
-                    onPress={handleCloseTicket}
-                    icon={<Icon name="check-fill" className="h-4 w-4" />}
-                    isDisabled={
-                      actionsDisabled || ticket.status === TicketStatus.Closed
-                    }
-                  >
-                    Close ticket
-                  </BaseButton>
-                </PermissionGuard>
+              <div className="mt-2">
+                <InlineEditable
+                  variant="heading"
+                  value={ticket.subject ?? ''}
+                  onSave={next => handleInlineSave('subject', next)}
+                  isSaving={updateTicketMutation.isPending}
+                  canEdit={!actionsDisabled && canWriteTicket}
+                  emptyLabel="Untitled ticket"
+                />
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {companyName && <CompanyPill name={companyName} />}
+                {/* The organisation repeats nothing when it shares the company's name. */}
+                {organisationName && organisationName !== companyName && (
+                  <OrganisationPill name={organisationName} />
+                )}
+                {requesterName && (
+                  <span className="border-l border-default-200 pl-2 text-sm text-default-600">
+                    {requesterName}
+                  </span>
+                )}
+                <StatusBadge color={statusConfig.color}>
+                  {statusConfig.label}
+                </StatusBadge>
+                <StatusBadge color={priorityConfig.color}>
+                  {priorityConfig.label}
+                </StatusBadge>
+                <DeadlineChip deadline={ticket.deadline} />
+                {/* Exceptional states with no control of their own on this page. */}
+                {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
+                {ticket.isProblem && (
+                  <StatusBadge color="danger">Problem</StatusBadge>
+                )}
+                {ticket.isPublishedAsIdea && (
+                  <StatusBadge color="success">
+                    Published to Ideas Forum
+                  </StatusBadge>
+                )}
               </div>
             </Box>
 
@@ -1136,6 +1096,28 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 canEdit={!actionsDisabled && canWriteTicket}
                 emptyLabel="No description yet."
               />
+            </Box>
+
+            {/* Conversation: the thread, with the composer at its foot. */}
+            <Box>
+              <h3 className="mb-3 text-base font-semibold">Conversation</h3>
+              <div className="space-y-4">
+                <CommentThread
+                  comments={visibleComments}
+                  isLoading={commentsLoading}
+                  ticketId={id}
+                />
+                <div className="border-t border-divider pt-4 helpdesk-print-hide">
+                  <ReplyEditor
+                    ticketId={id ?? ''}
+                    categoryId={ticket.categoryId ?? undefined}
+                    email={{
+                      recipient: ticket.emailRecipient ?? null,
+                      onEditSignature: () => setIsSignatureOpen(true),
+                    }}
+                  />
+                </div>
+              </div>
             </Box>
 
             {/* Attachments */}
@@ -1270,37 +1252,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 ) : null}
               </Box>
             )}
-
-            {/* Comment Thread */}
-            <Box>
-              <div className="space-y-4">
-                <div className="flex justify-end helpdesk-print-hide">
-                  <BaseButton
-                    size="sm"
-                    variant="light"
-                    onPress={handleToggleSystemLog}
-                    icon={
-                      <Icon
-                        name={showSystemLog ? 'eye-slash' : 'eye'}
-                        className="h-4 w-4"
-                      />
-                    }
-                  >
-                    {showSystemLog ? 'Hide System Log' : 'Show System Log'}
-                  </BaseButton>
-                </div>
-                <CommentThread
-                  comments={visibleComments}
-                  isLoading={commentsLoading}
-                />
-                <div ref={replyEditorRef} className="helpdesk-print-hide">
-                  <ReplyEditor
-                    ticketId={id ?? ''}
-                    categoryId={ticket.categoryId ?? undefined}
-                  />
-                </div>
-              </div>
-            </Box>
 
             {/*
               Linked work items.
@@ -1443,9 +1394,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               />
             </Box>
 
-            {/* SLA Indicator */}
-            {slaData && <SlaIndicator slaData={slaData} variant="full" />}
-
             {/* Time Tracker */}
             <TimeTracker
               ticketId={id ?? ''}
@@ -1522,10 +1470,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onClose={() => setIsAiAssistantOpen(false)}
           ticketId={id ?? ''}
         />
-        <NewRequestModal
-          isOpen={isNewRequestOpen}
-          onClose={() => setIsNewRequestOpen(false)}
-          onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
+        <EditSignatureModal
+          isOpen={isSignatureOpen}
+          onClose={() => {
+            setIsSignatureOpen(false);
+            clearConnectResult();
+          }}
+          recipient={ticket.emailRecipient}
+          subject={`Re: [#${ticket.id?.substring(0, 8)}] ${ticket.subject ?? ''}`}
+          connectError={
+            connectResult && !connectResult.ok
+              ? (connectResult.reason ?? 'Failed')
+              : undefined
+          }
         />
         {confirmDialog}
         <MarkSpamModal

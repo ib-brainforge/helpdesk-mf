@@ -7,6 +7,7 @@ import {
   badgeFieldClasses,
   badgeSwatchClasses,
 } from '@/components/shared';
+import { SlaIndicator } from '@/components/sla/SlaIndicator';
 import {
   useAddTagToTicket,
   useRemoveTagFromTicket,
@@ -55,6 +56,11 @@ import {
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
+import {
+  CompanyPill,
+  OrganisationPill,
+  useTicketScopeNames,
+} from './ScopePills';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -185,6 +191,13 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     ticket.requesterName ??
     (ticket.requesterId ? userMap[ticket.requesterId]?.name : undefined) ??
     '—';
+  const requesterEmail =
+    ticket.emailRecipient?.address ??
+    (ticket.requesterId ? userMap[ticket.requesterId]?.email : undefined);
+  const { companyName, organisationName } = useTicketScopeNames(
+    ticket.tenantId,
+    ticket.organisationId,
+  );
   const assigneeDisplayName =
     ticket.assigneeName ??
     (ticket.assigneeId ? userMap[ticket.assigneeId]?.name : undefined) ??
@@ -539,14 +552,61 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </PermissionGuard>
       </div>
 
+      {/* Vehicles: the linked assets, moved up beside the fields they qualify. */}
+      <LinkedAssetsSection
+        ticketId={ticket.id ?? ''}
+        tenantId={ticket.tenantId}
+        organisationId={ticket.organisationId}
+      />
+
       <div className="border-t pt-6">
         {/* Requester */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-default-700 mb-1">
             Requester
           </label>
-          <p className="text-sm">{requesterDisplayName}</p>
+          <p className="text-sm">
+            {requesterDisplayName}
+            {requesterEmail && (
+              <span className="ml-1.5 text-xs text-default-500">
+                {requesterEmail}
+              </span>
+            )}
+          </p>
         </div>
+
+        {/*
+          Company and Organisation, both always shown here because they are
+          labelled. (The header drops the organisation when it repeats the
+          company's name.)
+        */}
+        {(companyName || organisationName) && (
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <div className="min-w-0">
+              <span className="mb-1 block text-sm font-medium text-default-700">
+                Company
+              </span>
+              {companyName && <CompanyPill name={companyName} />}
+            </div>
+            <div className="min-w-0">
+              <span className="mb-1 block text-sm font-medium text-default-700">
+                Organisation
+              </span>
+              {organisationName && <OrganisationPill name={organisationName} />}
+            </div>
+          </div>
+        )}
+
+        {/* Deadline: its "Fix by" row replaces the old Due Date field. */}
+        {ticket.deadline && (
+          <div className="mb-4 border-t pt-4">
+            <SlaIndicator
+              deadline={ticket.deadline}
+              createdAt={ticket.createdAt}
+              companyName={companyName}
+            />
+          </div>
+        )}
 
         {/* Via (Origin) */}
         <div className="mb-4">
@@ -566,8 +626,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
         </div>
 
-        {/* Due Date */}
-        {ticket.dueDate && (
+        {/* Due Date, only while the backend sends no deadline block. */}
+        {!ticket.deadline && ticket.dueDate && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-default-700 mb-1">
               Due Date
@@ -712,13 +772,6 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           </label>
           <p className="text-sm text-default-500">None</p>
         </div>
-
-        {/* Assets */}
-        <LinkedAssetsSection
-          ticketId={ticket.id ?? ''}
-          tenantId={ticket.tenantId}
-          organisationId={ticket.organisationId}
-        />
 
         {/* Parent ticket */}
         {ticket.parentTicketId && (

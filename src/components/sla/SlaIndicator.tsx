@@ -1,141 +1,106 @@
-import { StatusBadge } from '@/components/shared';
-import { type SlaIndicatorDto, SlaStatus } from '@/types';
-import { Box, Icon } from '@brainforgeau/components/base';
-import { formatDateTime } from '@brainforgeau/components/utils';
+import type { TicketDeadlineDto } from '@/api/local/deadlines';
+import {
+  DeadlineChip,
+  formatDeadlineDateTime,
+  formatDuration,
+  isDeadlineMet,
+} from '@/components/shared/deadline';
+import { Icon } from '@brainforgeau/components/base';
 import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
 
 interface SlaIndicatorProps {
-  slaData: SlaIndicatorDto;
-  variant?: 'compact' | 'full';
+  /** The ticket's deadlines, from the ticket itself (no separate request). */
+  deadline: TicketDeadlineDto;
+  /** When the ticket was raised, for "Met in 24 min". */
+  createdAt?: string | null;
+  /** The ticket's company, for the policy line ("Harbour Logistics, High priority"). */
+  companyName?: string | null;
 }
 
+const minutesBetween = (from: string, to: string) =>
+  (new Date(to).getTime() - new Date(from).getTime()) / 60_000;
+
+/**
+ * The ticket's deadline block: where it stands, the first reply and the fix,
+ * and the company policy that set them.
+ *
+ * Everything comes from the backend's deadline instants and its policy text;
+ * nothing here works out business hours. The clock never pauses, so there is
+ * no paused state.
+ */
 export const SlaIndicator: FC<SlaIndicatorProps> = ({
-  slaData,
-  variant = 'full',
+  deadline,
+  createdAt,
+  companyName,
 }) => {
   const timezone = useTimezone();
-  const formatTimeRemaining = (minutes: number | undefined): string => {
-    if (minutes === undefined) return 'N/A';
+  const met = isDeadlineMet(deadline);
+  const { policy } = deadline;
 
-    if (minutes < 0) {
-      const absMinutes = Math.abs(minutes);
-      const hours = Math.floor(absMinutes / 60);
-      const mins = absMinutes % 60;
-      return `Overdue ${hours}h ${mins}m`;
+  const replyRow = (() => {
+    if (deadline.repliedAt) {
+      const onTime =
+        !deadline.replyDueAt || deadline.repliedAt <= deadline.replyDueAt;
+      const took =
+        createdAt && minutesBetween(createdAt, deadline.repliedAt) >= 0
+          ? ` in ${formatDuration(minutesBetween(createdAt, deadline.repliedAt))}`
+          : '';
+      return (
+        <span
+          className={`flex items-center gap-1 font-semibold ${
+            onTime ? 'text-green-700' : 'text-danger'
+          }`}
+        >
+          <Icon name={onTime ? 'check' : 'warning'} className="h-3.5 w-3.5" />
+          {onTime ? `Met${took}` : `Missed, replied${took}`}
+        </span>
+      );
     }
-
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
-
-  const getStatusColor = (
-    status: SlaStatus | undefined,
-  ): 'success' | 'warning' | 'danger' => {
-    switch (status) {
-      case SlaStatus.OnTrack:
-        return 'success';
-      case SlaStatus.Warning:
-        return 'warning';
-      case SlaStatus.Breached:
-        return 'danger';
-      default:
-        return 'success';
-    }
-  };
-
-  const getStatusIcon = (status: SlaStatus | undefined): string => {
-    switch (status) {
-      case SlaStatus.OnTrack:
-        return 'check-circle';
-      case SlaStatus.Warning:
-        return 'exclamation-triangle';
-      case SlaStatus.Breached:
-        return 'x-circle';
-      default:
-        return 'clock';
-    }
-  };
-
-  if (variant === 'compact') {
-    return (
-      <div className="flex gap-2">
-        {slaData.responseStatus !== undefined && (
-          <StatusBadge color={getStatusColor(slaData.responseStatus)}>
-            <Icon
-              name={getStatusIcon(slaData.responseStatus)}
-              className="h-3 w-3"
-            />
-            Response: {formatTimeRemaining(slaData.responseTimeRemaining)}
-          </StatusBadge>
-        )}
-        {slaData.resolutionStatus !== undefined && (
-          <StatusBadge color={getStatusColor(slaData.resolutionStatus)}>
-            <Icon
-              name={getStatusIcon(slaData.resolutionStatus)}
-              className="h-3 w-3"
-            />
-            Resolution: {formatTimeRemaining(slaData.resolutionTimeRemaining)}
-          </StatusBadge>
-        )}
-      </div>
+    return deadline.replyDueAt ? (
+      <span>{formatDeadlineDateTime(deadline.replyDueAt, timezone)}</span>
+    ) : (
+      <span className="text-default-400">No target</span>
     );
-  }
+  })();
 
   return (
-    <Box title="SLA Status">
-      <div className="space-y-4">
-        {slaData.responseStatus !== undefined && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icon
-                name={getStatusIcon(slaData.responseStatus)}
-                className={`h-5 w-5 text-${getStatusColor(slaData.responseStatus)}`}
-              />
-              <span className="font-medium">First Response Time</span>
-            </div>
-            <div className="text-right">
-              <p
-                className={`font-semibold text-${getStatusColor(slaData.responseStatus)}`}
-              >
-                {formatTimeRemaining(slaData.responseTimeRemaining)}
-              </p>
-              {slaData.responseTimeDeadline && (
-                <p className="text-xs text-default-500 dark:text-default-400">
-                  Due:{' '}
-                  {formatDateTime(slaData.responseTimeDeadline, { timezone })}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {slaData.resolutionStatus !== undefined && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icon
-                name={getStatusIcon(slaData.resolutionStatus)}
-                className={`h-5 w-5 text-${getStatusColor(slaData.resolutionStatus)}`}
-              />
-              <span className="font-medium">Resolution Time</span>
-            </div>
-            <div className="text-right">
-              <p
-                className={`font-semibold text-${getStatusColor(slaData.resolutionStatus)}`}
-              >
-                {formatTimeRemaining(slaData.resolutionTimeRemaining)}
-              </p>
-              {slaData.resolutionTimeDeadline && (
-                <p className="text-xs text-default-500 dark:text-default-400">
-                  Due:{' '}
-                  {formatDateTime(slaData.resolutionTimeDeadline, { timezone })}
-                </p>
-              )}
-            </div>
-          </div>
+    <div className="space-y-2 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-default-700">Deadline</span>
+        {met === null ? (
+          <DeadlineChip deadline={deadline} />
+        ) : (
+          <span
+            className={`text-sm font-semibold ${met ? 'text-green-700' : 'text-danger'}`}
+          >
+            {met ? 'Deadline met' : 'Deadline missed'}
+          </span>
         )}
       </div>
-    </Box>
+      <div className="flex items-center justify-between">
+        <span className="text-default-600">Time to first reply</span>
+        {replyRow}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-default-600">Fix by</span>
+        <span className="font-medium">
+          {deadline.fixDueAt
+            ? formatDeadlineDateTime(deadline.fixDueAt, timezone)
+            : 'No target'}
+        </span>
+      </div>
+      {policy && (
+        <div className="rounded-[3px] bg-default-100 px-3 py-2 text-xs">
+          <p className="font-semibold text-foreground">
+            {companyName ? `${companyName}, ` : ''}
+            {policy.priority} priority
+          </p>
+          <p className="text-default-600">
+            {policy.targetsText} {policy.hoursText}
+          </p>
+        </div>
+      )}
+    </div>
   );
 };

@@ -398,89 +398,55 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
     );
   };
 
+  const trackingNote = (assetId?: string | null) =>
+    linkedTrackingError || !assetId || !trackedLinkedIds
+      ? ''
+      : trackedLinkedIds.has(assetId)
+        ? 'In Tracking'
+        : 'Not in Tracking';
+
   return (
-    <div className="mb-4">
-      <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-default-700">
-          Assets
-        </label>
-        {canEditLinks && (
-          <BaseButton
-            size="sm"
-            variant="light"
-            icon={<Icon name="plus" className="h-3 w-3" />}
-            onPress={() => setIsAddModalOpen(true)}
-          >
-            Add
-          </BaseButton>
-        )}
-      </div>
+    <div>
+      <span className="mb-1.5 block text-sm font-medium text-default-700">
+        Vehicles
+      </span>
 
       {isLoading ? (
-        <p className="text-xs text-default-400">Loading assets...</p>
+        <p className="text-xs text-default-400">Loading vehicles...</p>
       ) : assets && assets.length > 0 ? (
         /*
-          One row per asset rather than pills: a name with its number and
-          registration beneath reads at a glance, where "Tow Truck (#11 ·
-          273-TT)" squeezed into a pill did not. Unlink is a quiet button that
-          only turns red on hover, so removing an asset is easy to find but
-          hard to hit by accident.
+          Soft chips in the picker's own format, "Name (#id · REGO)", so a
+          vehicle reads the same here as where it was chosen. Whether it is in
+          Tracking is on hover, not a second badge per row.
         */
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-wrap gap-1.5">
           {assets.map(link => {
             const asset = link.assetId ? byId[link.assetId] : null;
-            const name =
+            const label =
               asset === undefined
                 ? 'Loading...'
                 : asset
-                  ? asset.assetName?.trim() || 'Unnamed asset'
-                  : 'Unknown asset';
-            const detail = asset
-              ? [
-                  asset.assetId ? `#${asset.assetId}` : null,
-                  asset.registrationNo,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')
-              : asset === null && link.assetId
-                ? `No longer found (${link.assetId.substring(0, 8)})`
-                : '';
+                  ? assetLabel(asset)
+                  : `Unknown vehicle (${link.assetId?.substring(0, 8) ?? ''})`;
+            const tracking = linkedTrackingLoading
+              ? ''
+              : trackingNote(link.assetId);
             return (
               <li
                 key={link.id}
-                className="group flex items-center gap-2.5 rounded-md border border-default-200 px-2.5 py-2 transition-colors hover:bg-default-50"
+                title={tracking ? `${label}. ${tracking}` : label}
+                className="inline-flex h-6 max-w-full items-center gap-1 rounded-[3px] bg-[#dbeafe] pr-1 pl-2 text-xs text-[#1d4ed8]"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-lighter-blue text-blue">
-                  <Icon name="TruckIcon" className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-default-700">
-                    {name}
-                  </p>
-                  {detail && (
-                    <p className="truncate text-xs text-default-400">
-                      {detail}
-                    </p>
-                  )}
-                </div>
-                <TrackingBadge
-                  inTracking={
-                    link.assetId && trackedLinkedIds
-                      ? trackedLinkedIds.has(link.assetId)
-                      : undefined
-                  }
-                  isLoading={linkedTrackingLoading}
-                  isError={linkedTrackingError}
-                />
+                <span className="truncate">{label}</span>
                 {canEditLinks && (
-                  <IconTip label={`Unlink ${name}`}>
+                  <IconTip label={`Unlink ${label}`}>
                     <button
                       type="button"
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-default-400 transition-colors hover:bg-danger-50 hover:text-danger-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] hover:bg-[#bfdbfe] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       onClick={() => link.assetId && handleUnlink(link.assetId)}
-                      aria-label={`Unlink ${name}`}
+                      aria-label={`Unlink ${label}`}
                     >
-                      <Icon name="XMarkIcon" className="h-4 w-4" />
+                      <Icon name="x" className="h-3 w-3" />
                     </button>
                   </IconTip>
                 )}
@@ -489,7 +455,17 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
           })}
         </ul>
       ) : (
-        <p className="text-xs text-default-400 italic">No assets linked</p>
+        <p className="text-xs text-default-400 italic">No vehicles linked</p>
+      )}
+
+      {canEditLinks && (
+        <button
+          type="button"
+          onClick={() => setIsAddModalOpen(true)}
+          className="mt-1.5 text-xs text-blue hover:underline"
+        >
+          + Link vehicle
+        </button>
       )}
 
       <AddAssetModal
