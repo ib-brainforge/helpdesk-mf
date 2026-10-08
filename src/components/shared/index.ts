@@ -1,3 +1,4 @@
+export * from './deadline';
 export { IconTip } from './IconTip';
 export { ModalHeader } from './ModalHeader';
 export { PageHint } from './PageHint';
