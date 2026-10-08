@@ -33,12 +33,7 @@ import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
-import { formatDateTime } from '@brainforgeau/components/utils';
-import {
-  PermissionGuard,
-  usePermissions,
-  useTimezone,
-} from '@brainforgeau/security';
+import { PermissionGuard, usePermissions } from '@brainforgeau/security';
 import {
   Dropdown,
   DropdownItem,
@@ -93,6 +88,7 @@ import {
 } from './ScopePills';
 import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
+import { TicketHistory } from './TicketHistory';
 
 const SYSTEM_LOG_PREF_KEY = 'helpdesk:show-system-log';
 
@@ -104,7 +100,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const { id: urlId } = useParams<{ id: string }>();
   const id = ticketId ?? urlId;
   const navigate = useNavigate();
-  const timezone = useTimezone();
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   const updateTicketMutation = useUpdateTicket();
 
@@ -140,34 +135,11 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const canDeleteTickets = hasPermission(HelpdeskPermissions.Tickets.Delete);
 
   /*
-   * Names for the activity timeline.
-   *
-   * The ticket carries ids, not names, so both have to be resolved through the
-   * identity lookup the rest of the page already uses. Declared here with the
-   * other hooks for the same reason as the permission check above: this
+   * The requester's name when the ticket does not carry it. Declared here with
+   * the other hooks for the same reason as the permission check above: this
    * component returns early while the ticket loads.
    */
-  const { userMap } = useUserEnrichment([
-    ticket?.createdById,
-    ticket?.updatedById,
-    ticket?.requesterId,
-  ]);
-
-  // Falls back to the requester when the creator is unknown, which is every row
-  // written without a user context: seed data, imports and background jobs all
-  // stamp an empty id. That was already this line's behaviour before the real
-  // creator was available, so the fallback loses nothing and the common case
-  // now shows the person who actually raised it.
-  const createdByName =
-    (ticket?.createdById ? userMap[ticket.createdById]?.name : undefined) ??
-    ticket?.requesterName ??
-    (ticket?.requesterId ? userMap[ticket.requesterId]?.name : undefined);
-
-  // No equivalent fallback exists for the editor, so an unknown one drops the
-  // "by ..." clause entirely rather than naming someone who may not have done it.
-  const updatedByName = ticket?.updatedById
-    ? userMap[ticket.updatedById]?.name
-    : undefined;
+  const { userMap } = useUserEnrichment([ticket?.requesterId]);
 
   // Attachments
   const { attachments, isLoading: attachmentsLoading } = useAttachments(id);
@@ -1357,40 +1329,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               </Box>
             )}
 
-            {/* Activity Timeline - Placeholder */}
-            <Box>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Icon name="plus" className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Ticket created</p>
-                    <p className="text-xs text-default-500">
-                      {createdByName ? `by ${createdByName} on ` : 'on '}
-                      {formatDateTime(ticket.createdAt, { timezone })}
-                    </p>
-                  </div>
-                </div>
-                {ticket.updatedAt && ticket.updatedAt !== ticket.createdAt && (
-                  <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-default-100 rounded-full flex items-center justify-center">
-                      <Icon
-                        name="pencil"
-                        className="h-4 w-4 text-default-600"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Ticket updated</p>
-                      <p className="text-xs text-default-500">
-                        {updatedByName ? `by ${updatedByName} on ` : 'on '}
-                        {formatDateTime(ticket.updatedAt, { timezone })}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Box>
+            {/* Who changed what, collapsed until asked for. */}
+            <TicketHistory ticketId={id ?? ''} />
           </div>
 
           {/* Sidebar */}
