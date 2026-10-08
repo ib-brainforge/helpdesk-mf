@@ -105,7 +105,7 @@ export function useCategoryTable({
               header: 'Section',
               cell: ({ row }) => (
                 <span className="text-sm text-default-600">
-                  {row.original.sectionName ?? '—'}
+                  {row.original.sectionName ?? '–'}
                 </span>
               ),
               size: 200,
@@ -151,7 +151,7 @@ export function useCategoryTable({
         header: () => <span className="block text-right">Open tickets</span>,
         cell: ({ row }) => (
           <span className="block text-right tabular-nums">
-            {openCounts ? (openCounts.get(row.original.id) ?? 0) : '—'}
+            {openCounts ? (openCounts.get(row.original.id) ?? 0) : '–'}
           </span>
         ),
         size: 110,
