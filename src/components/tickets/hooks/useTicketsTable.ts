@@ -1,11 +1,9 @@
+import type { TableLayoutController } from '@/components/shared/table-layout';
 import {
   type ColumnDef,
   type PaginationState,
   type RowSelectionState,
-  type SortingState,
-  type VisibilityState,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { useState } from 'react';
@@ -17,6 +15,8 @@ interface UseTicketsTableProps {
   totalCount: number;
   pagination: PaginationState;
   onPaginationChange?: (pagination: PaginationState) => void;
+  /** The user's saved column order, visibility, widths and sort. */
+  layout: TableLayoutController;
 }
 
 export const useTicketsTable = ({
@@ -25,25 +25,34 @@ export const useTicketsTable = ({
   totalCount,
   pagination,
   onPaginationChange,
+  layout,
 }: UseTicketsTableProps) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const table = useReactTable({
     data,
     columns,
     state: {
-      sorting,
-      columnVisibility,
+      ...layout.state,
       pagination,
       rowSelection,
+    },
+    initialState: {
+      // The checkbox and Subject stay put while the grid scrolls sideways on a
+      // narrow screen, and so does the row menu on the right.
+      columnPinning: { left: ['select', 'subject'], right: ['actions'] },
     },
     getRowId: row => row.id ?? '',
     manualPagination: true,
     pageCount: Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     rowCount: totalCount,
+    /*
+     * Sorted on the server, across every page. It used to sort only the page
+     * in hand, so "oldest first" meant oldest of these 25.
+     */
+    manualSorting: true,
     enableSorting: true,
+    enableSortingRemoval: true,
     /*
      * No client-side search. The rows are the server's search results already:
      * it matches assignee and requester names, category, scope, status and the
@@ -54,8 +63,13 @@ export const useTicketsTable = ({
     enableGlobalFilter: false,
     enableColumnFilters: false,
     enableRowSelection: true,
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
+    // One write per drag, not one per pixel.
+    enableColumnResizing: true,
+    columnResizeMode: 'onEnd',
+    onSortingChange: layout.onSortingChange,
+    onColumnOrderChange: layout.onColumnOrderChange,
+    onColumnVisibilityChange: layout.onColumnVisibilityChange,
+    onColumnSizingChange: layout.onColumnSizingChange,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: updater => {
       if (onPaginationChange) {
@@ -65,7 +79,6 @@ export const useTicketsTable = ({
       }
     },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   return { table };

@@ -1,5 +1,6 @@
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { IconTip } from '@/components/shared';
+import { useMinuteTick } from '@/components/shared';
+import { ColumnsChooser } from '@/components/shared/table-layout';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
@@ -20,15 +21,7 @@ import {
   usePermissions,
   useTimezone,
 } from '@brainforgeau/security';
-import {
-  DrawerBackdrop,
-  DrawerBody,
-  DrawerContent,
-  DrawerDialog,
-  DrawerRoot,
-  toast,
-  useOverlayState,
-} from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
 import {
   type FC,
@@ -52,19 +45,23 @@ import {
   useBulkUpdateTickets,
   useUpdateTicket,
 } from '../hooks/useTickets';
+import { useTicketsLayout } from '../hooks/useTicketsLayout';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { NewRequestModal } from '../new-request/NewRequestModal';
 import { BulkAssignModal } from './BulkAssignModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { TicketFilters } from './TicketFilters';
-import { createTicketColumns } from './ticket-grid-columns';
+import {
+  TICKET_SORT_KEYS,
+  createTicketColumns,
+  isTicketOverdue,
+} from './ticket-grid-columns';
 
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
-import { TicketSidebar } from '../TicketSidebar';
 import type { TicketRow } from '../types';
 
 export const TicketGrid: FC = () => {
@@ -73,7 +70,6 @@ export const TicketGrid: FC = () => {
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
   const [searchTerm, setSearchTerm] = useState('');
-  const mobileSidebarState = useOverlayState();
 
   /*
    * Locks this page to the visible viewport so it never scrolls as a whole.
@@ -147,6 +143,27 @@ export const TicketGrid: FC = () => {
     },
     [setSearchParams],
   );
+  /*
+   * The user's saved columns and sort. The first page waits for it (it loads
+   * alongside everything else on this page), so the list is fetched once in
+   * the right order rather than once by default and again by preference.
+   */
+  const ticketsLayout = useTicketsLayout(selectedTab);
+  const activeSort = ticketsLayout.layout.state.sorting[0];
+  const sortBy = activeSort ? TICKET_SORT_KEYS[activeSort.id] : undefined;
+  const sort = useMemo(
+    () =>
+      sortBy
+        ? {
+            sortBy,
+            sortDirection: (activeSort?.desc ? 'desc' : 'asc') as
+              | 'asc'
+              | 'desc',
+          }
+        : null,
+    [sortBy, activeSort?.desc],
+  );
+
   const {
     items,
     totalCount,
@@ -168,18 +185,8 @@ export const TicketGrid: FC = () => {
       {},
       user?.profile?.sub,
     ),
+    { sort, enabled: ticketsLayout.isReady },
   );
-
-  /*
-   * The sidebar's highlight is DERIVED from `filters`, not stored alongside it.
-   *
-   * These used to be their own useState, which meant "Clear Filters" could wipe
-   * `filters` while the sidebar went on highlighting a category and the tag
-   * chips stayed lit — two sources of truth for one piece of state. Deriving
-   * them makes that desync unrepresentable: clearing the filters returns the
-   * sidebar to "All categories" on its own, with nothing left to keep in sync.
-   */
-  const selectedCategoryId = filters.categoryId?.[0] ?? null;
 
   /*
    * WHO OWNS THE ASSIGNEE FILTER.
@@ -219,8 +226,8 @@ export const TicketGrid: FC = () => {
    * tickets are categorised. This fills it in the same way assignee and
    * requester names are already enriched above.
    *
-   * No extra request: TicketSidebar on this page already fetches this hook's
-   * ['helpdesk-categories'] query, so this reads the same React Query cache.
+   * No extra request: the Category filter on this page reads the same
+   * ['helpdesk-categories'] query, so this shares its React Query cache.
    *
    * Deliberately NOT filtered by isActive: a ticket filed under a category
    * that was later deactivated still needs its name shown.
@@ -332,76 +339,26 @@ export const TicketGrid: FC = () => {
     totalCount,
     pagination,
     onPaginationChange: setPagination,
+    layout: ticketsLayout.layout,
   });
 
   /*
-   * Shed columns, least load-bearing first, when the grid is too narrow to hold
-   * them all.
-   *
-   * The grid is `table-layout: fixed` and the column `size` values behave as a
-   * MINIMUM total (1368px with every column in). Wider than that, columns scale
-   * up and nothing scrolls; narrower, the shortfall becomes horizontal scroll
-   * no matter how the widths are shuffled, so something has to give.
-   *
-   * Columns go in SHED_ORDER until the rest fit, measured from the columns
-   * actually present (Scope exists only for service admins), so the order is
-   * the whole rule and there are no hand-kept pixel thresholds to drift.
-   *
-   * Order, and why:
-   *   ID        first. Eight characters of a GUID; Subject is already the link.
-   *   Updated   Created answers "how old is this?" on its own.
-   *   Scope     which organisation owns it; worth keeping, but not over people.
-   *   Created   the date, before the people on the ticket.
-   *   Category  before Requester.
-   *   Requester last of the optional columns. It used to go second, so on a
-   *             laptop (a table area of roughly 900 to 1000px) nobody could see
-   *             who raised a ticket while Created and Category stayed.
-   * Subject, Status, Priority, Assignee and the actions never go; below their
-   * total the grid scrolls sideways rather than lose them.
+   * Overdue rows carry a 4px red bar on their first cell. An inset shadow
+   * rather than a border, so the row's checkbox stays in line with the rest.
+   * The scope-colour rowMarker is not used on Tickets.
    */
-  useLayoutEffect(() => {
-    const el = tableAreaRef.current;
-    if (!el) return undefined;
+  const now = useMinuteTick();
+  const getCellClassName = useCallback(
+    ({
+      row,
+      cell,
+    }: { row: { original: TicketRow }; cell: { column: { id: string } } }) =>
+      cell.column.id === 'select' && isTicketOverdue(row.original, now)
+        ? 'shadow-[inset_4px_0_0_#ae2e24]'
+        : undefined,
+    [now],
+  );
 
-    const SHED_ORDER = [
-      'id',
-      'updatedAt',
-      'scope',
-      'createdAt',
-      'categoryName',
-      'requester',
-    ];
-
-    const apply = () => {
-      const width = el.clientWidth;
-      const columns = table.getAllLeafColumns();
-      let total = columns.reduce((sum, c) => sum + c.getSize(), 0);
-      const visibility: Record<string, boolean> = {};
-      for (const id of SHED_ORDER) {
-        const column = columns.find(c => c.id === id);
-        if (!column) continue;
-        const fits = total <= width;
-        visibility[id] = fits;
-        if (!fits) total -= column.getSize();
-      }
-      // A column is hidden only while everything shed before it still did not
-      // make room, so re-check in reverse: give back anything that fits now.
-      for (const id of [...SHED_ORDER].reverse()) {
-        const column = columns.find(c => c.id === id);
-        if (!column || visibility[id]) continue;
-        if (total + column.getSize() <= width) {
-          visibility[id] = true;
-          total += column.getSize();
-        }
-      }
-      table.setColumnVisibility(visibility);
-    };
-
-    apply();
-    const observer = new ResizeObserver(apply);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [table]);
   /*
    * The table area fills whatever height the page-height chain gives it, and
    * the rows scroll inside it. Page size stays a fixed, user-chosen number.
@@ -419,7 +376,6 @@ export const TicketGrid: FC = () => {
    * row is ordinary scrolling and is what the other platform grids do; the gap
    * it was trying to avoid was worse than the sliver it avoided.
    */
-  const tableAreaRef = useRef<HTMLDivElement>(null);
 
   /*
    * The badges are scoped by whatever YOU filtered, so each one counts the list
@@ -685,10 +641,8 @@ export const TicketGrid: FC = () => {
         ...prev,
         categoryId: categoryId ? [categoryId] : undefined,
       }));
-      // Close mobile drawer after selecting a category
-      mobileSidebarState.close();
     },
-    [setFilters, mobileSidebarState],
+    [setFilters],
   );
 
   const handleTabChange = useCallback(
@@ -716,11 +670,9 @@ export const TicketGrid: FC = () => {
   );
 
   /*
-   * Assignee is one filter with two ways in: this rail for the busiest few,
-   * and the toolbar autocomplete for anyone else, including people with
-   * nothing open. Both write `filters.assigneeId` and the rail's highlight is
-   * DERIVED from it, so they cannot disagree the way the old category pair
-   * could.
+   * The Assignee filter. It writes `filters.assigneeId`, and what it shows is
+   * DERIVED from it (railAssigneeId), so the control and the list cannot
+   * disagree.
    */
   const handleAssigneeSelect = useCallback(
     (assigneeId?: string) => {
@@ -767,28 +719,6 @@ export const TicketGrid: FC = () => {
     [setFilters, selectedTab, setSelectedTab, currentUserId],
   );
 
-  const sidebarProps = {
-    onCategorySelect: handleCategorySelect,
-    /*
-     * The rail highlights what YOU chose, so it reads railAssigneeId rather
-     * than the raw filter.
-     *
-     * On "Assigned to you" the tab sets the assignee itself, which lit your row
-     * even though you had not touched the rail. Rows toggle, so clicking your
-     * own name there deselected instead of selecting and dumped you back to an
-     * unfiltered All. Now that tab leaves the rail on "All assignees", and
-     * clicking any name, including your own, selects it and behaves identically.
-     */
-    selectedAssigneeId: railAssigneeId,
-    onAssigneeSelect: handleAssigneeSelect,
-    // So each person's count in the rail is the same figure the All tab shows
-    // once that person is selected.
-    ticketFilters: filters,
-    // Lets the sidebar highlight the active category and show "All categories"
-    // as selected when no filter is applied.
-    selectedCategoryId,
-  };
-
   return (
     <div
       ref={gridRootRef}
@@ -799,57 +729,12 @@ export const TicketGrid: FC = () => {
       // measured height authoritative.
       className="flex min-h-0 shrink-0 gap-0 overflow-hidden"
     >
-      {/* Desktop sidebar — always visible, hidden on mobile */}
-      {/*
-        No height of its own — it stretches to the row, which is now sized by the
-        flex chain above. An earlier attempt used `h-screen self-start`, but the
-        row starts BELOW the top navbar, so a 100vh sidebar hung roughly a
-        navbar-height past the bottom of the viewport: that alone made the page
-        scrollable and stretched the ticket column, which then rendered one extra
-        row.
-
-        `min-h-0` + `overflow-hidden` keep the category list from pushing the row
-        taller; the scroll region inside TicketSidebar absorbs it instead.
-      */}
-      <aside className="border-light bg-default-50 hidden min-h-0 w-64 flex-shrink-0 flex-col overflow-hidden border-r md:flex">
-        <TicketSidebar {...sidebarProps} />
-      </aside>
-
-      {/* Mobile sidebar — rendered as a Drawer overlay (HeroUI 3 compound pattern) */}
-      <DrawerRoot state={mobileSidebarState}>
-        <DrawerBackdrop isDismissable className="md:hidden">
-          <DrawerContent placement="left" className="max-w-72">
-            <DrawerDialog>
-              <DrawerBody>
-                <TicketSidebar
-                  {...sidebarProps}
-                  onClose={() => mobileSidebarState.close()}
-                />
-              </DrawerBody>
-            </DrawerDialog>
-          </DrawerContent>
-        </DrawerBackdrop>
-      </DrawerRoot>
-
       {/* Main content */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto px-4 py-4 md:px-6 md:py-6">
         <div className="shrink-0">
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {/* Hamburger button — mobile only */}
-              <IconTip label={'Open filter sidebar'}>
-                <button
-                  type="button"
-                  className="hover:bg-default-100 flex items-center justify-center rounded-md p-1.5 transition-colors md:hidden"
-                  aria-label="Open filter sidebar"
-                  onClick={() => mobileSidebarState.open()}
-                >
-                  <Icon name="Bars3Icon" className="text-default-600 h-5 w-5" />
-                </button>
-              </IconTip>
-              <h1 className="text-2xl font-semibold">Tickets</h1>
-            </div>
+            <h1 className="text-2xl font-semibold">Tickets</h1>
             <PermissionGuard
               requiredPermissions={[HelpdeskPermissions.TicketWrite]}
               fallback={null}
@@ -897,6 +782,17 @@ export const TicketGrid: FC = () => {
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}
+              assigneeId={railAssigneeId}
+              onAssigneeChange={handleAssigneeSelect}
+              onCategoryChange={handleCategorySelect}
+              columnsChooser={
+                <ColumnsChooser
+                  layout={ticketsLayout.layout}
+                  labels={ticketsLayout.labels}
+                  persisted={ticketsLayout.hasSaved}
+                  onReset={() => void ticketsLayout.reset()}
+                />
+              }
             />
           </div>
 
@@ -954,10 +850,7 @@ export const TicketGrid: FC = () => {
         {/* Table */}
         {/* min-h-0 lets BaseTable's own scroll region take the overflow. Without
             it this flex child sizes to its content and the page scrolls instead. */}
-        <div
-          ref={tableAreaRef}
-          className="relative flex min-h-0 flex-1 flex-col"
-        >
+        <div className="relative flex min-h-0 flex-1 flex-col">
           {/*
             pageSizeOptions + onPageSizeChange together are what render the
             "per page" dropdown (BaseTable derives showPageSizeSelector from
@@ -968,14 +861,12 @@ export const TicketGrid: FC = () => {
             which does not exist at 100/page, and the grid would come back empty.
           */}
           {/*
-            Keyed by the visible columns. BaseTable's body is a React.memo
-            whose props do not include column visibility, so when the effect
-            above hides columns the header updates and the body does not: the
-            rows keep every cell and slide out from under their headings.
-            That shows on returning to this page, when the tickets come from
-            cache and render before the columns are fitted; a full reload got
-            away with it only because the data arrived after the fit. A new
-            key redraws the body whenever the set of columns changes.
+            Keyed by the visible columns in their order. BaseTable's body is a
+            React.memo whose props do not include column visibility or order,
+            so hiding or moving a column in the chooser updated the header and
+            not the body: the rows kept their old cells and slid out from under
+            their headings. A new key redraws the body whenever the set or the
+            order of columns changes.
           */}
           <BaseTable
             key={table
@@ -984,8 +875,9 @@ export const TicketGrid: FC = () => {
               .join(',')}
             table={table}
             fullHeight
-            isLoading={isLoading || isLoadingUsers}
+            isLoading={isLoading || isLoadingUsers || !ticketsLayout.isReady}
             showInfo={false}
+            getCellClassName={getCellClassName}
             paginationTemplate={paginationTemplate}
             pageSizeOptions={[10, 25, 50, 100]}
             onPageSizeChange={size =>

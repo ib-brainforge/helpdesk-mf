@@ -192,7 +192,24 @@ export const fetchTicketCount = async (
   return data.totalCount ?? 0;
 };
 
-export const useTicketsData = (initialFilters?: TicketFilters) => {
+export interface TicketsSort {
+  /** The backend's SortBy key, e.g. "deadline". */
+  sortBy: string;
+  sortDirection: 'asc' | 'desc';
+}
+
+export const useTicketsData = (
+  initialFilters?: TicketFilters,
+  {
+    sort,
+    enabled = true,
+  }: {
+    /** Server-side sort across every page; omitted is the server's default. */
+    sort?: TicketsSort | null;
+    /** Held while the caller waits on something the first request depends on. */
+    enabled?: boolean;
+  } = {},
+) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
@@ -237,8 +254,14 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
     // Held while a name lookup the search depends on is running, so the grid
     // asks once with the full search rather than once without it and again.
-    enabled: search.ready,
-    queryKey: ['tickets', pagination, queryFilters, principalId ?? 'tenant'],
+    enabled: search.ready && enabled,
+    queryKey: [
+      'tickets',
+      pagination,
+      queryFilters,
+      principalId ?? 'tenant',
+      sort ?? null,
+    ],
     queryFn: async () => {
       // The same mapping fetchTicketCount uses. Written once so the rows and
       // the badge above them cannot ask different questions.
@@ -262,8 +285,8 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
             v.unassignedOnly,
             pagination.pageIndex + 1,
             pagination.pageSize,
-            undefined, // sortBy
-            undefined, // sortDirection
+            sort?.sortBy,
+            sort?.sortDirection,
             extraParams(queryFilters, true),
           );
         const principalResult = principalResponse.data;
@@ -290,8 +313,8 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
         v.unassignedOnly,
         pagination.pageIndex + 1,
         pagination.pageSize,
-        undefined, // sortBy
-        undefined, // sortDirection
+        sort?.sortBy,
+        sort?.sortDirection,
         extraParams(queryFilters, false),
       );
 

@@ -23,10 +23,10 @@ import { withSearchMatches } from './useTickets';
  * 1.6ms. The expense was the round trips, so the fix is to stop making them.
  * Locally the fan-out measured 76-382ms and this measures 18-35ms.
  *
- * WHY BOTH HOOKS CALL THIS RATHER THAN THE ENDPOINT DIRECTLY
- * useTicketTabCounts and useAssigneeTicketCounts both render on the tickets
- * page. They pass the same filters, so they build the same query key, and React
- * Query serves both from a single in-flight request. Two hooks, one call.
+ * WHY THE HOOKS CALL THIS RATHER THAN THE ENDPOINT DIRECTLY
+ * useTicketTabCounts and useScopedAssignees both render on the tickets page.
+ * When they pass the same filters they build the same query key, and React
+ * Query serves both from a single in-flight request.
  *
  * WHY THE COUNTS ARE INTERNALLY CONSISTENT
  * The server answers from a single GROUP BY, so every number comes from one
@@ -141,7 +141,7 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
   /*
    * Same scope branch as the grid and as the hooks this replaces. Counting in
    * the tenant scope while the rows come from the principal scope is the exact
-   * defect useAssigneeTicketCounts was written to stop repeating, so the
+   * defect the old assignee rail's counts were written to stop repeating, so the
    * principal has its own counts route rather than a tenant-scoped
    * approximation.
    */

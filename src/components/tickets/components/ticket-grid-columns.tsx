@@ -1,4 +1,9 @@
-import { ScopeCell, StatusBadge, UserCell } from '@/components/shared';
+import {
+  DeadlineChip,
+  StatusBadge,
+  UserCell,
+  getDeadlineState,
+} from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import type { UseScopeNamesResult } from '@/hooks/useScopeNames';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
@@ -7,7 +12,7 @@ import {
   buildStatusOptions,
   resolveStatusKey,
 } from '@/types/custom-status';
-import { TicketPriority, TicketStatus } from '@/types/ticket';
+import { TicketPriority, type TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { PermissionGuard } from '@brainforgeau/security';
@@ -85,41 +90,42 @@ const formatAge = (
 const TimeCell = ({
   date,
   timezone,
-  isOverdue = false,
 }: {
   date: string | Date | null | undefined;
   // Matches createTicketColumns' options.timezone, which is nullable.
   timezone?: string | null;
-  /** Marks the ticket as past its due date and still open. */
-  isOverdue?: boolean;
 }) => {
   if (!date) return <span className="text-default-400 text-sm">—</span>;
   const { label, absolute } = formatAge(date, timezone);
   return (
-    <span
-      title={isOverdue ? `${absolute} — overdue` : absolute}
-      className={`text-sm ${isOverdue ? 'text-red-dark font-semibold' : ''}`}
-    >
+    <span title={absolute} className="truncate text-sm">
       {label}
     </span>
   );
 };
 
 /**
- * Past its due date and not yet closed.
- *
- * Reads dueDate rather than measuring the ticket's age, so it agrees with the
- * backend: the Overdue tab, the Overdue report and the OverdueCondition
- * automation trigger all key off the same field. Computing an age here instead
- * would have produced a second, competing definition of overdue that silently
- * disagreed with the tab claiming to list them.
- *
- * A closed ticket is never overdue, however late it was.
+ * Open and past its next deadline (the first reply until there is one, then
+ * the fix). Read from the backend's deadline instants, so the red row marker,
+ * the chip and the Overdue tab all agree on one definition.
  */
-const isTicketOverdue = (row: TicketRow) =>
-  !!row.dueDate &&
-  row.status !== TicketStatus.Closed &&
-  new Date(row.dueDate).getTime() < Date.now();
+export const isTicketOverdue = (row: TicketRow, now: number = Date.now()) =>
+  getDeadlineState(row.deadline, now) === 'overdue';
+
+/** A plain single-line cell, truncated with the full text on hover. */
+const TextCell = ({ value }: { value?: string | null }) =>
+  value ? (
+    <span className="block truncate text-sm" title={value}>
+      {value}
+    </span>
+  ) : null;
+
+const ORIGIN_LABELS: Record<string, string> = {
+  Web: 'Web',
+  WebApp: 'Web',
+  Email: 'Email',
+  Api: 'API',
+};
 
 // Helper functions for status and priority display
 
@@ -141,12 +147,56 @@ interface CreateColumnsOptions {
   customStatuses?: CustomTicketStatusDto[];
   onChangePriority?: (ticketId: string, priority: TicketPriority) => void;
   timezone?: string | null;
-  /**
-   * Resolved tenant and organisation names. Omit to leave the Scope column out
-   * entirely, which is what callers without a `useScopeNames()` result get.
-   */
-  scopeNames?: UseScopeNamesResult;
+  /** Resolved company (tenant) and organisation names for their columns. */
+  scopeNames: UseScopeNamesResult;
 }
+
+/*
+ * Column ids, in the default order, and the ones hidden until a user shows
+ * them in the Columns chooser. TicketGrid's layout reads these, so a column
+ * added here appears in the chooser without further wiring.
+ */
+export const TICKET_COLUMN_LABELS: Record<string, string> = {
+  subject: 'Subject',
+  company: 'Company',
+  organisation: 'Organisation',
+  status: 'Status',
+  priority: 'Priority',
+  deadline: 'Deadline',
+  assignee: 'Assignee',
+  requester: 'Requester',
+  categoryName: 'Category',
+  createdAt: 'Created',
+  updatedAt: 'Updated',
+  origin: 'Via',
+  id: 'ID',
+};
+export const TICKET_DEFAULT_HIDDEN = [
+  'categoryName',
+  'createdAt',
+  'updatedAt',
+  'origin',
+  'id',
+];
+/**
+ * Column id to the backend's SortBy key. Only these sort, because only these
+ * sort on the server across every page; names resolved in the browser
+ * (company, organisation, people, category) cannot.
+ */
+export const TICKET_SORT_KEYS: Record<string, string> = {
+  subject: 'subject',
+  status: 'status',
+  priority: 'priority',
+  deadline: 'deadline',
+  createdAt: 'createdat',
+  updatedAt: 'modifiedat',
+};
+const sortable = (id: string) => id in TICKET_SORT_KEYS;
+
+const scopeName = (
+  id: string | null | undefined,
+  lookup: (id: string) => string | undefined,
+) => (id ? (lookup(id) ?? `${id.substring(0, 8)}...`) : null);
 
 export const createTicketColumns = (
   options: CreateColumnsOptions,
@@ -157,6 +207,7 @@ export const createTicketColumns = (
     header: ({ table }) => (
       <input
         type="checkbox"
+        aria-label="Select all tickets on this page"
         checked={table.getIsAllPageRowsSelected()}
         onChange={table.getToggleAllPageRowsSelectedHandler()}
         className="h-4 w-4 rounded border-default-300 text-primary focus:ring-primary"
@@ -165,6 +216,7 @@ export const createTicketColumns = (
     cell: ({ row }) => (
       <input
         type="checkbox"
+        aria-label="Select ticket"
         checked={row.getIsSelected()}
         onChange={row.getToggleSelectedHandler()}
         className="h-4 w-4 rounded border-default-300 text-primary focus:ring-primary"
@@ -172,41 +224,64 @@ export const createTicketColumns = (
     ),
     enableSorting: false,
     enableHiding: false,
+    enableResizing: false,
     size: 44,
-  }),
-  columnHelper.accessor('id', {
-    header: 'ID',
-    cell: ({ getValue }) => {
-      const value = getValue();
-      // Display short ID (first 8 characters)
-      const shortId = value?.substring(0, 8) ?? '—';
-      return <span className="font-mono text-xs">{shortId}</span>;
-    },
-    size: 70,
   }),
   columnHelper.accessor('subject', {
     header: 'Subject',
     cell: ({ getValue, row }) => {
-      const value = getValue();
+      const value = getValue() ?? 'Untitled Ticket';
       const unread = row.original.unreadForAgent;
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {unread && (
-            <span className="flex h-2 w-2">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-pulse absolute inline-flex h-2 w-2 rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
           )}
           <NavLink
             to={`/tickets/${row.original.id}`}
-            className="font-medium text-foreground hover:text-blue hover:underline"
+            title={value}
+            className="min-w-0 truncate font-medium text-foreground hover:text-blue hover:underline"
           >
-            {value ?? 'Untitled Ticket'}
+            {value}
           </NavLink>
         </div>
       );
     },
-    size: 230,
+    enableSorting: sortable('subject'),
+    size: 240,
+    minSize: 220,
+  }),
+  columnHelper.display({
+    id: 'company',
+    header: 'Company',
+    cell: ({ row }) => (
+      <TextCell
+        value={scopeName(
+          row.original.tenantId,
+          id => options.scopeNames.byTenantId.get(id)?.tenantName,
+        )}
+      />
+    ),
+    enableSorting: false,
+    size: 140,
+    minSize: 80,
+  }),
+  columnHelper.display({
+    id: 'organisation',
+    header: 'Organisation',
+    cell: ({ row }) => (
+      <TextCell
+        value={scopeName(row.original.organisationId, id =>
+          options.scopeNames.byOrganisationId.get(id),
+        )}
+      />
+    ),
+    enableSorting: false,
+    size: 140,
+    minSize: 80,
   }),
   columnHelper.accessor('status', {
     header: 'Status',
@@ -215,7 +290,9 @@ export const createTicketColumns = (
       const config = getStatusConfig(status);
       return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
+    enableSorting: sortable('status'),
     size: 104,
+    minSize: 80,
   }),
   columnHelper.accessor('priority', {
     header: 'Priority',
@@ -224,37 +301,18 @@ export const createTicketColumns = (
       const config = getPriorityConfig(priority);
       return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
-    size: 96,
+    enableSorting: sortable('priority'),
+    size: 88,
+    minSize: 72,
   }),
-  columnHelper.accessor('categoryName', {
-    header: 'Category',
-    cell: ({ getValue }) => <span>{getValue() ?? '—'}</span>,
-    size: 100,
+  columnHelper.display({
+    id: 'deadline',
+    header: 'Deadline',
+    cell: ({ row }) => <DeadlineChip deadline={row.original.deadline} />,
+    enableSorting: sortable('deadline'),
+    size: 136,
+    minSize: 100,
   }),
-  /*
-   * Where the ticket sits: tenant above, organisation below.
-   *
-   * Both are shown even though this grid is pinned to one tenant by a global
-   * query filter, so the tenant line repeats down the column. That is the
-   * point: scope is one fact and it is read whole, and matching the principal
-   * console means the column means the same thing wherever it appears.
-   */
-  ...(options.scopeNames
-    ? [
-        columnHelper.display({
-          id: 'scope',
-          header: 'Scope',
-          cell: ({ row }) => (
-            <ScopeCell
-              tenantId={row.original.tenantId}
-              organisationId={row.original.organisationId}
-              names={options.scopeNames as UseScopeNamesResult}
-            />
-          ),
-          size: 160,
-        }),
-      ]
-    : []),
   columnHelper.display({
     id: 'assignee',
     header: 'Assignee',
@@ -283,43 +341,77 @@ export const createTicketColumns = (
         <UserCell userInfo={assigneeUserInfo} fallbackName={assigneeName} />
       );
     },
+    enableSorting: false,
     size: 152,
+    minSize: 100,
   }),
   columnHelper.display({
     id: 'requester',
     header: 'Requester',
     cell: ({ row }) => {
       const { requesterUserInfo, requesterName } = row.original;
-      if (!row.original.requesterId) {
-        return <span className="text-sm text-muted-foreground">—</span>;
-      }
+      if (!row.original.requesterId) return null;
       return (
-        <UserCell userInfo={requesterUserInfo} fallbackName={requesterName} />
+        <UserCell
+          userInfo={requesterUserInfo}
+          fallbackName={requesterName}
+          showAvatar={false}
+        />
       );
     },
-    size: 152,
+    enableSorting: false,
+    size: 132,
+    minSize: 90,
+  }),
+  columnHelper.accessor('categoryName', {
+    header: 'Category',
+    cell: ({ getValue }) => <TextCell value={getValue()} />,
+    enableSorting: false,
+    size: 140,
+    minSize: 90,
   }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
-    cell: ({ getValue, row }) => (
-      <TimeCell
-        date={getValue()}
-        timezone={options.timezone}
-        isOverdue={isTicketOverdue(row.original)}
-      />
+    cell: ({ getValue }) => (
+      <TimeCell date={getValue()} timezone={options.timezone} />
     ),
+    enableSorting: sortable('createdAt'),
     size: 100,
+    minSize: 80,
   }),
   columnHelper.accessor('updatedAt', {
     header: 'Updated',
     cell: ({ getValue }) => (
       <TimeCell date={getValue()} timezone={options.timezone} />
     ),
+    enableSorting: sortable('updatedAt'),
     size: 100,
+    minSize: 80,
+  }),
+  columnHelper.accessor('origin', {
+    header: 'Via',
+    cell: ({ getValue }) => {
+      const origin = getValue() as string | undefined;
+      return (
+        <TextCell value={origin ? (ORIGIN_LABELS[origin] ?? origin) : null} />
+      );
+    },
+    enableSorting: false,
+    size: 80,
+    minSize: 60,
+  }),
+  columnHelper.accessor('id', {
+    header: 'ID',
+    cell: ({ getValue }) => (
+      <span className="font-mono text-xs">{getValue()?.substring(0, 8)}</span>
+    ),
+    enableSorting: false,
+    size: 80,
+    minSize: 70,
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Actions',
+    header: 'Action',
     cell: ({ row }) => (
       <PermissionGuard
         requiredPermissions={[HelpdeskPermissions.TicketWrite]}
@@ -422,6 +514,7 @@ export const createTicketColumns = (
     ),
     enableSorting: false,
     enableHiding: false,
-    size: 60,
+    enableResizing: false,
+    size: 56,
   }),
 ];

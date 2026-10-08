@@ -1,3 +1,5 @@
+import type { TicketDeadlineDto } from '@/api/local/deadlines';
+
 // Re-export types from generated client
 export {
   type HelpdeskApplicationTicketsDTOsTicketListDto,
@@ -61,6 +63,12 @@ export type TicketListDto = GeneratedTicketListDto & {
    * without fetching the whole ticket. Same generated-client caveat as above.
    */
   divisionId?: string | null;
+  /**
+   * The ticket's deadlines (first reply and fix), computed by the backend in
+   * the company's business hours. `policy` is always null on the list.
+   * Declared here until the client is regenerated.
+   */
+  deadline?: TicketDeadlineDto | null;
 };
 
 export type TicketDto = GeneratedTicketDto & {
@@ -96,7 +104,21 @@ export type TicketDto = GeneratedTicketDto & {
   // TODO: Remove these when helpdesk-backend-client exposes isDeleted and isSpam in TicketDto
   isDeleted?: boolean;
   isSpam?: boolean;
+  /** Deadlines with the policy summary filled. Until the client is regenerated. */
+  deadline?: TicketDeadlineDto | null;
+  /**
+   * Who a public reply is emailed to (the ticket's contact). Null when there is
+   * nobody to email, which disables "Reply by email". Until the client is
+   * regenerated.
+   */
+  emailRecipient?: TicketEmailRecipientDto | null;
 };
+
+export interface TicketEmailRecipientDto {
+  contactId: string | null;
+  name: string;
+  address: string;
+}
 
 export interface CustomFieldValueDto {
   fieldId: string;

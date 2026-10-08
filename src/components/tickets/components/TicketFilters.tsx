@@ -1,3 +1,5 @@
+import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
+import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { useTags } from '@/components/tags/hooks/useTags';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
@@ -17,22 +19,25 @@ import {
   BaseTagSelectItem,
   Icon,
 } from '@brainforgeau/components';
-import { type FC, useCallback, useMemo, useState } from 'react';
+import { type FC, type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useScopedAssignees } from '../hooks/useScopedAssignees';
 
 const scopeLabel = (option: ScopeOption) =>
   option.parentName ? `${option.name} (${option.parentName})` : option.name;
 
 /**
- * One level of the scope picker, rendered only when that level has more than
- * one option.
+ * One searchable single-select filter: a scope level, an assignee or a
+ * category. Rendered only when that level has more than one option.
  *
  * A picker offering a single value narrows nothing and just reads as a control
  * that does not work. Division is the live case: no context or ticket carries
  * one today, so it stays hidden until they exist rather than showing an empty
  * list and implying the data failed to load.
  */
-const ScopeLevel: FC<{
+const FilterAutocomplete: FC<{
   label: string;
+  /** "All companies"; defaults to "All {label}s". */
+  placeholder?: string;
   options: ScopeOption[];
   /**
    * Whether this level exists anywhere in the estate, before the cascade
@@ -42,7 +47,7 @@ const ScopeLevel: FC<{
   levelExists: boolean;
   value?: string;
   onChange: (id?: string) => void;
-}> = ({ label, options, levelExists, value, onChange }) => {
+}> = ({ label, placeholder, options, levelExists, value, onChange }) => {
   /*
    * Typeable rather than a plain select. A principal can hold hundreds of
    * tenants, and a list that long can only be found by scrolling, which is the
@@ -91,7 +96,7 @@ const ScopeLevel: FC<{
   const isEmpty = options.length === 0 && !value;
   const anyLabel = isEmpty
     ? `No ${label.toLowerCase()}s`
-    : `All ${label.toLowerCase()}s`;
+    : (placeholder ?? `All ${label.toLowerCase()}s`);
   const selected = options.find(option => option.id === value);
 
   return (
@@ -148,6 +153,16 @@ interface TicketFiltersProps {
   onFiltersChange: (filters: TicketFiltersType) => void;
   onSearch: (searchTerm: string) => void;
   searchTerm: string;
+  /**
+   * The person chosen in the Assignee filter. Not `filters.assigneeId`: the
+   * "Assigned to you" tab sets that for itself, and it is not a choice.
+   */
+  assigneeId?: string;
+  /** Owns the tab rules around a chosen person (see TicketGrid). */
+  onAssigneeChange: (assigneeId?: string) => void;
+  onCategoryChange: (categoryId: string | null) => void;
+  /** The Columns button, at the right of the second row. */
+  columnsChooser?: ReactNode;
 }
 
 export const TicketFilters: FC<TicketFiltersProps> = ({
@@ -155,6 +170,10 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   onFiltersChange,
   onSearch,
   searchTerm,
+  assigneeId,
+  onAssigneeChange,
+  onCategoryChange,
+  columnsChooser,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
@@ -203,6 +222,30 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       filters.tenantId,
     ],
   );
+  /*
+   * Assignee and Category options come from queries this page already runs
+   * (the assign picker and the Category column), so they add no request.
+   * Assignees are the people who can work tickets in the chosen company and
+   * organisation; categories are the tenant's own plus the Netcorp presets.
+   */
+  const { options: assigneeUsers } = useScopedAssignees({
+    tenantId: filters.tenantId,
+    organisationId: filters.organisationId,
+  });
+  const assigneeOptions: ScopeOption[] = useMemo(
+    () => assigneeUsers.map(u => ({ id: u.id, name: u.name })),
+    [assigneeUsers],
+  );
+  const { categories: ownedCategories } = useCategoriesData();
+  const { presets } = usePresetCategories(ownedCategories.map(c => c.id));
+  const categoryOptions: ScopeOption[] = useMemo(() => {
+    const byId = new Map<string, ScopeOption>();
+    for (const c of [...ownedCategories, ...presets]) {
+      if (c.id) byId.set(c.id, { id: c.id, name: c.name });
+    }
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [ownedCategories, presets]);
+
   const activeCustomStatuses = useMemo(
     () => customStatuses.filter(s => s.isActive),
     [customStatuses],
@@ -250,191 +293,213 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   }, [onFiltersChange, onSearch]);
 
   return (
-    <div className="flex w-full flex-wrap items-end gap-2.5">
-      <div className="min-w-60 flex-1">
-        <BaseInput
-          label="Search"
-          type="text"
-          placeholder="Search tickets..."
-          value={searchTerm}
-          onChange={e => onSearch(e.target.value)}
-          startContent={
-            <Icon name="search" className="h-4 w-4 text-default-400" />
-          }
+    <div className="flex w-full flex-col gap-2.5">
+      <div className="flex w-full flex-wrap items-end gap-2.5">
+        <div className="min-w-60 flex-1">
+          <BaseInput
+            label="Search"
+            type="text"
+            placeholder="Search tickets..."
+            value={searchTerm}
+            onChange={e => onSearch(e.target.value)}
+            startContent={
+              <Icon name="search" className="h-4 w-4 text-default-400" />
+            }
+          />
+        </div>
+
+        <FilterAutocomplete
+          label="Assignee"
+          placeholder="All assignees"
+          options={assigneeOptions}
+          levelExists
+          value={assigneeId}
+          onChange={id => onAssigneeChange(id)}
         />
-      </div>
 
-      <div className="min-w-40">
-        <BaseTagSelect
-          label="Status"
-          placeholder="Filter by status"
-          classNames={{ base: 'w-full [&_svg]:my-0' }}
-          value={[
-            ...(filters.status?.map(s => s.toString()) ?? []),
-            ...(filters.customStatusIds ?? []).map(
-              id => `${CUSTOM_STATUS_PREFIX}${id}`,
-            ),
-          ]}
-          onValueChange={handleStatusChange}
-        >
-          {[
-            <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>
-              New
-            </BaseTagSelectItem>,
-            <BaseTagSelectItem
-              key={TicketStatus.InProgress}
-              value={TicketStatus.InProgress}
-            >
-              In Progress
-            </BaseTagSelectItem>,
-            <BaseTagSelectItem
-              key={TicketStatus.Closed}
-              value={TicketStatus.Closed}
-            >
-              Closed
-            </BaseTagSelectItem>,
-            ...activeCustomStatuses.map(cs => (
+        <FilterAutocomplete
+          label="Category"
+          placeholder="All categories"
+          options={categoryOptions}
+          levelExists
+          value={filters.categoryId?.[0]}
+          onChange={id => onCategoryChange(id ?? null)}
+        />
+
+        <div className="min-w-40">
+          <BaseTagSelect
+            label="Status"
+            placeholder="Filter by status"
+            classNames={{ base: 'w-full [&_svg]:my-0' }}
+            value={[
+              ...(filters.status?.map(s => s.toString()) ?? []),
+              ...(filters.customStatusIds ?? []).map(
+                id => `${CUSTOM_STATUS_PREFIX}${id}`,
+              ),
+            ]}
+            onValueChange={handleStatusChange}
+          >
+            {[
               <BaseTagSelectItem
-                key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
-                value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+                key={TicketStatus.New}
+                value={TicketStatus.New}
               >
-                {cs.name}
-              </BaseTagSelectItem>
-            )),
-          ]}
-        </BaseTagSelect>
-      </div>
+                New
+              </BaseTagSelectItem>,
+              <BaseTagSelectItem
+                key={TicketStatus.InProgress}
+                value={TicketStatus.InProgress}
+              >
+                In Progress
+              </BaseTagSelectItem>,
+              <BaseTagSelectItem
+                key={TicketStatus.Closed}
+                value={TicketStatus.Closed}
+              >
+                Closed
+              </BaseTagSelectItem>,
+              ...activeCustomStatuses.map(cs => (
+                <BaseTagSelectItem
+                  key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+                  value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+                >
+                  {cs.name}
+                </BaseTagSelectItem>
+              )),
+            ]}
+          </BaseTagSelect>
+        </div>
 
-      <div className="min-w-40">
-        <BaseTagSelect
-          label="Priority"
-          placeholder="Filter by priority"
-          classNames={{ base: 'w-full [&_svg]:my-0' }}
-          value={filters.priority?.map(p => p.toString()) ?? []}
-          onValueChange={handlePriorityChange}
-        >
-          <BaseTagSelectItem
-            key={TicketPriority.Critical}
-            value={TicketPriority.Critical}
+        <div className="min-w-40">
+          <BaseTagSelect
+            label="Priority"
+            placeholder="Filter by priority"
+            classNames={{ base: 'w-full [&_svg]:my-0' }}
+            value={filters.priority?.map(p => p.toString()) ?? []}
+            onValueChange={handlePriorityChange}
           >
-            Critical
-          </BaseTagSelectItem>
-          <BaseTagSelectItem
-            key={TicketPriority.High}
-            value={TicketPriority.High}
-          >
-            High
-          </BaseTagSelectItem>
-          <BaseTagSelectItem
-            key={TicketPriority.Normal}
-            value={TicketPriority.Normal}
-          >
-            Normal
-          </BaseTagSelectItem>
-          <BaseTagSelectItem
-            key={TicketPriority.Low}
-            value={TicketPriority.Low}
-          >
-            Low
-          </BaseTagSelectItem>
-          {/* No "None" filter: None is no longer selectable anywhere a ticket is
+            <BaseTagSelectItem
+              key={TicketPriority.Critical}
+              value={TicketPriority.Critical}
+            >
+              Critical
+            </BaseTagSelectItem>
+            <BaseTagSelectItem
+              key={TicketPriority.High}
+              value={TicketPriority.High}
+            >
+              High
+            </BaseTagSelectItem>
+            <BaseTagSelectItem
+              key={TicketPriority.Normal}
+              value={TicketPriority.Normal}
+            >
+              Normal
+            </BaseTagSelectItem>
+            <BaseTagSelectItem
+              key={TicketPriority.Low}
+              value={TicketPriority.Low}
+            >
+              Low
+            </BaseTagSelectItem>
+            {/* No "None" filter: None is no longer selectable anywhere a ticket is
               created or edited, so filtering by it can only ever return legacy
               rows. The enum member is kept in the render mappings so those
               still display their label rather than falling through to
               "Unknown". */}
-        </BaseTagSelect>
-      </div>
-
-      {/* Tags, moved out of the sidebar. They are a filter, so they sit with
-          the filters instead of in a rail two controls away from them. */}
-      {tags.length > 0 && (
-        <div className="min-w-44">
-          <BaseTagSelect
-            label="Tags"
-            placeholder="Filter by tag"
-            classNames={{ base: 'w-full [&_svg]:my-0' }}
-            value={filters.tagIds ?? []}
-            onValueChange={(value: string[]) =>
-              onFiltersChange({
-                ...filters,
-                tagIds: value.length > 0 ? value : undefined,
-              })
-            }
-          >
-            {tags.map(tag => (
-              <BaseTagSelectItem key={tag.id} value={tag.id as string}>
-                {tag.name}
-              </BaseTagSelectItem>
-            ))}
           </BaseTagSelect>
         </div>
-      )}
 
-      {/* Scope, for Netcorp staff whose rows span tenants. A tenant user has
+        {/* Tags, moved out of the sidebar. They are a filter, so they sit with
+          the filters instead of in a rail two controls away from them. */}
+        {tags.length > 0 && (
+          <div className="min-w-44">
+            <BaseTagSelect
+              label="Tags"
+              placeholder="Filter by tag"
+              classNames={{ base: 'w-full [&_svg]:my-0' }}
+              value={filters.tagIds ?? []}
+              onValueChange={(value: string[]) =>
+                onFiltersChange({
+                  ...filters,
+                  tagIds: value.length > 0 ? value : undefined,
+                })
+              }
+            >
+              {tags.map(tag => (
+                <BaseTagSelectItem key={tag.id} value={tag.id as string}>
+                  {tag.name}
+                </BaseTagSelectItem>
+              ))}
+            </BaseTagSelect>
+          </div>
+        )}
+      </div>
+
+      <div className="flex w-full flex-wrap items-end gap-2.5">
+        {/* Scope, for Netcorp staff whose rows span companies. A tenant user has
           exactly one of each, so these render nothing for them. */}
-      {isServiceAdmin && (
-        <>
-          <ScopeLevel
-            label="Tenant"
-            options={tenantOptions}
-            levelExists={tenantOptions.length > 0}
-            value={filters.tenantId}
-            // Changing the tenant drops the organisation and division with it.
-            // They sit underneath the old tenant, so keeping them would leave a
-            // combination that describes nothing: "this tenant, and an
-            // organisation belonging to a different one" matches no ticket, and
-            // the grid would read empty for a reason nothing on screen explains.
-            onChange={id =>
-              onFiltersChange({
-                ...filters,
-                tenantId: id,
-                organisationId: undefined,
-                divisionId: undefined,
-              })
-            }
-          />
-          <ScopeLevel
-            label="Organisation"
-            options={scopedOrganisations}
-            levelExists={organisationOptions.length > 0}
-            value={filters.organisationId}
-            onChange={id =>
-              onFiltersChange({
-                ...filters,
-                organisationId: id,
-                divisionId: undefined,
-              })
-            }
-          />
-          <ScopeLevel
-            label="Division"
-            options={scopedDivisions}
-            levelExists={divisionOptions.length > 0}
-            value={filters.divisionId}
-            onChange={id => onFiltersChange({ ...filters, divisionId: id })}
-          />
-        </>
-      )}
+        {isServiceAdmin && (
+          <>
+            <FilterAutocomplete
+              label="Company"
+              placeholder="All companies"
+              options={tenantOptions}
+              levelExists={tenantOptions.length > 0}
+              value={filters.tenantId}
+              // Changing the tenant drops the organisation and division with it.
+              // They sit underneath the old tenant, so keeping them would leave a
+              // combination that describes nothing: "this tenant, and an
+              // organisation belonging to a different one" matches no ticket, and
+              // the grid would read empty for a reason nothing on screen explains.
+              onChange={id =>
+                onFiltersChange({
+                  ...filters,
+                  tenantId: id,
+                  organisationId: undefined,
+                  divisionId: undefined,
+                })
+              }
+            />
+            <FilterAutocomplete
+              label="Organisation"
+              options={scopedOrganisations}
+              levelExists={organisationOptions.length > 0}
+              value={filters.organisationId}
+              onChange={id =>
+                onFiltersChange({
+                  ...filters,
+                  organisationId: id,
+                  divisionId: undefined,
+                })
+              }
+            />
+            <FilterAutocomplete
+              label="Division"
+              options={scopedDivisions}
+              levelExists={divisionOptions.length > 0}
+              value={filters.divisionId}
+              onChange={id => onFiltersChange({ ...filters, divisionId: id })}
+            />
+          </>
+        )}
 
-      {/* No Category filter here: the sidebar lists every category and is the
-          single place to pick one. Two controls writing the same
-          filters.categoryId meant the toolbar could show a category the
-          sidebar had not highlighted, and vice versa. */}
+        {/* The Assignee and Category filters above are the only place to pick
+          either: the explorer rail that also did it is gone, so two controls
+          can no longer write the same field. Assignee offers the people who
+          can work tickets in the chosen scope, not the whole directory. */}
 
-      {/* No Assignee filter here either: the sidebar rail is the single place
-          to pick a person, and its number is that person's ticket count in the
-          same scope the tabs use. The toolbar autocomplete that used to sit
-          here searched the whole directory, so it could offer people the rail
-          never shows. */}
-
-      <div className="flex gap-2">
-        <BaseButton
-          variant="bordered"
-          onPress={handleClearFilters}
-          icon={<Icon name="x" className="h-4 w-4" />}
-        >
-          Clear Filters
-        </BaseButton>
+        <div className="flex gap-2">
+          <BaseButton
+            variant="bordered"
+            color="light"
+            onPress={handleClearFilters}
+            icon={<Icon name="x" className="h-4 w-4" />}
+          >
+            Clear Filters
+          </BaseButton>
+        </div>
+        {columnsChooser && <div className="ml-auto">{columnsChooser}</div>}
       </div>
     </div>
   );
