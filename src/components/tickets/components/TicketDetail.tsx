@@ -27,7 +27,6 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { CommentType } from '@/types/comment';
 import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
@@ -89,8 +88,6 @@ import {
 import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { TicketHistory } from './TicketHistory';
-
-const SYSTEM_LOG_PREF_KEY = 'helpdesk:show-system-log';
 
 export interface TicketDetailProps {
   ticketId?: string;
@@ -217,32 +214,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
 
   // Wave 6 modal state
   const [isAddSubtaskModalOpen, setIsAddSubtaskModalOpen] = useState(false);
-
-  // Hide/Show System Log — persisted in localStorage
-  const [showSystemLog, setShowSystemLog] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(SYSTEM_LOG_PREF_KEY);
-      return saved === null ? true : saved === 'true';
-    } catch {
-      return true;
-    }
-  });
-
-  const handleToggleSystemLog = useCallback(() => {
-    setShowSystemLog(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SYSTEM_LOG_PREF_KEY, String(next));
-      } catch {
-        // localStorage unavailable — ignore
-      }
-      return next;
-    });
-  }, []);
-
-  const visibleComments = showSystemLog
-    ? comments
-    : comments.filter(c => c.commentType !== CommentType.SystemMessage);
 
   const handleUpdate = useCallback(
     (updates: any) => {
@@ -887,14 +858,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                               Print
                             </DropdownItem>
                             <DropdownItem
-                              key="systemlog"
-                              onPress={handleToggleSystemLog}
-                            >
-                              {showSystemLog
-                                ? 'Hide System Log'
-                                : 'Show System Log'}
-                            </DropdownItem>
-                            <DropdownItem
                               key="summary"
                               onPress={() => handleComingSoon('Ticket Summary')}
                             >
@@ -1086,7 +1049,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               <h3 className="mb-3 text-base font-semibold">Conversation</h3>
               <div className="space-y-4">
                 <CommentThread
-                  comments={visibleComments}
+                  comments={comments}
                   isLoading={commentsLoading}
                   ticketId={id}
                 />

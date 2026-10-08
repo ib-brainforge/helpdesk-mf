@@ -20,6 +20,17 @@ interface CommentThreadProps {
 /** Messages shown in full at the bottom; anything older collapses to a line. */
 const EXPANDED_TAIL = 2;
 
+/**
+ * A system log line ("Ticket forwarded to ...") rather than a message. The
+ * conversation is messages only: who changed what lives in the ticket's
+ * History. A system line that carries an email (the New Request confirmation
+ * sent to the contact) is a message the customer received, so it stays and
+ * renders like any other email, with its status and Retry.
+ */
+const isLogLine = (comment: CommentDto): boolean =>
+  (fromApiCommentType(comment.commentType) ?? CommentType.Reply) ===
+    CommentType.SystemMessage && !comment.email;
+
 const toPlainText = (html: string): string => {
   if (typeof DOMParser === 'undefined') return html.replace(/<[^>]*>/g, ' ');
   const doc = new DOMParser().parseFromString(
@@ -109,14 +120,16 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
    */
   const { userMap } = useUserEnrichment(comments.map(c => c.authorId));
 
-  // Oldest first, so the newest sits next to the composer.
+  // Messages only, oldest first, so the newest sits next to the composer.
   const ordered = useMemo(
     () =>
-      [...comments].sort(
-        (a, b) =>
-          new Date(a.createdAt ?? 0).getTime() -
-          new Date(b.createdAt ?? 0).getTime(),
-      ),
+      comments
+        .filter(c => !isLogLine(c))
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt ?? 0).getTime() -
+            new Date(b.createdAt ?? 0).getTime(),
+        ),
     [comments],
   );
 
@@ -135,7 +148,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     );
   }
 
-  if (comments.length === 0) {
+  if (ordered.length === 0) {
     return (
       <EmptyState
         title="No messages yet"
@@ -155,15 +168,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     comment.email?.from.name ||
     'Unknown user';
 
-  // Older than the last EXPANDED_TAIL real messages (system lines don't count).
-  const messageIds = ordered
-    .filter(
-      c =>
-        (fromApiCommentType(c.commentType) ?? CommentType.Reply) !==
-        CommentType.SystemMessage,
-    )
-    .map(c => c.id ?? '');
-  const tail = new Set(messageIds.slice(-EXPANDED_TAIL));
+  // Older than the last EXPANDED_TAIL messages collapse to a line.
+  const tail = new Set(ordered.slice(-EXPANDED_TAIL).map(c => c.id ?? ''));
 
   return (
     <div
@@ -175,24 +181,6 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         const type =
           fromApiCommentType(comment.commentType) ?? CommentType.Reply;
         const time = formatDateTime(comment.createdAt, { timezone });
-
-        if (type === CommentType.SystemMessage) {
-          return (
-            <div
-              key={id}
-              className="flex items-center gap-2 px-1 text-xs text-default-500"
-            >
-              <Icon name="info" className="h-3.5 w-3.5 shrink-0" />
-              <span
-                className="min-w-0 flex-1 truncate"
-                title={toPlainText(comment.body ?? '')}
-              >
-                {toPlainText(comment.body ?? '')}
-              </span>
-              <span className="shrink-0">{time}</span>
-            </div>
-          );
-        }
 
         const name = authorName(comment);
         const isNote = type === CommentType.InternalNote;
