@@ -53,10 +53,12 @@ export function PrincipalSidenav({
 
   const adminOnlyItems: NavItem[] = [
     {
-      label: 'SLA policies',
-      href: `${base}/sla-policies`,
+      // Deadlines are edited per company under Configuration, the one place
+      // for them. This console's own SLA policy pages were retired.
+      label: 'Company Deadlines',
+      href: '/configuration/company-deadlines',
       icon: 'clock',
-      testId: 'nav-principal-sla-policies',
+      testId: 'nav-principal-company-deadlines',
     },
     {
       label: 'Categories',

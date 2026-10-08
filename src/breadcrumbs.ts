@@ -109,9 +109,6 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/principal/[principalId]/categories/page.tsx
 // routes/principal/[principalId]/categories/new/page.tsx
 // routes/principal/[principalId]/categories/[id]/page.tsx
-// routes/principal/[principalId]/sla-policies/page.tsx
-// routes/principal/[principalId]/sla-policies/new/page.tsx
-// routes/principal/[principalId]/sla-policies/[id]/page.tsx
 // routes/principal/[principalId]/workflows/page.tsx
 // routes/principal/[principalId]/workflows/[id]/page.tsx
 // routes/principal/[principalId]/automations/page.tsx
@@ -679,58 +676,6 @@ export const breadcrumbs = {
     {
       labelKey: 'helpdesk.configuration.categories',
       href: `/principal/${params.principalId}/categories`,
-    },
-    { label: params.name },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/page.tsx — "SLA" is an acronym */
-  'principal.sla-policies.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/new/page.tsx */
-  'principal.sla-policies.new': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-    { label: 'New SLA Policy' },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/[id]/page.tsx */
-  'principal.sla-policies.detail': (params: {
-    principalId: string;
-    principalName: string;
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
     },
     { label: params.name },
   ],
