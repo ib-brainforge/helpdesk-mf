@@ -5,6 +5,7 @@ import { Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { useTimezone } from '@brainforgeau/security';
 import { type FC, useMemo, useRef, useState } from 'react';
+import { useAssetsByIds } from '../hooks/useAssets';
 import { useTicketHistory } from '../hooks/useTicketHistory';
 import {
   type HistoryNameLookup,
@@ -19,6 +20,8 @@ const PENDING_NAME = '...';
 
 export interface TicketHistoryProps {
   ticketId: string;
+  /** The ticket's company, where asset names are looked up. */
+  tenantId?: string | null;
 }
 
 /**
@@ -29,7 +32,10 @@ export interface TicketHistoryProps {
  * look. Then 20 rows at a time with "Show more". The conversation above is
  * for messages; this is for who changed what.
  */
-export const TicketHistory: FC<TicketHistoryProps> = ({ ticketId }) => {
+export const TicketHistory: FC<TicketHistoryProps> = ({
+  ticketId,
+  tenantId,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const timezone = useTimezone();
   const {
@@ -63,6 +69,21 @@ export const TicketHistory: FC<TicketHistoryProps> = ({ ticketId }) => {
   if (!usersLoading) knownUsers.current = userMap;
   const users = usersLoading ? knownUsers.current : userMap;
 
+  // Asset names the same way the Vehicles card gets them, under the same
+  // cache keys, so an asset still linked costs nothing more.
+  const assetIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          items
+            .map(item => item.details?.assetId)
+            .filter((id): id is string => !!id),
+        ),
+      ),
+    [items],
+  );
+  const assets = useAssetsByIds(assetIds, tenantId);
+
   // Cached from the page's company pills, so no extra request.
   const scopeNames = useScopeNames();
 
@@ -71,9 +92,14 @@ export const TicketHistory: FC<TicketHistoryProps> = ({ ticketId }) => {
       user: id => (id in users ? users[id]?.name : PENDING_NAME),
       company: id => scopeNames.byTenantId.get(id)?.tenantName,
       organisation: id => scopeNames.byOrganisationId.get(id),
+      asset: id => {
+        const asset = assets[id];
+        if (asset === undefined) return PENDING_NAME;
+        return asset?.assetName?.trim() || undefined;
+      },
       dateTime: iso => formatDateTimeAmPm(iso, timezone),
     }),
-    [users, scopeNames, timezone],
+    [users, scopeNames, assets, timezone],
   );
 
   const actorName = (actorUserId: string | null): string => {

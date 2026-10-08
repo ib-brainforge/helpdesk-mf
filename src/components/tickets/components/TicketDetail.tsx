@@ -1330,7 +1330,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             )}
 
             {/* Who changed what, collapsed until asked for. */}
-            <TicketHistory ticketId={id ?? ''} />
+            <TicketHistory ticketId={id ?? ''} tenantId={ticket.tenantId} />
           </div>
 
           {/* Sidebar */}

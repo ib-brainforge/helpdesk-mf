@@ -14,6 +14,8 @@ export interface HistoryNameLookup {
   user: (id: string) => string | undefined;
   company: (id: string) => string | undefined;
   organisation: (id: string) => string | undefined;
+  /** An asset's name; the backend stores only the asset id. */
+  asset: (id: string) => string | undefined;
   /** An ISO instant as the app shows it ("08/10/2026 4:12 pm"). */
   dateTime: (iso: string) => string;
 }
@@ -46,6 +48,13 @@ export const humaniseEventType = (eventType: string): string => {
 const named = (noun: string, name: string | undefined, verb: string): string =>
   name ? `${noun} ${name} ${verb}` : `${noun} ${verb}`;
 
+/** "Sarah Chen <sarah@x.com>" reads "Sarah Chen"; a bare address stays. */
+const person = (value: string | undefined): string | undefined => {
+  if (!value) return undefined;
+  const match = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(value);
+  return match ? match[1] || match[2] : value;
+};
+
 const shortId = (id: string | null | undefined): string =>
   id ? `#${id.slice(0, 8)}` : 'another ticket';
 
@@ -73,6 +82,10 @@ export const describeHistoryEvent = (
   const user = (key: string): string | undefined => {
     const id = v(key);
     return id ? (names.user(id) ?? 'a former user') : undefined;
+  };
+  const asset = (): string | undefined => {
+    const id = v('assetId');
+    return id ? names.asset(id) : undefined;
   };
   const when = (key: string): string | undefined => {
     const iso = v(key);
@@ -187,12 +200,12 @@ export const describeHistoryEvent = (
     case 'AssetLinked':
       return {
         icon: 'TruckIcon',
-        text: named('Asset', v('assetName'), 'linked'),
+        text: named('Asset', asset(), 'linked'),
       };
     case 'AssetUnlinked':
       return {
         icon: 'TruckIcon',
-        text: named('Asset', v('assetName'), 'unlinked'),
+        text: named('Asset', asset(), 'unlinked'),
       };
     case 'AttachmentAdded':
       return {
@@ -207,20 +220,27 @@ export const describeHistoryEvent = (
     case 'EmailSent':
       return {
         icon: 'EnvelopeIcon',
-        text: `Email reply sent to ${v('toName') || v('toAddress') || 'the contact'}`,
+        text: `Email reply sent to ${person(v('to')) ?? 'the contact'}`,
       };
     case 'EmailReceived':
       return {
         icon: 'EnvelopeOpenIcon',
-        text: `Email received from ${v('fromName') || v('fromAddress') || 'the contact'}`,
+        text: `Email received from ${person(v('from')) ?? 'the contact'}`,
       };
     case 'EmailFailed': {
-      const reason = v('reason');
+      // No recipient when it never got that far (no mailbox, no contact).
+      const to = person(v('to'));
+      const reason = v('reason') ? ` (${v('reason')})` : '';
       return {
         icon: 'ExclamationTriangleIcon',
-        text: `Email to ${v('toAddress') || 'the contact'} failed${reason ? ` (${reason})` : ''}`,
+        text: to ? `Email to ${to} failed${reason}` : `Email not sent${reason}`,
       };
     }
+    case 'CustomFieldChanged':
+      return {
+        icon: 'PencilSquareIcon',
+        text: v('field') ? `${v('field')} changed` : 'Custom field changed',
+      };
     case 'Forwarded':
       return {
         icon: 'ArrowUturnRightIcon',
