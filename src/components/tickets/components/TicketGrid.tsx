@@ -6,6 +6,7 @@ import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomS
 import { useMinuteTick } from '@/components/shared';
 import { ColumnsChooser } from '@/components/shared/table-layout';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import type {
@@ -317,6 +318,8 @@ export const TicketGrid: FC = () => {
   // Tenant-defined statuses, offered by the row menu alongside the built-in
   // three and applied through the same status patch.
   const { customStatuses } = useCustomStatuses();
+  // The company the custom statuses above belong to.
+  const { tenantId: viewerTenantId } = useHelpdeskAccess();
 
   // Tenant and organisation names for the Scope column; tickets carry ids only.
   const scopeNames = useScopeNames();
@@ -338,6 +341,7 @@ export const TicketGrid: FC = () => {
         timezone,
         scopeNames,
         customStatuses,
+        customStatusTenantId: viewerTenantId,
       }),
     [
       canAssign,
@@ -348,6 +352,7 @@ export const TicketGrid: FC = () => {
       timezone,
       scopeNames,
       customStatuses,
+      viewerTenantId,
     ],
   );
 
@@ -961,6 +966,9 @@ export const TicketGrid: FC = () => {
           onClose={() => setIsBulkStatusModalOpen(false)}
           onConfirm={handleBulkStatusConfirm}
           ticketCount={selectedRows.length}
+          allowCustomStatuses={selectedRows.every(
+            r => r.original.tenantId === viewerTenantId,
+          )}
         />
         <NewRequestModal
           isOpen={isNewRequestOpen}

@@ -147,6 +147,12 @@ interface CreateColumnsOptions {
   ) => void;
   /** Tenant-defined statuses to offer alongside the built-in three. */
   customStatuses?: CustomTicketStatusDto[];
+  /**
+   * The company those custom statuses belong to (the viewer's). Another
+   * company's row is offered the built-in three only: the backend refuses a
+   * custom status from a different company.
+   */
+  customStatusTenantId?: string;
   onChangePriority?: (ticketId: string, priority: TicketPriority) => void;
   timezone?: string | null;
   /** Resolved company (tenant) and organisation names for their columns. */
@@ -499,7 +505,9 @@ export const createTicketColumns = (
                 be applied from the ticket page but not from the grid.
               */}
               {buildStatusOptions(
-                options.customStatuses ?? [],
+                row.original.tenantId === options.customStatusTenantId
+                  ? (options.customStatuses ?? [])
+                  : [],
                 row.original.customStatusId,
               ).map(opt => (
                 <DropdownItem
