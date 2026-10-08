@@ -5,7 +5,8 @@
  * The table owns search-filtered rows. The page owns searchTerm state and passes
  * it in, allowing <ListPage filters={...}> to wire the search input.
  */
-import { IconTip, StatusBadge } from '@/components/shared';
+import { IconTip, StatusBadge, UserCell } from '@/components/shared';
+import type { UserInfo } from '@/hooks/useUserEnrichment';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { Icon } from '@brainforgeau/components/base';
@@ -24,23 +25,19 @@ export type CategoryRow = CategoryDto & { sectionName?: string };
 
 const columnHelper = createColumnHelper<CategoryRow>();
 
-const getAccessLevelColor = (level: AccessLevel) => {
-  const colors: Record<AccessLevel, 'default' | 'primary' | 'warning'> = {
-    [AccessLevel.Everyone]: 'default',
-    [AccessLevel.AgentsOnly]: 'primary',
-    [AccessLevel.AdminsOnly]: 'warning',
-  };
-  return colors[level] ?? 'default';
-};
-
-const getAccessLevelName = (level: AccessLevel): string => {
-  const names: Record<AccessLevel, string> = {
-    [AccessLevel.Everyone]: 'Everyone',
-    [AccessLevel.AgentsOnly]: 'Agents Only',
-    [AccessLevel.AdminsOnly]: 'Admins Only',
-  };
-  return names[level] ?? 'Unknown';
-};
+/**
+ * Who can log a ticket in the category, in the words the request form's users
+ * would use. Everyone is the ordinary case and stays plain text; the
+ * restricted levels get a solid chip so they stand out.
+ */
+const WhoCanUseIt = ({ level }: { level: AccessLevel }) =>
+  level === AccessLevel.AgentsOnly ? (
+    <StatusBadge color="primary">Techs only</StatusBadge>
+  ) : level === AccessLevel.AdminsOnly ? (
+    <StatusBadge color="warning">Admins only</StatusBadge>
+  ) : (
+    <span className="text-default-600 text-sm">Clients and techs</span>
+  );
 
 interface UseCategoryTableOptions {
   categories: CategoryDto[];
@@ -56,6 +53,14 @@ interface UseCategoryTableOptions {
    * tenant's to do.
    */
   presetIds?: Set<string>;
+  /** Show the Section column. Off while categories are presets only. */
+  showSections?: boolean;
+  /** Open tickets per category id; undefined hides the counts (tenant users). */
+  openCounts?: Map<string, number>;
+  /** Names for the Default assignee column, from useUserEnrichment. */
+  userMap?: Record<string, UserInfo | null | undefined>;
+  /** Opens the default assignee picker; undefined makes the column read only. */
+  onSetDefaultAssignee?: (category: CategoryDto) => void;
 }
 
 export function useCategoryTable({
@@ -65,44 +70,91 @@ export function useCategoryTable({
   onEditCategory,
   onDeleteCategory,
   presetIds,
+  showSections = true,
+  openCounts,
+  userMap,
+  onSetDefaultAssignee,
 }: UseCategoryTableOptions) {
   const columns = useMemo(
     (): ColumnDef<CategoryRow, any>[] => [
       columnHelper.display({
         id: 'name',
         header: 'Name',
-        cell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() => onEditCategory(row.original)}
-            className="text-primary hover:underline font-medium"
-          >
-            {row.original.name}
-          </button>
-        ),
-        size: 300,
+        // The preset names are long: truncated here, whole in the tooltip.
+        cell: ({ row }) =>
+          presetIds?.has(row.original.id) ? (
+            <span className="block truncate" title={row.original.name}>
+              {row.original.name}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onEditCategory(row.original)}
+              className="text-primary block max-w-full truncate font-medium hover:underline"
+              title={row.original.name}
+            >
+              {row.original.name}
+            </button>
+          ),
+        size: 360,
       }),
-      columnHelper.display({
-        id: 'section',
-        header: 'Section',
-        cell: ({ row }) => (
-          <span className="text-sm text-default-600">
-            {row.original.sectionName ?? '—'}
-          </span>
-        ),
-        size: 200,
-      }),
+      ...(showSections
+        ? [
+            columnHelper.display({
+              id: 'section',
+              header: 'Section',
+              cell: ({ row }) => (
+                <span className="text-sm text-default-600">
+                  {row.original.sectionName ?? '—'}
+                </span>
+              ),
+              size: 200,
+            }),
+          ]
+        : []),
       columnHelper.display({
         id: 'accessLevel',
-        header: 'Access Type',
+        header: 'Who can use it',
         cell: ({ row }) => (
-          <StatusBadge
-            color={getAccessLevelColor(row.original.accessLevel as AccessLevel)}
-          >
-            {getAccessLevelName(row.original.accessLevel as AccessLevel)}
-          </StatusBadge>
+          <WhoCanUseIt level={row.original.accessLevel as AccessLevel} />
         ),
-        size: 150,
+        size: 160,
+      }),
+      columnHelper.display({
+        id: 'defaultAssignee',
+        header: 'Default assignee',
+        cell: ({ row }) => {
+          const id = row.original.defaultAssigneeId;
+          const content = id ? (
+            <UserCell userInfo={userMap?.[id]} />
+          ) : (
+            <span className="text-default-400 text-sm">Not set</span>
+          );
+          if (!onSetDefaultAssignee) return content;
+          return (
+            <IconTip label="Set default assignee">
+              <button
+                type="button"
+                className="-mx-1 flex w-full items-center rounded px-1 py-0.5 text-left hover:bg-default-100"
+                aria-label={`Set default assignee for ${row.original.name}`}
+                onClick={() => onSetDefaultAssignee(row.original)}
+              >
+                {content}
+              </button>
+            </IconTip>
+          );
+        },
+        size: 240,
+      }),
+      columnHelper.display({
+        id: 'openTickets',
+        header: () => <span className="block text-right">Open tickets</span>,
+        cell: ({ row }) => (
+          <span className="block text-right tabular-nums">
+            {openCounts ? (openCounts.get(row.original.id) ?? 0) : '—'}
+          </span>
+        ),
+        size: 110,
       }),
       columnHelper.display({
         id: 'actions',
@@ -151,7 +203,15 @@ export function useCategoryTable({
         size: 100,
       }),
     ],
-    [onEditCategory, onDeleteCategory, presetIds],
+    [
+      onEditCategory,
+      onDeleteCategory,
+      presetIds,
+      showSections,
+      openCounts,
+      userMap,
+      onSetDefaultAssignee,
+    ],
   );
 
   // Build flat rows with section grouping info
