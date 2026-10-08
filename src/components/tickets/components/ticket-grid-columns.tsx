@@ -132,6 +132,8 @@ const ORIGIN_LABELS: Record<string, string> = {
 interface CreateColumnsOptions {
   /** `null` unassigns. */
   onAssign?: (ticketId: string, assigneeId: string | null) => void;
+  /** Opens the assignee picker for one row (the row menu's Assign). */
+  onOpenAssign?: (ticket: TicketRow) => void;
   /** Signed in user, so the assignee cell can offer "Assign to me" first. */
   currentUserId?: string;
   /**
@@ -478,26 +480,19 @@ export const createTicketColumns = (
           </DropdownTrigger>
           <DropdownPopover className="helpdesk-dropdown-popover">
             <DropdownMenu aria-label="Ticket actions">
-              <DropdownItem
-                key="assign"
-                onPress={() => {
-                  // REVIEW: Using inline prompt for quick assign - proper modal would be better UX
-                  const assigneeId = prompt(
-                    'Enter user ID to assign (or leave empty to unassign):',
-                  );
-                  if (
-                    assigneeId !== null &&
-                    options.onAssign &&
-                    row.original.id
-                  ) {
-                    // An empty prompt means unassign, which has to be null:
-                    // an empty string is falsy and was silently dropped.
-                    options.onAssign(row.original.id, assigneeId || null);
-                  }
-                }}
-              >
-                Assign
-              </DropdownItem>
+              {/*
+                The same picker as bulk assign, for this row: it lists the
+                people who can work this ticket's company. This used to be a
+                window.prompt asking for a raw user id.
+              */}
+              {options.onOpenAssign ? (
+                <DropdownItem
+                  key="assign"
+                  onPress={() => options.onOpenAssign?.(row.original)}
+                >
+                  Assign
+                </DropdownItem>
+              ) : null}
               {/*
                 Built-in statuses and tenant-defined ones in one list. This
                 menu offered only the built-in three, so a custom status could

@@ -1,3 +1,7 @@
+import type {
+  BulkTicketPriority,
+  BulkTicketResultDto,
+} from '@/api/local/ticket-bulk';
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { useMinuteTick } from '@/components/shared';
 import { ColumnsChooser } from '@/components/shared/table-layout';
@@ -21,7 +25,6 @@ import {
   usePermissions,
   useTimezone,
 } from '@brainforgeau/security';
-import { toast } from '@heroui/react';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
 import {
   type FC,
@@ -38,13 +41,9 @@ import {
   filtersForTab,
   tabForFilters,
 } from '../hooks/ticketTabs';
+import { useBulkTicketAction } from '../hooks/useBulkTicketAction';
 import { useTicketTabCounts } from '../hooks/useTicketTabCounts';
 import { useTicketsData } from '../hooks/useTickets';
-import {
-  useBulkDeleteTickets,
-  useBulkUpdateTickets,
-  useUpdateTicket,
-} from '../hooks/useTickets';
 import { useTicketsLayout } from '../hooks/useTicketsLayout';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { NewRequestModal } from '../new-request/NewRequestModal';
@@ -264,9 +263,13 @@ export const TicketGrid: FC = () => {
     [items, userMap, categoryNameById],
   );
 
-  const updateTicketMutation = useUpdateTicket();
-  const bulkUpdateMutation = useBulkUpdateTickets();
-  const bulkDeleteMutation = useBulkDeleteTickets();
+  /*
+   * Every write from the list, bulk bar and row actions alike, goes through
+   * one request scoped the way the list is read. The per-ticket calls used the
+   * app's own company token, so on the all-companies list another company's
+   * tickets came back "not found" and nothing was shown.
+   */
+  const ticketAction = useBulkTicketAction();
 
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
@@ -275,26 +278,40 @@ export const TicketGrid: FC = () => {
 
   const handleAssign = useCallback(
     (ticketId: string, assigneeId: string | null) => {
-      updateTicketMutation.mutate({ id: ticketId, updates: { assigneeId } });
+      ticketAction.mutate({
+        ticketIds: [ticketId],
+        action: 'Assign',
+        assigneeId,
+      });
     },
-    [updateTicketMutation],
+    [ticketAction.mutate],
   );
+
+  // The row menu's Assign opens the same picker as bulk assign, for one row.
+  const [assignRow, setAssignRow] = useState<TicketRow | null>(null);
 
   const handleChangeStatus = useCallback(
     (ticketId: string, status: TicketStatus, customStatusId: string | null) => {
-      updateTicketMutation.mutate({
-        id: ticketId,
-        updates: { status, customStatusId },
+      ticketAction.mutate({
+        ticketIds: [ticketId],
+        action: 'SetStatus',
+        status,
+        customStatusId,
       });
     },
-    [updateTicketMutation],
+    [ticketAction.mutate],
   );
 
   const handleChangePriority = useCallback(
     (ticketId: string, priority: TicketPriority) => {
-      updateTicketMutation.mutate({ id: ticketId, updates: { priority } });
+      ticketAction.mutate({
+        ticketIds: [ticketId],
+        action: 'SetPriority',
+        // The row menu offers Critical and High only, never None.
+        priority: priority as BulkTicketPriority,
+      });
     },
-    [updateTicketMutation],
+    [ticketAction.mutate],
   );
 
   // Tenant-defined statuses, offered by the row menu alongside the built-in
@@ -314,6 +331,7 @@ export const TicketGrid: FC = () => {
     () =>
       createTicketColumns({
         onAssign: canAssign ? handleAssign : undefined,
+        onOpenAssign: canAssign ? setAssignRow : undefined,
         onChangeStatus: handleChangeStatus,
         onChangePriority: handleChangePriority,
         currentUserId,
@@ -519,6 +537,19 @@ export const TicketGrid: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedIdsKey],
   );
+  const assignRowScopes = useMemo(
+    () =>
+      assignRow
+        ? [
+            {
+              tenantId: assignRow.tenantId,
+              organisationId: assignRow.organisationId,
+              divisionId: assignRow.divisionId,
+            },
+          ]
+        : null,
+    [assignRow],
+  );
 
   const handleBulkAssign = useCallback(() => {
     setIsBulkAssignModalOpen(true);
@@ -528,52 +559,65 @@ export const TicketGrid: FC = () => {
     setIsBulkStatusModalOpen(true);
   }, []);
 
-  const handleBulkAssignConfirm = useCallback(
-    (assigneeId: string | null) => {
-      const ids = selectedRows
-        .map(row => row.original.id)
-        .filter((id): id is string => !!id);
-      bulkUpdateMutation.mutate(
-        { ids, updates: { assigneeId } },
-        {
-          onSuccess: () => {
-            toast('Tickets assigned', {
-              description: `Successfully assigned ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
-              variant: 'success',
-            });
-            table.resetRowSelection();
-          },
-        },
+  // Read when the action runs, so it is always the current selection.
+  const selectedIds = useCallback(
+    () =>
+      table
+        .getSelectedRowModel()
+        .rows.map(row => row.original.id)
+        .filter((id): id is string => !!id),
+    [table],
+  );
+
+  // After a bulk action only the tickets that failed stay selected, so the
+  // user can see which they were and try again.
+  const keepFailedSelected = useCallback(
+    (result: BulkTicketResultDto) => {
+      table.setRowSelection(
+        Object.fromEntries(result.failed.map(f => [f.ticketId, true])),
       );
     },
-    [selectedRows, bulkUpdateMutation, table],
+    [table],
+  );
+
+  const handleBulkAssignConfirm = useCallback(
+    (assigneeId: string | null) => {
+      // One row from its menu, or the selection from the bulk bar.
+      if (assignRow?.id) {
+        handleAssign(assignRow.id, assigneeId);
+        return;
+      }
+      ticketAction.mutate(
+        { ticketIds: selectedIds(), action: 'Assign', assigneeId },
+        { onSuccess: keepFailedSelected },
+      );
+    },
+    [
+      assignRow,
+      handleAssign,
+      ticketAction.mutate,
+      selectedIds,
+      keepFailedSelected,
+    ],
   );
 
   const handleBulkStatusConfirm = useCallback(
     (status: TicketStatus, customStatusId: string | null) => {
-      const ids = selectedRows
-        .map(row => row.original.id)
-        .filter((id): id is string => !!id);
-      bulkUpdateMutation.mutate(
-        { ids, updates: { status, customStatusId } },
+      ticketAction.mutate(
         {
-          onSuccess: () => {
-            toast('Status updated', {
-              description: `Successfully updated ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
-              variant: 'success',
-            });
-            table.resetRowSelection();
-          },
+          ticketIds: selectedIds(),
+          action: 'SetStatus',
+          status,
+          customStatusId,
         },
+        { onSuccess: keepFailedSelected },
       );
     },
-    [selectedRows, bulkUpdateMutation, table],
+    [ticketAction.mutate, selectedIds, keepFailedSelected],
   );
 
   const handleBulkDelete = useCallback(async () => {
-    const ids = selectedRows
-      .map(row => row.original.id)
-      .filter((id): id is string => !!id);
+    const ids = selectedIds();
     const ok = await confirm({
       title: 'Delete Tickets',
       body: `This action will permanently delete ${ids.length} ticket${ids.length !== 1 ? 's' : ''}. Are you sure you want to continue?`,
@@ -581,16 +625,11 @@ export const TicketGrid: FC = () => {
       destructive: true,
     });
     if (!ok) return;
-    bulkDeleteMutation.mutate(ids, {
-      onSuccess: () => {
-        toast('Tickets deleted', {
-          description: `Successfully deleted ${ids.length} ticket${ids.length !== 1 ? 's' : ''}`,
-          variant: 'success',
-        });
-        table.resetRowSelection();
-      },
-    });
-  }, [selectedRows, confirm, bulkDeleteMutation, table]);
+    ticketAction.mutate(
+      { ticketIds: ids, action: 'Delete' },
+      { onSuccess: keepFailedSelected },
+    );
+  }, [selectedIds, confirm, ticketAction.mutate, keepFailedSelected]);
 
   /*
    * Functional update, not `{ ...filters, ... }`.
@@ -908,11 +947,14 @@ export const TicketGrid: FC = () => {
 
         {/* Bulk Action Modals */}
         <BulkAssignModal
-          isOpen={isBulkAssignModalOpen}
-          onClose={() => setIsBulkAssignModalOpen(false)}
+          isOpen={isBulkAssignModalOpen || !!assignRow}
+          onClose={() => {
+            setIsBulkAssignModalOpen(false);
+            setAssignRow(null);
+          }}
           onConfirm={handleBulkAssignConfirm}
-          ticketCount={selectedRows.length}
-          scopes={selectedScopes}
+          ticketCount={assignRow ? 1 : selectedRows.length}
+          scopes={assignRowScopes ?? selectedScopes}
         />
         <BulkStatusModal
           isOpen={isBulkStatusModalOpen}
