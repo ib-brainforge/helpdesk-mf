@@ -22,6 +22,8 @@ export interface ColumnsChooserProps {
   layout: TableLayoutController;
   /** Display name per column id. */
   labels: Record<string, string>;
+  /** A muted note beside a column while it is hidden, by id. */
+  hints?: Record<string, string>;
   /** Shows "Saved for you automatically" once a layout is stored. */
   persisted?: boolean;
   onReset: () => void;
@@ -30,6 +32,7 @@ export interface ColumnsChooserProps {
 export const ColumnsChooser: FC<ColumnsChooserProps> = ({
   layout,
   labels,
+  hints = {},
   persisted = true,
   onReset,
 }) => {
@@ -103,6 +106,11 @@ export const ColumnsChooser: FC<ColumnsChooserProps> = ({
           }`}
         >
           <span className="truncate">{labels[id] ?? id}</span>
+          {isHidden && hints[id] && (
+            <span className="ml-1 text-[11px] text-default-400">
+              {hints[id]}
+            </span>
+          )}
         </BaseCheckbox>
         {isLocked && (
           <span className="ml-auto shrink-0 text-xs text-default-400">

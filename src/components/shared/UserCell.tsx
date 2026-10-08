@@ -13,6 +13,8 @@ interface UserCellProps {
   fallbackName?: string | null;
   /** Off for columns that list a person as plain text (Requester). */
   showAvatar?: boolean;
+  /** "xs" (24px) keeps slim table rows slim. */
+  avatarSize?: 'xs' | 'sm';
 }
 
 /**
@@ -87,6 +89,7 @@ export const UserCell: React.FC<UserCellProps> = ({
   userInfo,
   fallbackName,
   showAvatar = true,
+  avatarSize = 'sm',
 }) => {
   const displayName = userInfo?.name ?? fallbackName;
   const email = userInfo?.email;
@@ -158,7 +161,7 @@ export const UserCell: React.FC<UserCellProps> = ({
         <BaseAvatar
           src={userInfo?.avatarUrl}
           name={displayName}
-          size="sm"
+          size={avatarSize}
           className="flex-shrink-0"
         />
       )}

@@ -21,7 +21,8 @@ export interface UserPreferenceDto<T> {
 
 /** `tickets.list.layout` */
 export interface TableLayoutPreference {
-  v: 1;
+  /** Layout version; another version is ignored (see useTableLayout). */
+  v: number;
   /** Column ids in display order. */
   order: string[];
   /** Hidden column ids. Stored this way so a column added later shows by default. */

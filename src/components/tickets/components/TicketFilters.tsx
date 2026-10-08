@@ -100,7 +100,7 @@ const FilterAutocomplete: FC<{
   const selected = options.find(option => option.id === value);
 
   return (
-    <div className="min-w-44">
+    <div className="w-40">
       <BaseAutocomplete
         label={label}
         placeholder={anyLabel}
@@ -293,9 +293,9 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   }, [onFiltersChange, onSearch]);
 
   return (
-    <div className="flex w-full flex-col gap-2.5">
-      <div className="flex w-full flex-wrap items-end gap-2.5">
-        <div className="min-w-60 flex-1">
+    <div className="flex w-full flex-wrap items-end gap-2.5">
+      <div className="contents">
+        <div className="w-60">
           <BaseInput
             label="Search"
             type="text"
@@ -326,7 +326,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           onChange={id => onCategoryChange(id ?? null)}
         />
 
-        <div className="min-w-40">
+        <div className="w-40">
           <BaseTagSelect
             label="Status"
             placeholder="Filter by status"
@@ -370,7 +370,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           </BaseTagSelect>
         </div>
 
-        <div className="min-w-40">
+        <div className="w-40">
           <BaseTagSelect
             label="Priority"
             placeholder="Filter by priority"
@@ -413,7 +413,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         {/* Tags, moved out of the sidebar. They are a filter, so they sit with
           the filters instead of in a rail two controls away from them. */}
         {tags.length > 0 && (
-          <div className="min-w-44">
+          <div className="w-40">
             <BaseTagSelect
               label="Tags"
               placeholder="Filter by tag"
@@ -436,7 +436,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
         )}
       </div>
 
-      <div className="flex w-full flex-wrap items-end gap-2.5">
+      <div className="contents">
         {/* Scope, for Netcorp staff whose rows span companies. A tenant user has
           exactly one of each, so these render nothing for them. */}
         {isServiceAdmin && (

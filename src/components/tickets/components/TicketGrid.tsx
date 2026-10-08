@@ -353,9 +353,12 @@ export const TicketGrid: FC = () => {
       row,
       cell,
     }: { row: { original: TicketRow }; cell: { column: { id: string } } }) =>
-      cell.column.id === 'select' && isTicketOverdue(row.original, now)
-        ? 'shadow-[inset_4px_0_0_#ae2e24]'
-        : undefined,
+      // Slim rows: 6px above and below, every cell centred on the row.
+      `py-1.5! align-middle ${
+        cell.column.id === 'select' && isTicketOverdue(row.original, now)
+          ? 'shadow-[inset_4px_0_0_#ae2e24]'
+          : ''
+      }`,
     [now],
   );
 
@@ -789,6 +792,7 @@ export const TicketGrid: FC = () => {
                 <ColumnsChooser
                   layout={ticketsLayout.layout}
                   labels={ticketsLayout.labels}
+                  hints={ticketsLayout.hints}
                   persisted={ticketsLayout.hasSaved}
                   onReset={() => void ticketsLayout.reset()}
                 />

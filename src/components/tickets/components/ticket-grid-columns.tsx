@@ -159,25 +159,37 @@ interface CreateColumnsOptions {
 export const TICKET_COLUMN_LABELS: Record<string, string> = {
   subject: 'Subject',
   company: 'Company',
-  organisation: 'Organisation',
-  status: 'Status',
-  priority: 'Priority',
   deadline: 'Deadline',
   assignee: 'Assignee',
   requester: 'Requester',
+  status: 'Status',
+  priority: 'Priority',
   categoryName: 'Category',
   createdAt: 'Created',
   updatedAt: 'Updated',
   origin: 'Via',
   id: 'ID',
 };
+/*
+ * Status and Priority are on every row already, under the subject. Their own
+ * columns stay in the chooser because they are how to sort by status or
+ * priority; turning one on drops that chip from under the subject, so it is
+ * never shown twice.
+ */
 export const TICKET_DEFAULT_HIDDEN = [
+  'status',
+  'priority',
   'categoryName',
   'createdAt',
   'updatedAt',
   'origin',
   'id',
 ];
+/** Muted notes beside hidden columns in the chooser. */
+export const TICKET_COLUMN_HINTS: Record<string, string> = {
+  status: '(shown under Subject)',
+  priority: '(shown under Subject)',
+};
 /**
  * Column id to the backend's SortBy key. Only these sort, because only these
  * sort on the server across every page; names resolved in the browser
@@ -225,93 +237,107 @@ export const createTicketColumns = (
     enableSorting: false,
     enableHiding: false,
     enableResizing: false,
-    size: 44,
+    size: 36,
   }),
+  /*
+   * Two slim lines: the subject, then its status and priority as small chips.
+   * A chip whose own column is switched on is left out here, so nothing shows
+   * twice; with both on the row is back to one line.
+   */
   columnHelper.accessor('subject', {
     header: 'Subject',
-    cell: ({ getValue, row }) => {
+    cell: ({ getValue, row, table }) => {
       const value = getValue() ?? 'Untitled Ticket';
       const unread = row.original.unreadForAgent;
+      const showStatus = !table.getColumn('status')?.getIsVisible();
+      const showPriority = !table.getColumn('priority')?.getIsVisible();
+      const status = getStatusConfig(row.original.status as TicketStatus);
+      const priority = getPriorityConfig(
+        row.original.priority as TicketPriority,
+      );
       return (
-        <div className="flex min-w-0 items-center gap-2">
-          {unread && (
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-pulse absolute inline-flex h-2 w-2 rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 items-center gap-2">
+            {unread && (
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-pulse absolute inline-flex h-2 w-2 rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+            )}
+            <NavLink
+              to={`/tickets/${row.original.id}`}
+              title={value}
+              className="min-w-0 truncate text-[13px] leading-[18px] font-medium text-foreground hover:text-blue hover:underline"
+            >
+              {value}
+            </NavLink>
+          </div>
+          {(showStatus || showPriority) && (
+            <div className="flex items-center gap-1">
+              {showStatus && (
+                <StatusBadge color={status.color} size="sm">
+                  {status.label}
+                </StatusBadge>
+              )}
+              {showPriority && (
+                <StatusBadge color={priority.color} size="sm">
+                  {priority.label}
+                </StatusBadge>
+              )}
+            </div>
           )}
-          <NavLink
-            to={`/tickets/${row.original.id}`}
-            title={value}
-            className="min-w-0 truncate font-medium text-foreground hover:text-blue hover:underline"
-          >
-            {value}
-          </NavLink>
         </div>
       );
     },
     enableSorting: sortable('subject'),
-    size: 240,
+    size: 334,
     minSize: 220,
   }),
+  /*
+   * Company above, organisation muted beneath it in the same slim two-line
+   * rhythm as the subject. The organisation is left out when it carries the
+   * company's own name.
+   */
   columnHelper.display({
     id: 'company',
     header: 'Company',
-    cell: ({ row }) => (
-      <TextCell
-        value={scopeName(
-          row.original.tenantId,
-          id => options.scopeNames.byTenantId.get(id)?.tenantName,
-        )}
-      />
-    ),
-    enableSorting: false,
-    size: 140,
-    minSize: 80,
-  }),
-  columnHelper.display({
-    id: 'organisation',
-    header: 'Organisation',
-    cell: ({ row }) => (
-      <TextCell
-        value={scopeName(row.original.organisationId, id =>
-          options.scopeNames.byOrganisationId.get(id),
-        )}
-      />
-    ),
-    enableSorting: false,
-    size: 140,
-    minSize: 80,
-  }),
-  columnHelper.accessor('status', {
-    header: 'Status',
-    cell: ({ getValue }) => {
-      const status = getValue();
-      const config = getStatusConfig(status);
-      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
+    cell: ({ row }) => {
+      const company = scopeName(
+        row.original.tenantId,
+        id => options.scopeNames.byTenantId.get(id)?.tenantName,
+      );
+      const organisation = scopeName(row.original.organisationId, id =>
+        options.scopeNames.byOrganisationId.get(id),
+      );
+      return (
+        <div className="flex min-w-0 flex-col gap-1 text-xs leading-4">
+          {company && (
+            <span
+              className="truncate font-medium text-foreground"
+              title={company}
+            >
+              {company}
+            </span>
+          )}
+          {organisation && organisation !== company && (
+            <span className="truncate text-[#8c8f97]" title={organisation}>
+              {organisation}
+            </span>
+          )}
+        </div>
+      );
     },
-    enableSorting: sortable('status'),
-    size: 104,
-    minSize: 80,
-  }),
-  columnHelper.accessor('priority', {
-    header: 'Priority',
-    cell: ({ getValue }) => {
-      const priority = getValue();
-      const config = getPriorityConfig(priority);
-      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
-    },
-    enableSorting: sortable('priority'),
-    size: 88,
-    minSize: 72,
+    enableSorting: false,
+    size: 160,
+    minSize: 100,
   }),
   columnHelper.display({
     id: 'deadline',
     header: 'Deadline',
     cell: ({ row }) => <DeadlineChip deadline={row.original.deadline} />,
     enableSorting: sortable('deadline'),
-    size: 136,
-    minSize: 100,
+    size: 150,
+    minSize: 120,
   }),
   columnHelper.display({
     id: 'assignee',
@@ -338,11 +364,15 @@ export const createTicketColumns = (
       // id cannot be resolved, and passing a stand-in made a lookup failure
       // render as a person's name. UserCell states it plainly instead.
       return (
-        <UserCell userInfo={assigneeUserInfo} fallbackName={assigneeName} />
+        <UserCell
+          userInfo={assigneeUserInfo}
+          fallbackName={assigneeName}
+          avatarSize="xs"
+        />
       );
     },
     enableSorting: false,
-    size: 152,
+    size: 150,
     minSize: 100,
   }),
   columnHelper.display({
@@ -360,8 +390,30 @@ export const createTicketColumns = (
       );
     },
     enableSorting: false,
-    size: 132,
+    size: 120,
     minSize: 90,
+  }),
+  columnHelper.accessor('status', {
+    header: 'Status',
+    cell: ({ getValue }) => {
+      const status = getValue();
+      const config = getStatusConfig(status);
+      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
+    },
+    enableSorting: sortable('status'),
+    size: 104,
+    minSize: 80,
+  }),
+  columnHelper.accessor('priority', {
+    header: 'Priority',
+    cell: ({ getValue }) => {
+      const priority = getValue();
+      const config = getPriorityConfig(priority);
+      return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
+    },
+    enableSorting: sortable('priority'),
+    size: 88,
+    minSize: 72,
   }),
   columnHelper.accessor('categoryName', {
     header: 'Category',
@@ -515,6 +567,6 @@ export const createTicketColumns = (
     enableSorting: false,
     enableHiding: false,
     enableResizing: false,
-    size: 56,
+    size: 44,
   }),
 ];

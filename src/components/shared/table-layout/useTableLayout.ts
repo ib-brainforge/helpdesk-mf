@@ -18,6 +18,12 @@ import { useCallback, useMemo } from 'react';
  */
 
 export interface TableLayout {
+  /**
+   * Layout version. A saved layout of another version is ignored and the
+   * defaults apply, so changing the default columns never resurrects old
+   * ones from a layout saved before the change.
+   */
+  v: number;
   /** Column ids in display order. */
   order: string[];
   /** Hidden column ids. Stored this way so a column added later shows by default. */
@@ -28,6 +34,8 @@ export interface TableLayout {
 }
 
 export interface UseTableLayoutOptions {
+  /** Bump when the columns or their defaults change (see TableLayout.v). */
+  version: number;
   /** Every column id, in the default order. */
   columnIds: string[];
   /** Hidden until the user shows them. */
@@ -54,15 +62,17 @@ const resolve = <T>(updater: Updater<T>, prev: T): T =>
   typeof updater === 'function' ? (updater as (old: T) => T)(prev) : updater;
 
 export const useTableLayout = ({
+  version,
   columnIds,
   defaultHidden = [],
   defaultSort = null,
   lockedIds = [],
   pinnedStart = [],
   pinnedEnd = [],
-  value,
+  value: savedValue,
   onChange,
 }: UseTableLayoutOptions) => {
+  const value = savedValue?.v === version ? savedValue : null;
   const fixed = useMemo(
     () => new Set([...pinnedStart, ...pinnedEnd]),
     [pinnedStart, pinnedEnd],
@@ -97,12 +107,13 @@ export const useTableLayout = ({
 
   const layout: TableLayout = useMemo(
     () => ({
+      v: version,
       order,
       hidden,
       widths: value?.widths ?? {},
       sort: value?.sort ?? null,
     }),
-    [order, hidden, value?.widths, value?.sort],
+    [version, order, hidden, value?.widths, value?.sort],
   );
 
   const columnOrder: ColumnOrderState = useMemo(

@@ -6,6 +6,7 @@ import {
 import { useUserPreference } from '@/hooks/useUserPreference';
 import { useCallback, useMemo } from 'react';
 import {
+  TICKET_COLUMN_HINTS,
   TICKET_COLUMN_LABELS,
   TICKET_DEFAULT_HIDDEN,
 } from '../components/ticket-grid-columns';
@@ -21,6 +22,11 @@ import type { TicketTabKey } from './ticketTabs';
  */
 
 const COLUMN_IDS = Object.keys(TICKET_COLUMN_LABELS);
+/**
+ * 2: Status and Priority moved under the subject, Company and Organisation
+ * share one cell. Layouts saved as 1 fall back to the new defaults.
+ */
+const LAYOUT_VERSION = 2;
 const LOCKED = ['subject'];
 const PINNED_START = ['select'];
 const PINNED_END = ['actions'];
@@ -44,6 +50,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
     () =>
       saved
         ? {
+            v: saved.v,
             order: saved.order ?? [],
             hidden: saved.hidden ?? [],
             widths: saved.widths ?? {},
@@ -56,7 +63,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
   const { save } = pref;
   const onChange = useCallback(
     (layout: TableLayout) => {
-      void save({ v: 1, ...layout });
+      void save(layout);
     },
     [save],
   );
@@ -68,6 +75,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
   );
 
   const layout = useTableLayout({
+    version: LAYOUT_VERSION,
     columnIds: COLUMN_IDS,
     defaultHidden: TICKET_DEFAULT_HIDDEN,
     defaultSort,
@@ -81,6 +89,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
   return {
     layout,
     labels: TICKET_COLUMN_LABELS,
+    hints: TICKET_COLUMN_HINTS,
     isReady: pref.isReady,
     hasSaved: pref.value !== null,
     reset: pref.reset,
