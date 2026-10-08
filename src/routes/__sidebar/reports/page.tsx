@@ -1,5 +1,6 @@
 import { CustomReportBuilder } from '@/components/reports/components/CustomReportBuilder';
 import { useTechPerformanceReport } from '@/components/reports/hooks/useReports';
+import { KpiOverview } from '@/components/reports/kpi/KpiOverview';
 import {
   REPORT_DEFAULT_RANGE,
   REPORT_RANGE_OPTIONS,
@@ -24,7 +25,7 @@ import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { DashboardPage } from '@brainforgeau/components/page';
 import { useTimezone } from '@brainforgeau/security';
-import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
+import { useSearchParams } from '@modern-js/runtime/router';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -33,29 +34,19 @@ import {
 import { useMemo, useState } from 'react';
 
 // URL query-param tab persistence: ?tab=<key> synced to selected tab.
-const REPORT_VALID_TABS = new Set(['tech-performance', 'custom']);
-const REPORT_DEFAULT_TAB = 'tech-performance';
+const REPORT_VALID_TABS = new Set(['overview', 'team', 'custom']);
+const REPORT_DEFAULT_TAB = 'overview';
+/** Old links keep working: Team was called Tech Performance. */
+const REPORT_TAB_ALIASES: Record<string, string> = {
+  'tech-performance': 'team',
+};
 
-function ReportsPage() {
-  const navigate = useNavigate();
-  const timezone = useTimezone();
-
-  // Falls back to the first tab (REPORT_DEFAULT_TAB) when the param is absent or unknown.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedTab = (() => {
-    const param = searchParams.get('tab');
-    return param && REPORT_VALID_TABS.has(param) ? param : REPORT_DEFAULT_TAB;
-  })();
-  const setSelectedTab = (key: string) => {
-    setSearchParams(
-      prev => {
-        prev.set('tab', key);
-        return prev;
-      },
-      { replace: true },
-    );
-  };
-
+/**
+ * Team: each technician's assigned and resolved tickets and their times.
+ * Its own component so its request and its date range only exist while the
+ * tab is open, rather than loading behind the Overview.
+ */
+function TeamTab() {
   // The header offers named ranges rather than two calendars: see
   // dateRangePresets.ts for why, and for the local-vs-UTC boundary handling.
   // Resolved on render so a preset keeps meaning what it says over time.
@@ -158,6 +149,53 @@ function ReportsPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  return (
+    <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
+      {/* Named ranges rather than two calendars: see dateRangePresets.ts. */}
+      <BaseSelect
+        aria-label="Date range"
+        selectedKey={rangeKey}
+        onSelectionChange={keys => setRangeKey(keys as ReportRangeKey)}
+        className="w-48"
+      >
+        {REPORT_RANGE_OPTIONS.map(option => (
+          <BaseSelectItem key={option.key} value={option.key}>
+            {option.label}
+          </BaseSelectItem>
+        ))}
+      </BaseSelect>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <BaseTable
+          table={techTable}
+          isLoading={loadingTechPerf}
+          loading={{ title: 'Loading technician performance...' }}
+          fullHeight
+        />
+      </div>
+    </div>
+  );
+}
+
+function ReportsPage() {
+  const timezone = useTimezone();
+
+  // Falls back to the first tab (REPORT_DEFAULT_TAB) when the param is absent or unknown.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab = (() => {
+    const raw = searchParams.get('tab');
+    const param = raw ? (REPORT_TAB_ALIASES[raw] ?? raw) : null;
+    return param && REPORT_VALID_TABS.has(param) ? param : REPORT_DEFAULT_TAB;
+  })();
+  const setSelectedTab = (key: string) => {
+    setSearchParams(
+      prev => {
+        prev.set('tab', key);
+        return prev;
+      },
+      { replace: true },
+    );
+  };
+
   const handleExportCustom = (
     data: CustomReportResultDto,
     format: 'csv' | 'excel',
@@ -177,27 +215,17 @@ function ReportsPage() {
       title="Reports"
       breadcrumbsKey="reports.list"
       actions={
-        <>
+        // Export PDF prints the Overview (print styles in KpiOverview); the
+        // browser's print dialog offers Save as PDF. Nothing to install.
+        selectedTab === 'overview' && (
           <BaseButton
-            variant="light"
-            onClick={() => navigate('/reports/satisfaction')}
-            icon={<Icon name="star" className="h-4 w-4" />}
+            color="primary"
+            onPress={() => window.print()}
+            icon={<Icon name="download" className="h-4 w-4" />}
           >
-            CSAT Report
+            Export PDF
           </BaseButton>
-          <BaseSelect
-            aria-label="Date range"
-            selectedKey={rangeKey}
-            onSelectionChange={keys => setRangeKey(keys as ReportRangeKey)}
-            className="w-48"
-          >
-            {REPORT_RANGE_OPTIONS.map(option => (
-              <BaseSelectItem key={option.key} value={option.key}>
-                {option.label}
-              </BaseSelectItem>
-            ))}
-          </BaseSelect>
-        </>
+        )
       }
     >
       {/*
@@ -220,16 +248,14 @@ function ReportsPage() {
         selectedKey={selectedTab}
         onSelectionChange={key => setSelectedTab(key as string)}
       >
-        {/* Tech Performance Tab */}
-        <BaseTab key="tech-performance" title="Tech Performance">
-          <div className="mt-4 flex min-h-0 flex-1 flex-col">
-            <BaseTable
-              table={techTable}
-              isLoading={loadingTechPerf}
-              loading={{ title: 'Loading technician performance...' }}
-              fullHeight
-            />
+        <BaseTab key="overview" title="Overview">
+          <div className="min-h-0 flex-1 overflow-auto">
+            <KpiOverview />
           </div>
+        </BaseTab>
+
+        <BaseTab key="team" title="Team">
+          <TeamTab />
         </BaseTab>
 
         {/* Custom Tab */}
