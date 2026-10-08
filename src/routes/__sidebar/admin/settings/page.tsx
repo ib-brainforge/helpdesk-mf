@@ -147,18 +147,8 @@ function AdministrationPage() {
           icon: 'bolt',
           href: '/configuration/automations',
         },
-        {
-          title: 'Live Chat widget',
-          description: 'Embed live chat on your website',
-          icon: 'chat-bubble-left-right',
-          href: '/configuration/live-chat',
-        },
-        {
-          title: 'Integration',
-          description: 'Connect with third-party tools and services',
-          icon: 'puzzle-piece',
-          href: '/configuration/integrations',
-        },
+        // Live Chat and Integrations are hidden for now and have no route.
+        // components/live-chat/LiveChatConfigPage.tsx says how to restore them.
         {
           title: 'Import and Export',
           description: 'Bulk import/export tickets and data',

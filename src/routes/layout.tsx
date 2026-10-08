@@ -92,6 +92,7 @@ const TopNavbar = lazyWithRetry(
 import { Logo } from '@/components/Logo';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { TEST_IDS } from '@/constants/testIds';
+import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { PageTracker } from '@/observability';
 import { hubConnectedAtom } from '@/state/config';
 import { getAppConfig } from '@/state/config';
@@ -118,6 +119,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.categories.new': 'New Category',
   'helpdesk.configuration.custom-statuses': 'Custom Statuses',
   'helpdesk.configuration.custom-priorities': 'Custom Priorities',
+  'helpdesk.configuration.company-deadlines': 'Company Deadlines',
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
   'helpdesk.configuration.integrations': 'Integrations',
@@ -130,17 +132,10 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.workflows.rule-migration-report':
     'Rule Migration Report',
   'helpdesk.reports': 'Reports',
-  'helpdesk.reports.summary': 'Summary',
-  'helpdesk.reports.by-category': 'By Category',
-  'helpdesk.reports.by-priority': 'By Priority',
-  'helpdesk.reports.by-status': 'By Status',
   'helpdesk.reports.satisfaction': 'Satisfaction',
-  'helpdesk.reports.utilization': 'Utilization',
-  'helpdesk.reports.overdue': 'Overdue',
   'helpdesk.reports.deleted': 'Deleted',
   'helpdesk.reports.audit': 'Audit',
   'helpdesk.reports.assets': 'Assets',
-  'helpdesk.reports.companies': 'Companies',
   'helpdesk.approvals': 'Approvals',
   'helpdesk.approvals.new': 'New Approval',
   'helpdesk.admin': 'Admin',
@@ -247,6 +242,16 @@ const navItemsBottom: GuardedItem<NavItem>[] = withRoutePermissions([
         testId: 'nav-configuration-custom-priorities',
       },
       {
+        // Netcorp staff only: deadlines are set per company by the principal,
+        // never by the company itself, and the API takes principal admin to
+        // save. The page checks the same roles.
+        label: 'Company Deadlines',
+        href: '/configuration/company-deadlines',
+        icon: 'clock',
+        testId: 'nav-configuration-company-deadlines',
+        requiredRoles: [...PRINCIPAL_ADMIN_ROLES],
+      },
+      {
         label: 'Automation',
         href: '/configuration/automations',
         icon: 'cube',
@@ -258,18 +263,22 @@ const navItemsBottom: GuardedItem<NavItem>[] = withRoutePermissions([
         icon: 'matching',
         testId: 'nav-configuration-workflows',
       },
-      {
-        label: 'Integrations',
-        href: '/configuration/integrations',
-        icon: 'plug',
-        testId: 'nav-configuration-integrations',
-      },
-      {
-        label: 'Live Chat',
-        href: '/configuration/live-chat',
-        icon: 'chatO',
-        testId: 'nav-configuration-live-chat',
-      },
+      // Integrations and Live Chat are hidden, not deleted. Their pages now live
+      // in components/integrations/IntegrationsConfigPage.tsx and
+      // components/live-chat/LiveChatConfigPage.tsx with no route, so the URL
+      // is gone too. Each file's header says how to bring it back.
+      // {
+      //   label: 'Integrations',
+      //   href: '/configuration/integrations',
+      //   icon: 'plug',
+      //   testId: 'nav-configuration-integrations',
+      // },
+      // {
+      //   label: 'Live Chat',
+      //   href: '/configuration/live-chat',
+      //   icon: 'chatO',
+      //   testId: 'nav-configuration-live-chat',
+      // },
     ],
   },
 ]);
