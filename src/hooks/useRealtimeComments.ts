@@ -1,3 +1,5 @@
+import type { CommentEmailStatus } from '@/api/local/comments';
+import type { CommentDto } from '@/types/comment';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useSignalR } from './useSignalR';
@@ -14,6 +16,13 @@ interface CommentAddedEventDto {
   authorId: string | null;
   isInternal: boolean;
   createdAt: string;
+}
+
+/** A public reply's email changed state (sent, or failed). */
+interface CommentEmailStatusChangedEventDto {
+  commentId: string;
+  status: CommentEmailStatus;
+  statusReason: string | null;
 }
 
 interface CommentUpdatedEventDto {
@@ -98,14 +107,41 @@ export const useRealtimeComments = (ticketId: string) => {
       }
     };
 
+    /*
+     * Patched in place rather than refetched: only the one comment's email
+     * status moved, and the event already carries it.
+     */
+    const handleEmailStatusChanged = (
+      event: CommentEmailStatusChangedEventDto,
+    ) => {
+      queryClient.setQueryData<CommentDto[]>(
+        ['helpdesk-comments', ticketId],
+        comments =>
+          comments?.map(c =>
+            c.id === event.commentId && c.email
+              ? {
+                  ...c,
+                  email: {
+                    ...c.email,
+                    status: event.status,
+                    statusReason: event.statusReason,
+                  },
+                }
+              : c,
+          ),
+      );
+    };
+
     // Register event handlers
     connection.on('CommentAdded', handleCommentAdded);
     connection.on('CommentUpdated', handleCommentUpdated);
+    connection.on('CommentEmailStatusChanged', handleEmailStatusChanged);
 
     // Cleanup: Unsubscribe and remove handlers
     return () => {
       connection.off('CommentAdded', handleCommentAdded);
       connection.off('CommentUpdated', handleCommentUpdated);
+      connection.off('CommentEmailStatusChanged', handleEmailStatusChanged);
 
       // Unsubscribe from ticket
       connection.invoke('UnsubscribeTicket', ticketId).catch(err => {
