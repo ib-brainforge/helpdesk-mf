@@ -278,15 +278,25 @@ export const TicketGrid: FC = () => {
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
 
+  // A row's company, which decides the token its change is sent with.
+  const tenantById = useMemo(
+    () => new Map(items.map(t => [t.id ?? '', t.tenantId])),
+    [items],
+  );
+  const refOf = useCallback(
+    (id: string) => ({ id, tenantId: tenantById.get(id) }),
+    [tenantById],
+  );
+
   const handleAssign = useCallback(
     (ticketId: string, assigneeId: string | null) => {
       ticketAction.mutate({
-        ticketIds: [ticketId],
+        tickets: [refOf(ticketId)],
         action: 'Assign',
         assigneeId,
       });
     },
-    [ticketAction.mutate],
+    [ticketAction.mutate, refOf],
   );
 
   // The row menu's Assign opens the same picker as bulk assign, for one row.
@@ -295,25 +305,25 @@ export const TicketGrid: FC = () => {
   const handleChangeStatus = useCallback(
     (ticketId: string, status: TicketStatus, customStatusId: string | null) => {
       ticketAction.mutate({
-        ticketIds: [ticketId],
+        tickets: [refOf(ticketId)],
         action: 'SetStatus',
         status,
         customStatusId,
       });
     },
-    [ticketAction.mutate],
+    [ticketAction.mutate, refOf],
   );
 
   const handleChangePriority = useCallback(
     (ticketId: string, priority: TicketPriority) => {
       ticketAction.mutate({
-        ticketIds: [ticketId],
+        tickets: [refOf(ticketId)],
         action: 'SetPriority',
         // The row menu offers Critical and High only, never None.
         priority: priority as BulkTicketPriority,
       });
     },
-    [ticketAction.mutate],
+    [ticketAction.mutate, refOf],
   );
 
   // Tenant-defined statuses, offered by the row menu alongside the built-in
@@ -566,12 +576,15 @@ export const TicketGrid: FC = () => {
   }, []);
 
   // Read when the action runs, so it is always the current selection.
-  const selectedIds = useCallback(
+  const selectedTickets = useCallback(
     () =>
       table
         .getSelectedRowModel()
-        .rows.map(row => row.original.id)
-        .filter((id): id is string => !!id),
+        .rows.filter(row => !!row.original.id)
+        .map(row => ({
+          id: row.original.id as string,
+          tenantId: row.original.tenantId,
+        })),
     [table],
   );
 
@@ -594,7 +607,7 @@ export const TicketGrid: FC = () => {
         return;
       }
       ticketAction.mutate(
-        { ticketIds: selectedIds(), action: 'Assign', assigneeId },
+        { tickets: selectedTickets(), action: 'Assign', assigneeId },
         { onSuccess: keepFailedSelected },
       );
     },
@@ -602,7 +615,7 @@ export const TicketGrid: FC = () => {
       assignRow,
       handleAssign,
       ticketAction.mutate,
-      selectedIds,
+      selectedTickets,
       keepFailedSelected,
     ],
   );
@@ -611,7 +624,7 @@ export const TicketGrid: FC = () => {
     (status: TicketStatus, customStatusId: string | null) => {
       ticketAction.mutate(
         {
-          ticketIds: selectedIds(),
+          tickets: selectedTickets(),
           action: 'SetStatus',
           status,
           customStatusId,
@@ -619,23 +632,23 @@ export const TicketGrid: FC = () => {
         { onSuccess: keepFailedSelected },
       );
     },
-    [ticketAction.mutate, selectedIds, keepFailedSelected],
+    [ticketAction.mutate, selectedTickets, keepFailedSelected],
   );
 
   const handleBulkDelete = useCallback(async () => {
-    const ids = selectedIds();
+    const selected = selectedTickets();
     const ok = await confirm({
       title: 'Delete Tickets',
-      body: `This action will permanently delete ${ids.length} ticket${ids.length !== 1 ? 's' : ''}. Are you sure you want to continue?`,
+      body: `This action will permanently delete ${selected.length} ticket${selected.length !== 1 ? 's' : ''}. Are you sure you want to continue?`,
       confirmLabel: 'Delete',
       destructive: true,
     });
     if (!ok) return;
     ticketAction.mutate(
-      { ticketIds: ids, action: 'Delete' },
+      { tickets: selected, action: 'Delete' },
       { onSuccess: keepFailedSelected },
     );
-  }, [selectedIds, confirm, ticketAction.mutate, keepFailedSelected]);
+  }, [selectedTickets, confirm, ticketAction.mutate, keepFailedSelected]);
 
   /*
    * Functional update, not `{ ...filters, ... }`.

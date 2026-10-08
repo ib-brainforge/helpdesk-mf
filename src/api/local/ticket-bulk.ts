@@ -1,15 +1,13 @@
 /*
  * One write path for the Tickets list: assign, change status, change priority
- * or delete several tickets (or one) in a single request, scoped the same way
- * the list is read. The tenant route answers for the app's own company; the
- * principal route for every company under the principal, which is what an
- * all-companies list shows. Per-ticket calls with the app's own token could
- * not reach another company's tickets at all.
+ * or delete several tickets (or one) in a single request per company.
+ * POST /v1/tickets/bulk answers for the company its token is for, so another
+ * company's tickets are sent with that company's own token (api/local/scoped).
  *
  * Replace with the generated client once it is regenerated. Shapes mirror the
  * backend exactly (agreed with Ben; CONTRACTS.md, Ticket bulk actions).
  */
-import { authorizedAxios } from '@/state/authorizedAxios';
+import { type HelpdeskScope, helpdeskAxios } from '@/api/local/scoped';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 
 export type BulkTicketPriority = 'Low' | 'Normal' | 'High' | 'Critical';
@@ -43,16 +41,13 @@ export interface BulkTicketResultDto {
 
 export const BULK_TICKET_LIMIT = 100;
 
+/** For one company: the app's own without a scope. */
 export const bulkTicketAction = async (
   request: BulkTicketRequest,
-  principalId?: string,
+  scope?: HelpdeskScope | null,
 ): Promise<BulkTicketResultDto> => {
-  const base = requireHelpdeskApiBaseUrl();
-  const url = principalId
-    ? `${base}/v1/principals/${principalId}/tickets/bulk`
-    : `${base}/v1/tickets/bulk`;
-  const { data } = await authorizedAxios.post<BulkTicketResultDto>(
-    url,
+  const { data } = await helpdeskAxios(scope).post<BulkTicketResultDto>(
+    `${requireHelpdeskApiBaseUrl()}/v1/tickets/bulk`,
     request,
   );
   return data;
