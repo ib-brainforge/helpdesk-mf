@@ -134,7 +134,10 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
 
   const emailing = mode === 'reply' && !!email;
   const recipient = email?.recipient ?? null;
-  const recipientFirstName = recipient?.name.trim().split(/\s+/)[0] ?? '';
+  const recipientName = recipient?.name?.trim() || recipient?.address || '';
+  const recipientFirstName = recipient?.name?.trim()
+    ? recipient.name.trim().split(/\s+/)[0]
+    : (recipient?.address ?? '');
   /** Why an emailed reply cannot go right now, if it cannot. */
   const blocked = !emailing
     ? null
@@ -369,7 +372,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
               <span className="font-semibold">
                 Only your team can see this.
               </span>{' '}
-              {recipient?.name ?? 'The requester'} will not get an email.
+              {recipientName || 'The requester'} will not get an email.
             </span>
           </div>
         ) : (
@@ -390,7 +393,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
                     className="inline-flex h-6 items-center rounded-[3px] bg-default-100 px-2"
                     title={recipient.address}
                   >
-                    {recipient.name}
+                    {recipientName}
                   </span>
                 ) : (
                   <span className="text-default-400">No contact email</span>

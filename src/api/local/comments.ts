@@ -9,8 +9,9 @@
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 
+/** EmailParticipantDto. The name is null when the address has none. */
 export interface EmailAddressDto {
-  name: string;
+  name: string | null;
   address: string;
 }
 
