@@ -1,10 +1,8 @@
-import { scopedRequest } from '@/api/local/scoped';
+import { issueScopeToken, scopedRequest } from '@/api/local/scoped';
 import {
   requireAssetApiBaseUrl,
   requireTrackingApiBaseUrl,
 } from '@/state/config';
-import { createIdentityApiClient } from '@/utils/identityApiClient';
-import { ContextsApi } from '@brainforgeau/identity-management-client';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
@@ -66,24 +64,6 @@ const useDebounced = <T>(value: T, ms: number): T => {
     return () => clearTimeout(id);
   }, [value, ms]);
   return debounced;
-};
-
-/**
- * Asks identity for a context token for one tenant and organisation. Calls
- * made with it are answered for that scope rather than the app's own context.
- */
-export const issueScopeToken = async (
-  scope: AssetScope,
-  app: 'asset' | 'tracking' | 'helpdesk',
-): Promise<string> => {
-  const client = await createIdentityApiClient(ContextsApi);
-  const { data } = await client.v1ContextsIssuePost({
-    tenantId: scope.tenantId as string,
-    organisationId: scope.organisationId ?? null,
-    app,
-  });
-  if (!data?.token) throw new Error('No context token issued');
-  return data.token;
 };
 
 /**

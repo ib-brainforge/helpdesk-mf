@@ -1,4 +1,5 @@
 import type { DeadlinePriority } from '@/api/local/deadlines';
+import { issueScopeToken } from '@/api/local/scoped';
 import { ScopeSelect } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
@@ -17,7 +18,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { type FC, useEffect, useMemo, useState } from 'react';
 import { TicketDescriptionContent } from '../components/TicketDescriptionContent';
-import { issueScopeToken } from '../hooks/useAssets';
 import type { PickedAsset } from './AssetPicker';
 import { ContactPicker, type RequestContact } from './ContactPicker';
 import { DeadlinePreviewBox } from './DeadlinePreviewBox';

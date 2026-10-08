@@ -1,8 +1,7 @@
-import { scopedRequest } from '@/api/local/scoped';
+import { issueScopeToken, scopedRequest } from '@/api/local/scoped';
 import type { CreateTicketContactFields } from '@/api/local/tickets';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { createContext, useContext } from 'react';
-import { issueScopeToken } from '../hooks/useAssets';
 
 /**
  * The tenant and organisation a new request is raised for, chosen on the

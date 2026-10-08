@@ -1,4 +1,4 @@
-import { authorizedAxios } from '@/state/authorizedAxios';
+import { type HelpdeskScope, helpdeskAxios } from '@/api/local/scoped';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { Configuration } from '@brainforgeau/helpdesk-client';
 
@@ -14,12 +14,18 @@ export const createHelpdeskApiConfiguration = () =>
 
 type HelpdeskApiConstructor<TClient> = new (...args: any[]) => TClient;
 
+/**
+ * The generated client, answering in the app's own context, or with `scope`
+ * in that company's (see api/local/scoped.ts, the one scoping mechanism).
+ * Pass the scope from useHelpdeskScope() on the ticket page.
+ */
 export const createHelpdeskApiClient = async <TClient>(
   ClientCtor: HelpdeskApiConstructor<TClient>,
+  scope?: HelpdeskScope | null,
 ): Promise<TClient> => {
   return new ClientCtor(
     createHelpdeskApiConfiguration(),
     undefined,
-    authorizedAxios,
+    helpdeskAxios(scope),
   );
 };
