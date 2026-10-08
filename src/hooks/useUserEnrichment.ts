@@ -20,6 +20,13 @@ const getUserName = (user: UserDto): string => {
   return fullName || user.email || 'Unknown';
 };
 
+/**
+ * One empty map for every caller with nothing loaded, rather than a new `{}`
+ * each render: callers put userMap in table column memos, which a fresh
+ * object would rebuild on every render.
+ */
+const EMPTY_USER_MAP: Record<string, UserInfo | null> = Object.freeze({});
+
 export const useUserEnrichment = (
   userIds: Array<string | undefined | null>,
 ) => {
@@ -77,7 +84,7 @@ export const useUserEnrichment = (
   });
 
   return {
-    userMap: query.data ?? {},
+    userMap: query.data ?? EMPTY_USER_MAP,
     isLoading: query.isLoading,
   };
 };
