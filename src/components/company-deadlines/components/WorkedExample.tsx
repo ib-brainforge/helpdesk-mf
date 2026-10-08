@@ -116,7 +116,7 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
             <Spinner size="sm" className="mt-0.5" />
           ) : (
             <Icon
-              name="information-circle"
+              name="info"
               className="text-primary mt-0.5 h-4 w-4 shrink-0"
             />
           )}
