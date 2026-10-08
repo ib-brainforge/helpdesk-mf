@@ -1,4 +1,4 @@
-import { formatDateTimeAmPm } from '@/components/shared';
+import { formatDateTimeAmPm, formatDeadlineDayTime } from '@/components/shared';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { type UserInfo, useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { Icon } from '@brainforgeau/components';
@@ -98,6 +98,7 @@ export const TicketHistory: FC<TicketHistoryProps> = ({
         return asset?.assetName?.trim() || undefined;
       },
       dateTime: iso => formatDateTimeAmPm(iso, timezone),
+      deadline: iso => formatDeadlineDayTime(iso, timezone),
     }),
     [users, scopeNames, assets, timezone],
   );

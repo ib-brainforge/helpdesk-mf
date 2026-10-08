@@ -18,6 +18,8 @@ export interface HistoryNameLookup {
   asset: (id: string) => string | undefined;
   /** An ISO instant as the app shows it ("08/10/2026 4:12 pm"). */
   dateTime: (iso: string) => string;
+  /** A deadline as the app shows it ("Fri 09/10 4:00 pm"). */
+  deadline: (iso: string) => string;
 }
 
 export interface HistoryEventView {
@@ -115,11 +117,26 @@ export const describeHistoryEvent = (
         text: `Status changed from ${label(v('from'))} to ${label(to)}`,
       };
     }
-    case 'PriorityChanged':
+    case 'PriorityChanged': {
+      // The deadlines the change caused. Null once replied, without a policy
+      // and on a closed ticket, so the clause only says what still applies.
+      const reply = v('replyDueAt');
+      const fix = v('fixDueAt');
+      const r = reply ? names.deadline(reply) : '';
+      const f = fix ? names.deadline(fix) : '';
+      const clause =
+        r && f
+          ? `. Reply by now ${r}, fix by ${f}`
+          : r
+            ? `. Reply by now ${r}`
+            : f
+              ? `. Fix by now ${f}`
+              : '';
       return {
         icon: 'FlagIcon',
-        text: `Priority changed from ${label(v('from'))} to ${label(v('to'))}`,
+        text: `Priority changed from ${label(v('from'))} to ${label(v('to'))}${clause}`,
       };
+    }
     case 'Assigned': {
       const from = user('fromUserId');
       const to = user('toUserId');
@@ -246,8 +263,33 @@ export const describeHistoryEvent = (
         icon: 'ArrowUturnRightIcon',
         text: v('to') ? `Ticket forwarded to ${v('to')}` : 'Ticket forwarded',
       };
-    case 'ContactLinked':
-      return { icon: 'UserCircleIcon', text: 'Contact linked' };
+    case 'ContactChanged': {
+      const to = person(v('to'));
+      return {
+        icon: 'UserCircleIcon',
+        text: to
+          ? `Contact changed to ${to}`
+          : v('toContactId')
+            ? 'Contact changed'
+            : 'Contact removed',
+      };
+    }
+    case 'ConfirmationEmailed':
+      return {
+        icon: 'EnvelopeIcon',
+        text: `Confirmation emailed to ${person(v('to')) ?? 'the contact'}`,
+      };
+    case 'ConfirmationFailed': {
+      // No recipient when it never got that far (no mailbox, no contact).
+      const to = person(v('to'));
+      const reason = v('reason') ? ` (${v('reason')})` : '';
+      return {
+        icon: 'ExclamationTriangleIcon',
+        text: to
+          ? `Confirmation email to ${to} failed${reason}`
+          : `Confirmation email not sent${reason}`,
+      };
+    }
     case 'Merged':
       return {
         icon: 'ArrowsPointingInIcon',

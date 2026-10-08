@@ -11,6 +11,7 @@ export {
   formatDateTimeAmPm,
   formatDeadlineDateTime,
   formatDeadlineDay,
+  formatDeadlineDayTime,
   formatDeadlineLabel,
   formatDuration,
   getDeadlineState,

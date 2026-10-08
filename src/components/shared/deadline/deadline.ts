@@ -146,6 +146,22 @@ export const formatDeadlineDateTime = (
   return `${p.weekday} ${joinDateTime(p)}`;
 };
 
+/** "Fri 09/10 4:00 pm": a target's day and time, without the year. */
+export const formatDeadlineDayTime = (
+  iso: string,
+  timezone?: string | null,
+): string => {
+  const p = parts(iso, timezone, {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return `${p.weekday} ${p.day}/${p.month} ${p.hour}:${p.minute} ${p.dayPeriod?.toLowerCase() ?? ''}`.trim();
+};
+
 /**
  * "08/10/2026 4:12 pm": a date and time the way Netcorp reads them, for an
  * instant that is not a target (a History row, for example).
