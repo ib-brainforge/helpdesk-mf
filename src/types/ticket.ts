@@ -116,7 +116,8 @@ export type TicketDto = GeneratedTicketDto & {
 
 export interface TicketEmailRecipientDto {
   contactId: string | null;
-  name: string;
+  /** Null when the contact has no display name; show the address instead. */
+  name: string | null;
   address: string;
 }
 

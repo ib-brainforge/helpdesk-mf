@@ -21,8 +21,10 @@ interface CommentAddedEventDto {
 /** A public reply's email changed state (sent, or failed). */
 interface CommentEmailStatusChangedEventDto {
   commentId: string;
+  ticketId: string;
   status: CommentEmailStatus;
   statusReason: string | null;
+  statusAt: string;
 }
 
 interface CommentUpdatedEventDto {
@@ -114,6 +116,7 @@ export const useRealtimeComments = (ticketId: string) => {
     const handleEmailStatusChanged = (
       event: CommentEmailStatusChangedEventDto,
     ) => {
+      if (event.ticketId !== ticketId) return;
       queryClient.setQueryData<CommentDto[]>(
         ['helpdesk-comments', ticketId],
         comments =>
@@ -125,6 +128,7 @@ export const useRealtimeComments = (ticketId: string) => {
                     ...c.email,
                     status: event.status,
                     statusReason: event.statusReason,
+                    statusAt: event.statusAt,
                   },
                 }
               : c,

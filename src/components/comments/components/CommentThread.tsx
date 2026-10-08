@@ -248,7 +248,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 {email && email.to.length > 0 && (
                   <div className="truncate text-xs text-default-500">
                     To{' '}
-                    {email.to.map(t => `${t.name} <${t.address}>`).join(', ')}
+                    {email.to
+                      .map(t =>
+                        t.name ? `${t.name} <${t.address}>` : t.address,
+                      )
+                      .join(', ')}
                     {email.cc.length > 0 &&
                       `, Cc ${email.cc.map(c => c.address).join(', ')}`}
                   </div>

@@ -167,7 +167,9 @@ export const EditSignatureModal: FC<EditSignatureModalProps> = ({
                   <dt className="text-default-500">To</dt>
                   <dd className="truncate">
                     {recipient
-                      ? `${recipient.name} <${recipient.address}>`
+                      ? recipient.name
+                        ? `${recipient.name} <${recipient.address}>`
+                        : recipient.address
                       : 'The ticket contact'}
                   </dd>
                   {subject && (
