@@ -41,10 +41,12 @@ const reasonsOf = (result: BulkTicketResultDto): string =>
     '; ',
   );
 
+/** The server's own words for a failed request, or a plain fallback. */
 const requestErrorMessage = (error: unknown): string | undefined => {
-  const data = (
+  const response = (
     error as {
       response?: {
+        status?: number;
         data?: {
           errors?: Array<{ message?: string }>;
           detail?: string;
@@ -52,8 +54,15 @@ const requestErrorMessage = (error: unknown): string | undefined => {
         };
       };
     }
-  )?.response?.data;
-  return data?.errors?.[0]?.message ?? data?.detail ?? data?.title;
+  )?.response;
+  const data =
+    typeof response?.data === 'object' && response.data !== null
+      ? response.data
+      : undefined;
+  const own = data?.errors?.[0]?.message ?? data?.detail;
+  if (own) return own;
+  if (response?.status === 403) return "You don't have permission to do this.";
+  return data?.title;
 };
 
 const failAll = (
@@ -150,15 +159,46 @@ export const useBulkTicketAction = () => {
         const key = ref.tenantId ?? null;
         byCompany.set(key, [...(byCompany.get(key) ?? []), ref.id]);
       }
-      const parts = await Promise.all(
-        Array.from(byCompany, ([tenantId, ids]) =>
+      const groups = Array.from(byCompany);
+      // Settled, not all: one company's failure must never hide the others'
+      // results, or the whole action would end without a word.
+      const settled = await Promise.allSettled(
+        groups.map(([tenantId, ids]) =>
           runForCompany(ids, action as BulkTicketAction, tenantId),
         ),
       );
-      return {
-        succeeded: parts.flatMap(p => p.succeeded),
-        failed: parts.flatMap(p => p.failed),
-      };
+      const merged: BulkTicketResultDto = { succeeded: [], failed: [] };
+      settled.forEach((outcome, i) => {
+        if (outcome.status === 'fulfilled') {
+          merged.succeeded.push(...outcome.value.succeeded);
+          merged.failed.push(...outcome.value.failed);
+        } else {
+          merged.failed.push(
+            ...failAll(
+              groups[i][1],
+              'Request.Failed',
+              requestErrorMessage(outcome.reason) ??
+                'The change could not be saved.',
+            ),
+          );
+        }
+      });
+      // Every ticket asked about is accounted for: one the answer did not
+      // mention counts as failed rather than silently unchanged.
+      const answered = new Set([
+        ...merged.succeeded,
+        ...merged.failed.map(f => f.ticketId),
+      ]);
+      for (const ref of refs) {
+        if (!answered.has(ref.id)) {
+          merged.failed.push({
+            ticketId: ref.id,
+            code: 'Request.NoAnswer',
+            reason: 'No answer for this ticket. Try again.',
+          });
+        }
+      }
+      return merged;
     },
     onSuccess: (result, input) => {
       const [verb, done] = WORDS[input.action];
