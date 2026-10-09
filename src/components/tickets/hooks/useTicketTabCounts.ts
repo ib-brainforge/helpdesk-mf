@@ -1,8 +1,22 @@
 import type { TicketFilters } from '@/types/ticket';
+import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
 import { tabCountsFrom, useTicketCounts } from './useTicketCounts';
 
 export type { TicketTabKey };
+
+/**
+ * Tickets per person for the Assignee filter's badges, from the same response
+ * as the tab badges. Each counts that person's tickets in any status under
+ * the other active filters (company, organisation, category, priority, tags,
+ * search), in the list's own scope: the number the list shows on All with
+ * only that person ticked. The selected assignees never narrow it.
+ */
+export interface AssigneeCounts {
+  byId: ReadonlyMap<string, number>;
+  /** Tickets with nobody assigned, on the same terms. */
+  unassigned: number;
+}
 
 /**
  * Counts for the badge on each ticket tab.
@@ -53,5 +67,22 @@ export const useTicketTabCounts = (
 
   const { data, isLoading } = useTicketCounts(base);
 
-  return { counts: tabCountsFrom(data, currentUserId), isLoading };
+  // The rail half of the same response, for the Assignee filter: no request of
+  // its own. Someone absent from it holds no matching ticket.
+  const assigneeCounts = useMemo(
+    (): AssigneeCounts | undefined =>
+      data
+        ? {
+            byId: new Map(data.assignees.map(a => [a.assigneeId, a.count])),
+            unassigned: data.unassigned,
+          }
+        : undefined,
+    [data],
+  );
+
+  return {
+    counts: tabCountsFrom(data, currentUserId),
+    assigneeCounts,
+    isLoading,
+  };
 };
