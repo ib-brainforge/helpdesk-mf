@@ -16,6 +16,8 @@ interface SlaIndicatorProps {
   createdAt?: string | null;
   /** The ticket's company, for the policy line ("Harbour Logistics, High priority"). */
   companyName?: string | null;
+  /** The ticket's organisation, for an organisation's own policy. */
+  organisationName?: string | null;
 }
 
 const minutesBetween = (from: string, to: string) =>
@@ -33,10 +35,20 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
   deadline,
   createdAt,
   companyName,
+  organisationName,
 }) => {
   const timezone = useTimezone();
   const met = isDeadlineMet(deadline);
   const { policy } = deadline;
+
+  // Whose policy set these deadlines: the organisation's own, the company's,
+  // or the defaults.
+  const policyOwner =
+    policy?.source === 'Organisation'
+      ? (organisationName ?? companyName)
+      : policy?.source === 'Company'
+        ? companyName
+        : 'Default deadlines';
 
   const replyRow = (() => {
     if (deadline.repliedAt) {
@@ -93,7 +105,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
       {policy && (
         <div className="rounded-[3px] bg-default-100 px-3 py-2 text-xs">
           <p className="font-semibold text-foreground">
-            {companyName ? `${companyName}, ` : ''}
+            {policyOwner ? `${policyOwner}, ` : ''}
             {policy.priority} priority
           </p>
           <p className="text-default-600">

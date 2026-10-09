@@ -16,8 +16,19 @@ import { scopedRequest } from './scoped';
 
 export type DeadlinePriority = 'Critical' | 'High' | 'Normal' | 'Low';
 
+/**
+ * Where a policy's effective values come from: the organisation's own, its
+ * company's, the principal's default, or the built-in default when the
+ * principal has saved nothing.
+ */
+export type DeadlinePolicySource =
+  | 'Organisation'
+  | 'Company'
+  | 'Default'
+  | 'Fallback';
+
 export interface DeadlinePolicySummaryDto {
-  source: 'Company' | 'Default' | 'Fallback';
+  source: DeadlinePolicySource;
   priority: DeadlinePriority;
   replyMinutes: number;
   fixMinutes: number;
@@ -97,13 +108,14 @@ export const previewDeadline = (
 
 /**
  * Deadline preview for the Company Deadlines worked example (principal
- * admins). A draft `policy` wins over `tenantId`; with neither, the principal
- * default applies.
+ * admins). A draft `policy` wins; without one, the organisation's policy, then
+ * the company's, then the principal default applies.
  */
 export const previewCompanyDeadline = async (
   principalId: string,
   body: {
     tenantId?: string | null;
+    organisationId?: string | null;
     policy?: CompanyDeadlinePolicyInput;
     priority: DeadlinePriority;
     startAt?: string;

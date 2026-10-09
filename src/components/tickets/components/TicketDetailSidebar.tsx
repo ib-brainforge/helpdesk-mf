@@ -622,6 +622,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               deadline={ticket.deadline}
               createdAt={ticket.createdAt}
               companyName={companyName}
+              organisationName={organisationName}
             />
           </div>
         )}
