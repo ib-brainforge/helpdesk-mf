@@ -42,4 +42,4 @@ export const TIME_TRACKING_ENABLED = false;
  * for principal admins only. While off, the switcher is hidden and every
  * /it-support URL redirects to Tickets.
  */
-export const IT_SUPPORT_WORKSPACE_ENABLED = true;
+export const IT_SUPPORT_WORKSPACE_ENABLED = false;
