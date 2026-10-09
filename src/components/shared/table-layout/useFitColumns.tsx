@@ -98,6 +98,10 @@ export interface UseFitColumnsOptions {
   deps: unknown[];
 }
 
+/** The shared table's scrolling box inside the container, if rendered. */
+const scrollHolderOf = (el: HTMLElement): HTMLElement | null =>
+  el.querySelector<HTMLElement>('[class*="group/table-scroll"]');
+
 const sameSizing = (a: ColumnSizingState, b: ColumnSizingState) => {
   const keys = Object.keys(a);
   return (
@@ -115,19 +119,7 @@ export const useFitColumns = ({
   deps,
 }: UseFitColumnsOptions): ColumnSizingState => {
   const [sizing, setSizing] = useState<ColumnSizingState>({});
-  const [width, setWidth] = useState(0);
   const columnsKey = columns.map(c => `${c.id}:${c.size}`).join(',');
-
-  // The width to fill, kept current as the window or the page changes.
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
-    const read = () => setWidth(el.clientWidth);
-    read();
-    const observer = new ResizeObserver(read);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [containerRef]);
 
   // Late web fonts change every width once they arrive.
   const [fontsReady, setFontsReady] = useState(false);
@@ -143,8 +135,8 @@ export const useFitColumns = ({
    * Measures the rendered cells and sets the widths. Reads the latest options
    * through a ref, so the content observer below always uses current ones.
    */
-  const latest = useRef({ columns, fillId, fillMin, cellPadding, width });
-  latest.current = { columns, fillId, fillMin, cellPadding, width };
+  const latest = useRef({ columns, fillId, fillMin, cellPadding });
+  latest.current = { columns, fillId, fillMin, cellPadding };
   const measure = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -172,10 +164,17 @@ export const useFitColumns = ({
       used += w;
     }
     if (opts.columns.some(c => c.id === opts.fillId)) {
-      // A few px for the table's own border, so it never scrolls by a hair.
+      /*
+       * The width on offer is the scroll holder's clientWidth, measured:
+       * inside its border and beside its vertical scrollbar, whose width
+       * depends on the platform and on whether the rows overflow at all.
+       * 2px spare for the column dividers' rounding.
+       */
+      const holder = scrollHolderOf(el);
+      const available = holder ? holder.clientWidth : el.clientWidth - 2;
       next[opts.fillId] = Math.max(
         opts.fillMin,
-        Math.floor(opts.width - used - 4),
+        Math.floor(available - used - 2),
       );
     }
     setSizing(prev => (sameSizing(prev, next) ? prev : next));
@@ -188,7 +187,6 @@ export const useFitColumns = ({
     fillId,
     fillMin,
     cellPadding,
-    width,
     fontsReady,
     ...deps,
   ]);
@@ -204,18 +202,26 @@ export const useFitColumns = ({
     const el = containerRef.current;
     if (!el) return undefined;
     let frame = 0;
-    const observer = new MutationObserver(() => {
+    const schedule = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
-    });
+    };
+    const observer = new MutationObserver(schedule);
     observer.observe(el, {
       childList: true,
       subtree: true,
       characterData: true,
     });
+    // The width on offer changes with the window, and with the scroll
+    // holder's vertical scrollbar coming and going.
+    const resize = new ResizeObserver(schedule);
+    resize.observe(el);
+    const holder = scrollHolderOf(el);
+    if (holder) resize.observe(holder);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      resize.disconnect();
     };
   }, [containerRef, measure]);
 

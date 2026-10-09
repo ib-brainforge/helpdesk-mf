@@ -266,9 +266,13 @@ export const createTicketColumns = (
       );
       return (
         <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex min-w-0 items-center gap-2">
+          {/*
+            The unread dot sits in the cell's left padding, out of the flow,
+            so the subject and the chips under it share one left edge.
+          */}
+          <div className="relative flex min-w-0 items-center">
             {unread && (
-              <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute top-1/2 -left-[9px] flex h-2 w-2 -translate-y-1/2">
                 <span className="animate-pulse absolute inline-flex h-2 w-2 rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
@@ -467,7 +471,9 @@ export const createTicketColumns = (
   }),
   columnHelper.display({
     id: 'actions',
-    header: 'Action',
+    // No visible label: a word wider than the menu button made the column
+    // wider than its content or clipped it. Screen readers still hear it.
+    header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => (
       <PermissionGuard
         requiredPermissions={[HelpdeskPermissions.TicketWrite]}

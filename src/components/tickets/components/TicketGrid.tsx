@@ -69,8 +69,12 @@ import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
 import type { TicketRow } from '../types';
 
-/** Sized by their definitions, not measured: Subject fills the rest. */
-const FIT_SKIP = ['select', 'subject', 'actions'];
+/**
+ * Not measured: the checkbox keeps its size, and Subject fills the rest. The
+ * row menu is measured like any other column (its header is screen-reader
+ * only), so its button always fits.
+ */
+const FIT_SKIP = ['select', 'subject'];
 
 export const TicketGrid: FC = () => {
   const navigate = useNavigate();
