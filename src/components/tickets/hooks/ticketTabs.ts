@@ -33,6 +33,16 @@ export const TICKET_TAB_KEYS: readonly TicketTabKey[] = [
   'all',
 ];
 
+/** What each tab is called in the tab row (and its More menu). */
+export const TICKET_TAB_LABELS: Record<TicketTabKey, string> = {
+  unanswered: 'Unanswered',
+  unclosed: 'Unclosed',
+  unassigned: 'Unassigned',
+  overdue: 'Overdue',
+  'assigned-to-you': 'Assigned to you',
+  all: 'All',
+};
+
 /** URL query-param tab persistence: ?tab=<key>. */
 export const TICKET_VALID_TABS = new Set<string>(TICKET_TAB_KEYS);
 

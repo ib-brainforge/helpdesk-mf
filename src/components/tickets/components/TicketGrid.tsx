@@ -26,7 +26,6 @@ import {
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
-import { BaseTab, BaseTabs } from '@brainforgeau/components';
 import {
   PermissionGuard,
   usePermissions,
@@ -58,6 +57,7 @@ import { NewRequestModal } from '../new-request/NewRequestModal';
 import { BulkAssignModal } from './BulkAssignModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { COUNT_BADGE_CLASS, TicketFilters } from './TicketFilters';
+import { TicketTabsRow } from './TicketTabsRow';
 import {
   TICKET_SORT_KEYS,
   createTicketColumns,
@@ -498,7 +498,7 @@ export const TicketGrid: FC = () => {
        * so clicking one is a choice you can see and undo.
        */
       return (
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-1 whitespace-nowrap">
           {label}
           {count !== undefined && (
             /*
@@ -766,39 +766,11 @@ export const TicketGrid: FC = () => {
 
           {/* Tab Bar */}
           <div className="mb-4">
-            {/* The Columns button sits at the right end of the tab row. The tabs
-              scroll sideways before they would run under it, and the line
-              under the tabs carries on beneath the button. */}
-            <div className="mb-5 flex items-stretch">
-              <BaseTabs
-                selectedKey={selectedTab}
-                onSelectionChange={handleTabChange}
-                className="min-w-0 flex-1"
-                classNames={{
-                  tabList: 'overflow-x-auto overflow-y-hidden',
-                  panel: 'empty:hidden',
-                }}
-              >
-                <BaseTab
-                  key="unanswered"
-                  title={tabTitle('Unanswered', 'unanswered')}
-                />
-                <BaseTab
-                  key="unclosed"
-                  title={tabTitle('Unclosed', 'unclosed')}
-                />
-                <BaseTab
-                  key="unassigned"
-                  title={tabTitle('Unassigned', 'unassigned')}
-                />
-                <BaseTab key="overdue" title={tabTitle('Overdue', 'overdue')} />
-                <BaseTab
-                  key="assigned-to-you"
-                  title={tabTitle('Assigned to you', 'assigned-to-you')}
-                />
-                <BaseTab key="all" title={tabTitle('All', 'all')} />
-              </BaseTabs>
-              <div className="border-light flex shrink-0 items-center border-b-2 pl-4">
+            <TicketTabsRow
+              selectedTab={selectedTab}
+              onTabChange={handleTabChange}
+              renderTitle={tabTitle}
+              end={
                 <ColumnsChooser
                   layout={ticketsLayout.layout}
                   labels={ticketsLayout.labels}
@@ -806,8 +778,8 @@ export const TicketGrid: FC = () => {
                   persisted={ticketsLayout.hasSaved}
                   onReset={() => void ticketsLayout.reset()}
                 />
-              </div>
-            </div>
+              }
+            />
             {/* Filters */}
             <TicketFilters
               filters={filters}
