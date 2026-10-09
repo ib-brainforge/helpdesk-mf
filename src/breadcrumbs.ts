@@ -44,6 +44,7 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/configuration/custom-priorities/page.tsx
 // routes/__sidebar/configuration/company-deadlines/page.tsx
 // routes/__sidebar/configuration/company-deadlines/[tenantId]/page.tsx
+// routes/__sidebar/configuration/company-deadlines/[tenantId]/organisations/[organisationId]/page.tsx
 // routes/__sidebar/configuration/custom-fields/page.tsx
 // routes/__sidebar/configuration/canned-responses/page.tsx
 // components/integrations/IntegrationsConfigPage.tsx (hidden, no route)
@@ -222,6 +223,25 @@ export const breadcrumbs = {
     {
       labelKey: 'helpdesk.configuration.company-deadlines',
       href: '/configuration/company-deadlines',
+    },
+    { label: params.name },
+  ],
+
+  /** routes/__sidebar/configuration/company-deadlines/[tenantId]/organisations/[organisationId]/page.tsx */
+  'configuration.company-deadlines.organisation': (params: {
+    tenantId: string;
+    companyName: string;
+    name: string;
+  }) => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.configuration' },
+    {
+      labelKey: 'helpdesk.configuration.company-deadlines',
+      href: '/configuration/company-deadlines',
+    },
+    {
+      label: params.companyName,
+      href: `/configuration/company-deadlines/${params.tenantId}`,
     },
     { label: params.name },
   ],

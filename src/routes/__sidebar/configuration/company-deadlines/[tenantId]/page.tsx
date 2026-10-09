@@ -2,40 +2,29 @@
  * One company's deadlines: /configuration/company-deadlines/[tenantId]
  *
  * Also the default policy, at /configuration/company-deadlines/default, which
- * every company without its own follows. Netcorp staff only.
+ * every company without its own follows. Netcorp staff only. An organisation
+ * of the company can have its own deadlines instead
+ * (organisations/[organisationId]/page.tsx); the form is the same component.
  *
  * The worked example asks the backend, with the unsaved form, what a ticket
  * would get. Nothing on this page calculates a deadline.
  */
-import { DEFAULT_POLICY_KEY } from '@/api/local/company-deadlines';
+import { DEFAULT_POLICY_KEY, policyKey } from '@/api/local/company-deadlines';
 import { AppLoadingSplash } from '@/components/AppSplash';
-import { ClockSection } from '@/components/company-deadlines/components/ClockSection';
-import { TargetsSection } from '@/components/company-deadlines/components/TargetsSection';
-import { WorkedExample } from '@/components/company-deadlines/components/WorkedExample';
-import {
-  type PolicyFormValues,
-  policyFormSchema,
-  toFormValues,
-  toPolicyInput,
-} from '@/components/company-deadlines/deadlinePolicy';
+import { DeadlinePolicyForm } from '@/components/company-deadlines/components/DeadlinePolicyForm';
 import {
   useCompanyDeadlinePolicy,
   useDeadlinesPrincipal,
   useRevertCompanyDeadlinePolicy,
-  useSaveCompanyDeadlinePolicy,
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { extractErrorMessage } from '@/utils/error-handling';
 import { BaseButton } from '@brainforgeau/components/button';
-import {
-  FormPage,
-  useConfirm,
-  useEntityForm,
-} from '@brainforgeau/components/page';
+import { useConfirm } from '@brainforgeau/components/page';
 import { AccessDenied } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
-import { useNavigate, useParams } from '@modern-js/runtime/router';
-import { useMemo } from 'react';
+import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
+import { Fragment, useMemo } from 'react';
 
 const pill = 'rounded-[2px] px-1.5 py-0.5 text-xs font-medium';
 
@@ -55,11 +44,10 @@ function CompanyDeadlinePage() {
     enabledPrincipal,
     key,
   );
-  const save = useSaveCompanyDeadlinePolicy(enabledPrincipal, key);
   const revert = useRevertCompanyDeadlinePolicy(enabledPrincipal);
   const { confirm, dialog } = useConfirm();
 
-  const { byTenantId, organisationOptions } = useScopeNames();
+  const { byTenantId, organisationOptions, byOrganisationId } = useScopeNames();
   const name = isDefault
     ? 'Default for all companies'
     : (byTenantId.get(key)?.tenantName ?? 'Company');
@@ -73,42 +61,15 @@ function CompanyDeadlinePage() {
           ),
     [isDefault, organisationOptions, key, name],
   );
-
-  // Memoised on the policy, so the form only resets when the server's copy
-  // changes (on load and after a save), never while someone is typing.
-  const values = useMemo(
-    () => (policy ? toFormValues(policy) : undefined),
-    [policy],
+  // Organisations with deadlines of their own, which this page does not set.
+  const customOrganisations = useMemo(
+    () =>
+      (policy?.customOrganisationIds ?? []).map(id => ({
+        id,
+        name: byOrganisationId.get(id) ?? 'Organisation',
+      })),
+    [policy?.customOrganisationIds, byOrganisationId],
   );
-
-  const entityForm = useEntityForm<typeof policyFormSchema>({
-    schema: policyFormSchema,
-    defaultValues: toFormValues(undefined),
-    values,
-    onSubmit: async ({ applyToOpenTickets, ...rest }: PolicyFormValues) => {
-      try {
-        const result = await save.mutateAsync({
-          ...toPolicyInput(rest),
-          applyToOpenTickets,
-        });
-        toast(`Deadlines saved for ${name}`, {
-          description: applyToOpenTickets
-            ? `${result.recalculatedTickets} open tickets were given new due dates.`
-            : 'New tickets will use them.',
-          variant: 'success',
-        });
-      } catch (error) {
-        toast("Couldn't save these deadlines", {
-          description: extractErrorMessage(
-            error,
-            'Helpdesk refused the change. Check the hours and targets, then try again.',
-          ),
-          variant: 'danger',
-        });
-        throw error;
-      }
-    },
-  });
 
   const handleUseDefault = async () => {
     if (!tenantId) return;
@@ -122,7 +83,7 @@ function CompanyDeadlinePage() {
       toast(`${name} now uses the default deadlines`, { variant: 'success' });
       navigate('/configuration/company-deadlines');
     };
-    revert.mutate(tenantId, {
+    revert.mutate(policyKey(tenantId), {
       onSuccess: done,
       onError: error => {
         // 404: the company had no policy of its own, so it is already on the default.
@@ -152,16 +113,22 @@ function CompanyDeadlinePage() {
   }
   if (loadingAccess || isLoading || !policy) return <AppLoadingSplash />;
 
-  const form = entityForm.form;
-  const openTickets = policy.openTickets;
+  const applyCount = policy.inheritingOpenTickets;
 
   return (
-    <FormPage
-      title={name}
+    <DeadlinePolicyForm
+      principalId={principalId}
+      policyKey={key}
+      policy={policy}
+      name={name}
       breadcrumbsKey="configuration.company-deadlines.detail"
       breadcrumbsParams={{ name }}
-      documentTitle={`Deadlines: ${name}`}
-      form={entityForm}
+      tenantId={tenantId}
+      applyQuestion={
+        isDefault
+          ? `Apply to the ${applyCount} open tickets too?`
+          : `Apply to ${applyCount} open tickets in organisations using these deadlines?`
+      }
       onCancel={() => navigate('/configuration/company-deadlines')}
       headerActions={
         policy.isCustom &&
@@ -200,57 +167,33 @@ function CompanyDeadlinePage() {
               </>
             )}
             <span>
-              {openTickets} open tickets, {policy.lateTickets} late. Deadlines
-              apply to every organisation in this company.
+              {policy.openTickets} open tickets, {policy.lateTickets} late.
+              Deadlines apply to every organisation in this company that has
+              none of its own.
               {!policy.isCustom && ' It follows the default until you save.'}
             </span>
           </>
         )}
       </div>
-
-      <div className="grid gap-8 xl:grid-cols-2">
-        <ClockSection form={form} saved={policy} principalId={principalId} />
-        <div className="space-y-4">
-          <TargetsSection form={form} saved={policy} companyName={name} />
-          <WorkedExample
-            form={form}
-            principalId={principalId}
-            tenantId={tenantId}
-          />
-          {openTickets > 0 && (
-            <form.Field name="applyToOpenTickets">
-              {/* biome-ignore lint/suspicious/noExplicitAny: untyped form field */}
-              {(f: any) => (
-                <fieldset className="border-default-200 flex flex-wrap items-center gap-4 rounded-md border px-4 py-3 text-sm">
-                  <legend className="sr-only">Apply to open tickets</legend>
-                  <span className="font-semibold">
-                    Apply to the {openTickets} open tickets too?
-                  </span>
-                  {[
-                    { value: true, label: 'Yes' },
-                    { value: false, label: 'No, new tickets only' },
-                  ].map(o => (
-                    <label
-                      key={o.label}
-                      className="flex cursor-pointer items-center gap-1.5"
-                    >
-                      <input
-                        type="radio"
-                        name="applyToOpenTickets"
-                        className="accent-primary"
-                        checked={f.state.value === o.value}
-                        onChange={() => f.handleChange(o.value)}
-                      />
-                      {o.label}
-                    </label>
-                  ))}
-                </fieldset>
-              )}
-            </form.Field>
-          )}
-        </div>
-      </div>
-    </FormPage>
+      {customOrganisations.length > 0 && tenantId && (
+        <p className="text-default-600 -mt-3 mb-6 text-sm">
+          {customOrganisations.map((o, i) => (
+            <Fragment key={o.id}>
+              {i > 0 && (i === customOrganisations.length - 1 ? ' and ' : ', ')}
+              <NavLink
+                to={`/configuration/company-deadlines/${policyKey(tenantId, o.id)}`}
+                className="text-primary font-medium hover:underline"
+              >
+                {o.name}
+              </NavLink>
+            </Fragment>
+          ))}{' '}
+          {customOrganisations.length === 1 ? 'has' : 'have'} deadlines of
+          {customOrganisations.length === 1 ? ' its' : ' their'} own, which
+          these do not change.
+        </p>
+      )}
+    </DeadlinePolicyForm>
   );
 }
 

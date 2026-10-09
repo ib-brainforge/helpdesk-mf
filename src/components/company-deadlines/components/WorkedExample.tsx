@@ -25,6 +25,8 @@ interface WorkedExampleProps {
   principalId?: string;
   /** Null for the default policy. */
   tenantId: string | null;
+  /** Set on an organisation's page. */
+  organisationId?: string | null;
 }
 
 const ResultBox: FC<{ label: string; iso?: string | null; tz: string }> = ({
@@ -50,6 +52,7 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
   form,
   principalId,
   tenantId,
+  organisationId = null,
 }) => {
   const values = useStore(
     form.store,
@@ -64,8 +67,14 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
   const request = useMemo(() => {
     if (!values || !policyFormSchema.safeParse(values).success) return null;
     const { applyToOpenTickets: _, ...policy } = values;
-    return { tenantId, policy: toPolicyInput(policy), priority, startAt };
-  }, [values, tenantId, priority, startAt]);
+    return {
+      tenantId,
+      organisationId,
+      policy: toPolicyInput(policy),
+      priority,
+      startAt,
+    };
+  }, [values, tenantId, organisationId, priority, startAt]);
 
   const preview = useDeadlinePreview(principalId, request);
   const tz = values?.timeZoneId ?? 'Australia/Sydney';

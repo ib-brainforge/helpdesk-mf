@@ -11,14 +11,17 @@
  */
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
-import type { CompanyDeadlinePolicyInput } from './deadlines';
+import type {
+  CompanyDeadlinePolicyInput,
+  DeadlinePolicySource,
+} from './deadlines';
 
 export type DeadlineClockMode = CompanyDeadlinePolicyInput['clockMode'];
 
-/** One row of the companies list. Missing for companies with no policy and no tickets. */
-export interface CompanyDeadlineSummaryDto {
-  tenantId: string;
+/** The effective deadlines of one company or organisation, for a list row. */
+interface DeadlineSummaryFields {
   isCustom: boolean;
+  source: DeadlinePolicySource;
   clockMode: DeadlineClockMode;
   /** "Mon to Fri, 8:00 am to 5:30 pm Sydney time." */
   hoursText: string;
@@ -28,18 +31,49 @@ export interface CompanyDeadlineSummaryDto {
   lateTickets: number;
 }
 
+/**
+ * An organisation under a company row. Only organisations with a policy of
+ * their own or open tickets are listed; any other one uses the company's.
+ */
+export interface CompanyDeadlineOrganisationSummaryDto
+  extends DeadlineSummaryFields {
+  organisationId: string;
+}
+
+/**
+ * One row of the companies list. Missing for companies with no policy, no
+ * organisation policy and no tickets. Counts cover all its organisations.
+ */
+export interface CompanyDeadlineSummaryDto extends DeadlineSummaryFields {
+  tenantId: string;
+  organisations: CompanyDeadlineOrganisationSummaryDto[];
+}
+
 export interface ClosedDayDto {
   /** YYYY-MM-DD */
   date: string;
   name: string;
 }
 
+/**
+ * One policy page: the default, a company or an organisation. The policy
+ * fields are the EFFECTIVE values (an organisation without its own shows its
+ * company's, and so on), so an inheriting page can show them read-only.
+ */
 export interface CompanyDeadlinePolicyDto extends CompanyDeadlinePolicyInput {
   /** Null for the principal default. */
   tenantId: string | null;
+  /** Set on an organisation's page only. */
+  organisationId: string | null;
   policyId: string | null;
-  /** False when the company inherits the default. */
+  /** Whether THIS page has its own policy rather than inheriting one. */
   isCustom: boolean;
+  /** Where the effective values come from. */
+  source: DeadlinePolicySource;
+  /** Company page: its organisations that have their own policy. Otherwise []. */
+  customOrganisationIds: string[];
+  /** The open tickets this page's "apply to open tickets" would recalculate. */
+  inheritingOpenTickets: number;
   openTickets: number;
   lateTickets: number;
   nextClosedDay: ClosedDayDto | null;
@@ -54,6 +88,21 @@ export interface SaveCompanyDeadlineResult {
 /** The route segment for one policy: a tenant id, or "default". */
 export const DEFAULT_POLICY_KEY = 'default';
 
+/**
+ * The path below .../company-deadlines/ for one policy, which every call here
+ * takes as its `key`: "default", a tenant id, or a tenant id and one of its
+ * organisations.
+ */
+export const policyKey = (
+  tenantId: string | null,
+  organisationId?: string | null,
+): string => {
+  if (!tenantId) return DEFAULT_POLICY_KEY;
+  return organisationId
+    ? `${tenantId}/organisations/${organisationId}`
+    : tenantId;
+};
+
 const base = (principalId: string) =>
   `${requireHelpdeskApiBaseUrl()}/v1/principals/${principalId}/company-deadlines`;
 
@@ -66,7 +115,7 @@ export const getCompanyDeadlineSummaries = async (
   return data ?? [];
 };
 
-/** `key` is a tenant id or DEFAULT_POLICY_KEY. */
+/** `key` comes from policyKey. */
 export const getCompanyDeadlinePolicy = async (
   principalId: string,
   key: string,
@@ -89,12 +138,16 @@ export const saveCompanyDeadlinePolicy = async (
   return data;
 };
 
-/** Reverts a company to the default policy. */
+/**
+ * Drops a company's or an organisation's own policy (`key` from policyKey),
+ * so it inherits again: a company the default, an organisation its company.
+ * 404 when it had none.
+ */
 export const revertCompanyDeadlinePolicy = async (
   principalId: string,
-  tenantId: string,
+  key: string,
 ): Promise<void> => {
-  await authorizedAxios.delete(`${base(principalId)}/${tenantId}`);
+  await authorizedAxios.delete(`${base(principalId)}/${key}`);
 };
 
 export const getHolidays = async (
