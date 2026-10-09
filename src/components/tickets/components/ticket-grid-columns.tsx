@@ -388,12 +388,15 @@ export const createTicketColumns = (
     header: 'Requester',
     cell: ({ row }) => {
       const { requesterUserInfo, requesterName } = row.original;
-      if (!row.original.requesterId) return null;
+      // An email-only contact has no user account, only a name: it still
+      // gets its initials, from that name.
+      if (!row.original.requesterId && !requesterName) return null;
+      // The same cell as Assignee: the person's picture, or their initials.
       return (
         <UserCell
           userInfo={requesterUserInfo}
           fallbackName={requesterName}
-          showAvatar={false}
+          avatarSize="xs"
         />
       );
     },
