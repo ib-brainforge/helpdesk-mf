@@ -61,10 +61,10 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
                 onClick={() => {
                   if (!isActive) onNavigate(workspace.home);
                 }}
-                className={`-mb-px flex w-10 items-center justify-center border-0 border-b-2 border-solid bg-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
+                className={`-mb-px flex w-10 items-center justify-center border-0 border-b-2 border-solid transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                   isActive
                     ? 'border-b-[#1868db] bg-[#EBECF0] text-[#6a9a1f] dark:bg-[#A6C5E229]'
-                    : 'border-b-transparent text-[#59636e] hover:text-[#292a2e]'
+                    : 'border-b-transparent bg-transparent text-[#59636e] hover:text-[#292a2e]'
                 }`}
               >
                 <WorkspaceIcon className="h-6 w-6" strokeWidth={1.5} />
