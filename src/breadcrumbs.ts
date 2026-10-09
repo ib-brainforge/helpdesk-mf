@@ -96,6 +96,13 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/knowledge-base/settings/page.tsx
 
 // ---------------------------------------------------------------------------
+// IT Support workspace  /it-support/...
+// ---------------------------------------------------------------------------
+
+// routes/it-support/page.tsx
+// routes/it-support/remote-sessions/page.tsx
+
+// ---------------------------------------------------------------------------
 // Principal-scoped routes  /principal/[principalId]/...
 // ---------------------------------------------------------------------------
 
@@ -504,6 +511,20 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.knowledge-base', href: '/knowledge-base' },
     { labelKey: 'helpdesk.knowledge-base.settings' },
+  ],
+
+  // -------------------------------------------------------------------------
+  // IT Support workspace. Its own trail: it is not part of Helpdesk, so the
+  // leading crumb is IT Support, not Helpdesk.
+  // -------------------------------------------------------------------------
+
+  /** routes/it-support/page.tsx */
+  'it-support.overview': () => [{ labelKey: 'it-support' }],
+
+  /** routes/it-support/remote-sessions/page.tsx */
+  'it-support.remote-sessions': () => [
+    { labelKey: 'it-support', href: '/it-support' },
+    { labelKey: 'it-support.remote-sessions' },
   ],
 
   // -------------------------------------------------------------------------

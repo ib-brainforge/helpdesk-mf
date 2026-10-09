@@ -82,7 +82,12 @@ import {
   usePermissions,
   useWhitelabel,
 } from '@brainforgeau/security';
-import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
+import {
+  NavLink,
+  Navigate,
+  Outlet,
+  useLocation,
+} from '@modern-js/runtime/router';
 
 const TopNavbar = lazyWithRetry(
   () => import('@brainforgeau/navbar/Navbar'),
@@ -91,10 +96,10 @@ const TopNavbar = lazyWithRetry(
 import { Logo } from '@/components/Logo';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { TEST_IDS } from '@/constants/testIds';
-import { HELPDESK_NAV } from '@/navigation';
 import { PageTracker } from '@/observability';
 import { hubConnectedAtom } from '@/state/config';
 import { getAppConfig } from '@/state/config';
+import { WORKSPACE_FALLBACK_PATH, useWorkspaces } from '@/workspaces';
 import { SignalIcon } from '@heroicons/react/24/solid';
 import { useAtomValue } from 'jotai';
 
@@ -146,6 +151,8 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
+  'it-support': 'IT Support',
+  'it-support.remote-sessions': 'Remote sessions',
 };
 
 function breadcrumbI18nResolver(key: string): string {
@@ -224,6 +231,13 @@ export default function Layout() {
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
   const { setAction } = useNavbarAction();
+  // Which workspace the URL is in picks the side menu, and opening one the
+  // user cannot use redirects (workspaces.ts).
+  const {
+    active: workspace,
+    blocked: workspaceBlocked,
+    isLoading: loadingWorkspaces,
+  } = useWorkspaces(location.pathname);
 
   const { config: whitelabelConfig, isLoading: whitelabelLoading } =
     useWhitelabel();
@@ -244,10 +258,10 @@ export default function Layout() {
   // Include permissions in deps to ensure re-render when context token changes
   const navSections = useMemo(
     () => [
-      { key: 'top', items: filterNavItems(HELPDESK_NAV.top) },
-      { key: 'bottom', items: filterNavItems(HELPDESK_NAV.bottom) },
+      { key: 'top', items: filterNavItems(workspace.nav.top) },
+      { key: 'bottom', items: filterNavItems(workspace.nav.bottom) },
     ],
-    [filterNavItems, permissions],
+    [filterNavItems, permissions, workspace],
   );
 
   // Someone whose role reaches only the Tickets page (a Customer, Platform
@@ -341,6 +355,7 @@ export default function Layout() {
                 }) => (
                   <NavLink
                     to={item.href}
+                    end={item.end}
                     data-testid={item.testId}
                     className={({ isActive }: { isActive: boolean }) =>
                       isActive ? activeClassName : className
@@ -361,10 +376,19 @@ export default function Layout() {
               <div className="flex flex-1 min-w-0">
                 <ErrorBoundary>
                   <LicenseGuard appId="helpdesk">
-                    {/* Page permissions: see routes/route-permissions.tsx. */}
-                    <RouteGuard pathname={location.pathname}>
-                      <Outlet />
-                    </RouteGuard>
+                    {/* A workspace the user cannot open (switched off, or
+                        not their role) sends them to Tickets; nothing renders
+                        while roles are still loading, so an admin is never
+                        bounced. Page permissions: routes/route-permissions.tsx. */}
+                    {workspaceBlocked ? (
+                      loadingWorkspaces ? null : (
+                        <Navigate to={WORKSPACE_FALLBACK_PATH} replace />
+                      )
+                    ) : (
+                      <RouteGuard pathname={location.pathname}>
+                        <Outlet />
+                      </RouteGuard>
+                    )}
                   </LicenseGuard>
                 </ErrorBoundary>
               </div>

@@ -12,6 +12,8 @@ export interface NavItem {
   href?: string;
   icon: string;
   testId?: string;
+  /** Active only on this exact URL, not on the pages below it. */
+  end?: boolean;
   children?: NavItem[];
 }
 
@@ -142,4 +144,28 @@ export const HELPDESK_NAV: NavSections = {
       ],
     },
   ]),
+};
+
+/**
+ * IT Support, the remote support workspace under /it-support. Both pages are
+ * placeholders until remote access lands. Who may open the workspace at all
+ * is decided once, in workspaces.ts, so the items carry no rules of their own.
+ */
+export const IT_SUPPORT_NAV: NavSections = {
+  top: [
+    {
+      label: 'Overview',
+      href: '/it-support',
+      end: true,
+      icon: 'grids',
+      testId: 'nav-it-support-overview',
+    },
+    {
+      label: 'Remote sessions',
+      href: '/it-support/remote-sessions',
+      icon: 'pc',
+      testId: 'nav-it-support-remote-sessions',
+    },
+  ],
+  bottom: [],
 };

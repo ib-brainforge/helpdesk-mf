@@ -1,6 +1,6 @@
 /**
- * Product features that are switched off for now but kept in the code, so
- * turning one back on is a one-line change rather than a rewrite.
+ * Product features behind a switch. Most are off for now but kept in the code,
+ * so turning one back on (or off) is a one-line change rather than a rewrite.
  */
 
 /**
@@ -35,3 +35,11 @@ export const APPROVALS_ENABLED = false;
  * fetching time entries.
  */
 export const TIME_TRACKING_ENABLED = false;
+
+/**
+ * The IT Support workspace: the Helpdesk / IT Support switcher in the navbar,
+ * the /it-support pages and their own side menu (see src/workspaces.ts). On,
+ * for principal admins only. While off, the switcher is hidden and every
+ * /it-support URL redirects to Tickets.
+ */
+export const IT_SUPPORT_WORKSPACE_ENABLED = true;
