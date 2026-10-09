@@ -6,6 +6,7 @@ import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomS
 import { useMinuteTick } from '@/components/shared';
 import {
   ColumnsChooser,
+  fitColumnsOf,
   useFitColumns,
   withFitMarkers,
 } from '@/components/shared/table-layout';
@@ -391,13 +392,7 @@ export const TicketGrid: FC = () => {
   const tableAreaRef = useRef<HTMLDivElement>(null);
   const hiddenColumns = ticketsLayout.layout.hidden;
   const fitColumns = useMemo(
-    () =>
-      columns
-        .map(c => ({
-          id: c.id ?? String((c as { accessorKey?: string }).accessorKey),
-          size: c.size ?? 150,
-        }))
-        .filter(c => !hiddenColumns.includes(c.id)),
+    () => fitColumnsOf(columns, hiddenColumns),
     [columns, hiddenColumns],
   );
   const columnSizing = useFitColumns({

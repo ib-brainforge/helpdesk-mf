@@ -35,6 +35,9 @@ import { QuickAssignCell } from './QuickAssignCell';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
+/** Category's fixed width in px; everything but Subject fits its content. */
+const CATEGORY_WIDTH = 180;
+
 /** One day in seconds — the cutoff between relative and absolute display. */
 const RELATIVE_CUTOFF_SECONDS = 24 * 60 * 60;
 
@@ -426,12 +429,24 @@ export const createTicketColumns = (
     size: 88,
     minSize: 72,
   }),
+  /*
+   * The one fixed-width column besides Subject: preset names can be a whole
+   * sentence ("Issue with a vehicle's GPS tracking hardware or ability to
+   * track"), so they truncate, with the full name on hover.
+   */
   columnHelper.accessor('categoryName', {
     header: 'Category',
-    cell: ({ getValue }) => <TextCell value={getValue()} />,
+    cell: ({ getValue }) => {
+      const value = getValue();
+      return value ? (
+        <span className="block truncate text-sm" title={value}>
+          {value}
+        </span>
+      ) : null;
+    },
     enableSorting: false,
-    size: 140,
-    minSize: 90,
+    size: CATEGORY_WIDTH,
+    meta: { fixedWidth: CATEGORY_WIDTH },
   }),
   columnHelper.accessor('createdAt', {
     header: 'Created',
