@@ -5,7 +5,6 @@ import {
   UserCell,
   getDeadlineState,
 } from '@/components/shared';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import type { UseScopeNamesResult } from '@/hooks/useScopeNames';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
 import {
@@ -17,7 +16,6 @@ import {
 import { TicketPriority, type TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { PermissionGuard } from '@brainforgeau/security';
 import {
   Dropdown,
   DropdownItem,
@@ -136,6 +134,8 @@ const ORIGIN_LABELS: Record<string, string> = {
 interface CreateColumnsOptions {
   /** `null` unassigns. */
   onAssign?: (ticketId: string, assigneeId: string | null) => void;
+  /** May edit tickets: shows the row menu. */
+  canWrite?: boolean;
   /** Opens the assignee picker for one row (the row menu's Assign). */
   onOpenAssign?: (ticket: TicketRow) => void;
   /** Signed in user, so the assignee cell can offer "Assign to me" first. */
@@ -492,11 +492,10 @@ export const createTicketColumns = (
     // No visible label: a word wider than the menu button made the column
     // wider than its content or clipped it. Screen readers still hear it.
     header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => (
-      <PermissionGuard
-        requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-        fallback={null}
-      >
+    // The permission is checked once for the grid (options.canWrite), not by
+    // a guard in every row, which read the token again for each of them.
+    cell: ({ row }) =>
+      options.canWrite ? (
         <Dropdown>
           <IconTip label="Ticket actions">
             <DropdownTrigger
@@ -589,8 +588,7 @@ export const createTicketColumns = (
             </DropdownMenu>
           </DropdownPopover>
         </Dropdown>
-      </PermissionGuard>
-    ),
+      ) : null,
     enableSorting: false,
     enableHiding: false,
     enableResizing: false,

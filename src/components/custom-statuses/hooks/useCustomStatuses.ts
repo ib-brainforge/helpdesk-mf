@@ -16,6 +16,8 @@ export const useCustomStatuses = () => {
     // Custom statuses belong to a company: on another company's ticket these
     // are that company's.
     queryKey: [QUERY_KEY, helpdeskScopeKey(scope)],
+    // Reference data; saves invalidate it, so it can stay fresh for longer.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CustomStatusesApi, scope);
       const response = await client.v1CustomStatusesGet();

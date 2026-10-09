@@ -351,12 +351,14 @@ export const TicketGrid: FC = () => {
   // permission removes both, rather than showing controls the API refuses.
   const { hasPermission } = usePermissions();
   const canAssign = hasPermission(HelpdeskPermissions.TicketAssign);
+  const canWrite = hasPermission(HelpdeskPermissions.TicketWrite);
 
   const columns = useMemo(
     () =>
       withFitMarkers(
         createTicketColumns({
           onAssign: canAssign ? handleAssign : undefined,
+          canWrite,
           onOpenAssign: canAssign ? setAssignRow : undefined,
           onChangeStatus: handleChangeStatus,
           onChangePriority: handleChangePriority,
@@ -371,6 +373,7 @@ export const TicketGrid: FC = () => {
       ),
     [
       canAssign,
+      canWrite,
       handleAssign,
       handleChangeStatus,
       handleChangePriority,

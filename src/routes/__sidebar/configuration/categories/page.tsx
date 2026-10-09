@@ -39,7 +39,9 @@ const CATEGORY_AUTHORING_ENABLED = false;
 
 function CategoriesPage() {
   const queryClient = useQueryClient();
-  const { categories, sections, isLoading } = useCategoriesData();
+  const { categories, sections, isLoading } = useCategoriesData({
+    withSections: true,
+  });
 
   /*
    * The Netcorp presets are listed alongside the tenant's own categories. They

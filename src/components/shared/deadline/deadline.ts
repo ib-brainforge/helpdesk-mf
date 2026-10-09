@@ -92,21 +92,40 @@ export const formatDuration = (minutes: number): string => {
   return h ? `${d}d ${h}h` : `${d}d`;
 };
 
+/*
+ * Formatters by zone and options. Building an Intl.DateTimeFormat is slow
+ * next to using one, and every chip on the list formats on every minute
+ * tick, so each distinct formatter is built once.
+ */
+const formatters = new Map<string, Intl.DateTimeFormat>();
+const formatterFor = (
+  timezone: string | null | undefined,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat => {
+  const key = `${timezone ?? ''}|${JSON.stringify(options)}`;
+  let formatter = formatters.get(key);
+  if (!formatter) {
+    try {
+      formatter = new Intl.DateTimeFormat(LOCALE, {
+        ...options,
+        timeZone: timezone ?? undefined,
+      });
+    } catch {
+      // An invalid IANA zone falls back to the browser's, as formatDateTime does.
+      formatter = new Intl.DateTimeFormat(LOCALE, options);
+    }
+    formatters.set(key, formatter);
+  }
+  return formatter;
+};
+
 const parts = (
   iso: string,
   timezone: string | null | undefined,
   options: Intl.DateTimeFormatOptions,
 ): Record<string, string> => {
   const date = new Date(iso);
-  const make = (timeZone?: string) =>
-    new Intl.DateTimeFormat(LOCALE, { ...options, timeZone });
-  let formatter: Intl.DateTimeFormat;
-  try {
-    formatter = make(timezone ?? undefined);
-  } catch {
-    // An invalid IANA zone falls back to the browser's, as formatDateTime does.
-    formatter = make();
-  }
+  const formatter = formatterFor(timezone, options);
   const out: Record<string, string> = {};
   for (const p of formatter.formatToParts(date)) out[p.type] = p.value;
   return out;
