@@ -47,7 +47,7 @@ export const useCompanyDeadlineSummaries = (principalId?: string) =>
     enabled: Boolean(principalId),
   });
 
-/** `key` is a tenant id or DEFAULT_POLICY_KEY. */
+/** `key` comes from policyKey: the default, a company or an organisation. */
 export const useCompanyDeadlinePolicy = (principalId?: string, key?: string) =>
   useQuery({
     queryKey: [COMPANY_DEADLINES_QUERY_KEY, principalId, 'policy', key],
@@ -83,12 +83,14 @@ export const useSaveCompanyDeadlinePolicy = (
   });
 };
 
-/** Drops a company's own policy, so it follows the default again. */
+/**
+ * Drops a company's or an organisation's own policy (the mutation takes a
+ * policyKey), so it inherits again.
+ */
 export const useRevertCompanyDeadlinePolicy = (principalId?: string) => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
-    mutationFn: tenantId =>
-      revertCompanyDeadlinePolicy(principalId as string, tenantId),
+    mutationFn: key => revertCompanyDeadlinePolicy(principalId as string, key),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [COMPANY_DEADLINES_QUERY_KEY, principalId],
@@ -124,6 +126,8 @@ const useDebounced = <T>(value: T, ms: number): T => {
 
 export interface DeadlinePreviewRequest {
   tenantId: string | null;
+  /** Set on an organisation's page. */
+  organisationId?: string | null;
   policy: CompanyDeadlinePolicyInput;
   priority: DeadlinePriority;
   startAt: string;
