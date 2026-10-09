@@ -53,7 +53,8 @@ const newTicketSchema = z.object({
     .max(200, 'Subject is too long'),
   description: z.string().min(1, 'Description is required'),
   priority: z.nativeEnum(TicketPriority),
-  categoryId: z.string().optional(),
+  // A ticket cannot exist without a category.
+  categoryId: z.string().min(1, 'Choose a category'),
   assigneeId: z.string().optional(),
 });
 
@@ -108,7 +109,7 @@ function NewTicketPage() {
       subject: '',
       description: '',
       priority: TicketPriority.Normal,
-      categoryId: undefined,
+      categoryId: '',
       assigneeId: undefined,
     },
     onSubmit: async (values: NewTicketFormData) => {
@@ -235,13 +236,15 @@ function NewTicketPage() {
           {field => (
             <BaseAutocomplete
               label="Category"
-              placeholder="Search category (optional)..."
-              isClearable
-              selectedKey={field.state.value ?? null}
+              placeholder="Search category..."
+              isRequired
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+              selectedKey={field.state.value || null}
+              // Required, so there is nothing to clear it to.
               onSelectionChange={key => {
-                field.handleChange((key as string | null) ?? undefined);
+                if (key) field.handleChange(key as string);
               }}
-              onClear={() => field.handleChange(undefined)}
               onValueChange={(value: string) => {
                 searchCategories({ query: value });
               }}

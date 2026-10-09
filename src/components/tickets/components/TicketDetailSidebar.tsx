@@ -504,13 +504,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         >
           <BaseAutocomplete
             placeholder="Search category..."
-            isClearable
             selectedKey={ticket.categoryId ?? null}
+            // A ticket cannot exist without a category: it can be changed,
+            // never cleared.
             onSelectionChange={key => {
-              const newKey = key as string | null;
-              onUpdate?.({ categoryId: newKey ?? undefined });
+              if (key) onUpdate?.({ categoryId: key as string });
             }}
-            onClear={() => onUpdate?.({ categoryId: undefined })}
             onValueChange={(value: string) => {
               searchCategories({ query: value, scope });
             }}
