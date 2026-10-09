@@ -23,12 +23,8 @@ export interface UserPreferenceDto<T> {
 export interface TableLayoutPreference {
   /** Layout version; another version is ignored (see useTableLayout). */
   v: number;
-  /** Column ids in display order. */
-  order: string[];
   /** Hidden column ids. Stored this way so a column added later shows by default. */
   hidden: string[];
-  /** Column widths in px, by id. */
-  widths: Record<string, number>;
   sort: { id: string; desc: boolean } | null;
 }
 

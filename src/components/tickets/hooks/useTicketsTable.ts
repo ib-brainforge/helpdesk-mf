@@ -1,6 +1,7 @@
 import type { TableLayoutController } from '@/components/shared/table-layout';
 import {
   type ColumnDef,
+  type ColumnSizingState,
   type PaginationState,
   type RowSelectionState,
   getCoreRowModel,
@@ -15,8 +16,10 @@ interface UseTicketsTableProps {
   totalCount: number;
   pagination: PaginationState;
   onPaginationChange?: (pagination: PaginationState) => void;
-  /** The user's saved column order, visibility, widths and sort. */
+  /** The user's saved column visibility and sort. */
   layout: TableLayoutController;
+  /** Widths that follow the content (useFitColumns). */
+  columnSizing: ColumnSizingState;
 }
 
 export const useTicketsTable = ({
@@ -26,6 +29,7 @@ export const useTicketsTable = ({
   pagination,
   onPaginationChange,
   layout,
+  columnSizing,
 }: UseTicketsTableProps) => {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
@@ -34,6 +38,7 @@ export const useTicketsTable = ({
     columns,
     state: {
       ...layout.state,
+      columnSizing,
       pagination,
       rowSelection,
     },
@@ -63,13 +68,10 @@ export const useTicketsTable = ({
     enableGlobalFilter: false,
     enableColumnFilters: false,
     enableRowSelection: true,
-    // One write per drag, not one per pixel.
-    enableColumnResizing: true,
-    columnResizeMode: 'onEnd',
+    // Widths follow the content and the order is fixed: nothing to drag.
+    enableColumnResizing: false,
     onSortingChange: layout.onSortingChange,
-    onColumnOrderChange: layout.onColumnOrderChange,
     onColumnVisibilityChange: layout.onColumnVisibilityChange,
-    onColumnSizingChange: layout.onColumnSizingChange,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: updater => {
       if (onPaginationChange) {

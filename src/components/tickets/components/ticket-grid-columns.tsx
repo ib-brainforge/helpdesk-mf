@@ -86,8 +86,7 @@ const formatAge = (
  * width. It read as two identical unlabelled times ("20h ago" over "20h ago")
  * with only the shared "Created / Updated" header to tell you which was which
  * — compact, but a puzzle. A column header sitting directly above its value is
- * what anyone expects of a table and needs no decoding, so the width is spent
- * and the narrow-window rules in TicketGrid give it back.
+ * what anyone expects of a table and needs no decoding, so the width is spent.
  */
 const TimeCell = ({
   date,
@@ -100,7 +99,7 @@ const TimeCell = ({
   if (!date) return <span className="text-default-400 text-sm">—</span>;
   const { label, absolute } = formatAge(date, timezone);
   return (
-    <span title={absolute} className="truncate text-sm">
+    <span title={absolute} className="text-sm">
       {label}
     </span>
   );
@@ -114,10 +113,10 @@ const TimeCell = ({
 export const isTicketOverdue = (row: TicketRow, now: number = Date.now()) =>
   getDeadlineState(row.deadline, now) === 'overdue';
 
-/** A plain single-line cell, truncated with the full text on hover. */
+/** A plain single-line cell. The column is as wide as its text. */
 const TextCell = ({ value }: { value?: string | null }) =>
   value ? (
-    <span className="block truncate text-sm" title={value}>
+    <span className="block text-sm" title={value}>
       {value}
     </span>
   ) : null;
@@ -322,19 +321,12 @@ export const createTicketColumns = (
         options.scopeNames.byOrganisationId.get(id),
       );
       return (
-        <div className="flex min-w-0 flex-col gap-1 text-xs leading-4">
+        <div className="flex flex-col gap-1 text-xs leading-4">
           {company && (
-            <span
-              className="truncate font-medium text-foreground"
-              title={company}
-            >
-              {company}
-            </span>
+            <span className="font-medium text-foreground">{company}</span>
           )}
           {organisation && organisation !== company && (
-            <span className="truncate text-[#8c8f97]" title={organisation}>
-              {organisation}
-            </span>
+            <span className="text-[#8c8f97]">{organisation}</span>
           )}
         </div>
       );

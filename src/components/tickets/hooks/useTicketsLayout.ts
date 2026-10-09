@@ -23,13 +23,13 @@ import type { TicketTabKey } from './ticketTabs';
 
 const COLUMN_IDS = Object.keys(TICKET_COLUMN_LABELS);
 /**
- * 2: Status and Priority moved under the subject, Company and Organisation
- * share one cell. Layouts saved as 1 fall back to the new defaults.
+ * 3: column order is fixed and widths follow the content, so a layout holds
+ * only hidden columns and the sort. Layouts saved as 1 or 2 (with order and
+ * widths) fall back to the defaults.
  */
-const LAYOUT_VERSION = 2;
+const LAYOUT_VERSION = 3;
 const LOCKED = ['subject'];
-const PINNED_START = ['select'];
-const PINNED_END = ['actions'];
+const FIXED = ['select', 'actions'];
 
 /**
  * Queues where the next deadline is the question open the list sorts by it,
@@ -51,9 +51,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
       saved
         ? {
             v: saved.v,
-            order: saved.order ?? [],
             hidden: saved.hidden ?? [],
-            widths: saved.widths ?? {},
             sort: saved.sort ?? null,
           }
         : null,
@@ -80,8 +78,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
     defaultHidden: TICKET_DEFAULT_HIDDEN,
     defaultSort,
     lockedIds: LOCKED,
-    pinnedStart: PINNED_START,
-    pinnedEnd: PINNED_END,
+    fixedIds: FIXED,
     value,
     onChange,
   });
