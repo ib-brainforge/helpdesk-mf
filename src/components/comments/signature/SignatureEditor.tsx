@@ -256,7 +256,7 @@ export const SignatureEditor: FC<SignatureEditorProps> = ({
           isDisabled={uploading > 0}
           onPress={() => fileRef.current?.click()}
         >
-          <Icon name="photo" className="h-4 w-4" />
+          <Icon name="PhotoIcon" className="h-4 w-4" />
         </ToolButton>
         <input
           ref={fileRef}
