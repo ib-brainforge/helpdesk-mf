@@ -67,7 +67,7 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
                     : 'border-b-transparent bg-transparent text-[#59636e] hover:text-[#292a2e]'
                 }`}
               >
-                <WorkspaceIcon className="h-6 w-6" strokeWidth={1.5} />
+                <WorkspaceIcon className="h-5 w-5" strokeWidth={1.5} />
               </button>
             );
           })}
