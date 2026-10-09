@@ -51,7 +51,12 @@ export const issueScopeToken = async (
   scope: TokenScope,
   app: 'asset' | 'tracking' | 'helpdesk',
 ): Promise<string> => {
-  const client = await createIdentityApiClient(ContextsApi);
+  // A licence refusal is explained by the page that asked (the ticket
+  // page's not-enabled state, New Request's notice), so it must not also
+  // raise the app-wide "Access Denied" banner. Other failures still do.
+  const client = await createIdentityApiClient(ContextsApi, {
+    isExpectedError: isNotLicensedError,
+  });
   const { data } = await client.v1ContextsIssuePost({
     tenantId: scope.tenantId as string,
     organisationId: scope.organisationId ?? null,
