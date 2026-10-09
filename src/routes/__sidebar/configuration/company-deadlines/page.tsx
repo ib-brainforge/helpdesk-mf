@@ -2,10 +2,16 @@
  * Company Deadlines, the list: /configuration/company-deadlines
  *
  * One row per company, plus the default that every company without its own
- * policy follows. Netcorp staff only: a company never sets its own deadlines.
- * Clicking a company opens its policy ([tenantId]/page.tsx).
+ * policy follows. A company with several organisations expands to show them,
+ * since each can have deadlines of its own (organisation, else company, else
+ * default). Netcorp staff only: a company never sets its own deadlines.
+ * Clicking a company or an organisation opens its policy.
  */
-import { DEFAULT_POLICY_KEY } from '@/api/local/company-deadlines';
+import {
+  type CompanyDeadlineOrganisationSummaryDto,
+  DEFAULT_POLICY_KEY,
+  policyKey,
+} from '@/api/local/company-deadlines';
 import {
   describeHours,
   formatTargetMinutes,
@@ -15,6 +21,7 @@ import {
   useCompanyDeadlineSummaries,
   useDeadlinesPrincipal,
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
+import { IconTip } from '@/components/shared';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
@@ -23,24 +30,30 @@ import { AccessDenied } from '@brainforgeau/security';
 import { NavLink } from '@modern-js/runtime/router';
 import {
   type ColumnDef,
+  type ExpandedState,
   createColumnHelper,
   getCoreRowModel,
+  getExpandedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 
 interface CompanyDeadlineRow {
-  /** Tenant id, or DEFAULT_POLICY_KEY for the default row. */
+  /** policyKey: DEFAULT_POLICY_KEY, a tenant id, or a tenant and organisation. */
   key: string;
   name: string;
   isDefault: boolean;
-  /** The company has its own policy (always false for the default row). */
+  /** An organisation row, under its company. */
+  isOrganisation: boolean;
+  /** It has its own policy (always false for the default row). */
   isCustom: boolean;
   hours: string;
   highReplyMinutes: number | null;
   highFixMinutes: number | null;
   openTickets: number | null;
   lateTickets: number;
+  /** A company's organisations, when it has more than one. */
+  subRows?: CompanyDeadlineRow[];
 }
 
 const columnHelper = createColumnHelper<CompanyDeadlineRow>();
@@ -53,7 +66,11 @@ function CompanyDeadlinesPage() {
     isAdmin,
     isLoading: loadingAccess,
   } = useDeadlinesPrincipal();
-  const { tenantOptions, isLoading: loadingNames } = useScopeNames();
+  const {
+    tenantOptions,
+    organisationOptions,
+    isLoading: loadingNames,
+  } = useScopeNames();
   const summaries = useCompanyDeadlineSummaries(
     isAdmin ? principalId : undefined,
   );
@@ -62,11 +79,16 @@ function CompanyDeadlinesPage() {
     DEFAULT_POLICY_KEY,
   );
   const [searchTerm, setSearchTerm] = useState('');
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   /*
    * Every company the user can reach, from contexts, joined to its summary.
    * The backend only has rows for companies with a policy or with tickets, so
    * the rest are shown on the default, which is what they follow.
+   *
+   * Organisations come from contexts too, never from the summary alone (the
+   * backend has no organisation directory). Their summary entries carry the
+   * effective values; one without an entry uses its company's.
    */
   const rows = useMemo((): CompanyDeadlineRow[] => {
     const policy = defaults.data;
@@ -74,10 +96,20 @@ function CompanyDeadlinesPage() {
     const defaultHours = policy ? describeHours(policy) : '';
     const byTenant = new Map((summaries.data ?? []).map(s => [s.tenantId, s]));
 
+    const orgsByTenant = new Map<string, typeof organisationOptions>();
+    for (const o of organisationOptions) {
+      if (!o.parentId) continue;
+      orgsByTenant.set(o.parentId, [
+        ...(orgsByTenant.get(o.parentId) ?? []),
+        o,
+      ]);
+    }
+
     const defaultRow: CompanyDeadlineRow = {
       key: DEFAULT_POLICY_KEY,
       name: 'Default for all companies',
       isDefault: true,
+      isOrganisation: false,
       isCustom: false,
       hours: defaultHours,
       highReplyMinutes: high?.replyMinutes ?? null,
@@ -88,10 +120,11 @@ function CompanyDeadlinesPage() {
 
     const companies = tenantOptions.map((t): CompanyDeadlineRow => {
       const s = byTenant.get(t.id);
-      return {
+      const company: CompanyDeadlineRow = {
         key: t.id,
         name: t.name,
         isDefault: false,
+        isOrganisation: false,
         isCustom: s?.isCustom ?? false,
         hours: s?.hoursText ?? defaultHours,
         highReplyMinutes: s?.highReplyMinutes ?? high?.replyMinutes ?? null,
@@ -99,28 +132,96 @@ function CompanyDeadlinesPage() {
         openTickets: s?.openTickets ?? 0,
         lateTickets: s?.lateTickets ?? 0,
       };
+
+      const orgSummaries = new Map<
+        string,
+        CompanyDeadlineOrganisationSummaryDto
+      >((s?.organisations ?? []).map(o => [o.organisationId, o]));
+      const orgs = orgsByTenant.get(t.id) ?? [];
+      // A single organisation is the company, so it stays one row, unless it
+      // has deadlines of its own, which must stay reachable from here.
+      if (orgs.length < 2 && !orgs.some(o => orgSummaries.get(o.id)?.isCustom))
+        return company;
+
+      company.subRows = orgs.map((o): CompanyDeadlineRow => {
+        const os = orgSummaries.get(o.id);
+        return {
+          key: policyKey(t.id, o.id),
+          name: o.name,
+          isDefault: false,
+          isOrganisation: true,
+          isCustom: os?.isCustom ?? false,
+          hours: os?.hoursText ?? company.hours,
+          highReplyMinutes: os?.highReplyMinutes ?? company.highReplyMinutes,
+          highFixMinutes: os?.highFixMinutes ?? company.highFixMinutes,
+          openTickets: os?.openTickets ?? 0,
+          lateTickets: os?.lateTickets ?? 0,
+        };
+      });
+      return company;
     });
 
+    // A company matches by its own name or any of its organisations'.
     const term = searchTerm.trim().toLowerCase();
     const shown = term
-      ? companies.filter(c => c.name.toLowerCase().includes(term))
+      ? companies.filter(
+          c =>
+            c.name.toLowerCase().includes(term) ||
+            c.subRows?.some(o => o.name.toLowerCase().includes(term)),
+        )
       : companies;
     return term ? shown : [defaultRow, ...shown];
-  }, [defaults.data, summaries.data, tenantOptions, searchTerm]);
+  }, [
+    defaults.data,
+    summaries.data,
+    tenantOptions,
+    organisationOptions,
+    searchTerm,
+  ]);
 
   const columns = useMemo(
     (): ColumnDef<CompanyDeadlineRow, unknown>[] => [
       columnHelper.display({
         id: 'company',
         header: 'Company',
-        cell: ({ row }) => (
-          <NavLink
-            to={`/configuration/company-deadlines/${row.original.key}`}
-            className={`text-primary hover:underline ${row.original.isDefault ? 'font-semibold' : 'font-medium'}`}
-          >
-            {row.original.name}
-          </NavLink>
-        ),
+        cell: ({ row }) => {
+          const r = row.original;
+          const label = `${row.getIsExpanded() ? 'Hide' : 'Show'} ${r.name}'s organisations`;
+          return (
+            <span
+              className={`flex items-center gap-1.5 ${r.isOrganisation ? 'pl-7' : ''}`}
+            >
+              {row.getCanExpand() ? (
+                <IconTip label={label}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    aria-expanded={row.getIsExpanded()}
+                    onClick={row.getToggleExpandedHandler()}
+                    className="text-default-500 hover:text-default-700 flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                  >
+                    <Icon
+                      name={
+                        row.getIsExpanded()
+                          ? 'ChevronDownIcon'
+                          : 'ChevronRightIcon'
+                      }
+                      className="h-4 w-4"
+                    />
+                  </button>
+                </IconTip>
+              ) : (
+                !r.isOrganisation && !r.isDefault && <span className="w-5" />
+              )}
+              <NavLink
+                to={`/configuration/company-deadlines/${r.key}`}
+                className={`text-primary hover:underline ${r.isDefault ? 'font-semibold' : 'font-medium'}`}
+              >
+                {r.name}
+              </NavLink>
+            </span>
+          );
+        },
         size: 260,
       }),
       columnHelper.display({
@@ -170,6 +271,10 @@ function CompanyDeadlinesPage() {
             <span className={`bg-lighter-blue text-blue ${pillClass}`}>
               Custom
             </span>
+          ) : row.original.isOrganisation ? (
+            <span className="text-default-500 text-xs">
+              Uses company deadlines
+            </span>
           ) : (
             <span className={`bg-default-100 text-default-600 ${pillClass}`}>
               Default
@@ -186,6 +291,11 @@ function CompanyDeadlinesPage() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: row => row.key,
+    getSubRows: row => row.subRows,
+    getExpandedRowModel: getExpandedRowModel(),
+    // Everything opens while searching, so a match on an organisation shows.
+    state: { expanded: searchTerm.trim() ? true : expanded },
+    onExpandedChange: setExpanded,
   });
 
   if (!loadingAccess && !isAdmin) {
