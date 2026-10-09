@@ -28,7 +28,7 @@ export type { TicketTabKey };
  * by clicking it. Without this, choosing an assignee narrowed the rows to that
  * person while all six badges carried on reporting the whole queue.
  *
- * The tab-owned fields (status, unassignedOnly, overdueOnly) are stripped
+ * The tab-owned fields (status, overdueOnly) are stripped
  * before the key is built, so switching tabs does not invalidate the counts:
  * the six numbers do not depend on which tab is currently open.
  */
@@ -45,16 +45,11 @@ export const useTicketTabCounts = (
    * query instead. Both hooks pass the same filters and so build the same query
    * key, which is what makes React Query serve them from one call.
    *
-   * The tab-owned fields are still stripped here. Each tab defines status,
-   * unassignedOnly and overdueOnly for itself server-side, so sending them
-   * would make every badge depend on whichever tab happened to be open.
+   * The tab-owned fields are still stripped here. Each tab defines status
+   * and overdueOnly for itself server-side, so sending them would make every
+   * badge depend on whichever tab happened to be open.
    */
-  const {
-    status: _status,
-    unassignedOnly: _unassignedOnly,
-    overdueOnly: _overdueOnly,
-    ...base
-  } = filters;
+  const { status: _status, overdueOnly: _overdueOnly, ...base } = filters;
 
   const { data, isLoading } = useTicketCounts(base);
 

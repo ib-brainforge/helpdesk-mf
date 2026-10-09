@@ -26,8 +26,7 @@ const scopeLabel = (option: ScopeOption) =>
   option.parentName ? `${option.name} (${option.parentName})` : option.name;
 
 /**
- * One searchable single-select filter: a scope level, an assignee or a
- * category. Rendered only when that level has more than one option.
+ * One searchable single-select filter: a scope level or a category. Rendered only when that level has more than one option.
  *
  * A picker offering a single value narrows nothing and just reads as a control
  * that does not work. Division is the live case: no context or ticket carries
@@ -148,18 +147,134 @@ const FilterAutocomplete: FC<{
   );
 };
 
+/** The Unassigned option's value in the Assignee select. Never a user id. */
+const UNASSIGNED = '__unassigned__';
+
+/**
+ * What the Assignee trigger says: the one name, the first name and how many
+ * more, or just how many once a list of names would be too long to read.
+ */
+export const summariseAssignees = (labels: string[]): string => {
+  if (labels.length <= 1) return labels[0] ?? '';
+  if (labels.length <= 3) return `${labels[0]} +${labels.length - 1}`;
+  return `${labels.length} assignees`;
+};
+
+/**
+ * The last row of the Assignee list. BaseTagSelect renders whatever children
+ * it is given, so this sits under the people; it hides while a search is
+ * typed, when it has no text to match.
+ */
+const ClearAssigneesRow: FC<{ onClear: () => void }> = ({ onClear }) => (
+  <div className="mt-1 border-t border-light pt-1">
+    <button
+      type="button"
+      onClick={onClear}
+      className="w-full rounded-[3px] px-2 py-1.5 text-left text-sm text-blue hover:bg-default-100"
+    >
+      Clear
+    </button>
+  </div>
+);
+
+/**
+ * The Assignee filter: several people and Unassigned at once ("Eric Isik +
+ * Tony Tran + Unassigned"), matched as "any of".
+ *
+ * The same BaseTagSelect as Status, Priority and Tags, so it looks and behaves
+ * like them (checkboxes, the clear cross on the trigger), with search because
+ * the list of people can be long. Unassigned is pinned at the top. The trigger
+ * shows a summary rather than one chip per person, which would not fit.
+ */
+const AssigneeFilter: FC<{
+  options: ScopeOption[];
+  people: string[];
+  includeUnassigned: boolean;
+  onChange: (people: string[], includeUnassigned: boolean) => void;
+}> = ({ options, people, includeUnassigned, onChange }) => {
+  const nameById = useMemo(
+    () => new Map(options.map(o => [o.id, o.name])),
+    [options],
+  );
+  const value = [...people, ...(includeUnassigned ? [UNASSIGNED] : [])];
+  const labels = [
+    ...people.map(id => nameById.get(id) ?? 'Unknown user'),
+    ...(includeUnassigned ? ['Unassigned'] : []),
+  ];
+
+  return (
+    <div className="w-40">
+      <BaseTagSelect
+        label="Assignee"
+        placeholder="All assignees"
+        hasSearch
+        classNames={{ base: 'w-full [&_svg]:my-0' }}
+        value={value}
+        onValueChange={(next: string[]) =>
+          onChange(
+            next.filter(v => v !== UNASSIGNED),
+            next.includes(UNASSIGNED),
+          )
+        }
+        // Always the summary: maxVisibleTags 0 sends every selection down the
+        // collapsed path, whose first tag is drawn as the whole summary and
+        // whose "+N" is dropped (the summary already counts).
+        maxVisibleTags={0}
+        renderSelectedTag={() => (
+          <span
+            className="truncate text-xs font-medium"
+            title={labels.join(', ')}
+          >
+            {summariseAssignees(labels)}
+          </span>
+        )}
+        renderCollapsedCount={() => null}
+      >
+        {[
+          <BaseTagSelectItem
+            key={UNASSIGNED}
+            value={UNASSIGNED}
+            textValue="Unassigned"
+          >
+            Unassigned
+          </BaseTagSelectItem>,
+          ...options.map(option => (
+            <BaseTagSelectItem
+              key={option.id}
+              value={option.id}
+              textValue={option.name}
+            >
+              {option.name}
+            </BaseTagSelectItem>
+          )),
+          // Someone chosen before the company or organisation changed may no
+          // longer be offered; they stay listed so they can still be unticked.
+          ...people
+            .filter(id => !nameById.has(id))
+            .map(id => (
+              <BaseTagSelectItem key={id} value={id} textValue="Unknown user">
+                Unknown user
+              </BaseTagSelectItem>
+            )),
+          ...(value.length > 0
+            ? [
+                <ClearAssigneesRow
+                  key="__clear"
+                  onClear={() => onChange([], false)}
+                />,
+              ]
+            : []),
+        ]}
+      </BaseTagSelect>
+    </div>
+  );
+};
+
 interface TicketFiltersProps {
   filters: TicketFiltersType;
   onFiltersChange: (filters: TicketFiltersType) => void;
   onSearch: (searchTerm: string) => void;
   searchTerm: string;
-  /**
-   * The person chosen in the Assignee filter. Not `filters.assigneeId`: the
-   * "Assigned to you" tab sets that for itself, and it is not a choice.
-   */
-  assigneeId?: string;
-  /** Owns the tab rules around a chosen person (see TicketGrid). */
-  onAssigneeChange: (assigneeId?: string) => void;
   onCategoryChange: (categoryId: string | null) => void;
   /** The Columns button, at the right of the second row. */
   columnsChooser?: ReactNode;
@@ -170,8 +285,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   onFiltersChange,
   onSearch,
   searchTerm,
-  assigneeId,
-  onAssigneeChange,
   onCategoryChange,
   columnsChooser,
 }) => {
@@ -308,13 +421,20 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           />
         </div>
 
-        <FilterAutocomplete
-          label="Assignee"
-          placeholder="All assignees"
+        {/* Written through onFiltersChange like every other filter; the grid
+          picks the tab from the result ("Assigned to you" for exactly you,
+          "Unassigned" for Unassigned alone; see tabForFilters). */}
+        <AssigneeFilter
           options={assigneeOptions}
-          levelExists
-          value={assigneeId}
-          onChange={id => onAssigneeChange(id)}
+          people={filters.assigneeId ?? []}
+          includeUnassigned={Boolean(filters.includeUnassigned)}
+          onChange={(people, includeUnassigned) =>
+            onFiltersChange({
+              ...filters,
+              assigneeId: people.length > 0 ? people : undefined,
+              includeUnassigned: includeUnassigned || undefined,
+            })
+          }
         />
 
         <FilterAutocomplete

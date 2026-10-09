@@ -23,7 +23,12 @@ import {
   PrincipalTicketsApi,
   TicketsApi,
 } from '@brainforgeau/helpdesk-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchMatches } from './useSearchMatches';
@@ -63,8 +68,38 @@ export const withSearchMatches = (
   searchScopeIds: scopeIds.length > 0 ? scopeIds : undefined,
 });
 
+/**
+ * The Assignee filter's selection as the ticket endpoints take it, worked out
+ * once for the list, the counts and fetchTicketCount.
+ *
+ * One person and nothing else goes in the plain `assigneeId`, which the
+ * generated client declares and the "Assigned to you" tab has always sent.
+ * Anything wider (several people, or Unassigned ticked) goes out as repeated
+ * `assigneeIds=` plus `includeUnassigned`, which the backend matches as "any
+ * of" and the generated client predates.
+ */
+export const assigneeParams = (
+  filters: TicketFilters,
+): {
+  assigneeId?: string;
+  assigneeIds?: string[];
+  includeUnassigned?: true;
+} => {
+  const people = filters.assigneeId ?? [];
+  if (people.length === 1 && !filters.includeUnassigned) {
+    return { assigneeId: people[0] };
+  }
+  return {
+    assigneeIds: people.length > 0 ? people : undefined,
+    includeUnassigned: filters.includeUnassigned ? true : undefined,
+  };
+};
+
 const extraParams = (filters: TicketFilters, includeScope: boolean) => {
   const params: Record<string, unknown> = {};
+  const { assigneeIds, includeUnassigned } = assigneeParams(filters);
+  if (assigneeIds) params.assigneeIds = assigneeIds;
+  if (includeUnassigned) params.includeUnassigned = includeUnassigned;
   if (filters.tagIds?.length) params.tagIds = filters.tagIds;
   // Name matches for the search box, resolved by useSearchMatches.
   if (filters.searchUserIds?.length) {
@@ -123,12 +158,10 @@ const ticketQueryValues = (filters: TicketFilters) => ({
     ? toApiTicketPriority(filters.priority[0])
     : undefined,
   categoryId: filters.categoryId?.[0],
-  // When unassignedOnly is active, clear assigneeId so the backend is not asked
-  // for both at once, which matches nothing.
-  assigneeId: filters.unassignedOnly ? undefined : filters.assigneeId?.[0],
+  // A wider selection goes out via extraParams (assigneeIds).
+  assigneeId: assigneeParams(filters).assigneeId,
   searchTerm: filters.searchTerm,
   overdueOnly: filters.overdueOnly ? true : undefined,
-  unassignedOnly: filters.unassignedOnly ? true : undefined,
 });
 
 /**
@@ -162,7 +195,7 @@ export const fetchTicketCount = async (
       v.searchTerm,
       undefined, // unreadOnly
       v.overdueOnly,
-      v.unassignedOnly,
+      undefined, // unassignedOnly: Unassigned is includeUnassigned now
       1, // page
       1, // pageSize
       undefined, // sortBy
@@ -184,7 +217,7 @@ export const fetchTicketCount = async (
     undefined, // unreadOnly
     v.overdueOnly,
     undefined, // spamOnly
-    v.unassignedOnly,
+    undefined, // unassignedOnly: Unassigned is includeUnassigned now
     1, // page
     1, // pageSize
     undefined, // sortBy
@@ -257,6 +290,10 @@ export const useTicketsData = (
     // Held while a name lookup the search depends on is running, so the grid
     // asks once with the full search rather than once without it and again.
     enabled: search.ready && enabled,
+    // Ticking several assignees (or paging, or switching tab) keeps the rows
+    // on screen until the new ones arrive, instead of blanking the grid to a
+    // loading state on every click.
+    placeholderData: keepPreviousData,
     queryKey: [
       'tickets',
       pagination,
@@ -284,7 +321,7 @@ export const useTicketsData = (
             v.searchTerm,
             undefined, // unreadOnly
             v.overdueOnly,
-            v.unassignedOnly,
+            undefined, // unassignedOnly: Unassigned is includeUnassigned now
             pagination.pageIndex + 1,
             pagination.pageSize,
             sort?.sortBy,
@@ -312,7 +349,7 @@ export const useTicketsData = (
         undefined, // unreadOnly
         v.overdueOnly,
         undefined, // spamOnly — default view excludes spam
-        v.unassignedOnly,
+        undefined, // unassignedOnly: Unassigned is includeUnassigned now
         pagination.pageIndex + 1,
         pagination.pageSize,
         sort?.sortBy,

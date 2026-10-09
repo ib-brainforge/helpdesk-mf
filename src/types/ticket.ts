@@ -138,7 +138,18 @@ export interface TicketFilters {
   status?: string[]; // API takes single value, but UI may filter multiple
   priority?: string[];
   categoryId?: string[];
+  /**
+   * People chosen in the Assignee filter, matched as "any of" (together with
+   * unassigned tickets when includeUnassigned is set). The "Assigned to you"
+   * tab sets this to the current user.
+   */
   assigneeId?: string[];
+  /**
+   * The Assignee filter's "Unassigned" option: unassigned tickets are part of
+   * the selection. On its own it means unassigned only, which with the open
+   * statuses is what the "Unassigned" tab is.
+   */
+  includeUnassigned?: boolean;
   searchTerm?: string;
   /**
    * People and places whose NAME matched searchTerm, resolved on this side
@@ -148,7 +159,6 @@ export interface TicketFilters {
   searchUserIds?: string[];
   searchScopeIds?: string[];
   tagIds?: string[]; // Filter by tag IDs
-  unassignedOnly?: boolean;
   /** When true, only tickets past their due date are returned (backend OverdueOnly param). */
   overdueOnly?: boolean;
   /**

@@ -3,11 +3,11 @@ import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import type { TicketFilters } from '@/types/ticket';
 import { toApiTicketPriority } from '@/utils/typeMappers';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
 import { useSearchMatches } from './useSearchMatches';
-import { withSearchMatches } from './useTickets';
+import { assigneeParams, withSearchMatches } from './useTickets';
 
 /**
  * Every badge on the ticket list, from one request.
@@ -54,8 +54,7 @@ export interface TicketCountsResponse {
 /**
  * The filters the endpoint accepts.
  *
- * status, statuses, custom statuses, overdueOnly and unassignedOnly are
- * deliberately absent:
+ * status, statuses, custom statuses and overdueOnly are deliberately absent:
  * each tab defines those for itself server-side. Sending them would make every
  * badge depend on whichever tab happened to be open, which is the bug
  * ticketTabs.ts exists to prevent.
@@ -69,7 +68,11 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
     params.priority = toApiTicketPriority(filters.priority[0]);
   }
   if (filters.categoryId?.[0]) params.categoryId = filters.categoryId[0];
-  if (filters.assigneeId?.[0]) params.assigneeId = filters.assigneeId[0];
+  // The Assignee filter's selection, in the same shape the list sends.
+  const assignees = assigneeParams(filters);
+  if (assignees.assigneeId) params.assigneeId = assignees.assigneeId;
+  if (assignees.assigneeIds) params.assigneeIds = assignees.assigneeIds;
+  if (assignees.includeUnassigned) params.includeUnassigned = true;
   if (filters.searchTerm) params.searchTerm = filters.searchTerm;
   // Name matches for the search box, resolved by useSearchMatches.
   if (filters.searchUserIds?.length)
@@ -118,8 +121,8 @@ export const ticketCountsQueryOptions = (
       // regenerated; the shape below already matches the DTO.
       const { data } = await authorizedAxios.get<TicketCountsResponse>(url, {
         params,
-        // tagIds goes out as repeated `tagIds=` rather than `tagIds[0]=`,
-        // matching how the ticket list serialises the same filter.
+        // tagIds and assigneeIds go out as repeated `tagIds=` rather than
+        // `tagIds[0]=`, matching how the ticket list serialises them.
         paramsSerializer: { indexes: null },
       });
       return data;
@@ -156,6 +159,10 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
   const query = useQuery({
     ...ticketCountsQueryOptions(searched, scopedPrincipalId),
     enabled: search.ready,
+    // The badges keep their numbers while a changed filter is recounted,
+    // rather than vanishing and reappearing on every tick of the Assignee
+    // filter.
+    placeholderData: keepPreviousData,
   });
 
   return { data: query.data, isLoading: query.isLoading };
