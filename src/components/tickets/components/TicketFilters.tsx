@@ -311,8 +311,6 @@ interface TicketFiltersProps {
   onSearch: (searchTerm: string) => void;
   searchTerm: string;
   onCategoryChange: (categoryId: string | null) => void;
-  /** The Columns button, at the right of the second row. */
-  columnsChooser?: ReactNode;
   /** Tickets per person, from the tab counts the grid already loads. */
   assigneeCounts?: AssigneeCounts;
 }
@@ -323,7 +321,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   onSearch,
   searchTerm,
   onCategoryChange,
-  columnsChooser,
   assigneeCounts,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
@@ -658,7 +655,6 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             Clear Filters
           </BaseButton>
         </div>
-        {columnsChooser && <div className="ml-auto">{columnsChooser}</div>}
       </div>
     </div>
   );

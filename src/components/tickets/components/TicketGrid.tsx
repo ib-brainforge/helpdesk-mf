@@ -763,30 +763,48 @@ export const TicketGrid: FC = () => {
 
           {/* Tab Bar */}
           <div className="mb-4">
-            <BaseTabs
-              selectedKey={selectedTab}
-              onSelectionChange={handleTabChange}
-              classNames={{ tabList: 'mb-5', panel: 'empty:hidden' }}
-            >
-              <BaseTab
-                key="unanswered"
-                title={tabTitle('Unanswered', 'unanswered')}
-              />
-              <BaseTab
-                key="unclosed"
-                title={tabTitle('Unclosed', 'unclosed')}
-              />
-              <BaseTab
-                key="unassigned"
-                title={tabTitle('Unassigned', 'unassigned')}
-              />
-              <BaseTab key="overdue" title={tabTitle('Overdue', 'overdue')} />
-              <BaseTab
-                key="assigned-to-you"
-                title={tabTitle('Assigned to you', 'assigned-to-you')}
-              />
-              <BaseTab key="all" title={tabTitle('All', 'all')} />
-            </BaseTabs>
+            {/* The Columns button sits at the right end of the tab row. The tabs
+              scroll sideways before they would run under it, and the line
+              under the tabs carries on beneath the button. */}
+            <div className="mb-5 flex items-stretch">
+              <BaseTabs
+                selectedKey={selectedTab}
+                onSelectionChange={handleTabChange}
+                className="min-w-0 flex-1"
+                classNames={{
+                  tabList: 'overflow-x-auto overflow-y-hidden',
+                  panel: 'empty:hidden',
+                }}
+              >
+                <BaseTab
+                  key="unanswered"
+                  title={tabTitle('Unanswered', 'unanswered')}
+                />
+                <BaseTab
+                  key="unclosed"
+                  title={tabTitle('Unclosed', 'unclosed')}
+                />
+                <BaseTab
+                  key="unassigned"
+                  title={tabTitle('Unassigned', 'unassigned')}
+                />
+                <BaseTab key="overdue" title={tabTitle('Overdue', 'overdue')} />
+                <BaseTab
+                  key="assigned-to-you"
+                  title={tabTitle('Assigned to you', 'assigned-to-you')}
+                />
+                <BaseTab key="all" title={tabTitle('All', 'all')} />
+              </BaseTabs>
+              <div className="border-light flex shrink-0 items-center border-b-2 pl-4">
+                <ColumnsChooser
+                  layout={ticketsLayout.layout}
+                  labels={ticketsLayout.labels}
+                  hints={ticketsLayout.hints}
+                  persisted={ticketsLayout.hasSaved}
+                  onReset={() => void ticketsLayout.reset()}
+                />
+              </div>
+            </div>
             {/* Filters */}
             <TicketFilters
               filters={filters}
@@ -795,15 +813,6 @@ export const TicketGrid: FC = () => {
               onSearch={handleSearch}
               searchTerm={searchTerm}
               onCategoryChange={handleCategorySelect}
-              columnsChooser={
-                <ColumnsChooser
-                  layout={ticketsLayout.layout}
-                  labels={ticketsLayout.labels}
-                  hints={ticketsLayout.hints}
-                  persisted={ticketsLayout.hasSaved}
-                  onReset={() => void ticketsLayout.reset()}
-                />
-              }
             />
           </div>
 
