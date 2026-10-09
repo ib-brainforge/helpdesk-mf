@@ -12,13 +12,17 @@ import { IT_SUPPORT_WORKSPACE_ENABLED } from '@/constants/features';
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { HELPDESK_NAV, IT_SUPPORT_NAV, type NavSections } from '@/navigation';
 import { usePermissions } from '@brainforgeau/security';
-import { useMemo } from 'react';
+import { ComputerDesktopIcon, TicketIcon } from '@heroicons/react/24/outline';
+import { type ComponentType, type SVGProps, useMemo } from 'react';
 
 export interface Workspace {
   key: 'helpdesk' | 'it-support';
   label: string;
-  /** A name from the library's Icon set. */
-  icon: string;
+  /**
+   * An outline icon, the thin line style Tracking uses for its own mode
+   * buttons, so the two apps' switchers read the same.
+   */
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   /**
    * Its URLs: the prefix itself and everything below it. Null for Helpdesk,
    * which owns every URL no other workspace claims.
@@ -37,7 +41,7 @@ export const WORKSPACES: readonly Workspace[] = [
   {
     key: 'helpdesk',
     label: 'Helpdesk',
-    icon: 'TicketIcon',
+    icon: TicketIcon,
     prefix: null,
     // The landing redirect, which picks Dashboard or Tickets by permission.
     home: '/',
@@ -48,7 +52,7 @@ export const WORKSPACES: readonly Workspace[] = [
   {
     key: 'it-support',
     label: 'IT Support',
-    icon: 'ComputerDesktopIcon',
+    icon: ComputerDesktopIcon,
     prefix: '/it-support',
     home: '/it-support',
     enabled: IT_SUPPORT_WORKSPACE_ENABLED,

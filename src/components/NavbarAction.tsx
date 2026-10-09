@@ -1,7 +1,6 @@
 import { IconTip } from '@/components/shared';
 import { hubConnectedAtom } from '@/state/config';
 import type { Workspace } from '@/workspaces';
-import { Icon } from '@brainforgeau/components/base';
 import { SignalIcon } from '@heroicons/react/24/solid';
 import { useAtomValue } from 'jotai';
 import type { FC } from 'react';
@@ -36,10 +35,11 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
       {workspaces.length > 1 && (
         <fieldset
           aria-label="Workspace"
-          className="m-0 flex min-w-0 items-center gap-0.5 rounded-lg border-0 bg-default-100 p-0.5"
+          className="m-0 flex min-w-0 items-center gap-0.5 rounded-lg border-0 bg-[#F4F5F7] p-0.5 dark:bg-[#A6C5E229]"
         >
           {workspaces.map(workspace => {
             const isActive = workspace.key === activeKey;
+            const WorkspaceIcon = workspace.icon;
             return (
               <IconTip key={workspace.key} label={workspace.label}>
                 <button
@@ -50,13 +50,16 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
                   onClick={() => {
                     if (!isActive) onNavigate(workspace.home);
                   }}
-                  className={`flex h-7 w-8 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
+                  className={`flex h-[30px] w-9 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                     isActive
                       ? 'border-blue bg-white text-blue dark:bg-zinc-900'
-                      : 'border-transparent text-default-500 hover:text-default-700'
+                      : 'border-transparent text-[#59636e] hover:bg-white/70 hover:text-[#292a2e]'
                   }`}
                 >
-                  <Icon name={workspace.icon} className="h-4 w-4" />
+                  <WorkspaceIcon
+                    className="h-[18px] w-[18px]"
+                    strokeWidth={1.5}
+                  />
                 </button>
               </IconTip>
             );
