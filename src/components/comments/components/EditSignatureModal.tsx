@@ -67,10 +67,15 @@ export const EditSignatureModal: FC<EditSignatureModalProps> = ({
       await signature.save({ html, addToReplies }, { immediate: true });
       toast('Signature saved', { variant: 'success' });
       onClose();
-    } catch {
+    } catch (error) {
+      const code = (
+        error as { response?: { data?: { errors?: Array<{ code?: string }> } } }
+      )?.response?.data?.errors?.[0]?.code;
       toast('Signature not saved', {
         description:
-          'Check any linked image is an https address, then try again.',
+          code === 'SignatureImage.NotFound'
+            ? 'An image in it is no longer available. Remove it, add it again, then save.'
+            : 'Check any linked image is an https address, then try again.',
         variant: 'danger',
       });
     } finally {
