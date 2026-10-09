@@ -13,9 +13,9 @@ import {
   BaseToggle,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { RichTextEditor } from '@brainforgeau/components/text-editor';
 import { toast } from '@heroui/react';
 import { type FC, useEffect, useState } from 'react';
+import { SignatureEditor } from '../signature/SignatureEditor';
 import { SignatureBlock } from './SignatureBlock';
 
 const CONNECT_ERRORS: Record<MailboxConnectError, string> = {
@@ -69,7 +69,8 @@ export const EditSignatureModal: FC<EditSignatureModalProps> = ({
       onClose();
     } catch {
       toast('Signature not saved', {
-        description: 'Images must be https links. Check it and try again.',
+        description:
+          'Check any linked image is an https address, then try again.',
         variant: 'danger',
       });
     } finally {
@@ -142,11 +143,7 @@ export const EditSignatureModal: FC<EditSignatureModalProps> = ({
             <section>
               <h3 className="mb-1.5 text-xs font-bold">Signature</h3>
               <div className="rounded-[3px] border border-[#d1d9e0]">
-                <RichTextEditor
-                  content={html}
-                  onChange={setHtml}
-                  placeholder="Your name, role and phone number"
-                />
+                <SignatureEditor content={html} onChange={setHtml} />
               </div>
             </section>
 
