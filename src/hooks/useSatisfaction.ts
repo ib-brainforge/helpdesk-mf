@@ -17,8 +17,19 @@ export const useSatisfactionRatingByTicket = (ticketId: string) => {
     queryKey: ['satisfaction', 'ticket', ticketId],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(SatisfactionApi, scope);
-      const { data } = await client.v1SatisfactionTicketTicketIdGet(ticketId);
-      return data;
+      try {
+        const { data } = await client.v1SatisfactionTicketTicketIdGet(ticketId);
+        return data;
+      } catch (error) {
+        // 404 is the normal answer for a ticket nobody has rated yet: an
+        // empty result, not a failure to retry.
+        if (
+          (error as { response?: { status?: number } })?.response?.status ===
+          404
+        )
+          return null;
+        throw error;
+      }
     },
     enabled: !!ticketId,
   });
