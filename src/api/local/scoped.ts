@@ -68,15 +68,22 @@ export const issueScopeToken = async (
 export const isNotLicensedError = (error: unknown): boolean => {
   const response = (error as { response?: { status?: number; data?: unknown } })
     ?.response;
-  if (!response) return false;
+  const status = response?.status ?? 0;
+  if (status < 400 || status >= 500) return false;
   let body = '';
   try {
-    body = JSON.stringify(response.data ?? '');
+    body = JSON.stringify(response?.data ?? '');
   } catch {
-    // Not serialisable; judge by status alone.
+    return false;
   }
-  if (/NOT_LICENSED|NotLicensed|not licensed/i.test(body)) return true;
-  return response.status === 403 && /licen[cs]e/i.test(body);
+  // The API's RequireLicensedApp refusal: 403 ProblemDetails with no code,
+  // detail "Tenant is not licensed for app 'helpdesk'." A plain permission
+  // 403 says nothing about a licence, so it never matches.
+  if (status === 403 && /not licensed for app/i.test(body)) return true;
+  // Identity's refusal to issue the token (CTX_APP_NOT_LICENSED). Not a
+  // feature licence (ENT_FEATURE_NOT_LICENSED), which is about one feature,
+  // not the app.
+  return /APP_NOT_LICENSED/.test(body);
 };
 
 /** For callers that hold a token: it goes in each request's headers. */
