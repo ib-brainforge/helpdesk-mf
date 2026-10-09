@@ -51,16 +51,25 @@ export const TICKET_DEFAULT_TAB: TicketTabKey = 'all';
  * filters and rebuilt per tab, so a previous tab's flags cannot leak into the
  * next one.
  *
- * `assigneeId` is deliberately NOT in here. It belongs to the sidebar rail and
- * the toolbar autocomplete, so it survives a tab change like every other
- * filter. The two tabs that define themselves in terms of a person override it
- * explicitly below.
+ * The assignee selection (`assigneeId`, `includeUnassigned`) is deliberately
+ * NOT in here. It belongs to the Assignee filter, so it survives a tab change
+ * like every other filter. The two tabs that define themselves in terms of a
+ * person set it explicitly below, which is also what the Assignee filter then
+ * shows.
  */
-type TabOwnedField =
-  | 'status'
-  | 'customStatusIds'
-  | 'unassignedOnly'
-  | 'overdueOnly';
+type TabOwnedField = 'status' | 'customStatusIds' | 'overdueOnly';
+
+/** The statuses a ticket can still be picked up in. */
+const OPEN_STATUSES = [TicketStatus.New, TicketStatus.InProgress];
+
+/**
+ * The tabs that ARE an assignee selection: "Unassigned" is the Assignee
+ * filter's Unassigned option alone (on open tickets), and "Assigned to you" is
+ * the current user alone. Choosing that selection in the filter opens the tab,
+ * and opening the tab sets the filter to it.
+ */
+export const isPersonTab = (tabKey: string) =>
+  tabKey === 'unassigned' || tabKey === 'assigned-to-you';
 
 /**
  * The filters a tab means, layered on whatever the sidebar and filter bar have
@@ -83,7 +92,6 @@ export const filtersForTab = (
     status: _status,
     // Custom statuses are part of the status selection, which a tab owns.
     customStatusIds: _customStatusIds,
-    unassignedOnly: _unassignedOnly,
     overdueOnly: _overdueOnly,
     ...carried
   } = filters as TicketFilters & Record<TabOwnedField, unknown>;
@@ -98,33 +106,30 @@ export const filtersForTab = (
         status: [TicketStatus.New, TicketStatus.InProgress],
       };
     case 'unassigned':
-      // The dedicated unassignedOnly param; a magic assigneeId string is not
-      // recognised by the endpoint.
+      // The Assignee filter's Unassigned option on its own, so the filter shows
+      // exactly what the tab means. Chosen people are replaced rather than
+      // kept: with them the list would no longer be nobody's tickets.
       //
-      // Constrained to open statuses as well. `unassignedOnly` on its own means
-      // "no assignee, any status", which swept in closed tickets: 144 of the
-      // 453 this tab used to show. A closed ticket cannot be picked up, so
-      // counting it in a triage queue overstates the work by a third and makes
-      // the number useless for deciding what to do next.
-      //
-      // A chosen assignee is cleared rather than sent alongside: "unassigned"
-      // and "assigned to this person" match nothing together, and leaving it
-      // set would keep that person highlighted in the rail while the list
-      // showed tickets that are by definition nobody's.
+      // Constrained to open statuses as well. Unassigned on its own means "no
+      // assignee, any status", which swept in closed tickets: 144 of the 453
+      // this tab used to show. A closed ticket cannot be picked up, so counting
+      // it in a triage queue overstates the work by a third and makes the
+      // number useless for deciding what to do next.
       return {
         ...carried,
         assigneeId: undefined,
-        unassignedOnly: true,
-        status: [TicketStatus.New, TicketStatus.InProgress],
+        includeUnassigned: true,
+        status: [...OPEN_STATUSES],
       };
     case 'overdue':
       return { ...carried, overdueOnly: true };
     case 'assigned-to-you':
-      // This tab IS an assignee filter, so it overrides whoever the rail has
-      // selected rather than intersecting with them.
+      // This tab IS an assignee filter, so it replaces whoever the Assignee
+      // filter has selected rather than intersecting with them.
       return {
         ...carried,
         assigneeId: currentUserId ? [currentUserId] : undefined,
+        includeUnassigned: undefined,
       };
     default:
       return { ...carried };
@@ -145,35 +150,66 @@ const sameSet = (a?: readonly unknown[], b?: readonly unknown[]) => {
  * New), but editing those fields afterwards left the tab lit: clear New from
  * Status and the list showed every status under a tab still saying Unanswered.
  *
- * The current tab is kept while the filters still match its definition.
- * Otherwise the first tab whose definition they match exactly is chosen, and
- * All when none does. Assigned to you is never chosen this way: picking
- * yourself as assignee is a filter like picking anyone else, not that tab.
+ * The Assignee filter decides first, because two tabs are an assignee
+ * selection (isPersonTab):
+ *   - exactly you, with no status or Overdue chosen, is "Assigned to you";
+ *   - only Unassigned, with exactly the open statuses, is "Unassigned". So is
+ *     only Unassigned with no status, but only when it was just chosen in
+ *     the Assignee filter (`previous` differs): the caller then applies the
+ *     tab's definition (filtersForTab), which adds the open statuses, so the
+ *     tab and its badge describe the rows. Otherwise clearing those statuses
+ *     on the Unassigned tab would put them straight back. A status the user
+ *     did choose (Closed, say) is never overridden.
+ * Otherwise the current tab is kept while the filters still match its
+ * definition, then the first tab whose definition they match exactly, and All
+ * when none does.
  */
 export const tabForFilters = (
   filters: TicketFilters,
   currentTab: string,
   currentUserId?: string,
+  /** The filters before this change, to tell a new assignee selection apart. */
+  previous?: TicketFilters,
 ): TicketTabKey => {
+  const people = filters.assigneeId ?? [];
+  const assigneesJustChosen =
+    previous !== undefined &&
+    (!sameSet(previous.assigneeId, filters.assigneeId) ||
+      Boolean(previous.includeUnassigned) !==
+        Boolean(filters.includeUnassigned));
+  const noOtherTabFields =
+    !filters.overdueOnly && !filters.customStatusIds?.length;
+  if (
+    noOtherTabFields &&
+    currentUserId &&
+    !filters.includeUnassigned &&
+    people.length === 1 &&
+    people[0] === currentUserId &&
+    !filters.status?.length
+  )
+    return 'assigned-to-you';
+  if (
+    noOtherTabFields &&
+    filters.includeUnassigned &&
+    people.length === 0 &&
+    (sameSet(filters.status, OPEN_STATUSES) ||
+      (assigneesJustChosen && !filters.status?.length))
+  )
+    return 'unassigned';
+
   const matches = (key: TicketTabKey) => {
+    // The person tabs were decided above; anything that reached here is not
+    // their selection.
+    if (isPersonTab(key)) return false;
     const definition = filtersForTab(key, filters, currentUserId);
-    const ownFieldsMatch =
+    return (
       sameSet(definition.status, filters.status) &&
       sameSet(definition.customStatusIds, filters.customStatusIds) &&
-      Boolean(definition.unassignedOnly) === Boolean(filters.unassignedOnly) &&
-      Boolean(definition.overdueOnly) === Boolean(filters.overdueOnly);
-    if (!ownFieldsMatch) return false;
-    return key === 'assigned-to-you' || key === 'unassigned'
-      ? sameSet(definition.assigneeId, filters.assigneeId)
-      : true;
+      Boolean(definition.overdueOnly) === Boolean(filters.overdueOnly)
+    );
   };
   if (TICKET_VALID_TABS.has(currentTab) && matches(currentTab as TicketTabKey))
     return currentTab as TicketTabKey;
-  const candidates: TicketTabKey[] = [
-    'unanswered',
-    'unclosed',
-    'unassigned',
-    'overdue',
-  ];
+  const candidates: TicketTabKey[] = ['unanswered', 'unclosed', 'overdue'];
   return candidates.find(matches) ?? 'all';
 };

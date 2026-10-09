@@ -45,6 +45,7 @@ import {
   TICKET_VALID_TABS,
   type TicketTabKey,
   filtersForTab,
+  isPersonTab,
   tabForFilters,
 } from '../hooks/ticketTabs';
 import { useBulkTicketAction } from '../hooks/useBulkTicketAction';
@@ -203,22 +204,20 @@ export const TicketGrid: FC = () => {
   /*
    * WHO OWNS THE ASSIGNEE FILTER.
    *
-   * "Assigned to you" is an assignee filter wearing a tab's clothes: opening it
-   * sets `filters.assigneeId` to the current user. So a non-empty assigneeId
-   * means one of two completely different things, and almost everything on this
-   * screen has to tell them apart:
+   * "Assigned to you" and "Unassigned" are assignee selections wearing a tab's
+   * clothes (isPersonTab): opening one sets the Assignee filter to you alone,
+   * or to Unassigned alone, and choosing that selection in the filter opens
+   * the tab. On those tabs the selection belongs to the TAB:
    *
-   *   - the TAB set it for itself  -> not a selection, must not narrow anything
-   *     beyond its own tab, and must not survive leaving that tab
-   *   - YOU picked it from the rail -> a real filter that narrows the badges and
-   *     travels with you across tabs
+   *   - it must not narrow the badges beside it (All read 179 against a real
+   *     2001 when it did), and
+   *   - it must not survive leaving the tab, or clicking All afterwards still
+   *     listed only your own tickets.
    *
-   * Conflating the two caused three separate bugs: a dead-end where the tab
-   * disabled itself, badges that scoped the whole strip to your own queue
-   * (All reading 179 against a real 2001), and clicking All afterwards leaving
-   * the list still filtered to you.
+   * On every other tab the selection is YOURS: it narrows the badges and
+   * travels with you across tabs.
    */
-  const tabOwnsAssignee = selectedTab === 'assigned-to-you';
+  const tabOwnsAssignee = isPersonTab(selectedTab);
 
   // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
   useRealtimeTickets();
@@ -471,7 +470,10 @@ export const TicketGrid: FC = () => {
    * it, or the strip stops being a way to see what else is there.
    */
   const countsFilters = useMemo(
-    () => (tabOwnsAssignee ? { ...filters, assigneeId: undefined } : filters),
+    () =>
+      tabOwnsAssignee
+        ? { ...filters, assigneeId: undefined, includeUnassigned: undefined }
+        : filters,
     [filters, tabOwnsAssignee],
   );
   const { counts } = useTicketTabCounts(currentUserId, countsFilters);
@@ -483,65 +485,18 @@ export const TicketGrid: FC = () => {
    * a 0 or a spinner: a queue tab that reads "0" is a statement about the data,
    * and it should never say that while it simply does not know yet.
    */
-  /*
-   * Tabs that cannot coexist with a chosen assignee.
-   *
-   * Both define themselves in terms of a person, so picking one from the rail
-   * leaves them asking a contradictory or a redundant question: "unassigned"
-   * and "assigned to Zeljko" match nothing together, and "assigned to you" is
-   * already an assignee filter that would simply overwrite the choice. Their
-   * badges reflect this today by ignoring the rail, which is correct but reads
-   * as though the number is stale.
-   *
-   * Every other tab narrows cleanly by assignee and stays enabled: Unclosed for
-   * Zeljko is his New plus In Progress, which is a question worth asking.
-   */
-  const railAssigneeId = tabOwnsAssignee ? undefined : filters.assigneeId?.[0];
-
-  const isTabDisabled = useCallback(
-    (key: TicketTabKey) => {
-      // Never dim where you already are: a disabled selected tab is a dead end.
-      if (key === selectedTab || !railAssigneeId) return false;
-      // "Unassigned" contradicts any chosen person.
-      if (key === 'unassigned') return true;
-      /*
-       * Dimmed for ANY chosen person, your own name included. The rail is
-       * already applying an assignee, and this tab would only overwrite it, so
-       * offering it would mean two controls fighting over one field. Treating
-       * your name as a special case made the rail behave differently depending
-       * on whose name you clicked, which is harder to predict than a rule that
-       * holds for everyone.
-       */
-      if (key === 'assigned-to-you') return true;
-      return false;
-    },
-    [railAssigneeId, selectedTab],
-  );
 
   const tabTitle = useCallback(
     (label: string, key: TicketTabKey) => {
       const count = counts?.[key];
-      const disabled = isTabDisabled(key);
+      /*
+       * No tab is ever disabled. "Unassigned" and "Assigned to you" used to dim
+       * while a person was chosen, since they would silently overwrite the
+       * choice. They now set the Assignee filter to what they mean, visibly,
+       * so clicking one is a choice you can see and undo.
+       */
       return (
-        <span
-          /*
-           * pointer-events-auto is what makes the tooltip appear at all.
-           *
-           * HeroUI gives a disabled tab `pointer-events: none`, so the browser
-           * never hit-tests it, never fires a hover, and a `title` on it is
-           * silently dead. A child may re-enable hit-testing even when its
-           * parent has it off, so the label opts back in while the tab itself
-           * stays disabled and still refuses the click.
-           */
-          className={`flex items-center gap-1.5 ${
-            disabled ? 'pointer-events-auto cursor-not-allowed opacity-40' : ''
-          }`}
-          title={
-            disabled
-              ? `${label} ignores the assignee filter. Clear the assignee to use this tab.`
-              : undefined
-          }
-        >
+        <span className="flex items-center gap-1.5">
           {label}
           {count !== undefined && (
             /*
@@ -565,7 +520,7 @@ export const TicketGrid: FC = () => {
         </span>
       );
     },
-    [counts, isTabDisabled],
+    [counts],
   );
 
   const paginationTemplate = useCallback(() => {
@@ -732,11 +687,16 @@ export const TicketGrid: FC = () => {
       // Any other change may stop matching the tab (clearing New from Status
       // on Unanswered, say), so the tab is re-chosen from the filters rather
       // than left lit over rows it no longer describes. See tabForFilters.
-      const tab = tabForFilters(next, selectedTab, currentUserId);
+      const tab = tabForFilters(next, selectedTab, currentUserId, filters);
       if (tab !== selectedTab) setSelectedTab(tab);
-      setFilters(next);
+      // A person tab chosen from the Assignee filter brings its definition
+      // with it (Unassigned adds the open statuses), so the rows, the tab and
+      // its badge agree. Every other tab already matches `next` exactly.
+      setFilters(
+        isPersonTab(tab) ? filtersForTab(tab, next, currentUserId) : next,
+      );
     },
-    [setFilters, selectedTab, setSelectedTab, currentUserId],
+    [setFilters, filters, selectedTab, setSelectedTab, currentUserId],
   );
 
   const handleCategorySelect = useCallback(
@@ -760,67 +720,19 @@ export const TicketGrid: FC = () => {
       setFilters(prev =>
         filtersForTab(
           tabKey,
-          // Drop a tab-owned assignee on the way out. filtersForTab carries
-          // assigneeId so a rail choice survives a tab change, but the one
-          // "Assigned to you" set for itself belongs to that tab: leaving it in
-          // meant clicking All next still listed only your own tickets, under a
-          // badge saying 2001.
-          tabOwnsAssignee ? { ...prev, assigneeId: undefined } : prev,
+          // Drop a tab-owned assignee selection on the way out. filtersForTab
+          // carries the selection so your own choice survives a tab change,
+          // but the one a person tab set for itself belongs to that tab:
+          // leaving it in meant clicking All next still listed only your own
+          // tickets, under a badge saying 2001.
+          tabOwnsAssignee
+            ? { ...prev, assigneeId: undefined, includeUnassigned: undefined }
+            : prev,
           currentUserId,
         ),
       );
     },
     [setFilters, currentUserId, setSelectedTab, tabOwnsAssignee],
-  );
-
-  /*
-   * The Assignee filter. It writes `filters.assigneeId`, and what it shows is
-   * DERIVED from it (railAssigneeId), so the control and the list cannot
-   * disagree.
-   */
-  const handleAssigneeSelect = useCallback(
-    (assigneeId?: string) => {
-      /*
-       * Your own name is treated exactly like anyone else's: the rail is a
-       * filter, not navigation. Picking yourself narrows the tab you are on,
-       * the same as picking Zeljko, which keeps combinations like "mine, and
-       * overdue" reachable in one click.
-       *
-       * The two person-defined tabs dim while any name is selected, including
-       * your own: "Unassigned" contradicts having an assignee, and "Assigned to
-       * you" is an assignee filter that would overwrite the choice. Clearing the
-       * rail brings both back.
-       */
-      const contradictsTab =
-        selectedTab === 'assigned-to-you'
-          ? true
-          : selectedTab === 'unassigned'
-            ? Boolean(assigneeId)
-            : false;
-
-      if (contradictsTab) {
-        // The tab's own meaning no longer holds, so land on All rather than
-        // leave a header describing a filter it is not applying.
-        setSelectedTab('all');
-        setFilters(prev =>
-          filtersForTab(
-            'all',
-            { ...prev, assigneeId: assigneeId ? [assigneeId] : undefined },
-            currentUserId,
-          ),
-        );
-        return;
-      }
-
-      setFilters(prev => ({
-        ...prev,
-        assigneeId: assigneeId ? [assigneeId] : undefined,
-        // Picking a person contradicts "unassigned only", so it clears it
-        // rather than sending both and getting nothing back.
-        unassignedOnly: assigneeId ? undefined : prev.unassignedOnly,
-      }));
-    },
-    [setFilters, selectedTab, setSelectedTab, currentUserId],
   );
 
   return (
@@ -870,13 +782,11 @@ export const TicketGrid: FC = () => {
               <BaseTab
                 key="unassigned"
                 title={tabTitle('Unassigned', 'unassigned')}
-                isDisabled={isTabDisabled('unassigned')}
               />
               <BaseTab key="overdue" title={tabTitle('Overdue', 'overdue')} />
               <BaseTab
                 key="assigned-to-you"
                 title={tabTitle('Assigned to you', 'assigned-to-you')}
-                isDisabled={isTabDisabled('assigned-to-you')}
               />
               <BaseTab key="all" title={tabTitle('All', 'all')} />
             </BaseTabs>
@@ -886,8 +796,6 @@ export const TicketGrid: FC = () => {
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}
-              assigneeId={railAssigneeId}
-              onAssigneeChange={handleAssigneeSelect}
               onCategoryChange={handleCategorySelect}
               columnsChooser={
                 <ColumnsChooser

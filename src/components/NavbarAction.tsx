@@ -32,9 +32,14 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
   return (
     <div className="flex items-center gap-2">
       {workspaces.length > 1 && (
+        /*
+          Tracking's mode buttons: bare icons the full height of the navbar,
+          the active one tinted on a light grey tile with an underline along
+          the navbar's bottom edge, and a divider before the AI button and the bell.
+        */
         <fieldset
           aria-label="Workspace"
-          className="m-0 flex min-w-0 items-center gap-0.5 rounded-lg border-0 bg-[#F4F5F7] p-0.5 dark:bg-[#A6C5E229]"
+          className="m-0 flex h-[54px] min-w-0 items-stretch gap-1 border-0 border-r border-solid border-r-[#d1d9e0] p-0 pr-3"
         >
           {workspaces.map(workspace => {
             const isActive = workspace.key === activeKey;
@@ -56,16 +61,13 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
                 onClick={() => {
                   if (!isActive) onNavigate(workspace.home);
                 }}
-                className={`flex h-[30px] w-9 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
+                className={`-mb-px flex w-10 items-center justify-center border-0 border-b-2 border-solid transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                   isActive
-                    ? 'border-blue bg-white text-blue dark:bg-zinc-900'
-                    : 'border-transparent text-[#59636e] hover:bg-white/70 hover:text-[#292a2e]'
+                    ? 'border-b-[#1868db] bg-[#EBECF0] text-[#6a9a1f] dark:bg-[#A6C5E229]'
+                    : 'border-b-transparent bg-transparent text-[#59636e] hover:text-[#292a2e]'
                 }`}
               >
-                <WorkspaceIcon
-                  className="h-[18px] w-[18px]"
-                  strokeWidth={1.5}
-                />
+                <WorkspaceIcon className="h-5 w-5" strokeWidth={1.5} />
               </button>
             );
           })}
