@@ -87,6 +87,7 @@ import {
   Navigate,
   Outlet,
   useLocation,
+  useNavigate,
 } from '@modern-js/runtime/router';
 
 const TopNavbar = lazyWithRetry(
@@ -94,14 +95,12 @@ const TopNavbar = lazyWithRetry(
   m => m?.TopNavbar,
 );
 import { Logo } from '@/components/Logo';
+import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
-import { hubConnectedAtom } from '@/state/config';
 import { getAppConfig } from '@/state/config';
 import { WORKSPACE_FALLBACK_PATH, useWorkspaces } from '@/workspaces';
-import { SignalIcon } from '@heroicons/react/24/solid';
-import { useAtomValue } from 'jotai';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -159,22 +158,6 @@ function breadcrumbI18nResolver(key: string): string {
   return BREADCRUMB_LABELS[key] ?? key;
 }
 
-const HelpdeskAction = () => {
-  const hubConnected = useAtomValue(hubConnectedAtom);
-  return (
-    <div className="flex items-center gap-1.5">
-      {hubConnected && (
-        <span
-          className="flex items-center gap-1 text-green-500"
-          title="Live connection active"
-        >
-          <SignalIcon className="h-3.5 w-3.5" />
-        </span>
-      )}
-    </div>
-  );
-};
-
 export default function Layout() {
   // Desktop sidebar: extended (full) or collapsed (icons only)
   const [desktopMode, setDesktopMode] =
@@ -231,10 +214,12 @@ export default function Layout() {
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
   const { setAction } = useNavbarAction();
+  const navigate = useNavigate();
   // Which workspace the URL is in picks the side menu, and opening one the
   // user cannot use redirects (workspaces.ts).
   const {
     active: workspace,
+    available: workspaces,
     blocked: workspaceBlocked,
     isLoading: loadingWorkspaces,
   } = useWorkspaces(location.pathname);
@@ -249,10 +234,19 @@ export default function Layout() {
     [location.pathname],
   );
 
+  // The navbar draws this outside Helpdesk's router, so it gets navigate and
+  // the active workspace from here, and is set again whenever they change.
   useEffect(() => {
-    setAction(<HelpdeskAction />);
-    return () => setAction(null);
-  }, [setAction]);
+    setAction(
+      <HelpdeskNavbarAction
+        workspaces={workspaces}
+        activeKey={workspace.key}
+        onNavigate={navigate}
+      />,
+    );
+  }, [setAction, workspaces, workspace.key, navigate]);
+  // Cleared once, on leaving Helpdesk, not between the updates above.
+  useEffect(() => () => setAction(null), [setAction]);
 
   // Filter navigation items based on user permissions
   // Include permissions in deps to ensure re-render when context token changes
