@@ -36,6 +36,17 @@ const FIT_ATTR = 'data-fit-col';
 const EXTRA_ATTR = 'data-fit-extra';
 const SORT_ARROW_PX = 18;
 
+declare module '@tanstack/react-table' {
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /**
+     * A fixed width in px, for a column whose values can be long and are
+     * better truncated (with the full text on hover) than allowed to widen
+     * the table. Not measured by useFitColumns.
+     */
+    fixedWidth?: number;
+  }
+}
+
 export interface FitMarkerOptions {
   /** Columns sized from their definition rather than measured. */
   skipIds: string[];
@@ -56,7 +67,8 @@ export const withFitMarkers = <T extends RowData>(
 ): ColumnDef<T, unknown>[] =>
   columns.map(def => {
     const id = columnIdOf(def);
-    if (skipIds.includes(id)) return def;
+    // Fixed-width columns keep their own cells, so they can truncate.
+    if (skipIds.includes(id) || def.meta?.fixedWidth) return def;
     const header = def.header;
     const cell = def.cell;
     return {
@@ -86,8 +98,8 @@ export const withFitMarkers = <T extends RowData>(
 export interface UseFitColumnsOptions {
   /** Holds the table; its width is the width to fill. */
   containerRef: RefObject<HTMLElement | null>;
-  /** Visible column ids, with the size each has in its definition. */
-  columns: Array<{ id: string; size: number }>;
+  /** The visible columns (see fitColumnsOf). */
+  columns: FitColumn[];
   /** The column that takes the remaining width and truncates. */
   fillId: string;
   /** The fill column never goes below this. */
@@ -97,6 +109,28 @@ export interface UseFitColumnsOptions {
   /** Re-measures when any of these change (rows, names, a ticking clock). */
   deps: unknown[];
 }
+
+/** A visible column as useFitColumns sizes it. */
+export interface FitColumn {
+  id: string;
+  /** The definition's size, kept by columns that are not measured. */
+  size: number;
+  /** Set from meta.fixedWidth: used as it is, never measured. */
+  fixedWidth?: number;
+}
+
+/** The visible columns of `columns`, for useFitColumns. */
+export const fitColumnsOf = <T extends RowData>(
+  columns: ColumnDef<T, unknown>[],
+  hidden: string[],
+): FitColumn[] =>
+  columns
+    .map(def => ({
+      id: columnIdOf(def),
+      size: def.size ?? 150,
+      fixedWidth: def.meta?.fixedWidth,
+    }))
+    .filter(c => !hidden.includes(c.id));
 
 /** The shared table's scrolling box inside the container, if rendered. */
 const scrollHolderOf = (el: HTMLElement): HTMLElement | null =>
@@ -119,7 +153,9 @@ export const useFitColumns = ({
   deps,
 }: UseFitColumnsOptions): ColumnSizingState => {
   const [sizing, setSizing] = useState<ColumnSizingState>({});
-  const columnsKey = columns.map(c => `${c.id}:${c.size}`).join(',');
+  const columnsKey = columns
+    .map(c => `${c.id}:${c.size}:${c.fixedWidth ?? ''}`)
+    .join(',');
 
   // Late web fonts change every width once they arrive.
   const [fontsReady, setFontsReady] = useState(false);
@@ -154,12 +190,14 @@ export const useFitColumns = ({
 
     const next: ColumnSizingState = {};
     let used = 0;
-    for (const { id, size } of opts.columns) {
+    for (const { id, size, fixedWidth } of opts.columns) {
       if (id === opts.fillId) continue;
       // Measured columns: content plus padding and the 1px divider. Others
       // (checkbox, row menu) keep their own size.
       const measured = widest.get(id);
-      const w = measured !== undefined ? measured + opts.cellPadding + 1 : size;
+      const w =
+        fixedWidth ??
+        (measured !== undefined ? measured + opts.cellPadding + 1 : size);
       next[id] = w;
       used += w;
     }

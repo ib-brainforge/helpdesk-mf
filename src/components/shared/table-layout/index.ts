@@ -6,7 +6,9 @@ export {
   useTableLayout,
 } from './useTableLayout';
 export {
+  type FitColumn,
   type FitMarkerOptions,
+  fitColumnsOf,
   type UseFitColumnsOptions,
   useFitColumns,
   withFitMarkers,
