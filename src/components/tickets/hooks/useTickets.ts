@@ -1,5 +1,6 @@
 import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateTicketDto,
@@ -344,10 +345,11 @@ export const useTicketsData = (
 };
 
 export const useTicketDetail = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, error } = useQuery<TicketDto>({
     queryKey: ['ticket', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdGet(ticketId);
       return response.data as TicketDto;
     },
@@ -380,6 +382,7 @@ export const useCreateTicket = () => {
 };
 
 export const useUpdateTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -387,7 +390,7 @@ export const useUpdateTicket = () => {
       id,
       updates,
     }: { id: string; updates: UpdateTicketDto }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
 
       // REVIEW: Backend has separate endpoints for different updates
       // Basic fields (subject, description)
@@ -448,6 +451,7 @@ export const useUpdateTicket = () => {
 };
 
 export const useMergeTickets = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -455,7 +459,7 @@ export const useMergeTickets = () => {
       primaryTicketId,
       ticketIdToMerge,
     }: { primaryTicketId: string; ticketIdToMerge: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdMergePost(primaryTicketId, {
         mergedTicketId: ticketIdToMerge,
       });
@@ -474,6 +478,7 @@ export const useMergeTickets = () => {
 };
 
 export const useLinkTickets = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -495,7 +500,7 @@ export const useLinkTickets = () => {
       semantic: TicketLinkSemantic;
     }) => {
       const wire = toWireLink(semantic, currentTicketId, otherTicketId);
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdLinksPost(wire.sourceTicketId, {
         targetTicketId: wire.targetTicketId,
         linkType: wire.linkType,
@@ -518,10 +523,11 @@ export const useLinkTickets = () => {
 
 /** Every link on a ticket, as source or as target. */
 export const useTicketLinks = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['ticket-links', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdLinksGet(ticketId);
       return (response.data ?? []) as TicketLink[];
     },
@@ -530,6 +536,7 @@ export const useTicketLinks = (ticketId: string) => {
 };
 
 export const useUnlinkTickets = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -537,7 +544,7 @@ export const useUnlinkTickets = () => {
       ticketId,
       linkId,
     }: { ticketId: string; linkId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdLinksLinkIdDelete(ticketId, linkId);
       return { ticketId };
     },
@@ -551,11 +558,12 @@ export const useUnlinkTickets = () => {
 };
 
 export const useDeleteTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdDelete(ticketId);
       return ticketId;
     },
@@ -566,10 +574,11 @@ export const useDeleteTicket = () => {
 };
 
 export const useMyTicketSubscription = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery<boolean>({
     queryKey: ['ticket-subscription', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdSubscribeMeGet(ticketId);
       return response.data as boolean;
     },
@@ -578,11 +587,12 @@ export const useMyTicketSubscription = (ticketId: string) => {
 };
 
 export const useSubscribeToTicket = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdSubscribePost(ticketId);
     },
     onSuccess: () => {
@@ -594,11 +604,12 @@ export const useSubscribeToTicket = (ticketId: string) => {
 };
 
 export const useUnsubscribeFromTicket = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdSubscribeDelete(ticketId);
     },
     onSuccess: () => {
@@ -610,11 +621,12 @@ export const useUnsubscribeFromTicket = (ticketId: string) => {
 };
 
 export const useMarkTicketAsSpam = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdMarkSpamPost(ticketId);
       return ticketId;
     },
@@ -625,11 +637,12 @@ export const useMarkTicketAsSpam = () => {
 };
 
 export const useUnmarkTicketAsSpam = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdUnmarkSpamPost(ticketId);
       return ticketId;
     },
@@ -642,6 +655,7 @@ export const useUnmarkTicketAsSpam = () => {
 // Wave 3 hooks
 
 export const useForwardTicket = () => {
+  const scope = useHelpdeskScope();
   return useMutation({
     mutationFn: async ({
       ticketId,
@@ -658,7 +672,7 @@ export const useForwardTicket = () => {
       body: string;
       includeAttachments: boolean;
     }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdForwardPost(ticketId, {
         to,
         cc: cc ?? null,
@@ -671,11 +685,12 @@ export const useForwardTicket = () => {
 };
 
 export const useDuplicateTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdDuplicatePost(ticketId);
       return response.data as string;
     },
@@ -686,6 +701,7 @@ export const useDuplicateTicket = () => {
 };
 
 export const useConvertToReply = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -693,7 +709,7 @@ export const useConvertToReply = () => {
       ticketId,
       parentTicketId,
     }: { ticketId: string; parentTicketId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdConvertToReplyPost(ticketId, { parentTicketId });
     },
     onSuccess: () => {
@@ -703,10 +719,11 @@ export const useConvertToReply = () => {
 };
 
 export const useTicketChildren = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['ticket-children', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdChildrenGet(ticketId, 1, 50);
       return response.data?.items ?? [];
     },
@@ -715,10 +732,11 @@ export const useTicketChildren = (ticketId: string) => {
 };
 
 export const useLinkedAssets = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['ticket-linked-assets', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdLinkedAssetsGet(ticketId);
       return response.data ?? [];
     },
@@ -727,6 +745,7 @@ export const useLinkedAssets = (ticketId: string) => {
 };
 
 export const useLinkAsset = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -734,7 +753,7 @@ export const useLinkAsset = () => {
       ticketId,
       assetId,
     }: { ticketId: string; assetId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdLinkedAssetsPost(ticketId, {
         assetId,
       });
@@ -749,6 +768,7 @@ export const useLinkAsset = () => {
 };
 
 export const useUnlinkAsset = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -756,7 +776,7 @@ export const useUnlinkAsset = () => {
       ticketId,
       assetId,
     }: { ticketId: string; assetId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdLinkedAssetsAssetIdDelete(ticketId, assetId);
     },
     onSuccess: (_, variables) => {
@@ -778,6 +798,7 @@ export type CreateSubtaskDto = {
 };
 
 export const useCreateSubtask = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -785,7 +806,7 @@ export const useCreateSubtask = () => {
       parentTicketId,
       data,
     }: { parentTicketId: string; data: CreateSubtaskDto }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsParentIdSubtasksPost(
         parentTicketId,
         data as never,
@@ -805,11 +826,12 @@ export const useCreateSubtask = () => {
 };
 
 export const useMarkTicketAsProblem = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdMarkProblemPost(ticketId);
       return ticketId;
     },
@@ -820,11 +842,12 @@ export const useMarkTicketAsProblem = () => {
 };
 
 export const useUnmarkTicketAsProblem = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdUnmarkProblemPost(ticketId);
       return ticketId;
     },
@@ -835,11 +858,12 @@ export const useUnmarkTicketAsProblem = () => {
 };
 
 export const usePublishTicketAsIdea = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdPublishAsIdeaPost(ticketId);
       return ticketId;
     },
@@ -851,11 +875,12 @@ export const usePublishTicketAsIdea = () => {
 };
 
 export const useUnpublishTicketAsIdea = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdUnpublishAsIdeaPost(ticketId);
       return ticketId;
     },
