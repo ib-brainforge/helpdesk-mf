@@ -46,7 +46,13 @@ export interface TicketCountsResponse {
     assignedToMe: number | null;
     all: number;
   };
-  assignees: { assigneeId: string; count: number }[];
+  assignees: {
+    assigneeId: string;
+    /** Matching tickets in any status. */
+    count: number;
+    /** Matching tickets still open (New or In Progress): the work left. */
+    openCount: number;
+  }[];
   /** Tickets matching the filters with nobody assigned, in any status. */
   unassigned: number;
 }

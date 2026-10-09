@@ -7,14 +7,15 @@ export type { TicketTabKey };
 
 /**
  * Tickets per person for the Assignee filter's badges, from the same response
- * as the tab badges. Each counts that person's tickets in any status under
- * the other active filters (company, organisation, category, priority, tags,
- * search), in the list's own scope: the number the list shows on All with
+ * as the tab badges: how many each person has LEFT. Each counts that person's
+ * open tickets (New or In Progress, as the Unclosed tab means it) under the
+ * other active filters (company, organisation, category, priority, tags,
+ * search), in the list's own scope: the number the list shows on Unclosed with
  * only that person ticked. The selected assignees never narrow it.
  */
 export interface AssigneeCounts {
   byId: ReadonlyMap<string, number>;
-  /** Tickets with nobody assigned, on the same terms. */
+  /** Open tickets with nobody assigned, on the same terms: the Unassigned tab's badge. */
   unassigned: number;
 }
 
@@ -73,8 +74,9 @@ export const useTicketTabCounts = (
     (): AssigneeCounts | undefined =>
       data
         ? {
-            byId: new Map(data.assignees.map(a => [a.assigneeId, a.count])),
-            unassigned: data.unassigned,
+            byId: new Map(data.assignees.map(a => [a.assigneeId, a.openCount])),
+            // Open unassigned is exactly the Unassigned tab's count.
+            unassigned: data.tabs.unassigned,
           }
         : undefined,
     [data],
