@@ -34,8 +34,8 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
       {workspaces.length > 1 && (
         /*
           Tracking's mode buttons: bare icons the full height of the navbar,
-          the active one tinted with an underline along the navbar's bottom
-          edge, and a divider before the AI button and the bell.
+          the active one tinted on a light grey tile with an underline along
+          the navbar's bottom edge, and a divider before the AI button and the bell.
         */
         <fieldset
           aria-label="Workspace"
@@ -63,7 +63,7 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
                 }}
                 className={`-mb-px flex w-10 items-center justify-center border-0 border-b-2 border-solid bg-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                   isActive
-                    ? 'border-b-[#1868db] text-[#6a9a1f]'
+                    ? 'border-b-[#1868db] bg-[#F4F5F7] text-[#6a9a1f] dark:bg-[#A6C5E229]'
                     : 'border-b-transparent text-[#59636e] hover:text-[#292a2e]'
                 }`}
               >
