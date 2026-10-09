@@ -20,6 +20,16 @@ export interface TicketLinkState {
 }
 
 /**
+ * A page-level message centred in the content area. The page outlet is a flex
+ * row, so without w-full and flex-1 the message hugged the top-left corner.
+ */
+const PageState: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="mt-16 flex w-full flex-1 justify-center px-4">
+    <div className="w-full max-w-[480px] text-center">{children}</div>
+  </div>
+);
+
+/**
  * Shown instead of the ticket when its company does not have Helpdesk: identity
  * will not issue a Helpdesk token there, and the API refuses one.
  */
@@ -32,20 +42,18 @@ export const TicketNotEnabled: FC<{ tenantId?: string | null }> = ({
     (tenantId ? byTenantId.get(tenantId)?.tenantName : undefined) ??
     'this company';
   return (
-    <div className="flex h-96 items-center justify-center">
-      <div className="max-w-md text-center">
-        <Icon name="lock" className="mx-auto mb-4 h-12 w-12 text-default-400" />
-        <h2 className="mb-2 text-xl font-semibold">
-          Helpdesk isn't enabled for {company}
-        </h2>
-        <p className="mb-4 text-default-600">
-          Tickets for this company can't be opened until Helpdesk is licensed.
-        </p>
-        <BaseButton onPress={() => navigate('/tickets')}>
-          Back to tickets
-        </BaseButton>
-      </div>
-    </div>
+    <PageState>
+      <Icon name="lock" className="mx-auto mb-4 h-12 w-12 text-default-400" />
+      <h2 className="mb-2 text-xl font-semibold">
+        Helpdesk isn't enabled for {company}
+      </h2>
+      <p className="mb-4 text-default-600">
+        Tickets for this company can't be opened until Helpdesk is licensed.
+      </p>
+      <BaseButton onPress={() => navigate('/tickets')}>
+        Back to tickets
+      </BaseButton>
+    </PageState>
   );
 };
 
@@ -125,18 +133,16 @@ export const TicketScopeProvider: FC<{
       return <TicketNotEnabled tenantId={scope.tenantId} />;
     }
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="max-w-md text-center">
-          <Icon name="warning" className="mx-auto mb-4 h-12 w-12 text-danger" />
-          <h2 className="mb-2 text-xl font-semibold">
-            This ticket couldn't be opened
-          </h2>
-          <p className="mb-4 text-default-600">
-            Its company couldn't be reached. Try again in a moment.
-          </p>
-          <BaseButton onPress={() => token.refetch()}>Try again</BaseButton>
-        </div>
-      </div>
+      <PageState>
+        <Icon name="warning" className="mx-auto mb-4 h-12 w-12 text-danger" />
+        <h2 className="mb-2 text-xl font-semibold">
+          This ticket couldn't be opened
+        </h2>
+        <p className="mb-4 text-default-600">
+          Its company couldn't be reached. Try again in a moment.
+        </p>
+        <BaseButton onPress={() => token.refetch()}>Try again</BaseButton>
+      </PageState>
     );
   }
 
