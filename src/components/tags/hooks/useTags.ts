@@ -9,6 +9,8 @@ export const useTags = (searchTerm?: string) => {
   const { data, isLoading, refetch } = useQuery<TagDto[]>({
     // Tags belong to a company, so the list is per company.
     queryKey: ['tags', helpdeskScopeKey(scope), searchTerm],
+    // Reference data; creating a tag invalidates it.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(TagsApi, scope);
 
