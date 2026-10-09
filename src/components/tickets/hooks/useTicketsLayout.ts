@@ -23,10 +23,14 @@ import type { TicketTabKey } from './ticketTabs';
 
 const COLUMN_IDS = Object.keys(TICKET_COLUMN_LABELS);
 /**
- * 2: Status and Priority moved under the subject, Company and Organisation
- * share one cell. Layouts saved as 1 fall back to the new defaults.
+ * 4: widths follow the content, so a layout holds the column order, hidden
+ * columns and the sort. A layout saved as 3 (no order) keeps its hidden
+ * columns and sort and starts from the default order; 1 and 2 fall back to
+ * the defaults.
  */
-const LAYOUT_VERSION = 2;
+const LAYOUT_VERSION = 4;
+const KEEP_HIDDEN_AND_SORT_FROM = [3];
+/** Subject can move anywhere but is never hidden. */
 const LOCKED = ['subject'];
 const PINNED_START = ['select'];
 const PINNED_END = ['actions'];
@@ -53,7 +57,6 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
             v: saved.v,
             order: saved.order ?? [],
             hidden: saved.hidden ?? [],
-            widths: saved.widths ?? {},
             sort: saved.sort ?? null,
           }
         : null,
@@ -76,6 +79,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
 
   const layout = useTableLayout({
     version: LAYOUT_VERSION,
+    keepHiddenAndSortFrom: KEEP_HIDDEN_AND_SORT_FROM,
     columnIds: COLUMN_IDS,
     defaultHidden: TICKET_DEFAULT_HIDDEN,
     defaultSort,

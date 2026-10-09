@@ -10,7 +10,8 @@ import {
 import type { TableLayoutController } from './useTableLayout';
 
 /*
- * Show, hide and reorder a table's columns.
+ * Show, hide and reorder a table's columns. A locked column (always shown)
+ * cannot be hidden but still moves.
  *
  * Built only on TanStack state (through useTableLayout) and library
  * primitives, with nothing app-specific, so it can move into the shared table
@@ -78,21 +79,19 @@ export const ColumnsChooser: FC<ColumnsChooserProps> = ({
     return (
       <li
         key={id}
-        draggable={!isLocked}
-        onDragStart={isLocked ? undefined : onDragStart(id)}
-        onDragOver={isLocked ? undefined : onDragOver(id)}
-        onDrop={isLocked ? undefined : onDrop(id)}
+        draggable
+        onDragStart={onDragStart(id)}
+        onDragOver={onDragOver(id)}
+        onDrop={onDrop(id)}
         onDragEnd={endDrag}
-        onKeyDown={isLocked ? undefined : onRowKeyDown(id)}
+        onKeyDown={onRowKeyDown(id)}
         className={`flex h-8 items-center gap-1.5 pr-3 pl-1.5 text-sm ${
           dragId === id ? 'opacity-50' : ''
         } ${isDropTarget ? 'shadow-[inset_0_-2px_0_var(--color-blue)]' : ''}`}
       >
         <span
           aria-hidden
-          className={`flex w-4 justify-center ${
-            isLocked ? 'invisible' : 'cursor-grab text-default-400'
-          }`}
+          className="flex w-4 cursor-grab justify-center text-default-400"
         >
           <Icon name="grip" className="h-3.5 w-3.5" />
         </span>
@@ -101,9 +100,7 @@ export const ColumnsChooser: FC<ColumnsChooserProps> = ({
           isDisabled={isLocked}
           onValueChange={selected => setHidden(id, !selected)}
           className="min-w-0 flex-1"
-          aria-label={`Show ${labels[id] ?? id}${
-            isLocked ? '' : '. Alt and the arrow keys move it'
-          }`}
+          aria-label={`Show ${labels[id] ?? id}. Alt and the arrow keys move it`}
         >
           <span className="truncate">{labels[id] ?? id}</span>
           {isHidden && hints[id] && (

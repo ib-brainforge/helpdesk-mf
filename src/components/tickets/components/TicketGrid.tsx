@@ -4,7 +4,11 @@ import type {
 } from '@/api/local/ticket-bulk';
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { useMinuteTick } from '@/components/shared';
-import { ColumnsChooser } from '@/components/shared/table-layout';
+import {
+  ColumnsChooser,
+  useFitColumns,
+  withFitMarkers,
+} from '@/components/shared/table-layout';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
@@ -65,6 +69,13 @@ import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
 import type { TicketRow } from '../types';
+
+/**
+ * Not measured: the checkbox keeps its size, and Subject fills the rest. The
+ * row menu is measured like any other column (its header is screen-reader
+ * only), so its button always fits.
+ */
+const FIT_SKIP = ['select', 'subject'];
 
 export const TicketGrid: FC = () => {
   const navigate = useNavigate();
@@ -342,17 +353,21 @@ export const TicketGrid: FC = () => {
 
   const columns = useMemo(
     () =>
-      createTicketColumns({
-        onAssign: canAssign ? handleAssign : undefined,
-        onOpenAssign: canAssign ? setAssignRow : undefined,
-        onChangeStatus: handleChangeStatus,
-        onChangePriority: handleChangePriority,
-        currentUserId,
-        timezone,
-        scopeNames,
-        customStatuses,
-        customStatusTenantId: viewerTenantId,
-      }),
+      withFitMarkers(
+        createTicketColumns({
+          onAssign: canAssign ? handleAssign : undefined,
+          onOpenAssign: canAssign ? setAssignRow : undefined,
+          onChangeStatus: handleChangeStatus,
+          onChangePriority: handleChangePriority,
+          currentUserId,
+          timezone,
+          scopeNames,
+          customStatuses,
+          customStatusTenantId: viewerTenantId,
+        }),
+        // Subject fills the rest; the checkbox and row menu have fixed sizes.
+        { skipIds: FIT_SKIP, isSortable: id => id in TICKET_SORT_KEYS },
+      ),
     [
       canAssign,
       handleAssign,
@@ -366,6 +381,34 @@ export const TicketGrid: FC = () => {
     ],
   );
 
+  /*
+   * Every column is as wide as its content, Subject takes the rest (never
+   * below 220px, truncated with the full text on hover), and if even that
+   * does not fit the table scrolls sideways with the checkbox and Subject
+   * pinned. Re-measured when the rows, their names or the minute tick change.
+   */
+  const now = useMinuteTick();
+  const tableAreaRef = useRef<HTMLDivElement>(null);
+  const hiddenColumns = ticketsLayout.layout.hidden;
+  const fitColumns = useMemo(
+    () =>
+      columns
+        .map(c => ({
+          id: c.id ?? String((c as { accessorKey?: string }).accessorKey),
+          size: c.size ?? 150,
+        }))
+        .filter(c => !hiddenColumns.includes(c.id)),
+    [columns, hiddenColumns],
+  );
+  const columnSizing = useFitColumns({
+    containerRef: tableAreaRef,
+    columns: fitColumns,
+    fillId: 'subject',
+    fillMin: 220,
+    cellPadding: 20,
+    deps: [enrichedItems, now, isLoading],
+  });
+
   const { table } = useTicketsTable({
     data: enrichedItems,
     columns,
@@ -373,6 +416,7 @@ export const TicketGrid: FC = () => {
     pagination,
     onPaginationChange: setPagination,
     layout: ticketsLayout.layout,
+    columnSizing,
   });
 
   /*
@@ -380,7 +424,6 @@ export const TicketGrid: FC = () => {
    * rather than a border, so the row's checkbox stays in line with the rest.
    * The scope-colour rowMarker is not used on Tickets.
    */
-  const now = useMinuteTick();
   const getCellClassName = useCallback(
     ({
       row,
@@ -820,7 +863,10 @@ export const TicketGrid: FC = () => {
         {/* Table */}
         {/* min-h-0 lets BaseTable's own scroll region take the overflow. Without
             it this flex child sizes to its content and the page scrolls instead. */}
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={tableAreaRef}
+          className="relative flex min-h-0 flex-1 flex-col"
+        >
           {/*
             pageSizeOptions + onPageSizeChange together are what render the
             "per page" dropdown (BaseTable derives showPageSizeSelector from
@@ -836,7 +882,8 @@ export const TicketGrid: FC = () => {
             so hiding or moving a column in the chooser updated the header and
             not the body: the rows kept their old cells and slid out from under
             their headings. A new key redraws the body whenever the set or the
-            order of columns changes.
+            order of columns changes. (Widths need no redraw: the table's
+            colgroup sets them.)
           */}
           <BaseTable
             key={table

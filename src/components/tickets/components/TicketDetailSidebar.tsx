@@ -3,6 +3,7 @@ import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggesti
 import {
   type BadgeColor,
   StatusBadge,
+  UserCell,
   UserOptionRow,
   badgeFieldClasses,
   badgeSwatchClasses,
@@ -573,14 +574,23 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           <label className="block text-sm font-medium text-default-700 mb-1">
             Requester
           </label>
-          <p className="text-sm">
-            {requesterDisplayName}
-            {requesterEmail && (
-              <span className="ml-1.5 text-xs text-default-500">
-                {requesterEmail}
-              </span>
-            )}
-          </p>
+          {/* The same person cell as the Tickets list: picture or initials. */}
+          {ticket.requesterId || ticket.requesterName ? (
+            <UserCell
+              userInfo={
+                ticket.requesterId ? userMap[ticket.requesterId] : undefined
+              }
+              fallbackName={ticket.requesterName}
+              avatarSize="xs"
+            />
+          ) : (
+            <p className="text-sm">{requesterDisplayName}</p>
+          )}
+          {requesterEmail && (
+            <p className="mt-0.5 break-all pl-8 text-xs text-default-500">
+              {requesterEmail}
+            </p>
+          )}
         </div>
 
         {/*

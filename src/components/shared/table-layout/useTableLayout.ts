@@ -1,6 +1,5 @@
 import type {
   ColumnOrderState,
-  ColumnSizingState,
   OnChangeFn,
   SortingState,
   Updater,
@@ -9,8 +8,10 @@ import type {
 import { useCallback, useMemo } from 'react';
 
 /*
- * A table's saved layout as TanStack state: column order, visibility, widths
- * and sort.
+ * A table's saved layout as TanStack state: column order, which columns are
+ * hidden, and the sort.
+ *
+ * Widths are not a user setting: they follow the content (useFitColumns).
  *
  * Written against plain TanStack types with persistence passed in, so it can
  * move into the shared table library unchanged. The caller decides where the
@@ -28,25 +29,28 @@ export interface TableLayout {
   order: string[];
   /** Hidden column ids. Stored this way so a column added later shows by default. */
   hidden: string[];
-  /** Widths in px, by column id. */
-  widths: Record<string, number>;
   sort: { id: string; desc: boolean } | null;
 }
 
 export interface UseTableLayoutOptions {
   /** Bump when the columns or their defaults change (see TableLayout.v). */
   version: number;
+  /**
+   * Older versions whose hidden columns and sort still apply. Their column
+   * order does not: it starts from the default.
+   */
+  keepHiddenAndSortFrom?: number[];
   /** Every column id, in the default order. */
   columnIds: string[];
   /** Hidden until the user shows them. */
   defaultHidden?: string[];
   /** Applied while the user has not chosen a sort. */
   defaultSort?: { id: string; desc: boolean } | null;
-  /** Always shown, never hidden (e.g. the title column). */
+  /** Always shown, never hidden (e.g. the title column). They still move. */
   lockedIds?: string[];
   /**
-   * Fixed at the start or end, never listed in a chooser, never hidden or
-   * moved (selection checkbox, row actions).
+   * Structural columns fixed at the start or end: never listed in a chooser,
+   * never hidden or moved (selection checkbox, row actions).
    */
   pinnedStart?: string[];
   pinnedEnd?: string[];
@@ -63,6 +67,7 @@ const resolve = <T>(updater: Updater<T>, prev: T): T =>
 
 export const useTableLayout = ({
   version,
+  keepHiddenAndSortFrom = [],
   columnIds,
   defaultHidden = [],
   defaultSort = null,
@@ -72,23 +77,30 @@ export const useTableLayout = ({
   value: savedValue,
   onChange,
 }: UseTableLayoutOptions) => {
-  const value = savedValue?.v === version ? savedValue : null;
-  const fixed = useMemo(
-    () => new Set([...pinnedStart, ...pinnedEnd]),
-    [pinnedStart, pinnedEnd],
-  );
+  const isCurrent = savedValue?.v === version;
+  const value =
+    savedValue && (isCurrent || keepHiddenAndSortFrom.includes(savedValue.v))
+      ? savedValue
+      : null;
+
+  /** The columns a chooser lists and moves, in the default order. */
   const movable = useMemo(
-    () => columnIds.filter(id => !fixed.has(id)),
-    [columnIds, fixed],
+    () =>
+      columnIds.filter(
+        id => !pinnedStart.includes(id) && !pinnedEnd.includes(id),
+      ),
+    [columnIds, pinnedStart, pinnedEnd],
   );
 
   /*
    * The saved order, with ids that no longer exist dropped and new ones put
    * back at their default position relative to their default neighbours.
+   * An older layout kept for its hidden columns and sort has no order of
+   * its own here.
    */
+  const savedOrder = isCurrent ? savedValue?.order : undefined;
   const order = useMemo(() => {
-    const saved = (value?.order ?? []).filter(id => movable.includes(id));
-    const result = [...saved];
+    const result = (savedOrder ?? []).filter(id => movable.includes(id));
     movable.forEach((id, index) => {
       if (result.includes(id)) return;
       const before = movable
@@ -98,22 +110,16 @@ export const useTableLayout = ({
       result.splice(before ? result.indexOf(before) + 1 : 0, 0, id);
     });
     return result;
-  }, [value?.order, movable]);
+  }, [savedOrder, movable]);
 
   const hidden = useMemo(() => {
-    const ids = value ? value.hidden : defaultHidden;
-    return ids.filter(id => movable.includes(id) && !lockedIds.includes(id));
-  }, [value, defaultHidden, movable, lockedIds]);
+    const ids = value ? (value.hidden ?? []) : defaultHidden;
+    return order.filter(id => ids.includes(id) && !lockedIds.includes(id));
+  }, [value, defaultHidden, order, lockedIds]);
 
   const layout: TableLayout = useMemo(
-    () => ({
-      v: version,
-      order,
-      hidden,
-      widths: value?.widths ?? {},
-      sort: value?.sort ?? null,
-    }),
-    [version, order, hidden, value?.widths, value?.sort],
+    () => ({ v: version, order, hidden, sort: value?.sort ?? null }),
+    [version, order, hidden, value?.sort],
   );
 
   const columnOrder: ColumnOrderState = useMemo(
@@ -124,7 +130,6 @@ export const useTableLayout = ({
     () => Object.fromEntries(hidden.map(id => [id, false])),
     [hidden],
   );
-  const columnSizing: ColumnSizingState = layout.widths;
   const sortSource = layout.sort ?? defaultSort;
   const sorting: SortingState = useMemo(
     () => (sortSource ? [{ id: sortSource.id, desc: sortSource.desc }] : []),
@@ -136,36 +141,15 @@ export const useTableLayout = ({
     [layout, onChange],
   );
 
-  const onColumnOrderChange: OnChangeFn<ColumnOrderState> = useCallback(
-    updater => {
-      const next = resolve(updater, columnOrder).filter(id =>
-        movable.includes(id),
-      );
-      if (!sameIds(next, order)) update({ order: next });
-    },
-    [columnOrder, movable, order, update],
-  );
-
   const onColumnVisibilityChange: OnChangeFn<VisibilityState> = useCallback(
     updater => {
       const next = resolve(updater, columnVisibility);
-      const nextHidden = movable.filter(
+      const nextHidden = order.filter(
         id => next[id] === false && !lockedIds.includes(id),
       );
       if (!sameIds(nextHidden, hidden)) update({ hidden: nextHidden });
     },
-    [columnVisibility, movable, lockedIds, hidden, update],
-  );
-
-  const onColumnSizingChange: OnChangeFn<ColumnSizingState> = useCallback(
-    updater => {
-      const next = resolve(updater, columnSizing);
-      const widths = Object.fromEntries(
-        Object.entries(next).map(([id, px]) => [id, Math.round(px)]),
-      );
-      update({ widths });
-    },
-    [columnSizing, update],
+    [columnVisibility, order, lockedIds, hidden, update],
   );
 
   const onSortingChange: OnChangeFn<SortingState> = useCallback(
@@ -176,7 +160,7 @@ export const useTableLayout = ({
     [sorting, update],
   );
 
-  /** Moves one column up (-1) or down (+1) among the movable columns. */
+  /** Moves one column to `toIndex` among the movable columns. */
   const move = useCallback(
     (id: string, toIndex: number) => {
       const from = order.indexOf(id);
@@ -184,19 +168,15 @@ export const useTableLayout = ({
         from < 0 ||
         toIndex < 0 ||
         toIndex >= order.length ||
-        from === toIndex ||
-        // A locked column keeps its place; nothing moves past it.
-        lockedIds.includes(id) ||
-        lockedIds.includes(order[toIndex])
-      ) {
+        from === toIndex
+      )
         return;
-      }
       const next = [...order];
       next.splice(from, 1);
       next.splice(toIndex, 0, id);
       update({ order: next });
     },
-    [order, lockedIds, update],
+    [order, update],
   );
 
   const setHidden = useCallback(
@@ -205,19 +185,17 @@ export const useTableLayout = ({
       const next = isHidden
         ? [...hidden.filter(h => h !== id), id]
         : hidden.filter(h => h !== id);
-      update({ hidden: movable.filter(m => next.includes(m)) });
+      update({ hidden: order.filter(c => next.includes(c)) });
     },
-    [hidden, lockedIds, movable, update],
+    [hidden, lockedIds, order, update],
   );
 
   return {
     /** Pass to useReactTable's `state`. */
-    state: { columnOrder, columnVisibility, columnSizing, sorting },
-    onColumnOrderChange,
+    state: { columnOrder, columnVisibility, sorting },
     onColumnVisibilityChange,
-    onColumnSizingChange,
     onSortingChange,
-    /** The chooser's view: movable ids in order, and which are hidden. */
+    /** The chooser's view: movable ids in display order, and which are hidden. */
     order,
     hidden,
     lockedIds,

@@ -5,3 +5,9 @@ export {
   type UseTableLayoutOptions,
   useTableLayout,
 } from './useTableLayout';
+export {
+  type FitMarkerOptions,
+  type UseFitColumnsOptions,
+  useFitColumns,
+  withFitMarkers,
+} from './useFitColumns';
