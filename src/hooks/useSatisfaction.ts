@@ -1,3 +1,4 @@
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CSATReportFilters,
@@ -11,10 +12,11 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useSatisfactionRatingByTicket = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['satisfaction', 'ticket', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(SatisfactionApi);
+      const client = await createHelpdeskApiClient(SatisfactionApi, scope);
       const { data } = await client.v1SatisfactionTicketTicketIdGet(ticketId);
       return data;
     },

@@ -1,3 +1,4 @@
+import { helpdeskScopeKey, useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateCustomStatusRequest,
@@ -10,10 +11,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 const QUERY_KEY = 'helpdesk-custom-statuses';
 
 export const useCustomStatuses = () => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, refetch } = useQuery<CustomTicketStatusDto[]>({
-    queryKey: [QUERY_KEY],
+    // Custom statuses belong to a company: on another company's ticket these
+    // are that company's.
+    queryKey: [QUERY_KEY, helpdeskScopeKey(scope)],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(CustomStatusesApi);
+      const client = await createHelpdeskApiClient(CustomStatusesApi, scope);
       const response = await client.v1CustomStatusesGet();
       return (response.data as unknown as CustomTicketStatusDto[]) ?? [];
     },

@@ -16,12 +16,10 @@ import {
 } from '@/components/tags/hooks/useTags';
 import { SUBTASKS_ENABLED, TIME_TRACKING_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import {
-  NO_CUSTOM_STATUSES,
   buildStatusOptions,
-  customStatusesApply,
   encodeCustomStatusKey,
   resolveStatusKey,
   toTicketStatusName,
@@ -157,13 +155,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
    * without rewriting the tickets already on it, which is why the ticket's
    * current status is added back below even when inactive.
    */
-  const { customStatuses: ownStatuses } = useCustomStatuses();
-  // Another company's ticket (opened from the all-companies list) gets the
-  // built-in three only: these are the viewer's company's statuses.
-  const { tenantId: viewerTenantId } = useHelpdeskAccess();
-  const customStatuses = customStatusesApply(viewerTenantId, [ticket.tenantId])
-    ? ownStatuses
-    : NO_CUSTOM_STATUSES;
+  // The ticket's own company's statuses: the page runs in its company
+  // (TicketScopeProvider), so another company's ticket shows its own.
+  const { customStatuses } = useCustomStatuses();
+  // Categories are searched in the ticket's company too.
+  const scope = useHelpdeskScope();
   const statusOptions = useMemo(
     () => buildStatusOptions(customStatuses, ticket.customStatusId),
     [customStatuses, ticket.customStatusId],
@@ -248,7 +244,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
   // Load initial data when component mounts
   useEffect(() => {
-    searchCategories({ query: '' });
+    searchCategories({ query: '', scope });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -515,11 +511,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             }}
             onClear={() => onUpdate?.({ categoryId: undefined })}
             onValueChange={(value: string) => {
-              searchCategories({ query: value });
+              searchCategories({ query: value, scope });
             }}
             onOpenChange={open => {
               if (open && !isSearchingCategories) {
-                searchCategories({ query: '' });
+                searchCategories({ query: '', scope });
               }
             }}
             isLoading={isSearchingCategories}

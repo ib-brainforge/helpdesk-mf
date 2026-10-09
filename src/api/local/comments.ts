@@ -6,7 +6,7 @@
  * Replace with the generated client once it is regenerated. Shapes mirror the
  * backend exactly (design-review/notes/dev/CONTRACTS.md, Ben's section).
  */
-import { authorizedAxios } from '@/state/authorizedAxios';
+import { type HelpdeskScope, helpdeskAxios } from '@/api/local/scoped';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 
 /** EmailParticipantDto. The name is null when the address has none. */
@@ -50,11 +50,13 @@ export const COMMENT_ERRORS = {
 const base = (ticketId: string) =>
   `${requireHelpdeskApiBaseUrl()}/v1/tickets/${ticketId}/comments`;
 
+/** `scope`: the ticket's company when it is not the app's own. */
 export const addPublicComment = async (
   ticketId: string,
   body: AddPublicCommentBody,
+  scope?: HelpdeskScope | null,
 ): Promise<unknown> => {
-  const { data } = await authorizedAxios.post(base(ticketId), body);
+  const { data } = await helpdeskAxios(scope).post(base(ticketId), body);
   return data;
 };
 
@@ -62,6 +64,7 @@ export const addPublicComment = async (
 export const retryCommentEmail = async (
   ticketId: string,
   commentId: string,
+  scope?: HelpdeskScope | null,
 ): Promise<void> => {
-  await authorizedAxios.post(`${base(ticketId)}/${commentId}/email/retry`);
+  await helpdeskAxios(scope).post(`${base(ticketId)}/${commentId}/email/retry`);
 };

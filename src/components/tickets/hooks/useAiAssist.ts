@@ -1,3 +1,4 @@
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AiAssistApi } from '@brainforgeau/helpdesk-client';
 import { useMutation } from '@tanstack/react-query';
@@ -8,12 +9,13 @@ export interface AiAssistResult {
 }
 
 export const useGetTicketSummary = () => {
+  const scope = useHelpdeskScope();
   return useMutation({
     mutationFn: async ({
       ticketId,
       signal,
     }: { ticketId: string; signal?: AbortSignal }): Promise<AiAssistResult> => {
-      const client = await createHelpdeskApiClient(AiAssistApi);
+      const client = await createHelpdeskApiClient(AiAssistApi, scope);
       const response = await client.v1AiTicketSummaryPost(
         { ticketId },
         { signal },
@@ -24,12 +26,13 @@ export const useGetTicketSummary = () => {
 };
 
 export const useSuggestReply = () => {
+  const scope = useHelpdeskScope();
   return useMutation({
     mutationFn: async ({
       ticketId,
       signal,
     }: { ticketId: string; signal?: AbortSignal }): Promise<AiAssistResult> => {
-      const client = await createHelpdeskApiClient(AiAssistApi);
+      const client = await createHelpdeskApiClient(AiAssistApi, scope);
       const response = await client.v1AiSuggestReplyPost(
         { ticketId },
         { signal },
