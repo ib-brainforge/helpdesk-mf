@@ -19,7 +19,14 @@ import {
   BaseTagSelectItem,
   Icon,
 } from '@brainforgeau/components';
-import { type FC, type ReactNode, useCallback, useMemo, useState } from 'react';
+import {
+  type FC,
+  type ReactNode,
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { useScopedAssignees } from '../hooks/useScopedAssignees';
 import type { AssigneeCounts } from '../hooks/useTicketTabCounts';
 
@@ -53,7 +60,7 @@ const scopeLabel = (option: ScopeOption) =>
  * one today, so it stays hidden until they exist rather than showing an empty
  * list and implying the data failed to load.
  */
-const FilterAutocomplete: FC<{
+const FilterAutocompleteImpl: FC<{
   label: string;
   /** "All companies"; defaults to "All {label}s". */
   placeholder?: string;
@@ -167,6 +174,13 @@ const FilterAutocomplete: FC<{
   );
 };
 
+/**
+ * Memoised, with stable props from TicketFilters: the grid re-renders often
+ * (rows, counts, realtime), and each render used to rebuild every option of
+ * every picker.
+ */
+const FilterAutocomplete = memo(FilterAutocompleteImpl);
+
 /** The Unassigned option's value in the Assignee select. Never a user id. */
 const UNASSIGNED = '__unassigned__';
 
@@ -179,6 +193,15 @@ export const summariseAssignees = (labels: string[]): string => {
   if (labels.length <= 3) return `${labels[0]} +${labels.length - 1}`;
   return `${labels.length} assignees`;
 };
+
+/**
+ * A line of text in a BaseTagSelect list that is not an option ("Loading
+ * tags..."). A component rather than a bare element because BaseTagSelect
+ * hands every child a `value` prop, which a <div> would print as an attribute.
+ */
+const ListNote: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="text-default-500 px-2 py-1.5 text-sm">{children}</div>
+);
 
 /**
  * The last row of the Assignee list. BaseTagSelect renders whatever children
@@ -206,7 +229,7 @@ const ClearAssigneesRow: FC<{ onClear: () => void }> = ({ onClear }) => (
  * the list of people can be long. Unassigned is pinned at the top. The trigger
  * shows a summary rather than one chip per person, which would not fit.
  */
-const AssigneeFilter: FC<{
+const AssigneeFilterImpl: FC<{
   options: ScopeOption[];
   /** Undefined until the counts arrive; the rows then show no badge. */
   counts?: AssigneeCounts;
@@ -305,6 +328,31 @@ const AssigneeFilter: FC<{
   );
 };
 
+const AssigneeFilter = memo(AssigneeFilterImpl);
+
+/** Priority options never change, so they are built once. */
+const PRIORITY_ITEMS = [
+  <BaseTagSelectItem
+    key={TicketPriority.Critical}
+    value={TicketPriority.Critical}
+  >
+    Critical
+  </BaseTagSelectItem>,
+  <BaseTagSelectItem key={TicketPriority.High} value={TicketPriority.High}>
+    High
+  </BaseTagSelectItem>,
+  <BaseTagSelectItem key={TicketPriority.Normal} value={TicketPriority.Normal}>
+    Normal
+  </BaseTagSelectItem>,
+  <BaseTagSelectItem key={TicketPriority.Low} value={TicketPriority.Low}>
+    Low
+  </BaseTagSelectItem>,
+  // No "None" filter: None is no longer selectable anywhere a ticket is
+  // created or edited, so filtering by it can only ever return legacy rows.
+  // The enum member is kept in the render mappings so those still display
+  // their label rather than falling through to "Unknown".
+];
+
 interface TicketFiltersProps {
   filters: TicketFiltersType;
   onFiltersChange: (filters: TicketFiltersType) => void;
@@ -315,7 +363,7 @@ interface TicketFiltersProps {
   assigneeCounts?: AssigneeCounts;
 }
 
-export const TicketFilters: FC<TicketFiltersProps> = ({
+const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   filters,
   onFiltersChange,
   onSearch,
@@ -325,7 +373,17 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
-  const { tags } = useTags();
+  /*
+   * Tags load when the Tags filter is first opened (or focused), or straight
+   * away when tags are already chosen so their chips have names. Loading them
+   * with the page cost a slow request on every list load for a filter most
+   * visits never open.
+   */
+  const [tagsWanted, setTagsWanted] = useState(false);
+  const wantTags = useCallback(() => setTagsWanted(true), []);
+  const { tags, isLoading: loadingTags } = useTags(undefined, {
+    enabled: tagsWanted || Boolean(filters.tagIds?.length),
+  });
   const { isServiceAdmin } = useHelpdeskAccess();
   const { tenantOptions, organisationOptions, divisionOptions } =
     useScopeNames();
@@ -435,6 +493,109 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     [filters, onFiltersChange],
   );
 
+  // Stable callbacks for the memoised pickers below: an inline arrow would be
+  // a new prop on every render and undo the memo.
+  const handleAssigneeChange = useCallback(
+    (people: string[], includeUnassigned: boolean) =>
+      onFiltersChange({
+        ...filters,
+        assigneeId: people.length > 0 ? people : undefined,
+        includeUnassigned: includeUnassigned || undefined,
+      }),
+    [filters, onFiltersChange],
+  );
+  const handleCategoryPick = useCallback(
+    (id?: string) => onCategoryChange(id ?? null),
+    [onCategoryChange],
+  );
+  // Changing the tenant drops the organisation and division with it. They sit
+  // underneath the old tenant, so keeping them would leave a combination that
+  // describes nothing: "this tenant, and an organisation belonging to a
+  // different one" matches no ticket, and the grid would read empty for a
+  // reason nothing on screen explains.
+  const handleTenantChange = useCallback(
+    (id?: string) =>
+      onFiltersChange({
+        ...filters,
+        tenantId: id,
+        organisationId: undefined,
+        divisionId: undefined,
+      }),
+    [filters, onFiltersChange],
+  );
+  const handleOrganisationChange = useCallback(
+    (id?: string) =>
+      onFiltersChange({
+        ...filters,
+        organisationId: id,
+        divisionId: undefined,
+      }),
+    [filters, onFiltersChange],
+  );
+  const handleDivisionChange = useCallback(
+    (id?: string) => onFiltersChange({ ...filters, divisionId: id }),
+    [filters, onFiltersChange],
+  );
+  const handleTagsChange = useCallback(
+    (value: string[]) =>
+      onFiltersChange({
+        ...filters,
+        tagIds: value.length > 0 ? value : undefined,
+      }),
+    [filters, onFiltersChange],
+  );
+
+  const statusValue = useMemo(
+    () => [
+      ...(filters.status?.map(s => s.toString()) ?? []),
+      ...(filters.customStatusIds ?? []).map(
+        id => `${CUSTOM_STATUS_PREFIX}${id}`,
+      ),
+    ],
+    [filters.status, filters.customStatusIds],
+  );
+  const statusItems = useMemo(
+    () => [
+      <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>
+        New
+      </BaseTagSelectItem>,
+      <BaseTagSelectItem
+        key={TicketStatus.InProgress}
+        value={TicketStatus.InProgress}
+      >
+        In Progress
+      </BaseTagSelectItem>,
+      <BaseTagSelectItem key={TicketStatus.Closed} value={TicketStatus.Closed}>
+        Closed
+      </BaseTagSelectItem>,
+      ...activeCustomStatuses.map(cs => (
+        <BaseTagSelectItem
+          key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+          value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
+        >
+          {cs.name}
+        </BaseTagSelectItem>
+      )),
+    ],
+    [activeCustomStatuses],
+  );
+  const tagItems = useMemo(
+    () =>
+      tags.length > 0
+        ? tags.map(tag => (
+            <BaseTagSelectItem key={tag.id} value={tag.id as string}>
+              {tag.name}
+            </BaseTagSelectItem>
+          ))
+        : // Not loaded yet, or the company has none: say which.
+          [
+            <ListNote key="__tags-state">
+              {loadingTags || !tagsWanted ? 'Loading tags...' : 'No tags yet'}
+            </ListNote>,
+          ],
+    [tags, loadingTags, tagsWanted],
+  );
+
   const handleClearFilters = useCallback(() => {
     onFiltersChange({});
     onSearch('');
@@ -464,13 +625,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           counts={assigneeCounts}
           people={filters.assigneeId ?? []}
           includeUnassigned={Boolean(filters.includeUnassigned)}
-          onChange={(people, includeUnassigned) =>
-            onFiltersChange({
-              ...filters,
-              assigneeId: people.length > 0 ? people : undefined,
-              includeUnassigned: includeUnassigned || undefined,
-            })
-          }
+          onChange={handleAssigneeChange}
         />
 
         <FilterAutocomplete
@@ -479,7 +634,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           options={categoryOptions}
           levelExists
           value={filters.categoryId?.[0]}
-          onChange={id => onCategoryChange(id ?? null)}
+          onChange={handleCategoryPick}
         />
 
         <div className="w-40">
@@ -487,42 +642,10 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             label="Status"
             placeholder="Filter by status"
             classNames={{ base: 'w-full [&_svg]:my-0' }}
-            value={[
-              ...(filters.status?.map(s => s.toString()) ?? []),
-              ...(filters.customStatusIds ?? []).map(
-                id => `${CUSTOM_STATUS_PREFIX}${id}`,
-              ),
-            ]}
+            value={statusValue}
             onValueChange={handleStatusChange}
           >
-            {[
-              <BaseTagSelectItem
-                key={TicketStatus.New}
-                value={TicketStatus.New}
-              >
-                New
-              </BaseTagSelectItem>,
-              <BaseTagSelectItem
-                key={TicketStatus.InProgress}
-                value={TicketStatus.InProgress}
-              >
-                In Progress
-              </BaseTagSelectItem>,
-              <BaseTagSelectItem
-                key={TicketStatus.Closed}
-                value={TicketStatus.Closed}
-              >
-                Closed
-              </BaseTagSelectItem>,
-              ...activeCustomStatuses.map(cs => (
-                <BaseTagSelectItem
-                  key={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
-                  value={`${CUSTOM_STATUS_PREFIX}${cs.id}`}
-                >
-                  {cs.name}
-                </BaseTagSelectItem>
-              )),
-            ]}
+            {statusItems}
           </BaseTagSelect>
         </div>
 
@@ -534,62 +657,29 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
             value={filters.priority?.map(p => p.toString()) ?? []}
             onValueChange={handlePriorityChange}
           >
-            <BaseTagSelectItem
-              key={TicketPriority.Critical}
-              value={TicketPriority.Critical}
-            >
-              Critical
-            </BaseTagSelectItem>
-            <BaseTagSelectItem
-              key={TicketPriority.High}
-              value={TicketPriority.High}
-            >
-              High
-            </BaseTagSelectItem>
-            <BaseTagSelectItem
-              key={TicketPriority.Normal}
-              value={TicketPriority.Normal}
-            >
-              Normal
-            </BaseTagSelectItem>
-            <BaseTagSelectItem
-              key={TicketPriority.Low}
-              value={TicketPriority.Low}
-            >
-              Low
-            </BaseTagSelectItem>
-            {/* No "None" filter: None is no longer selectable anywhere a ticket is
-              created or edited, so filtering by it can only ever return legacy
-              rows. The enum member is kept in the render mappings so those
-              still display their label rather than falling through to
-              "Unknown". */}
+            {PRIORITY_ITEMS}
           </BaseTagSelect>
         </div>
 
         {/* Tags, moved out of the sidebar. They are a filter, so they sit with
-          the filters instead of in a rail two controls away from them. */}
-        {tags.length > 0 && (
-          <div className="w-40">
-            <BaseTagSelect
-              label="Tags"
-              placeholder="Filter by tag"
-              classNames={{ base: 'w-full [&_svg]:my-0' }}
-              value={filters.tagIds ?? []}
-              onValueChange={(value: string[]) =>
-                onFiltersChange({
-                  ...filters,
-                  tagIds: value.length > 0 ? value : undefined,
-                })
-              }
-            >
-              {tags.map(tag => (
-                <BaseTagSelectItem key={tag.id} value={tag.id as string}>
-                  {tag.name}
-                </BaseTagSelectItem>
-              ))}
-            </BaseTagSelect>
-          </div>
-        )}
+          the filters instead of in a rail two controls away from them. Always
+          shown now: whether the company has tags is only known once they
+          load, which waits for the first open. */}
+        <div
+          className="w-40"
+          onPointerDownCapture={wantTags}
+          onFocusCapture={wantTags}
+        >
+          <BaseTagSelect
+            label="Tags"
+            placeholder="Filter by tag"
+            classNames={{ base: 'w-full [&_svg]:my-0' }}
+            value={filters.tagIds ?? []}
+            onValueChange={handleTagsChange}
+          >
+            {tagItems}
+          </BaseTagSelect>
+        </div>
       </div>
 
       <div className="contents">
@@ -603,39 +693,21 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
               options={tenantOptions}
               levelExists={tenantOptions.length > 0}
               value={filters.tenantId}
-              // Changing the tenant drops the organisation and division with it.
-              // They sit underneath the old tenant, so keeping them would leave a
-              // combination that describes nothing: "this tenant, and an
-              // organisation belonging to a different one" matches no ticket, and
-              // the grid would read empty for a reason nothing on screen explains.
-              onChange={id =>
-                onFiltersChange({
-                  ...filters,
-                  tenantId: id,
-                  organisationId: undefined,
-                  divisionId: undefined,
-                })
-              }
+              onChange={handleTenantChange}
             />
             <FilterAutocomplete
               label="Organisation"
               options={scopedOrganisations}
               levelExists={organisationOptions.length > 0}
               value={filters.organisationId}
-              onChange={id =>
-                onFiltersChange({
-                  ...filters,
-                  organisationId: id,
-                  divisionId: undefined,
-                })
-              }
+              onChange={handleOrganisationChange}
             />
             <FilterAutocomplete
               label="Division"
               options={scopedDivisions}
               levelExists={divisionOptions.length > 0}
               value={filters.divisionId}
-              onChange={id => onFiltersChange({ ...filters, divisionId: id })}
+              onChange={handleDivisionChange}
             />
           </>
         )}
@@ -659,3 +731,10 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
     </div>
   );
 };
+
+/**
+ * Memoised: the grid re-renders on every row, count and realtime update, and
+ * this rebuilt every filter each time. The grid passes stable callbacks, so it
+ * now renders when the filters, the search text or the counts change.
+ */
+export const TicketFilters = memo(TicketFiltersImpl);
