@@ -57,7 +57,7 @@ import { useTicketsTable } from '../hooks/useTicketsTable';
 import { NewRequestModal } from '../new-request/NewRequestModal';
 import { BulkAssignModal } from './BulkAssignModal';
 import { BulkStatusModal } from './BulkStatusModal';
-import { TicketFilters } from './TicketFilters';
+import { COUNT_BADGE_CLASS, TicketFilters } from './TicketFilters';
 import {
   TICKET_SORT_KEYS,
   createTicketColumns,
@@ -471,7 +471,11 @@ export const TicketGrid: FC = () => {
         : filters,
     [filters, tabOwnsAssignee],
   );
-  const { counts } = useTicketTabCounts(currentUserId, countsFilters);
+  // One response for the tab badges and the Assignee filter's per-person counts.
+  const { counts, assigneeCounts } = useTicketTabCounts(
+    currentUserId,
+    countsFilters,
+  );
 
   /*
    * Tab label with its count beside it.
@@ -508,9 +512,7 @@ export const TicketGrid: FC = () => {
              * cost is a slightly wide pill around a small number, which is a
              * fair trade for a bar that stays still.
              */
-            <span className="bg-lighter-blue text-blue inline-block min-w-[3rem] rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums">
-              {count}
-            </span>
+            <span className={COUNT_BADGE_CLASS}>{count}</span>
           )}
         </span>
       );
@@ -788,6 +790,7 @@ export const TicketGrid: FC = () => {
             {/* Filters */}
             <TicketFilters
               filters={filters}
+              assigneeCounts={assigneeCounts}
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}

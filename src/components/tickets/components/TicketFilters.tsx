@@ -21,6 +21,26 @@ import {
 } from '@brainforgeau/components';
 import { type FC, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useScopedAssignees } from '../hooks/useScopedAssignees';
+import type { AssigneeCounts } from '../hooks/useTicketTabCounts';
+
+/**
+ * The count pill on the ticket tabs, and on each person in the Assignee
+ * filter. Fixed minimum width so a row of them does not jiggle as the numbers
+ * change.
+ */
+export const COUNT_BADGE_CLASS =
+  'bg-lighter-blue text-blue inline-block min-w-[3rem] shrink-0 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums';
+
+/** An option row: the name, and the person's ticket count at the right. */
+const AssigneeOptionLabel: FC<{ name: string; count?: number }> = ({
+  name,
+  count,
+}) => (
+  <span className="flex min-w-0 items-center justify-between gap-2">
+    <span className="truncate">{name}</span>
+    {count !== undefined && <span className={COUNT_BADGE_CLASS}>{count}</span>}
+  </span>
+);
 
 const scopeLabel = (option: ScopeOption) =>
   option.parentName ? `${option.name} (${option.parentName})` : option.name;
@@ -188,10 +208,14 @@ const ClearAssigneesRow: FC<{ onClear: () => void }> = ({ onClear }) => (
  */
 const AssigneeFilter: FC<{
   options: ScopeOption[];
+  /** Undefined until the counts arrive; the rows then show no badge. */
+  counts?: AssigneeCounts;
   people: string[];
   includeUnassigned: boolean;
   onChange: (people: string[], includeUnassigned: boolean) => void;
-}> = ({ options, people, includeUnassigned, onChange }) => {
+}> = ({ options, counts, people, includeUnassigned, onChange }) => {
+  const countOf = (id: string) =>
+    counts ? (counts.byId.get(id) ?? 0) : undefined;
   const nameById = useMemo(
     () => new Map(options.map(o => [o.id, o.name])),
     [options],
@@ -203,12 +227,20 @@ const AssigneeFilter: FC<{
   ];
 
   return (
-    <div className="w-40">
+    // As wide as Search, and the list wider still, so a full name and its
+    // count fit without truncating.
+    <div className="w-60">
       <BaseTagSelect
         label="Assignee"
         placeholder="All assignees"
         hasSearch
-        classNames={{ base: 'w-full [&_svg]:my-0' }}
+        classNames={{
+          base: 'w-full [&_svg]:my-0',
+          // The list's inner box is sized to the trigger by an inline style.
+          popover: '[&>div]:!w-[300px] [&>div]:!min-w-[300px]',
+          // Let the label take the row, so the count sits at the right edge.
+          item: '[&>span]:min-w-0 [&>span]:flex-1',
+        }}
         value={value}
         onValueChange={(next: string[]) =>
           onChange(
@@ -236,7 +268,7 @@ const AssigneeFilter: FC<{
             value={UNASSIGNED}
             textValue="Unassigned"
           >
-            Unassigned
+            <AssigneeOptionLabel name="Unassigned" count={counts?.unassigned} />
           </BaseTagSelectItem>,
           ...options.map(option => (
             <BaseTagSelectItem
@@ -244,7 +276,10 @@ const AssigneeFilter: FC<{
               value={option.id}
               textValue={option.name}
             >
-              {option.name}
+              <AssigneeOptionLabel
+                name={option.name}
+                count={countOf(option.id)}
+              />
             </BaseTagSelectItem>
           )),
           // Someone chosen before the company or organisation changed may no
@@ -278,6 +313,8 @@ interface TicketFiltersProps {
   onCategoryChange: (categoryId: string | null) => void;
   /** The Columns button, at the right of the second row. */
   columnsChooser?: ReactNode;
+  /** Tickets per person, from the tab counts the grid already loads. */
+  assigneeCounts?: AssigneeCounts;
 }
 
 export const TicketFilters: FC<TicketFiltersProps> = ({
@@ -287,6 +324,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
   searchTerm,
   onCategoryChange,
   columnsChooser,
+  assigneeCounts,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
@@ -426,6 +464,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
           "Unassigned" for Unassigned alone; see tabForFilters). */}
         <AssigneeFilter
           options={assigneeOptions}
+          counts={assigneeCounts}
           people={filters.assigneeId ?? []}
           includeUnassigned={Boolean(filters.includeUnassigned)}
           onChange={(people, includeUnassigned) =>
