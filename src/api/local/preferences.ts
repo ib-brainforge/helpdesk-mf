@@ -23,6 +23,8 @@ export interface UserPreferenceDto<T> {
 export interface TableLayoutPreference {
   /** Layout version; another version is ignored (see useTableLayout). */
   v: number;
+  /** Column ids in display order. Absent on layouts saved as 3. */
+  order?: string[];
   /** Hidden column ids. Stored this way so a column added later shows by default. */
   hidden: string[];
   sort: { id: string; desc: boolean } | null;

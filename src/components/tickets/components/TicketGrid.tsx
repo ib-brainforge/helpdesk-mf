@@ -969,12 +969,13 @@ export const TicketGrid: FC = () => {
             which does not exist at 100/page, and the grid would come back empty.
           */}
           {/*
-            Keyed by the visible columns. BaseTable's body is a React.memo
-            whose props do not include column visibility, so hiding a column
-            in the chooser updated the header and not the body: the rows kept
-            their old cells and slid out from under their headings. A new key
-            redraws the body whenever the set of columns changes. (Widths need
-            no redraw: the table's colgroup sets them.)
+            Keyed by the visible columns in their order. BaseTable's body is a
+            React.memo whose props do not include column visibility or order,
+            so hiding or moving a column in the chooser updated the header and
+            not the body: the rows kept their old cells and slid out from under
+            their headings. A new key redraws the body whenever the set or the
+            order of columns changes. (Widths need no redraw: the table's
+            colgroup sets them.)
           */}
           <BaseTable
             key={table

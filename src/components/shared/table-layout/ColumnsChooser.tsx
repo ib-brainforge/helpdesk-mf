@@ -1,15 +1,22 @@
 import { BaseButton, BaseCheckbox, Icon } from '@brainforgeau/components';
 import { PopoverContent, PopoverDialog } from '@heroui/react';
-import { type FC, useRef, useState } from 'react';
+import {
+  type DragEvent,
+  type FC,
+  type KeyboardEvent,
+  useRef,
+  useState,
+} from 'react';
 import type { TableLayoutController } from './useTableLayout';
 
 /*
- * Show and hide a table's columns, and reset them to the defaults. Column
- * order is fixed by the table itself.
+ * Show, hide and reorder a table's columns. A locked column (always shown)
+ * cannot be hidden but still moves.
  *
  * Built only on TanStack state (through useTableLayout) and library
  * primitives, with nothing app-specific, so it can move into the shared table
- * library as it is.
+ * library as it is. Reordering is native drag and drop, plus Alt+Up and
+ * Alt+Down on a focused row for keyboards; no drag package is installed.
  */
 
 export interface ColumnsChooserProps {
@@ -32,22 +39,68 @@ export const ColumnsChooser: FC<ColumnsChooserProps> = ({
 }) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
-  const { columns, hidden, lockedIds, setHidden } = layout;
-  const visibleIds = columns.filter(id => !hidden.includes(id));
-  const hiddenIds = columns.filter(id => hidden.includes(id));
+  const { order, hidden, lockedIds, move, setHidden } = layout;
+  const visibleIds = order.filter(id => !hidden.includes(id));
+  const hiddenIds = order.filter(id => hidden.includes(id));
+
+  const onDragStart = (id: string) => (e: DragEvent) => {
+    setDragId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  };
+  const onDragOver = (id: string) => (e: DragEvent) => {
+    if (!dragId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (overId !== id) setOverId(id);
+  };
+  const endDrag = () => {
+    setDragId(null);
+    setOverId(null);
+  };
+  const onDrop = (id: string) => (e: DragEvent) => {
+    e.preventDefault();
+    if (dragId && dragId !== id) move(dragId, order.indexOf(id));
+    endDrag();
+  };
+  const onRowKeyDown = (id: string) => (e: KeyboardEvent) => {
+    if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    move(id, order.indexOf(id) + (e.key === 'ArrowUp' ? -1 : 1));
+  };
 
   const row = (id: string) => {
     const isLocked = lockedIds.includes(id);
     const isHidden = hidden.includes(id);
+    const isDropTarget = overId === id && dragId !== id;
     return (
-      <li key={id} className="flex h-8 items-center gap-1.5 px-3 text-sm">
+      <li
+        key={id}
+        draggable
+        onDragStart={onDragStart(id)}
+        onDragOver={onDragOver(id)}
+        onDrop={onDrop(id)}
+        onDragEnd={endDrag}
+        onKeyDown={onRowKeyDown(id)}
+        className={`flex h-8 items-center gap-1.5 pr-3 pl-1.5 text-sm ${
+          dragId === id ? 'opacity-50' : ''
+        } ${isDropTarget ? 'shadow-[inset_0_-2px_0_var(--color-blue)]' : ''}`}
+      >
+        <span
+          aria-hidden
+          className="flex w-4 cursor-grab justify-center text-default-400"
+        >
+          <Icon name="grip" className="h-3.5 w-3.5" />
+        </span>
         <BaseCheckbox
           isSelected={!isHidden}
           isDisabled={isLocked}
           onValueChange={selected => setHidden(id, !selected)}
           className="min-w-0 flex-1"
-          aria-label={`Show ${labels[id] ?? id}`}
+          aria-label={`Show ${labels[id] ?? id}. Alt and the arrow keys move it`}
         >
           <span className="truncate">{labels[id] ?? id}</span>
           {isHidden && hints[id] && (
@@ -104,7 +157,7 @@ export const ColumnsChooser: FC<ColumnsChooserProps> = ({
               <ul className="pb-1.5">{hiddenIds.map(row)}</ul>
             </>
           )}
-          <div className="border-t border-[#d1d9e0] px-3 py-2">
+          <div className="flex items-center justify-between border-t border-[#d1d9e0] px-3 py-2">
             <button
               type="button"
               onClick={onReset}
@@ -112,6 +165,7 @@ export const ColumnsChooser: FC<ColumnsChooserProps> = ({
             >
               Reset to default
             </button>
+            <span className="text-xs text-default-400">Drag to reorder</span>
           </div>
         </PopoverDialog>
       </PopoverContent>

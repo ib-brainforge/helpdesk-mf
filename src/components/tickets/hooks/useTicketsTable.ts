@@ -16,7 +16,7 @@ interface UseTicketsTableProps {
   totalCount: number;
   pagination: PaginationState;
   onPaginationChange?: (pagination: PaginationState) => void;
-  /** The user's saved column visibility and sort. */
+  /** The user's saved column order, visibility and sort. */
   layout: TableLayoutController;
   /** Widths that follow the content (useFitColumns). */
   columnSizing: ColumnSizingState;
@@ -43,9 +43,9 @@ export const useTicketsTable = ({
       rowSelection,
     },
     initialState: {
-      // The checkbox and Subject stay put while the grid scrolls sideways on a
-      // narrow screen, and so does the row menu on the right.
-      columnPinning: { left: ['select', 'subject'], right: ['actions'] },
+      // The checkbox and the row menu stay put while the grid scrolls
+      // sideways. Subject is not pinned: it can sit anywhere in the order.
+      columnPinning: { left: ['select'], right: ['actions'] },
     },
     getRowId: row => row.id ?? '',
     manualPagination: true,
@@ -68,7 +68,8 @@ export const useTicketsTable = ({
     enableGlobalFilter: false,
     enableColumnFilters: false,
     enableRowSelection: true,
-    // Widths follow the content and the order is fixed: nothing to drag.
+    // Widths follow the content, so there is nothing to resize. Columns are
+    // reordered in the Columns chooser.
     enableColumnResizing: false,
     onSortingChange: layout.onSortingChange,
     onColumnVisibilityChange: layout.onColumnVisibilityChange,

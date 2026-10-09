@@ -23,13 +23,17 @@ import type { TicketTabKey } from './ticketTabs';
 
 const COLUMN_IDS = Object.keys(TICKET_COLUMN_LABELS);
 /**
- * 3: column order is fixed and widths follow the content, so a layout holds
- * only hidden columns and the sort. Layouts saved as 1 or 2 (with order and
- * widths) fall back to the defaults.
+ * 4: widths follow the content, so a layout holds the column order, hidden
+ * columns and the sort. A layout saved as 3 (no order) keeps its hidden
+ * columns and sort and starts from the default order; 1 and 2 fall back to
+ * the defaults.
  */
-const LAYOUT_VERSION = 3;
+const LAYOUT_VERSION = 4;
+const KEEP_HIDDEN_AND_SORT_FROM = [3];
+/** Subject can move anywhere but is never hidden. */
 const LOCKED = ['subject'];
-const FIXED = ['select', 'actions'];
+const PINNED_START = ['select'];
+const PINNED_END = ['actions'];
 
 /**
  * Queues where the next deadline is the question open the list sorts by it,
@@ -51,6 +55,7 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
       saved
         ? {
             v: saved.v,
+            order: saved.order ?? [],
             hidden: saved.hidden ?? [],
             sort: saved.sort ?? null,
           }
@@ -74,11 +79,13 @@ export const useTicketsLayout = (tab: TicketTabKey | string) => {
 
   const layout = useTableLayout({
     version: LAYOUT_VERSION,
+    keepHiddenAndSortFrom: KEEP_HIDDEN_AND_SORT_FROM,
     columnIds: COLUMN_IDS,
     defaultHidden: TICKET_DEFAULT_HIDDEN,
     defaultSort,
     lockedIds: LOCKED,
-    fixedIds: FIXED,
+    pinnedStart: PINNED_START,
+    pinnedEnd: PINNED_END,
     value,
     onChange,
   });
