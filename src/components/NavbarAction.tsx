@@ -1,4 +1,3 @@
-import { IconTip } from '@/components/shared';
 import { hubConnectedAtom } from '@/state/config';
 import type { Workspace } from '@/workspaces';
 import { SignalIcon } from '@heroicons/react/24/solid';
@@ -41,27 +40,33 @@ export const HelpdeskNavbarAction: FC<HelpdeskNavbarActionProps> = ({
             const isActive = workspace.key === activeKey;
             const WorkspaceIcon = workspace.icon;
             return (
-              <IconTip key={workspace.key} label={workspace.label}>
-                <button
-                  type="button"
-                  aria-label={workspace.label}
-                  aria-pressed={isActive}
-                  data-testid={workspace.testId}
-                  onClick={() => {
-                    if (!isActive) onNavigate(workspace.home);
-                  }}
-                  className={`flex h-[30px] w-9 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
-                    isActive
-                      ? 'border-blue bg-white text-blue dark:bg-zinc-900'
-                      : 'border-transparent text-[#59636e] hover:bg-white/70 hover:text-[#292a2e]'
-                  }`}
-                >
-                  <WorkspaceIcon
-                    className="h-[18px] w-[18px]"
-                    strokeWidth={1.5}
-                  />
-                </button>
-              </IconTip>
+              /*
+                  A native title, not IconTip: this node renders inside the
+                  shared navbar, outside Helpdesk's HeroUI provider, where the
+                  library tooltip never opens. The title works in both the
+                  standalone and the embedded navbar.
+                */
+              <button
+                key={workspace.key}
+                type="button"
+                title={workspace.label}
+                aria-label={workspace.label}
+                aria-pressed={isActive}
+                data-testid={workspace.testId}
+                onClick={() => {
+                  if (!isActive) onNavigate(workspace.home);
+                }}
+                className={`flex h-[30px] w-9 items-center justify-center rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
+                  isActive
+                    ? 'border-blue bg-white text-blue dark:bg-zinc-900'
+                    : 'border-transparent text-[#59636e] hover:bg-white/70 hover:text-[#292a2e]'
+                }`}
+              >
+                <WorkspaceIcon
+                  className="h-[18px] w-[18px]"
+                  strokeWidth={1.5}
+                />
+              </button>
             );
           })}
         </fieldset>
