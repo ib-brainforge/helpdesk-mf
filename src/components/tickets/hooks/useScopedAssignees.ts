@@ -1,13 +1,15 @@
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
+import { helpdeskAppQueryOptions } from '@/state/helpdesk-app-query';
 import type { TicketFilters } from '@/types/ticket';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
+import { UserAppAssignmentsApi } from '@brainforgeau/identity-management-client';
 import {
-  AppsApi,
-  UserAppAssignmentsApi,
-} from '@brainforgeau/identity-management-client';
-import { useQueries, useQuery } from '@tanstack/react-query';
+  type QueryFunctionContext,
+  useQueries,
+  useQuery,
+} from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 import type { UserOption } from '../state/users-dropdown-state';
@@ -77,13 +79,13 @@ const MAX_ROWS = 5000;
  * stays small: it is loaded once and matched against any number of scopes in
  * the browser.
  */
-const fetchHelpdeskAssignments = async (): Promise<RoleAssignment[]> => {
-  // Resolved by name, the same name the app already identifies itself by in
-  // src/state/authorizedAxios.ts, rather than an id that differs per
-  // environment.
-  const apps = await createIdentityApiClient(AppsApi);
-  const { data: app } = await apps.v1AppsByNameNameGet('helpdesk');
-  const appId = (app as { id?: string } | undefined)?.id;
+const fetchHelpdeskAssignments = async ({
+  client,
+}: QueryFunctionContext): Promise<RoleAssignment[]> => {
+  // The app id comes from the shared helpdesk app query, so the app itself is
+  // fetched once per session however many callers need it.
+  const app = await client.fetchQuery(helpdeskAppQueryOptions);
+  const appId = app?.id;
   if (!appId) return [];
 
   const api = await createIdentityApiClient(UserAppAssignmentsApi);
