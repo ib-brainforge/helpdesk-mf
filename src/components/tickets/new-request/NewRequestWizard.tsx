@@ -737,12 +737,22 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         together rather than at opposite ends of the dialog.
       */}
         <div className="border-light mt-4 flex items-center justify-between border-t pt-4">
-          <BaseButton variant="bordered" onPress={onCancel} isDisabled={isBusy}>
+          <BaseButton
+            variant="bordered"
+            color="light"
+            onPress={onCancel}
+            isDisabled={isBusy}
+          >
             Cancel
           </BaseButton>
           <div className="flex items-center gap-2">
             {stepIndex > 0 && (
-              <BaseButton variant="bordered" onPress={back} isDisabled={isBusy}>
+              <BaseButton
+                variant="bordered"
+                color="light"
+                onPress={back}
+                isDisabled={isBusy}
+              >
                 Back
               </BaseButton>
             )}

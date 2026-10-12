@@ -150,6 +150,7 @@ export const InlineEditable: FC<InlineEditableProps> = ({
         <BaseButton
           size="sm"
           variant="bordered"
+          color="light"
           onPress={cancel}
           isDisabled={isSaving}
         >

@@ -82,6 +82,7 @@ function CompanyStatisticsPage() {
           />
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExport}
             isDisabled={!stats}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}

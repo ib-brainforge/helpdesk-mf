@@ -299,6 +299,7 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
             <div className="flex justify-end gap-2 mt-4">
               <BaseButton
                 variant="bordered"
+                color="light"
                 onPress={handleClose}
                 type="button"
               >

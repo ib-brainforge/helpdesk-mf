@@ -113,6 +113,7 @@ function TicketsByPriorityPage() {
           />
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExport}
             isDisabled={priorities.length === 0}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}

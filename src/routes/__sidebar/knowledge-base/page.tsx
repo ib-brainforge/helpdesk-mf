@@ -46,6 +46,7 @@ function KnowledgeBasePage() {
         <PageHeader.Actions>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={() => setIsQuickCreateOpen(true)}
             icon={<Icon name="plus" className="h-4 w-4" />}
           >

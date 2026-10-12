@@ -123,6 +123,7 @@ export const SubtaskModal: FC<SubtaskModalProps> = ({
           >
             <BaseButton
               variant="bordered"
+              color="light"
               isDisabled={updateTicketMutation.isPending || !subtask}
               onPress={toggleClosed}
             >

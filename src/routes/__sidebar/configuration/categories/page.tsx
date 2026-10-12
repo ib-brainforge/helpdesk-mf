@@ -228,6 +228,7 @@ function CategoriesPage() {
             icon={<Icon name="plus" className="h-3.5 w-3.5" />}
             onPress={handleCreateSection}
             variant="bordered"
+            color="light"
           >
             Add Section
           </BaseButton>

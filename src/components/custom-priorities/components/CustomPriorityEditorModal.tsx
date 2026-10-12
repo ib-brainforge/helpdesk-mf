@@ -199,6 +199,7 @@ export function CustomPriorityEditorModal({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={isSubmitting}
           >

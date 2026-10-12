@@ -108,6 +108,7 @@ function TicketsByCategoryPage() {
           />
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExport}
             isDisabled={categories.length === 0}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}

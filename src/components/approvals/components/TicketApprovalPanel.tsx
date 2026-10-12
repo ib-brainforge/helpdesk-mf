@@ -241,6 +241,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
                         <BaseButton
                           size="sm"
                           variant="bordered"
+                          color="light"
                           onPress={() => {
                             setSelectedStepId(decisionItem.stepId ?? '');
                             setDecision(ApprovalDecisionType.Approved);
@@ -329,6 +330,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
           <BaseModalFooter>
             <BaseButton
               variant="bordered"
+              color="light"
               onPress={() => setShowDecisionModal(false)}
             >
               Cancel

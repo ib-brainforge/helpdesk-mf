@@ -76,7 +76,7 @@ export const DuplicateCategoryModal: FC<DuplicateCategoryModalProps> = ({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={handleClose}>
+          <BaseButton variant="bordered" color="light" onPress={handleClose}>
             Cancel
           </BaseButton>
           <BaseButton

@@ -430,6 +430,7 @@ export const TicketFilters: FC<TicketFiltersProps> = ({
       <div className="flex gap-2">
         <BaseButton
           variant="bordered"
+          color="light"
           onPress={handleClearFilters}
           icon={<Icon name="x" className="h-4 w-4" />}
         >

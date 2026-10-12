@@ -164,6 +164,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         <div className="flex items-center gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             onPress={() => setIsPickerOpen(true)}
             icon={<Icon name="document-text" className="h-4 w-4" />}
@@ -271,6 +272,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             onPress={() => {
               setBody('');

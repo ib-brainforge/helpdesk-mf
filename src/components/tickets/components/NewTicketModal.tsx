@@ -389,7 +389,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={handleCancel}>
+          <BaseButton variant="bordered" color="light" onPress={handleCancel}>
             Cancel
           </BaseButton>
           <BaseButton

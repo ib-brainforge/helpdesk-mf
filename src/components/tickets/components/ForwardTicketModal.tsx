@@ -152,6 +152,7 @@ export const ForwardTicketModal: FC<ForwardTicketModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={forwardMutation.isPending || forwardMutation.isPending}
           >

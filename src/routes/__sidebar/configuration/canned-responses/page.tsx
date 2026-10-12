@@ -284,6 +284,7 @@ function CannedResponsesPage() {
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExportCSV}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
           >

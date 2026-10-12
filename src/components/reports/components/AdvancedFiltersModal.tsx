@@ -179,7 +179,7 @@ export const AdvancedFiltersModal: FC<AdvancedFiltersModalProps> = ({
           <BaseButton variant="light" onPress={handleReset}>
             Reset
           </BaseButton>
-          <BaseButton variant="bordered" onPress={onClose}>
+          <BaseButton variant="bordered" color="light" onPress={onClose}>
             Cancel
           </BaseButton>
           <BaseButton color="primary" onPress={handleApply}>

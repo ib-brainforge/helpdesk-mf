@@ -33,6 +33,7 @@ export const MarkSpamModal: React.FC<MarkSpamModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={isLoading}
           >

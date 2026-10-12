@@ -127,6 +127,15 @@
   border: 1px solid var(--border);
 }
 
+/* HeroUI rounds `.dropdown__popover` with `min(32px, var(--radius-3xl))` and
+ * its menu items with `calc(var(--radius) * 2)`. Helpdesk's popover blocks use
+ * the same 3px radius as the theme's toast cards, so both are flattened here,
+ * in light and dark mode alike. */
+.dropdown__popover.helpdesk-dropdown-popover,
+.dropdown__popover.helpdesk-dropdown-popover .menu-item {
+  border-radius: 3px;
+}
+
 /* Tooltips above everything, and wrapped between words.
  *
  * A tooltip portals into a React Aria overlay container, which the shared

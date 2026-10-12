@@ -295,6 +295,7 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleClose}
             isDisabled={isLoading}
           >

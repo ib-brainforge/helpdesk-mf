@@ -877,6 +877,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   >
                     <BaseButton
                       variant="bordered"
+                      color="light"
                       onPress={handleAiAssistant}
                       isDisabled={actionsDisabled}
                       icon={<Icon name="flash" className="h-4 w-4" />}
@@ -1099,6 +1100,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 >
                   <BaseButton
                     variant="bordered"
+                    color="light"
                     onPress={handleTakeover}
                     icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
                     isDisabled={
@@ -1114,6 +1116,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 >
                   <BaseButton
                     variant="bordered"
+                    color="light"
                     onPress={handleCloseTicket}
                     icon={<Icon name="check-fill" className="h-4 w-4" />}
                     isDisabled={

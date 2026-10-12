@@ -137,7 +137,7 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
           </BaseAutocomplete>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={handleClose}>
+          <BaseButton variant="bordered" color="light" onPress={handleClose}>
             Cancel
           </BaseButton>
           <BaseButton

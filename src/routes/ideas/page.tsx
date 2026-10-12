@@ -97,6 +97,7 @@ function IdeasForumPage() {
               <BaseButton
                 size="sm"
                 variant="bordered"
+                color="light"
                 isDisabled={page <= 1}
                 onPress={() => setPage(p => p - 1)}
               >
@@ -108,6 +109,7 @@ function IdeasForumPage() {
               <BaseButton
                 size="sm"
                 variant="bordered"
+                color="light"
                 isDisabled={page >= totalPages}
                 onPress={() => setPage(p => p + 1)}
               >

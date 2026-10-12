@@ -380,6 +380,7 @@ function LiveChatForm({
           <BaseButton
             size="sm"
             variant="bordered"
+            color="light"
             onPress={handleAddDomain}
             isDisabled={!isEnabled || !newDomain.trim()}
           >
@@ -434,6 +435,7 @@ function LiveChatForm({
           <BaseButton
             size="sm"
             variant="bordered"
+            color="light"
             onPress={handleCopyScript}
             isDisabled={isLoadingScript || !embedScript}
             startContent={

@@ -66,6 +66,7 @@ export const ConvertToReplyModal: FC<ConvertToReplyModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={isLoading || isLoading}
           >

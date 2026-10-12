@@ -134,6 +134,7 @@ function KnowledgeBaseArticlePage() {
         <Link to={`/knowledge-base/${slug}/edit`}>
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             icon={<Icon name="pencil" className="h-4 w-4" />}
           >

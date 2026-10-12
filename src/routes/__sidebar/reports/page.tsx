@@ -235,7 +235,7 @@ function ReportsPage() {
       */}
       <BaseTabs
         className="flex min-h-0 flex-1 flex-col"
-        classNames={{ panel: 'flex min-h-0 flex-1 flex-col' }}
+        classNames={{ panel: 'flex min-h-0 flex-1 flex-col pt-5' }}
         selectedKey={selectedTab}
         onSelectionChange={key => setSelectedTab(key as string)}
       >
@@ -254,7 +254,7 @@ function ReportsPage() {
             way TicketGrid measures `innerHeight - top`. Unchanged behaviour
             here, not a fix.
           */}
-          <div className="mt-4 min-h-0 flex-1 space-y-6 overflow-auto">
+          <div className="min-h-0 flex-1 space-y-6 overflow-auto">
             <div className="flex gap-4">
               <BaseSelect
                 label="Granularity"
@@ -302,7 +302,7 @@ function ReportsPage() {
 
         {/* Tech Performance Tab */}
         <BaseTab key="tech-performance" title="Tech Performance">
-          <div className="mt-4 flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <BaseTable
               table={techTable}
               isLoading={loadingTechPerf}
@@ -314,7 +314,7 @@ function ReportsPage() {
 
         {/* Custom Tab */}
         <BaseTab key="custom" title="Custom">
-          <div className="mt-4 min-h-0 flex-1 overflow-auto">
+          <div className="min-h-0 flex-1 overflow-auto">
             <CustomReportBuilder onExport={handleExportCustom} />
           </div>
         </BaseTab>

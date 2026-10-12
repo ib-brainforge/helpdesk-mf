@@ -310,6 +310,7 @@ function ReportsSummaryPage() {
           />
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={() => setIsAdvancedFiltersOpen(true)}
             icon={<Icon name="adjustments-horizontal" className="h-4 w-4" />}
           >

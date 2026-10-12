@@ -156,7 +156,7 @@ function CategoryFormModal({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose}>
+          <BaseButton variant="bordered" color="light" onPress={onClose}>
             Cancel
           </BaseButton>
           <BaseButton

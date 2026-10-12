@@ -123,6 +123,7 @@ function IntegrationsPage() {
                   <BaseButton
                     size="sm"
                     variant="bordered"
+                    color="light"
                     onPress={() => openAdd(provider)}
                     startContent={<Icon name="plus" className="h-3 w-3" />}
                   >
