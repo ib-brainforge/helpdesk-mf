@@ -14,7 +14,7 @@ import {
 } from '@/api/local/deadlines';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
-import { usePermissions } from '@brainforgeau/security';
+import { usePermissions } from '@/security';
 import {
   keepPreviousData,
   useMutation,

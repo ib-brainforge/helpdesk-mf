@@ -1,13 +1,13 @@
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { useScopeNames } from '@/hooks/useScopeNames';
+import { usePermissions } from '@/security';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
-import { usePermissions } from '@brainforgeau/security';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useMemo } from 'react';
 import { CompaniesTable } from './CompaniesTable';

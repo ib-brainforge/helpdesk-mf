@@ -11,8 +11,8 @@
 import { AppLoadingSplash } from '@/components/AppSplash';
 import { PrincipalSidenav } from '@/components/principal/PrincipalSidenav';
 import { usePrincipalAccess } from '@/hooks/usePrincipalAccess';
+import { useAuth } from '@/security';
 import { ErrorBoundary } from '@brainforgeau/components';
-import { useAuth } from '@brainforgeau/security';
 import { Navigate, Outlet, useParams } from '@modern-js/runtime/router';
 import { useMemo } from 'react';
 

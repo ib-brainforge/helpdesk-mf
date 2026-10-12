@@ -14,6 +14,7 @@ import {
 } from '@/components/reports/utils/exportReport';
 import { UserCell } from '@/components/shared';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { useTimezone } from '@/security';
 import type { CustomReportResultDto, TechPerformanceDto } from '@/types';
 import { BaseTab, BaseTabs } from '@brainforgeau/components';
 import {
@@ -24,7 +25,6 @@ import {
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { DashboardPage } from '@brainforgeau/components/page';
-import { useTimezone } from '@brainforgeau/security';
 import { useSearchParams } from '@modern-js/runtime/router';
 import {
   type ColumnDef,

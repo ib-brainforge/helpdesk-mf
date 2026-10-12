@@ -23,10 +23,10 @@ import {
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { IconTip } from '@/components/shared';
 import { useScopeNames } from '@/hooks/useScopeNames';
+import { AccessDenied } from '@/security';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { EmptyState, ListPage } from '@brainforgeau/components/page';
-import { AccessDenied } from '@brainforgeau/security';
 import { NavLink } from '@modern-js/runtime/router';
 import {
   type ColumnDef,

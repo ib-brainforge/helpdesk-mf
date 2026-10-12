@@ -66,6 +66,13 @@ registerStatusColors({
 });
 import { renderBreadcrumbLink } from '@/components/Breadcrumbs';
 import {
+  LicenseGuard,
+  PreviewRoleSlot,
+  useAuth,
+  usePermissions,
+  useWhitelabel,
+} from '@/security';
+import {
   ErrorBoundary,
   SideNav,
   type SideNavDesktopMode,
@@ -76,12 +83,6 @@ import {
   BreadcrumbRegistryProvider,
   PageTemplateProvider,
 } from '@brainforgeau/components/page';
-import {
-  LicenseGuard,
-  useAuth,
-  usePermissions,
-  useWhitelabel,
-} from '@brainforgeau/security';
 import {
   NavLink,
   Navigate,
@@ -360,33 +361,42 @@ export default function Layout() {
                 )}
               />
             )}
-            {isPrincipalRoute ? (
-              <ErrorBoundary>
-                <LicenseGuard appId="helpdesk">
-                  <Outlet />
-                </LicenseGuard>
-              </ErrorBoundary>
-            ) : (
-              <div className="flex flex-1 min-w-0">
-                <ErrorBoundary>
-                  <LicenseGuard appId="helpdesk">
-                    {/* A workspace the user cannot open (switched off, or
+            {/* A column so the development-only "Preview as role" banner can
+                sit across the top of the content. Each branch below keeps
+                the same row it always had. In production PreviewRoleSlot
+                renders nothing. */}
+            <div className="flex flex-1 min-w-0 flex-col">
+              {isAuthenticated && <PreviewRoleSlot />}
+              {isPrincipalRoute ? (
+                <div className="flex flex-1">
+                  <ErrorBoundary>
+                    <LicenseGuard appId="helpdesk">
+                      <Outlet />
+                    </LicenseGuard>
+                  </ErrorBoundary>
+                </div>
+              ) : (
+                <div className="flex flex-1 min-w-0">
+                  <ErrorBoundary>
+                    <LicenseGuard appId="helpdesk">
+                      {/* A workspace the user cannot open (switched off, or
                         not their role) sends them to Tickets; nothing renders
                         while roles are still loading, so an admin is never
                         bounced. Page permissions: routes/route-permissions.tsx. */}
-                    {workspaceBlocked ? (
-                      loadingWorkspaces ? null : (
-                        <Navigate to={WORKSPACE_FALLBACK_PATH} replace />
-                      )
-                    ) : (
-                      <RouteGuard pathname={location.pathname}>
-                        <Outlet />
-                      </RouteGuard>
-                    )}
-                  </LicenseGuard>
-                </ErrorBoundary>
-              </div>
-            )}
+                      {workspaceBlocked ? (
+                        loadingWorkspaces ? null : (
+                          <Navigate to={WORKSPACE_FALLBACK_PATH} replace />
+                        )
+                      ) : (
+                        <RouteGuard pathname={location.pathname}>
+                          <Outlet />
+                        </RouteGuard>
+                      )}
+                    </LicenseGuard>
+                  </ErrorBoundary>
+                </div>
+              )}
+            </div>
           </div>
         </BreadcrumbRegistryProvider>
       </PageTemplateProvider>

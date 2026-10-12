@@ -9,15 +9,12 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import type { IdeaListItem } from '@/components/tickets/hooks/useTickets';
 import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
+import { useTimezone, withAuthenticationRequired } from '@/security';
 import { PageSpinner } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { EmptyState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import {
-  useTimezone,
-  withAuthenticationRequired,
-} from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useState } from 'react';
 

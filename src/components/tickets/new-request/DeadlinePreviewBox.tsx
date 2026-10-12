@@ -1,7 +1,7 @@
 import { type DeadlinePriority, previewDeadline } from '@/api/local/deadlines';
 import { formatDeadlineDateTime } from '@/components/shared/deadline';
+import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components/base';
-import { useTimezone } from '@brainforgeau/security';
 import { useQuery } from '@tanstack/react-query';
 import type { FC } from 'react';
 

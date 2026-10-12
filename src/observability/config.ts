@@ -25,9 +25,9 @@
  * telemetry correctly attributed even as a support agent moves between tenants.
  */
 
+import { getAccessToken, getContextToken } from '@/security';
 import { getAppConfig } from '@/state/config';
 import type { ObservabilityConfig } from '@brainforgeau/observability';
-import { getAccessToken, getContextToken } from '@brainforgeau/security';
 
 const appConfig = getAppConfig();
 

@@ -9,13 +9,13 @@
 
 import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
+import { withAuthenticationRequired } from '@/security';
 import { Box } from '@brainforgeau/components/base';
 import {
   PageBody,
   PageHeader,
   PendingCrumb,
 } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { Chip } from '@heroui/react';
 import { useParams } from '@modern-js/runtime/router';
 

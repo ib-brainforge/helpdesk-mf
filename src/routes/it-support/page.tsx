@@ -6,7 +6,7 @@
  */
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ItSupportComingSoon } from '@/components/it-support/ItSupportComingSoon';
-import { withAuthenticationRequired } from '@brainforgeau/security';
+import { withAuthenticationRequired } from '@/security';
 
 function ItSupportPage() {
   return <ItSupportComingSoon breadcrumbsKey="it-support.overview" />;

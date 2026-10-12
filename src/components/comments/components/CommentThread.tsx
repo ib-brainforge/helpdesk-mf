@@ -1,11 +1,11 @@
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { useTimezone } from '@/security';
 import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
 import { BaseAvatar } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { EmptyState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
 import DOMPurify from 'dompurify';
 import { type FC, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRetryCommentEmail } from '../hooks/useComments';

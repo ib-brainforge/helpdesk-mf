@@ -18,9 +18,9 @@ import {
   useRevertCompanyDeadlinePolicy,
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { useScopeNames } from '@/hooks/useScopeNames';
+import { AccessDenied } from '@/security';
 import { extractErrorMessage } from '@/utils/error-handling';
 import { useConfirm } from '@brainforgeau/components/page';
-import { AccessDenied } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
 import { useState } from 'react';

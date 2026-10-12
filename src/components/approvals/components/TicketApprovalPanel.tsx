@@ -1,5 +1,6 @@
 import { ModalHeader, StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { PermissionGuard, useTimezone } from '@/security';
 import {
   BaseButton,
   BaseModal,
@@ -16,7 +17,6 @@ import {
   HelpdeskDomainApprovalsEnumsApprovalDecisionType as ApprovalDecisionType,
   HelpdeskDomainApprovalsEnumsApprovalState as ApprovalState,
 } from '@brainforgeau/helpdesk-client';
-import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { type FC, useCallback, useState } from 'react';
 import {
   useCancelApproval,

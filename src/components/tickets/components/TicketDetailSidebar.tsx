@@ -19,6 +19,8 @@ import { SUBTASKS_ENABLED, TIME_TRACKING_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { usePermissions } from '@/security';
+import { PermissionGuard, useTimezone } from '@/security';
 import {
   buildStatusOptions,
   encodeCustomStatusKey,
@@ -42,8 +44,6 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { usePermissions } from '@brainforgeau/security';
-import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';

@@ -1,4 +1,9 @@
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import {
@@ -14,11 +19,6 @@ import type {
   ServicesCoreAbstractionsRecordMeta,
   ServicesCoreAbstractionsScopePatch,
 } from '@brainforgeau/helpdesk-client';
-import {
-  PlatformPermissions,
-  useAccessScope,
-  usePermissions,
-} from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';

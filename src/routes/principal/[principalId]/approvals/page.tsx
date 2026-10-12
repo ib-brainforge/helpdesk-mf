@@ -13,6 +13,7 @@ import {
   useDeletePrincipalApprovalWorkflow,
   usePrincipalApprovalWorkflows,
 } from '@/hooks/usePrincipalApprovalWorkflows';
+import { withAuthenticationRequired } from '@/security';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import {
@@ -22,7 +23,6 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import type { HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto } from '@brainforgeau/helpdesk-client';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   useNavigate,

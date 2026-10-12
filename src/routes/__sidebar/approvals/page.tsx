@@ -1,8 +1,8 @@
 import { usePendingApprovals } from '@/components/approvals';
 import { StatusBadge } from '@/components/shared';
+import { useTimezone } from '@/security';
 import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { useTimezone } from '@brainforgeau/security';
 import { Card, CardContent } from '@heroui/react';
 import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';

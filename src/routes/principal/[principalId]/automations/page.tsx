@@ -13,8 +13,8 @@
 import { PrincipalAutomationProjectsListPage } from '@/automations-editor';
 import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
+import { withAuthenticationRequired } from '@/security';
 import { PageHeader, PendingCrumb } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 
 function PrincipalAutomationListRoute() {

@@ -1,3 +1,9 @@
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+  useTimezone,
+} from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -17,12 +23,6 @@ import { EmptyState } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import {
-  PlatformPermissions,
-  useAccessScope,
-  usePermissions,
-  useTimezone,
-} from '@brainforgeau/security';
 import { Chip } from '@heroui/react';
 import { Link } from '@modern-js/runtime/router';
 import {

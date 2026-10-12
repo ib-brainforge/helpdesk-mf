@@ -1,6 +1,6 @@
 import type { TicketDeadlineDto } from '@/api/local/deadlines';
+import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components/base';
-import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
 import {
   type DeadlineState,

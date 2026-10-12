@@ -12,9 +12,9 @@
 
 import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
+import { withAuthenticationRequired } from '@/security';
 import { PrincipalWorkflowListPage } from '@/workflow-editor';
 import { PageHeader, PendingCrumb } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 
 function PrincipalWorkflowListRoute() {

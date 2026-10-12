@@ -9,8 +9,8 @@
  * bf-template-migration: legacy / deadline: 2026-08-01
  */
 import { AppAuthSplash } from '@/components/AppSplash';
+import { withAuthenticationRequired } from '@/security';
 import { WorkflowDetailPage } from '@/workflow-editor';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function WorkflowDetailRoute() {

@@ -5,8 +5,8 @@ import {
   formatDuration,
   isDeadlineMet,
 } from '@/components/shared/deadline';
+import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components/base';
-import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
 
 interface SlaIndicatorProps {

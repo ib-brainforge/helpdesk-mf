@@ -11,6 +11,11 @@ import {
   badgeSwatchClasses,
 } from '@/components/shared';
 import { getStatusConfig } from '@/components/tickets/ticket-status-config';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -35,11 +40,6 @@ import {
 } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import {
-  PlatformPermissions,
-  useAccessScope,
-  usePermissions,
-} from '@brainforgeau/security';
 import { Chip, toast } from '@heroui/react';
 import {
   type ColumnDef,

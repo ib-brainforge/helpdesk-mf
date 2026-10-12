@@ -22,6 +22,7 @@ import {
   categoriesMutationAtom,
   mapCategoryToOption,
 } from '@/components/tickets/state/categories-dropdown-state';
+import { withAuthenticationRequired } from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { TicketPriority } from '@/types/ticket';
 import {
@@ -36,7 +37,6 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useState } from 'react';

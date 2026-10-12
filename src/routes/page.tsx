@@ -1,9 +1,6 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import {
-  usePermissions,
-  withAuthenticationRequired,
-} from '@brainforgeau/security';
+import { usePermissions, withAuthenticationRequired } from '@/security';
 import { Navigate } from '@modern-js/runtime/router';
 import React from 'react';
 

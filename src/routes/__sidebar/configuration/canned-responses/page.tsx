@@ -4,6 +4,11 @@ import {
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
 import { IconTip, ScopeLabel } from '@/components/shared';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -28,11 +33,6 @@ import {
 } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import {
-  PlatformPermissions,
-  useAccessScope,
-  usePermissions,
-} from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   type ColumnDef,

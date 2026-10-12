@@ -2,6 +2,7 @@ import { UserRolesModal } from '@/components/admin-users/components/UserRolesMod
 import { useTenantUsers } from '@/components/admin-users/hooks/useAdminUsers';
 import { useUsersData } from '@/components/users';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { usePermissions } from '@/security';
 import { getAppConfig } from '@/state/config';
 import type { HelpdeskRole, TenantUserDto } from '@/types/admin-user';
 import { Icon } from '@brainforgeau/components/base';
@@ -11,7 +12,6 @@ import {
   PageBody,
   PageHeader,
 } from '@brainforgeau/components/page';
-import { usePermissions } from '@brainforgeau/security';
 import { Chip, Link, Spinner } from '@heroui/react';
 import { useState } from 'react';
 

@@ -1,8 +1,5 @@
+import { parseContextTokenIdentityClaims, usePermissions } from '@/security';
 import { contextTokenAtom } from '@/state/auth-atoms';
-import {
-  parseContextTokenIdentityClaims,
-  usePermissions,
-} from '@brainforgeau/security';
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 

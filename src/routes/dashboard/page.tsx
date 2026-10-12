@@ -1,6 +1,7 @@
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { useTicketSummaryReport } from '@/components/reports/hooks/useReports';
 import { SummaryCard } from '@/components/shared';
+import { withAuthenticationRequired } from '@/security';
 import type {
   CategoryBreakdownDto,
   PriorityBreakdownDto,
@@ -8,7 +9,6 @@ import type {
 } from '@/types';
 import { BaseButton, Box, DonutChart, Icon } from '@brainforgeau/components';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
 
 // Chart colors aligned with BrainForge theme palette (--color-* tokens)
