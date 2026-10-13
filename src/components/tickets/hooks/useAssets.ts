@@ -215,6 +215,11 @@ export const useTrackedAssetIds = (
           undefined, // search
           undefined, // groupId
           undefined, // displayProfileName
+          undefined, // visibilityGroupId
+          undefined, // displayProfileId
+          undefined, // isTrackingActive
+          undefined, // hasTracker
+          undefined, // trackerConnected
           page,
           TRACKABLES_PAGE, // pageSize
           undefined, // orderBy
