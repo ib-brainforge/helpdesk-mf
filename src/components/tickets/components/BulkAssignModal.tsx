@@ -1,4 +1,4 @@
-import { UserOptionRow } from '@/components/shared';
+import { ModalHeader, UserOptionRow } from '@/components/shared';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -8,14 +8,13 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
 } from '@brainforgeau/components';
-import { useAtom } from 'jotai';
-import { type FC, useEffect, useMemo, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import {
-  mapUserToOption,
-  usersMutationAtom,
-} from '../state/users-dropdown-state';
+  type AssigneeScope,
+  filterAssignees,
+  useScopedAssigneesIntersection,
+} from '../hooks/useScopedAssignees';
 
 interface BulkAssignModalProps {
   isOpen: boolean;
@@ -23,6 +22,12 @@ interface BulkAssignModalProps {
   /** `null` unassigns the selected tickets. */
   onConfirm: (assigneeId: string | null) => void;
   ticketCount: number;
+  /**
+   * The scope of each selected ticket. Only people who can work every one of
+   * them are offered, so a bulk assignment never lands someone on a ticket
+   * outside their reach.
+   */
+  scopes: AssigneeScope[];
 }
 
 export const BulkAssignModal: FC<BulkAssignModalProps> = ({
@@ -30,49 +35,61 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
   onClose,
   onConfirm,
   ticketCount,
+  scopes,
 }) => {
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | null>(
     null,
   );
 
-  // Users search mutation for assignee autocomplete
-  const [
-    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
-  ] = useAtom(usersMutationAtom);
+  const [query, setQuery] = useState('');
 
-  // Load initial users when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      searchUsers({ query: '' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  // The modal stays mounted under the grid, so it loads only while open.
+  const assignees = useScopedAssigneesIntersection(scopes, { enabled: isOpen });
+  const usersOptions = filterAssignees(assignees.options, query);
 
-  // Map users data to options for the autocomplete
-  const usersOptions = useMemo(
-    () => (usersData ?? []).map(mapUserToOption),
-    [usersData],
+  // Counted by organisation, the unit the message below talks about. Tickets
+  // with no organisation belong to their tenant as a whole and are not counted.
+  const orgCount = useMemo(
+    () => new Set(scopes.map(s => s.organisationId).filter(Boolean)).size,
+    [scopes],
   );
+  const nobodyInCommon =
+    !assignees.isLoading &&
+    !assignees.isError &&
+    assignees.scopeCount > 1 &&
+    assignees.options.length === 0;
 
   const handleConfirm = () => {
     onConfirm(selectedAssigneeId ?? null);
     setSelectedAssigneeId(null);
+    setQuery('');
     onClose();
   };
 
   const handleClose = () => {
     setSelectedAssigneeId(null);
+    setQuery('');
     onClose();
   };
 
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose}>
       <BaseModalContent>
-        <BaseModalHeader title="Assign Tickets">Assign Tickets</BaseModalHeader>
+        <ModalHeader>Assign Tickets</ModalHeader>
         <BaseModalBody>
           <p className="mb-4">
             Assign {ticketCount} ticket{ticketCount !== 1 ? 's' : ''} to:
           </p>
+          {nobodyInCommon ? (
+            <p className="mb-4 text-sm text-muted-foreground">
+              No one belongs to{' '}
+              {orgCount === 2
+                ? 'both'
+                : `all ${orgCount > 2 ? orgCount : 'the'}`}{' '}
+              organisations in this selection. Narrow the selection to one
+              organisation to assign.
+            </p>
+          ) : null}
           <BaseAutocomplete
             label="Assignee"
             placeholder="Search team member..."
@@ -85,17 +102,14 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
               }
             }}
             onClear={() => setSelectedAssigneeId(null)}
-            onValueChange={(value: string) => {
-              searchUsers({ query: value });
-            }}
+            isDisabled={nobodyInCommon}
+            onValueChange={setQuery}
             onOpenChange={open => {
-              if (open && !isSearchingUsers) {
-                searchUsers({ query: '' });
-              }
+              if (!open) setQuery('');
             }}
-            isLoading={isSearchingUsers}
+            isLoading={assignees.isLoading}
             renderSelectedItem={selectedKey => {
-              const user = usersOptions.find(u => u.id === selectedKey);
+              const user = assignees.options.find(u => u.id === selectedKey);
               if (!user) return null;
               return (
                 <div className="flex w-full min-w-0 flex-1 items-center gap-2">
@@ -123,7 +137,7 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
           </BaseAutocomplete>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={handleClose}>
+          <BaseButton variant="bordered" color="light" onPress={handleClose}>
             Cancel
           </BaseButton>
           <BaseButton

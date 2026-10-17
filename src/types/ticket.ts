@@ -48,29 +48,9 @@ export type TicketListDto = GeneratedTicketListDto & {
   // requesterName / assigneeName are now provided natively by the generated
   // client; categoryName remains a UI-only enrichment field.
   categoryName?: string;
-  /**
-   * Tenancy of the ticket, used by the principal console's Scope column.
-   * Declared here because the generated client is rebuilt from the OpenAPI
-   * spec by CI and will not carry these until that runs against the merged
-   * backend change. Drop them from here once it does.
-   */
-  tenantId?: string | null;
-  organisationId?: string | null;
 };
 
 export type TicketDto = GeneratedTicketDto & {
-  /**
-   * Who raised and who last changed the ticket.
-   *
-   * Stamped by the backend's audit interceptor onto every entity, but not
-   * previously projected onto the DTO, which is why the activity timeline
-   * had nothing to show and fell back to "Unknown". Null when the row was
-   * written without a user context (seed data, imports, background jobs);
-   * the backend normalises Guid.Empty to null so there is one meaning of
-   * "unknown" rather than two.
-   */
-  createdById?: string | null;
-  updatedById?: string | null;
   // requesterName / assigneeName / isProblem / isPublishedAsIdea /
   // publishedAsIdeaAt are now provided natively by the generated client.
   // categoryName remains a UI-only enrichment field.
@@ -100,12 +80,32 @@ export interface TicketFilters {
   categoryId?: string[];
   assigneeId?: string[];
   searchTerm?: string;
+  /**
+   * People and places whose NAME matched searchTerm, resolved on this side
+   * because the names live in identity-management (see useSearchMatches).
+   * Never set by the user; derived from searchTerm just before querying.
+   */
+  searchUserIds?: string[];
+  searchScopeIds?: string[];
   tagIds?: string[]; // Filter by tag IDs
   unassignedOnly?: boolean;
   /** When true, only tickets past their due date are returned (backend OverdueOnly param). */
   overdueOnly?: boolean;
-  /** Filter by a custom (tenant-defined) ticket status — maps to the backend CustomStatusId param. */
-  customStatusId?: string;
+  /**
+   * Custom (tenant-defined) statuses to include, sent as repeated
+   * `customStatusIds=`. Matched together with `status` as "any of": ticking
+   * New and a custom status lists tickets in either, not only those in both.
+   */
+  customStatusIds?: string[];
+  /*
+   * Scope narrowing, for a service admin whose rows span tenants.
+   *
+   * Ignored on the tenant-scoped endpoint, which already answers for exactly
+   * one tenant and one organisation, so there is nothing for these to narrow.
+   */
+  tenantId?: string;
+  organisationId?: string;
+  divisionId?: string;
 }
 
 export interface CreateTicketDto {

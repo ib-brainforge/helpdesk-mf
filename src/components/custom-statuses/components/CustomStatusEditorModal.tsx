@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { TicketStatus, toTicketStatus } from '@/types/custom-status';
@@ -8,13 +9,13 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
   ContextScopeStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -67,7 +68,12 @@ export function CustomStatusEditorModal({
   // hook itself is always called (rules of hooks) with `meta: undefined` in
   // create mode, which every downstream computation here already treats as
   // "no scope yet" the same way a freshly-created record would.
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom status',
     meta: status?.meta,
@@ -176,9 +182,9 @@ export function CustomStatusEditorModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader>
+        <ModalHeader>
           {isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
-        </BaseModalHeader>
+        </ModalHeader>
         <BaseModalBody className="space-y-4">
           <BaseInput
             label="Name"
@@ -195,11 +201,19 @@ export function CustomStatusEditorModal({
               meaningful once the record exists (has an id/meta); the create
               form has nothing to place yet. */}
           {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+          {isEditing && (
+            <MetadataPanel
+              meta={metaForPanel}
+              scopeBadge={scopeBadge}
+              canViewMetadata={canViewMetadata}
+            />
+          )}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <BaseInput
                 label="Sort Order"
+                description="Where it appears in the status list. Lower numbers come first."
                 type="number"
                 value={String(sortOrder)}
                 onChange={e => setSortOrder(Number(e.target.value) || 0)}
@@ -207,15 +221,19 @@ export function CustomStatusEditorModal({
               />
             </div>
             <div className="flex-1">
-              <label className="text-foreground mb-1.5 block text-sm font-medium">
+              <label
+                htmlFor="custom-status-color"
+                className="text-gray block pb-1 text-xs font-bold leading-5 dark:text-light"
+              >
                 Color
               </label>
               <div className="flex items-center gap-2">
                 <input
+                  id="custom-status-color"
                   type="color"
                   value={color}
                   onChange={e => setColor(e.target.value)}
-                  className="border-light h-10 w-10 cursor-pointer rounded border"
+                  className="border-light h-8 w-8 cursor-pointer rounded border"
                 />
                 <span className="text-default-500 text-sm">{color}</span>
               </div>
@@ -274,6 +292,7 @@ export function CustomStatusEditorModal({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={isSubmitting || isSubmitting}
           >

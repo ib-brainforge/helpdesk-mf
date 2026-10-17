@@ -4,6 +4,7 @@ import {
   FileUploadZone,
   InlineImageButton,
 } from '@/components/file-upload';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AttachmentDto } from '@/types';
 import type { CannedResponseDto } from '@/types/canned-response';
@@ -11,15 +12,12 @@ import { CommentType } from '@/types/comment';
 import { BaseToggle } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { RichTextEditor } from '@brainforgeau/components/text-editor';
 import { CommentsApi } from '@brainforgeau/helpdesk-client';
+import { usePermissions } from '@brainforgeau/security';
 import { CannedResponsePicker } from '@components/canned-responses';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useState } from 'react';
 
 interface ReplyEditorProps {
@@ -33,7 +31,12 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   categoryId,
   onCommentAdded,
 }) => {
-  const [isInternalNote, setIsInternalNote] = useState(false);
+  // Posting an internal note needs tickets.update, as its endpoint does.
+  // Without it the toggle is hidden so the request is never made.
+  const { hasPermission } = usePermissions();
+  const canPostInternalNote = hasPermission(HelpdeskPermissions.Tickets.Update);
+  const [internalNoteSelected, setIsInternalNote] = useState(false);
+  const isInternalNote = canPostInternalNote && internalNoteSelected;
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<AttachmentDto[]>(
@@ -42,31 +45,23 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   const queryClient = useQueryClient();
   const { uploadFiles, uploadProgress, isUploading } = useUploadAttachment();
 
-  // Initialize TipTap editor
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Link.configure({ openOnClick: false }),
-      Image,
-      Placeholder.configure({
-        placeholder: isInternalNote
-          ? 'Add an internal note (only visible to agents)...'
-          : 'Write your reply...',
-      }),
-    ],
-    content: '',
-  });
+  /*
+   * The body as HTML, held here rather than inside a TipTap instance.
+   *
+   * This screen used to build its own TipTap editor and hand-roll a toolbar out
+   * of BaseButtons, which is why the comment box looked nothing like the
+   * description field directly above it: same job, two implementations, two
+   * appearances. RichTextEditor is the design system's editor and is what the
+   * description already uses, so the two now match and the toolbar styling is
+   * not this file's problem any more.
+   *
+   * It is a controlled component (content + onChange), so "is there anything to
+   * send" and "clear it" become plain state questions.
+   */
+  const [body, setBody] = useState('');
 
-  // Update placeholder when internal note toggle changes
-  useEffect(() => {
-    if (editor) {
-      editor.extensionManager.extensions.forEach(ext => {
-        if (ext.name === 'placeholder') {
-          editor.commands.focus();
-        }
-      });
-    }
-  }, [isInternalNote, editor]);
+  /** TipTap emits "<p></p>" for an empty document, so length alone lies. */
+  const isBodyEmpty = body.replace(/<[^>]*>/g, '').trim().length === 0;
 
   const mutation = useMutation({
     mutationFn: async (body: string) => {
@@ -92,7 +87,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
       toast(isInternalNote ? 'Internal note added' : 'Reply added', {
         variant: 'success',
       });
-      editor?.commands.clearContent();
+      setBody('');
       setPendingAttachments([]);
       setShowFileUpload(false);
       queryClient.invalidateQueries({
@@ -107,20 +102,15 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   });
 
   const handleSubmit = useCallback(() => {
-    if (!editor || editor.isEmpty) return;
-
-    const html = editor.getHTML();
-    mutation.mutate(html);
-  }, [editor, mutation]);
+    if (isBodyEmpty) return;
+    mutation.mutate(body);
+  }, [body, isBodyEmpty, mutation]);
 
   const handleCannedResponseSelect = useCallback(
     (response: CannedResponseDto) => {
-      // Insert canned response into TipTap editor
-      if (editor && response.body) {
-        editor.commands.setContent(response.body);
-      }
+      if (response.body) setBody(response.body);
     },
-    [editor],
+    [],
   );
 
   const handleFilesSelected = useCallback(
@@ -174,19 +164,29 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         <div className="flex items-center gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             onPress={() => setIsPickerOpen(true)}
             icon={<Icon name="document-text" className="h-4 w-4" />}
           >
             Canned Response
           </BaseButton>
-          <BaseToggle isSelected={isInternalNote} onChange={setIsInternalNote}>
-            Internal Note
-          </BaseToggle>
+          {canPostInternalNote && (
+            <BaseToggle
+              isSelected={isInternalNote}
+              onChange={setIsInternalNote}
+            >
+              Internal Note
+            </BaseToggle>
+          )}
         </div>
       </div>
 
-      {/* TipTap Editor */}
+      {/*
+        The design system's editor, the same component the ticket description
+        uses. The internal-note tint stays on the wrapper so the box still turns
+        amber when the toggle is on.
+      */}
       <div
         className={`rounded-lg border ${
           isInternalNote
@@ -194,72 +194,14 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
             : 'bg-content1 border-divider'
         }`}
       >
-        {/* Editor Toolbar */}
-        {editor && (
-          <div className="flex items-center gap-1 border-b border-divider p-2">
-            <BaseButton
-              variant="light"
-              size="sm"
-              onPress={() => editor.chain().focus().toggleBold().run()}
-              isIconOnly
-              className={`font-bold ${editor.isActive('bold') ? 'bg-default-200' : ''}`}
-              aria-label="Bold"
-            >
-              B
-            </BaseButton>
-            <BaseButton
-              variant="light"
-              size="sm"
-              onPress={() => editor.chain().focus().toggleItalic().run()}
-              isIconOnly
-              className={`italic ${editor.isActive('italic') ? 'bg-default-200' : ''}`}
-              aria-label="Italic"
-            >
-              I
-            </BaseButton>
-            <BaseButton
-              variant="light"
-              size="sm"
-              onPress={() => editor.chain().focus().toggleBulletList().run()}
-              isIconOnly
-              className={editor.isActive('bulletList') ? 'bg-default-200' : ''}
-              aria-label="Bullet List"
-            >
-              •
-            </BaseButton>
-            <BaseButton
-              variant="light"
-              size="sm"
-              onPress={() => editor.chain().focus().toggleOrderedList().run()}
-              isIconOnly
-              className={editor.isActive('orderedList') ? 'bg-default-200' : ''}
-              aria-label="Numbered List"
-            >
-              1.
-            </BaseButton>
-            <div className="w-px h-6 bg-divider mx-1" />
-            <BaseButton
-              variant="light"
-              size="sm"
-              onPress={() => {
-                const url = window.prompt('Enter URL:');
-                if (url) {
-                  editor.chain().focus().setLink({ href: url }).run();
-                }
-              }}
-              isIconOnly
-              className={editor.isActive('link') ? 'bg-default-200' : ''}
-              aria-label="Insert Link"
-            >
-              🔗
-            </BaseButton>
-          </div>
-        )}
-
-        {/* Editor Content */}
-        <EditorContent
-          editor={editor}
-          className="prose prose-sm max-w-none dark:prose-invert px-3 py-2 min-h-[120px] focus:outline-none"
+        <RichTextEditor
+          content={body}
+          onChange={setBody}
+          placeholder={
+            isInternalNote
+              ? 'Add an internal note (only visible to agents)...'
+              : 'Write your reply...'
+          }
         />
       </div>
 
@@ -278,7 +220,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           disabled={isUploading}
         />
         {pendingAttachments.length > 0 && (
-          <span className="text-xs text-default-500">
+          <span className="text-default-500 text-xs">
             {pendingAttachments.length} file(s) attached
           </span>
         )}
@@ -294,7 +236,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           />
           {pendingAttachments.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-default-600">
+              <p className="text-default-600 text-xs font-medium">
                 Pending Attachments:
               </p>
               <AttachmentList
@@ -308,9 +250,9 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
       )}
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-default-400">
+        <span className="text-default-400 text-xs">
           Press{' '}
-          <kbd className="px-1 py-0.5 text-xs rounded bg-default-100">
+          <kbd className="bg-default-100 rounded px-1 py-0.5 text-xs">
             {/* REVIEW: navigator.userAgentData?.platform is the modern API; fall back to
                 navigator.platform for browsers that don't support it (Firefox, Safari).
                 Both return a string containing "Mac" on macOS. */}
@@ -330,13 +272,14 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             onPress={() => {
-              editor?.commands.clearContent();
+              setBody('');
               setPendingAttachments([]);
             }}
             isDisabled={
-              (editor?.isEmpty && pendingAttachments.length === 0) ||
+              (isBodyEmpty && pendingAttachments.length === 0) ||
               mutation.isPending
             }
           >
@@ -345,9 +288,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
           <BaseButton
             size="sm"
             onPress={handleSubmit}
-            isDisabled={
-              mutation.isPending || isUploading || !editor || editor.isEmpty
-            }
+            isDisabled={mutation.isPending || isUploading || isBodyEmpty}
           >
             {isInternalNote ? 'Add Internal Note' : 'Send Reply'}
           </BaseButton>

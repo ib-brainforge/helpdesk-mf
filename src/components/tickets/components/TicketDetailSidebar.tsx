@@ -38,17 +38,20 @@ import {
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { usePermissions } from '@brainforgeau/security';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
-import { type FC, useCallback, useEffect, useMemo } from 'react';
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  filterAssignees,
+  useScopedAssignees,
+} from '../hooks/useScopedAssignees';
+import { useTicketDetail } from '../hooks/useTickets';
 import {
   categoriesMutationAtom,
   mapCategoryToOption,
 } from '../state/categories-dropdown-state';
-import {
-  mapUserToOption,
-  usersMutationAtom,
-} from '../state/users-dropdown-state';
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
@@ -116,8 +119,21 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   isSubscribeLoading = false,
   onSubscribeToggle,
 }) => {
+  const { hasPermission: hasKbPermission } = usePermissions();
+  const canSeeKnowledgeBase = hasKbPermission(
+    HelpdeskPermissions.KnowledgeBase.Manage,
+  );
   const timezone = useTimezone();
   const statusConfig = getStatusConfig(ticket.status as TicketStatus);
+
+  /*
+   * The parent's subject, for the Parent Ticket link below.
+   *
+   * `useTicketDetail` is gated on a truthy id, so this costs nothing for the
+   * common case of a ticket with no parent. It also shares the ['ticket', id]
+   * query key, so navigating to the parent reuses this instead of refetching.
+   */
+  const { data: parentTicket } = useTicketDetail(ticket.parentTicketId ?? '');
 
   /*
    * Tenant-defined statuses belong in this picker alongside the three built-in
@@ -182,10 +198,19 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   const addTagMutation = useAddTagToTicket();
   const removeTagMutation = useRemoveTagFromTicket();
 
-  // Users search mutation for assignee autocomplete
-  const [
-    { mutate: searchUsers, data: usersData, isPending: isSearchingUsers },
-  ] = useAtom(usersMutationAtom);
+  /*
+   * Everyone this ticket can be assigned to: people whose helpdesk role reaches
+   * the ticket's own tenant, organisation or division, plus anyone already
+   * holding tickets there. Scoped to the TICKET, not the viewer's context, so a
+   * service admin looking at another tenant's ticket sees that tenant's people.
+   * See useScopedAssignees for why both sources are needed.
+   */
+  const scopedAssignees = useScopedAssignees({
+    tenantId: ticket.tenantId,
+    organisationId: ticket.organisationId,
+    divisionId: ticket.divisionId,
+  });
+  const [assigneeQuery, setAssigneeQuery] = useState('');
 
   // Categories search mutation for category autocomplete
   const [
@@ -198,15 +223,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
   // Load initial data when component mounts
   useEffect(() => {
-    searchUsers({ query: '' });
     searchCategories({ query: '' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Map data to options
+  // The scope is loaded once and searched here: neither source behind it has
+  // a text search, and BaseAutocomplete never filters its own items.
   const usersOptions = useMemo(
-    () => (usersData ?? []).map(mapUserToOption),
-    [usersData],
+    () => filterAssignees(scopedAssignees.options, assigneeQuery),
+    [scopedAssignees.options, assigneeQuery],
   );
 
   const categoriesOptions = useMemo(
@@ -276,7 +301,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
                 cs => encodeCustomStatusKey(cs.id) === opt.key,
               );
               return (
-                <BaseSelectItem key={opt.key} value={opt.key}>
+                /*
+                  textValue is what the closed trigger renders. These children
+                  are a JSX span (colour dot + label), not a plain string, so
+                  without it the trigger falls back to the item's key and a
+                  custom status showed as the raw wire token
+                  "custom:0971f548-fd73-4bfe-8029-346e432baeef".
+                */
+                <BaseSelectItem
+                  key={opt.key}
+                  value={opt.key}
+                  textValue={opt.label}
+                >
                   <span className="flex items-center gap-2">
                     <OptionDot
                       hex={custom?.color}
@@ -372,25 +408,48 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               onUpdate?.({ assigneeId: newKey ?? null });
             }}
             onClear={() => onUpdate?.({ assigneeId: null })}
-            onValueChange={(value: string) => {
-              searchUsers({ query: value });
-            }}
+            onValueChange={setAssigneeQuery}
+            // Closing forgets the search, so reopening starts from everyone.
             onOpenChange={open => {
-              if (open && !isSearchingUsers) {
-                searchUsers({ query: '' });
-              }
+              if (!open) setAssigneeQuery('');
             }}
-            isLoading={isSearchingUsers}
+            isLoading={scopedAssignees.isLoading}
             isDisabled={isUpdating}
             renderSelectedItem={selectedKey => {
-              const user = usersOptions.find(u => u.id === selectedKey);
-              if (!user) return null;
+              /*
+               * Falls back to the enriched user when the options list has not
+               * been fetched.
+               *
+               * usersOptions is filled by a search that only runs when the
+               * dropdown is opened, so on a freshly loaded ticket it is empty.
+               * Returning null then rendered an empty control, which read as
+               * "unassigned" on a ticket that was in fact assigned. Taking a
+               * ticket over looked like it had done nothing: the write
+               * succeeded, the button correctly disabled itself, and the field
+               * beside it still showed nobody.
+               *
+               * userMap is the same identity lookup the read-only fallback
+               * below already uses, so the name is available without opening
+               * anything.
+               */
+              // The unfiltered list: a search that happens to exclude the
+              // current assignee must not blank out their name.
+              const user = scopedAssignees.options.find(
+                u => u.id === selectedKey,
+              );
+              const enriched = selectedKey
+                ? userMap[selectedKey as string]
+                : undefined;
+              const name = user?.name ?? enriched?.name;
+              if (!name) return null;
               return (
                 <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-                  <BaseAvatar src={user.avatarUrl} name={user.name} size="xs" />
-                  <span className="truncate text-xs font-medium">
-                    {user.name}
-                  </span>
+                  <BaseAvatar
+                    src={user?.avatarUrl ?? enriched?.avatarUrl}
+                    name={name}
+                    size="xs"
+                  />
+                  <span className="truncate text-xs font-medium">{name}</span>
                 </div>
               );
             }}
@@ -655,17 +714,43 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
 
         {/* Assets */}
-        <LinkedAssetsSection ticketId={ticket.id ?? ''} />
+        <LinkedAssetsSection
+          ticketId={ticket.id ?? ''}
+          tenantId={ticket.tenantId}
+          organisationId={ticket.organisationId}
+        />
 
         {/* Parent ticket */}
         {ticket.parentTicketId && (
           <div className="mb-4">
+            {/*
+              "Subtask of", not "Parent Ticket". Parent is no longer a field
+              anyone sets: the only way a ticket gets one is by being created as
+              a subtask, so this is a statement about what this ticket IS rather
+              than a relationship someone chose, and it reads as the way back up
+              rather than as an editable property.
+            */}
             <label className="block text-sm font-medium text-default-700 mb-1">
-              Parent Ticket
+              Subtask of
             </label>
-            <p className="text-sm font-mono text-blue-600">
-              #{ticket.parentTicketId?.substring(0, 8)}
-            </p>
+            {/*
+              A link, not blue text. This rendered the first 8 characters of the
+              parent's GUID styled like a link but with no behaviour: it named
+              nothing a reader recognises and could not be followed. The subject
+              is what identifies a ticket to a person, so it leads, and the short
+              id stays alongside it for anyone matching against a URL or a log.
+            */}
+            <Link
+              to={`/tickets/${ticket.parentTicketId}`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {parentTicket?.subject ?? `#${ticket.parentTicketId.slice(0, 8)}`}
+              {parentTicket?.subject && (
+                <span className="ml-1.5 font-mono text-xs text-default-400">
+                  #{ticket.parentTicketId.slice(0, 8)}
+                </span>
+              )}
+            </Link>
           </div>
         )}
       </div>
@@ -689,13 +774,20 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested KB Articles — seeded from ticket subject */}
-      {ticket.subject && (
+      {/* Suggested KB Articles — seeded from ticket subject. The knowledge
+          base is internal (kb.manage, the same rule as its pages), so the
+          suggestions are only shown to people who may open them. */}
+      {ticket.subject && canSeeKnowledgeBase && (
         <div className="border-t pt-6">
           <label className="block text-sm font-medium text-default-700 mb-2">
             Suggested KB Articles
           </label>
-          <KbSuggestions searchText={ticket.subject} minChars={3} limit={5} />
+          <KbSuggestions
+            searchText={ticket.subject}
+            minChars={3}
+            limit={5}
+            emptyMessage="No related articles found for this ticket."
+          />
         </div>
       )}
     </div>

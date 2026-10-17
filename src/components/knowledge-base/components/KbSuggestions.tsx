@@ -4,11 +4,33 @@ import { Link } from '@modern-js/runtime/router';
 import type { FC } from 'react';
 import { useSimilarArticles } from '../hooks/useKnowledgeBase';
 
+/**
+ * The match percentage to display, or null when there is nothing worth showing.
+ *
+ * Null covers both "the search tier did not rank this" (the substring fallback)
+ * and "it ranked so low it rounds to zero". Neither is a statement worth
+ * printing next to an article the search chose to surface.
+ */
+const matchPercent = (score: unknown): number | null => {
+  if (typeof score !== 'number' || Number.isNaN(score)) return null;
+  const percent = Math.round(score * 100);
+  return percent > 0 ? percent : null;
+};
+
 interface KbSuggestionsProps {
   searchText: string;
   minChars?: number;
   limit?: number;
   onArticleClick?: (slug: string) => void;
+  /**
+   * Shown instead of nothing when the search returns no articles.
+   *
+   * Callers that render their own heading above this component need it: with
+   * the component returning null, the heading was left standing over empty
+   * space and read as something that had failed to load. Omit it where the
+   * component is free to disappear entirely.
+   */
+  emptyMessage?: string;
 }
 
 export const KbSuggestions: FC<KbSuggestionsProps> = ({
@@ -16,6 +38,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
   minChars = 3,
   limit = 5,
   onArticleClick,
+  emptyMessage,
 }) => {
   const shouldFetch = searchText.length >= minChars;
   const {
@@ -24,15 +47,18 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
     isError,
   } = useSimilarArticles(shouldFetch ? searchText : '', limit);
 
-  // If the suggestions call failed, degrade silently — never block the ticket detail view.
-  if (isError) {
-    return null;
-  }
-
   const hasSuggestions = suggestions && suggestions.length > 0;
+  const isEmpty = isError || !shouldFetch || (!isLoading && !hasSuggestions);
 
-  if (!shouldFetch || (!isLoading && !hasSuggestions)) {
-    return null;
+  if (isEmpty) {
+    /*
+     * A failed call is treated the same as no results on purpose: suggestions
+     * are a convenience, and the ticket view must never surface their failure
+     * as something the reader has to act on.
+     */
+    return emptyMessage ? (
+      <p className="text-sm text-default-400 italic">{emptyMessage}</p>
+    ) : null;
   }
 
   return (
@@ -78,12 +104,18 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
                     {article.categoryName && (
                       <span>{article.categoryName}</span>
                     )}
-                    {article.relevanceScore !== undefined &&
-                      article.relevanceScore !== null && (
-                        <span className="text-primary">
-                          {Math.round(article.relevanceScore * 100)}% match
-                        </span>
-                      )}
+                    {/*
+                      Only shown when there is a score worth stating. The
+                      unranked substring fallback sends null, and anything that
+                      rounds to 0% is a worse claim than saying nothing: it
+                      reads as "this article is irrelevant" on a list the search
+                      just returned as relevant.
+                    */}
+                    {matchPercent(article.relevanceScore) !== null && (
+                      <span className="text-primary">
+                        {matchPercent(article.relevanceScore)}% match
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

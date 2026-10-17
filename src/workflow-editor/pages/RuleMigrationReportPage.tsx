@@ -79,6 +79,7 @@ export function RuleMigrationReportPage() {
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             isDisabled={apply.isPending || !hasRules || apply.isPending}
             onPress={handleDryRun}
           >

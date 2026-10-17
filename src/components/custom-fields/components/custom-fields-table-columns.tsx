@@ -1,9 +1,8 @@
-import { StatusBadge } from '@/components/shared';
+import { IconTip, ScopeLabel, StatusBadge } from '@/components/shared';
 import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
 import { toScopeMeta, toWireMeta } from '@/utils/scopeMeta';
 import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
 import type { CustomFieldsRow } from '../types';
@@ -56,16 +55,7 @@ export const createCustomFieldsColumns = (
     id: 'scope',
     header: 'Scope',
     cell: ({ row }) => (
-      <ScopeBadge
-        meta={toScopeMeta(toWireMeta(row.original.meta))}
-        currentOrganisationId={options.currentOrganisationId}
-        currentDivisionId={options.currentDivisionId}
-        organisationCount={options.organisationCount}
-        bypassSingleOrganisationSuppressionForTesting={
-          SCOPE_TESTING_BYPASS_SINGLE_ORG
-        }
-        size="sm"
-      />
+      <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
     ),
     size: 140,
   }),
@@ -140,24 +130,30 @@ export const createCustomFieldsColumns = (
     header: '',
     cell: ({ row }) => (
       <div className="-my-1.5 flex items-center justify-end gap-1">
-        <BaseButton
-          variant="link"
-          size="none"
-          className="text-dark dark:text-light hover:text-blue"
-          aria-label="Edit field"
-          onPress={() => row.original.id && options?.onEdit?.(row.original.id)}
-          icon={<Icon name="pencil" className="h-4 w-4" />}
-        />
-        <BaseButton
-          variant="link"
-          size="none"
-          className="text-danger hover:text-danger-600"
-          aria-label="Delete field"
-          onPress={() =>
-            row.original.id && options?.onDelete?.(row.original.id)
-          }
-          icon={<Icon name="trash" className="h-4 w-4" />}
-        />
+        <IconTip label={'Edit field'}>
+          <BaseButton
+            variant="link"
+            size="none"
+            className="text-dark dark:text-light hover:text-blue"
+            aria-label="Edit field"
+            onPress={() =>
+              row.original.id && options?.onEdit?.(row.original.id)
+            }
+            icon={<Icon name="pencil" className="h-4 w-4" />}
+          />
+        </IconTip>
+        <IconTip label={'Delete field'}>
+          <BaseButton
+            variant="link"
+            size="none"
+            className="text-danger hover:text-danger-600"
+            aria-label="Delete field"
+            onPress={() =>
+              row.original.id && options?.onDelete?.(row.original.id)
+            }
+            icon={<Icon name="trash" className="h-4 w-4" />}
+          />
+        </IconTip>
       </div>
     ),
     enableSorting: false,

@@ -3,7 +3,7 @@ import {
   useCannedResponses,
   useDeleteCannedResponse,
 } from '@/components/canned-responses/hooks/useCannedResponses';
-import { ScopePermissions } from '@/constants/permissions';
+import { IconTip, ScopeLabel } from '@/components/shared';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -26,11 +26,13 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import { useAccessScope, usePermissions } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -82,8 +84,10 @@ function CannedResponsesPage() {
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
 
@@ -95,6 +99,7 @@ function CannedResponsesPage() {
     accessScope,
     selectedContext,
     canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
     // entityType verified against helpdesk-backend's `HelpdeskDbContext`
     // (`DbSet<CannedResponse> CannedResponses`).
     patchScope: async (ids, patch) => {
@@ -184,16 +189,7 @@ function CannedResponsesPage() {
         id: 'placement',
         header: 'Placement',
         cell: ({ row }) => (
-          <ScopeBadge
-            meta={toScopeMeta(toWireMeta(row.original.meta))}
-            currentOrganisationId={currentOrganisationId}
-            currentDivisionId={currentDivisionId}
-            organisationCount={organisationCount}
-            bypassSingleOrganisationSuppressionForTesting={
-              SCOPE_TESTING_BYPASS_SINGLE_ORG
-            }
-            size="sm"
-          />
+          <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
         ),
         size: 140,
       }),
@@ -212,27 +208,31 @@ function CannedResponsesPage() {
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit canned response"
-              onPress={() => handleEdit(row.original)}
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete canned response"
-              onPress={() =>
-                handleDeleteRequest(
-                  row.original.id ?? '',
-                  row.original.title ?? '',
-                )
-              }
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Edit canned response'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit canned response"
+                onPress={() => handleEdit(row.original)}
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete canned response'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete canned response"
+                onPress={() =>
+                  handleDeleteRequest(
+                    row.original.id ?? '',
+                    row.original.title ?? '',
+                  )
+                }
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,
@@ -284,6 +284,7 @@ function CannedResponsesPage() {
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExportCSV}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
           >
@@ -343,6 +344,4 @@ function CannedResponsesPage() {
   );
 }
 
-export default withAuthorizationRequired(CannedResponsesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default CannedResponsesPage;

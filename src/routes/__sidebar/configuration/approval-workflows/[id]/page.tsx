@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 /**
  * Configuration approval workflow detail page —
  * /__sidebar/configuration/approval-workflows/[id]
@@ -36,6 +37,7 @@ import {
   ContextScopeStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import {
   DetailPage,
   EmptyState,
@@ -50,7 +52,6 @@ import {
   HelpdeskDomainApprovalsEnumsApprovalMode,
   ScopeApi,
 } from '@brainforgeau/helpdesk-client';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
@@ -120,7 +121,12 @@ function EditApprovalWorkflowPage() {
     destinationName: string | null;
   } | null>(null);
 
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Approval workflow',
     meta: workflow?.meta,
@@ -340,6 +346,11 @@ function EditApprovalWorkflowPage() {
                 above the form fields, same relative placement as asset-mf's/
                 hr-mf's detail pages (between header and content). */}
             <ContextScopeStrip {...scopeStripProps} />
+            <MetadataPanel
+              meta={metaForPanel}
+              scopeBadge={scopeBadge}
+              canViewMetadata={canViewMetadata}
+            />
 
             <BaseCard>
               <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
@@ -544,31 +555,43 @@ function EditApprovalWorkflowPage() {
                         Step {index + 1}
                       </span>
                       <div className="flex items-center gap-1">
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          onPress={() => handleMoveStepUp(index)}
-                          isDisabled={index === 0}
-                          icon={
-                            <Icon name="chevron-up" className="h-3.5 w-3.5" />
-                          }
-                        />
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          onPress={() => handleMoveStepDown(index)}
-                          isDisabled={index === steps.length - 1}
-                          icon={
-                            <Icon name="chevron-down" className="h-3.5 w-3.5" />
-                          }
-                        />
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => handleRemoveStep(index)}
-                          icon={<Icon name="trash" className="h-3.5 w-3.5" />}
-                        />
+                        <IconTip label={'Move step up'}>
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            aria-label="Move step up"
+                            onPress={() => handleMoveStepUp(index)}
+                            isDisabled={index === 0}
+                            icon={
+                              <Icon name="chevron-up" className="h-3.5 w-3.5" />
+                            }
+                          />
+                        </IconTip>
+                        <IconTip label={'Move step down'}>
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            aria-label="Move step down"
+                            onPress={() => handleMoveStepDown(index)}
+                            isDisabled={index === steps.length - 1}
+                            icon={
+                              <Icon
+                                name="chevron-down"
+                                className="h-3.5 w-3.5"
+                              />
+                            }
+                          />
+                        </IconTip>
+                        <IconTip label={'Remove step'}>
+                          <BaseButton
+                            size="sm"
+                            variant="light"
+                            color="danger"
+                            aria-label="Remove step"
+                            onPress={() => handleRemoveStep(index)}
+                            icon={<Icon name="trash" className="h-3.5 w-3.5" />}
+                          />
+                        </IconTip>
                       </div>
                     </div>
 
@@ -616,6 +639,4 @@ function EditApprovalWorkflowPage() {
   );
 }
 
-export default withAuthorizationRequired(EditApprovalWorkflowPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default EditApprovalWorkflowPage;

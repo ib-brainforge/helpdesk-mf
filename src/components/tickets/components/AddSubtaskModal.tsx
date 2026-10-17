@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -5,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTextarea,
 } from '@brainforgeau/components';
 import { type FC, useState } from 'react';
@@ -50,7 +50,7 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader title="Add Subtask">Add Subtask</BaseModalHeader>
+        <ModalHeader>Add Subtask</ModalHeader>
         <BaseModalBody>
           <div className="flex flex-col gap-4">
             <BaseInput
@@ -80,6 +80,7 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleClose}
             isDisabled={isLoading || isLoading}
           >

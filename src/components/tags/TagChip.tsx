@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 import { Icon } from '@brainforgeau/components/base';
 import type { FC } from 'react';
 
@@ -28,14 +29,16 @@ export const TagChip: FC<TagChipProps> = ({
     >
       {name}
       {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="inline-flex items-center rounded-full hover:opacity-70"
-          aria-label={`Remove tag ${name}`}
-        >
-          <Icon name="x-mark" className="h-3 w-3" />
-        </button>
+        <IconTip label={`Remove tag ${name}`}>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="inline-flex items-center rounded-full hover:opacity-70"
+            aria-label={`Remove tag ${name}`}
+          >
+            <Icon name="x-mark" className="h-3 w-3" />
+          </button>
+        </IconTip>
       )}
     </span>
   );

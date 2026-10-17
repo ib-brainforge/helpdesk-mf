@@ -94,6 +94,7 @@ export function WorkflowActionButtons({
       <BaseButton
         size="sm"
         variant="bordered"
+        color="light"
         onPress={handleValidate}
         isDisabled={validateMutation.isPending}
       >

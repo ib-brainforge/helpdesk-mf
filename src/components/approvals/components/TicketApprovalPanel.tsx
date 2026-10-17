@@ -1,4 +1,4 @@
-import { StatusBadge } from '@/components/shared';
+import { ModalHeader, StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import {
   BaseButton,
@@ -6,7 +6,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseTextarea,
   Icon,
 } from '@brainforgeau/components';
@@ -242,6 +241,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
                         <BaseButton
                           size="sm"
                           variant="bordered"
+                          color="light"
                           onPress={() => {
                             setSelectedStepId(decisionItem.stepId ?? '');
                             setDecision(ApprovalDecisionType.Approved);
@@ -285,7 +285,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         onClose={() => setShowDecisionModal(false)}
       >
         <BaseModalContent>
-          <BaseModalHeader>Make Decision</BaseModalHeader>
+          <ModalHeader>Make Decision</ModalHeader>
           <BaseModalBody>
             <div className="space-y-4">
               <div>
@@ -330,6 +330,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
           <BaseModalFooter>
             <BaseButton
               variant="bordered"
+              color="light"
               onPress={() => setShowDecisionModal(false)}
             >
               Cancel

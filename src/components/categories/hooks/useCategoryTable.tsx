@@ -1,4 +1,3 @@
-import { useDuplicateCategory } from '@/components/categories/hooks/useCategoriesData';
 /**
  * useCategoryTable — lifts the TanStack table instance out of CategoryList so
  * the categories page can pass it directly to <ListPage>.
@@ -6,12 +5,11 @@ import { useDuplicateCategory } from '@/components/categories/hooks/useCategorie
  * The table owns search-filtered rows. The page owns searchTerm state and passes
  * it in, allowing <ListPage filters={...}> to wire the search input.
  */
-import { StatusBadge } from '@/components/shared';
+import { IconTip, StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { toast } from '@heroui/react';
 import {
   type ColumnDef,
   type PaginationState,
@@ -20,7 +18,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export type CategoryRow = CategoryDto & { sectionName?: string };
 
@@ -51,6 +49,13 @@ interface UseCategoryTableOptions {
   isLoading?: boolean;
   onEditCategory: (category: CategoryDto) => void;
   onDeleteCategory: (categoryId: string) => void;
+  /**
+   * Categories the tenant may use but does not own (the Netcorp presets).
+   * They are listed so the set matches what the request form offers, but they
+   * belong to the principal, so editing or deleting one here is not the
+   * tenant's to do.
+   */
+  presetIds?: Set<string>;
 }
 
 export function useCategoryTable({
@@ -59,29 +64,8 @@ export function useCategoryTable({
   searchTerm,
   onEditCategory,
   onDeleteCategory,
+  presetIds,
 }: UseCategoryTableOptions) {
-  const duplicateCategoryMutation = useDuplicateCategory();
-
-  const handleDuplicate = useCallback(
-    (category: CategoryDto) => {
-      duplicateCategoryMutation.mutate(category.id, {
-        onSuccess: () => {
-          toast('Category duplicated', {
-            description: `"${category.name} (copy)" has been created.`,
-            variant: 'success',
-          });
-        },
-        onError: () => {
-          toast('Duplication failed', {
-            description: 'Could not duplicate the category. Please try again.',
-            variant: 'danger',
-          });
-        },
-      });
-    },
-    [duplicateCategoryMutation],
-  );
-
   const columns = useMemo(
     (): ColumnDef<CategoryRow, any>[] => [
       columnHelper.display({
@@ -123,40 +107,51 @@ export function useCategoryTable({
       columnHelper.display({
         id: 'actions',
         header: '',
-        cell: ({ row }) => (
-          <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Duplicate category"
-              onPress={() => handleDuplicate(row.original)}
-              icon={<Icon name="document-duplicate" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit category"
-              onPress={() => onEditCategory(row.original)}
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete category"
-              onPress={() => onDeleteCategory(row.original.id)}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isPreset = presetIds?.has(row.original.id) ?? false;
+          if (isPreset) {
+            return (
+              <div className="-my-1.5 flex items-center justify-end gap-2">
+                <span
+                  className="bg-lighter-blue text-blue rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  title="Provided by Netcorp. Cannot be edited or deleted here."
+                >
+                  Preset
+                </span>
+              </div>
+            );
+          }
+          return (
+            <div className="-my-1.5 flex items-center justify-end gap-1">
+              <IconTip label={'Edit category'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-dark dark:text-light hover:text-blue"
+                  aria-label="Edit category"
+                  onPress={() => onEditCategory(row.original)}
+                  icon={<Icon name="pencil" className="h-4 w-4" />}
+                />
+              </IconTip>
+              <IconTip label={'Delete category'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-danger hover:text-danger-600"
+                  aria-label="Delete category"
+                  onPress={() => onDeleteCategory(row.original.id)}
+                  icon={<Icon name="trash" className="h-4 w-4" />}
+                />
+              </IconTip>
+            </div>
+          );
+        },
         enableSorting: false,
         enableHiding: false,
         size: 100,
       }),
     ],
-    [onEditCategory, onDeleteCategory, handleDuplicate],
+    [onEditCategory, onDeleteCategory, presetIds],
   );
 
   // Build flat rows with section grouping info

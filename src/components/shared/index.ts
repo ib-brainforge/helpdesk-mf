@@ -1,4 +1,10 @@
+export { IconTip } from './IconTip';
+export { ModalHeader } from './ModalHeader';
+export { PageHint } from './PageHint';
+export { PresetPill } from './PresetPill';
 export { ScopeCell } from './ScopeCell';
+export { ScopeLabel } from './ScopeLabel';
+export { ScopeSelect } from './ScopeSelect';
 export {
   badgeFieldClasses,
   badgeSwatchClasses,

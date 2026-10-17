@@ -24,6 +24,7 @@ import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { CommentType } from '@/types/comment';
 import { TicketStatus } from '@/types/ticket';
+import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
@@ -57,17 +58,19 @@ import {
   useMergeTickets,
   useMyTicketSubscription,
   usePublishTicketAsIdea,
-  useSetTicketParent,
   useSubscribeToTicket,
   useTicketChildren,
   useTicketDetail,
+  useTicketLinks,
+  useUnlinkTickets,
   useUnmarkTicketAsProblem,
   useUnmarkTicketAsSpam,
   useUnpublishTicketAsIdea,
   useUnsubscribeFromTicket,
   useUpdateTicket,
 } from '../hooks/useTickets';
-import { AddParentTicketModal } from './AddParentTicketModal';
+import { NewRequestModal } from '../new-request/NewRequestModal';
+import { getStatusConfig } from '../ticket-status-config';
 import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
 import { CSATWidget } from './CSATWidget';
@@ -79,7 +82,7 @@ import { InlineEditable } from './InlineEditable';
 import { LinkTicketModal } from './LinkTicketModal';
 import { MarkSpamModal } from './MarkSpamModal';
 import { MergeTicketModal } from './MergeTicketModal';
-import { NewTicketModal } from './NewTicketModal';
+import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 
 const SYSTEM_LOG_PREF_KEY = 'helpdesk:show-system-log';
@@ -116,6 +119,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
    */
   const { hasPermission } = usePermissions();
   const canWriteTicket = hasPermission(HelpdeskPermissions.TicketWrite);
+  /*
+   * The ticket actions menu needs edit access to open at all, but several of
+   * its actions need more than that. These mirror what each endpoint requires
+   * (TicketsController): subtask and duplicate create a ticket, forward,
+   * moderation and delete each have their own permission. Without them a
+   * Technician saw Delete, which the API then refused.
+   */
+  const canCreateTickets = hasPermission(HelpdeskPermissions.Tickets.Create);
+  const canForwardTickets = hasPermission(HelpdeskPermissions.Tickets.Forward);
+  const canModerateTickets = hasPermission(
+    HelpdeskPermissions.Tickets.Moderate,
+  );
+  const canDeleteTickets = hasPermission(HelpdeskPermissions.Tickets.Delete);
 
   /*
    * Names for the activity timeline.
@@ -173,8 +189,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   // Wave 3 mutations
   const duplicateTicketMutation = useDuplicateTicket();
   const convertToReplyMutation = useConvertToReply();
-  const setParentMutation = useSetTicketParent();
   const { data: children } = useTicketChildren(id ?? '');
+  const { data: ticketLinks } = useTicketLinks(id ?? '');
+  const unlinkTicketsMutation = useUnlinkTickets();
 
   // Wave 6 mutations
   const createSubtaskMutation = useCreateSubtask();
@@ -187,8 +204,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const [showAttachments, setShowAttachments] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  /** Empty when no subtask dialog is open; doubles as the id to fetch. */
+  const [openSubtaskId, setOpenSubtaskId] = useState('');
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
-  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
+  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isMarkSpamModalOpen, setIsMarkSpamModalOpen] = useState(false);
 
   // Wave 3 modal state
@@ -197,7 +216,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const [isConvertToReplyModalOpen, setIsConvertToReplyModalOpen] =
     useState(false);
-  const [isAddParentModalOpen, setIsAddParentModalOpen] = useState(false);
 
   // Wave 6 modal state
   const [isAddSubtaskModalOpen, setIsAddSubtaskModalOpen] = useState(false);
@@ -498,15 +516,23 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   );
 
   const handleLinkConfirm = useCallback(
-    (targetTicketId: string, linkType: string) => {
+    (otherTicketId: string, semantic: TicketLinkSemantic) => {
       if (!id) return;
       linkTicketsMutation.mutate(
-        { sourceTicketId: id, targetTicketId, linkType },
+        { currentTicketId: id, otherTicketId, semantic },
         {
           onSuccess: () => {
+            setIsLinkModalOpen(false);
             toast('Tickets linked', {
-              description: `Linked to ticket ${targetTicketId.substring(0, 8)}`,
+              description: 'The link has been added to this ticket.',
               variant: 'success',
+            });
+          },
+          onError: () => {
+            toast('Error', {
+              description:
+                'Could not link that ticket. Check the ID and try again.',
+              variant: 'danger',
             });
           },
         },
@@ -613,40 +639,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
       );
     },
     [id, convertToReplyMutation, navigate],
-  );
-
-  const handleAddParentConfirm = useCallback(
-    (parentTicketId: string) => {
-      if (!id) return;
-      setParentMutation.mutate(
-        { ticketId: id, parentTicketId },
-        {
-          onSuccess: () => {
-            toast('Parent set', {
-              description: 'Parent ticket linked successfully.',
-              variant: 'success',
-            });
-            setIsAddParentModalOpen(false);
-          },
-          onError: (error: any) => {
-            const errorCode = error?.response?.data?.errors?.[0]?.code;
-            if (errorCode === 'CIRCULAR_HIERARCHY') {
-              toast('Circular hierarchy', {
-                description:
-                  'Setting this parent would create a circular hierarchy.',
-                variant: 'danger',
-              });
-            } else {
-              toast('Error', {
-                description: 'Failed to set parent ticket. Please try again.',
-                variant: 'danger',
-              });
-            }
-          },
-        },
-      );
-    },
-    [id, setParentMutation],
   );
 
   // Wave 6 handlers
@@ -793,7 +785,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const isDeleted = !!ticket.isDeleted;
   const isSpam = !!ticket.isSpam;
   // Tickets that are spam or deleted cannot be moderated further
-  const canModerate = !isDeleted && !isSpam;
+  const canModerate = !isDeleted && !isSpam && canModerateTickets;
   // All actions are disabled when ticket is deleted
   const actionsDisabled = isDeleted;
 
@@ -807,7 +799,14 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
         }
       `}</style>
 
-      <div className="w-full max-w-7xl mx-auto">
+      {/*
+        pb-8: the sidebar column ends on a card, and with no bottom gutter that
+        card's border lands exactly on the viewport edge at the end of the
+        scroll, which reads as the page being cut off rather than finished.
+        The left nav is `sticky top-0` and keeps reaching the viewport bottom,
+        so this adds scroll room under the content without stranding the nav.
+      */}
+      <div className="w-full max-w-7xl mx-auto pb-8">
         {/* Back Button */}
         <div className="mb-4 helpdesk-print-hide">
           <BaseButton
@@ -878,6 +877,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   >
                     <BaseButton
                       variant="bordered"
+                      color="light"
                       onPress={handleAiAssistant}
                       isDisabled={actionsDisabled}
                       icon={<Icon name="flash" className="h-4 w-4" />}
@@ -890,11 +890,11 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     fallback={null}
                   >
                     <Dropdown>
-                      <DropdownTrigger>
-                        <BaseButton
-                          variant="bordered"
-                          icon={<Icon name="dotsV" className="h-4 w-4" />}
-                        />
+                      <DropdownTrigger
+                        aria-label="Ticket actions"
+                        className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-9 w-9"
+                      >
+                        <Icon name="dotsV" className="h-4 w-4" />
                       </DropdownTrigger>
                       <DropdownPopover className="helpdesk-dropdown-popover">
                         <DropdownMenu
@@ -951,14 +951,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="subtask"
                               onPress={() => setIsAddSubtaskModalOpen(true)}
+                              isDisabled={!canCreateTickets}
                             >
                               Add Subtask
                             </DropdownItem>
-                            <DropdownItem
-                              key="parent"
-                              onPress={() => setIsAddParentModalOpen(true)}
-                            >
-                              Add Parent
+                            {/*
+                              Was "Add Parent". Parent is no longer something a
+                              caller assigns: nesting comes from creating a
+                              ticket as a subtask, and a relationship between two
+                              independent tickets is a link. This slot now opens
+                              the link picker, which existed but had no way in.
+                            */}
+                            <DropdownItem key="link" onPress={handleLink}>
+                              Link Ticket
                             </DropdownItem>
                             <DropdownItem
                               key="convert"
@@ -975,6 +980,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="duplicate"
                               onPress={() => setIsDuplicateModalOpen(true)}
+                              isDisabled={!canCreateTickets}
                             >
                               Duplicate
                             </DropdownItem>
@@ -985,6 +991,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             <DropdownItem
                               key="forward"
                               onPress={() => setIsForwardModalOpen(true)}
+                              isDisabled={!canForwardTickets}
                             >
                               Forward by Email
                             </DropdownItem>
@@ -1030,6 +1037,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                             )}
                             <DropdownItem
                               key="spam"
+                              isDisabled={!canModerateTickets}
                               onPress={
                                 isSpam
                                   ? handleUnmarkSpam
@@ -1046,6 +1054,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                               key="delete"
                               className="text-danger"
                               onPress={handleDeleteTicket}
+                              isDisabled={!canDeleteTickets}
                             >
                               Delete
                             </DropdownItem>
@@ -1066,7 +1075,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   fallback={null}
                 >
                   <BaseButton
-                    onPress={() => setIsNewTicketModalOpen(true)}
+                    onPress={() => setIsNewRequestOpen(true)}
                     icon={<Icon name="plus" className="h-4 w-4" />}
                   >
                     New Ticket
@@ -1091,6 +1100,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 >
                   <BaseButton
                     variant="bordered"
+                    color="light"
                     onPress={handleTakeover}
                     icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
                     isDisabled={
@@ -1106,6 +1116,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 >
                   <BaseButton
                     variant="bordered"
+                    color="light"
                     onPress={handleCloseTicket}
                     icon={<Icon name="check-fill" className="h-4 w-4" />}
                     isDisabled={
@@ -1193,6 +1204,76 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               )}
             </Box>
 
+            {/*
+              Subtasks, worked from the ticket that owns them.
+
+              This was a headingless list that appeared only when children
+              already existed, showed a GUID fragment before the subject, and
+              offered no way to add one: the only route in was a menu item three
+              levels deep, and the only way to see a subtask's state was to open
+              it. Each row now carries the status that makes the list worth
+              scanning, and opens the subtask in a dialog rather than navigating:
+              it is a step in the work already on screen.
+
+              Shown only once a ticket actually has subtasks. Most never get
+              one, and a permanent "No subtasks yet" panel is furniture on every
+              ticket describing the absence of a feature they do not use.
+            */}
+            {children && children.length > 0 && (
+              <Box>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">
+                    Subtasks
+                    {children && children.length > 0 && (
+                      <span className="ml-1.5 font-normal text-default-400">
+                        {children.length}
+                      </span>
+                    )}
+                  </h3>
+                  <PermissionGuard
+                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setIsAddSubtaskModalOpen(true)}
+                      disabled={actionsDisabled}
+                      className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+                    >
+                      + Add subtask
+                    </button>
+                  </PermissionGuard>
+                </div>
+
+                {children && children.length > 0 ? (
+                  <div className="divide-default-200 divide-y">
+                    {children.map((child: any) => {
+                      const childStatus = getStatusConfig(
+                        child.status as TicketStatus,
+                      );
+                      return (
+                        <button
+                          type="button"
+                          key={child.id}
+                          onClick={() => setOpenSubtaskId(child.id ?? '')}
+                          className="hover:bg-default-50 flex w-full items-center gap-3 rounded px-1 py-2 text-left"
+                        >
+                          <StatusBadge color={childStatus.color}>
+                            {childStatus.label}
+                          </StatusBadge>
+                          <span className="min-w-0 flex-1 truncate text-sm">
+                            {child.subject}
+                          </span>
+                          <span className="shrink-0 text-xs text-default-400">
+                            {child.assigneeName ?? 'Unassigned'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </Box>
+            )}
+
             {/* Comment Thread */}
             <Box>
               <div className="space-y-4">
@@ -1222,6 +1303,97 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   />
                 </div>
               </div>
+            </Box>
+
+            {/*
+              Linked work items.
+
+              Replaces the old "Add Parent": a relationship between two tickets
+              that both stand on their own is a link, and hierarchy is subtasks.
+              The backend has carried ticket links the whole time, but nothing
+              rendered them and the picker that created them was unreachable,
+              so a link could only ever be written, never seen.
+
+              Each row is phrased from THIS ticket's side. The stored edge is
+              directional, so the same row reads "Blocks" on one ticket and
+              "Is blocked by" on the other; see describeLink.
+            */}
+            <Box>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">
+                  Linked Work Items
+                  {ticketLinks && ticketLinks.length > 0 && (
+                    <span className="ml-1.5 font-normal text-default-400">
+                      {ticketLinks.length}
+                    </span>
+                  )}
+                </h3>
+                <PermissionGuard
+                  requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                >
+                  <button
+                    type="button"
+                    onClick={handleLink}
+                    disabled={actionsDisabled}
+                    className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+                  >
+                    + Link ticket
+                  </button>
+                </PermissionGuard>
+              </div>
+
+              {ticketLinks && ticketLinks.length > 0 ? (
+                <div className="divide-default-200 divide-y">
+                  {ticketLinks.map(link => {
+                    const { label, otherTicketId, otherSubject } = describeLink(
+                      link,
+                      id ?? '',
+                    );
+                    return (
+                      <div
+                        key={link.id}
+                        className="flex items-center gap-3 py-2"
+                      >
+                        <span className="w-28 shrink-0 text-xs text-default-500">
+                          {label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/tickets/${otherTicketId}`)}
+                          className="min-w-0 flex-1 truncate text-left text-sm text-blue-600 hover:underline"
+                        >
+                          {otherSubject || `#${otherTicketId?.slice(0, 8)}`}
+                        </button>
+                        <PermissionGuard
+                          requiredPermissions={[
+                            HelpdeskPermissions.TicketWrite,
+                          ]}
+                        >
+                          <BaseButton
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto min-h-0 shrink-0 text-default-400"
+                            onPress={() =>
+                              id &&
+                              link.id &&
+                              unlinkTicketsMutation.mutate({
+                                ticketId: id,
+                                linkId: link.id,
+                              })
+                            }
+                          >
+                            Remove
+                          </BaseButton>
+                        </PermissionGuard>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-default-400 italic">
+                  No linked tickets.
+                </p>
+              )}
             </Box>
 
             {/* Activity Timeline - Placeholder */}
@@ -1293,32 +1465,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               ticketId={id ?? ''}
               ticketStatus={ticket.status as TicketStatus}
             />
-
-            {/* Child Tickets */}
-            {children && children.length > 0 && (
-              <Box>
-                <div className="space-y-2">
-                  {children.map((child: any) => (
-                    <div
-                      key={child.id}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <BaseButton
-                        variant="link"
-                        size="sm"
-                        className="font-mono text-xs p-0 h-auto min-h-0"
-                        onPress={() => navigate(`/tickets/${child.id}`)}
-                      >
-                        #{child.id?.substring(0, 8)}
-                      </BaseButton>
-                      <span className="text-default-600 truncate ml-2 flex-1">
-                        {child.subject}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Box>
-            )}
           </div>
         </div>
 
@@ -1349,12 +1495,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           isLoading={convertToReplyMutation.isPending}
           currentTicketId={id ?? ''}
         />
-        <AddParentTicketModal
-          isOpen={isAddParentModalOpen}
-          onClose={() => setIsAddParentModalOpen(false)}
-          onConfirm={handleAddParentConfirm}
-          isLoading={setParentMutation.isPending}
-          currentTicketId={id ?? ''}
+        <SubtaskModal
+          isOpen={!!openSubtaskId}
+          subtaskId={openSubtaskId}
+          onClose={() => setOpenSubtaskId('')}
         />
         <AddSubtaskModal
           isOpen={isAddSubtaskModalOpen}
@@ -1381,9 +1525,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onClose={() => setIsAiAssistantOpen(false)}
           ticketId={id ?? ''}
         />
-        <NewTicketModal
-          isOpen={isNewTicketModalOpen}
-          onClose={() => setIsNewTicketModalOpen(false)}
+        <NewRequestModal
+          isOpen={isNewRequestOpen}
+          onClose={() => setIsNewRequestOpen(false)}
           onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
         />
         {confirmDialog}

@@ -1,22 +1,7 @@
 import { BaseButton, BaseInput } from '@brainforgeau/components';
 import { RichTextEditor } from '@brainforgeau/components/text-editor';
-import DOMPurify from 'dompurify';
 import { type FC, useEffect, useRef, useState } from 'react';
-
-/**
- * Does this string carry markup, or is it plain text that merely contains
- * angle brackets?
- *
- * Descriptions predating the rich-text editor are plain text with real
- * newlines, and there are thousands of them. Rendering those as HTML would
- * collapse every line break; rendering genuine HTML as text would show the
- * tags. The two cases have to be told apart at display time.
- *
- * The test looks for a tag with a known-ish shape rather than any `<`, so a
- * description reading "if x < y then" is treated as the plain text it is.
- */
-const looksLikeHtml = (value: string): boolean =>
-  /<\/?[a-z][a-z0-9]*(\s[^<>]*)?>/i.test(value);
+import { TicketDescriptionContent } from './TicketDescriptionContent';
 
 interface InlineEditableProps {
   value: string;
@@ -109,6 +94,8 @@ export const InlineEditable: FC<InlineEditableProps> = ({
       );
     }
 
+    // Rendering lives in TicketDescriptionContent, shared with the request
+    // wizard's Review step.
     return (
       <div
         className={`${hoverable} -mx-2 px-2 py-1`}
@@ -116,16 +103,7 @@ export const InlineEditable: FC<InlineEditableProps> = ({
         title={title}
       >
         {value ? (
-          <div className="prose max-w-none">
-            {looksLikeHtml(value) ? (
-              <div
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: the value is passed through DOMPurify.sanitize on this same line. Ticket descriptions are untrusted (any requester, or an inbound email, controls the string) and the backend sanitiser is currently wired to knowledge-base articles only, so this is the gate.
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value) }}
-              />
-            ) : (
-              <p className="whitespace-pre-wrap">{value}</p>
-            )}
-          </div>
+          <TicketDescriptionContent value={value} />
         ) : (
           <p className="text-sm text-default-400 italic">{emptyLabel}</p>
         )}
@@ -172,6 +150,7 @@ export const InlineEditable: FC<InlineEditableProps> = ({
         <BaseButton
           size="sm"
           variant="bordered"
+          color="light"
           onPress={cancel}
           isDisabled={isSaving}
         >

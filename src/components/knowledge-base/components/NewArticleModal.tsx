@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
   BaseButton,
@@ -6,7 +7,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
@@ -100,9 +100,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
       className="max-w-3xl"
     >
       <BaseModalContent>
-        <BaseModalHeader>
-          <h2 className="text-xl font-semibold">New Article</h2>
-        </BaseModalHeader>
+        <ModalHeader>New Article</ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput
@@ -114,7 +112,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
             />
 
             <div>
-              <label className="block text-sm font-medium mb-2">Details</label>
+              <label className="mb-2 block text-sm font-medium">Details</label>
               <TipTapEditor
                 content={details}
                 onChange={setDetails}
@@ -158,7 +156,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="light" onPress={handleCancel}>
+          <BaseButton variant="bordered" color="light" onPress={handleCancel}>
             Cancel
           </BaseButton>
           <BaseButton

@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -10,11 +11,11 @@ import {
   BaseModal,
   BaseModalBody,
   BaseModalContent,
-  BaseModalHeader,
   BaseToggle,
   ContextScopeStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { CategoriesApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
@@ -46,7 +47,12 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // section exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEdit` below).
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Section',
     meta: section?.meta,
@@ -124,7 +130,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="md">
       <BaseModalContent>
-        <BaseModalHeader
+        <ModalHeader
           title={isEdit ? 'Edit Section' : 'Create Section'}
           onClose={handleClose}
         />
@@ -155,6 +161,13 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
                 meaningful once the record exists (has an id/meta); the create
                 form has nothing to place yet. */}
             {isEdit && <ContextScopeStrip {...scopeStripProps} />}
+            {isEdit && (
+              <MetadataPanel
+                meta={metaForPanel}
+                scopeBadge={scopeBadge}
+                canViewMetadata={canViewMetadata}
+              />
+            )}
 
             <form.Field name="sortOrder">
               {field => (
@@ -184,6 +197,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
             <div className="flex justify-end gap-2 mt-4">
               <BaseButton
                 variant="bordered"
+                color="light"
                 onPress={handleClose}
                 type="button"
               >

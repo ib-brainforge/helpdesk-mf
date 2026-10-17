@@ -1,4 +1,3 @@
-import { ScopePermissions } from '@/constants/permissions';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
@@ -15,7 +14,11 @@ import type {
   ServicesCoreAbstractionsRecordMeta,
   ServicesCoreAbstractionsScopePatch,
 } from '@brainforgeau/helpdesk-client';
-import { useAccessScope, usePermissions } from '@brainforgeau/security';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
@@ -91,8 +94,11 @@ export function useEntityScopeStrip<TEntity>(
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
+  const canViewScope = hasPlatformPermission(PlatformPermissions.Scope.Read);
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
   const currentContextName =
@@ -220,6 +226,7 @@ export function useEntityScopeStrip<TEntity>(
       bypassSingleOrganisationSuppressionForTesting:
         SCOPE_TESTING_BYPASS_SINGLE_ORG,
       canManageScope,
+      canViewScope,
       organisations: scopeOrganisations,
       divisions: scopeDivisions,
       users: [] as SelectOption[],
@@ -233,5 +240,7 @@ export function useEntityScopeStrip<TEntity>(
     metaForPanel: recordMeta,
     /** Ready for `<MetadataPanel scopeBadge={scopeBadge} .../>`. */
     scopeBadge: { organisationCount, currentOrganisationId, currentDivisionId },
+    /** Ready for `<MetadataPanel canViewMetadata={canViewMetadata} .../>`. */
+    canViewMetadata: hasPlatformPermission(PlatformPermissions.Metadata.Read),
   };
 }

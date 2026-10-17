@@ -104,6 +104,7 @@ function SlaCompliancePage() {
           />
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExport}
             isDisabled={!compliance || compliance.byPolicy.length === 0}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}

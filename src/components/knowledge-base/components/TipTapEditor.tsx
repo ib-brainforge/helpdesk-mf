@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import CodeBlock from '@tiptap/extension-code-block';
@@ -74,16 +75,18 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       >
         <code>&lt;&gt;</code>
       </BaseButton>
-      <BaseButton
-        size="sm"
-        variant={editor.isActive('highlight') ? 'bordered' : 'light'}
-        onPress={() => editor.chain().focus().toggleHighlight().run()}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Highlight"
-      >
-        <Icon name="pencil" className="h-4 w-4" />
-      </BaseButton>
+      <IconTip label={'Highlight'}>
+        <BaseButton
+          size="sm"
+          variant={editor.isActive('highlight') ? 'bordered' : 'light'}
+          onPress={() => editor.chain().focus().toggleHighlight().run()}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Highlight"
+        >
+          <Icon name="pencil" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
 
       <div className="w-px h-6 bg-divider mx-1" />
 
@@ -128,18 +131,20 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       <div className="w-px h-6 bg-divider mx-1" />
 
       {/* Lists */}
-      <BaseButton
-        size="sm"
-        variant={editor.isActive('bulletList') ? 'bordered' : 'light'}
-        onPress={() => editor.chain().focus().toggleBulletList().run()}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Bullet List"
-      >
-        {/* REVIEW: 'list-bullet' is kebab-case and not in the Icon registry.
+      <IconTip label={'Bullet List'}>
+        <BaseButton
+          size="sm"
+          variant={editor.isActive('bulletList') ? 'bordered' : 'light'}
+          onPress={() => editor.chain().focus().toggleBulletList().run()}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Bullet List"
+        >
+          {/* REVIEW: 'list-bullet' is kebab-case and not in the Icon registry.
             PascalCase heroicon name is used instead. */}
-        <Icon name="ListBulletIcon" className="h-4 w-4" />
-      </BaseButton>
+          <Icon name="ListBulletIcon" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
       <BaseButton
         size="sm"
         variant={editor.isActive('orderedList') ? 'bordered' : 'light'}
@@ -154,17 +159,19 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       <div className="w-px h-6 bg-divider mx-1" />
 
       {/* Blocks */}
-      <BaseButton
-        size="sm"
-        variant={editor.isActive('blockquote') ? 'bordered' : 'light'}
-        onPress={() => editor.chain().focus().toggleBlockquote().run()}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Quote"
-      >
-        {/* REVIEW: 'chat-bubble-left-right' is kebab-case; using PascalCase heroicon. */}
-        <Icon name="ChatBubbleLeftRightIcon" className="h-4 w-4" />
-      </BaseButton>
+      <IconTip label={'Quote'}>
+        <BaseButton
+          size="sm"
+          variant={editor.isActive('blockquote') ? 'bordered' : 'light'}
+          onPress={() => editor.chain().focus().toggleBlockquote().run()}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Quote"
+        >
+          {/* REVIEW: 'chat-bubble-left-right' is kebab-case; using PascalCase heroicon. */}
+          <Icon name="ChatBubbleLeftRightIcon" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
       <BaseButton
         size="sm"
         variant={editor.isActive('codeBlock') ? 'bordered' : 'light'}
@@ -175,84 +182,94 @@ const TipTapMenuBar: FC<TipTapMenuBarProps> = ({ editor }) => {
       >
         <span className="text-xs font-mono">{'{}'}</span>
       </BaseButton>
-      <BaseButton
-        size="sm"
-        variant="light"
-        onPress={() => editor.chain().focus().setHorizontalRule().run()}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Horizontal Rule"
-      >
-        <Icon name="minus" className="h-4 w-4" />
-      </BaseButton>
+      <IconTip label={'Horizontal Rule'}>
+        <BaseButton
+          size="sm"
+          variant="light"
+          onPress={() => editor.chain().focus().setHorizontalRule().run()}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Horizontal Rule"
+        >
+          <Icon name="minus" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
 
       <div className="w-px h-6 bg-divider mx-1" />
 
       {/* Table */}
-      <BaseButton
-        size="sm"
-        variant={editor.isActive('table') ? 'bordered' : 'light'}
-        onPress={() =>
-          editor
-            .chain()
-            .focus()
-            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-            .run()
-        }
-        isIconOnly
-        className={buttonClass}
-        aria-label="Insert Table"
-      >
-        {/* REVIEW: 'table-cells' is kebab-case; using PascalCase heroicon. */}
-        <Icon name="TableCellsIcon" className="h-4 w-4" />
-      </BaseButton>
+      <IconTip label={'Insert Table'}>
+        <BaseButton
+          size="sm"
+          variant={editor.isActive('table') ? 'bordered' : 'light'}
+          onPress={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+          isIconOnly
+          className={buttonClass}
+          aria-label="Insert Table"
+        >
+          {/* REVIEW: 'table-cells' is kebab-case; using PascalCase heroicon. */}
+          <Icon name="TableCellsIcon" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
 
       <div className="w-px h-6 bg-divider mx-1" />
 
       {/* Link */}
-      <BaseButton
-        size="sm"
-        variant={editor.isActive('link') ? 'bordered' : 'light'}
-        onPress={() => {
-          const url = window.prompt('Enter URL');
-          if (url) {
-            editor.chain().focus().setLink({ href: url }).run();
-          }
-        }}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Add Link"
-      >
-        <Icon name="link" className="h-4 w-4" />
-      </BaseButton>
+      <IconTip label={'Add Link'}>
+        <BaseButton
+          size="sm"
+          variant={editor.isActive('link') ? 'bordered' : 'light'}
+          onPress={() => {
+            const url = window.prompt('Enter URL');
+            if (url) {
+              editor.chain().focus().setLink({ href: url }).run();
+            }
+          }}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Add Link"
+        >
+          <Icon name="link" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
 
       <div className="w-px h-6 bg-divider mx-1" />
 
       {/* Undo/Redo */}
-      <BaseButton
-        size="sm"
-        variant="light"
-        onPress={() => editor.chain().focus().undo().run()}
-        isDisabled={!editor.can().undo()}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Undo"
-      >
-        {/* REVIEW: 'arrow-uturn-left' is kebab-case; using PascalCase heroicon. */}
-        <Icon name="ArrowUturnLeftIcon" className="h-4 w-4" />
-      </BaseButton>
-      <BaseButton
-        size="sm"
-        variant="light"
-        onPress={() => editor.chain().focus().redo().run()}
-        isDisabled={!editor.can().redo()}
-        isIconOnly
-        className={buttonClass}
-        aria-label="Redo"
-      >
-        {/* REVIEW: 'arrow-uturn-right' is kebab-case; using PascalCase heroicon. */}
-        <Icon name="ArrowUturnRightIcon" className="h-4 w-4" />
-      </BaseButton>
+      <IconTip label={'Undo'}>
+        <BaseButton
+          size="sm"
+          variant="light"
+          onPress={() => editor.chain().focus().undo().run()}
+          isDisabled={!editor.can().undo()}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Undo"
+        >
+          {/* REVIEW: 'arrow-uturn-left' is kebab-case; using PascalCase heroicon. */}
+          <Icon name="ArrowUturnLeftIcon" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
+      <IconTip label={'Redo'}>
+        <BaseButton
+          size="sm"
+          variant="light"
+          onPress={() => editor.chain().focus().redo().run()}
+          isDisabled={!editor.can().redo()}
+          isIconOnly
+          className={buttonClass}
+          aria-label="Redo"
+        >
+          {/* REVIEW: 'arrow-uturn-right' is kebab-case; using PascalCase heroicon. */}
+          <Icon name="ArrowUturnRightIcon" className="h-4 w-4" />
+        </BaseButton>
+      </IconTip>
     </div>
   );
 };

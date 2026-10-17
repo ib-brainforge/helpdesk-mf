@@ -1,5 +1,6 @@
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import { RouteGuard, ruleForPath } from './route-permissions';
 
 // css-base-split: helpdesk-mf's single, permanent base stylesheet —
 // precompiled Tailwind preflight + @brainforgeau/theme tokens (`:root`) +
@@ -63,6 +64,7 @@ registerStatusColors({
     Archived: 'default',
   },
 });
+import { renderBreadcrumbLink } from '@/components/Breadcrumbs';
 import {
   ErrorBoundary,
   SideNav,
@@ -89,7 +91,6 @@ const TopNavbar = lazyWithRetry(
 );
 import { Logo } from '@/components/Logo';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
 import { hubConnectedAtom } from '@/state/config';
@@ -165,8 +166,29 @@ interface NavItem {
   children?: NavItem[];
 }
 
+/**
+ * A menu item needs the same permission as the page it opens, taken from the
+ * route table (routes/route-permissions.tsx), so the menu never offers a page
+ * that would say Access Denied, and never hides one the user may open. Items
+ * whose page has no rule stay visible. Groups (Configuration) are hidden by
+ * the shell when none of their children survive.
+ */
+const withRoutePermissions = (
+  items: GuardedItem<NavItem>[],
+): GuardedItem<NavItem>[] =>
+  items.map(item => {
+    const children = (item as { children?: GuardedItem<NavItem>[] }).children;
+    const href = (item as { href?: string }).href;
+    const rule = href ? ruleForPath(href) : undefined;
+    return {
+      ...item,
+      ...(children ? { children: withRoutePermissions(children) } : {}),
+      ...(rule ? { requiredPermissions: rule.anyOf } : {}),
+    };
+  });
+
 // Navigation items for the sidebar
-const navItemsTop: GuardedItem<NavItem>[] = [
+const navItemsTop: GuardedItem<NavItem>[] = withRoutePermissions([
   {
     label: 'Dashboard',
     href: '/dashboard',
@@ -178,7 +200,6 @@ const navItemsTop: GuardedItem<NavItem>[] = [
     href: '/tickets',
     icon: 'text',
     testId: 'nav-tickets',
-    requiredPermissions: [HelpdeskPermissions.TicketRead],
   },
   {
     label: 'Knowledge Base',
@@ -198,9 +219,9 @@ const navItemsTop: GuardedItem<NavItem>[] = [
   // is no vote table. Giving a read-only list the same prominence as Tickets
   // made a half-built feature look broken. The route is left in place, so the
   // page is still reachable directly and nothing is deleted.
-];
+]);
 
-const navItemsBottom: GuardedItem<NavItem>[] = [
+const navItemsBottom: GuardedItem<NavItem>[] = withRoutePermissions([
   // Principal Picker + helpdesk principal routes are accessible via /principal/{id}/*
   {
     label: 'Configuration',
@@ -212,60 +233,46 @@ const navItemsBottom: GuardedItem<NavItem>[] = [
         href: '/configuration/categories',
         icon: 'folder',
         testId: 'nav-configuration-categories',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Custom Statuses',
         href: '/configuration/custom-statuses',
         icon: 'tag',
         testId: 'nav-configuration-custom-statuses',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
         label: 'Custom Priorities',
         href: '/configuration/custom-priorities',
         icon: 'flag',
         testId: 'nav-configuration-custom-priorities',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
-      },
-      {
-        label: 'Custom Fields',
-        href: '/configuration/custom-fields',
-        icon: 'f-field',
-        testId: 'nav-configuration-custom-fields',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Automation',
         href: '/configuration/automations',
         icon: 'cube',
         testId: 'nav-configuration-automations',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Workflows',
         href: '/configuration/workflows',
         icon: 'matching',
         testId: 'nav-configuration-workflows',
-        requiredPermissions: [HelpdeskPermissions.Settings.Read],
       },
       {
         label: 'Integrations',
         href: '/configuration/integrations',
         icon: 'plug',
         testId: 'nav-configuration-integrations',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
       {
         label: 'Live Chat',
         href: '/configuration/live-chat',
         icon: 'chatO',
         testId: 'nav-configuration-live-chat',
-        requiredPermissions: [HelpdeskPermissions.Settings.Manage],
       },
     ],
   },
-];
+]);
 
 const HelpdeskAction = () => {
   const hubConnected = useAtomValue(hubConnectedAtom);
@@ -365,6 +372,25 @@ export default function Layout() {
     [filterNavItems, permissions],
   );
 
+  // Someone whose role reaches only the Tickets page (a Customer, Platform
+  // Support, a Principal Agent) gets no side menu at all: a menu with one
+  // entry is just a frame around the page they are already on.
+  // Counted by destination, not by entry: a group such as Configuration can
+  // survive filtering with none of its pages left in it.
+  const countDestinations = (items: unknown[]): number =>
+    items.reduce<number>((n, item) => {
+      const { href, children } = item as {
+        href?: string;
+        children?: unknown[];
+      };
+      return n + (href ? 1 : 0) + (children ? countDestinations(children) : 0);
+    }, 0);
+  const hasSideMenu =
+    navSections.reduce(
+      (n, section) => n + countDestinations(section.items),
+      0,
+    ) > 1;
+
   return (
     <Providers>
       <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
@@ -373,11 +399,7 @@ export default function Layout() {
           // REVIEW: i18nResolver maps each full labelKey to its intended leaf label so
           // breadcrumbs show "Email Settings" not "Helpdesk Configuration Email Settings".
           i18nResolver={breadcrumbI18nResolver}
-          renderLink={({ item, className, children }) => (
-            <NavLink to={item.href} className={className}>
-              {children}
-            </NavLink>
-          )}
+          renderLink={renderBreadcrumbLink}
         >
           <PageTracker category="helpdesk" />
           {!isEmbedded && (
@@ -406,7 +428,7 @@ export default function Layout() {
             </ErrorBoundary>
           )}
           <div className="flex flex-1">
-            {isAuthenticated && !isPrincipalRoute && (
+            {isAuthenticated && !isPrincipalRoute && hasSideMenu && (
               <SideNav
                 data-testid={TEST_IDS.navbar.side}
                 sections={navSections}
@@ -461,7 +483,10 @@ export default function Layout() {
               <div className="flex flex-1 min-w-0">
                 <ErrorBoundary>
                   <LicenseGuard appId="helpdesk">
-                    <Outlet />
+                    {/* Page permissions: see routes/route-permissions.tsx. */}
+                    <RouteGuard pathname={location.pathname}>
+                      <Outlet />
+                    </RouteGuard>
                   </LicenseGuard>
                 </ErrorBoundary>
               </div>

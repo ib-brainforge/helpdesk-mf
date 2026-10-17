@@ -8,7 +8,6 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseTextarea,
@@ -17,7 +16,7 @@ import {
 import { toast } from '@heroui/react';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { UserOptionRow } from '@/components/shared';
+import { ModalHeader, UserOptionRow } from '@/components/shared';
 import { TagInput } from '@/components/tags/TagInput';
 import { useTags } from '@/components/tags/hooks/useTags';
 import { type CreateTicketDto, TicketPriority } from '@/types/ticket';
@@ -210,7 +209,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
       scrollBehavior="inside"
     >
       <BaseModalContent>
-        <BaseModalHeader title="New Ticket" onClose={handleCancel} />
+        <ModalHeader title="New Ticket" onClose={handleCancel} />
         <BaseModalBody>
           {submitError && (
             <ValidationAlert
@@ -390,7 +389,7 @@ export const NewTicketModal: FC<NewTicketModalProps> = ({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={handleCancel}>
+          <BaseButton variant="bordered" color="light" onPress={handleCancel}>
             Cancel
           </BaseButton>
           <BaseButton

@@ -1,3 +1,4 @@
+import { IconTip, ScopeLabel } from '@/components/shared';
 /**
  * Approval Workflows list — /__sidebar/configuration/approval-workflows
  *
@@ -10,7 +11,6 @@ import {
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
-import { ScopePermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -30,14 +30,16 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import {
   type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
   ScopeApi,
 } from '@brainforgeau/helpdesk-client';
-import { useAccessScope, usePermissions } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import {
   createColumnHelper,
@@ -64,8 +66,10 @@ function ApprovalWorkflowsPage() {
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
 
@@ -77,6 +81,7 @@ function ApprovalWorkflowsPage() {
     accessScope,
     selectedContext,
     canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
     // entityType verified against helpdesk-backend's `HelpdeskDbContext`
     // (`DbSet<ApprovalWorkflow> ApprovalWorkflows`).
     patchScope: async (ids, patch) => {
@@ -123,16 +128,7 @@ function ApprovalWorkflowsPage() {
         id: 'scope',
         header: 'Scope',
         cell: ({ row }) => (
-          <ScopeBadge
-            meta={toScopeMeta(toWireMeta(row.original.meta))}
-            currentOrganisationId={currentOrganisationId}
-            currentDivisionId={currentDivisionId}
-            organisationCount={organisationCount}
-            bypassSingleOrganisationSuppressionForTesting={
-              SCOPE_TESTING_BYPASS_SINGLE_ORG
-            }
-            size="sm"
-          />
+          <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
         ),
         size: 140,
       }),
@@ -168,30 +164,36 @@ function ApprovalWorkflowsPage() {
         header: '',
         cell: ({ row }) => (
           <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit approval workflow"
-              onPress={() =>
-                navigate(`/configuration/approval-workflows/${row.original.id}`)
-              }
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete approval workflow"
-              onPress={() =>
-                handleDeleteRequest(
-                  row.original.id ?? '',
-                  row.original.name ?? '',
-                )
-              }
-              isDisabled={deleteMutation.isPending}
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
+            <IconTip label={'Edit approval workflow'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit approval workflow"
+                onPress={() =>
+                  navigate(
+                    `/configuration/approval-workflows/${row.original.id}`,
+                  )
+                }
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete approval workflow'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete approval workflow"
+                onPress={() =>
+                  handleDeleteRequest(
+                    row.original.id ?? '',
+                    row.original.name ?? '',
+                  )
+                }
+                isDisabled={deleteMutation.isPending}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
           </div>
         ),
         enableSorting: false,
@@ -269,6 +271,4 @@ function ApprovalWorkflowsPage() {
   );
 }
 
-export default withAuthorizationRequired(ApprovalWorkflowsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default ApprovalWorkflowsPage;

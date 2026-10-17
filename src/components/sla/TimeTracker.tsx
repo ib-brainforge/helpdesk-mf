@@ -1,3 +1,4 @@
+import { IconTip } from '@/components/shared';
 import type { TicketTimeTrackingDto } from '@/components/sla/hooks/useTimeTracking';
 import { BaseInput, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
@@ -124,13 +125,16 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
                 )}
               </div>
               <div className="flex gap-1">
-                <BaseButton
-                  size="sm"
-                  variant="light"
-                  color="danger"
-                  onPress={() => entry.id && onDeleteEntry?.(entry.id)}
-                  icon={<Icon name="trash" className="h-3 w-3" />}
-                />
+                <IconTip label={'Delete time entry'}>
+                  <BaseButton
+                    size="sm"
+                    variant="light"
+                    color="danger"
+                    aria-label="Delete time entry"
+                    onPress={() => entry.id && onDeleteEntry?.(entry.id)}
+                    icon={<Icon name="trash" className="h-3 w-3" />}
+                  />
+                </IconTip>
               </div>
             </div>
           ))}

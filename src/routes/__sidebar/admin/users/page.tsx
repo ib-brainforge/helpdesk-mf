@@ -1,6 +1,7 @@
 import { UserRolesModal } from '@/components/admin-users/components/UserRolesModal';
 import { useTenantUsers } from '@/components/admin-users/hooks/useAdminUsers';
 import { useUsersData } from '@/components/users';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { getAppConfig } from '@/state/config';
 import type { HelpdeskRole, TenantUserDto } from '@/types/admin-user';
 import { Icon } from '@brainforgeau/components/base';
@@ -10,6 +11,7 @@ import {
   PageBody,
   PageHeader,
 } from '@brainforgeau/components/page';
+import { usePermissions } from '@brainforgeau/security';
 import { Chip, Link, Spinner } from '@heroui/react';
 import { useState } from 'react';
 
@@ -20,6 +22,10 @@ const ACTIVITY_ROLE_COLOR: Record<string, 'warning' | 'accent' | 'default'> = {
 };
 
 function AdminUsersPage() {
+  // Viewing this list needs users.read (the page rule); changing someone's
+  // roles needs users.manage, as the role endpoints do.
+  const { hasPermission } = usePermissions();
+  const canManageRoles = hasPermission(HelpdeskPermissions.Users.Manage);
   const [selectedUser, setSelectedUser] = useState<TenantUserDto | null>(null);
   const [isRolesModalOpen, setIsRolesModalOpen] = useState(false);
 
@@ -57,6 +63,7 @@ function AdminUsersPage() {
             >
               <BaseButton
                 variant="bordered"
+                color="light"
                 icon={
                   <Icon name="arrow-top-right-on-square" className="h-4 w-4" />
                 }
@@ -165,14 +172,16 @@ function AdminUsersPage() {
                     </p>
                   </div>
 
-                  <BaseButton
-                    size="sm"
-                    variant="light"
-                    onPress={() => handleManageRoles(user)}
-                    icon={<Icon name="shield-check" className="h-4 w-4" />}
-                  >
-                    Roles
-                  </BaseButton>
+                  {canManageRoles && (
+                    <BaseButton
+                      size="sm"
+                      variant="light"
+                      onPress={() => handleManageRoles(user)}
+                      icon={<Icon name="shield-check" className="h-4 w-4" />}
+                    >
+                      Roles
+                    </BaseButton>
+                  )}
                 </div>
               );
             })}

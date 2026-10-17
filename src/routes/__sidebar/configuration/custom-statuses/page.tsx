@@ -3,12 +3,20 @@ import {
   useCustomStatuses,
   useDeleteCustomStatus,
 } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { ScopePermissions } from '@/constants/permissions';
+import {
+  IconTip,
+  PageHint,
+  PresetPill,
+  ScopeLabel,
+  badgeSwatchClasses,
+} from '@/components/shared';
+import { getStatusConfig } from '@/components/tickets/ticket-status-config';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomTicketStatusDto } from '@/types/custom-status';
 import { TicketStatus, toTicketStatus } from '@/types/custom-status';
+import { TicketStatus as TicketStatusName } from '@/types/ticket';
 import {
   toBulkScopeSaveResult,
   toHelpdeskScopePatch,
@@ -16,7 +24,6 @@ import {
   toWireMeta,
 } from '@/utils/scopeMeta';
 import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
-import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -26,11 +33,13 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { ScopeBadge } from '@brainforgeau/components/scope-badge';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import { useAccessScope, usePermissions } from '@brainforgeau/security';
-import { withAuthorizationRequired } from '@brainforgeau/security';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { Chip, toast } from '@heroui/react';
 import {
   type ColumnDef,
@@ -46,6 +55,37 @@ const MAPS_TO_LABELS: Record<TicketStatus, string> = {
   [TicketStatus.InProgress]: 'In Progress',
   [TicketStatus.Closed]: 'Closed',
 };
+
+/*
+ * The built-in statuses every ticket starts from, listed under the tenant's
+ * own so the page shows the whole set a ticket can be in. A custom status
+ * maps onto one of these, so leaving them out made "Maps To" refer to things
+ * the page never showed. They are marked Preset and are read only: they are
+ * not records, so they cannot be edited, deleted or re-scoped.
+ */
+const PRESET_PREFIX = 'preset-status-';
+const isPreset = (status: CustomTicketStatusDto) =>
+  status.id.startsWith(PRESET_PREFIX);
+const PRESET_STATUS_NAMES = [
+  [TicketStatus.New, TicketStatusName.New],
+  [TicketStatus.InProgress, TicketStatusName.InProgress],
+  [TicketStatus.Closed, TicketStatusName.Closed],
+] as const;
+const PRESET_STATUSES: CustomTicketStatusDto[] = PRESET_STATUS_NAMES.map(
+  ([status, name], index) => ({
+    id: `${PRESET_PREFIX}${name}`,
+    name: MAPS_TO_LABELS[status],
+    sortOrder: index + 1,
+    mapsToStatus: name as unknown as CustomTicketStatusDto['mapsToStatus'],
+    isClosed: status === TicketStatus.Closed,
+    isDefault: false,
+    isActive: true,
+    createdAt: '',
+    modifiedAt: '',
+  }),
+);
+const presetStatusName = (status: CustomTicketStatusDto) =>
+  status.id.slice(PRESET_PREFIX.length) as TicketStatusName;
 
 const columnHelper = createColumnHelper<CustomTicketStatusDto>();
 
@@ -66,8 +106,10 @@ function CustomStatusesPage() {
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
 
@@ -87,6 +129,7 @@ function CustomStatusesPage() {
     accessScope,
     selectedContext,
     canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
     // entityType verified against helpdesk-backend's `HelpdeskDbContext`
     // (`DbSet<CustomTicketStatus> CustomTicketStatuses`) -- the scope
     // registry resolves by exact CLR class name, case-insensitive, NOT the
@@ -149,29 +192,28 @@ function CustomStatusesPage() {
       columnHelper.display({
         id: 'scope',
         header: 'Scope',
-        cell: ({ row }) => (
-          <ScopeBadge
-            meta={toScopeMeta(toWireMeta(row.original.meta))}
-            currentOrganisationId={currentOrganisationId}
-            currentDivisionId={currentDivisionId}
-            organisationCount={organisationCount}
-            bypassSingleOrganisationSuppressionForTesting={
-              SCOPE_TESTING_BYPASS_SINGLE_ORG
-            }
-            size="sm"
-          />
-        ),
+        cell: ({ row }) =>
+          isPreset(row.original) ? (
+            <span className="text-default-600 text-sm">All tenants</span>
+          ) : (
+            <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
+          ),
         size: 140,
       }),
       columnHelper.display({
         id: 'color',
         header: '',
-        cell: ({ row }) => (
-          <div
-            className="border-light h-4 w-4 rounded-full border"
-            style={{ backgroundColor: row.original.color ?? '#1868db' }}
-          />
-        ),
+        cell: ({ row }) =>
+          isPreset(row.original) ? (
+            <div
+              className={`h-4 w-4 rounded-full ${badgeSwatchClasses[getStatusConfig(presetStatusName(row.original)).color]}`}
+            />
+          ) : (
+            <div
+              className="border-light h-4 w-4 rounded-full border"
+              style={{ backgroundColor: row.original.color ?? '#1868db' }}
+            />
+          ),
         size: 32,
       }),
       columnHelper.display({
@@ -179,13 +221,17 @@ function CustomStatusesPage() {
         header: 'Name',
         cell: ({ row }) => (
           <div className="flex flex-wrap items-center gap-2">
+            {/* Marks the row so index.css hides its selection checkbox:
+                a preset has nothing to select, and ListPage offers no
+                per-cell hook to leave the box out. */}
+            {isPreset(row.original) && <span data-preset-row hidden />}
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.isDefault && (
               <Chip size="sm" color="accent">
                 Default
               </Chip>
             )}
-            {row.original.isClosed && (
+            {row.original.isClosed && !isPreset(row.original) && (
               <Chip size="sm" color="success">
                 Counts as Closed
               </Chip>
@@ -225,51 +271,65 @@ function CustomStatusesPage() {
       columnHelper.display({
         id: 'actions',
         header: '',
-        cell: ({ row }) => (
-          <div className="-my-1.5 flex items-center justify-end gap-1">
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-dark dark:text-light hover:text-blue"
-              aria-label="Edit status"
-              onPress={() => handleEdit(row.original)}
-              icon={<Icon name="pencil" className="h-4 w-4" />}
-            />
-            <BaseButton
-              variant="link"
-              size="none"
-              className="text-danger hover:text-danger-600"
-              aria-label="Delete status"
-              onPress={() =>
-                handleDeleteRequest(row.original.id, row.original.name)
-              }
-              icon={<Icon name="trash" className="h-4 w-4" />}
-            />
-          </div>
-        ),
+        cell: ({ row }) =>
+          isPreset(row.original) ? (
+            <div className="-my-1.5 flex items-center justify-end">
+              <PresetPill hint="Built into Helpdesk. Custom statuses map onto it; it can't be edited or deleted." />
+            </div>
+          ) : (
+            <div className="-my-1.5 flex items-center justify-end gap-1">
+              <IconTip label={'Edit status'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-dark dark:text-light hover:text-blue"
+                  aria-label="Edit status"
+                  onPress={() => handleEdit(row.original)}
+                  icon={<Icon name="pencil" className="h-4 w-4" />}
+                />
+              </IconTip>
+              <IconTip label={'Delete status'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-danger hover:text-danger-600"
+                  aria-label="Delete status"
+                  onPress={() =>
+                    handleDeleteRequest(row.original.id, row.original.name)
+                  }
+                  icon={<Icon name="trash" className="h-4 w-4" />}
+                />
+              </IconTip>
+            </div>
+          ),
         enableSorting: false,
         enableHiding: false,
         size: 80,
       }),
     ],
-    [
-      handleEdit,
-      handleDeleteRequest,
-      currentOrganisationId,
-      currentDivisionId,
-      organisationCount,
-    ],
+    [handleEdit, handleDeleteRequest],
+  );
+
+  const rows = useMemo(
+    // One list in sort order, built-in and custom together. Array.sort is
+    // stable, so on a tie a built-in status stays ahead of a custom one.
+    () =>
+      [...PRESET_STATUSES, ...scope.filteredRows].sort(
+        (a, b) => a.sortOrder - b.sortOrder,
+      ),
+    [scope.filteredRows],
   );
 
   const table = useReactTable({
-    data: scope.filteredRows,
+    data: rows,
     columns,
     // Keys row selection by the record's own id, matching `useScopeList`'s
     // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
     // and the table's own selection checkboxes agree on the same keys.
     getRowId: row => row.id,
     state: { rowSelection: scope.rowSelection },
-    enableRowSelection: true,
+    // Presets are not records, so there is nothing to re-scope.
+    enableRowSelection: row => !isPreset(row.original),
     onRowSelectionChange: scope.onRowSelectionChange,
     getCoreRowModel: getCoreRowModel(),
     enableSorting: false,
@@ -298,14 +358,11 @@ function CustomStatusesPage() {
       }
       subheader={
         <>
-          <BaseCard className="max-w-3xl">
-            <p className="text-default-700 text-sm">
-              Custom statuses appear in the ticket status selector alongside the
-              built-in statuses (New, In Progress, Closed). Each custom status
-              maps to a built-in lifecycle state for SLA and reporting
-              calculations.
-            </p>
-          </BaseCard>
+          <PageHint>
+            Custom statuses appear in the ticket status selector alongside the
+            built-in New, In Progress and Closed. Each one maps to a built-in
+            state, which is what SLAs and reports count.
+          </PageHint>
           {/* Out-of-context banner + bulk re-scoping (DTO tenancy/scope
               metadata initiative) -- entirely driven by `useScopeList`
               (`scope.bannerProps`/`scope.editorProps`/`scope.isExpanded`). */}
@@ -345,6 +402,4 @@ function CustomStatusesPage() {
   );
 }
 
-export default withAuthorizationRequired(CustomStatusesPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default CustomStatusesPage;

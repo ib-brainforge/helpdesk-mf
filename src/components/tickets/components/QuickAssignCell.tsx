@@ -6,17 +6,20 @@ import {
   DropdownPopover,
   DropdownTrigger,
 } from '@heroui/react';
-import { useAtom } from 'jotai';
 import { type FC, useMemo, useState } from 'react';
-import {
-  mapUserToOption,
-  usersMutationAtom,
-} from '../state/users-dropdown-state';
+import { useScopedAssignees } from '../hooks/useScopedAssignees';
 
 interface QuickAssignCellProps {
   ticketId: string;
   /** Signed in user, so "Assign to me" can be offered first. */
   currentUserId?: string;
+  /**
+   * The row's own scope, so the menu lists the people who can work THIS
+   * ticket rather than whoever the viewer's context happens to name.
+   */
+  tenantId?: string | null;
+  organisationId?: string | null;
+  divisionId?: string | null;
   onAssign: (ticketId: string, assigneeId: string | null) => void;
 }
 
@@ -32,23 +35,24 @@ interface QuickAssignCellProps {
  * common case and this makes it a single click, with no searching or reading
  * of a list. The rest of the team follows underneath.
  *
- * Users come from the same identity search the bulk assign modal uses, so
- * there is one source of truth for who is assignable. The list is fetched when
- * the menu opens rather than on render, so a grid of 25 rows does not fire 25
- * identity lookups for a menu nobody has opened.
+ * Users come from useScopedAssignees, the same source as the ticket sidebar and
+ * bulk assign, so there is one answer to who is assignable: everyone whose
+ * helpdesk role reaches the row's scope, plus anyone already holding tickets
+ * there. It loads when the menu first opens rather than on render, so a grid of
+ * 25 unassigned rows does not fire lookups for menus nobody has opened.
  */
 export const QuickAssignCell: FC<QuickAssignCellProps> = ({
   ticketId,
   currentUserId,
+  tenantId,
+  organisationId,
+  divisionId,
   onAssign,
 }) => {
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [{ mutate: searchUsers, data: usersData, isPending }] =
-    useAtom(usersMutationAtom);
-
-  const options = useMemo(
-    () => (usersData ?? []).map(mapUserToOption).filter(u => u.id),
-    [usersData],
+  const [hasOpened, setHasOpened] = useState(false);
+  const { options, isLoading } = useScopedAssignees(
+    { tenantId, organisationId, divisionId },
+    { enabled: hasOpened },
   );
 
   // Whoever is signed in is already offered as "Assign to me", so drop them
@@ -61,26 +65,15 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
   return (
     <Dropdown
       onOpenChange={open => {
-        if (open && !hasLoaded) {
-          searchUsers({ query: '' });
-          setHasLoaded(true);
-        }
+        if (open) setHasOpened(true);
       }}
     >
-      <DropdownTrigger>
-        {/*
-          A plain button, not BaseButton: BaseButton's variants resolve their
-          own text colour and beat a className override, which is what made the
-          row actions glyph render white on white. Stated once, here.
-        */}
-        <button
-          type="button"
-          aria-label="Assign this ticket"
-          className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue -ml-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm transition-colors focus:outline-none focus:ring-2"
-        >
-          <span className="text-muted-foreground">Unassigned</span>
-          <Icon name="plus" className="h-3 w-3" />
-        </button>
+      <DropdownTrigger
+        aria-label="Assign this ticket"
+        className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue -ml-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm transition-colors focus:outline-none focus:ring-2"
+      >
+        <span className="text-muted-foreground">Unassigned</span>
+        <Icon name="plus" className="h-3 w-3" />
       </DropdownTrigger>
       <DropdownPopover className="helpdesk-dropdown-popover">
         <DropdownMenu aria-label="Assign ticket to">
@@ -92,7 +85,7 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
               Assign to me
             </DropdownItem>
           ) : null}
-          {isPending ? (
+          {isLoading ? (
             <DropdownItem key="loading" isDisabled>
               Loading team...
             </DropdownItem>

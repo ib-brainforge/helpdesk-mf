@@ -1,16 +1,17 @@
+import { IconTip, ModalHeader } from '@/components/shared';
 import {
   BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   ContextScopeStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -58,7 +59,12 @@ export function CannedResponseEditorModal({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // response exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEditing` below).
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Canned response',
     meta: cannedResponse?.meta,
@@ -164,11 +170,9 @@ export function CannedResponseEditorModal({
       className="max-w-3xl"
     >
       <BaseModalContent>
-        <BaseModalHeader
-          title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
-        >
+        <ModalHeader>
           {isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
-        </BaseModalHeader>
+        </ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput
@@ -180,56 +184,69 @@ export function CannedResponseEditorModal({
             />
 
             {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+            {isEditing && (
+              <MetadataPanel
+                meta={metaForPanel}
+                scopeBadge={scopeBadge}
+                canViewMetadata={canViewMetadata}
+              />
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-2">Body</label>
               <div className="border rounded-lg overflow-hidden">
                 {/* Toolbar */}
                 <div className="flex gap-1 p-2 border-b bg-default-50">
-                  <button
-                    type="button"
-                    onClick={() => editor?.chain().focus().toggleBold().run()}
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('bold') ? 'bg-default-200' : ''
-                    }`}
-                    title="Bold"
-                  >
-                    <Icon name="bold" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => editor?.chain().focus().toggleItalic().run()}
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('italic') ? 'bg-default-200' : ''
-                    }`}
-                    title="Italic"
-                  >
-                    <Icon name="italic" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      editor?.chain().focus().toggleBulletList().run()
-                    }
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('bulletList') ? 'bg-default-200' : ''
-                    }`}
-                    title="Bullet List"
-                  >
-                    <Icon name="list-bullet" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      editor?.chain().focus().toggleOrderedList().run()
-                    }
-                    className={`p-1.5 rounded hover:bg-default-100 ${
-                      editor?.isActive('orderedList') ? 'bg-default-200' : ''
-                    }`}
-                    title="Numbered List"
-                  >
-                    <Icon name="numbered-list" className="h-4 w-4" />
-                  </button>
+                  <IconTip label={'Bold'}>
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().toggleBold().run()}
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('bold') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="bold" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
+                  <IconTip label={'Italic'}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        editor?.chain().focus().toggleItalic().run()
+                      }
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('italic') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="italic" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
+                  <IconTip label={'Bullet List'}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        editor?.chain().focus().toggleBulletList().run()
+                      }
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('bulletList') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="list-bullet" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
+                  <IconTip label={'Numbered List'}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        editor?.chain().focus().toggleOrderedList().run()
+                      }
+                      className={`p-1.5 rounded hover:bg-default-100 ${
+                        editor?.isActive('orderedList') ? 'bg-default-200' : ''
+                      }`}
+                    >
+                      <Icon name="numbered-list" className="h-4 w-4" />
+                    </button>
+                  </IconTip>
                 </div>
 
                 {/* Editor */}
@@ -284,7 +301,7 @@ export function CannedResponseEditorModal({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose}>
+          <BaseButton variant="bordered" color="light" onPress={onClose}>
             Cancel
           </BaseButton>
           <BaseButton

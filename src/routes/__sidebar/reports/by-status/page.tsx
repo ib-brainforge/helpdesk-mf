@@ -97,6 +97,7 @@ function TicketsByStatusPage() {
           />
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExport}
             isDisabled={statuses.length === 0}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}

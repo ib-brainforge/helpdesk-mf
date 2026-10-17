@@ -17,6 +17,12 @@ export interface PrincipalTicketFilters {
   requesterId?: string;
   searchTerm?: string;
   unreadOnly?: boolean;
+  /** ANY-of tag filter. */
+  tagIds?: string[];
+  /** Scope narrowing inside the principal's own access. */
+  tenantId?: string;
+  organisationId?: string;
+  divisionId?: string;
 }
 
 export function usePrincipalTickets(
@@ -35,6 +41,7 @@ export function usePrincipalTickets(
       const response = await client.v1PrincipalsPrincipalIdTicketsGet(
         principalId,
         filters?.status,
+        undefined, // statuses
         undefined, // customStatusId — not surfaced in the principal tickets view
         filters?.priority,
         filters?.categoryId,
@@ -44,6 +51,10 @@ export function usePrincipalTickets(
         filters?.unreadOnly,
         undefined, // overdueOnly — not surfaced in the principal tickets view
         undefined, // unassignedOnly — not used for principal tickets view
+        filters?.tenantId || undefined,
+        filters?.organisationId || undefined,
+        filters?.divisionId || undefined,
+        filters?.tagIds?.length ? filters.tagIds : undefined,
         pagination.pageIndex + 1,
         pagination.pageSize,
         'createdAt',

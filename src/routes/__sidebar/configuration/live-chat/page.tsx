@@ -3,6 +3,7 @@ import {
   useGetLiveChatEmbedScript,
   useUpdateLiveChatConfig,
 } from '@/components/live-chat/hooks/useLiveChat';
+import { IconTip } from '@/components/shared';
 import {
   type BusinessHoursDay,
   type BusinessHoursDayConfig,
@@ -19,7 +20,6 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -380,6 +380,7 @@ function LiveChatForm({
           <BaseButton
             size="sm"
             variant="bordered"
+            color="light"
             onPress={handleAddDomain}
             isDisabled={!isEnabled || !newDomain.trim()}
           >
@@ -395,17 +396,19 @@ function LiveChatForm({
                 className="bg-default-50 border-light flex items-center justify-between rounded-lg border px-3 py-2"
               >
                 <span className="font-mono text-sm">{domain}</span>
-                <BaseButton
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  color="danger"
-                  onPress={() => handleRemoveDomain(domain)}
-                  isDisabled={!isEnabled}
-                  aria-label={`Remove ${domain}`}
-                >
-                  <Icon name="x-mark" className="h-4 w-4" />
-                </BaseButton>
+                <IconTip label={`Remove ${domain}`}>
+                  <BaseButton
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    color="danger"
+                    onPress={() => handleRemoveDomain(domain)}
+                    isDisabled={!isEnabled}
+                    aria-label={`Remove ${domain}`}
+                  >
+                    <Icon name="x-mark" className="h-4 w-4" />
+                  </BaseButton>
+                </IconTip>
               </li>
             ))}
           </ul>
@@ -432,6 +435,7 @@ function LiveChatForm({
           <BaseButton
             size="sm"
             variant="bordered"
+            color="light"
             onPress={handleCopyScript}
             isDisabled={isLoadingScript || !embedScript}
             startContent={
@@ -496,6 +500,4 @@ function LiveChatPage() {
   );
 }
 
-export default withAuthorizationRequired(LiveChatPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default LiveChatPage;

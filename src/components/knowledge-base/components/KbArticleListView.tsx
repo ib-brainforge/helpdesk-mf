@@ -1,4 +1,3 @@
-import { ScopePermissions } from '@/constants/permissions';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -19,6 +18,7 @@ import { useScopeList } from '@brainforgeau/components/scope-list';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
+  PlatformPermissions,
   useAccessScope,
   usePermissions,
   useTimezone,
@@ -92,8 +92,10 @@ export function KbArticleListView({
     selectedContext?.tenantId,
     { identityBaseUrl: requireIdentityApiBaseUrl() },
   );
-  const { hasPermission } = usePermissions();
-  const canManageScope = hasPermission(ScopePermissions.Manage);
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
 
   const scope = useScopeList({
     rows: articles,
@@ -103,6 +105,7 @@ export function KbArticleListView({
     accessScope,
     selectedContext,
     canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
     // entityType verified against helpdesk-backend's `HelpdeskDbContext`
     // (`DbSet<KbArticle> KbArticles`).
     patchScope: async (ids, patch) => {

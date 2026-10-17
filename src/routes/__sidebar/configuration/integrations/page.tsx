@@ -3,6 +3,7 @@ import {
   useDeleteIntegration,
   useIntegrations,
 } from '@/components/integrations/hooks/useIntegrations';
+import { IconTip } from '@/components/shared';
 import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type {
   IntegrationConfigDto,
@@ -14,7 +15,6 @@ import {
   PageHeader,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { withAuthorizationRequired } from '@brainforgeau/security';
 import { Card, CardContent, Chip, Spinner, toast } from '@heroui/react';
 import { useState } from 'react';
 
@@ -123,6 +123,7 @@ function IntegrationsPage() {
                   <BaseButton
                     size="sm"
                     variant="bordered"
+                    color="light"
                     onPress={() => openAdd(provider)}
                     startContent={<Icon name="plus" className="h-3 w-3" />}
                   >
@@ -150,26 +151,30 @@ function IntegrationsPage() {
                           </span>
                         </div>
                         <div className="ml-2 flex flex-shrink-0 items-center gap-1">
-                          <BaseButton
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            onPress={() => openEdit(instance)}
-                            aria-label="Edit integration"
-                          >
-                            <Icon name="pencil" className="h-4 w-4" />
-                          </BaseButton>
-                          <BaseButton
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => handleDeleteRequest(instance)}
-                            isDisabled={deleteMutation.isPending}
-                            aria-label="Remove integration"
-                          >
-                            <Icon name="trash" className="h-4 w-4" />
-                          </BaseButton>
+                          <IconTip label={'Edit integration'}>
+                            <BaseButton
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              onPress={() => openEdit(instance)}
+                              aria-label="Edit integration"
+                            >
+                              <Icon name="pencil" className="h-4 w-4" />
+                            </BaseButton>
+                          </IconTip>
+                          <IconTip label={'Remove integration'}>
+                            <BaseButton
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              color="danger"
+                              onPress={() => handleDeleteRequest(instance)}
+                              isDisabled={deleteMutation.isPending}
+                              aria-label="Remove integration"
+                            >
+                              <Icon name="trash" className="h-4 w-4" />
+                            </BaseButton>
+                          </IconTip>
                         </div>
                       </li>
                     ))}
@@ -205,6 +210,4 @@ function IntegrationsPage() {
   );
 }
 
-export default withAuthorizationRequired(IntegrationsPage, {
-  requiredPermissions: ['Helpdesk.Settings.Manage'],
-});
+export default IntegrationsPage;
