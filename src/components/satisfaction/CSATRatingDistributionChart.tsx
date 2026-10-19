@@ -1,12 +1,12 @@
 import type { FC } from 'react';
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 
 // REVIEW: Following existing chart pattern with Recharts
@@ -20,9 +20,9 @@ interface CSATRatingDistributionChartProps {
   };
 }
 
-export const CSATRatingDistributionChart: FC<CSATRatingDistributionChartProps> = ({
-  distribution,
-}) => {
+export const CSATRatingDistributionChart: FC<
+  CSATRatingDistributionChartProps
+> = ({ distribution }) => {
   const chartData = [
     { rating: '1 Star', count: distribution.rating1Count },
     { rating: '2 Stars', count: distribution.rating2Count },

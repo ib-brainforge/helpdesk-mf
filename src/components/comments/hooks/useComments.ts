@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CommentsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CommentDto } from '@/types/comment';
+import { CommentsApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useComments = (ticketId: string) => {
   const { data, isLoading, refetch } = useQuery<CommentDto[]>({
@@ -25,7 +25,10 @@ export const useAddComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ticketId, body }: { ticketId: string; body: string }) => {
+    mutationFn: async ({
+      ticketId,
+      body,
+    }: { ticketId: string; body: string }) => {
       const client = await createHelpdeskApiClient(CommentsApi);
       const response = await client.v1TicketsTicketIdCommentsPost(ticketId, {
         body,
@@ -33,8 +36,12 @@ export const useAddComment = () => {
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-comments', variables.ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-comments', variables.ticketId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.ticketId],
+      });
     },
   });
 };
@@ -43,16 +50,26 @@ export const useAddInternalNote = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ticketId, body }: { ticketId: string; body: string }) => {
+    mutationFn: async ({
+      ticketId,
+      body,
+    }: { ticketId: string; body: string }) => {
       const client = await createHelpdeskApiClient(CommentsApi);
-      const response = await client.v1TicketsTicketIdCommentsInternalNotesPost(ticketId, {
-        body,
-      });
+      const response = await client.v1TicketsTicketIdCommentsInternalNotesPost(
+        ticketId,
+        {
+          body,
+        },
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-comments', variables.ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket', variables.ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-comments', variables.ticketId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket', variables.ticketId],
+      });
     },
   });
 };

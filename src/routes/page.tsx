@@ -1,14 +1,34 @@
-import React from 'react';
+import { AppAuthSplash } from '@/components/AppSplash';
+import { HelpdeskPermissions } from '@/constants/permissions';
+import {
+  usePermissions,
+  withAuthenticationRequired,
+} from '@brainforgeau/security';
 import { Navigate } from '@modern-js/runtime/router';
-import { PageSpinner } from '@brainforgeau/components/base';
-import { withAuthenticationRequired } from '@brainforgeau/security';
+import React from 'react';
 
+/**
+ * The landing redirect. The dashboard is built from reports, which Customers,
+ * Platform Support and Principal Agents cannot read, so they land on their
+ * tickets instead of a page that would say Access Denied.
+ */
 function Page() {
-  return <Navigate to="/dashboard" replace />;
+  const { hasPermission, isLoading } = usePermissions();
+  if (isLoading) return <AppAuthSplash />;
+  return (
+    <Navigate
+      to={
+        hasPermission(HelpdeskPermissions.Reports.Read)
+          ? '/dashboard'
+          : '/tickets'
+      }
+      replace
+    />
+  );
 }
 
 export default withAuthenticationRequired(Page, {
-  OnRedirecting: () => <PageSpinner title="Redirecting..." />,
+  OnRedirecting: () => <AppAuthSplash />,
   signinRedirectArgs: {
     redirect_uri: window.location.href,
   },

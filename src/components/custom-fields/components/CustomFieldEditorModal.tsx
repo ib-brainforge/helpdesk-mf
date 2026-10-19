@@ -1,22 +1,35 @@
-import { BaseModal } from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
-import { useForm } from '@tanstack/react-form';
-import { z } from 'zod';
-import { addToast, Switch } from '@heroui/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
+import { IconTip, ModalHeader } from '@/components/shared';
+import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { AccessLevel } from '@/types/category';
 import type {
-  CustomFieldDefinitionDto,
   CreateCustomFieldCommand,
-  UpdateCustomFieldCommand,
+  CustomFieldDefinitionDto,
   CustomFieldOptionDto,
+  UpdateCustomFieldCommand,
 } from '@/types/custom-field';
 import { CustomFieldType, CustomFieldUsageType } from '@/types/custom-field';
-import { AccessLevel } from '@/types/category';
+import {
+  BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseSelect,
+  BaseSelectItem,
+  BaseToggle,
+  ContextScopeStrip,
+} from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
+import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
+import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
+import { toast } from '@heroui/react';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { z } from 'zod';
+
+const CUSTOM_FIELDS_QUERY_KEY = 'helpdesk-custom-fields';
 
 const customFieldFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -65,8 +78,38 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   const queryClient = useQueryClient();
   const isEdit = Boolean(field);
 
+  // DTO tenancy/scope metadata initiative -- only meaningful once the field
+  // exists (has an id/meta); the create form has nothing to place yet
+  // (gated on `isEdit` below).
+  const {
+    stripProps: scopeStripProps,
+    metaForPanel,
+    scopeBadge,
+    canViewMetadata,
+  } = useEntityScopeStrip({
+    mode: 'modal',
+    entityLabel: 'Custom field',
+    meta: field?.meta,
+    patchScope: async patch => {
+      if (!field) return;
+      const client = await createHelpdeskApiClient(ScopeApi);
+      // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+      // (`DbSet<CustomFieldDefinition> CustomFieldDefinitions`).
+      await client.v1ScopeEntityTypeIdPatch(
+        'CustomFieldDefinition',
+        field.id,
+        patch,
+      );
+    },
+    onSaved: () => {
+      queryClient.invalidateQueries({ queryKey: [CUSTOM_FIELDS_QUERY_KEY] });
+    },
+  });
+
   // State for managing options (for Dropdown/MultiSelect fields)
-  const [options, setOptions] = useState<CustomFieldOptionDto[]>(field?.options || []);
+  const [options, setOptions] = useState<CustomFieldOptionDto[]>(
+    field?.options || [],
+  );
   const [newOptionValue, setNewOptionValue] = useState('');
 
   const mutation = useMutation({
@@ -82,15 +125,17 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
       } else {
         const createDto: CreateCustomFieldCommand = {
           ...data,
-          options: options.length > 0 ? options.map(o => ({ value: o.value, sortOrder: o.sortOrder })) : undefined,
+          options:
+            options.length > 0
+              ? options.map(o => ({ value: o.value, sortOrder: o.sortOrder }))
+              : undefined,
         };
         await client.v1CustomFieldsPost(createDto as any);
       }
     },
     onSuccess: () => {
-      addToast({
-        title: `Custom field ${isEdit ? 'updated' : 'created'} successfully`,
-        severity: 'success',
+      toast(`Custom field ${isEdit ? 'updated' : 'created'} successfully`, {
+        variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-custom-fields'] });
       onClose();
@@ -120,11 +165,17 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
 
   const formatFormErrors = (errors: any[]): string | undefined => {
     if (!errors || errors.length === 0) return undefined;
-    return errors.map(e => (typeof e === 'string' ? e : e.message || String(e))).join(', ');
+    return errors
+      .map(e => (typeof e === 'string' ? e : e.message || String(e)))
+      .join(', ');
   };
 
-  const [selectedFieldType, setSelectedFieldType] = useState(field?.fieldType ?? CustomFieldType.Text);
-  const needsOptions = selectedFieldType === CustomFieldType.Dropdown || selectedFieldType === CustomFieldType.MultiSelect;
+  const [selectedFieldType, setSelectedFieldType] = useState(
+    field?.fieldType ?? CustomFieldType.Text,
+  );
+  const needsOptions =
+    selectedFieldType === CustomFieldType.Dropdown ||
+    selectedFieldType === CustomFieldType.MultiSelect;
 
   const handleClose = () => {
     form.reset();
@@ -155,8 +206,13 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newOptions.length) return;
 
-    [newOptions[index], newOptions[targetIndex]] = [newOptions[targetIndex], newOptions[index]];
-    newOptions.forEach((opt, idx) => { opt.sortOrder = idx; });
+    [newOptions[index], newOptions[targetIndex]] = [
+      newOptions[targetIndex],
+      newOptions[index],
+    ];
+    newOptions.forEach((opt, idx) => {
+      opt.sortOrder = idx;
+    });
     setOptions(newOptions);
   };
 
@@ -164,189 +220,242 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
-      size="2xl"
+      size="lg"
+      className="max-w-2xl"
     >
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          await form.handleSubmit();
-        }}
-        className="flex flex-col gap-4"
-      >
-        <form.Field name="name">
-          {(field) => (
-            <BaseInput
-              label="Name"
-              isRequired
-              name={field.name}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              errorMessage={formatFormErrors(field.state.meta.errors)}
-              isInvalid={field.state.meta.errors.length > 0}
-            />
-          )}
-        </form.Field>
+      <BaseModalContent>
+        <ModalHeader
+          title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
+          onClose={handleClose}
+        />
+        <BaseModalBody>
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              e.stopPropagation();
+              await form.handleSubmit();
+            }}
+            className="flex flex-col gap-4 pb-4"
+          >
+            <form.Field name="name">
+              {field => (
+                <BaseInput
+                  label="Name"
+                  isRequired
+                  name={field.name}
+                  value={field.state.value}
+                  onChange={e => field.handleChange(e.target.value)}
+                  errorMessage={formatFormErrors(field.state.meta.errors)}
+                  isInvalid={field.state.meta.errors.length > 0}
+                />
+              )}
+            </form.Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <form.Field name="fieldType">
-            {(field) => (
-              <BaseSelect
-                label="Field Type"
-                placeholder="Select type"
-                isRequired
-                selectedKeys={[String(field.state.value)]}
-                onSelectionChange={(keys) => {
-                  const newValue = Number(keys.currentKey) as CustomFieldType;
-                  field.handleChange(newValue);
-                  setSelectedFieldType(newValue);
-                }}
-                errorMessage={formatFormErrors(field.state.meta.errors)}
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                {FIELD_TYPE_OPTIONS.map((option) => (
-                  <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
-                ))}
-              </BaseSelect>
-            )}
-          </form.Field>
-
-          <form.Field name="usageType">
-            {(field) => (
-              <BaseSelect
-                label="Usage Type"
-                placeholder="Select usage"
-                isRequired
-                selectedKeys={[String(field.state.value)]}
-                onSelectionChange={(keys) => {
-                  const newValue = Number(keys.currentKey) as CustomFieldUsageType;
-                  field.handleChange(newValue);
-                }}
-                errorMessage={formatFormErrors(field.state.meta.errors)}
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                {USAGE_TYPE_OPTIONS.map((option) => (
-                  <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
-                ))}
-              </BaseSelect>
-            )}
-          </form.Field>
-        </div>
-
-        <form.Field name="accessLevel">
-          {(field) => (
-            <BaseSelect
-              label="Access Level"
-              placeholder="Select access level"
-              isRequired
-              selectedKeys={[String(field.state.value)]}
-              onSelectionChange={(keys) => {
-                const newValue = Number(keys.currentKey) as AccessLevel;
-                field.handleChange(newValue);
-              }}
-              errorMessage={formatFormErrors(field.state.meta.errors)}
-              isInvalid={field.state.meta.errors.length > 0}
-            >
-              {ACCESS_LEVEL_OPTIONS.map((option) => (
-                <BaseSelectItem key={String(option.id)}>{option.name}</BaseSelectItem>
-              ))}
-            </BaseSelect>
-          )}
-        </form.Field>
-
-        <div className="flex gap-4">
-          <form.Field name="isRequired">
-            {(field) => (
-              <Switch
-                isSelected={field.state.value}
-                onValueChange={(checked) => field.handleChange(checked)}
-              >
-                Required
-              </Switch>
-            )}
-          </form.Field>
-
-          <form.Field name="isActive">
-            {(field) => (
-              <Switch
-                isSelected={field.state.value}
-                onValueChange={(checked) => field.handleChange(checked)}
-              >
-                Active
-              </Switch>
-            )}
-          </form.Field>
-        </div>
-
-        {needsOptions && (
-          <div className="border-t pt-4">
-            <h3 className="text-sm font-semibold mb-3">Options</h3>
-            <div className="flex gap-2 mb-3">
-              <BaseInput
-                placeholder="Add option..."
-                value={newOptionValue}
-                onChange={(e) => setNewOptionValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddOption();
-                  }
-                }}
+            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
+            {isEdit && (
+              <MetadataPanel
+                meta={metaForPanel}
+                scopeBadge={scopeBadge}
+                canViewMetadata={canViewMetadata}
               />
-              <BaseButton
-                type="button"
-                onPress={handleAddOption}
-                icon={<Icon name="plus" className="h-4 w-4" />}
-              >
-                Add
-              </BaseButton>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <form.Field name="fieldType">
+                {field => (
+                  <BaseSelect
+                    label="Field Type"
+                    placeholder="Select type"
+                    isRequired
+                    selectedKey={String(field.state.value)}
+                    onSelectionChange={keys => {
+                      const newValue = Number(keys) as CustomFieldType;
+                      field.handleChange(newValue);
+                      setSelectedFieldType(newValue);
+                    }}
+                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    isInvalid={field.state.meta.errors.length > 0}
+                  >
+                    {FIELD_TYPE_OPTIONS.map(option => (
+                      <BaseSelectItem
+                        key={String(option.id)}
+                        value={String(option.id)}
+                      >
+                        {option.name}
+                      </BaseSelectItem>
+                    ))}
+                  </BaseSelect>
+                )}
+              </form.Field>
+
+              <form.Field name="usageType">
+                {field => (
+                  <BaseSelect
+                    label="Usage Type"
+                    placeholder="Select usage"
+                    isRequired
+                    selectedKey={String(field.state.value)}
+                    onSelectionChange={keys => {
+                      const newValue = Number(keys) as CustomFieldUsageType;
+                      field.handleChange(newValue);
+                    }}
+                    errorMessage={formatFormErrors(field.state.meta.errors)}
+                    isInvalid={field.state.meta.errors.length > 0}
+                  >
+                    {USAGE_TYPE_OPTIONS.map(option => (
+                      <BaseSelectItem
+                        key={String(option.id)}
+                        value={String(option.id)}
+                      >
+                        {option.name}
+                      </BaseSelectItem>
+                    ))}
+                  </BaseSelect>
+                )}
+              </form.Field>
             </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {options.map((option, index) => (
-                <div key={option.id} className="flex items-center gap-2 p-2 bg-content1 rounded border">
-                  <div className="flex flex-col gap-1">
-                    <BaseButton
-                      type="button"
-                      variant="link"
-                      size="none"
-                      isDisabled={index === 0}
-                      onPress={() => handleMoveOption(index, 'up')}
-                      icon={<Icon name="chevron-up" className="h-3 w-3" />}
-                    />
-                    <BaseButton
-                      type="button"
-                      variant="link"
-                      size="none"
-                      isDisabled={index === options.length - 1}
-                      onPress={() => handleMoveOption(index, 'down')}
-                      icon={<Icon name="chevron-down" className="h-3 w-3" />}
-                    />
-                  </div>
-                  <span className="flex-1 text-sm">{option.value}</span>
+
+            <form.Field name="accessLevel">
+              {field => (
+                <BaseSelect
+                  label="Access Level"
+                  placeholder="Select access level"
+                  isRequired
+                  selectedKey={String(field.state.value)}
+                  onSelectionChange={keys => {
+                    const newValue = Number(keys) as AccessLevel;
+                    field.handleChange(newValue);
+                  }}
+                  errorMessage={formatFormErrors(field.state.meta.errors)}
+                  isInvalid={field.state.meta.errors.length > 0}
+                >
+                  {ACCESS_LEVEL_OPTIONS.map(option => (
+                    <BaseSelectItem
+                      key={String(option.id)}
+                      value={String(option.id)}
+                    >
+                      {option.name}
+                    </BaseSelectItem>
+                  ))}
+                </BaseSelect>
+              )}
+            </form.Field>
+
+            <div className="flex gap-4">
+              <form.Field name="isRequired">
+                {field => (
+                  <BaseToggle
+                    isSelected={field.state.value}
+                    onChange={checked => field.handleChange(checked)}
+                  >
+                    Required
+                  </BaseToggle>
+                )}
+              </form.Field>
+
+              <form.Field name="isActive">
+                {field => (
+                  <BaseToggle
+                    isSelected={field.state.value}
+                    onChange={checked => field.handleChange(checked)}
+                  >
+                    Active
+                  </BaseToggle>
+                )}
+              </form.Field>
+            </div>
+
+            {needsOptions && (
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3">Options</h3>
+                <div className="flex gap-2 mb-3">
+                  <BaseInput
+                    placeholder="Add option..."
+                    value={newOptionValue}
+                    onChange={e => setNewOptionValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddOption();
+                      }
+                    }}
+                  />
                   <BaseButton
                     type="button"
-                    variant="link"
-                    size="none"
-                    className="text-danger"
-                    onPress={() => handleRemoveOption(option.id)}
-                    icon={<Icon name="trash" className="h-4 w-4" />}
-                  />
+                    onPress={handleAddOption}
+                    icon={<Icon name="plus" className="h-4 w-4" />}
+                  >
+                    Add
+                  </BaseButton>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {options.map((option, index) => (
+                    <div
+                      key={option.id}
+                      className="flex items-center gap-2 p-2 bg-content1 rounded border"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <IconTip label={'Move option up'}>
+                          <BaseButton
+                            type="button"
+                            variant="link"
+                            size="none"
+                            isDisabled={index === 0}
+                            aria-label="Move option up"
+                            onPress={() => handleMoveOption(index, 'up')}
+                            icon={
+                              <Icon name="chevron-up" className="h-3 w-3" />
+                            }
+                          />
+                        </IconTip>
+                        <IconTip label={'Move option down'}>
+                          <BaseButton
+                            type="button"
+                            variant="link"
+                            size="none"
+                            isDisabled={index === options.length - 1}
+                            aria-label="Move option down"
+                            onPress={() => handleMoveOption(index, 'down')}
+                            icon={
+                              <Icon name="chevron-down" className="h-3 w-3" />
+                            }
+                          />
+                        </IconTip>
+                      </div>
+                      <span className="flex-1 text-sm">{option.value}</span>
+                      <IconTip label={'Remove option'}>
+                        <BaseButton
+                          type="button"
+                          variant="link"
+                          size="none"
+                          className="text-danger"
+                          aria-label="Remove option"
+                          onPress={() => handleRemoveOption(option.id)}
+                          icon={<Icon name="trash" className="h-4 w-4" />}
+                        />
+                      </IconTip>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        <div className="flex justify-end gap-2 mt-4">
-          <BaseButton variant="bordered" onPress={handleClose} type="button">
-            Cancel
-          </BaseButton>
-          <BaseButton type="submit" isLoading={mutation.isPending}>
-            {isEdit ? 'Update' : 'Create'}
-          </BaseButton>
-        </div>
-      </form>
+            <div className="flex justify-end gap-2 mt-4">
+              <BaseButton
+                variant="bordered"
+                color="light"
+                onPress={handleClose}
+                type="button"
+              >
+                Cancel
+              </BaseButton>
+              <BaseButton type="submit" isDisabled={mutation.isPending}>
+                {isEdit ? 'Update' : 'Create'}
+              </BaseButton>
+            </div>
+          </form>
+        </BaseModalBody>
+      </BaseModalContent>
     </BaseModal>
   );
 };

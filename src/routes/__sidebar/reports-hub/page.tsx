@@ -1,8 +1,8 @@
-import { Helmet } from '@modern-js/runtime/head';
-import { NavLink } from '@modern-js/runtime/router';
+import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody } from '@heroui/react';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { Card, CardContent } from '@heroui/react';
+import { NavLink } from '@modern-js/runtime/router';
 
 type ReportCardProps = {
   title: string;
@@ -12,27 +12,32 @@ type ReportCardProps = {
   isComingSoon?: boolean;
 };
 
-function ReportCard({ title, description, icon, href, isComingSoon }: ReportCardProps) {
+function ReportCard({
+  title,
+  description,
+  icon,
+  href,
+  isComingSoon,
+}: ReportCardProps) {
   const content = (
-    <Card
-      className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
-      isPressable={!isComingSoon}
+    <BaseCard
+      className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:border-primary hover:shadow-md'}`}
     >
-      <CardBody className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-1">
-            <Icon name={icon} className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold mb-1">{title}</h3>
-            <p className="text-sm text-default-500">{description}</p>
-            {isComingSoon && (
-              <span className="inline-block mt-2 text-xs text-warning">Coming soon</span>
-            )}
-          </div>
+      <div className="flex items-start gap-3">
+        <div className="mt-1 flex-shrink-0">
+          <Icon name={icon} className="text-primary h-5 w-5" />
         </div>
-      </CardBody>
-    </Card>
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-1 text-base font-semibold">{title}</h3>
+          <p className="text-default-500 text-sm">{description}</p>
+          {isComingSoon && (
+            <span className="text-warning mt-2 inline-block text-xs">
+              Coming soon
+            </span>
+          )}
+        </div>
+      </div>
+    </BaseCard>
   );
 
   if (isComingSoon) {
@@ -68,53 +73,51 @@ function ReportsHubPage() {
           description: 'Daily ticket volume and trends',
           icon: 'chart-bar',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Custom reports',
           description: 'Build custom reports with flexible filters',
           icon: 'adjustments-horizontal',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Response speed',
           description: 'First response and resolution time metrics',
           icon: 'clock',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Overdue tickets',
           description: 'Tickets past their due date or SLA',
           icon: 'exclamation-circle',
           href: '/reports/overdue',
-          isComingSoon: true,
         },
         {
           title: 'Tickets by category',
           description: 'Distribution of tickets across categories',
           icon: 'folder-open',
           href: '/reports/by-category',
-          isComingSoon: true,
         },
         {
           title: 'Tickets by priority',
           description: 'Breakdown by priority levels',
           icon: 'flag',
           href: '/reports/by-priority',
-          isComingSoon: true,
         },
         {
           title: 'Tickets by status',
           description: 'Current status distribution',
           icon: 'bars-3-bottom-left',
           href: '/reports/by-status',
-          isComingSoon: true,
         },
         {
           title: 'SLA compliance',
           description: 'Track SLA adherence and breaches',
           icon: 'shield-check',
           href: '/reports/sla',
-          isComingSoon: true,
         },
       ],
     },
@@ -126,13 +129,13 @@ function ReportsHubPage() {
           description: 'Agent performance and activity metrics',
           icon: 'user-circle',
           href: '/reports',
+          isComingSoon: true,
         },
         {
           title: 'Companies statistics',
           description: 'Ticket volume and metrics by company',
           icon: 'building-office',
           href: '/reports/companies',
-          isComingSoon: true,
         },
         {
           title: 'Customer satisfaction',
@@ -145,7 +148,6 @@ function ReportsHubPage() {
           description: 'Workload distribution and capacity',
           icon: 'chart-bar-square',
           href: '/reports/utilization',
-          isComingSoon: true,
         },
       ],
     },
@@ -157,61 +159,46 @@ function ReportsHubPage() {
           description: 'Audit trail of deleted tickets',
           icon: 'trash',
           href: '/reports/deleted',
-          isComingSoon: true,
         },
         {
           title: 'Audit Log',
           description: 'Complete activity and change history',
           icon: 'clipboard-document-list',
           href: '/reports/audit',
-          isComingSoon: true,
         },
         {
           title: 'Assets',
           description: 'Asset inventory and allocation reports',
           icon: 'server-stack',
           href: '/reports/assets',
-          isComingSoon: true,
         },
       ],
     },
   ];
 
   return (
-    <>
-      <Helmet>
-        <title>Reports - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Reports', href: '/reports-hub', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Reports</h1>
-        <p className="text-default-500 mt-1">
+    <PageBody>
+      <PageHeader title="Reports" breadcrumbsKey="reports.hub">
+        <PageHeader.Meta>
           Analyze ticket metrics, team performance, and customer satisfaction
-        </p>
-      </div>
+        </PageHeader.Meta>
+      </PageHeader>
 
       <div className="space-y-8">
-        {sections.map((section) => (
+        {sections.map(section => (
           <div key={section.title}>
-            <h2 className="text-lg font-semibold mb-4 text-default-700">{section.title}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {section.items.map((item) => (
+            <h2 className="text-default-700 mb-4 text-lg font-semibold">
+              {section.title}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {section.items.map(item => (
                 <ReportCard key={item.title} {...item} />
               ))}
             </div>
           </div>
         ))}
       </div>
-    </>
+    </PageBody>
   );
 }
 

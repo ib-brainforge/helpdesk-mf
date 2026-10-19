@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { hubConnectedAtom, requireHelpdeskHubUrl } from '@/state/config';
+import { getAccessToken, getContextToken } from '@brainforgeau/security';
 import {
-  HubConnection,
+  type HubConnection,
   HubConnectionBuilder,
   HubConnectionState,
   LogLevel,
 } from '@microsoft/signalr';
-import { getAccessToken, getContextToken } from '@brainforgeau/security';
-import { configAtom, hubConnectedAtom, type AppConfig } from '@/state/config';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useSetAtom } from 'jotai';
+import { useEffect, useRef, useState } from 'react';
 
-export type SignalRConnectionState = 'connected' | 'disconnected' | 'reconnecting' | 'error';
+export type SignalRConnectionState =
+  | 'connected'
+  | 'disconnected'
+  | 'reconnecting'
+  | 'error';
 
 // Auto-reconnect delays (milliseconds)
 const RECONNECT_DELAYS = [0, 2000, 5000, 10000, 30000];
@@ -33,27 +37,41 @@ export interface UseSignalRReturn {
 }
 
 /**
- * Hook to manage SignalR connection to a hub.
- * Passes JWT tokens via query string (same pattern as tracking-mf)
- * because WebSocket connections cannot use Authorization headers
- * after the initial handshake.
+ * Hook to manage a SignalR connection to HELPDESK-BACKEND's own hub.
+ *
+ * `hubPath` is a path on helpdesk-backend (today only `/hubs/helpdesk`, which
+ * `Helpdesk.Api/Program.cs` maps). It is joined to `helpdeskApiBaseUrl` — the
+ * base URL of the very service that serves the hub — by
+ * `requireHelpdeskHubUrl`. This is NOT the notification bell hub: that one has
+ * its own key (`notificationSignalRHubUrl`) and is passed to the navbar in
+ * routes/layout.tsx. The old ambiguous `api.signalRHubUrl` was used for both.
+ *
+ * Passes JWT tokens via query string (same pattern as tracking-mf) because
+ * WebSocket connections cannot use Authorization headers after the initial
+ * handshake.
  */
 export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
-  const { hubPath, autoConnect = true, onConnected, onDisconnected, onReconnecting, onReconnected, onError } = options;
+  const {
+    hubPath,
+    autoConnect = true,
+    onConnected,
+    onDisconnected,
+    onReconnecting,
+    onReconnected,
+    onError,
+  } = options;
 
-  const config = useAtomValue(configAtom) as AppConfig;
   const setHubConnected = useSetAtom(hubConnectedAtom);
   const connectionRef = useRef<HubConnection | null>(null);
-  const [connectionState, setConnectionState] = useState<SignalRConnectionState>('disconnected');
+  const [connectionState, setConnectionState] =
+    useState<SignalRConnectionState>('disconnected');
 
   useEffect(() => {
     let cancelled = false;
-    const hubBaseUrl = config?.signalrHubUrl || `${config?.api?.baseUrl || ''}${hubPath}`;
-
-    if (!hubBaseUrl) {
-      console.warn('[useSignalR] SignalR hub URL not configured, connection will not be established');
-      return;
-    }
+    // helpdesk-backend's own hub. Throws by name (stage 2) when
+    // HELPDESK_API_BASE_URL was never configured, rather than the old
+    // `|| ''` that quietly produced an origin-relative `/hubs/helpdesk`.
+    const hubBaseUrl = requireHelpdeskHubUrl(hubPath);
 
     // Build hub URL with tokens in query string and start connection
     // WebSocket connections cannot use Authorization headers after the initial handshake,
@@ -70,14 +88,16 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
         params.set('context_token', contextToken);
       }
 
-      const hubUrl = params.toString() ? `${hubBaseUrl}?${params.toString()}` : hubBaseUrl;
+      const hubUrl = params.toString()
+        ? `${hubBaseUrl}?${params.toString()}`
+        : hubBaseUrl;
 
       if (cancelled) return;
 
       const connection = new HubConnectionBuilder()
         .withUrl(hubUrl)
         .withAutomaticReconnect({
-          nextRetryDelayInMilliseconds: (retryContext) => {
+          nextRetryDelayInMilliseconds: retryContext => {
             if (retryContext.previousRetryCount >= RECONNECT_DELAYS.length) {
               return null;
             }
@@ -90,7 +110,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
       connectionRef.current = connection;
 
       // Connection lifecycle handlers
-      connection.onclose((error) => {
+      connection.onclose(error => {
         setConnectionState('disconnected');
         setHubConnected(false);
         onDisconnected?.();
@@ -100,7 +120,7 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
         }
       });
 
-      connection.onreconnecting((error) => {
+      connection.onreconnecting(error => {
         setConnectionState('reconnecting');
         setHubConnected(false);
         onReconnecting?.();
@@ -143,12 +163,12 @@ export const useSignalR = (options: UseSignalROptions): UseSignalRReturn => {
       setHubConnected(false);
       const connection = connectionRef.current;
       if (connection && connection.state !== HubConnectionState.Disconnected) {
-        connection.stop().catch((err) => {
+        connection.stop().catch(err => {
           console.error('[useSignalR] Error disconnecting:', err);
         });
       }
     };
-  }, [hubPath, config?.signalrHubUrl, config?.api?.baseUrl, autoConnect]);
+  }, [hubPath, autoConnect]);
 
   const connect = async () => {
     const connection = connectionRef.current;

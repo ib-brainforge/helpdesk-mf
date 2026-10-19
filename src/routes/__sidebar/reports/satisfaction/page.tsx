@@ -1,20 +1,24 @@
-import { useState, useMemo } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { Box, PageSpinner } from '@brainforgeau/components/base';
-import { withAuthenticationRequired } from '@brainforgeau/security';
-import { Icon, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { DateRangeSelector } from '@/components/reports/components/DateRangeSelector';
-import { StarRating } from '@/components/satisfaction/StarRating';
+import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { CSATRatingDistributionChart } from '@/components/satisfaction/CSATRatingDistributionChart';
+import { StarRating } from '@/components/satisfaction/StarRating';
+import { SummaryCard } from '@/components/shared';
 import { useCSATReport } from '@/hooks/useSatisfaction';
 import { CSATGroupBy } from '@/types';
+import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
+import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
+import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { useMemo, useState } from 'react';
 
-// REVIEW: Following existing reports page pattern with date range filtering
+// REVIEW: Following DashboardPage pattern — summary cards + chart grid
 function CSATReportPage() {
   const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
-  const [endDate, setEndDate] = useState(new Date().toISOString());
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
   const [groupBy, setGroupBy] = useState<CSATGroupBy | undefined>(undefined);
 
   const handleDateRangeChange = (start: string, end: string) => {
@@ -29,146 +33,182 @@ function CSATReportPage() {
   });
 
   const satisfactionColor = useMemo(() => {
-    if (!reportData) return 'text-gray-600';
-    if (reportData.satisfactionPercentage >= 80) return 'text-green-600';
-    if (reportData.satisfactionPercentage >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (!reportData) return 'text-default-600';
+    const pct = reportData.satisfactionPercentage ?? 0;
+    if (pct >= 80) return 'text-green-600';
+    if (pct >= 60) return 'text-yellow-600';
+    return 'text-danger';
+  }, [reportData]);
+
+  const mostCommonRating = useMemo(() => {
+    if (!reportData?.ratingDistribution) return 'N/A';
+    const dist = reportData.ratingDistribution;
+    const rating1Count = dist.rating1Count ?? 0;
+    const rating2Count = dist.rating2Count ?? 0;
+    const rating3Count = dist.rating3Count ?? 0;
+    const rating4Count = dist.rating4Count ?? 0;
+    const rating5Count = dist.rating5Count ?? 0;
+    const max = Math.max(
+      rating1Count,
+      rating2Count,
+      rating3Count,
+      rating4Count,
+      rating5Count,
+    );
+    if (max === rating5Count) return '5 ⭐';
+    if (max === rating4Count) return '4 ⭐';
+    if (max === rating3Count) return '3 ⭐';
+    if (max === rating2Count) return '2 ⭐';
+    return '1 ⭐';
   }, [reportData]);
 
   if (isLoading) {
-    return <PageSpinner title="Loading CSAT report..." />;
+    return <AppLoadingSplash />;
   }
 
   return (
-    <>
-      <Helmet>
-        <title>Customer Satisfaction (CSAT) Report</title>
-      </Helmet>
-
-      <div className="mb-5">
-        <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Customer Satisfaction (CSAT)</h1>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onChange={handleDateRangeChange}
+    <DashboardPage
+      title="Customer Satisfaction (CSAT)"
+      breadcrumbsKey="reports.satisfaction"
+      actions={
+        <BaseDateRangePicker
+          value={{ start: new Date(startDate), end: new Date(endDate) }}
+          onChange={({ start, end }) =>
+            handleDateRangeChange(
+              start.toISOString().split('T')[0],
+              end.toISOString().split('T')[0],
+            )
+          }
+        />
+      }
+      summary={
+        <>
+          <SummaryCard
+            title="Average Rating"
+            value={`${reportData?.averageRating?.toFixed(1) || '0.0'} / 5.0`}
+            icon="star"
+            variant="warning"
           />
-        </div>
-
-        <div className="space-y-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <Box title="Average Rating">
-              <div className="flex items-center gap-3">
-                <Icon name="star" className="h-8 w-8 text-yellow-400 fill-current" />
-                <div className="flex items-center gap-2">
-                  <p className="text-3xl font-bold">
-                    {reportData?.averageRating?.toFixed(1) || '0.0'}
-                  </p>
-                  <StarRating value={Math.round(reportData?.averageRating || 0)} readonly size="sm" />
-                </div>
-              </div>
-            </Box>
-
-            <Box title="Total Ratings">
-              <div className="flex items-center gap-3">
-                <Icon name="chat-bubble-left-right" className="h-8 w-8 text-blue-500" />
-                <p className="text-3xl font-bold">{reportData?.totalRatings || 0}</p>
-              </div>
-            </Box>
-
-            <Box title="Satisfaction Rate">
-              <div className="flex items-center gap-3">
-                <Icon name="face-smile" className={`h-8 w-8 ${satisfactionColor}`} />
-                <div>
-                  <p className={`text-3xl font-bold ${satisfactionColor}`}>
-                    {reportData?.satisfactionPercentage?.toFixed(1) || '0.0'}%
-                  </p>
-                  <p className="text-xs text-gray-500">Ratings 4-5 stars</p>
-                </div>
-              </div>
-            </Box>
-
-            <Box title="Most Common Rating">
-              <div className="flex items-center gap-3">
-                <Icon name="chart-bar" className="h-8 w-8 text-purple-500" />
-                <p className="text-3xl font-bold">
-                  {reportData?.ratingDistribution &&
-                    (() => {
-                      const dist = reportData.ratingDistribution;
-                      const max = Math.max(
-                        dist.rating1Count,
-                        dist.rating2Count,
-                        dist.rating3Count,
-                        dist.rating4Count,
-                        dist.rating5Count,
-                      );
-                      if (max === dist.rating5Count) return '5';
-                      if (max === dist.rating4Count) return '4';
-                      if (max === dist.rating3Count) return '3';
-                      if (max === dist.rating2Count) return '2';
-                      return '1';
-                    })()}
-                  ⭐
-                </p>
-              </div>
-            </Box>
-          </div>
-
-          {/* Rating Distribution Chart */}
+          <SummaryCard
+            title="Total Ratings"
+            value={reportData?.totalRatings || 0}
+            icon="chat-bubble-left-right"
+            variant="info"
+          />
+          <SummaryCard
+            title="Satisfaction Rate"
+            value={`${reportData?.satisfactionPercentage?.toFixed(1) || '0.0'}%`}
+            subtitle="Ratings 4–5 stars"
+            icon="face-smile"
+            variant={
+              (reportData?.satisfactionPercentage ?? 0) >= 80
+                ? 'success'
+                : (reportData?.satisfactionPercentage ?? 0) >= 60
+                  ? 'warning'
+                  : 'danger'
+            }
+          />
+          <SummaryCard
+            title="Most Common Rating"
+            value={mostCommonRating}
+            icon="chart-bar"
+            variant="default"
+          />
+        </>
+      }
+      charts={
+        <>
           <Box title="Rating Distribution">
-            {reportData?.ratingDistribution && (
-              <CSATRatingDistributionChart distribution={reportData.ratingDistribution} />
+            {reportData?.ratingDistribution ? (
+              <CSATRatingDistributionChart
+                distribution={{
+                  rating1Count: reportData.ratingDistribution.rating1Count ?? 0,
+                  rating2Count: reportData.ratingDistribution.rating2Count ?? 0,
+                  rating3Count: reportData.ratingDistribution.rating3Count ?? 0,
+                  rating4Count: reportData.ratingDistribution.rating4Count ?? 0,
+                  rating5Count: reportData.ratingDistribution.rating5Count ?? 0,
+                }}
+              />
+            ) : (
+              <EmptyState title="No rating data" size="sm" />
             )}
           </Box>
 
-          {/* Grouped Data */}
-          {groupBy && reportData?.groupedData && reportData.groupedData.length > 0 && (
-            <Box title={`Breakdown by ${groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}`}>
-              <div className="space-y-3">
-                {reportData.groupedData.map((item) => (
-                  <div
-                    key={item.groupKey}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{item.groupName}</p>
-                      <p className="text-sm text-gray-600">{item.count} ratings</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xl font-bold">{item.averageRating.toFixed(1)}</p>
-                      <StarRating value={Math.round(item.averageRating)} readonly size="sm" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Box>
-          )}
-
-          {/* Filters */}
+          {/* Group-by filter */}
           <Box title="Group By">
             <BaseSelect
               label="Group by"
               placeholder="Select grouping"
-              selectedKeys={groupBy ? new Set([groupBy]) : new Set<string>()}
-              onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0] as CSATGroupBy | undefined;
-                setGroupBy(key);
+              selectedKey={groupBy ?? null}
+              onSelectionChange={key => {
+                setGroupBy((key as CSATGroupBy) || undefined);
               }}
               className="max-w-xs"
             >
-              <BaseSelectItem key={CSATGroupBy.Technician}>Technician</BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Category}>Category</BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Priority}>Priority</BaseSelectItem>
-              <BaseSelectItem key={CSATGroupBy.Month}>Month</BaseSelectItem>
+              <BaseSelectItem
+                key={CSATGroupBy.Technician}
+                value={CSATGroupBy.Technician}
+              >
+                Technician
+              </BaseSelectItem>
+              <BaseSelectItem
+                key={CSATGroupBy.Category}
+                value={CSATGroupBy.Category}
+              >
+                Category
+              </BaseSelectItem>
+              <BaseSelectItem
+                key={CSATGroupBy.Priority}
+                value={CSATGroupBy.Priority}
+              >
+                Priority
+              </BaseSelectItem>
+              <BaseSelectItem key={CSATGroupBy.Month} value={CSATGroupBy.Month}>
+                Month
+              </BaseSelectItem>
             </BaseSelect>
           </Box>
-        </div>
-      </div>
-    </>
+        </>
+      }
+    >
+      {/* Grouped breakdown (conditional) */}
+      {groupBy &&
+        reportData?.groupedData &&
+        reportData.groupedData.length > 0 && (
+          <Box
+            title={`Breakdown by ${groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}`}
+          >
+            <div className="space-y-3">
+              {reportData.groupedData.map(item => (
+                <div
+                  key={item.groupKey}
+                  className="flex items-center justify-between p-3 bg-default-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{item.groupName}</p>
+                    <p className="text-sm text-default-600">
+                      {item.count} ratings
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xl font-bold">
+                      {(item.averageRating ?? 0).toFixed(1)}
+                    </p>
+                    <StarRating
+                      value={Math.round(item.averageRating ?? 0)}
+                      readonly
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Box>
+        )}
+    </DashboardPage>
   );
 }
 
 export default withAuthenticationRequired(CSATReportPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

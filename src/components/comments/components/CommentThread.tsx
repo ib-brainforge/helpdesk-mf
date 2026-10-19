@@ -1,9 +1,11 @@
-import { CommentType, type CommentDto } from '@/types/comment';
 import { StatusBadge } from '@/components/shared';
-import DOMPurify from 'dompurify';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
+import { EmptyState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
+import DOMPurify from 'dompurify';
 
 interface CommentThreadProps {
   comments: CommentDto[];
@@ -33,7 +35,7 @@ const getCommentBackgroundClass = (type: CommentType): string => {
     return 'bg-warning-50 dark:bg-warning-100/10 border-warning-200 dark:border-warning-800';
   }
   if (type === CommentType.SystemMessage) {
-    return 'bg-default-100 dark:bg-default-50/10 border-default-200 dark:border-default-700';
+    return 'bg-default-100 dark:bg-default-50/10 border-light dark:border-default-700';
   }
   return 'bg-content1 border-divider';
 };
@@ -45,8 +47,27 @@ const getCommentTextClass = (type: CommentType): string => {
   return 'text-foreground';
 };
 
-export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoading }) => {
+export const CommentThread: React.FC<CommentThreadProps> = ({
+  comments,
+  isLoading,
+}) => {
   const timezone = useTimezone();
+
+  /*
+   * Author names.
+   *
+   * The DTO carries `createdByUserName`, but nothing populates it for a comment
+   * written through the API or by a background job, and the fallback was
+   * `authorId`, so those rows printed a raw GUID where a person's name belongs.
+   * This is the same identity lookup the grid and the ticket sidebar already
+   * use, reading the same cache, so it costs no extra request for ids they have
+   * already resolved.
+   *
+   * Declared before the isLoading early-return: a hook after it would be called
+   * on some renders and not others.
+   */
+  const { userMap } = useUserEnrichment(comments.map(c => c.authorId));
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -57,40 +78,47 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ comments, isLoadin
 
   if (comments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <p className="text-default-500 text-sm">No comments yet.</p>
-        <p className="text-default-400 text-xs mt-1">Be the first to add a comment.</p>
-      </div>
+      <EmptyState
+        title="No comments yet"
+        description="Be the first to add a comment."
+        size="sm"
+        live
+      />
     );
   }
 
   return (
     <div className="space-y-4">
-      {comments.map((comment) => {
-        const commentType = fromApiCommentType(comment.commentType as any) ?? CommentType.Reply;
+      {comments.map(comment => {
+        const commentType =
+          fromApiCommentType(comment.commentType) ?? CommentType.Reply;
         return (
           <div
             key={comment.id}
-            className={`p-4 rounded-lg border ${getCommentBackgroundClass(commentType)}`}
+            className={`rounded-lg border p-4 ${getCommentBackgroundClass(commentType)}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">
-                  {comment.createdByUserName || comment.authorId || 'Unknown User'}
+                <span className="text-sm font-semibold">
+                  {comment.createdByUserName?.trim() ||
+                    (comment.authorId
+                      ? userMap[comment.authorId]?.name
+                      : undefined) ||
+                    'Unknown user'}
                 </span>
-                <StatusBadge
-                  color={getCommentTypeColor(commentType)}
-                >
+                <StatusBadge color={getCommentTypeColor(commentType)}>
                   {getCommentTypeName(commentType)}
                 </StatusBadge>
               </div>
-              <span className="text-xs text-default-400">
+              <span className="text-default-400 text-xs">
                 {formatDateTime(comment.createdAt, { timezone })}
               </span>
             </div>
             <div
               className={`text-sm ${getCommentTextClass(commentType)}`}
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.body ?? '') }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(comment.body ?? ''),
+              }}
             />
           </div>
         );

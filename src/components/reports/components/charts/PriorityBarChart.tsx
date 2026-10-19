@@ -1,33 +1,33 @@
+import type { PriorityBreakdownDto } from '@/types';
 import type { FC } from 'react';
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import type { PriorityBreakdownDto } from '@/types';
 
 interface PriorityBarChartProps {
   data: PriorityBreakdownDto[];
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  None: '#9ca3af', // gray
-  Low: '#3b82f6', // blue
-  Normal: '#10b981', // green
-  High: '#f59e0b', // amber
-  Critical: '#ef4444', // red
+  None: '#8c8f97',
+  Low: '#1868db',
+  Normal: '#6a9a23',
+  High: '#ff7f00',
+  Critical: '#f15050',
 };
 
 export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const chartData = data.map(item => ({
-    name: item.priorityName,
+    name: item.name,
     count: item.count,
     percentage: item.percentage,
   }));
@@ -44,7 +44,7 @@ export const PriorityBarChart: FC<PriorityBarChartProps> = ({ data }) => {
           }
         />
         <Legend />
-        <Bar dataKey="count" fill="#3b82f6" name="Ticket Count" />
+        <Bar dataKey="count" fill="#1868db" name="Ticket Count" />
       </BarChart>
     </ResponsiveContainer>
   );

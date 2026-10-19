@@ -1,72 +1,112 @@
-import { useQuery } from '@tanstack/react-query';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
+import { AccessLevel } from '@/types/category';
+import { CategoriesApi } from '@brainforgeau/helpdesk-client';
+import type {
+  HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto,
+  HelpdeskApplicationCategoriesModelsCategoryDto,
+} from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-// REVIEW: Using generated client types directly, flattening hierarchy into flat array for UI
-type CategoryHierarchyDto = {
-  sections?: Array<{
-    id?: string;
-    name?: string;
-    sortOrder?: number;
-    isActive?: boolean;
-    categories?: Array<{
-      id?: string;
-      name?: string;
-      sectionId?: string;
-      sectionName?: string;
-      accessLevel?: number;
-      defaultAssigneeId?: string;
-      emailRoutingAddress?: string;
-      emailRoutingProtocol?: string;
-      isActive?: boolean;
-      sortOrder?: number;
-      customFieldIds?: string[];
-    }>;
-  }>;
+export const useDuplicateCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (categoryId: string) => {
+      const client = await createHelpdeskApiClient(CategoriesApi);
+      const response = await client.v1CategoriesIdDuplicatePost(categoryId);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
+    },
+  });
 };
 
+// Map a generated CategoryDto to the local CategoryDto shape.
+// Fields fromEmailAddress / fromEmailName / useFromAddressAsReplyTo replace the old
+// emailRoutingAddress / emailRoutingProtocol fields that did not exist on the backend DTO.
+function mapGeneratedCategory(
+  cat: HelpdeskApplicationCategoriesModelsCategoryDto,
+  sectionName?: string,
+): CategoryDto {
+  // HelpdeskDomainCategoriesEnumsAccessLevel uses string values ('Everyone'|'AgentsOnly'|'AdminsOnly')
+  // that are identical to the local AccessLevel enum keys — cast via lookup map for safety.
+  const accessLevelMap: Record<string, AccessLevel> = {
+    Everyone: AccessLevel.Everyone,
+    AgentsOnly: AccessLevel.AgentsOnly,
+    AdminsOnly: AccessLevel.AdminsOnly,
+  };
+  const accessLevel =
+    accessLevelMap[cat.accessLevel as string] ?? AccessLevel.Everyone;
+
+  return {
+    id: cat.id ?? '',
+    name: cat.name ?? '',
+    sectionId: cat.sectionId ?? undefined,
+    sectionName,
+    accessLevel,
+    defaultAssigneeId: undefined,
+    fromEmailAddress: cat.fromEmailAddress ?? undefined,
+    fromEmailName: cat.fromEmailName ?? undefined,
+    useFromAddressAsReplyTo: cat.useFromAddressAsReplyTo ?? false,
+    isActive: cat.isActive ?? true,
+    sortOrder: cat.sortOrder ?? 0,
+    customFieldIds: cat.customFieldIds ?? undefined,
+  };
+}
+
 export const useCategoriesData = () => {
-  const { data: hierarchyData, isLoading: isLoadingCategories, refetch: refetchCategories } = useQuery<CategoryDto[]>({
+  const {
+    data: hierarchyData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useQuery<CategoryDto[]>({
     queryKey: ['helpdesk-categories'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesGet();
-      // Flatten hierarchy into flat array of categories
-      const hierarchy = data as CategoryHierarchyDto;
+      // Use the generated hierarchy type directly — no local CategoryItemDto / CategoryHierarchyDto needed.
+      const hierarchy =
+        data as HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto;
       const flatCategories: CategoryDto[] = [];
-      hierarchy.sections?.forEach((section) => {
-        section.categories?.forEach((cat) => {
-          flatCategories.push({
-            id: cat.id!,
-            name: cat.name!,
-            sectionId: cat.sectionId,
-            sectionName: section.name,
-            accessLevel: cat.accessLevel ?? 0,
-            defaultAssigneeId: cat.defaultAssigneeId,
-            emailRoutingAddress: cat.emailRoutingAddress,
-            emailRoutingProtocol: cat.emailRoutingProtocol,
-            isActive: cat.isActive ?? true,
-            sortOrder: cat.sortOrder ?? 0,
-            customFieldIds: cat.customFieldIds,
-          });
+
+      hierarchy.sections?.forEach(section => {
+        section.categories?.forEach(cat => {
+          flatCategories.push(mapGeneratedCategory(cat, section.name));
         });
       });
+
+      // D23 fix: unsectionedCategories was ignored — categories created without a section
+      // were never included in the list, causing them to be invisible until a hard refresh
+      // that happened to bust the browser cache rather than the React Query cache.
+      hierarchy.unsectionedCategories?.forEach(cat => {
+        flatCategories.push(mapGeneratedCategory(cat, undefined));
+      });
+
       return flatCategories;
     },
   });
 
-  const { data: sectionsData, isLoading: isLoadingSections, refetch: refetchSections } = useQuery<SectionDto[]>({
+  const {
+    data: sectionsData,
+    isLoading: isLoadingSections,
+    refetch: refetchSections,
+  } = useQuery<SectionDto[]>({
     queryKey: ['helpdesk-sections'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesSectionsGet();
-      // API returns PagedResult, extract items
-      return ((data as any)?.items || []).map((section: any) => ({
-        id: section.id!,
-        name: section.name!,
+      // API returns PagedResult, extract items. `meta` (record placement/audit
+      // metadata -- DTO tenancy/scope metadata initiative) is carried through
+      // so SectionEditorModal can wire the scope strip; it was previously
+      // dropped here even though SectionDto has always returned it.
+      return (data.items ?? []).map(section => ({
+        id: section.id ?? '',
+        name: section.name ?? '',
         sortOrder: section.sortOrder ?? 0,
         isActive: section.isActive ?? true,
+        meta: section.meta,
       }));
     },
   });

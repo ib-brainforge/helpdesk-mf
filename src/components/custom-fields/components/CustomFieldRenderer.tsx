@@ -1,8 +1,15 @@
-import { BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Checkbox, Textarea } from '@heroui/react';
-import { useMemo } from 'react';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 import { CustomFieldType } from '@/types/custom-field';
+import {
+  BaseCheckbox,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTagSelect,
+  BaseTagSelectItem,
+  BaseTextarea,
+} from '@brainforgeau/components';
+import { useMemo } from 'react';
 
 // REVIEW: Value type for custom field changes
 export interface CustomFieldChangePayload {
@@ -64,8 +71,8 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
         return (
           <BaseInput
             value={value?.stringValue ?? ''}
-            onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            onValueChange={v => onChange({ textValue: v })}
+            readOnly={readOnly}
             placeholder={`Enter ${field.name.toLowerCase()}`}
             isInvalid={!!error}
             errorMessage={error}
@@ -75,10 +82,10 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
 
       case CustomFieldType.MultilineText:
         return (
-          <Textarea
+          <BaseTextarea
             value={value?.stringValue ?? ''}
-            onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            onValueChange={v => onChange({ textValue: v })}
+            readOnly={readOnly}
             minRows={4}
             placeholder={`Enter ${field.name.toLowerCase()}`}
             isInvalid={!!error}
@@ -94,12 +101,15 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
         return (
           <BaseInput
             type="number"
-            value={value?.numericValue !== undefined ? String(value.numericValue) : ''}
-            onChange={(e) => {
-              const val = e.target.value;
-              onChange({ numericValue: val ? Number(val) : undefined });
+            value={
+              value?.numericValue !== undefined
+                ? String(value.numericValue)
+                : ''
+            }
+            onValueChange={v => {
+              onChange({ numericValue: v ? Number(v) : undefined });
             }}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             placeholder="0"
             isInvalid={!!error}
             errorMessage={error}
@@ -114,11 +124,12 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseInput
             type="date"
             value={value?.dateValue ? value.dateValue.split('T')[0] : ''}
-            onChange={(e) => {
-              const dateStr = e.target.value;
-              onChange({ dateValue: dateStr ? new Date(dateStr).toISOString() : undefined });
+            onValueChange={v => {
+              onChange({
+                dateValue: v ? new Date(v).toISOString() : undefined,
+              });
             }}
-            isReadOnly={readOnly}
+            readOnly={readOnly}
             isInvalid={!!error}
             errorMessage={error}
             isRequired={field.isRequired}
@@ -127,14 +138,14 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
 
       case CustomFieldType.Checkbox:
         return (
-          <Checkbox
+          <BaseCheckbox
             isSelected={value?.booleanValue ?? false}
-            onValueChange={(checked) => onChange({ booleanValue: checked })}
+            onValueChange={checked => onChange({ booleanValue: checked })}
             isDisabled={readOnly}
             isInvalid={!!error}
           >
             {field.name}
-          </Checkbox>
+          </BaseCheckbox>
         );
 
       case CustomFieldType.Dropdown:
@@ -142,10 +153,9 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseSelect
             label={field.name}
             placeholder="-- Select --"
-            selectedKeys={value?.selectedOptionId ? [value.selectedOptionId] : []}
-            onSelectionChange={(keys) => {
-              const selectedKey = keys.currentKey || null;
-              onChange({ selectedOptionId: selectedKey });
+            selectedKey={value?.selectedOptionId ?? null}
+            onSelectionChange={key => {
+              onChange({ selectedOptionId: (key as string) || null });
             }}
             isDisabled={readOnly}
             isInvalid={!!error}
@@ -153,37 +163,40 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
             isRequired={field.isRequired}
           >
             {(field.options || [])
-              .filter((o) => !o.isDisabled || o.id === value?.selectedOptionId)
+              .filter(o => !o.isDisabled || o.id === value?.selectedOptionId)
               .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((option) => (
-                <BaseSelectItem key={option.id}>{option.value}</BaseSelectItem>
+              .map(option => (
+                <BaseSelectItem key={option.id} value={option.id}>
+                  {option.value}
+                </BaseSelectItem>
               ))}
           </BaseSelect>
         );
 
       case CustomFieldType.MultiSelect:
         return (
-          <BaseSelect
-            label={field.name}
-            placeholder="Select options..."
-            selectionMode="multiple"
-            selectedKeys={value?.selectedOptions?.map((o) => o.id) ?? []}
-            onSelectionChange={(keys) => {
-              const selectedIds = Array.from(keys as Set<string>);
-              onChange({ selectedOptionIds: selectedIds });
-            }}
-            isDisabled={readOnly}
-            isInvalid={!!error}
-            errorMessage={error}
-            isRequired={field.isRequired}
-          >
-            {(field.options || [])
-              .filter((o) => !o.isDisabled)
-              .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((option) => (
-                <BaseSelectItem key={option.id}>{option.value}</BaseSelectItem>
-              ))}
-          </BaseSelect>
+          <div className={readOnly ? 'pointer-events-none opacity-50' : ''}>
+            <BaseTagSelect
+              label={field.name}
+              placeholder="Select options..."
+              value={value?.selectedOptions?.map(o => o.id) ?? []}
+              onValueChange={(selectedIds: string[]) => {
+                onChange({ selectedOptionIds: selectedIds });
+              }}
+              isInvalid={!!error}
+              errorMessage={error}
+              isRequired={field.isRequired}
+            >
+              {(field.options || [])
+                .filter(o => !o.isDisabled)
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map(option => (
+                  <BaseTagSelectItem key={option.id} value={option.id}>
+                    {option.value}
+                  </BaseTagSelectItem>
+                ))}
+            </BaseTagSelect>
+          </div>
         );
 
       case CustomFieldType.Url:
@@ -203,8 +216,8 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseInput
             type="url"
             value={value?.stringValue ?? ''}
-            onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            onChange={e => onChange({ textValue: e.target.value })}
+            readOnly={readOnly}
             placeholder="https://..."
             isInvalid={!!error}
             errorMessage={error}
@@ -217,8 +230,8 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
           <BaseInput
             type="email"
             value={value?.stringValue ?? ''}
-            onChange={(e) => onChange({ textValue: e.target.value })}
-            isReadOnly={readOnly}
+            onChange={e => onChange({ textValue: e.target.value })}
+            readOnly={readOnly}
             placeholder="email@example.com"
             isInvalid={!!error}
             errorMessage={error}
@@ -241,8 +254,11 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
     );
   }
 
-  // REVIEW: For Dropdown and MultiSelect, BaseSelect includes label
-  if (field.fieldType === CustomFieldType.Dropdown || field.fieldType === CustomFieldType.MultiSelect) {
+  // REVIEW: For Dropdown and MultiSelect, BaseSelect/BaseTagSelect includes label
+  if (
+    field.fieldType === CustomFieldType.Dropdown ||
+    field.fieldType === CustomFieldType.MultiSelect
+  ) {
     return <div className="custom-field-renderer">{fieldComponent}</div>;
   }
 

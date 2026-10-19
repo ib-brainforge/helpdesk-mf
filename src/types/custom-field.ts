@@ -1,3 +1,4 @@
+import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
 import type { AccessLevel } from './category';
 
 export interface CustomFieldDefinitionDto {
@@ -9,6 +10,8 @@ export interface CustomFieldDefinitionDto {
   accessLevel: AccessLevel;
   isActive: boolean;
   options?: CustomFieldOptionDto[];
+  /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface CustomFieldOptionDto {

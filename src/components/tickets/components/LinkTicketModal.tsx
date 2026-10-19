@@ -1,30 +1,26 @@
-import { type FC, useState } from 'react';
+import { ModalHeader } from '@/components/shared';
 import {
-  BaseModal,
-  BaseModalContent,
-  BaseModalHeader,
-  BaseModalBody,
-  BaseModalFooter,
+  TICKET_LINK_OPTIONS,
+  type TicketLinkSemantic,
+} from '@/types/ticket-links';
+import {
   BaseButton,
   BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
+import { type FC, useState } from 'react';
 
 interface LinkTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (targetTicketId: string, linkType: string) => void;
+  onConfirm: (targetTicketId: string, linkType: TicketLinkSemantic) => void;
   currentTicketId: string;
 }
-
-const LINK_TYPES = [
-  { value: 'relates-to', label: 'Relates To' },
-  { value: 'blocks', label: 'Blocks' },
-  { value: 'is-blocked-by', label: 'Is Blocked By' },
-  { value: 'duplicates', label: 'Duplicates' },
-  { value: 'is-duplicated-by', label: 'Is Duplicated By' },
-];
 
 export const LinkTicketModal: FC<LinkTicketModalProps> = ({
   isOpen,
@@ -33,7 +29,10 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
   currentTicketId,
 }) => {
   const [targetTicketId, setTargetTicketId] = useState('');
-  const [linkType, setLinkType] = useState('relates-to');
+  // The phrases live with the wire mapping in @/types/ticket-links, so the
+  // options a person sees and the (source, target, type) they turn into cannot
+  // drift apart. They previously lived here and matched nothing the API knew.
+  const [linkType, setLinkType] = useState<TicketLinkSemantic>('relates-to');
 
   const handleConfirm = () => {
     if (targetTicketId.trim()) {
@@ -47,31 +46,37 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <BaseModalHeader title="Link Ticket">Link Ticket</BaseModalHeader>
+        <ModalHeader>Link Ticket</ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
             <BaseSelect
               label="Link Type"
-              selectedKeys={new Set([linkType])}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0] as string;
-                setLinkType(value);
+              selectedKey={linkType}
+              onSelectionChange={keys => {
+                const value = keys as string;
+                setLinkType(value as TicketLinkSemantic);
               }}
             >
-              {LINK_TYPES.map((type) => (
-                <BaseSelectItem key={type.value}>{type.label}</BaseSelectItem>
+              {TICKET_LINK_OPTIONS.map(type => (
+                <BaseSelectItem
+                  key={type.value}
+                  value={type.value}
+                  textValue={type.label}
+                >
+                  {type.label}
+                </BaseSelectItem>
               ))}
             </BaseSelect>
             <BaseInput
               label="Target Ticket ID"
               placeholder="Enter the ID of the ticket to link"
               value={targetTicketId}
-              onChange={(e) => setTargetTicketId(e.target.value)}
+              onChange={e => setTargetTicketId(e.target.value)}
             />
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose}>
+          <BaseButton variant="bordered" color="light" onPress={onClose}>
             Cancel
           </BaseButton>
           <BaseButton

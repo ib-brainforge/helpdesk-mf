@@ -1,5 +1,6 @@
-import { type FC, useState } from 'react';
+import { IconTip } from '@/components/shared';
 import { Icon } from '@brainforgeau/components';
+import { type FC, useState } from 'react';
 
 // REVIEW: Using controlled component pattern for star rating
 interface StarRatingProps {
@@ -45,26 +46,29 @@ export const StarRating: FC<StarRatingProps> = ({
 
   return (
     <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((rating) => (
-        <button
-          key={rating}
-          type="button"
-          onClick={() => handleClick(rating)}
-          onMouseEnter={() => handleMouseEnter(rating)}
-          onMouseLeave={handleMouseLeave}
-          disabled={readonly}
-          className={`${
-            readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'
-          } transition-transform`}
-          aria-label={`Rate ${rating} stars`}
-        >
-          <Icon
-            name="star"
-            className={`${sizeClasses[size]} ${
-              rating <= displayRating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-            }`}
-          />
-        </button>
+      {[1, 2, 3, 4, 5].map(rating => (
+        <IconTip key={rating} label={`Rate ${rating} stars`}>
+          <button
+            type="button"
+            onClick={() => handleClick(rating)}
+            onMouseEnter={() => handleMouseEnter(rating)}
+            onMouseLeave={handleMouseLeave}
+            disabled={readonly}
+            className={`${
+              readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'
+            } transition-transform`}
+            aria-label={`Rate ${rating} stars`}
+          >
+            <Icon
+              name="star"
+              className={`${sizeClasses[size]} ${
+                rating <= displayRating
+                  ? 'text-yellow-400 fill-current'
+                  : 'text-default-300'
+              }`}
+            />
+          </button>
+        </IconTip>
       ))}
     </div>
   );

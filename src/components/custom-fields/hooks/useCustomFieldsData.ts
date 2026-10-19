@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
+import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
+import { useQuery } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useCallback, useState } from 'react';
 
 export const useCustomFieldsData = () => {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -30,20 +30,29 @@ export const useCustomFieldsData = () => {
           value: opt.value!,
           sortOrder: opt.sortOrder ?? 0,
         })),
+        meta: field.meta,
       }));
     },
   });
 
   // Client-side pagination
-  const items = data?.slice(
-    pagination.pageIndex * pagination.pageSize,
-    (pagination.pageIndex + 1) * pagination.pageSize
-  ) ?? [];
+  const items =
+    data?.slice(
+      pagination.pageIndex * pagination.pageSize,
+      (pagination.pageIndex + 1) * pagination.pageSize,
+    ) ?? [];
 
   const totalCount = data?.length ?? 0;
 
   return {
     items,
+    /**
+     * The full, unpaginated set -- needed by `useScopeList` (DTO tenancy/
+     * scope metadata initiative), whose out-of-context counting and
+     * "Change all N" bulk editor must consider every loaded record, not
+     * just the current client-side-paginated page.
+     */
+    allItems: data ?? [],
     totalCount,
     pagination,
     setPagination,

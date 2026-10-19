@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useSignalR } from './useSignalR';
 
 /**
@@ -102,7 +102,10 @@ export const useRealtimeTickets = () => {
     };
 
     const handleTicketStatusChanged = (event: TicketStatusChangedEventDto) => {
-      console.debug('[useRealtimeTickets] TicketStatusChanged:', event.ticketId);
+      console.debug(
+        '[useRealtimeTickets] TicketStatusChanged:',
+        event.ticketId,
+      );
       // Invalidate both the list (status may affect filtering/sorting) and detail
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       queryClient.invalidateQueries({ queryKey: ['ticket', event.ticketId] });

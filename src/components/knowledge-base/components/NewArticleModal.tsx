@@ -1,17 +1,33 @@
-import { type FC, useState, useCallback } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
-import { BaseButton, BaseInput, BaseSelect, BaseSelectItem } from '@brainforgeau/components';
-import { Switch, addToast } from '@heroui/react';
-import { TipTapEditor } from './TipTapEditor';
-import { useCreateKnowledgeBaseArticle, useKnowledgeBaseCategories } from '../hooks/useKnowledgeBase';
+import { ModalHeader } from '@/components/shared';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
+import {
+  BaseButton,
+  BaseInput,
+  BaseModal,
+  BaseModalBody,
+  BaseModalContent,
+  BaseModalFooter,
+  BaseSelect,
+  BaseSelectItem,
+  BaseToggle,
+} from '@brainforgeau/components';
+import { toast } from '@heroui/react';
+import { type FC, useCallback, useState } from 'react';
+import {
+  useCreateKnowledgeBaseArticle,
+  useKnowledgeBaseCategories,
+} from '../hooks/useKnowledgeBase';
+import { TipTapEditor } from './TipTapEditor';
 
 interface NewArticleModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) => {
+export const NewArticleModal: FC<NewArticleModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const [subject, setSubject] = useState('');
   const [details, setDetails] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -23,10 +39,9 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
 
   const handleCreate = useCallback(async () => {
     if (!subject.trim()) {
-      addToast({
-        title: 'Subject required',
+      toast('Subject required', {
         description: 'Please enter an article subject',
-        severity: 'warning',
+        variant: 'warning',
       });
       return;
     }
@@ -36,8 +51,15 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
         title: subject,
         body: details,
         categoryId: categoryId ?? undefined,
-        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        accessLevel: forTechniciansOnly ? KnowledgeBaseAccessLevel.Internal : KnowledgeBaseAccessLevel.Public,
+        tags: tags
+          ? tags
+              .split(',')
+              .map(t => t.trim())
+              .filter(Boolean)
+          : [],
+        accessLevel: forTechniciansOnly
+          ? KnowledgeBaseAccessLevel.Authenticated
+          : KnowledgeBaseAccessLevel.Public,
         status: KnowledgeBaseStatus.Draft,
       });
 
@@ -51,7 +73,15 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
     } catch (error) {
       // Error handled by mutation
     }
-  }, [subject, details, categoryId, tags, forTechniciansOnly, createMutation, onClose]);
+  }, [
+    subject,
+    details,
+    categoryId,
+    tags,
+    forTechniciansOnly,
+    createMutation,
+    onClose,
+  ]);
 
   const handleCancel = useCallback(() => {
     setSubject('');
@@ -63,23 +93,26 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
   }, [onClose]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
-      <ModalContent>
-        <ModalHeader>
-          <h2 className="text-xl font-semibold">New Article</h2>
-        </ModalHeader>
-        <ModalBody>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="lg"
+      className="max-w-3xl"
+    >
+      <BaseModalContent>
+        <ModalHeader>New Article</ModalHeader>
+        <BaseModalBody>
           <div className="space-y-4">
             <BaseInput
               label="Subject"
               isRequired
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={e => setSubject(e.target.value)}
               placeholder="Enter article subject"
             />
 
             <div>
-              <label className="block text-sm font-medium mb-2">Details</label>
+              <label className="mb-2 block text-sm font-medium">Details</label>
               <TipTapEditor
                 content={details}
                 onChange={setDetails}
@@ -89,15 +122,18 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
 
             <BaseSelect
               label="Category"
-              selectedKeys={categoryId ? new Set([categoryId]) : new Set()}
-              onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0] as string;
+              selectedKey={categoryId ? categoryId : null}
+              onSelectionChange={keys => {
+                const selected = keys as string;
                 setCategoryId(selected || null);
               }}
               placeholder="Select a category"
             >
-              {(categories || []).map((category) => (
-                <BaseSelectItem key={category.id ?? ''}>
+              {(categories || []).map(category => (
+                <BaseSelectItem
+                  key={category.id ?? ''}
+                  value={category.id ?? ''}
+                >
                   {category.name}
                 </BaseSelectItem>
               ))}
@@ -106,32 +142,32 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({ isOpen, onClose }) =
             <BaseInput
               label="Tags"
               value={tags}
-              onChange={(e) => setTags(e.target.value)}
+              onChange={e => setTags(e.target.value)}
               placeholder="tag1, tag2, tag3"
               description="Comma-separated tags"
             />
 
-            <Switch
+            <BaseToggle
               isSelected={forTechniciansOnly}
-              onValueChange={setForTechniciansOnly}
+              onChange={setForTechniciansOnly}
             >
               For technicians only
-            </Switch>
+            </BaseToggle>
           </div>
-        </ModalBody>
-        <ModalFooter>
-          <BaseButton variant="light" onPress={handleCancel}>
+        </BaseModalBody>
+        <BaseModalFooter>
+          <BaseButton variant="bordered" color="light" onPress={handleCancel}>
             Cancel
           </BaseButton>
           <BaseButton
             color="primary"
             onPress={handleCreate}
-            isLoading={createMutation.isPending}
+            isDisabled={createMutation.isPending}
           >
             Create
           </BaseButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </BaseModalFooter>
+      </BaseModalContent>
+    </BaseModal>
   );
 };
