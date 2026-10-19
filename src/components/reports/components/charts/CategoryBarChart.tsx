@@ -1,15 +1,15 @@
+import type { CategoryBreakdownDto } from '@/types';
 import type { FC } from 'react';
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import type { CategoryBreakdownDto } from '@/types';
 
 interface CategoryBarChartProps {
   data: CategoryBreakdownDto[];
@@ -23,7 +23,7 @@ export const CategoryBarChart: FC<CategoryBarChartProps> = ({ data }) => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
     .map(item => ({
-      name: item.categoryName,
+      name: item.name,
       count: item.count,
       percentage: item.percentage,
     }));
@@ -36,7 +36,7 @@ export const CategoryBarChart: FC<CategoryBarChartProps> = ({ data }) => {
         <YAxis dataKey="name" type="category" width={150} />
         <Tooltip formatter={(value: number) => `${value} tickets`} />
         <Legend />
-        <Bar dataKey="count" fill="#8b5cf6" name="Ticket Count" />
+        <Bar dataKey="count" fill="#1868db" name="Ticket Count" />
       </BarChart>
     </ResponsiveContainer>
   );

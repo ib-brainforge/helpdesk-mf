@@ -1,10 +1,13 @@
 # Stage 1: Build the application (includes type generation)
-FROM ghcr.io/brainforgeau/node-18-alpine AS app-builder
+FROM ghcr.io/brainforgeau/node-22-alpine AS app-builder
 
 WORKDIR /build
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally — PINNED. pnpm@11.20.0 (2026-08-03) verifies its own
+# @pnpm/exe binary against pnpm-lock.yaml (via the packageManager field) and
+# fails the frozen install on lockfiles that predate the feature. Unpinned
+# "latest" broke every build the day it shipped; bump deliberately.
+RUN npm install -g pnpm@11.19.0
 
 # Set up npm authentication for GitHub Packages
 ARG NPM_TOKEN
@@ -31,8 +34,24 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 # Copy full source code (after dependencies are installed for better caching)
 COPY . .
 
-# Build the app for production deployment with optimizations
-# Domain-agnostic: empty defaults, values injected at runtime via generate-config.sh
+# Build the app for production deployment with optimizations.
+# Domain-agnostic: empty defaults, values injected at runtime via generate-config.sh.
+# The API_BASE_URL="" family of pins below is deliberate: it stops any
+# build-time value being baked into __HELPDESK_CONFIG__ and leaking across
+# environments. The image must get config at runtime (deployed: the shell's
+# runtime config; local dev: .env). The reader in src/state/config turns a
+# missing value into a loud error, never a silent ''. The runtime-config
+# contract's named keys (HELPDESK_API_BASE_URL etc.) are pinned for the same
+# reason.
+# load-bearing: OIDC_REDIRECT_URI and BASE_PATH below shadow the committed
+# .env at build time — this ENV block is set BEFORE `pnpm run deploy` (which
+# runs `modern build`) at the bottom of this stage, and Modern.js's loadEnv
+# does not override an already-set process.env key. Do not remove these two
+# even though .env looks like it duplicates them: BASE_PATH in particular has
+# no runtime escape hatch (it's baked into the bundle, not read from
+# window.__RUNTIME_CONFIG__ at container start), so this pin is the ONLY
+# thing that makes production build with the right values regardless of what
+# .env's local-dev defaults say.
 ENV NODE_ENV=production \
     OIDC_AUTHORITY="" \
     OIDC_CLIENT_ID="" \
@@ -42,6 +61,13 @@ ENV NODE_ENV=production \
     NOTIFICATION_API_URL="" \
     MFS_PACKAGES_URL="" \
     IDENTITY_BASE_URL="" \
+    HELPDESK_API_BASE_URL="" \
+    NOTIFICATION_API_BASE_URL="" \
+    IDENTITY_API_BASE_URL="" \
+    TELEMETRY_API_BASE_URL="" \
+    ASSET_API_BASE_URL="" \
+    TRACKING_API_BASE_URL="" \
+    NOTIFICATION_SIGNALR_HUB_URL="" \
     STANDALONE="true" \
     BASE_PATH="/helpdesk" \
     OBSERVABILITY_ENABLED="false" \
@@ -70,6 +96,10 @@ WORKDIR /app
 COPY --from=app-builder /build/.output/html/main /usr/share/nginx/html
 COPY --from=app-builder /build/.output/static /usr/share/nginx/html/static
 
+# Module Federation manifest for the app shell — served at /helpdesk/mf-manifest.json
+COPY --from=app-builder /build/.output/mf-manifest.json /usr/share/nginx/html/mf-manifest.json
+COPY --from=app-builder /build/.output/mf-stats.json /usr/share/nginx/html/mf-stats.json
+
 # Copy Node.js BFF server
 COPY --from=app-builder /build/.output ./bff
 
@@ -84,11 +114,10 @@ COPY generate-config.sh /generate-config.sh
 RUN chmod +x /generate-config.sh
 
 # Create entrypoint script to run generate-config.sh, nginx template processing, and BFF
-# Generates random session secret, generates runtime config, and starts services
+# Generates runtime config and starts services
 RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'export BF_SESSION_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d "/+=" | head -c 32)' >> /entrypoint.sh && \
     echo '/generate-config.sh' >> /entrypoint.sh && \
-    echo 'envsubst "\$BF_SESSION_SECRET" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /entrypoint.sh && \
+    echo 'cp /etc/nginx/templates/default.conf.template /etc/nginx/conf.d/default.conf' >> /entrypoint.sh && \
     echo 'cd /app/bff && node index.cjs &' >> /entrypoint.sh && \
     echo 'nginx -g "daemon off;"' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh

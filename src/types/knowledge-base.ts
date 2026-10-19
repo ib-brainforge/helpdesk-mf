@@ -1,26 +1,45 @@
-// TODO: Replace with types from @brainforgeau/helpdesk-backend-client when available
-// These types match the backend DTOs for Knowledge Base
+// Enums use string values that match the generated @brainforgeau/helpdesk-client types
+// (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
+// This allows direct comparison against values returned from the backend without any casting.
+
+import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
 
 export enum KnowledgeBaseStatus {
-  Draft = 0,
-  Published = 1,
-  Archived = 2,
+  Draft = 'Draft',
+  Published = 'Published',
+  Archived = 'Archived',
 }
 
+// Access level values match HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel from the generated client.
+// Note: the old local enum used Internal/Private; the backend uses Authenticated/TechOnly/AdminOnly.
 export enum KnowledgeBaseAccessLevel {
-  Public = 0,
-  Internal = 1,
-  Private = 2,
+  Public = 'Public',
+  Authenticated = 'Authenticated',
+  TechOnly = 'TechOnly',
+  AdminOnly = 'AdminOnly',
 }
 
 export interface KnowledgeBaseCategoryDto {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   parentId?: string;
   children?: KnowledgeBaseCategoryDto[];
   articleCount: number;
   order: number;
+  /**
+   * Record placement/audit metadata (DTO tenancy/scope metadata initiative).
+   * Not yet populated from `flattenCategoryTree` -- the generated
+   * `HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto` (backing
+   * `v1KbCategoriesGet`, the only source of the tree this type is flattened
+   * from) does not expose `meta` yet. helpdesk-backend PR #169
+   * (`feat/kb-category-tree-meta`) adds it but is still open/unmerged as of
+   * this change. IS populated from `useDuplicateKbCategory`'s mapping, since
+   * that endpoint (`v1KbCategoriesIdDuplicatePost`) returns the flat
+   * `KbCategoryDto`, which has always carried `meta`.
+   */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface KnowledgeBaseArticleListDto {
@@ -37,10 +56,14 @@ export interface KnowledgeBaseArticleListDto {
   ratingCount: number;
   tags: string[];
   authorId: string;
+  // authorName is not exposed by the backend KbArticleDetailDto (only authorId is available).
+  // UI should treat absence as a gap and display a graceful fallback rather than "Unknown".
   authorName?: string;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
+  meta?: ServicesCoreAbstractionsRecordMeta;
 }
 
 export interface KnowledgeBaseArticleDto extends KnowledgeBaseArticleListDto {
@@ -71,7 +94,8 @@ export interface UpdateKnowledgeBaseArticleDto {
   categoryId?: string;
   tags?: string[];
   accessLevel?: KnowledgeBaseAccessLevel;
-  status?: KnowledgeBaseStatus;
+  // Note: status changes are applied via dedicated endpoints (publish/unpublish/archive),
+  // not through the update command. See useKnowledgeBase.ts for the transition logic.
 }
 
 export interface RateArticleDto {

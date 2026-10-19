@@ -1,9 +1,9 @@
+import { useBindQueryClientToContext } from '@brainforgeau/security/query';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
-import { useHydrateAtoms } from 'jotai/react/utils';
 import { queryClientAtom } from 'jotai-tanstack-query';
-import { useState, useEffect } from 'react';
-import { CONTEXT_TOKEN_CHANGED_EVENT } from '@brainforgeau/security';
+import { useHydrateAtoms } from 'jotai/react/utils';
+import { useEffect, useState } from 'react';
 
 const HydrateAtoms = ({ children }: { children: React.ReactNode }) => {
   const [client] = useState(
@@ -19,7 +19,7 @@ const HydrateAtoms = ({ children }: { children: React.ReactNode }) => {
             retry: 0,
           },
         },
-      })
+      }),
   );
 
   useHydrateAtoms([[queryClientAtom, client]]);
@@ -34,14 +34,20 @@ export default function QueryProvider({
 }) {
   const client = useAtomValue(queryClientAtom);
 
-  useEffect(() => {
-    const handleContextChange = () => {
-      client.invalidateQueries();
-    };
+  useBindQueryClientToContext(client);
 
-    window.addEventListener(CONTEXT_TOKEN_CHANGED_EVENT, handleContextChange);
+  useEffect(() => {
+    // The QueryClient itself is retained beyond this component's lifetime in
+    // the module-level `queryClientAtom` (first-write-wins via
+    // `useHydrateAtoms`), so it survives this provider unmounting while other
+    // remotes are active in the shell - otherwise its cache pins heap for the
+    // rest of the shell session. Free it immediately when this app's root
+    // unmounts (embedded: the bridge destroys/unmounts this remote's root
+    // when navigating away; standalone: the page/app is closing anyway, so
+    // clearing here is harmless). A fresh QueryClient is not created here -
+    // the atom keeps the same instance, we just drop its cached data.
     return () => {
-      window.removeEventListener(CONTEXT_TOKEN_CHANGED_EVENT, handleContextChange);
+      client.clear();
     };
   }, [client]);
 

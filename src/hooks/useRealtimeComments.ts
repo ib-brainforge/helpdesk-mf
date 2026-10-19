@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useSignalR } from './useSignalR';
 
 /**
@@ -54,29 +54,46 @@ export const useRealtimeComments = (ticketId: string) => {
       .then(() => {
         console.debug('[useRealtimeComments] Subscribed to ticket:', ticketId);
       })
-      .catch((err) => {
-        console.error('[useRealtimeComments] Failed to subscribe to ticket:', err);
+      .catch(err => {
+        console.error(
+          '[useRealtimeComments] Failed to subscribe to ticket:',
+          err,
+        );
       });
 
     // Event handlers for comment events
     const handleCommentAdded = (event: CommentAddedEventDto) => {
-      console.debug('[useRealtimeComments] CommentAdded:', event.commentId, 'on ticket:', event.ticketId);
+      console.debug(
+        '[useRealtimeComments] CommentAdded:',
+        event.commentId,
+        'on ticket:',
+        event.ticketId,
+      );
 
       // REVIEW: Only invalidate if this comment is for the current ticket
       if (event.ticketId === ticketId) {
         // Invalidate comments query to fetch the new comment
-        queryClient.invalidateQueries({ queryKey: ['helpdesk-comments', ticketId] });
+        queryClient.invalidateQueries({
+          queryKey: ['helpdesk-comments', ticketId],
+        });
         // Invalidate ticket detail (may have unread count, last activity, etc.)
         queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       }
     };
 
     const handleCommentUpdated = (event: CommentUpdatedEventDto) => {
-      console.debug('[useRealtimeComments] CommentUpdated:', event.commentId, 'on ticket:', event.ticketId);
+      console.debug(
+        '[useRealtimeComments] CommentUpdated:',
+        event.commentId,
+        'on ticket:',
+        event.ticketId,
+      );
 
       // REVIEW: Only invalidate if this comment is for the current ticket
       if (event.ticketId === ticketId) {
-        queryClient.invalidateQueries({ queryKey: ['helpdesk-comments', ticketId] });
+        queryClient.invalidateQueries({
+          queryKey: ['helpdesk-comments', ticketId],
+        });
         queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
       }
     };
@@ -91,8 +108,11 @@ export const useRealtimeComments = (ticketId: string) => {
       connection.off('CommentUpdated', handleCommentUpdated);
 
       // Unsubscribe from ticket
-      connection.invoke('UnsubscribeTicket', ticketId).catch((err) => {
-        console.error('[useRealtimeComments] Failed to unsubscribe from ticket:', err);
+      connection.invoke('UnsubscribeTicket', ticketId).catch(err => {
+        console.error(
+          '[useRealtimeComments] Failed to unsubscribe from ticket:',
+          err,
+        );
       });
     };
   }, [connection, isConnected, ticketId, queryClient]);

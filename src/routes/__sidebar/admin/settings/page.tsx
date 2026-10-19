@@ -1,8 +1,9 @@
-import { Helmet } from '@modern-js/runtime/head';
-import { NavLink } from '@modern-js/runtime/router';
+import { getAppConfig } from '@/state/config';
+import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { Card, CardBody } from '@heroui/react';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { Card, CardContent } from '@heroui/react';
+import { NavLink } from '@modern-js/runtime/router';
 
 type SettingCardProps = {
   title: string;
@@ -10,33 +11,61 @@ type SettingCardProps = {
   icon: string;
   href: string;
   isComingSoon?: boolean;
+  isExternal?: boolean;
 };
 
-function SettingCard({ title, description, icon, href, isComingSoon }: SettingCardProps) {
+function SettingCard({
+  title,
+  description,
+  icon,
+  href,
+  isComingSoon,
+  isExternal,
+}: SettingCardProps) {
   const content = (
-    <Card
-      className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:shadow-md hover:border-primary'}`}
-      isPressable={!isComingSoon}
+    <BaseCard
+      className={`transition-all ${isComingSoon ? 'opacity-60' : 'hover:border-primary hover:shadow-md'}`}
     >
-      <CardBody className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-1">
-            <Icon name={icon} className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold mb-1">{title}</h3>
-            <p className="text-sm text-default-500">{description}</p>
-            {isComingSoon && (
-              <span className="inline-block mt-2 text-xs text-warning">Coming soon</span>
+      <div className="flex items-start gap-3">
+        <div className="mt-1 flex-shrink-0">
+          <Icon name={icon} className="text-primary h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex items-center gap-1.5">
+            <h3 className="text-base font-semibold">{title}</h3>
+            {isExternal && (
+              <Icon
+                name="arrow-top-right-on-square"
+                className="text-default-400 h-3.5 w-3.5"
+              />
             )}
           </div>
+          <p className="text-default-500 text-sm">{description}</p>
+          {isComingSoon && (
+            <span className="text-warning mt-2 inline-block text-xs">
+              Coming soon
+            </span>
+          )}
         </div>
-      </CardBody>
-    </Card>
+      </div>
+    </BaseCard>
   );
 
   if (isComingSoon) {
     return content;
+  }
+
+  if (isExternal) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
+        {content}
+      </a>
+    );
   }
 
   return (
@@ -52,7 +81,16 @@ type SettingSection = {
 };
 
 function AdministrationPage() {
-  // REVIEW: Links map to existing pages where available, placeholders for not-yet-implemented pages
+  const config = getAppConfig();
+  // REVIEW: userManualUrl and apiDocsUrl can be overridden per environment via runtime config
+  const userManualUrl: string =
+    (config as any).userManualUrl ?? 'https://docs.brainforge.au/helpdesk';
+  // helpdesk-backend's own named key. This is a display-only link, so a
+  // missing key degrades to no link rather than throwing in render.
+  const apiDocsUrl: string | null =
+    (config as any).apiDocsUrl ??
+    (config.helpdeskApiBaseUrl ? `${config.helpdeskApiBaseUrl}/swagger` : null);
+
   const sections: SettingSection[] = [
     {
       title: 'General settings',
@@ -64,17 +102,10 @@ function AdministrationPage() {
           href: '/configuration/app-settings',
         },
         {
-          title: 'Email settings',
-          description: 'Configure email servers and notifications',
-          icon: 'envelope',
-          href: '/configuration/email',
-        },
-        {
           title: 'Users',
           description: 'Manage users, roles, and permissions',
           icon: 'users',
           href: '/admin/users',
-          isComingSoon: true,
         },
       ],
     },
@@ -88,17 +119,10 @@ function AdministrationPage() {
           href: '/configuration/categories',
         },
         {
-          title: 'Custom fields',
-          description: 'Add custom fields to tickets, users, and companies',
-          icon: 'variable',
-          href: '/configuration/custom-fields',
-        },
-        {
           title: 'Custom statuses',
           description: 'Define custom ticket statuses beyond open/closed',
           icon: 'flag',
           href: '/configuration/custom-statuses',
-          isComingSoon: true,
         },
         {
           title: 'Custom priorities',
@@ -121,41 +145,25 @@ function AdministrationPage() {
           title: 'Automation rules',
           description: 'Automate ticket workflows with conditional rules',
           icon: 'bolt',
-          href: '/configuration/automation',
-        },
-        {
-          title: 'AI features',
-          description: 'Configure AI-powered assistance and suggestions',
-          icon: 'sparkles',
-          href: '/configuration/ai-features',
+          href: '/configuration/automations',
         },
         {
           title: 'Live Chat widget',
           description: 'Embed live chat on your website',
           icon: 'chat-bubble-left-right',
           href: '/configuration/live-chat',
-          isComingSoon: true,
         },
         {
           title: 'Integration',
           description: 'Connect with third-party tools and services',
           icon: 'puzzle-piece',
           href: '/configuration/integrations',
-          isComingSoon: true,
         },
         {
           title: 'Import and Export',
           description: 'Bulk import/export tickets and data',
           icon: 'arrow-down-tray',
           href: '/configuration/import-export',
-          isComingSoon: true,
-        },
-        {
-          title: 'Billing',
-          description: 'Manage subscription and billing settings',
-          icon: 'credit-card',
-          href: '/configuration/billing',
-          isComingSoon: true,
         },
       ],
     },
@@ -164,55 +172,54 @@ function AdministrationPage() {
       items: [
         {
           title: 'User manual',
-          description: 'Comprehensive documentation and guides',
+          description:
+            'Comprehensive documentation and guides — opens in a new tab',
           icon: 'book-open',
-          href: '/help/manual',
-          isComingSoon: true,
+          href: userManualUrl,
+          isExternal: true,
         },
-        {
-          title: 'API',
-          description: 'Developer documentation and API reference',
-          icon: 'code-bracket',
-          href: '/help/api',
-          isComingSoon: true,
-        },
+        // Omitted entirely when helpdeskApiBaseUrl is unset: this is a
+        // display-only link, so a missing key drops the card rather than
+        // throwing in render or linking at a silently-empty ''.
+        ...(apiDocsUrl
+          ? [
+              {
+                title: 'API documentation',
+                description:
+                  'Developer documentation and OpenAPI reference — opens in a new tab',
+                icon: 'code-bracket' as const,
+                href: apiDocsUrl,
+                isExternal: true,
+              },
+            ]
+          : []),
       ],
     },
   ];
 
   return (
-    <>
-      <Helmet>
-        <title>Administration - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Administration', href: '/admin/settings', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Administration</h1>
-        <p className="text-default-500 mt-1">Manage your helpdesk configuration and settings</p>
-      </div>
+    <PageBody>
+      <PageHeader title="Administration" breadcrumbsKey="admin.settings">
+        <PageHeader.Meta>
+          Manage your helpdesk configuration and settings
+        </PageHeader.Meta>
+      </PageHeader>
 
       <div className="space-y-8">
-        {sections.map((section) => (
+        {sections.map(section => (
           <div key={section.title}>
-            <h2 className="text-lg font-semibold mb-4 text-default-700">{section.title}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {section.items.map((item) => (
+            <h2 className="text-default-700 mb-4 text-lg font-semibold">
+              {section.title}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {section.items.map(item => (
                 <SettingCard key={item.title} {...item} />
               ))}
             </div>
           </div>
         ))}
       </div>
-    </>
+    </PageBody>
   );
 }
 

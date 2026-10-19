@@ -1,59 +1,346 @@
-import { useCallback } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { useNavigate } from '@modern-js/runtime/router';
-import { BaseButton, Icon } from '@brainforgeau/components';
-import { ApprovalWorkflowForm, useCreateApprovalWorkflow } from '@/components/approvals';
+import { IconTip } from '@/components/shared';
+/**
+ * New approval workflow page — /__sidebar/configuration/approval-workflows/new
+ *
+ * W1-P8: Migrated to <FormPage> with useEntityForm for the core workflow fields.
+ *
+ * REVIEW: The approval step editor (add/remove/reorder steps) requires complex
+ * stateful UI that is not representable as a Zod schema field. Steps are managed
+ * as a separate useState array and passed to the mutation outside useEntityForm.
+ * A future PR should extract a StepEditor compound component and evaluate
+ * whether steps can be lifted into the schema as z.array(stepSchema).
+ */
 
-// REVIEW: Following existing pattern from automation rule creation
+import { useCreateApprovalWorkflow } from '@/components/approvals';
+import { useUsersData } from '@/components/users/hooks/useUsersData';
+import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
+import {
+  BaseButton,
+  BaseCard,
+  BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTextarea,
+  BaseToggle,
+  Icon,
+} from '@brainforgeau/components';
+import { FormPage, useEntityForm } from '@brainforgeau/components/page';
+import {
+  type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowStepDto as ApprovalWorkflowStepDto,
+  HelpdeskDomainApprovalsEnumsApprovalMode,
+} from '@brainforgeau/helpdesk-client';
+import { useNavigate } from '@modern-js/runtime/router';
+import { useCallback, useState } from 'react';
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// Schema (core fields only — steps are managed as local state)
+// ---------------------------------------------------------------------------
+
+const approvalWorkflowSchema = z.object({
+  name: z.string().min(1, 'Workflow name is required'),
+  description: z.string(),
+  approvalMode: z.nativeEnum(HelpdeskDomainApprovalsEnumsApprovalMode),
+  isActive: z.boolean(),
+  triggerOnCreation: z.boolean(),
+});
+
+type ApprovalWorkflowFormData = z.infer<typeof approvalWorkflowSchema>;
+
+// ---------------------------------------------------------------------------
+// Page component
+// ---------------------------------------------------------------------------
 
 function NewApprovalWorkflowPage() {
   const navigate = useNavigate();
   const createMutation = useCreateApprovalWorkflow();
 
-  const handleSubmit = useCallback(
-    (data: any) => {
-      createMutation.mutate(data, {
-        onSuccess: () => {
-          navigate('/configuration/approval-workflows');
-        },
-      });
+  // Step management lives outside useEntityForm (too complex for Zod schema)
+  const [steps, setSteps] = useState<ApprovalWorkflowStepDto[]>([]);
+  const { items: users } = useUsersData();
+
+  const form = useEntityForm<typeof approvalWorkflowSchema>({
+    schema: approvalWorkflowSchema,
+    defaultValues: {
+      name: '',
+      description: '',
+      approvalMode: HelpdeskDomainApprovalsEnumsApprovalMode.Sequential,
+      isActive: true,
+      triggerOnCreation: false,
     },
-    [createMutation, navigate]
+    onSubmit: async (values: ApprovalWorkflowFormData) => {
+      await createMutation.mutateAsync({
+        name: values.name,
+        description: values.description || undefined,
+        approvalMode: values.approvalMode,
+        isActive: values.isActive,
+        triggerOnCreation: values.triggerOnCreation,
+        steps,
+      });
+      navigate('/configuration/approval-workflows');
+    },
+    invalidateQueryKeys: [['approval-workflows']],
+    toast: {
+      success: 'Approval workflow created',
+      error: 'Create failed',
+    },
+  });
+
+  // Step helpers
+  const handleAddStep = useCallback(() => {
+    setSteps(prev => [
+      ...prev,
+      {
+        name: '',
+        approverUserId: undefined,
+        isRequired: true,
+        timeoutHours: undefined,
+        escalateToUserId: undefined,
+      },
+    ]);
+  }, []);
+
+  const handleRemoveStep = useCallback((index: number) => {
+    setSteps(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleUpdateStep = useCallback(
+    (index: number, updates: Partial<ApprovalWorkflowStepDto>) => {
+      setSteps(prev =>
+        prev.map((step, i) => (i === index ? { ...step, ...updates } : step)),
+      );
+    },
+    [],
   );
 
-  const handleCancel = useCallback(() => {
-    navigate('/configuration/approval-workflows');
-  }, [navigate]);
+  const handleMoveStepUp = useCallback((index: number) => {
+    if (index === 0) return;
+    setSteps(prev => {
+      const next = [...prev];
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      return next;
+    });
+  }, []);
+
+  const handleMoveStepDown = useCallback((index: number) => {
+    setSteps(prev => {
+      if (index === prev.length - 1) return prev;
+      const next = [...prev];
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      return next;
+    });
+  }, []);
+
+  const userOptions = users.map(user => ({
+    label: user.name || user.email || 'Unknown',
+    value: user.id,
+  }));
+
+  const f = form.form;
 
   return (
-    <>
-      <Helmet>
-        <title>New Approval Workflow - Configuration</title>
-      </Helmet>
+    <FormPage
+      title="Create Approval Workflow"
+      breadcrumbsKey="configuration.approval-workflows.new"
+      form={form}
+      onCancel={() => navigate('/configuration/approval-workflows')}
+    >
+      <FormPage.Section title="Basic Information" columns={2}>
+        <f.Field name="name">
+          {field => (
+            <BaseInput
+              label="Workflow Name"
+              isRequired
+              placeholder="Enter workflow name"
+              value={field.state.value}
+              onChange={e => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            />
+          )}
+        </f.Field>
 
-      <div className="mb-6">
-        <BaseButton
-          variant="link"
-          onPress={() => navigate('/configuration/approval-workflows')}
-          icon={<Icon name="arrow-left" className="h-4 w-4" />}
-        >
-          Back to Workflows
-        </BaseButton>
-      </div>
+        <f.Field name="approvalMode">
+          {field => (
+            <BaseSelect
+              label="Approval Mode"
+              isRequired
+              selectedKey={field.state.value}
+              onSelectionChange={key => {
+                if (key)
+                  field.handleChange(
+                    String(key) as HelpdeskDomainApprovalsEnumsApprovalMode,
+                  );
+              }}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            >
+              {Object.entries(APPROVAL_MODE_LABELS).map(([value, label]) => (
+                <BaseSelectItem key={value} value={value}>
+                  {label}
+                </BaseSelectItem>
+              ))}
+            </BaseSelect>
+          )}
+        </f.Field>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Create Approval Workflow</h1>
-        <p className="text-sm text-gray-600">
-          Configure a new approval workflow for tickets requiring approval.
-        </p>
-      </div>
+        <f.Field name="description">
+          {field => (
+            <BaseTextarea
+              label="Description"
+              placeholder="Optional description"
+              value={field.state.value}
+              onValueChange={field.handleChange}
+              onBlur={field.handleBlur}
+              minRows={3}
+              className="md:col-span-2"
+            />
+          )}
+        </f.Field>
 
-      <ApprovalWorkflowForm
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isSubmitting={createMutation.isPending}
-      />
-    </>
+        <f.Field name="isActive">
+          {field => (
+            <div className="flex flex-col gap-1">
+              <BaseToggle
+                isSelected={field.state.value}
+                onChange={field.handleChange}
+              >
+                <span className="text-sm font-medium">Active</span>
+              </BaseToggle>
+              <p className="text-muted-foreground text-xs">
+                Enable this workflow
+              </p>
+            </div>
+          )}
+        </f.Field>
+
+        <f.Field name="triggerOnCreation">
+          {field => (
+            <div className="flex flex-col gap-1">
+              <BaseToggle
+                isSelected={field.state.value}
+                onChange={field.handleChange}
+              >
+                <span className="text-sm font-medium">Trigger on Creation</span>
+              </BaseToggle>
+              <p className="text-muted-foreground text-xs">
+                Automatically trigger when ticket is created
+              </p>
+            </div>
+          )}
+        </f.Field>
+      </FormPage.Section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Approval Steps — managed as local state outside useEntityForm       */}
+      {/* ------------------------------------------------------------------ */}
+      <FormPage.Section title="Approval Steps">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Add the approval steps for this workflow.
+            </p>
+            <BaseButton
+              size="sm"
+              variant="light"
+              onPress={handleAddStep}
+              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            >
+              Add Step
+            </BaseButton>
+          </div>
+
+          {steps.length === 0 && (
+            <div className="text-muted-foreground flex flex-col items-center justify-center py-10 text-center">
+              <Icon name="clipboard-document-list" className="mb-2 h-10 w-10" />
+              <p className="text-sm">
+                No steps added yet. Click "Add Step" to create approval steps.
+              </p>
+            </div>
+          )}
+
+          {steps.map((step, index) => (
+            <BaseCard key={index}>
+              <div className="flex flex-col gap-3 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Step {index + 1}</span>
+                  <div className="flex items-center gap-1">
+                    <IconTip label={'Move step up'}>
+                      <BaseButton
+                        size="sm"
+                        variant="light"
+                        aria-label="Move step up"
+                        onPress={() => handleMoveStepUp(index)}
+                        isDisabled={index === 0}
+                        icon={
+                          <Icon name="chevron-up" className="h-3.5 w-3.5" />
+                        }
+                      />
+                    </IconTip>
+                    <IconTip label={'Move step down'}>
+                      <BaseButton
+                        size="sm"
+                        variant="light"
+                        aria-label="Move step down"
+                        onPress={() => handleMoveStepDown(index)}
+                        isDisabled={index === steps.length - 1}
+                        icon={
+                          <Icon name="chevron-down" className="h-3.5 w-3.5" />
+                        }
+                      />
+                    </IconTip>
+                    <IconTip label={'Remove step'}>
+                      <BaseButton
+                        size="sm"
+                        variant="light"
+                        color="danger"
+                        aria-label="Remove step"
+                        onPress={() => handleRemoveStep(index)}
+                        icon={<Icon name="trash" className="h-3.5 w-3.5" />}
+                      />
+                    </IconTip>
+                  </div>
+                </div>
+
+                <BaseInput
+                  label="Step Name"
+                  value={step.name}
+                  onValueChange={v => handleUpdateStep(index, { name: v })}
+                  isRequired
+                  placeholder="e.g., Manager Approval"
+                  size="sm"
+                />
+
+                <BaseSelect
+                  label="Approver"
+                  selectedKey={step.approverUserId ?? '__none__'}
+                  onSelectionChange={key => {
+                    handleUpdateStep(index, {
+                      approverUserId:
+                        key === '__none__' ? undefined : (key as string),
+                    });
+                  }}
+                  size="sm"
+                  aria-label="Approver"
+                >
+                  {[
+                    <BaseSelectItem key="__none__" id="__none__">
+                      Select approver...
+                    </BaseSelectItem>,
+                    ...userOptions.map(opt => (
+                      <BaseSelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </BaseSelectItem>
+                    )),
+                  ]}
+                </BaseSelect>
+              </div>
+            </BaseCard>
+          ))}
+        </div>
+      </FormPage.Section>
+    </FormPage>
   );
 }
 

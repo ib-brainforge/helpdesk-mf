@@ -4,6 +4,7 @@ export {
   type HelpdeskApplicationCannedResponsesCommandsCreateCannedResponseCreateCannedResponseCommand,
   type HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand,
   HelpdeskDomainCannedResponsesEnumsCannedResponseScope,
+  HelpdeskDomainCannedResponsesEnumsCannedResponseScope as CannedResponseScope,
 } from '@brainforgeau/helpdesk-client';
 
 // Local type aliases for convenience
@@ -13,23 +14,3 @@ export type CannedResponseDto = GeneratedCannedResponseDto & {
   // Add any UI-specific fields
   categoryName?: string;
 };
-
-export enum CannedResponseScope {
-  Personal = 'Personal',
-  Team = 'Team',
-  Global = 'Global',
-}
-
-export interface CreateCannedResponseCommand {
-  title: string;
-  body: string;
-  scope: number;
-  categoryId?: string;
-}
-
-export interface UpdateCannedResponseCommand {
-  title: string;
-  body: string;
-  scope: number;
-  categoryId?: string;
-}

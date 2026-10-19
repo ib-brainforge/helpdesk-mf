@@ -1,0 +1,39 @@
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment: au or brainforge (release tags only). dev/staging are automation-owned — do not dispatch.'
+        required: true
+        type: string
+        default: au
+      tag:
+        description: 'Release/version tag to deploy (e.g. 0.1.42)'
+        required: true
+        type: string
+
+jobs:
+  pick-runner:
+    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
+    secrets: inherit
+  prepare:
+    needs: pick-runner
+    runs-on: ${{ needs.pick-runner.outputs.label }}
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+    steps:
+      - name: Build lowercase image tag
+        id: tag
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=${IMAGE_NAME}:${{ inputs.tag }}" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: [pick-runner, prepare]
+    uses: BrainForgeAU/.github/.github/workflows/deploy-to-flux.yml@main
+    with:
+      runner_label: ${{ needs.pick-runner.outputs.label }}
+      environment_name: ${{ inputs.environment }}
+      image_tag: ${{ needs.prepare.outputs.image_tag }}
+    secrets: inherit

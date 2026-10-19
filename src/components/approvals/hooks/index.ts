@@ -10,4 +10,3 @@ export {
   useMakeApprovalDecision,
   useCancelApproval,
 } from './useApprovalWorkflows';
-export { useApprovalWorkflowsTable } from './useApprovalWorkflowsTable';

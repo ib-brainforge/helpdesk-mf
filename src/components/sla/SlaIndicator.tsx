@@ -1,9 +1,9 @@
-import type { FC } from 'react';
 import { StatusBadge } from '@/components/shared';
+import { type SlaIndicatorDto, SlaStatus } from '@/types';
 import { Box, Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import { SlaStatus, type SlaIndicatorDto } from '@/types';
+import type { FC } from 'react';
 
 interface SlaIndicatorProps {
   slaData: SlaIndicatorDto;
@@ -30,7 +30,9 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
     return `${hours}h ${mins}m`;
   };
 
-  const getStatusColor = (status: SlaStatus | undefined): 'success' | 'warning' | 'danger' => {
+  const getStatusColor = (
+    status: SlaStatus | undefined,
+  ): 'success' | 'warning' | 'danger' => {
     switch (status) {
       case SlaStatus.OnTrack:
         return 'success';
@@ -60,18 +62,20 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
     return (
       <div className="flex gap-2">
         {slaData.responseStatus !== undefined && (
-          <StatusBadge
-            color={getStatusColor(slaData.responseStatus)}
-          >
-            <Icon name={getStatusIcon(slaData.responseStatus)} className="h-3 w-3" />
+          <StatusBadge color={getStatusColor(slaData.responseStatus)}>
+            <Icon
+              name={getStatusIcon(slaData.responseStatus)}
+              className="h-3 w-3"
+            />
             Response: {formatTimeRemaining(slaData.responseTimeRemaining)}
           </StatusBadge>
         )}
         {slaData.resolutionStatus !== undefined && (
-          <StatusBadge
-            color={getStatusColor(slaData.resolutionStatus)}
-          >
-            <Icon name={getStatusIcon(slaData.resolutionStatus)} className="h-3 w-3" />
+          <StatusBadge color={getStatusColor(slaData.resolutionStatus)}>
+            <Icon
+              name={getStatusIcon(slaData.resolutionStatus)}
+              className="h-3 w-3"
+            />
             Resolution: {formatTimeRemaining(slaData.resolutionTimeRemaining)}
           </StatusBadge>
         )}
@@ -92,12 +96,15 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
               <span className="font-medium">First Response Time</span>
             </div>
             <div className="text-right">
-              <p className={`font-semibold text-${getStatusColor(slaData.responseStatus)}`}>
+              <p
+                className={`font-semibold text-${getStatusColor(slaData.responseStatus)}`}
+              >
                 {formatTimeRemaining(slaData.responseTimeRemaining)}
               </p>
               {slaData.responseTimeDeadline && (
-                <p className="text-xs text-gray-500">
-                  Due: {formatDateTime(slaData.responseTimeDeadline, { timezone })}
+                <p className="text-xs text-default-500 dark:text-default-400">
+                  Due:{' '}
+                  {formatDateTime(slaData.responseTimeDeadline, { timezone })}
                 </p>
               )}
             </div>
@@ -114,12 +121,15 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
               <span className="font-medium">Resolution Time</span>
             </div>
             <div className="text-right">
-              <p className={`font-semibold text-${getStatusColor(slaData.resolutionStatus)}`}>
+              <p
+                className={`font-semibold text-${getStatusColor(slaData.resolutionStatus)}`}
+              >
                 {formatTimeRemaining(slaData.resolutionTimeRemaining)}
               </p>
               {slaData.resolutionTimeDeadline && (
-                <p className="text-xs text-gray-500">
-                  Due: {formatDateTime(slaData.resolutionTimeDeadline, { timezone })}
+                <p className="text-xs text-default-500 dark:text-default-400">
+                  Due:{' '}
+                  {formatDateTime(slaData.resolutionTimeDeadline, { timezone })}
                 </p>
               )}
             </div>

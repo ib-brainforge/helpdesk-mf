@@ -22,7 +22,12 @@ export interface PlatformTicketListItem {
 }
 
 export type PlatformTicketStatus = 'New' | 'InProgress' | 'Closed';
-export type PlatformTicketPriority = 'None' | 'Low' | 'Normal' | 'High' | 'Critical';
+export type PlatformTicketPriority =
+  | 'None'
+  | 'Low'
+  | 'Normal'
+  | 'High'
+  | 'Critical';
 
 export interface PlatformTicketFilters {
   status?: PlatformTicketStatus;
@@ -62,13 +67,6 @@ export interface PlatformTicketComment {
   commentType: string;
   idempotencyKey?: string | null;
   createdAt: string;
-}
-
-export interface TenantTicketFilters {
-  status?: string;
-  priority?: string;
-  categoryId?: string;
-  searchTerm?: string;
 }
 
 export interface PagedResult<T> {

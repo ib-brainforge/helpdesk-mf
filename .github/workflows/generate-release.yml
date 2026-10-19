@@ -1,0 +1,154 @@
+name: Generate Draft Release
+
+on:
+  workflow_run:
+    workflows: ["Build and Deploy Helpdesk MF"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  pick-runner:
+    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
+    secrets: inherit
+  generate-release:
+    needs: pick-runner
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ${{ needs.pick-runner.outputs.label }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from build
+        id: version
+        run: |
+          RUN_NUMBER=${{ github.event.workflow_run.run_number }}
+          VERSION="${{ vars.VERSION_MAJOR || '0' }}.${{ vars.VERSION_MINOR || '1' }}.${RUN_NUMBER}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get last release tag
+        id: last
+        run: |
+          TAG=$(git tag --list '${{ vars.VERSION_MAJOR || '0' }}.${{ vars.VERSION_MINOR || '1' }}.*' --sort=-v:refname | head -1)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          if [ -n "$TAG" ]; then
+            echo "Last release: $TAG"
+          else
+            echo "No previous release found"
+          fi
+
+      - name: Get commits since last release
+        id: commits
+        env:
+          LAST_TAG: ${{ steps.last.outputs.tag }}
+        run: |
+          if [ -n "$LAST_TAG" ]; then
+            COMMITS=$(git log "$LAST_TAG"..HEAD --oneline --no-merges)
+          else
+            COMMITS=$(git log --oneline --no-merges -20)
+          fi
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Write commits to file
+        env:
+          COMMITS: ${{ steps.commits.outputs.commits }}
+        run: |
+          printf '%s\n' "$COMMITS" > /tmp/commits.txt
+
+      - name: Generate release notes via LLM
+        id: llm
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.last.outputs.tag }}
+        run: |
+          SERVICE_NAME=$(echo "${{ github.repository }}" | sed 's|.*/||')
+          IMAGE_TAG="ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]'):$VERSION"
+          LAST_TAG="$RELEASE_TAG"
+          if [ -z "$LAST_TAG" ]; then LAST_TAG="beginning"; fi
+
+          cp .github/prompts/release-notes-user.md /tmp/user-prompt.md
+          sed -i "s|{{SERVICE_NAME}}|$SERVICE_NAME|g" /tmp/user-prompt.md
+          sed -i "s|{{VERSION}}|$VERSION|g" /tmp/user-prompt.md
+          sed -i "s|{{IMAGE_TAG}}|$IMAGE_TAG|g" /tmp/user-prompt.md
+          sed -i "s|{{LAST_TAG}}|$LAST_TAG|g" /tmp/user-prompt.md
+          sed -i '/{{COMMITS}}/{
+            r /tmp/commits.txt
+            d
+          }' /tmp/user-prompt.md
+
+          PROVIDER="${{ vars.LLM_PROVIDER }}"
+
+          if [ "$PROVIDER" = "anthropic" ]; then
+            PAYLOAD=$(jq -n \
+              --arg model "${{ vars.LLM_MODEL }}" \
+              --rawfile system .github/prompts/release-notes-system.md \
+              --rawfile user /tmp/user-prompt.md \
+              '{
+                model: $model,
+                system: $system,
+                messages: [{role: "user", content: $user}],
+                temperature: 0.3,
+                max_tokens: 2000
+              }')
+
+            RESPONSE=$(curl -s -w "\n%{http_code}" "${{ vars.LLM_API_URL }}" \
+              -H "x-api-key: ${{ secrets.LLM_API_KEY }}" \
+              -H "anthropic-version: 2023-06-01" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+          else
+            PAYLOAD=$(jq -n \
+              --arg model "${{ vars.LLM_MODEL }}" \
+              --rawfile system .github/prompts/release-notes-system.md \
+              --rawfile user /tmp/user-prompt.md \
+              '{
+                model: $model,
+                messages: [
+                  {role: "system", content: $system},
+                  {role: "user", content: $user}
+                ],
+                temperature: 0.3,
+                max_tokens: 2000
+              }')
+
+            RESPONSE=$(curl -s -w "\n%{http_code}" "${{ vars.LLM_API_URL }}" \
+              -H "Authorization: Bearer ${{ secrets.LLM_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+          fi
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "LLM API returned HTTP $HTTP_CODE"
+            echo "$BODY" | head -5
+            echo "Falling back to commit list as release notes"
+            NOTES="### Changes
+          $(cat /tmp/commits.txt)"
+          else
+            if [ "$PROVIDER" = "anthropic" ]; then
+              NOTES=$(echo "$BODY" | jq -r '.content[0].text')
+            else
+              NOTES=$(echo "$BODY" | jq -r '.choices[0].message.content')
+            fi
+          fi
+
+          echo "$NOTES" > /tmp/release-notes.md
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          TITLE="$REPO_NAME $VERSION"
+          gh release create "$VERSION" \
+            --title "$TITLE" \
+            --notes-file /tmp/release-notes.md \
+            --target main \
+            --draft

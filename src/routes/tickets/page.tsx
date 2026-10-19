@@ -1,59 +1,34 @@
-import React, { useState } from 'react';
-import { PageSpinner } from '@brainforgeau/components/base';
-import { withAuthenticationRequired, usePermissions } from '@brainforgeau/security';
-import { Tabs, Tab } from '@heroui/react';
-import { TicketGrid } from '@/components/tickets/components/TicketGrid';
-import { UnifiedTicketGrid } from '@/components/tickets/components/UnifiedTicketGrid';
-import { TenantViewerPanel } from '@/components/tickets/components/TenantViewerPanel';
-
 /**
- * Unified Tickets Page with tabbed interface
+ * Tenant Tickets Page — single list of tenant-scoped tickets.
  *
- * - "My Tickets" tab: Regular tenant tickets
- * - "Platform Tickets" tab: Platform-wide support tickets (requires helpdesk.platform.manage)
- * - "Tenant Viewer" tab: Admin cross-tenant viewer (requires elevated access)
+ * The former 3-tab UI (My Tickets / Platform Tickets / Tenant Viewer) has been removed:
+ * - Platform self-service tickets are now handled via the navbar widget (/v1/platform/my-tickets).
+ * - The principal admin/agent console lives at /principal/{id}/tickets.
+ * - The flat helpdesk.platform.manage role and Tenant Viewer have been deleted.
  */
+
+import { AppAuthSplash } from '@/components/AppSplash';
+import { TicketGrid } from '@/components/tickets/components/TicketGrid';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import React from 'react';
+
 function TicketsPage() {
-  const { hasPermission, hasElevatedAccess } = usePermissions();
-  const [activeTab, setActiveTab] = useState<string>('regular');
-
-  const hasPlatformManage = hasPermission('helpdesk.platform.manage');
-  const hasTenantViewer = hasElevatedAccess;
-
   return (
-    <div className="flex flex-col h-full">
-      <div className="shrink-0 px-6 pt-4 pb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Tickets</h1>
-        <Tabs
-          selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as string)}
-          aria-label="Ticket views"
-          variant="underlined"
-          classNames={{
-            tabList:
-              'gap-0.5 relative rounded-none p-0 shadow-[inset_0_-1px_0_0_var(--color-white),inset_0_-3px_0_0_var(--color-light)]',
-            cursor: 'w-full bg-blue',
-            tab: 'max-w-fit h-11.5 px-1 md:px-5 font-medium text-sm relative z-10 span:text-blue !opacity-100 *:min-h-1 hover:*:!text-blue',
-            tabContent: 'group-data-[selected=true]:text-blue',
-            panel: 'p-0',
-          }}
-          color="primary"
-        >
-          <Tab key="regular" title="My Tickets" />
-          {hasPlatformManage && <Tab key="platform" title="Platform Tickets" />}
-          {hasTenantViewer && <Tab key="tenant" title="Tenant Viewer" />}
-        </Tabs>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === 'regular' && <TicketGrid />}
-        {activeTab === 'platform' && hasPlatformManage && <UnifiedTicketGrid source="platform" />}
-        {activeTab === 'tenant' && hasTenantViewer && <TenantViewerPanel />}
-      </div>
+    // `flex-1 min-h-0`, not `h-full`: `h-full` resolved against a parent with
+    // no definite height and collapsed to auto.
+    //
+    // This alone does NOT bound the page — measured in the browser, the whole
+    // ancestor chain (html > body > div#root > div.flex.flex-1) is plain block
+    // boxes sized by their content, so there is no height for `flex-1` to
+    // divide up. TicketGrid measures its own viewport height for that reason;
+    // see the comment on its useLayoutEffect. This keeps the wrapper from
+    // adding a second, conflicting sizing rule on top of it.
+    <div className="flex w-full min-h-0 flex-1 flex-col">
+      <TicketGrid />
     </div>
   );
 }
 
 export default withAuthenticationRequired(TicketsPage, {
-  OnRedirecting: () => <PageSpinner title="Loading..." />,
+  OnRedirecting: () => <AppAuthSplash />,
 });

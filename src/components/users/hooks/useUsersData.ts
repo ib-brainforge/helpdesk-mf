@@ -1,10 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import type { PaginationState } from '@tanstack/react-table';
-import { UsersApi, type UserDto } from '@brainforgeau/identity-management-client';
-import { createIdentityApiClient } from '@/utils/identityApiClient';
-import { useAtomValue } from 'jotai';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
+import { createIdentityApiClient } from '@/utils/identityApiClient';
+import {
+  type UserDto,
+  UsersApi,
+} from '@brainforgeau/identity-management-client';
+import { useQuery } from '@tanstack/react-query';
+import type { PaginationState } from '@tanstack/react-table';
+import { useAtomValue } from 'jotai';
+import { useCallback, useState } from 'react';
 
 export interface IdentityUserItem {
   id: string;
@@ -25,7 +28,12 @@ export const useUsersData = () => {
   });
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['identity-users', contextKey, pagination.pageIndex + 1, pagination.pageSize],
+    queryKey: [
+      'identity-users',
+      contextKey,
+      pagination.pageIndex + 1,
+      pagination.pageSize,
+    ],
     queryFn: async () => {
       const client = await createIdentityApiClient(UsersApi);
       const { data } = await client.v1UsersGet(
@@ -42,11 +50,13 @@ export const useUsersData = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const items: IdentityUserItem[] = (data?.items ?? []).map((user: UserDto) => ({
-    id: user.keycloakUserId ?? user.id ?? '',
-    name: getUserName(user),
-    email: user.email ?? undefined,
-  }));
+  const items: IdentityUserItem[] = (data?.items ?? []).map(
+    (user: UserDto) => ({
+      id: user.keycloakUserId ?? user.id ?? '',
+      name: getUserName(user),
+      email: user.email ?? undefined,
+    }),
+  );
 
   const totalCount = data?.totalCount ?? 0;
 

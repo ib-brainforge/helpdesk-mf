@@ -1,15 +1,14 @@
-import { useState } from 'react';
 import {
   type ColumnDef,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
   type VisibilityState,
-  type RowSelectionState,
   getCoreRowModel,
   getSortedRowModel,
-  getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { useState } from 'react';
 import type { TicketRow } from '../types';
 
 interface UseTicketsTableProps {
@@ -17,7 +16,6 @@ interface UseTicketsTableProps {
   columns: ColumnDef<TicketRow>[];
   totalCount: number;
   pagination: PaginationState;
-  searchTerm: string;
   onPaginationChange?: (pagination: PaginationState) => void;
 }
 
@@ -26,7 +24,6 @@ export const useTicketsTable = ({
   columns,
   totalCount,
   pagination,
-  searchTerm,
   onPaginationChange,
 }: UseTicketsTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -40,21 +37,27 @@ export const useTicketsTable = ({
       sorting,
       columnVisibility,
       pagination,
-      globalFilter: searchTerm,
       rowSelection,
     },
-    getRowId: (row) => row.id ?? '',
+    getRowId: row => row.id ?? '',
     manualPagination: true,
     pageCount: Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     rowCount: totalCount,
     enableSorting: true,
-    enableGlobalFilter: true,
+    /*
+     * No client-side search. The rows are the server's search results already:
+     * it matches assignee and requester names, category, scope, status and the
+     * id. Filtering them again here by the visible text dropped every row
+     * matched through something the table does not show as plain text (a
+     * search for an assignee's name listed nothing under a badge of 414).
+     */
+    enableGlobalFilter: false,
     enableColumnFilters: false,
     enableRowSelection: true,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: (updater) => {
+    onPaginationChange: updater => {
       if (onPaginationChange) {
         const newPagination =
           typeof updater === 'function' ? updater(pagination) : updater;
@@ -63,7 +66,6 @@ export const useTicketsTable = ({
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return { table };

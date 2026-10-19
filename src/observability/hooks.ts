@@ -4,9 +4,9 @@
  * Page tracking and action tracking hooks for observability.
  */
 
-import { useEffect, useRef } from 'react';
+import { useLogger, useMetrics, useTracker } from '@brainforgeau/observability';
 import { useLocation } from '@modern-js/runtime/router';
-import { useTracker, useLogger, useMetrics } from '@brainforgeau/observability';
+import { useEffect, useRef } from 'react';
 
 /**
  * Hook that automatically tracks page views when the route changes.
@@ -66,7 +66,14 @@ export function usePageTracking(options?: { category?: string }) {
     // Update refs for next navigation
     previousPathRef.current = currentPath;
     pageLoadTimeRef.current = Date.now();
-  }, [location.pathname, location.search, tracker, logger, metrics, options?.category]);
+  }, [
+    location.pathname,
+    location.search,
+    tracker,
+    logger,
+    metrics,
+    options?.category,
+  ]);
 }
 
 export type UserActionType =
@@ -100,7 +107,7 @@ export function useActionTracking(category: string) {
     trackAction: (
       action: UserActionType,
       label: string,
-      metadata?: Record<string, unknown>
+      metadata?: Record<string, unknown>,
     ) => {
       tracker.trackAction({
         action,
@@ -124,7 +131,11 @@ export function useActionTracking(category: string) {
     /**
      * Track an error that occurred during user interaction
      */
-    trackError: (error: Error, action?: string, metadata?: Record<string, unknown>) => {
+    trackError: (
+      error: Error,
+      action?: string,
+      metadata?: Record<string, unknown>,
+    ) => {
       tracker.trackError(error, {
         category,
         action,

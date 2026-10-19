@@ -1,103 +1,290 @@
-import { useState } from 'react';
-import { Helmet } from '@modern-js/runtime/head';
-import { Icon } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { BaseInput } from '@brainforgeau/components';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { useCannedResponses, useDeleteCannedResponse } from '@/components/canned-responses/hooks/useCannedResponses';
 import { CannedResponseEditorModal } from '@/components/canned-responses/components/CannedResponseEditorModal';
+import {
+  useCannedResponses,
+  useDeleteCannedResponse,
+} from '@/components/canned-responses/hooks/useCannedResponses';
+import { IconTip, ScopeLabel } from '@/components/shared';
+import { selectedContextAtom } from '@/state/auth-atoms';
+import { requireIdentityApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CannedResponseDto } from '@/types/canned-response';
-import { addToast } from '@heroui/react';
 import { CannedResponseScope } from '@/types/canned-response';
+import {
+  toBulkScopeSaveResult,
+  toHelpdeskScopePatch,
+  toScopeMeta,
+  toWireMeta,
+} from '@/utils/scopeMeta';
+import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
+import { BaseInput } from '@brainforgeau/components';
+import { Icon } from '@brainforgeau/components/base';
+import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
+import { BaseButton } from '@brainforgeau/components/button';
+import { ListScopeStrip } from '@brainforgeau/components/list-scope-strip';
+import {
+  EmptyState,
+  ListPage,
+  useConfirm,
+} from '@brainforgeau/components/page';
+import { useScopeList } from '@brainforgeau/components/scope-list';
+import { ScopeApi } from '@brainforgeau/helpdesk-client';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
+import { toast } from '@heroui/react';
+import {
+  type ColumnDef,
+  createColumnHelper,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useAtomValue } from 'jotai';
+import { useCallback, useMemo, useState } from 'react';
+
+const columnHelper = createColumnHelper<CannedResponseDto>();
+
+const SCOPE_COLORS: Record<CannedResponseScope, string> = {
+  [CannedResponseScope.Personal]: 'bg-default-100 text-default-800',
+  [CannedResponseScope.Shared]: 'bg-primary-100 text-primary-800',
+};
+
+const SCOPE_LABELS: Record<CannedResponseScope, string> = {
+  [CannedResponseScope.Personal]: 'Personal',
+  [CannedResponseScope.Shared]: 'Shared',
+};
+
+function getScopeBadge(scope: CannedResponseScope) {
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs ${SCOPE_COLORS[scope]}`}>
+      {SCOPE_LABELS[scope]}
+    </span>
+  );
+}
 
 function CannedResponsesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingResponse, setEditingResponse] = useState<CannedResponseDto | undefined>();
+  const [editingResponse, setEditingResponse] = useState<
+    CannedResponseDto | undefined
+  >();
 
-  const { cannedResponses, isLoading } = useCannedResponses(undefined, searchTerm);
+  const { cannedResponses, isLoading, refetch } = useCannedResponses(
+    undefined,
+    searchTerm,
+  );
   const deleteMutation = useDeleteCannedResponse();
+  const { confirm, dialog } = useConfirm();
+
+  // DTO tenancy/scope metadata initiative -- see useAccessScope for why this
+  // isn't @brainforgeau/security's useHierarchicalContext.
+  const selectedContext = useAtomValue(selectedContextAtom);
+  const { accessScope, organisationCount } = useAccessScope(
+    selectedContext?.tenantId,
+    { identityBaseUrl: requireIdentityApiBaseUrl() },
+  );
+  const { hasPlatformPermission } = usePermissions();
+  const canManageScope = hasPlatformPermission(
+    PlatformPermissions.Scope.Manage,
+  );
+  const currentOrganisationId = selectedContext?.organisationId;
+  const currentDivisionId = selectedContext?.divisionId;
+
+  const scope = useScopeList({
+    rows: cannedResponses,
+    getMeta: row => toWireMeta(row.meta),
+    getRecordId: row => row.id ?? '',
+    getRecordLabel: row => row.title ?? '',
+    accessScope,
+    selectedContext,
+    canManageScope,
+    canViewScope: hasPlatformPermission(PlatformPermissions.Scope.Read),
+    // entityType verified against helpdesk-backend's `HelpdeskDbContext`
+    // (`DbSet<CannedResponse> CannedResponses`).
+    patchScope: async (ids, patch) => {
+      const client = await createHelpdeskApiClient(ScopeApi);
+      const response = await client.v1ScopeEntityTypePatch('CannedResponse', {
+        ids,
+        patch: toHelpdeskScopePatch(patch),
+      });
+      return toBulkScopeSaveResult(response.data);
+    },
+    refetch: async () => {
+      await refetch();
+    },
+    // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc comment
+    // in scopeTestingBypass.ts. Remove this line to revert.
+    bypassSingleOrganisationSuppressionForTesting:
+      SCOPE_TESTING_BYPASS_SINGLE_ORG,
+    entityLabel: { one: 'canned response', other: 'canned responses' },
+  });
 
   const handleCreate = () => {
     setEditingResponse(undefined);
     setIsEditorOpen(true);
   };
 
-  const handleEdit = (response: CannedResponseDto) => {
+  const handleEdit = useCallback((response: CannedResponseDto) => {
     setEditingResponse(response);
     setIsEditorOpen(true);
-  };
+  }, []);
 
-  const handleDelete = async (id: string, title: string) => {
-    if (confirm(`Are you sure you want to delete "${title}"?`)) {
+  const handleDeleteRequest = useCallback(
+    async (id: string, title: string) => {
+      const ok = await confirm({
+        title: 'Delete Canned Response',
+        body: `Are you sure you want to delete "${title}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
       try {
         await deleteMutation.mutateAsync(id);
-        addToast({
-          title: 'Deleted',
+        toast('Deleted', {
           description: 'Canned response deleted successfully',
-          severity: 'success',
+          variant: 'success',
         });
-      } catch (error) {
-        addToast({
-          title: 'Error',
+      } catch {
+        toast('Error', {
           description: 'Failed to delete canned response',
-          severity: 'danger',
+          variant: 'danger',
         });
       }
-    }
-  };
+    },
+    [confirm, deleteMutation],
+  );
 
   const handleExportCSV = () => {
     // REVIEW: Export functionality to be implemented
-    addToast({
-      title: 'Coming soon',
+    toast('Coming soon', {
       description: 'CSV export will be available soon',
-      severity: 'warning',
+      variant: 'warning',
     });
   };
 
-  const getScopeBadge = (scope: CannedResponseScope) => {
-    const colors: Record<CannedResponseScope, string> = {
-      [CannedResponseScope.Personal]: 'bg-default-100 text-default-800',
-      [CannedResponseScope.Team]: 'bg-primary-100 text-primary-800',
-      [CannedResponseScope.Global]: 'bg-secondary-100 text-secondary-800',
-    };
-    const labels: Record<CannedResponseScope, string> = {
-      [CannedResponseScope.Personal]: 'Personal',
-      [CannedResponseScope.Team]: 'Team',
-      [CannedResponseScope.Global]: 'Global',
-    };
-    return (
-      <span className={`px-2 py-0.5 rounded-full text-xs ${colors[scope]}`}>
-        {labels[scope]}
-      </span>
-    );
-  };
+  const columns = useMemo(
+    (): ColumnDef<CannedResponseDto, any>[] => [
+      columnHelper.display({
+        id: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => handleEdit(row.original)}
+            className="text-primary hover:underline font-medium"
+          >
+            {row.original.title}
+          </button>
+        ),
+      }),
+      columnHelper.display({
+        id: 'scope',
+        header: 'Scope',
+        cell: ({ row }) =>
+          getScopeBadge(row.original.scope as CannedResponseScope),
+        size: 120,
+      }),
+      columnHelper.display({
+        id: 'placement',
+        header: 'Placement',
+        cell: ({ row }) => (
+          <ScopeLabel meta={toScopeMeta(toWireMeta(row.original.meta))} />
+        ),
+        size: 140,
+      }),
+      columnHelper.display({
+        id: 'category',
+        header: 'Category',
+        cell: ({ row }) => (
+          <span className="text-sm text-default-600">
+            {row.original.categoryName || '—'}
+          </span>
+        ),
+        size: 160,
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="-my-1.5 flex items-center justify-end gap-1">
+            <IconTip label={'Edit canned response'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit canned response"
+                onPress={() => handleEdit(row.original)}
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label={'Delete canned response'}>
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete canned response"
+                onPress={() =>
+                  handleDeleteRequest(
+                    row.original.id ?? '',
+                    row.original.title ?? '',
+                  )
+                }
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
+          </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 80,
+      }),
+    ],
+    [
+      handleEdit,
+      handleDeleteRequest,
+      currentOrganisationId,
+      currentDivisionId,
+      organisationCount,
+    ],
+  );
+
+  const table = useReactTable<CannedResponseDto>({
+    data: scope.filteredRows,
+    columns,
+    // Keys row selection by the record's own id, matching `useScopeList`'s
+    // `getRecordId` above -- required so `scope.rowSelection` (keyed by id)
+    // and the table's own selection checkboxes agree on the same keys.
+    getRowId: row => row.id ?? '',
+    state: { rowSelection: scope.rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: scope.onRowSelectionChange,
+    getCoreRowModel: getCoreRowModel(),
+    enableSorting: false,
+  });
 
   return (
-    <>
-      <Helmet>
-        <title>Canned Responses - Helpdesk</title>
-      </Helmet>
-
-      <div className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Configuration', href: '/configuration' },
-            { label: 'Canned Responses', href: '/configuration/canned-responses', isCurrent: true },
-          ]}
-        />
-      </div>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Canned Responses</h1>
-          <p className="text-default-500 mt-1">Manage pre-written responses for common questions</p>
-        </div>
+    <ListPage
+      title="Canned Responses"
+      breadcrumbsKey="configuration.canned-responses.list"
+      table={table}
+      isLoading={isLoading}
+      // `selectionColumn`'s checkboxes are now wired to `scope.rowSelection`/
+      // `onRowSelectionChange` (see `useReactTable()` above) -- selecting
+      // rows here feeds `editorProps.selectedRecords`, so "Change scope"
+      // (rendered inside `ListScopeStrip`'s `subheader` below) bulk-edits the
+      // selection, same as `rowMarker`'s per-row scope border.
+      tableProps={scope.tableProps}
+      subheader={
+        <ListScopeStrip {...scope.bannerProps}>
+          {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+        </ListScopeStrip>
+      }
+      actions={
         <div className="flex gap-2">
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleExportCSV}
             icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
           >
@@ -111,96 +298,49 @@ function CannedResponsesPage() {
             Create
           </BaseButton>
         </div>
-      </div>
-
-      <div className="mb-4">
+      }
+      filters={
         <BaseInput
           placeholder="Search canned responses..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          startContent={<Icon name="magnifying-glass" className="h-4 w-4 text-default-400" />}
+          onChange={e => setSearchTerm(e.target.value)}
+          startContent={
+            <Icon
+              name="magnifying-glass"
+              className="h-4 w-4 text-default-400"
+            />
+          }
           className="max-w-md"
         />
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <span className="text-default-500">Loading...</span>
-        </div>
-      ) : cannedResponses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg">
-          <Icon name="document-text" className="h-12 w-12 text-default-300 mb-3" />
-          <p className="text-default-500 mb-1">No canned responses yet</p>
-          <p className="text-default-400 text-sm mb-4">Create your first canned response to get started</p>
-          <BaseButton color="primary" onPress={handleCreate}>
-            Create Canned Response
-          </BaseButton>
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-default-100 border-b">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold">Name</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold">Scope</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold">Category</th>
-                <th className="text-right px-4 py-3 text-sm font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cannedResponses.map((response) => (
-                <tr key={response.id} className="border-b hover:bg-default-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(response)}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      {response.title}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    {getScopeBadge(response.scope as unknown as CannedResponseScope)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-default-600">
-                    {response.categoryName || '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(response)}
-                        className="p-1 hover:bg-default-100 rounded"
-                        title="Edit"
-                      >
-                        <Icon name="pencil" className="h-4 w-4 text-default-600" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(response.id!, response.title!)}
-                        className="p-1 hover:bg-danger-50 rounded"
-                        title="Delete"
-                      >
-                        <Icon name="trash" className="h-4 w-4 text-danger" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <CannedResponseEditorModal
-        isOpen={isEditorOpen}
-        onClose={() => {
-          setIsEditorOpen(false);
-          setEditingResponse(undefined);
-        }}
-        cannedResponse={editingResponse}
-      />
-    </>
+      }
+      hasActiveFilters={searchTerm.length > 0}
+      onClearFilters={() => setSearchTerm('')}
+      empty={
+        <EmptyState
+          title="No canned responses yet"
+          description="Create your first canned response to get started."
+          action={
+            <BaseButton color="primary" onPress={handleCreate}>
+              Create Canned Response
+            </BaseButton>
+          }
+          live
+        />
+      }
+      modals={
+        <>
+          <CannedResponseEditorModal
+            isOpen={isEditorOpen}
+            onClose={() => {
+              setIsEditorOpen(false);
+              setEditingResponse(undefined);
+            }}
+            cannedResponse={editingResponse}
+          />
+          {dialog}
+        </>
+      }
+    />
   );
 }
 

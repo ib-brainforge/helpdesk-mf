@@ -1,20 +1,24 @@
-import { useState, useMemo, type FC } from 'react';
-import { Checkbox, CheckboxGroup } from '@heroui/react';
-import { Box } from '@brainforgeau/components/base';
-import { BaseButton } from '@brainforgeau/components/button';
-import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
+import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
+import { TicketPriority, TicketStatus } from '@/types';
+import {
+  BaseCheckbox,
+  BaseCheckboxGroup,
+  BaseTagSelect,
+  BaseTagSelectItem,
+} from '@brainforgeau/components';
 import { BaseTable } from '@brainforgeau/components';
+import { Box } from '@brainforgeau/components/base';
 import { Icon } from '@brainforgeau/components/base';
+import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import {
-  useReactTable,
-  getCoreRowModel,
   type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
 } from '@tanstack/react-table';
+import { type FC, useMemo, useState } from 'react';
 import { useCustomReport } from '../hooks/useReports';
-import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
-import { TicketStatus, TicketPriority } from '@/types';
 
 // REVIEW: Using local state for filters - can be lifted to parent if needed
 interface CustomReportBuilderProps {
@@ -45,15 +49,18 @@ const STATUS_OPTIONS = [
   { value: TicketStatus.Closed, label: 'Closed' },
 ];
 
+// None is omitted: it is no longer selectable anywhere a ticket is created or
+// edited, so reporting on it can only ever surface legacy rows.
 const PRIORITY_OPTIONS = [
-  { value: TicketPriority.None, label: 'None' },
   { value: TicketPriority.Low, label: 'Low' },
   { value: TicketPriority.Normal, label: 'Normal' },
   { value: TicketPriority.High, label: 'High' },
   { value: TicketPriority.Critical, label: 'Critical' },
 ];
 
-export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) => {
+export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({
+  onExport,
+}) => {
   const timezone = useTimezone();
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     'id',
@@ -64,7 +71,9 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
   ]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
-  const [reportData, setReportData] = useState<CustomReportResultDto | null>(null);
+  const [reportData, setReportData] = useState<CustomReportResultDto | null>(
+    null,
+  );
 
   const { mutate: generateReport, isPending: isGenerating } = useCustomReport();
 
@@ -76,7 +85,7 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
     };
 
     generateReport(request, {
-      onSuccess: (data) => {
+      onSuccess: data => {
         setReportData(data);
       },
     });
@@ -91,12 +100,12 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
   // Dynamic columns based on selected fields
   const tableColumns: ColumnDef<Record<string, unknown>, unknown>[] = useMemo(
     () =>
-      selectedColumns.map((colKey) => {
-        const columnDef = AVAILABLE_COLUMNS.find((c) => c.key === colKey);
+      selectedColumns.map(colKey => {
+        const columnDef = AVAILABLE_COLUMNS.find(c => c.key === colKey);
         return {
           accessorKey: colKey,
           header: columnDef?.label || colKey,
-          cell: (info) => {
+          cell: info => {
             const value = info.getValue();
             // Format dates
             if (colKey.includes('Date') || colKey.includes('At')) {
@@ -126,58 +135,65 @@ export const CustomReportBuilder: FC<CustomReportBuilderProps> = ({ onExport }) 
         <div className="space-y-6">
           {/* Column Selection */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Select Columns</label>
-            <CheckboxGroup
+            <label className="mb-2 block text-sm font-medium">
+              Select Columns
+            </label>
+            <BaseCheckboxGroup
               value={selectedColumns}
-              onChange={(values) => setSelectedColumns(values as string[])}
-              orientation="horizontal"
-              className="gap-4"
+              onValueChange={values => setSelectedColumns(values)}
+              className="flex flex-row flex-wrap gap-4"
             >
-              {AVAILABLE_COLUMNS.map((col) => (
-                <Checkbox key={col.key} value={col.key}>
+              {AVAILABLE_COLUMNS.map(col => (
+                <BaseCheckbox key={col.key} value={col.key}>
                   {col.label}
-                </Checkbox>
+                </BaseCheckbox>
               ))}
-            </CheckboxGroup>
+            </BaseCheckboxGroup>
           </div>
 
           {/* Status Filter */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Filter by Status</label>
-            <BaseSelect
-              selectionMode="multiple"
-              selectedKeys={new Set(selectedStatuses)}
-              onSelectionChange={(keys) => setSelectedStatuses(Array.from(keys) as string[])}
+            <label className="mb-2 block text-sm font-medium">
+              Filter by Status
+            </label>
+            <BaseTagSelect
+              value={selectedStatuses}
+              onValueChange={setSelectedStatuses}
               placeholder="All statuses"
-              className="w-full"
+              classNames={{ base: 'w-full' }}
             >
-              {STATUS_OPTIONS.map((opt) => (
-                <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+              {STATUS_OPTIONS.map(opt => (
+                <BaseTagSelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </BaseTagSelectItem>
               ))}
-            </BaseSelect>
+            </BaseTagSelect>
           </div>
 
           {/* Priority Filter */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Filter by Priority</label>
-            <BaseSelect
-              selectionMode="multiple"
-              selectedKeys={new Set(selectedPriorities)}
-              onSelectionChange={(keys) => setSelectedPriorities(Array.from(keys) as string[])}
+            <label className="mb-2 block text-sm font-medium">
+              Filter by Priority
+            </label>
+            <BaseTagSelect
+              value={selectedPriorities}
+              onValueChange={setSelectedPriorities}
               placeholder="All priorities"
-              className="w-full"
+              classNames={{ base: 'w-full' }}
             >
-              {PRIORITY_OPTIONS.map((opt) => (
-                <BaseSelectItem key={opt.value}>{opt.label}</BaseSelectItem>
+              {PRIORITY_OPTIONS.map(opt => (
+                <BaseTagSelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </BaseTagSelectItem>
               ))}
-            </BaseSelect>
+            </BaseTagSelect>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3">
             <BaseButton
               onClick={handleGenerate}
-              isLoading={isGenerating}
+              isDisabled={isGenerating}
               icon={<Icon name="chart-bar" className="h-4 w-4" />}
             >
               Generate Report

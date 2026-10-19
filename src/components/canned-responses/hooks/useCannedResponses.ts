@@ -1,15 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CannedResponsesApi } from '@brainforgeau/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CannedResponseDto } from '@/types/canned-response';
+import {
+  CannedResponsesApi,
+  type HelpdeskApplicationCannedResponsesCommandsCreateCannedResponseCreateCannedResponseCommand,
+  type HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand,
+} from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export const useCannedResponses = (categoryId?: string, searchTerm?: string) => {
+export const useCannedResponses = (
+  categoryId?: string,
+  searchTerm?: string,
+) => {
   const { data, isLoading, refetch } = useQuery<CannedResponseDto[]>({
     queryKey: ['helpdesk-canned-responses', categoryId, searchTerm],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CannedResponsesApi);
-      const response = await client.v1CannedResponsesGet(categoryId, searchTerm);
-      return (response.data ?? []) as CannedResponseDto[];
+      const response = await client.v1CannedResponsesGet(
+        categoryId,
+        searchTerm,
+      );
+      return response.data ?? [];
     },
   });
 
@@ -24,23 +34,17 @@ export const useCreateCannedResponse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (cannedResponse: {
-      title: string;
-      body: string;
-      categoryId?: string;
-      scope?: string;
-    }) => {
+    mutationFn: async (
+      command: HelpdeskApplicationCannedResponsesCommandsCreateCannedResponseCreateCannedResponseCommand,
+    ) => {
       const client = await createHelpdeskApiClient(CannedResponsesApi);
-      const response = await client.v1CannedResponsesPost({
-        title: cannedResponse.title,
-        body: cannedResponse.body,
-        categoryId: cannedResponse.categoryId,
-        scope: cannedResponse.scope as any,
-      });
+      const response = await client.v1CannedResponsesPost(command);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-canned-responses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-canned-responses'],
+      });
     },
   });
 };
@@ -54,24 +58,16 @@ export const useUpdateCannedResponse = () => {
       updates,
     }: {
       id: string;
-      updates: {
-        title?: string;
-        body?: string;
-        categoryId?: string;
-        scope?: string;
-      };
+      updates: HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand;
     }) => {
       const client = await createHelpdeskApiClient(CannedResponsesApi);
-      const response = await client.v1CannedResponsesIdPut(id, {
-        title: updates.title,
-        body: updates.body,
-        categoryId: updates.categoryId,
-        scope: updates.scope as any,
-      });
+      const response = await client.v1CannedResponsesIdPut(id, updates);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-canned-responses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-canned-responses'],
+      });
     },
   });
 };
@@ -85,7 +81,9 @@ export const useDeleteCannedResponse = () => {
       await client.v1CannedResponsesIdDelete(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['helpdesk-canned-responses'] });
+      queryClient.invalidateQueries({
+        queryKey: ['helpdesk-canned-responses'],
+      });
     },
   });
 };

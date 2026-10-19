@@ -1,9 +1,9 @@
-import { atom } from 'jotai';
 import {
+  type AuthState,
   getAuthState,
   subscribeToAuthState,
-  type AuthState,
 } from '@brainforgeau/security';
+import { atom } from 'jotai';
 
 /**
  * Local reactive auth state atom that syncs with the security package's window state.
@@ -11,7 +11,7 @@ import {
  */
 export const authStateAtom = atom<AuthState>(getAuthState());
 
-authStateAtom.onMount = (set) => {
+authStateAtom.onMount = set => {
   // Initialize with current state
   set(getAuthState());
   // Subscribe to state changes and return the unsubscribe function
@@ -21,14 +21,16 @@ authStateAtom.onMount = (set) => {
 /**
  * Derived atom for the selected context
  */
-export const selectedContextAtom = atom((get) => get(authStateAtom).selectedContext);
+export const selectedContextAtom = atom(
+  get => get(authStateAtom).selectedContext,
+);
 
 /**
  * Derived atom for the authenticated user
  */
-export const authUserAtom = atom((get) => get(authStateAtom).user);
+export const authUserAtom = atom(get => get(authStateAtom).user);
 
 /**
  * Derived atom for the context token
  */
-export const contextTokenAtom = atom((get) => get(authStateAtom).contextToken);
+export const contextTokenAtom = atom(get => get(authStateAtom).contextToken);

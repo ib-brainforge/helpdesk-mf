@@ -1,6 +1,6 @@
-import type { FC } from 'react';
-import { Chip } from '@heroui/react';
+import { IconTip } from '@/components/shared';
 import { Icon } from '@brainforgeau/components/base';
+import type { FC } from 'react';
 
 interface TagChipProps {
   name: string;
@@ -9,26 +9,37 @@ interface TagChipProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
+const SIZE_CLASSES: Record<NonNullable<TagChipProps['size']>, string> = {
+  sm: 'px-2 py-0.5 text-xs',
+  md: 'px-2.5 py-1 text-sm',
+  lg: 'px-3 py-1 text-sm',
+};
+
 export const TagChip: FC<TagChipProps> = ({
   name,
   color,
   onRemove,
   size = 'sm',
 }) => {
+  const sizeClass = SIZE_CLASSES[size];
   return (
-    <Chip
-      size={size}
-      variant="flat"
-      color={color ? undefined : 'primary'}
+    <span
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${sizeClass} ${!color ? 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300' : ''}`}
       style={color ? { backgroundColor: color, color: '#fff' } : undefined}
-      onClose={onRemove}
-      endContent={
-        onRemove ? (
-          <Icon name="x-mark" className="h-3 w-3 cursor-pointer" onClick={onRemove} />
-        ) : undefined
-      }
     >
       {name}
-    </Chip>
+      {onRemove && (
+        <IconTip label={`Remove tag ${name}`}>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="inline-flex items-center rounded-full hover:opacity-70"
+            aria-label={`Remove tag ${name}`}
+          >
+            <Icon name="x-mark" className="h-3 w-3" />
+          </button>
+        </IconTip>
+      )}
+    </span>
   );
 };

@@ -1,8 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
+import {
+  createHelpdeskApiClient,
+  createHelpdeskApiConfiguration,
+} from '@/state/helpdeskApiClient';
 import type { AttachmentDto, FileUploadProgress } from '@/types';
-import { useState, useCallback } from 'react';
+import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+
+const getApiBaseUrl = (): string => {
+  return requireHelpdeskApiBaseUrl();
+};
 
 export const useAttachments = (ticketId?: string) => {
   const { data, isLoading, refetch } = useQuery<AttachmentDto[]>({
@@ -12,9 +20,24 @@ export const useAttachments = (ticketId?: string) => {
 
       const client = await createHelpdeskApiClient(AttachmentsApi);
       const response = await client.v1AttachmentsTicketTicketIdGet(ticketId);
+      const baseUrl = getApiBaseUrl();
 
-      // REVIEW: Backend returns array directly, not wrapped in items
-      return (response.data ?? []) as unknown as AttachmentDto[];
+      // Map backend DTO fields to frontend AttachmentDto
+      return (response.data ?? []).map(item => ({
+        id: item.id ?? '',
+        fileName: item.fileName ?? '',
+        fileSize: item.fileSizeBytes ?? 0,
+        contentType: item.contentType ?? '',
+        url: `${baseUrl}/v1/attachments/${item.id}`,
+        uploadedById: item.uploadedByUserId ?? '',
+        // REVIEW: uploadedByName is not on the generated AttachmentDto (backend
+        // doesn't project the uploader's display name onto this DTO) — leaving
+        // undefined until the backend adds it or the UI enriches by user id.
+        uploadedByName: undefined,
+        uploadedAt: item.createdAt ?? '',
+        ticketId: item.ticketId ?? '',
+        commentId: item.commentId ?? undefined,
+      }));
     },
     enabled: Boolean(ticketId),
   });
@@ -28,7 +51,9 @@ export const useAttachments = (ticketId?: string) => {
 
 export const useUploadAttachment = () => {
   const queryClient = useQueryClient();
-  const [uploadProgress, setUploadProgress] = useState<FileUploadProgress[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<FileUploadProgress[]>(
+    [],
+  );
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -47,7 +72,7 @@ export const useUploadAttachment = () => {
       // Update progress tracking
       setUploadProgress(prev => [
         ...prev,
-        { fileName: file.name, progress: 0, status: 'uploading' }
+        { fileName: file.name, progress: 0, status: 'uploading' },
       ]);
 
       try {
@@ -61,18 +86,18 @@ export const useUploadAttachment = () => {
             onUploadProgress: (progressEvent: any) => {
               if (progressEvent.total) {
                 const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
+                  (progressEvent.loaded * 100) / progressEvent.total,
                 );
                 setUploadProgress(prev =>
                   prev.map(p =>
                     p.fileName === file.name
                       ? { ...p, progress: percentCompleted }
-                      : p
-                  )
+                      : p,
+                  ),
                 );
               }
             },
-          }
+          },
         );
 
         // Mark as complete
@@ -80,8 +105,8 @@ export const useUploadAttachment = () => {
           prev.map(p =>
             p.fileName === file.name
               ? { ...p, progress: 100, status: 'complete' }
-              : p
-          )
+              : p,
+          ),
         );
 
         return response.data;
@@ -93,23 +118,24 @@ export const useUploadAttachment = () => {
               ? {
                   ...p,
                   status: 'error',
-                  error: error instanceof Error ? error.message : 'Upload failed'
+                  error:
+                    error instanceof Error ? error.message : 'Upload failed',
                 }
-              : p
-          )
+              : p,
+          ),
         );
         throw error;
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['attachments', variables.ticketId]
+        queryKey: ['attachments', variables.ticketId],
       });
 
       // Clear completed upload from progress after a delay
       setTimeout(() => {
         setUploadProgress(prev =>
-          prev.filter(p => p.fileName !== variables.file.name)
+          prev.filter(p => p.fileName !== variables.file.name),
         );
       }, 2000);
     },
@@ -118,11 +144,11 @@ export const useUploadAttachment = () => {
   const uploadFiles = useCallback(
     async (files: File[], ticketId?: string, commentId?: string) => {
       const uploads = files.map(file =>
-        mutation.mutateAsync({ file, ticketId, commentId })
+        mutation.mutateAsync({ file, ticketId, commentId }),
       );
       return Promise.all(uploads);
     },
-    [mutation]
+    [mutation],
   );
 
   return {
