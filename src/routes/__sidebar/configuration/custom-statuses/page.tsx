@@ -367,9 +367,13 @@ function CustomStatusesPage() {
               metadata initiative) -- entirely driven by `useScopeList`
               (`scope.bannerProps`/`scope.editorProps`/`scope.isExpanded`). */}
           <div className="mt-3">
-            <ListScopeStrip {...scope.bannerProps}>
-              {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
-            </ListScopeStrip>
+            {scope.bannerProps && (
+              <ListScopeStrip {...scope.bannerProps}>
+                {scope.isExpanded && scope.editorProps && (
+                  <BulkScopeEditor {...scope.editorProps} />
+                )}
+              </ListScopeStrip>
+            )}
           </div>
         </>
       }

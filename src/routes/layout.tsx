@@ -349,7 +349,7 @@ export default function Layout() {
 
   const { config: whitelabelConfig, isLoading: whitelabelLoading } =
     useWhitelabel();
-  const brandName = whitelabelConfig?.branding?.appTitle ?? 'BrainForge';
+  const brandName = whitelabelConfig?.branding?.appTitle || undefined;
 
   // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
   const isPrincipalRoute = useMemo(

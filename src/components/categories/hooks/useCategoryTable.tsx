@@ -114,7 +114,7 @@ export function useCategoryTable({
               <div className="-my-1.5 flex items-center justify-end gap-2">
                 <span
                   className="bg-lighter-blue text-blue rounded-full px-2 py-0.5 text-[11px] font-medium"
-                  title="Provided by Netcorp. Cannot be edited or deleted here."
+                  title="Provided by the platform. Cannot be edited or deleted here."
                 >
                   Preset
                 </span>

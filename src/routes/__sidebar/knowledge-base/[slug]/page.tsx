@@ -241,7 +241,7 @@ function KnowledgeBaseArticlePage() {
         <div className="space-y-6">
           {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
               width, above the narrower metadata card below. */}
-          <ContextScopeStrip {...scopeStripProps} />
+          {scopeStripProps && <ContextScopeStrip {...scopeStripProps} />}
           <MetadataPanel
             meta={metaForPanel}
             scopeBadge={scopeBadge}

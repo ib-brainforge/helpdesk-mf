@@ -345,7 +345,7 @@ function EditApprovalWorkflowPage() {
             {/* Scope strip (DTO tenancy/scope metadata initiative) -- sits
                 above the form fields, same relative placement as asset-mf's/
                 hr-mf's detail pages (between header and content). */}
-            <ContextScopeStrip {...scopeStripProps} />
+            {scopeStripProps && <ContextScopeStrip {...scopeStripProps} />}
             <MetadataPanel
               meta={metaForPanel}
               scopeBadge={scopeBadge}

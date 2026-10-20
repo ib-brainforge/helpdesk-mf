@@ -156,7 +156,9 @@ export function CustomPriorityEditorModal({
           />
 
           {/* Placement only exists once the record does. */}
-          {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+          {isEditing && scopeStripProps && (
+            <ContextScopeStrip {...scopeStripProps} />
+          )}
           {isEditing && (
             <MetadataPanel
               meta={metaForPanel}

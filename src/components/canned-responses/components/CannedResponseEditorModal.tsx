@@ -183,7 +183,9 @@ export function CannedResponseEditorModal({
               isRequired
             />
 
-            {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+            {isEditing && scopeStripProps && (
+              <ContextScopeStrip {...scopeStripProps} />
+            )}
             {isEditing && (
               <MetadataPanel
                 meta={metaForPanel}

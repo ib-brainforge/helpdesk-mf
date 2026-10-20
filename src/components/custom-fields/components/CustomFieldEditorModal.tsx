@@ -251,7 +251,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
               )}
             </form.Field>
 
-            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
+            {isEdit && scopeStripProps && (
+              <ContextScopeStrip {...scopeStripProps} />
+            )}
             {isEdit && (
               <MetadataPanel
                 meta={metaForPanel}

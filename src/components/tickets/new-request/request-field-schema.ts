@@ -86,7 +86,7 @@ const preferredTime: FieldSpec = {
 
 const recentService: FieldSpec = {
   key: 'recentService',
-  label: 'Recent service or repair that may affect Netcorp hardware?',
+  label: 'Recent service or repair that may affect the hardware?',
   kind: 'select',
   options: ['Select', 'Yes', 'No'],
 };
