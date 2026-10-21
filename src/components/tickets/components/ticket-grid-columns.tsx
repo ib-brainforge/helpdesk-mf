@@ -355,6 +355,7 @@ export const createTicketColumns = (
       <DeadlineChip
         deadline={row.original.deadline}
         isClosed={row.original.status === TicketStatus.Closed}
+        showNone
       />
     ),
     enableSorting: sortable('deadline'),

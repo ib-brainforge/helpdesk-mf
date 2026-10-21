@@ -86,7 +86,7 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
         <span className="text-sm font-medium text-default-700">Deadline</span>
         {/* Live chip while open; Met, Late by or No deadline once finished,
           from the same helper as the list's Deadline cell. */}
-        <DeadlineChip deadline={deadline} isClosed={isClosed} />
+        <DeadlineChip deadline={deadline} isClosed={isClosed} showNone />
       </div>
       <div className="flex items-center justify-between">
         <span className="text-default-600">Time to first reply</span>
