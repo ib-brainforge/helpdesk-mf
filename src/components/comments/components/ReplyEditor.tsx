@@ -297,6 +297,9 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
 
   const sig = signature.value;
   const showSignature = emailing && !!sig?.addToReplies && !!sig.html.trim();
+  // The signature is sent in full but shown folded: six lines of footer
+  // between the editor and Send pushed the button off the first screen.
+  const [signatureOpen, setSignatureOpen] = useState(false);
 
   return (
     <div className="space-y-3" onKeyDown={handleKeyDown}>
@@ -470,7 +473,20 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         {emailing && (
           <div className="flex items-start justify-between gap-3 px-3 pb-3">
             {showSignature ? (
-              <SignatureBlock html={sig.html} />
+              signatureOpen ? (
+                <SignatureBlock html={sig.html} />
+              ) : (
+                <span className="text-xs text-default-400">
+                  Your signature is added to this reply.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSignatureOpen(true)}
+                    className="text-blue hover:underline"
+                  >
+                    Show
+                  </button>
+                </span>
+              )
             ) : (
               <span className="text-xs text-default-400">
                 {sig?.html.trim()
@@ -486,13 +502,24 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
               </span>
             )}
             {showSignature && (
-              <button
-                type="button"
-                onClick={email?.onEditSignature}
-                className="shrink-0 text-xs text-blue hover:underline"
-              >
-                Edit signature
-              </button>
+              <span className="flex shrink-0 gap-3">
+                {signatureOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setSignatureOpen(false)}
+                    className="text-xs text-blue hover:underline"
+                  >
+                    Hide
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={email?.onEditSignature}
+                  className="text-xs text-blue hover:underline"
+                >
+                  Edit signature
+                </button>
+              </span>
             )}
           </div>
         )}

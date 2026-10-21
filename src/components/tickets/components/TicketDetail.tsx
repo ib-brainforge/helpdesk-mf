@@ -97,6 +97,12 @@ export interface TicketDetailProps {
   ticketId?: string;
 }
 
+/**
+ * Box always draws its header bar, even with no title, which left an empty
+ * strip and a double rule above every card on this page. Hide it when empty.
+ */
+const NO_EMPTY_HEADER = '[&>[data-slot=card-header]:empty]:hidden';
+
 export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const { id: urlId } = useParams<{ id: string }>();
   const id = ticketId ?? urlId;
@@ -790,11 +796,31 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               Header card: the ticket id with its actions, then the title and
               the facts about the ticket in one line of chips.
             */}
-            <Box>
+            <Box className={NO_EMPTY_HEADER}>
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold">
-                  Ticket #{ticket.id?.substring(0, 8)}
-                </h2>
+                {/* No GUID fragment as a name: nobody can quote one on the
+                  phone. The link is what people share, so it is one click. */}
+                <div className="flex items-center gap-1 text-sm text-default-500">
+                  <span>Ticket</span>
+                  <IconTip label="Copy link to this ticket">
+                    <BaseButton
+                      variant="ghost"
+                      size="sm"
+                      isIconOnly
+                      aria-label="Copy link to this ticket"
+                      className="h-7 w-7 min-w-7 helpdesk-print-hide"
+                      onPress={() => {
+                        void navigator.clipboard
+                          ?.writeText(window.location.href.split('?')[0])
+                          .then(() =>
+                            toast('Link copied', { variant: 'success' }),
+                          );
+                      }}
+                    >
+                      <Icon name="link" className="h-4 w-4" />
+                    </BaseButton>
+                  </IconTip>
+                </div>
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2 helpdesk-print-hide">
                   <PermissionGuard
@@ -1045,7 +1071,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             </Box>
 
             {/* Description */}
-            <Box>
+            <Box className={NO_EMPTY_HEADER}>
               <InlineEditable
                 variant="richText"
                 value={ticket.description ?? ''}
@@ -1054,77 +1080,72 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 canEdit={!actionsDisabled && canWriteTicket}
                 emptyLabel="No description yet."
               />
-            </Box>
 
-            {/*
-              Attachments sit under the description: they are what the
-              requester sent for us to look at, so they belong with the ask,
-              not after the conversation. The drop zone opens on demand so an
-              empty ticket does not carry a large box above the thread.
-            */}
-            <Box>
-              <h3 className="mb-3 text-base font-semibold">
-                Attachments
+              {/*
+                Attachments sit with the description: they are what the
+                requester sent for us to look at, so they belong with the ask.
+                One quiet line, not a card of its own, so the conversation is
+                on the first screen.
+              */}
+              <div className="mt-4 border-t border-divider pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold">
+                    Attachments
+                    <span className="ml-1.5 font-normal text-default-400">
+                      {attachmentsLoading
+                        ? 'Loading...'
+                        : attachments && attachments.length > 0
+                          ? attachments.length
+                          : 'None yet'}
+                    </span>
+                  </h3>
+                  {!showAttachments && (
+                    <PermissionGuard
+                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                      fallback={null}
+                    >
+                      <BaseButton
+                        size="sm"
+                        variant="bordered"
+                        color="light"
+                        className="helpdesk-print-hide"
+                        onPress={() => setShowAttachments(true)}
+                        icon={<Icon name="plus" className="h-4 w-4" />}
+                      >
+                        Add attachment
+                      </BaseButton>
+                    </PermissionGuard>
+                  )}
+                </div>
                 {attachments && attachments.length > 0 && (
-                  <span className="ml-1.5 font-normal text-default-400">
-                    {attachments.length}
-                  </span>
-                )}
-              </h3>
-              {attachmentsLoading ? (
-                <p className="text-sm text-default-400">
-                  Loading attachments...
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {attachments && attachments.length > 0 ? (
+                  <div className="mt-2">
                     <AttachmentList
                       attachments={attachments}
                       onDelete={handleDeleteAttachment}
                       canDelete={true}
                     />
-                  ) : (
-                    <p className="text-sm text-default-400 italic">
-                      No attachments yet.
-                    </p>
-                  )}
-                  <PermissionGuard
-                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                    fallback={null}
-                  >
-                    <div className="helpdesk-print-hide">
-                      {showAttachments ? (
-                        <div className="space-y-2">
-                          <FileUploadZone
-                            onFilesSelected={handleFilesSelected}
-                            progress={uploadProgress}
-                          />
-                          <BaseButton
-                            size="sm"
-                            variant="light"
-                            onPress={() => setShowAttachments(false)}
-                          >
-                            Cancel
-                          </BaseButton>
-                        </div>
-                      ) : (
-                        <BaseButton
-                          size="sm"
-                          variant="light"
-                          onPress={() => setShowAttachments(true)}
-                          icon={<Icon name="plus" className="h-4 w-4" />}
-                        >
-                          Add Attachment
-                        </BaseButton>
-                      )}
-                    </div>
-                  </PermissionGuard>
-                </div>
-              )}
+                  </div>
+                )}
+                {showAttachments && (
+                  <div className="mt-2 space-y-2 helpdesk-print-hide">
+                    <FileUploadZone
+                      onFilesSelected={handleFilesSelected}
+                      progress={uploadProgress}
+                    />
+                    <BaseButton
+                      size="sm"
+                      variant="ghost"
+                      onPress={() => setShowAttachments(false)}
+                    >
+                      Cancel
+                    </BaseButton>
+                  </div>
+                )}
+              </div>
             </Box>
 
             {/* Conversation: the thread, with the composer at its foot. */}
-            <Box>
+            <Box className={NO_EMPTY_HEADER}>
               <h3 className="mb-3 text-base font-semibold">Conversation</h3>
               <div className="space-y-4">
                 <CommentThread
@@ -1161,7 +1182,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               ticket describing the absence of a feature they do not use.
             */}
             {SUBTASKS_ENABLED && children && children.length > 0 && (
-              <Box>
+              <Box className={NO_EMPTY_HEADER}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold">
                     Subtasks
@@ -1229,7 +1250,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               "Is blocked by" on the other; see describeLink.
             */}
             {TICKET_LINKS_ENABLED && (
-              <Box>
+              <Box className={NO_EMPTY_HEADER}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold">
                     Linked Work Items
@@ -1315,7 +1336,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6 helpdesk-print-hide">
             {/* Ticket Info */}
-            <Box>
+            <Box className={NO_EMPTY_HEADER}>
               <TicketDetailSidebar
                 ticket={ticket}
                 onUpdate={handleUpdate}
