@@ -48,7 +48,7 @@ export const TicketNotEnabled: FC<{ tenantId?: string | null }> = ({
         Helpdesk isn't enabled for {company}
       </h2>
       <p className="mb-4 text-default-600">
-        Tickets for this company can't be opened until Helpdesk is licensed.
+        Tickets for this tenant can't be opened until Helpdesk is licensed.
       </p>
       <BaseButton onPress={() => navigate('/tickets')}>
         Back to tickets
@@ -161,7 +161,7 @@ export const TicketScopeProvider: FC<{
           This ticket couldn't be opened
         </h2>
         <p className="mb-4 text-default-600">
-          Its company couldn't be reached. Try again in a moment.
+          Its tenant couldn't be reached. Try again in a moment.
         </p>
         <BaseButton onPress={() => token.refetch()}>Try again</BaseButton>
       </PageState>

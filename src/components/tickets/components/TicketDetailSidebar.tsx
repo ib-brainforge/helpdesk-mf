@@ -55,11 +55,7 @@ import {
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
-import {
-  CompanyPill,
-  OrganisationPill,
-  useTicketScopeNames,
-} from './ScopePills';
+import { ScopePath, useTicketScopeNames } from './ScopePills';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -671,24 +667,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         )}
 
         {/*
-          Company and Organisation, both always shown here because they are
-          labelled. (The header drops the organisation when it repeats the
-          company's name.)
+          Tenant then organisation, "Remondis · Remondis NSW", the same as the
+          header, the list and New Request.
         */}
         {(companyName || organisationName) && (
-          <div className="mb-4 grid grid-cols-2 gap-3">
-            <div className="min-w-0">
-              <span className="mb-1 block text-sm font-medium text-default-700">
-                Company
-              </span>
-              {companyName && <CompanyPill name={companyName} />}
-            </div>
-            <div className="min-w-0">
-              <span className="mb-1 block text-sm font-medium text-default-700">
-                Organisation
-              </span>
-              {organisationName && <OrganisationPill name={organisationName} />}
-            </div>
+          <div className="mb-4 min-w-0">
+            <span className="mb-1 block text-sm font-medium text-default-700">
+              Tenant · Organisation
+            </span>
+            <ScopePath
+              tenantName={companyName}
+              organisationName={organisationName}
+            />
           </div>
         )}
 

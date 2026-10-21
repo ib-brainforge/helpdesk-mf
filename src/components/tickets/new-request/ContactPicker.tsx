@@ -145,7 +145,7 @@ export const ContactPicker: FC<ContactPickerProps> = ({
                 textValue="No contacts yet"
               >
                 <span className="text-light-gray text-xs">
-                  No contacts in this company yet. Type a name to add one.
+                  No contacts in this tenant yet. Type a name to add one.
                 </span>
               </BaseAutocompleteItem>,
             ]

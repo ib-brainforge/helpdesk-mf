@@ -31,6 +31,7 @@ import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import type { TicketRow } from '../types';
 import { QuickAssignCell } from './QuickAssignCell';
+import { ScopePath } from './ScopePills';
 import { SelectPageCheckbox, SelectRowCheckbox } from './ticketSelection';
 
 const columnHelper = createColumnHelper<TicketRow>();
@@ -181,7 +182,7 @@ interface CreateColumnsOptions {
  */
 export const TICKET_COLUMN_LABELS: Record<string, string> = {
   subject: 'Subject',
-  company: 'Company',
+  company: 'Tenant',
   deadline: 'Deadline',
   assignee: 'Assignee',
   requester: 'Requester',
@@ -308,13 +309,12 @@ export const createTicketColumns = (
     minSize: 220,
   }),
   /*
-   * Company above, organisation muted beneath it in the same slim two-line
-   * rhythm as the subject. The organisation is left out when it carries the
-   * company's own name.
+   * Tenant then organisation on one line, "Remondis · Remondis NSW", the
+   * organisation muted. Left out only when it carries the tenant's own name.
    */
   columnHelper.display({
     id: 'company',
-    header: 'Company',
+    header: 'Tenant',
     cell: ({ row }) => {
       const company = scopeName(
         row.original.tenantId,
@@ -324,14 +324,11 @@ export const createTicketColumns = (
         options.scopeNames.byOrganisationId.get(id),
       );
       return (
-        <div className="flex flex-col gap-1 text-xs leading-4">
-          {company && (
-            <span className="font-medium text-foreground">{company}</span>
-          )}
-          {organisation && organisation !== company && (
-            <span className="text-[#8c8f97]">{organisation}</span>
-          )}
-        </div>
+        <ScopePath
+          variant="text"
+          tenantName={company}
+          organisationName={organisation}
+        />
       );
     },
     enableSorting: false,

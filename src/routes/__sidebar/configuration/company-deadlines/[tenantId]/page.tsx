@@ -49,8 +49,8 @@ function CompanyDeadlinePage() {
 
   const { byTenantId, organisationOptions, byOrganisationId } = useScopeNames();
   const name = isDefault
-    ? 'Default for all companies'
-    : (byTenantId.get(key)?.tenantName ?? 'Company');
+    ? 'Default for all tenants'
+    : (byTenantId.get(key)?.tenantName ?? 'Tenant');
   // The organisation pill is left out when it only repeats the company name.
   const organisations = useMemo(
     () =>
@@ -106,7 +106,7 @@ function CompanyDeadlinePage() {
       <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
         <AccessDenied
           title="You don't have access to this page"
-          message="Company deadlines are set by Netcorp's helpdesk admins."
+          message="Tenant deadlines are set by Netcorp's helpdesk admins."
         />
       </div>
     );
@@ -146,10 +146,10 @@ function CompanyDeadlinePage() {
       {dialog}
       <div className="text-default-600 -mt-2 mb-6 flex flex-wrap items-center gap-2 text-sm">
         {isDefault ? (
-          <span>Used by every company that has no deadlines of its own.</span>
+          <span>Used by every tenant that has no deadlines of its own.</span>
         ) : (
           <>
-            <span className={`bg-lighter-blue text-blue ${pill}`}>Company</span>
+            <span className={`bg-lighter-blue text-blue ${pill}`}>Tenant</span>
             {organisations.length > 0 && (
               <>
                 <span>
@@ -168,8 +168,8 @@ function CompanyDeadlinePage() {
             )}
             <span>
               {policy.openTickets} open tickets, {policy.lateTickets} late.
-              Deadlines apply to every organisation in this company that has
-              none of its own.
+              Deadlines apply to every organisation in this tenant that has none
+              of its own.
               {!policy.isCustom && ' It follows the default until you save.'}
             </span>
           </>

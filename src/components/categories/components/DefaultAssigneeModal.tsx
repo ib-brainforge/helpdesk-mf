@@ -95,7 +95,7 @@ export const DefaultAssigneeModal: FC<DefaultAssigneeModalProps> = ({
           <p className="text-default-600 mb-3 text-sm">
             New tickets in{' '}
             <span className="font-semibold">{category?.name}</span> go to this
-            person when nobody else is picked. It applies to every company.
+            person when nobody else is picked. It applies to every tenant.
           </p>
           <BaseAutocomplete
             label="Default assignee"

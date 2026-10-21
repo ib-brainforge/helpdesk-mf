@@ -109,7 +109,7 @@ export const KpiOverview: FC = () => {
   );
 
   const prevName = monthName(previousMonthKey(month));
-  const scopeLabel = company ? companyName(company) : 'All companies';
+  const scopeLabel = company ? companyName(company) : 'All tenants';
 
   return (
     <div
@@ -137,8 +137,8 @@ export const KpiOverview: FC = () => {
           </BaseSelect>
           {principalId && (
             <BaseAutocomplete
-              label="Company"
-              placeholder="All companies"
+              label="Tenant"
+              placeholder="All tenants"
               className="w-56"
               selectedKey={company ?? ALL}
               onSelectionChange={key =>
@@ -152,9 +152,9 @@ export const KpiOverview: FC = () => {
                 <BaseAutocompleteItem
                   key={ALL}
                   id={ALL}
-                  textValue="All companies"
+                  textValue="All tenants"
                 >
-                  All companies
+                  All tenants
                 </BaseAutocompleteItem>,
                 ...tenantOptions.map(t => (
                   <BaseAutocompleteItem key={t.id} id={t.id} textValue={t.name}>

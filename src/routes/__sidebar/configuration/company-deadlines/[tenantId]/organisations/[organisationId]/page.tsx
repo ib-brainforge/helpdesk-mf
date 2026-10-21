@@ -50,7 +50,7 @@ function OrganisationDeadlinePage() {
   const { confirm, dialog } = useConfirm();
 
   const { byTenantId, byOrganisationId } = useScopeNames();
-  const companyName = byTenantId.get(tenantId)?.tenantName ?? 'Company';
+  const companyName = byTenantId.get(tenantId)?.tenantName ?? 'Tenant';
   const name = byOrganisationId.get(organisationId) ?? 'Organisation';
 
   /*
@@ -106,7 +106,7 @@ function OrganisationDeadlinePage() {
       <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
         <AccessDenied
           title="You don't have access to this page"
-          message="Company deadlines are set by Netcorp's helpdesk admins."
+          message="Tenant deadlines are set by Netcorp's helpdesk admins."
         />
       </div>
     );

@@ -264,7 +264,7 @@ function CategoriesPage() {
       }
       subheader={
         <PageHint>
-          {presets.length} preset categories, shared by every company. Clients
+          {presets.length} preset categories, shared by every tenant. Clients
           pick from these when they log a request.
         </PageHint>
       }

@@ -18,6 +18,7 @@ import { toast } from '@heroui/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { type FC, useEffect, useMemo, useState } from 'react';
+import { scopePath } from '../components/ScopePills';
 import { TicketDescriptionContent } from '../components/TicketDescriptionContent';
 import type { PickedAsset } from './AssetPicker';
 import { ContactPicker, type RequestContact } from './ContactPicker';
@@ -619,17 +620,17 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {tenantLocked ? (
                   <BaseInput
-                    label="Company"
+                    label="Tenant"
                     value={tenantName ?? ''}
                     isReadOnly
                   />
                 ) : (
                   <ScopeSelect
-                    label="Company"
+                    label="Tenant"
                     options={tenantOptions}
                     value={tenantId}
                     onChange={id => changeScope({ tenantId: id })}
-                    placeholder="Choose a company"
+                    placeholder="Choose a tenant"
                   />
                 )}
                 {orgLocked ? (
@@ -651,15 +652,15 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 {scopeUnavailable && (
                   <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
                     Helpdesk isn't enabled for {tenantName ?? 'this company'},
-                    so requests can't be raised there. Choose another company,
-                    or ask an admin to enable Helpdesk for it.
+                    so requests can't be raised there. Choose another tenant, or
+                    ask an admin to enable Helpdesk for it.
                   </p>
                 )}
                 {showErrors && !scopeComplete && (
                   <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
                     {tenantId
                       ? 'Choose the organisation this request is for.'
-                      : 'Choose the company this request is for.'}
+                      : 'Choose the tenant this request is for.'}
                   </p>
                 )}
                 <div className="sm:col-span-2">
@@ -864,9 +865,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                     </span>
                     {tenantName && (
                       <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
-                        {[tenantName, organisationName]
-                          .filter(Boolean)
-                          .join(' · ')}
+                        {scopePath(tenantName, organisationName)}
                       </span>
                     )}
                     <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
@@ -885,7 +884,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 </div>
               </div>
               {/*
-                What happens next: the deadline the company's policy gives this
+                What happens next: the deadline the tenant's policy gives this
                 ticket, and (staff only) the confirmation to the contact.
               */}
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">

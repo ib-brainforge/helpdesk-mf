@@ -59,7 +59,7 @@ export const CompaniesTable: FC<CompaniesTableProps> = ({
     (): ColumnDef<KpiCompanyRowDto, unknown>[] => [
       columnHelper.display({
         id: 'company',
-        header: 'Company',
+        header: 'Tenant',
         cell: ({ row }) => (
           <button
             type="button"
@@ -172,7 +172,7 @@ export const CompaniesTable: FC<CompaniesTableProps> = ({
 
   return (
     <KpiPanel
-      title="Companies, worst deadline record first"
+      title="Tenants, worst deadline record first"
       aside={
         companies.length > TOP && (
           <BaseButton
@@ -183,7 +183,7 @@ export const CompaniesTable: FC<CompaniesTableProps> = ({
           >
             {showAll
               ? 'Show the worst 5'
-              : `See all ${companies.length} companies`}
+              : `See all ${companies.length} tenants`}
           </BaseButton>
         )
       }

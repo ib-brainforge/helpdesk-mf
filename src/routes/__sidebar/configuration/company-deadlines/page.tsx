@@ -109,7 +109,7 @@ function CompanyDeadlinesPage() {
 
     const defaultRow: CompanyDeadlineRow = {
       key: DEFAULT_POLICY_KEY,
-      name: 'Default for all companies',
+      name: 'Default for all tenants',
       isDefault: true,
       isOrganisation: false,
       isCustom: false,
@@ -187,7 +187,7 @@ function CompanyDeadlinesPage() {
     (): ColumnDef<CompanyDeadlineRow, unknown>[] => [
       columnHelper.display({
         id: 'company',
-        header: 'Company',
+        header: 'Tenant',
         cell: ({ row }) => {
           const r = row.original;
           const label = `${row.getIsExpanded() ? 'Hide' : 'Show'} ${r.name}'s organisations`;
@@ -290,7 +290,7 @@ function CompanyDeadlinesPage() {
             // inherits from.
             <span className="text-default-500 text-xs">
               {row.original.isOrganisation
-                ? "Uses the company's"
+                ? "Uses the tenant's"
                 : 'Uses the default'}
             </span>
           ),
@@ -334,7 +334,7 @@ function CompanyDeadlinesPage() {
       <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
         <AccessDenied
           title="You don't have access to this page"
-          message="Company deadlines are set by Netcorp's helpdesk admins."
+          message="Tenant deadlines are set by Netcorp's helpdesk admins."
         />
       </div>
     );
@@ -342,7 +342,7 @@ function CompanyDeadlinesPage() {
 
   return (
     <ListPage
-      title="Company Deadlines"
+      title="Tenant Deadlines"
       breadcrumbsKey="configuration.company-deadlines.list"
       table={table}
       isLoading={
@@ -353,7 +353,7 @@ function CompanyDeadlinesPage() {
       }
       filters={
         <BaseInput
-          placeholder="Search companies..."
+          placeholder="Search tenants..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           startContent={
@@ -369,7 +369,7 @@ function CompanyDeadlinesPage() {
       onClearFilters={searchTerm ? () => setSearchTerm('') : undefined}
       empty={
         <EmptyState
-          title="No companies match your search"
+          title="No tenants match your search"
           description="Try a different name or clear the search."
           live
         />

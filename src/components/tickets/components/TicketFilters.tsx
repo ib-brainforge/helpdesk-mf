@@ -62,7 +62,7 @@ const scopeLabel = (option: ScopeOption) =>
  */
 const FilterAutocompleteImpl: FC<{
   label: string;
-  /** "All companies"; defaults to "All {label}s". */
+  /** "All tenants"; defaults to "All {label}s". */
   placeholder?: string;
   options: ScopeOption[];
   /**
@@ -344,7 +344,7 @@ const AssigneeFilter = memo(AssigneeFilterImpl);
 
 /** A company heading in the grouped Organisation list. Not an option. */
 const GroupHeading: FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="text-default-500 px-2 pt-2 pb-1 text-xs font-bold uppercase">
+  <div className="text-default-500 px-2 pt-2 pb-1 text-xs font-bold">
     {children}
   </div>
 );
@@ -870,8 +870,8 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           exactly one company, so this renders nothing for them. */}
         {showCompany && (
           <MultiFilter
-            label="Company"
-            plural="companies"
+            label="Tenant"
+            plural="tenants"
             options={tenantOptions}
             value={filters.tenantId ?? EMPTY}
             onChange={handleTenantChange}
