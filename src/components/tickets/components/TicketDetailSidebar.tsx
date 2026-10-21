@@ -27,11 +27,7 @@ import {
   resolveStatusKey,
   toTicketStatusName,
 } from '@/types/custom-status';
-import {
-  type TicketDto,
-  TicketPriority,
-  type TicketStatus,
-} from '@/types/ticket';
+import { type TicketDto, TicketPriority, TicketStatus } from '@/types/ticket';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -655,6 +651,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               createdAt={ticket.createdAt}
               companyName={companyName}
               organisationName={organisationName}
+              isClosed={ticket.status === TicketStatus.Closed}
             />
           </div>
         )}

@@ -37,14 +37,14 @@ export const TICKET_TAB_KEYS: readonly TicketTabKey[] = [
 
 /**
  * The tabs for someone who cannot work tickets (a customer): their open
- * requests and all of them. Needs reply and Overdue are the team's queues.
+ * requests and all of them. New and Overdue are the team's queues.
  */
 export const CUSTOMER_TAB_KEYS: readonly TicketTabKey[] = ['unclosed', 'all'];
 
 /** What each tab is called in the tab row (and its More menu). */
 export const TICKET_TAB_LABELS: Record<TicketTabKey, string> = {
   'assigned-to-you': 'Assigned to you',
-  unanswered: 'Needs reply',
+  unanswered: 'New',
   unclosed: 'Open',
   overdue: 'Overdue',
   all: 'All',
@@ -133,7 +133,7 @@ export const filtersForTab = (
 
   switch (tabKey) {
     case 'unanswered':
-      // Backend has no "unanswered" status; New is the closest proxy.
+      // Tickets in the New status: not yet picked up.
       return { ...carried, status: [TicketStatus.New] };
     case 'unclosed':
       return { ...carried, status: [...OPEN_STATUSES] };
@@ -161,8 +161,8 @@ const sameSet = (a?: readonly unknown[], b?: readonly unknown[]) => {
 
 /**
  * The tab that describes these filters, so the highlighted tab follows the
- * filter bar: clear New from Status on Needs reply and the list is no longer
- * Needs reply. The state fields decide, plus, for "Assigned to you" only,
+ * filter bar: clear New from Status on the New tab and the list is no longer
+ * New. The state fields decide, plus, for "Assigned to you" only,
  * the assignee being exactly you: change or clear it and you are off that
  * tab. The current tab wins while it still matches, then the first state tab
  * that matches exactly, and All when none does. "Assigned to you" is never

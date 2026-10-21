@@ -37,7 +37,7 @@ const PINNED_END = ['actions'];
 
 /**
  * Queues where the next deadline is the question open the list sorts by it,
- * most overdue first. All and Needs reply keep the server's default (newest).
+ * most overdue first. All and New keep the server's default (newest).
  */
 const DEADLINE_FIRST_TABS = new Set<string>([
   'unclosed',

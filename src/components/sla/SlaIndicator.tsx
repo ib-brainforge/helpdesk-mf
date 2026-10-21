@@ -3,7 +3,6 @@ import {
   DeadlineChip,
   formatDeadlineDateTime,
   formatDuration,
-  isDeadlineMet,
   sanitiseDeadline,
 } from '@/components/shared/deadline';
 import { useTimezone } from '@/security';
@@ -19,6 +18,8 @@ interface SlaIndicatorProps {
   companyName?: string | null;
   /** The ticket's organisation, for an organisation's own policy. */
   organisationName?: string | null;
+  /** The ticket is Closed, for one closed without a resolved time. */
+  isClosed?: boolean;
 }
 
 const minutesBetween = (from: string, to: string) =>
@@ -37,11 +38,11 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
   createdAt,
   companyName,
   organisationName,
+  isClosed,
 }) => {
   const timezone = useTimezone();
   // An impossible date (year 1) reads as "No target", not as a due date.
   const deadline = sanitiseDeadline(rawDeadline);
-  const met = isDeadlineMet(deadline);
   const { policy } = deadline;
 
   // Whose policy set these deadlines: the organisation's own, the company's,
@@ -83,15 +84,9 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
     <div className="space-y-2 text-sm">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-default-700">Deadline</span>
-        {met === null ? (
-          <DeadlineChip deadline={deadline} />
-        ) : (
-          <span
-            className={`text-sm font-semibold ${met ? 'text-green-700' : 'text-danger'}`}
-          >
-            {met ? 'Deadline met' : 'Deadline missed'}
-          </span>
-        )}
+        {/* Live chip while open; Met, Late by or No deadline once finished,
+          from the same helper as the list's Deadline cell. */}
+        <DeadlineChip deadline={deadline} isClosed={isClosed} />
       </div>
       <div className="flex items-center justify-between">
         <span className="text-default-600">Time to first reply</span>
