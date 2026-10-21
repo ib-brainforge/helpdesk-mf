@@ -122,7 +122,7 @@ export const KpiOverview: FC = () => {
       </h1>
 
       <div className="flex flex-wrap items-end gap-4">
-        <div className="kpi-print-hide flex flex-wrap items-end gap-4">
+        <div className="helpdesk-filter-row kpi-print-hide flex flex-wrap items-end gap-4">
           <BaseSelect
             label="Period"
             className="w-48"

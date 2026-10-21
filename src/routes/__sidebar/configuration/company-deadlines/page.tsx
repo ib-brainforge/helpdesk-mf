@@ -362,7 +362,7 @@ function CompanyDeadlinesPage() {
               className="h-4 w-4 text-default-400"
             />
           }
-          className="max-w-md"
+          className="helpdesk-filter-row max-w-md"
         />
       }
       // Clear only exists while there is something to clear.
