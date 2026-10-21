@@ -353,3 +353,29 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
   border-color: #3f3f46 !important;
   color: #a1a1aa !important;
 }
+
+/* Tabs: the underline is the only indicator.
+ *
+ * BaseTabs (shared library) gives the selected tab
+ * `shadow-[0_1px_0_0_blue,inset_0_-1px_0_0_blue]` on top of its border-b-2
+ * underline, and HeroUI's focus style adds a ring. At fractional scaling
+ * (125% on a 1280 laptop) those shadows bleed into thin blue lines down the
+ * tab's sides. Every tab in the app goes through .tabs__tab, so this covers
+ * all of them: no shadow, ring, outline or side borders, ever. Keyboard focus
+ * stays visible as a lighter underline on a tab that is not selected. */
+@layer utilities {
+  .tabs__tab,
+  .tabs__tab[data-selected="true"],
+  .tabs__tab[data-focus-visible="true"],
+  .tabs__tab:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
+    border-top-width: 0 !important;
+    border-left-width: 0 !important;
+    border-right-width: 0 !important;
+  }
+  .tabs__tab[data-focus-visible="true"]:not([data-selected="true"]),
+  .tabs__tab:focus-visible:not([data-selected="true"]) {
+    border-bottom-color: color-mix(in oklab, var(--color-blue) 50%, transparent) !important;
+  }
+}
