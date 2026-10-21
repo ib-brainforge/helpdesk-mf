@@ -148,11 +148,11 @@ const covers = (a: RoleAssignment, s: AssigneeScope): boolean => {
 
 /** The counts endpoint's filters for a scope, only the levels it names. */
 const scopeFilters = (s: AssigneeScope): TicketFilters => {
-  const f: Record<string, string> = {};
-  if (s.tenantId) f.tenantId = s.tenantId;
-  if (s.organisationId) f.organisationId = s.organisationId;
+  const f: TicketFilters = {};
+  if (s.tenantId) f.tenantId = [s.tenantId];
+  if (s.organisationId) f.organisationId = [s.organisationId];
   if (s.divisionId) f.divisionId = s.divisionId;
-  return f as TicketFilters;
+  return f;
 };
 
 /** Everyone reachable in one scope: role holders plus current ticket holders. */

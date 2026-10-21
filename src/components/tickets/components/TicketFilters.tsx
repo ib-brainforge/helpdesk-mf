@@ -330,6 +330,116 @@ const AssigneeFilterImpl: FC<{
 
 const AssigneeFilter = memo(AssigneeFilterImpl);
 
+/** The trigger text for a multi-select: one name, "first +N", or "N things". */
+const summariseSelection = (labels: string[], plural: string): string =>
+  labels.length > 3 ? `${labels.length} ${plural}` : summariseAssignees(labels);
+
+/** A company heading in the grouped Organisation list. Not an option. */
+const GroupHeading: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="text-default-500 px-2 pt-2 pb-1 text-xs font-bold uppercase">
+    {children}
+  </div>
+);
+
+/**
+ * Category, Company and Organisation: several values at once, matched as "any
+ * of". The same BaseTagSelect, search, summary trigger and Clear row as
+ * Assignee, so every multi-select in the bar behaves alike.
+ *
+ * `grouped` lists the options under their parent's name (organisations under
+ * their company). A heading is not an option, so it hides while a search is
+ * typed; each option's textValue carries the company name, so searching for a
+ * company still finds its organisations.
+ */
+const MultiFilterImpl: FC<{
+  label: string;
+  /** "categories", for the placeholder and the "N categories" summary. */
+  plural: string;
+  options: ScopeOption[];
+  value: string[];
+  onChange: (ids: string[]) => void;
+  grouped?: boolean;
+}> = ({ label, plural, options, value, onChange, grouped }) => {
+  const labelById = useMemo(
+    () => new Map(options.map(o => [o.id, o.name])),
+    [options],
+  );
+  const items = useMemo(() => {
+    const rows: ReactNode[] = [];
+    let group: string | undefined;
+    for (const option of options) {
+      if (grouped && (rows.length === 0 || option.parentName !== group)) {
+        group = option.parentName;
+        rows.push(
+          <GroupHeading key={`__group-${option.parentId ?? option.id}`}>
+            {group ?? 'Other'}
+          </GroupHeading>,
+        );
+      }
+      rows.push(
+        <BaseTagSelectItem
+          key={option.id}
+          value={option.id}
+          textValue={grouped ? scopeLabel(option) : option.name}
+        >
+          {option.name}
+        </BaseTagSelectItem>,
+      );
+    }
+    return rows;
+  }, [options, grouped]);
+  const labels = value.map(id => labelById.get(id) ?? 'Unknown');
+  const isEmpty = options.length === 0 && value.length === 0;
+
+  return (
+    <div className="w-40">
+      <BaseTagSelect
+        label={label}
+        placeholder={isEmpty ? `No ${plural}` : `All ${plural}`}
+        isDisabled={isEmpty}
+        hasSearch
+        classNames={{
+          base: 'w-full [&_svg]:my-0',
+          popover: '[&>div]:!w-[280px] [&>div]:!min-w-[280px]',
+        }}
+        value={value}
+        onValueChange={onChange}
+        maxVisibleTags={0}
+        renderSelectedTag={() => (
+          <span
+            className="truncate text-xs font-medium"
+            title={labels.join(', ')}
+          >
+            {summariseSelection(labels, plural)}
+          </span>
+        )}
+        renderCollapsedCount={() => null}
+      >
+        {[
+          ...items,
+          // A value no longer offered (its company was unticked, or it was
+          // removed) stays listed so it can still be unticked.
+          ...value
+            .filter(id => !labelById.has(id))
+            .map(id => (
+              <BaseTagSelectItem key={id} value={id} textValue="Unknown">
+                Unknown
+              </BaseTagSelectItem>
+            )),
+          ...(value.length > 0
+            ? [<ClearAssigneesRow key="__clear" onClear={() => onChange([])} />]
+            : []),
+        ]}
+      </BaseTagSelect>
+    </div>
+  );
+};
+
+const MultiFilter = memo(MultiFilterImpl);
+
+/** A stable empty selection, so a memoised picker is not re-rendered by `[]`. */
+const EMPTY: string[] = [];
+
 /** Priority options never change, so they are built once. */
 const PRIORITY_ITEMS = [
   <BaseTagSelectItem
@@ -358,7 +468,7 @@ interface TicketFiltersProps {
   onFiltersChange: (filters: TicketFiltersType) => void;
   onSearch: (searchTerm: string) => void;
   searchTerm: string;
-  onCategoryChange: (categoryId: string | null) => void;
+  onCategoryChange: (categoryIds: string[]) => void;
   /** Tickets per person, from the tab counts the grid already loads. */
   assigneeCounts?: AssigneeCounts;
 }
@@ -402,21 +512,30 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
    *
    * With no tenant chosen the full list is correct and stays.
    */
-  const scopedOrganisations = useMemo(
-    () =>
-      filters.tenantId
-        ? organisationOptions.filter(o => o.parentId === filters.tenantId)
-        : organisationOptions,
-    [organisationOptions, filters.tenantId],
-  );
+  const scopedOrganisations = useMemo(() => {
+    const tenants = filters.tenantId;
+    const shown = tenants?.length
+      ? organisationOptions.filter(
+          o => o.parentId && tenants.includes(o.parentId),
+        )
+      : organisationOptions;
+    // Grouped by company in the list, so sorted by company then name.
+    return [...shown].sort(
+      (a, b) =>
+        (a.parentName ?? '').localeCompare(b.parentName ?? '') ||
+        a.name.localeCompare(b.name),
+    );
+  }, [organisationOptions, filters.tenantId]);
 
   const scopedDivisions = useMemo(
     () =>
-      filters.organisationId
-        ? divisionOptions.filter(d => d.parentId === filters.organisationId)
+      filters.organisationId?.length
+        ? divisionOptions.filter(
+            d => d.parentId && filters.organisationId?.includes(d.parentId),
+          )
         : // No organisation chosen, but a tenant might be: fall back to every
-          // division under that tenant's organisations rather than the estate.
-          filters.tenantId
+          // division under those tenants' organisations rather than the estate.
+          filters.tenantId?.length
           ? divisionOptions.filter(d =>
               scopedOrganisations.some(o => o.id === d.parentId),
             )
@@ -434,9 +553,14 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
    * Assignees are the people who can work tickets in the chosen company and
    * organisation; categories are the tenant's own plus the Netcorp presets.
    */
+  // One company or organisation narrows the people offered; several offer
+  // everyone, since the picker matches a single scope.
   const { options: assigneeUsers } = useScopedAssignees({
-    tenantId: filters.tenantId,
-    organisationId: filters.organisationId,
+    tenantId: filters.tenantId?.length === 1 ? filters.tenantId[0] : undefined,
+    organisationId:
+      filters.organisationId?.length === 1
+        ? filters.organisationId[0]
+        : undefined,
   });
   const assigneeOptions: ScopeOption[] = useMemo(
     () => assigneeUsers.map(u => ({ id: u.id, name: u.name })),
@@ -504,30 +628,38 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
       }),
     [filters, onFiltersChange],
   );
-  const handleCategoryPick = useCallback(
-    (id?: string) => onCategoryChange(id ?? null),
-    [onCategoryChange],
-  );
   // Changing the tenant drops the organisation and division with it. They sit
   // underneath the old tenant, so keeping them would leave a combination that
   // describes nothing: "this tenant, and an organisation belonging to a
   // different one" matches no ticket, and the grid would read empty for a
   // reason nothing on screen explains.
+  // With several companies, only the organisations under a company that is
+  // still ticked are kept, and the division goes with any change.
   const handleTenantChange = useCallback(
-    (id?: string) =>
+    (ids: string[]) => {
+      const parentOf = new Map(
+        organisationOptions.map(o => [o.id, o.parentId]),
+      );
+      const orgs = ids.length
+        ? filters.organisationId?.filter(id => {
+            const parent = parentOf.get(id);
+            return parent !== undefined && ids.includes(parent);
+          })
+        : filters.organisationId;
       onFiltersChange({
         ...filters,
-        tenantId: id,
-        organisationId: undefined,
+        tenantId: ids.length > 0 ? ids : undefined,
+        organisationId: orgs?.length ? orgs : undefined,
         divisionId: undefined,
-      }),
-    [filters, onFiltersChange],
+      });
+    },
+    [filters, onFiltersChange, organisationOptions],
   );
   const handleOrganisationChange = useCallback(
-    (id?: string) =>
+    (ids: string[]) =>
       onFiltersChange({
         ...filters,
-        organisationId: id,
+        organisationId: ids.length > 0 ? ids : undefined,
         divisionId: undefined,
       }),
     [filters, onFiltersChange],
@@ -628,13 +760,12 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           onChange={handleAssigneeChange}
         />
 
-        <FilterAutocomplete
+        <MultiFilter
           label="Category"
-          placeholder="All categories"
+          plural="categories"
           options={categoryOptions}
-          levelExists
-          value={filters.categoryId?.[0]}
-          onChange={handleCategoryPick}
+          value={filters.categoryId ?? EMPTY}
+          onChange={onCategoryChange}
         />
 
         <div className="w-40">
@@ -687,21 +818,27 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           exactly one of each, so these render nothing for them. */}
         {isServiceAdmin && (
           <>
-            <FilterAutocomplete
-              label="Company"
-              placeholder="All companies"
-              options={tenantOptions}
-              levelExists={tenantOptions.length > 0}
-              value={filters.tenantId}
-              onChange={handleTenantChange}
-            />
-            <FilterAutocomplete
-              label="Organisation"
-              options={scopedOrganisations}
-              levelExists={organisationOptions.length > 0}
-              value={filters.organisationId}
-              onChange={handleOrganisationChange}
-            />
+            {(tenantOptions.length > 0 ||
+              Boolean(filters.tenantId?.length)) && (
+              <MultiFilter
+                label="Company"
+                plural="companies"
+                options={tenantOptions}
+                value={filters.tenantId ?? EMPTY}
+                onChange={handleTenantChange}
+              />
+            )}
+            {(organisationOptions.length > 0 ||
+              Boolean(filters.organisationId?.length)) && (
+              <MultiFilter
+                label="Organisation"
+                plural="organisations"
+                options={scopedOrganisations}
+                grouped
+                value={filters.organisationId ?? EMPTY}
+                onChange={handleOrganisationChange}
+              />
+            )}
             <FilterAutocomplete
               label="Division"
               options={scopedDivisions}

@@ -172,9 +172,12 @@ export interface TicketFilters {
    *
    * Ignored on the tenant-scoped endpoint, which already answers for exactly
    * one tenant and one organisation, so there is nothing for these to narrow.
+   *
+   * Companies and organisations are multi-selects, matched as "any of", like
+   * categoryId and assigneeId. Division stays single.
    */
-  tenantId?: string;
-  organisationId?: string;
+  tenantId?: string[];
+  organisationId?: string[];
   divisionId?: string;
 }
 

@@ -696,10 +696,10 @@ export const TicketGrid: FC = () => {
   );
 
   const handleCategorySelect = useCallback(
-    (categoryId: string | null) => {
+    (categoryIds: string[]) => {
       setFilters(prev => ({
         ...prev,
-        categoryId: categoryId ? [categoryId] : undefined,
+        categoryId: categoryIds.length > 0 ? categoryIds : undefined,
       }));
     },
     [setFilters],
