@@ -1,10 +1,12 @@
 export {
   DeadlineChip,
   type DeadlineChipProps,
+  DeadlineOutcomeLabel,
   DeadlineStateChip,
   type DeadlineStateChipProps,
 } from './DeadlineChip';
 export {
+  type DeadlineOutcome,
   type DeadlineState,
   type DeadlineTarget,
   type DeadlineTargetKind,
@@ -14,6 +16,8 @@ export {
   formatDeadlineDayTime,
   formatDeadlineLabel,
   formatDuration,
+  formatShortDate,
+  getDeadlineOutcome,
   getDeadlineState,
   getNextTarget,
   isDeadlineMet,

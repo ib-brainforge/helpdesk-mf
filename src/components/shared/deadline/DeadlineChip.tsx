@@ -3,9 +3,13 @@ import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components/base';
 import type { FC } from 'react';
 import {
+  type DeadlineOutcome,
   type DeadlineState,
   formatDeadlineDateTime,
   formatDeadlineLabel,
+  formatDuration,
+  formatShortDate,
+  getDeadlineOutcome,
   getDeadlineState,
   getNextTarget,
 } from './deadline';
@@ -55,8 +59,67 @@ export const DeadlineStateChip: FC<DeadlineStateChipProps> = ({
   </span>
 );
 
+export interface DeadlineOutcomeLabelProps {
+  outcome: DeadlineOutcome;
+  /** The word for how it ended: "Closed" or "Resolved". */
+  closedWord?: string;
+  className?: string;
+}
+
+/**
+ * How a finished ticket did, muted so it never competes with the live
+ * deadlines around it: a green check and "Met", a muted red "Late by 2d",
+ * a grey "No deadline", or just "Closed" when there is no resolved time.
+ * The date it closed sits underneath in small grey text.
+ */
+export const DeadlineOutcomeLabel: FC<DeadlineOutcomeLabelProps> = ({
+  outcome,
+  closedWord = 'Closed',
+  className = '',
+}) => {
+  const timezone = useTimezone();
+  const closedAt = 'closedAt' in outcome ? outcome.closedAt : null;
+  const when = closedAt
+    ? `${closedWord} ${formatShortDate(closedAt, timezone)}`
+    : null;
+  const title = closedAt
+    ? `${closedWord} ${formatDeadlineDateTime(closedAt, timezone)}`
+    : undefined;
+  const main =
+    outcome.kind === 'met' ? (
+      <span className="inline-flex items-center gap-1 text-green-700">
+        <Icon name="CheckCircleIcon" className="h-3.5 w-3.5 shrink-0" />
+        Met
+      </span>
+    ) : outcome.kind === 'late' ? (
+      <span className="text-[#ae2e24]/80">
+        Late by {formatDuration(outcome.lateMinutes)}
+      </span>
+    ) : outcome.kind === 'none' ? (
+      <span className="text-default-400">No deadline</span>
+    ) : (
+      <span className="text-default-500">{closedWord}</span>
+    );
+  return (
+    <span
+      title={title}
+      className={`inline-flex flex-col text-xs leading-tight ${className}`}
+    >
+      <span className="font-medium">{main}</span>
+      {when && outcome.kind !== 'closed' && (
+        <span className="text-default-400 text-[11px]">{when}</span>
+      )}
+    </span>
+  );
+};
+
 export interface DeadlineChipProps {
   deadline: TicketDeadlineDto | null | undefined;
+  /**
+   * The ticket is Closed. A finished ticket shows how it did against its
+   * deadline instead of a live chip; this covers one with no resolved time.
+   */
+  isClosed?: boolean;
   /** Fixed "now" in ms, for tests and static renders. Defaults to the shared clock. */
   now?: number;
   className?: string;
@@ -64,16 +127,21 @@ export interface DeadlineChipProps {
 
 /**
  * A ticket's next deadline: the first reply until there is one, then the fix.
- * Renders nothing for a fixed ticket or one without a deadline.
+ * A finished ticket shows its outcome (Met, Late by, No deadline) instead.
+ * Renders nothing for an open ticket without a deadline.
  */
 export const DeadlineChip: FC<DeadlineChipProps> = ({
   deadline,
+  isClosed,
   now,
   className,
 }) => {
   const tick = useMinuteTick();
   const timezone = useTimezone();
   const at = now ?? tick;
+  const outcome = getDeadlineOutcome(deadline, isClosed);
+  if (outcome)
+    return <DeadlineOutcomeLabel outcome={outcome} className={className} />;
   const state = getDeadlineState(deadline, at);
   const target = getNextTarget(deadline);
   if (!state || !target) return null;

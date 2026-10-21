@@ -257,3 +257,60 @@ export const isDeadlineMet = (
     replyDue === null || (replied !== null && replied <= replyDue);
   return fixMet && replyMet;
 };
+
+/**
+ * How a finished ticket did against its deadlines, for the Deadline cell on
+ * the list and the deadline box on the ticket page (one compute for both).
+ *
+ * - met: fixed (and first replied) on or before the due times;
+ * - late: by how long the worst target was missed;
+ * - none: the ticket never had a deadline;
+ * - closed: closed, but without a resolved time to judge by.
+ *
+ * Null while the ticket is still open. The impossible-date guard applies, so
+ * a year 1 due date counts as no deadline.
+ */
+export type DeadlineOutcome =
+  | { kind: 'met'; closedAt: string }
+  | { kind: 'late'; lateMinutes: number; closedAt: string }
+  | { kind: 'none'; closedAt: string | null }
+  | { kind: 'closed' };
+
+export const getDeadlineOutcome = (
+  raw: TicketDeadlineDto | null | undefined,
+  /** The ticket's status is Closed, for tickets without a resolved time. */
+  isClosed = false,
+): DeadlineOutcome | null => {
+  const deadline = raw ? sanitiseDeadline(raw) : null;
+  const fixed = toMs(deadline?.fixedAt);
+  const fixDue = toMs(deadline?.fixDueAt);
+  const replyDue = toMs(deadline?.replyDueAt);
+  const hadDeadline = fixDue !== null || replyDue !== null;
+
+  if (fixed === null) {
+    if (!isClosed) return null;
+    return hadDeadline ? { kind: 'closed' } : { kind: 'none', closedAt: null };
+  }
+  const closedAt = deadline?.fixedAt as string;
+  if (!hadDeadline) return { kind: 'none', closedAt };
+
+  // Closing a ticket answers it, so with no public reply the close counts as
+  // the reply (as isDeadlineMet does).
+  const replied = toMs(deadline?.repliedAt) ?? fixed;
+  const lateMinutes = Math.max(
+    fixDue === null ? 0 : (fixed - fixDue) / MINUTE,
+    replyDue === null ? 0 : (replied - replyDue) / MINUTE,
+  );
+  return lateMinutes > 0
+    ? { kind: 'late', lateMinutes, closedAt }
+    : { kind: 'met', closedAt };
+};
+
+/** "12/10": a day and month, for "Closed 12/10". */
+export const formatShortDate = (
+  iso: string,
+  timezone?: string | null,
+): string => {
+  const p = parts(iso, timezone, { day: '2-digit', month: '2-digit' });
+  return `${p.day}/${p.month}`;
+};

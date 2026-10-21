@@ -14,7 +14,7 @@ import {
   customStatusesApply,
   resolveStatusKey,
 } from '@/types/custom-status';
-import { TicketPriority, type TicketStatus } from '@/types/ticket';
+import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import {
@@ -351,7 +351,12 @@ export const createTicketColumns = (
   columnHelper.display({
     id: 'deadline',
     header: 'Deadline',
-    cell: ({ row }) => <DeadlineChip deadline={row.original.deadline} />,
+    cell: ({ row }) => (
+      <DeadlineChip
+        deadline={row.original.deadline}
+        isClosed={row.original.status === TicketStatus.Closed}
+      />
+    ),
     enableSorting: sortable('deadline'),
     size: 150,
     minSize: 120,
