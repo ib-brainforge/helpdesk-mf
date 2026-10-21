@@ -48,9 +48,13 @@ export const monthOptions = (now: Date = new Date()) =>
     };
   });
 
-/** The last complete month: what the report opens on. */
+/**
+ * The current month (so far): what the report opens on. Opening on last
+ * month read as stale ("September" on 21 October), and a manager checking in
+ * wants how this month is going. Last month is one pick away.
+ */
 export const defaultMonth = (now: Date = new Date()): string =>
-  toMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  toMonthKey(new Date(now.getFullYear(), now.getMonth(), 1));
 
 export const formatPct = (pct: number | null | undefined): string =>
   pct === null || pct === undefined ? '–' : `${pct.toFixed(1)}%`;

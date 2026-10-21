@@ -12,7 +12,7 @@ import {
   exportToExcel,
   formatReportData,
 } from '@/components/reports/utils/exportReport';
-import { UserCell } from '@/components/shared';
+import { IconTip, UserCell } from '@/components/shared';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { useTimezone } from '@/security';
 import type { CustomReportResultDto, TechPerformanceDto } from '@/types';
@@ -77,6 +77,26 @@ function TeamTab() {
     (techPerformance ?? []).map(row => row.technicianId),
   );
 
+  /*
+   * The resolved names go into the rows themselves. Rebuilding only the
+   * columns when enrichment landed did not re-render the cells (the table
+   * keeps rendered rows while its data is unchanged), so every technician
+   * stayed on an 8 character id although the lookup had answered.
+   */
+  const techRows = useMemo(
+    () =>
+      (techPerformance ?? []).map(row => ({
+        ...row,
+        technicianName:
+          row.technicianName ??
+          (row.technicianId
+            ? technicianUsers[row.technicianId]?.name
+            : undefined) ??
+          null,
+      })),
+    [techPerformance, technicianUsers],
+  );
+
   const techColumns: ColumnDef<TechPerformanceDto, any>[] = useMemo(
     () => [
       {
@@ -115,27 +135,33 @@ function TeamTab() {
       },
       {
         accessorKey: 'avgResolutionMinutes',
-        header: 'Avg Resolution',
-        cell: info =>
-          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        header: 'Average fix',
+        cell: info => hours(info.getValue() as number | null),
       },
       {
         accessorKey: 'avgFirstResponseMinutes',
-        header: 'First Response',
-        cell: info =>
-          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        header: 'First reply',
+        // No replies measured is "no figure", not "0.0h": that read as every
+        // technician answering instantly.
+        cell: info => hours(info.getValue() as number | null),
       },
       {
         accessorKey: 'p50ResolutionMinutes',
-        header: 'P50',
-        cell: info =>
-          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        header: () => (
+          <HeaderTip label="Half of this person's fixes took less than this, half took longer (the median).">
+            Typical fix
+          </HeaderTip>
+        ),
+        cell: info => hours(info.getValue() as number | null),
       },
       {
         accessorKey: 'p90ResolutionMinutes',
-        header: 'P90',
-        cell: info =>
-          `${(((info.getValue() as number) ?? 0) / 60).toFixed(1)}h`,
+        header: () => (
+          <HeaderTip label="9 in 10 fixes were quicker than this. The slowest 10% took longer.">
+            Slowest 10%
+          </HeaderTip>
+        ),
+        cell: info => hours(info.getValue() as number | null),
       },
     ],
     // technicianUsers: the Technician cell closes over it, so the columns have
@@ -144,7 +170,7 @@ function TeamTab() {
   );
 
   const techTable = useReactTable({
-    data: techPerformance || [],
+    data: techRows,
     columns: techColumns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -175,6 +201,28 @@ function TeamTab() {
     </div>
   );
 }
+
+/** Minutes as "60.1h", or a dash when there is no figure. */
+const hours = (minutes: number | null | undefined) =>
+  minutes === null || minutes === undefined
+    ? '–'
+    : `${(minutes / 60).toFixed(1)}h`;
+
+/** A column heading that explains itself on hover or focus. */
+const HeaderTip = ({
+  label,
+  children,
+}: { label: string; children: string }) => (
+  <IconTip label={label}>
+    {/* biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so keyboard users get the explanation */}
+    <span
+      tabIndex={0}
+      className="cursor-help border-b border-dotted border-current"
+    >
+      {children}
+    </span>
+  </IconTip>
+);
 
 function ReportsPage() {
   const timezone = useTimezone();
