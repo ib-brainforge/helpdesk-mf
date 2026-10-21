@@ -74,7 +74,11 @@ export const DeadlinePolicyForm: FC<DeadlinePolicyFormProps> = ({
 
   const entityForm = useEntityForm<typeof policyFormSchema>({
     schema: policyFormSchema,
-    defaultValues: toFormValues(undefined),
+    // The loaded policy, not a fresh object of zeros each render: the form
+    // re-applies changed defaultValues while untouched, so a new zeros object
+    // on every render could land after the reset to `values` and leave every
+    // Reply by and Fix by field at 0 (QA-04, on a cold load).
+    defaultValues: values,
     values,
     onSubmit: async ({ applyToOpenTickets, ...rest }: PolicyFormValues) => {
       try {
