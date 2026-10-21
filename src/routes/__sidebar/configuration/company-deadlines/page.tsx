@@ -52,6 +52,8 @@ interface CompanyDeadlineRow {
   highFixMinutes: number | null;
   openTickets: number | null;
   lateTickets: number;
+  /** Where "late" links to on the Tickets list; none for the default row. */
+  ticketsQuery?: string;
   /** A company's organisations, when it has more than one. */
   subRows?: CompanyDeadlineRow[];
 }
@@ -131,6 +133,7 @@ function CompanyDeadlinesPage() {
         highFixMinutes: s?.highFixMinutes ?? high?.fixMinutes ?? null,
         openTickets: s?.openTickets ?? 0,
         lateTickets: s?.lateTickets ?? 0,
+        ticketsQuery: `tenant=${encodeURIComponent(t.id)}`,
       };
 
       const orgSummaries = new Map<
@@ -156,6 +159,7 @@ function CompanyDeadlinesPage() {
           highFixMinutes: os?.highFixMinutes ?? company.highFixMinutes,
           openTickets: os?.openTickets ?? 0,
           lateTickets: os?.lateTickets ?? 0,
+          ticketsQuery: `tenant=${encodeURIComponent(t.id)}&organisation=${encodeURIComponent(o.id)}`,
         };
       });
       return company;
@@ -234,7 +238,7 @@ function CompanyDeadlinesPage() {
       }),
       columnHelper.display({
         id: 'high',
-        header: 'High reply / fix',
+        header: 'High priority: reply / fix',
         cell: ({ row }) => {
           const { highReplyMinutes: reply, highFixMinutes: fix } = row.original;
           if (reply === null || fix === null) return null;
@@ -250,14 +254,24 @@ function CompanyDeadlinesPage() {
         id: 'open',
         header: () => <span className="block text-right">Open (late)</span>,
         cell: ({ row }) => {
-          const { openTickets, lateTickets } = row.original;
+          const { openTickets, lateTickets, ticketsQuery } = row.original;
           if (openTickets === null) return null;
           return (
             <span className="block text-right text-sm tabular-nums">
               {openTickets}
-              {lateTickets > 0 && (
-                <span className="text-red-dark"> ({lateTickets} late)</span>
-              )}
+              {lateTickets > 0 &&
+                (ticketsQuery ? (
+                  // Straight to the late tickets, the question this number raises.
+                  <NavLink
+                    to={`/tickets?tab=overdue&${ticketsQuery}`}
+                    className="text-red-dark hover:underline"
+                  >
+                    {' '}
+                    ({lateTickets} late)
+                  </NavLink>
+                ) : (
+                  <span className="text-red-dark"> ({lateTickets} late)</span>
+                ))}
             </span>
           );
         },
@@ -271,16 +285,33 @@ function CompanyDeadlinesPage() {
             <span className={`bg-lighter-blue text-blue ${pillClass}`}>
               Custom
             </span>
-          ) : row.original.isOrganisation ? (
-            <span className="text-default-500 text-xs">
-              Uses company deadlines
-            </span>
           ) : (
-            <span className={`bg-default-100 text-default-600 ${pillClass}`}>
-              Default
+            // The same words for the same state on both levels: what it
+            // inherits from.
+            <span className="text-default-500 text-xs">
+              {row.original.isOrganisation
+                ? "Uses the company's"
+                : 'Uses the default'}
             </span>
           ),
-        size: 100,
+        size: 120,
+      }),
+      columnHelper.display({
+        id: 'open-row',
+        header: () => <span className="sr-only">Open</span>,
+        // The name is the link, but nothing else on the row said it opened.
+        cell: ({ row }) => (
+          <IconTip label={`Edit ${row.original.name}'s deadlines`}>
+            <NavLink
+              to={`/configuration/company-deadlines/${row.original.key}`}
+              aria-label={`Edit ${row.original.name}'s deadlines`}
+              className="text-default-400 hover:text-blue flex h-6 w-6 items-center justify-center rounded"
+            >
+              <Icon name="ChevronRightIcon" className="h-4 w-4" />
+            </NavLink>
+          </IconTip>
+        ),
+        size: 40,
       }),
     ],
     [],
@@ -334,8 +365,8 @@ function CompanyDeadlinesPage() {
           className="max-w-md"
         />
       }
-      hasActiveFilters={searchTerm.length > 0}
-      onClearFilters={() => setSearchTerm('')}
+      // Clear only exists while there is something to clear.
+      onClearFilters={searchTerm ? () => setSearchTerm('') : undefined}
       empty={
         <EmptyState
           title="No companies match your search"

@@ -192,14 +192,21 @@ export const TicketGrid: FC = () => {
   } = useTicketsData(
     // Seeded from the URL so the very first request matches the highlighted
     // tab and the ?assignee= shortcut (an old person-tab link brings its own).
-    filtersForTab(
-      selectedTab,
-      assigneeForShortcut(
+    // ?tenant= and ?organisation= come from links elsewhere (a company's
+    // late count on Company Deadlines).
+    filtersForTab(selectedTab, {
+      ...assigneeForShortcut(
         LEGACY_TABS[searchParams.get('tab') ?? '']?.assignee ??
           searchParams.get('assignee'),
         user?.profile?.sub,
       ),
-    ),
+      ...(searchParams.get('tenant')
+        ? { tenantId: [searchParams.get('tenant') as string] }
+        : {}),
+      ...(searchParams.get('organisation')
+        ? { organisationId: [searchParams.get('organisation') as string] }
+        : {}),
+    }),
     { sort, enabled: ticketsLayout.isReady },
   );
 
