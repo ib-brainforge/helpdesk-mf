@@ -478,6 +478,15 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
   .dark .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"] {
     color: #fff;
   }
+  /* Each option's text is a span with its own text-gray-300 (a mid grey on
+   * dark), so the colour above never reaches it. Ticked rows use the same
+   * span; a disabled option's row keeps its opacity-50, so it stays dimmed. */
+  .dark
+    .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
+    label
+    > span.text-gray-300 {
+    color: #fff;
+  }
   .dark
     .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
     input::placeholder {
