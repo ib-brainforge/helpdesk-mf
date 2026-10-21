@@ -287,7 +287,20 @@ export const TicketGrid: FC = () => {
 
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false);
-  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
+  // ?new=1 (where the old /tickets/new now lands) opens the wizard.
+  const [isNewRequestOpen, setIsNewRequestOpen] = useState(
+    () => searchParams.get('new') === '1',
+  );
+  useEffect(() => {
+    if (searchParams.get('new') !== '1') return;
+    setSearchParams(
+      prev => {
+        prev.delete('new');
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [searchParams, setSearchParams]);
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
 
   // A row's company, which decides the token its change is sent with.
