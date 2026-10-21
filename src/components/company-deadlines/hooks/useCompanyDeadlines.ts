@@ -1,11 +1,14 @@
 import {
   type CompanyDeadlinePolicyDto,
   DEFAULT_POLICY_KEY,
+  type DeadlineListParams,
   type SaveCompanyDeadlineResult,
+  type TenantDeadlineListParams,
   getCompanyDeadlinePolicy,
-  getCompanyDeadlineSummaries,
   getHolidayRegions,
   getHolidays,
+  getOrganisationDeadlines,
+  getTenantDeadlines,
   revertCompanyDeadlinePolicy,
   saveCompanyDeadlinePolicy,
 } from '@/api/local/company-deadlines';
@@ -35,11 +38,17 @@ const STALE = 60_000;
 
 /** The shared query keys, so a page never asks twice for the same thing. */
 export const deadlineKeys = {
-  all: (principalId?: string) => [COMPANY_DEADLINES_QUERY_KEY, principalId],
-  summaries: (principalId?: string) => [
+  /** Every page of the tenants list; add the params for one page. */
+  tenants: (principalId?: string) => [
     COMPANY_DEADLINES_QUERY_KEY,
     principalId,
-    'summaries',
+    'tenants',
+  ],
+  /** Every page of every tenant's organisations. */
+  organisations: (principalId?: string) => [
+    COMPANY_DEADLINES_QUERY_KEY,
+    principalId,
+    'organisations',
   ],
   policy: (principalId?: string, key?: string) => [
     COMPANY_DEADLINES_QUERY_KEY,
@@ -64,11 +73,35 @@ export const useDeadlinesPrincipal = () => {
   };
 };
 
-export const useCompanyDeadlineSummaries = (principalId?: string) =>
+/** One page of the tenants list. The last page stays on screen while the next loads. */
+export const useTenantDeadlines = (
+  principalId: string | undefined,
+  params: TenantDeadlineListParams,
+) =>
   useQuery({
-    queryKey: deadlineKeys.summaries(principalId),
-    queryFn: () => getCompanyDeadlineSummaries(principalId as string),
+    queryKey: [...deadlineKeys.tenants(principalId), params],
+    queryFn: () => getTenantDeadlines(principalId as string, params),
     enabled: Boolean(principalId),
+    placeholderData: keepPreviousData,
+    staleTime: STALE,
+  });
+
+/** One page of a tenant's organisations. */
+export const useOrganisationDeadlines = (
+  principalId: string | undefined,
+  tenantId: string | null,
+  params: DeadlineListParams,
+) =>
+  useQuery({
+    queryKey: [...deadlineKeys.organisations(principalId), tenantId, params],
+    queryFn: () =>
+      getOrganisationDeadlines(
+        principalId as string,
+        tenantId as string,
+        params,
+      ),
+    enabled: Boolean(principalId && tenantId),
+    placeholderData: keepPreviousData,
     staleTime: STALE,
   });
 
@@ -82,7 +115,7 @@ export const useCompanyDeadlinePolicy = (principalId?: string, key?: string) =>
   });
 
 /**
- * After a policy at `key` changes: the list, and only the pages whose values
+ * After a policy at `key` changes: the lists, and only the pages whose values
  * come from it (every page under the default; a tenant's organisations under
  * the tenant). Reports and, when open tickets were given new due dates, the
  * tickets follow.
@@ -93,8 +126,12 @@ const invalidateAfterChange = (
   key: string,
   ticketsChanged: boolean,
 ) => {
+  // Both lists show differences and counts that any policy can move.
   queryClient.invalidateQueries({
-    queryKey: deadlineKeys.summaries(principalId),
+    queryKey: deadlineKeys.tenants(principalId),
+  });
+  queryClient.invalidateQueries({
+    queryKey: deadlineKeys.organisations(principalId),
   });
   queryClient.invalidateQueries({
     queryKey: [COMPANY_DEADLINES_QUERY_KEY, principalId, 'policy'],

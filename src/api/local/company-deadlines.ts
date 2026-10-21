@@ -7,7 +7,8 @@
  * duration is in minutes. The policy input type and the preview call live in
  * ./deadlines.ts, the one client for deadlines, and are not repeated here.
  *
- * Names are not sent: tenants and organisations come from contexts.
+ * The lists (tenants, and a tenant's organisations) are paged, filtered and
+ * sorted on the server and carry names, since there are hundreds of tenants.
  */
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
@@ -16,39 +17,6 @@ import type {
   DeadlinePolicySource,
   DeadlinePriority,
 } from './deadlines';
-
-export type DeadlineClockMode = CompanyDeadlinePolicyInput['clockMode'];
-
-/** The effective deadlines of one company or organisation, for a list row. */
-interface DeadlineSummaryFields {
-  isCustom: boolean;
-  source: DeadlinePolicySource;
-  clockMode: DeadlineClockMode;
-  /** "Mon to Fri, 8:00 am to 5:30 pm Sydney time." */
-  hoursText: string;
-  highReplyMinutes: number;
-  highFixMinutes: number;
-  openTickets: number;
-  lateTickets: number;
-}
-
-/**
- * An organisation under a company row. Only organisations with a policy of
- * their own or open tickets are listed; any other one uses the company's.
- */
-export interface CompanyDeadlineOrganisationSummaryDto
-  extends DeadlineSummaryFields {
-  organisationId: string;
-}
-
-/**
- * One row of the companies list. Missing for companies with no policy, no
- * organisation policy and no tickets. Counts cover all its organisations.
- */
-export interface CompanyDeadlineSummaryDto extends DeadlineSummaryFields {
-  tenantId: string;
-  organisations: CompanyDeadlineOrganisationSummaryDto[];
-}
 
 /**
  * One way a policy differs from the one it would otherwise use: a tenant's
@@ -134,13 +102,88 @@ export const policyKey = (
 const base = (principalId: string) =>
   `${requireHelpdeskApiBaseUrl()}/v1/principals/${principalId}/company-deadlines`;
 
-export const getCompanyDeadlineSummaries = async (
-  principalId: string,
-): Promise<CompanyDeadlineSummaryDto[]> => {
-  const { data } = await authorizedAxios.get<CompanyDeadlineSummaryDto[]>(
-    base(principalId),
+/** A page of a list endpoint. */
+export interface PagedDto<T> {
+  items: T[];
+  /** Rows matching the filters, across every page. */
+  total: number;
+}
+
+export type DeadlineListSort = 'name' | 'open' | 'late';
+
+/** What every deadlines list takes. `page` is 1-based; `pageSize` at most 100. */
+export interface DeadlineListParams {
+  search?: string;
+  /** Only rows with deadlines of their own. */
+  custom?: boolean;
+  /** Only rows with late open tickets. */
+  hasLate?: boolean;
+  sort?: DeadlineListSort;
+  dir?: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
+}
+
+export interface TenantDeadlineListParams extends DeadlineListParams {
+  /** Only tenants with at least one organisation of deadlines of its own. */
+  hasCustomOrgs?: boolean;
+}
+
+/** One row of the tenants list: what differs from the default, and its tickets. */
+export interface TenantDeadlineRowDto {
+  tenantId: string;
+  name: string;
+  isCustom: boolean;
+  /** Empty when it uses the default, or its own policy matches it. */
+  differences: DeadlineDifferenceDto[];
+  orgCount: number;
+  customOrgCount: number;
+  open: number;
+  late: number;
+}
+
+/** One row of a tenant's organisations: what differs from the tenant's deadlines. */
+export interface OrganisationDeadlineRowDto {
+  organisationId: string;
+  name: string;
+  isCustom: boolean;
+  differences: DeadlineDifferenceDto[];
+  open: number;
+  late: number;
+}
+
+/** The query string for a list: only what is set, so defaults stay off the wire. */
+const listQuery = (params: TenantDeadlineListParams) =>
+  Object.fromEntries(
+    Object.entries(params).filter(
+      ([, v]) => v !== undefined && v !== false && v !== '',
+    ),
   );
-  return data ?? [];
+
+/** Every tenant, a page at a time, filtered and sorted on the server. */
+export const getTenantDeadlines = async (
+  principalId: string,
+  params: TenantDeadlineListParams,
+): Promise<PagedDto<TenantDeadlineRowDto>> => {
+  const { data } = await authorizedAxios.get<PagedDto<TenantDeadlineRowDto>>(
+    base(principalId),
+    { params: listQuery(params) },
+  );
+  return data ?? { items: [], total: 0 };
+};
+
+/** One tenant's organisations, a page at a time. */
+export const getOrganisationDeadlines = async (
+  principalId: string,
+  tenantId: string,
+  params: DeadlineListParams,
+): Promise<PagedDto<OrganisationDeadlineRowDto>> => {
+  const { data } = await authorizedAxios.get<
+    PagedDto<OrganisationDeadlineRowDto>
+  >(`${base(principalId)}/${tenantId}/organisations`, {
+    params: listQuery(params),
+  });
+  return data ?? { items: [], total: 0 };
 };
 
 /** `key` comes from policyKey. */

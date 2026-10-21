@@ -40,6 +40,7 @@ export interface ResolvedDeadlines {
   hasOwn: boolean;
   /** Where it inherits from, or would: "Remondis", "default". */
   fromName: string;
+  clockMode: Policy['clockMode'];
   /** Critical first. */
   rows: ResolvedRow[];
   /** The whole clock in one line. */
@@ -169,6 +170,7 @@ export const resolveDeadlines = ({
   return {
     hasOwn,
     fromName,
+    clockMode: values.clockMode,
     rows: PRIORITIES.flatMap(priority => {
       const t = values.targets.find(x => x.priority === priority);
       return t
