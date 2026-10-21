@@ -17,5 +17,6 @@ export {
   getDeadlineState,
   getNextTarget,
   isDeadlineMet,
+  sanitiseDeadline,
 } from './deadline';
 export { useMinuteTick } from './useMinuteTick';

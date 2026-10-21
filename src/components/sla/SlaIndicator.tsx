@@ -4,6 +4,7 @@ import {
   formatDeadlineDateTime,
   formatDuration,
   isDeadlineMet,
+  sanitiseDeadline,
 } from '@/components/shared/deadline';
 import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components/base';
@@ -32,12 +33,14 @@ const minutesBetween = (from: string, to: string) =>
  * no paused state.
  */
 export const SlaIndicator: FC<SlaIndicatorProps> = ({
-  deadline,
+  deadline: rawDeadline,
   createdAt,
   companyName,
   organisationName,
 }) => {
   const timezone = useTimezone();
+  // An impossible date (year 1) reads as "No target", not as a due date.
+  const deadline = sanitiseDeadline(rawDeadline);
   const met = isDeadlineMet(deadline);
   const { policy } = deadline;
 

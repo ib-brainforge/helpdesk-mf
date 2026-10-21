@@ -24,11 +24,37 @@ const MINUTE = 60_000;
 const DAY_MINUTES = 24 * 60;
 const LOCALE = 'en-AU';
 
+/**
+ * The earliest instant a deadline can plausibly fall on. Anything before it is
+ * a default date leaking out of the backend (a year 1 fix date showed as
+ * "Overdue 739809d"), not a real target, so it is read as no deadline at all.
+ */
+const EARLIEST_PLAUSIBLE_MS = Date.UTC(2000, 0, 1);
+
 const toMs = (iso: string | null | undefined): number | null => {
   if (!iso) return null;
   const ms = new Date(iso).getTime();
-  return Number.isNaN(ms) ? null : ms;
+  return Number.isNaN(ms) || ms < EARLIEST_PLAUSIBLE_MS ? null : ms;
 };
+
+/** The instant itself when it is a real date, else null. */
+const plausible = (iso: string | null | undefined): string | null =>
+  toMs(iso) === null ? null : (iso as string);
+
+/**
+ * The deadlines with every impossible instant (unparseable, or before 2000)
+ * turned into "none", so no screen shows a 2000 year overdue. Apply it before
+ * reading the instants directly; the helpers below already do.
+ */
+export const sanitiseDeadline = <T extends TicketDeadlineDto>(
+  deadline: T,
+): T => ({
+  ...deadline,
+  replyDueAt: plausible(deadline.replyDueAt),
+  replyWarnAt: plausible(deadline.replyWarnAt),
+  fixDueAt: plausible(deadline.fixDueAt),
+  fixWarnAt: plausible(deadline.fixWarnAt),
+});
 
 /**
  * The target the ticket is working towards now: the first reply until there
@@ -36,9 +62,10 @@ const toMs = (iso: string | null | undefined): number | null => {
  * deadline at all.
  */
 export const getNextTarget = (
-  deadline: TicketDeadlineDto | null | undefined,
+  raw: TicketDeadlineDto | null | undefined,
 ): DeadlineTarget | null => {
-  if (!deadline || deadline.fixedAt) return null;
+  if (!raw || raw.fixedAt) return null;
+  const deadline = sanitiseDeadline(raw);
   if (!deadline.repliedAt && deadline.replyDueAt) {
     return {
       kind: 'reply',
