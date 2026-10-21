@@ -567,32 +567,29 @@ export const createTicketColumns = (
                   {`Mark as ${opt.label}`}
                 </DropdownItem>
               ))}
-              <DropdownItem
-                key="priority-critical"
-                onPress={() => {
-                  if (options.onChangePriority && row.original.id) {
-                    options.onChangePriority(
-                      row.original.id,
-                      TicketPriority.Critical,
-                    );
-                  }
-                }}
-              >
-                Set Priority: Critical
-              </DropdownItem>
-              <DropdownItem
-                key="priority-high"
-                onPress={() => {
-                  if (options.onChangePriority && row.original.id) {
-                    options.onChangePriority(
-                      row.original.id,
-                      TicketPriority.High,
-                    );
-                  }
-                }}
-              >
-                Set Priority: High
-              </DropdownItem>
+              {/* Every priority, not only the two that raise it: lowering
+                one from the list was impossible. The current one is left out. */}
+              {(
+                [
+                  [TicketPriority.Critical, 'Critical'],
+                  [TicketPriority.High, 'High'],
+                  [TicketPriority.Normal, 'Normal'],
+                  [TicketPriority.Low, 'Low'],
+                ] as const
+              )
+                .filter(([value]) => value !== row.original.priority)
+                .map(([value, label]) => (
+                  <DropdownItem
+                    key={`priority-${label.toLowerCase()}`}
+                    onPress={() => {
+                      if (options.onChangePriority && row.original.id) {
+                        options.onChangePriority(row.original.id, value);
+                      }
+                    }}
+                  >
+                    {`Set priority: ${label}`}
+                  </DropdownItem>
+                ))}
             </DropdownMenu>
           </DropdownPopover>
         </Dropdown>
