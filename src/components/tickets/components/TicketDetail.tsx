@@ -718,6 +718,33 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     );
   }, [id, updateTicketMutation]);
 
+  // Back to In Progress: someone reopening a ticket is working it again.
+  const handleReopenTicket = useCallback(() => {
+    if (!id) return;
+    updateTicketMutation.mutate(
+      { id, updates: { status: TicketStatus.InProgress } },
+      {
+        onSuccess: () => {
+          toast('Ticket reopened', {
+            description: 'Ticket status updated to In Progress',
+            variant: 'success',
+          });
+        },
+        onError: (error: any) => {
+          const errorCode = error?.response?.data?.errors?.[0]?.code;
+          const detail = error?.response?.data?.detail;
+          const description =
+            errorCode === 'TRANSITION_NOT_AVAILABLE'
+              ? 'No workflow transition available to reopen this ticket. Check your workflow configuration.'
+              : detail
+                ? `Status change failed: ${detail}`
+                : 'Failed to reopen the ticket. Please try again.';
+          toast('Reopen failed', { description, variant: 'danger' });
+        },
+      },
+    );
+  }, [id, updateTicketMutation]);
+
   if (isLoading) {
     return <AppLoadingSplash />;
   }
@@ -855,17 +882,29 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                         AI Assistant
                       </BaseButton>
                     )}
-                    <BaseButton
-                      variant="bordered"
-                      color="light"
-                      onPress={handleCloseTicket}
-                      icon={<Icon name="check-o" className="h-4 w-4" />}
-                      isDisabled={
-                        actionsDisabled || ticket.status === TicketStatus.Closed
-                      }
-                    >
-                      Close ticket
-                    </BaseButton>
+                    {/* Close while open; Reopen once closed, rather than a
+                      Close button that can do nothing. */}
+                    {ticket.status === TicketStatus.Closed ? (
+                      <BaseButton
+                        variant="bordered"
+                        color="light"
+                        onPress={handleReopenTicket}
+                        icon={<Icon name="refresh" className="h-4 w-4" />}
+                        isDisabled={actionsDisabled}
+                      >
+                        Reopen
+                      </BaseButton>
+                    ) : (
+                      <BaseButton
+                        variant="bordered"
+                        color="light"
+                        onPress={handleCloseTicket}
+                        icon={<Icon name="check-o" className="h-4 w-4" />}
+                        isDisabled={actionsDisabled}
+                      >
+                        Close ticket
+                      </BaseButton>
+                    )}
                   </PermissionGuard>
                   {!limited && (
                     <PermissionGuard
