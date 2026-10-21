@@ -471,12 +471,43 @@ interface TicketFiltersProps {
   onCategoryChange: (categoryIds: string[]) => void;
   /** Tickets per person, from the tab counts the grid already loads. */
   assigneeCounts?: AssigneeCounts;
+  /** What the open tab sets by itself: Clear filters goes back to this. */
+  baseline?: TicketFiltersType;
   /**
    * Whether this person works tickets. A customer sees only their own
    * requests, so Assignee and Tags mean nothing to them.
    */
   isStaff?: boolean;
 }
+
+/** The filter values that narrow the list, ignoring empties and order. */
+const FILTER_KEYS = [
+  'assigneeId',
+  'includeUnassigned',
+  'status',
+  'customStatusIds',
+  'priority',
+  'tenantId',
+  'organisationId',
+  'divisionId',
+  'categoryId',
+  'tagIds',
+  'overdueOnly',
+] as const;
+const normalise = (v: unknown) =>
+  Array.isArray(v)
+    ? v.length
+      ? [...v].map(String).sort().join('|')
+      : ''
+    : v
+      ? String(v)
+      : '';
+const sameFilters = (a: TicketFiltersType, b: TicketFiltersType) =>
+  FILTER_KEYS.every(
+    k =>
+      normalise((a as Record<string, unknown>)[k]) ===
+      normalise((b as Record<string, unknown>)[k]),
+  );
 
 const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   filters,
@@ -486,6 +517,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   onCategoryChange,
   assigneeCounts,
   isStaff = true,
+  baseline,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
@@ -770,16 +802,10 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   const [moreOpen, setMoreOpen] = useState(moreCount > 0);
   const showMore = moreOpen || moreCount > 0;
 
+  // Something beyond what the tab itself sets (Open sets Status, say), so
+  // Clear filters only appears when there is something of yours to clear.
   const hasAnyFilter =
-    Boolean(searchTerm) ||
-    Boolean(filters.assigneeId?.length) ||
-    Boolean(filters.includeUnassigned) ||
-    Boolean(filters.status?.length) ||
-    Boolean(filters.customStatusIds?.length) ||
-    Boolean(filters.priority?.length) ||
-    Boolean(filters.tenantId?.length) ||
-    Boolean(filters.organisationId?.length) ||
-    moreCount > 0;
+    Boolean(searchTerm) || !sameFilters(filters, baseline ?? {});
 
   const showCompany =
     isServiceAdmin &&
@@ -883,7 +909,9 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             onPress={handleClearFilters}
             icon={<Icon name="x" className="h-4 w-4" />}
           >
-            Clear
+            {/* Resets every filter, those under More filters and Company and
+              Organisation included, and the search. The tab stays. */}
+            Clear filters
           </BaseButton>
         )}
       </div>
