@@ -52,6 +52,11 @@ export interface CategorySpec {
   note?: string;
   /** Section heading, for categories that read as a booking rather than a fault. */
   section?: string;
+  /**
+   * Handled without a visit (a portal, account or app question), so the
+   * Details step does not insist on a phone number and a site location.
+   */
+  remote?: boolean;
   fields: FieldSpec[];
 }
 
@@ -200,6 +205,7 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   },
   {
     key: 'system',
+    remote: true,
     label: 'Problems with the web interface or portal',
     icon: 'ComputerDesktopIcon',
     summary: 'Something in the portal is broken or not loading.',
@@ -272,6 +278,7 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   },
   {
     key: 'account',
+    remote: true,
     label: 'Accounts or sales enquiry',
     icon: 'BanknotesIcon',
     summary: 'Billing, your account, or a sales question.',
@@ -320,6 +327,7 @@ export const NETCORP_CATEGORIES: CategorySpec[] = [
   },
   {
     key: 'other',
+    remote: true,
     label: 'Problem with apps or something else',
     icon: 'QuestionMarkCircleIcon',
     summary: 'App problems, or anything not listed here.',

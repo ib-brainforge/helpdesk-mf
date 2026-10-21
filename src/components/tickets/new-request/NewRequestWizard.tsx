@@ -122,7 +122,9 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const { isConnected: mailboxConnected } = useMailbox();
   const [contact, setContact] = useState<RequestContact | null>(null);
   const [newContactEmail, setNewContactEmail] = useState('');
-  const [notifyContact, setNotifyContact] = useState(true);
+  // Off until asked for: on by default, a client was nearly emailed by
+  // someone who had not noticed the switch.
+  const [notifyContact, setNotifyContact] = useState(false);
 
   const [stepIndex, setStepIndex] = useState(0);
   const [categoryKey, setCategoryKey] = useState<string>('');
@@ -218,14 +220,15 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const profile = (user?.profile ?? {}) as Record<string, unknown>;
   const accountName = (profile.name as string) ?? '';
   const accountEmail = (profile.email as string) ?? '';
-  const contactName = !isStaff
+  const isSelf = !isStaff || contact?.kind === 'self';
+  const contactName = isSelf
     ? accountName
     : contact?.kind === 'existing'
       ? contact.contact.displayName
       : contact?.kind === 'new'
         ? contact.displayName
         : '';
-  const contactEmail = !isStaff
+  const contactEmail = isSelf
     ? accountEmail
     : contact?.kind === 'existing'
       ? contact.contact.email
@@ -249,6 +252,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   );
 
   const step = STEPS[stepIndex];
+  const siteDetailsRequired = !category?.remote;
 
   const questionPages = useMemo(
     () => (category ? paginateFields(category.fields) : []),
@@ -276,16 +280,14 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const canAdvance = (): boolean => {
     if (step.id === 'category') return !!category;
     if (step.id === 'details') {
-      // Phone and location are required like every other question: the point of
-      // the form is to arrive at something actionable without a round trip.
-      // Name and email are not checked because they come from the account and
-      // are read only.
+      // Phone and location are required where someone may need to ring or
+      // visit; a portal, account or app question needs neither.
       return (
         scopeComplete &&
         !scopeUnavailable &&
         subject.trim().length > 0 &&
-        phone.trim().length > 0 &&
-        location.trim().length > 0 &&
+        (!siteDetailsRequired ||
+          (phone.trim().length > 0 && location.trim().length > 0)) &&
         (!isStaff || !!contact) &&
         newContactEmailValid
       );
@@ -366,7 +368,8 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const submit = async () => {
     if (!category || !resolvedCategoryId) return;
     setSubmitError(null);
-    const notify = isStaff && notifyContact && !!contact;
+    const notify =
+      isStaff && notifyContact && !!contact && contact.kind !== 'self';
     const ticket = {
       subject: subject.trim(),
       description: buildDescription({
@@ -536,6 +539,10 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                         setAnswers({});
                         setPickedAssets({});
                         setQuestionPage(0);
+                        // One choice and nothing else on this step, so
+                        // picking it moves on.
+                        setSubmitError(null);
+                        setStepIndex(1);
                       }}
                       className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                         selected
@@ -582,8 +589,9 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 Tell us who and where
               </p>
               <p className="text-light-gray mb-3 text-[13px]">
-                Who the request is for, and how to reach you. Your name and
-                email come from your account.
+                {isStaff
+                  ? 'Who the request is for, and how to reach them.'
+                  : 'How to reach you. Your name and email come from your account.'}
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {tenantLocked ? (
@@ -649,17 +657,16 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                       <ContactPicker
                         value={contact}
                         onChange={pickContact}
+                        selfName={accountName || accountEmail || 'you'}
+                        isRequired
+                        isInvalid={showErrors && !contact}
+                        errorMessage="Choose who this request is for"
                         scopeKey={`${tenantId ?? ''}|${organisationId ?? ''}`}
                         scopeToken={inAppContext ? undefined : scopeToken.data}
                         isReady={
                           scopeComplete && (inAppContext || !!scopeToken.data)
                         }
                       />
-                      {showErrors && !contact && (
-                        <p className="text-red-dark mt-1 text-xs">
-                          Choose who this request is for.
-                        </p>
-                      )}
                     </div>
                     {contact?.kind === 'new' ? (
                       <BaseInput
@@ -697,20 +704,30 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 )}
                 <BaseInput
                   label="Contact phone"
-                  isRequired
-                  placeholder="Enter a phone number"
+                  isRequired={siteDetailsRequired}
+                  placeholder={
+                    siteDetailsRequired
+                      ? 'Enter a phone number'
+                      : 'Optional for this request'
+                  }
                   value={phone}
                   onValueChange={setPhone}
-                  isInvalid={showErrors && !phone.trim()}
+                  isInvalid={showErrors && siteDetailsRequired && !phone.trim()}
                   errorMessage="A phone number is required"
                 />
                 <BaseInput
                   label="Location"
-                  isRequired
-                  placeholder="Enter a location"
+                  isRequired={siteDetailsRequired}
+                  placeholder={
+                    siteDetailsRequired
+                      ? 'Where the vehicle or site is'
+                      : 'Optional for this request'
+                  }
                   value={location}
                   onValueChange={setLocation}
-                  isInvalid={showErrors && !location.trim()}
+                  isInvalid={
+                    showErrors && siteDetailsRequired && !location.trim()
+                  }
                   errorMessage="A location is required"
                 />
               </div>
@@ -825,7 +842,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                   isReady={inAppContext || !!scopeToken.data}
                   companyName={tenantName}
                 />
-                {isStaff && (
+                {isStaff && contact?.kind !== 'self' && (
                   <div className="border-light rounded-lg border px-4 py-3 text-sm">
                     <BaseToggle
                       isSelected={notifyContact && !!contact}
