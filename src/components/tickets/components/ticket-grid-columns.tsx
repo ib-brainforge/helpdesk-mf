@@ -481,7 +481,9 @@ export const createTicketColumns = (
   columnHelper.accessor('id', {
     header: 'ID',
     cell: ({ getValue }) => (
-      <span className="font-mono text-xs">{getValue()?.substring(0, 8)}</span>
+      <span className="font-mono text-xs">
+        {getValue()?.substring(0, 8).toUpperCase()}
+      </span>
     ),
     enableSorting: false,
     size: 80,

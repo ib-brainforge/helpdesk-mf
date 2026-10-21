@@ -804,6 +804,12 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             icon={<Icon name="user" className="h-4 w-4" />}
           >
             Mine
+            {/* Your OPEN tickets, the same count as your row in Assignee. */}
+            {assigneeCounts && (
+              <span className={COUNT_BADGE_CLASS}>
+                {assigneeCounts.byId.get(currentUserId) ?? 0}
+              </span>
+            )}
           </BaseButton>
         )}
 

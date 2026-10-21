@@ -798,10 +798,18 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             */}
             <Box className={NO_EMPTY_HEADER}>
               <div className="flex items-start justify-between gap-3">
-                {/* No GUID fragment as a name: nobody can quote one on the
-                  phone. The link is what people share, so it is one click. */}
+                {/* A quiet ref, not a heading: the subject is the name. The
+                  link is what people share, so it is one click. */}
                 <div className="flex items-center gap-1 text-sm text-default-500">
-                  <span>Ticket</span>
+                  {/* The same short ref as the list's ID column, so what a
+                    caller reads out can be found. There is no ticket number
+                    yet; this is the GUID's first 8 characters. */}
+                  <span>
+                    Ticket{' '}
+                    <span className="font-mono">
+                      {ticket.id?.substring(0, 8).toUpperCase()}
+                    </span>
+                  </span>
                   <IconTip label="Copy link to this ticket">
                     <BaseButton
                       variant="ghost"
