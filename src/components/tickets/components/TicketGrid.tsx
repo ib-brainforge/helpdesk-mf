@@ -752,8 +752,9 @@ export const TicketGrid: FC = () => {
             </PermissionGuard>
           </div>
 
-          {/* Tab Bar */}
-          <div className="mb-4">
+          {/* Tab Bar. helpdesk-soft-borders: grey, not white, rules in dark
+            mode (src/routes/index.css). */}
+          <div className="helpdesk-soft-borders mb-4">
             <TicketTabsRow
               selectedTab={selectedTab}
               onTabChange={handleTabChange}

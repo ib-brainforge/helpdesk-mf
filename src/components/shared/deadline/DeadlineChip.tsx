@@ -87,18 +87,18 @@ export const DeadlineOutcomeLabel: FC<DeadlineOutcomeLabelProps> = ({
     : undefined;
   const main =
     outcome.kind === 'met' ? (
-      <span className="inline-flex items-center gap-1 text-green-700">
+      <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400">
         <Icon name="CheckCircleIcon" className="h-3.5 w-3.5 shrink-0" />
         Met
       </span>
     ) : outcome.kind === 'late' ? (
-      <span className="text-[#ae2e24]/80">
+      <span className="text-[#ae2e24]/80 dark:text-red-400">
         Late by {formatDuration(outcome.lateMinutes)}
       </span>
     ) : outcome.kind === 'none' ? (
-      <span className="text-default-400">No deadline</span>
+      <span className="text-default-400 dark:text-white/55">No deadline</span>
     ) : (
-      <span className="text-default-500">{closedWord}</span>
+      <span className="text-default-500 dark:text-white/65">{closedWord}</span>
     );
   return (
     <span
@@ -107,7 +107,9 @@ export const DeadlineOutcomeLabel: FC<DeadlineOutcomeLabelProps> = ({
     >
       <span className="font-medium">{main}</span>
       {when && outcome.kind !== 'closed' && (
-        <span className="text-default-400 text-[11px]">{when}</span>
+        <span className="text-default-400 text-[11px] dark:text-white/60">
+          {when}
+        </span>
       )}
     </span>
   );
@@ -120,6 +122,8 @@ export interface DeadlineChipProps {
    * deadline instead of a live chip; this covers one with no resolved time.
    */
   isClosed?: boolean;
+  /** Say "No deadline" for an open ticket without one, rather than nothing. */
+  showNone?: boolean;
   /** Fixed "now" in ms, for tests and static renders. Defaults to the shared clock. */
   now?: number;
   className?: string;
@@ -133,6 +137,7 @@ export interface DeadlineChipProps {
 export const DeadlineChip: FC<DeadlineChipProps> = ({
   deadline,
   isClosed,
+  showNone = false,
   now,
   className,
 }) => {
@@ -144,7 +149,13 @@ export const DeadlineChip: FC<DeadlineChipProps> = ({
     return <DeadlineOutcomeLabel outcome={outcome} className={className} />;
   const state = getDeadlineState(deadline, at);
   const target = getNextTarget(deadline);
-  if (!state || !target) return null;
+  if (!state || !target)
+    return showNone ? (
+      <DeadlineOutcomeLabel
+        outcome={{ kind: 'none', closedAt: null }}
+        className={className}
+      />
+    ) : null;
   const due = formatDeadlineDateTime(target.dueAt, timezone);
   return (
     <DeadlineStateChip
