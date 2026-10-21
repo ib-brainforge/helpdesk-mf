@@ -798,7 +798,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
         {currentUserId && (
           <BaseButton
             aria-pressed={mine}
-            variant={mine ? 'flat' : 'bordered'}
+            variant="bordered"
             color={mine ? 'primary' : 'light'}
             onPress={toggleMine}
             icon={<Icon name="user" className="h-4 w-4" />}
@@ -866,8 +866,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
 
         {hasAnyFilter && (
           <BaseButton
-            variant="light"
-            color="light"
+            variant="ghost"
             onPress={handleClearFilters}
             icon={<Icon name="x" className="h-4 w-4" />}
           >
