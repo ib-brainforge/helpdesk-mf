@@ -5,6 +5,7 @@ import {
   UserCell,
   getDeadlineState,
 } from '@/components/shared';
+import { formatDateTimeAmPm } from '@/components/shared/deadline';
 import type { UseScopeNamesResult } from '@/hooks/useScopeNames';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
 import {
@@ -67,7 +68,12 @@ const formatAge = (
   const seconds = Math.floor((Date.now() - parsed.getTime()) / 1000);
 
   if (seconds < 0 || seconds >= RELATIVE_CUTOFF_SECONDS) {
-    return { label: absolute, absolute };
+    // No seconds in the cell ("06/10/2026 9:29 am"): they cost a column's
+    // width on every row and nobody triages by them. The title keeps them.
+    return {
+      label: formatDateTimeAmPm(parsed.toISOString(), timezone),
+      absolute,
+    };
   }
 
   const label =
