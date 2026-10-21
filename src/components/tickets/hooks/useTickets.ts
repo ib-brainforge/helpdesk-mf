@@ -306,17 +306,19 @@ export const useTicketsData = (
   {
     sort,
     enabled = true,
+    initialPagination,
   }: {
     /** Server-side sort across every page; omitted is the server's default. */
     sort?: TicketsSort | null;
     /** Held while the caller waits on something the first request depends on. */
     enabled?: boolean;
+    /** The first page and page size (from the URL); a seed, like the filters. */
+    initialPagination?: PaginationState;
   } = {},
 ) => {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+  const [pagination, setPagination] = useState<PaginationState>(
+    () => initialPagination ?? { pageIndex: 0, pageSize: 25 },
+  );
   // Lazy initialiser: `initialFilters` is a seed, not a controlled value, so
   // later renders must not reset what the user has since changed.
   const [filters, setFilters] = useState<TicketFilters>(
