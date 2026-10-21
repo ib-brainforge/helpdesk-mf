@@ -203,9 +203,14 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     ticket.requesterName ??
     (ticket.requesterId ? userMap[ticket.requesterId]?.name : undefined) ??
     '—';
-  const requesterEmail =
-    ticket.emailRecipient?.address ??
-    (ticket.requesterId ? userMap[ticket.requesterId]?.email : undefined);
+  // The requester's own address only. The reply recipient (the client's
+  // contact) has its own Contact line below: mixing them showed the staff
+  // member who logged it with the client's email.
+  const requesterEmail = ticket.requesterId
+    ? userMap[ticket.requesterId]?.email
+    : undefined;
+  const contact = ticket.emailRecipient;
+  const showContact = !!contact?.address && contact.address !== requesterEmail;
   const { companyName, organisationName } = useTicketScopeNames(
     ticket.tenantId,
     ticket.organisationId,
@@ -620,6 +625,19 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             </p>
           )}
         </div>
+
+        {/* Contact: who replies are emailed to, when not the requester. */}
+        {showContact && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-default-700 mb-1">
+              Contact
+            </label>
+            {contact?.name && <p className="text-sm">{contact.name}</p>}
+            <p className="break-all text-xs text-default-500">
+              {contact?.address}
+            </p>
+          </div>
+        )}
 
         {/*
           Company and Organisation, both always shown here because they are
