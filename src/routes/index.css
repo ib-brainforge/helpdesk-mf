@@ -399,33 +399,42 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
   }
 }
 
-/* Dark mode: the cleaner data table, for every BaseTable in Helpdesk
+/* The clean data table, in both themes, for every BaseTable in Helpdesk
  * (tickets, reports, configuration lists), each inside its scroll frame
  * (.group/table-scroll).
  *
- * The shared table gives every cell a full 1px border, which in dark mode is
- * a white grid. Here: no vertical dividers, a faint line between rows, a
- * slightly lighter header with one bottom line, and the frame as faint as the
- * rows. Only border colours and widths and the header background are set:
- * text colours, row hover and selected rows keep their own styles. The column
- * resize handle is its own element, not a cell border, so it still shows on
- * hover. Light mode is untouched. */
+ * The shared table gives every cell a full 1px border, a grid. Here: no
+ * vertical dividers, a faint line between rows, a lightly tinted header with
+ * one bottom line, and a frame as faint as the rows. One set of rules; only
+ * the colours differ per theme, through our own --hd-table-* properties (the
+ * theme's tokens are left alone, since they also colour text). Only border
+ * colours and widths and the header background are set: text, row hover and
+ * selected rows keep their own styles. The column resize handle is its own
+ * element, not a cell border, so it still shows on hover. */
 @layer utilities {
-  .dark .group\/table-scroll {
-    border-color: rgb(255 255 255 / 0.08);
+  .group\/table-scroll {
+    --hd-table-line: rgb(0 0 0 / 0.07);
+    --hd-table-head-line: rgb(0 0 0 / 0.12);
+    --hd-table-head-bg: color-mix(in srgb, black 3%, white);
+    border-color: var(--hd-table-line);
   }
-  .dark .group\/table-scroll :is(th, td) {
+  .dark .group\/table-scroll {
+    --hd-table-line: rgb(255 255 255 / 0.08);
+    --hd-table-head-line: rgb(255 255 255 / 0.12);
+    /* Opaque, so a sticky header never shows rows scrolling under it. */
+    --hd-table-head-bg: color-mix(in srgb, white 4%, var(--color-dark));
+  }
+  .group\/table-scroll :is(th, td) {
     border-top-width: 0;
     border-left-width: 0;
     border-right-width: 0;
-    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+    border-bottom: 1px solid var(--hd-table-line);
   }
-  .dark .group\/table-scroll thead :is(th, td) {
-    /* Opaque, so a sticky header never shows rows scrolling under it. */
-    background-color: color-mix(in srgb, white 4%, var(--color-dark));
-    border-bottom-color: rgb(255 255 255 / 0.12);
+  .group\/table-scroll thead :is(th, td) {
+    background-color: var(--hd-table-head-bg);
+    border-bottom-color: var(--hd-table-head-line);
   }
-  .dark .group\/table-scroll tbody tr:last-child > :is(th, td) {
+  .group\/table-scroll tbody tr:last-child > :is(th, td) {
     border-bottom-width: 0;
   }
 }
