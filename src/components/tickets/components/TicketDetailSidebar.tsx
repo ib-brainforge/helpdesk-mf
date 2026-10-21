@@ -213,10 +213,22 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     'Unassigned';
 
   // Tags
-  const { tags: availableTags } = useTags();
+  /*
+   * The company's tag list (a large response) loads when the Tags picker is
+   * first opened or focused, not with every ticket. The ticket's own tags come
+   * from useTicketTags and are listed too, so the chips keep their names.
+   */
+  const [tagsWanted, setTagsWanted] = useState(false);
+  const wantTags = useCallback(() => setTagsWanted(true), []);
+  const { tags: allTags } = useTags(undefined, { enabled: tagsWanted });
   const { tags: ticketTags, refetch: refetchTicketTags } = useTicketTags(
     ticket.id ?? '',
   );
+  const availableTags = useMemo(() => {
+    const byId = new Map(allTags.map(t => [t.id, t]));
+    for (const t of ticketTags ?? []) if (!byId.has(t.id)) byId.set(t.id, t);
+    return [...byId.values()];
+  }, [allTags, ticketTags]);
   const addTagMutation = useAddTagToTicket();
   const removeTagMutation = useRemoveTagFromTicket();
 
@@ -766,7 +778,11 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               ) : null
             }
           >
-            <div className={isUpdating ? 'pointer-events-none opacity-50' : ''}>
+            <div
+              className={isUpdating ? 'pointer-events-none opacity-50' : ''}
+              onPointerDownCapture={wantTags}
+              onFocusCapture={wantTags}
+            >
               <BaseTagSelect
                 label="Tags"
                 placeholder="Select tags..."
