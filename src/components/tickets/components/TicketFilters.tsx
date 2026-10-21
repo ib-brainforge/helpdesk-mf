@@ -275,7 +275,7 @@ const AssigneeFilterImpl: FC<{
   return (
     // As wide as Search, and the list wider still, so a full name and its
     // count fit without truncating.
-    <div className="w-60">
+    <div className="w-44">
       <BaseTagSelect
         label="Assignee"
         placeholder="All assignees"
@@ -400,7 +400,7 @@ const MultiFilterImpl: FC<{
   const isEmpty = options.length === 0 && value.length === 0;
 
   return (
-    <div className="w-40">
+    <div className="w-36">
       <BaseTagSelect
         label={label}
         placeholder={isEmpty ? `No ${plural}` : `All ${plural}`}
@@ -766,7 +766,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   const moreCount =
     (filters.categoryId?.length ?? 0) +
     (filters.tagIds?.length ?? 0) +
-    (filters.organisationId?.length ?? 0) +
     (filters.divisionId ? 1 : 0);
   const [moreOpen, setMoreOpen] = useState(moreCount > 0);
   const showMore = moreOpen || moreCount > 0;
@@ -779,6 +778,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
     Boolean(filters.customStatusIds?.length) ||
     Boolean(filters.priority?.length) ||
     Boolean(filters.tenantId?.length) ||
+    Boolean(filters.organisationId?.length) ||
     moreCount > 0;
 
   const showCompany =
@@ -791,7 +791,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   return (
     <div className="flex w-full flex-col gap-2.5">
       <div className="flex w-full flex-wrap items-end gap-2.5">
-        <div className="w-56">
+        <div className="w-44">
           <BaseInput
             label="Search"
             type="text"
@@ -814,7 +814,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           />
         )}
 
-        <div className="w-40">
+        <div className="w-36">
           <BaseTagSelect
             label="Status"
             placeholder="Any status"
@@ -827,7 +827,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           </BaseTagSelect>
         </div>
 
-        <div className="w-40">
+        <div className="w-36">
           <BaseTagSelect
             label="Priority"
             placeholder="Any priority"
@@ -849,6 +849,18 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             options={tenantOptions}
             value={filters.tenantId ?? EMPTY}
             onChange={handleTenantChange}
+          />
+        )}
+        {/* Straight after Company: one company has many organisations, and
+          the list narrows to the companies picked. */}
+        {showOrganisation && (
+          <MultiFilter
+            label="Organisation"
+            plural="organisations"
+            options={scopedOrganisations}
+            grouped
+            value={filters.organisationId ?? EMPTY}
+            onChange={handleOrganisationChange}
           />
         )}
 
@@ -886,16 +898,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             onChange={onCategoryChange}
           />
 
-          {showOrganisation && (
-            <MultiFilter
-              label="Organisation"
-              plural="organisations"
-              options={scopedOrganisations}
-              grouped
-              value={filters.organisationId ?? EMPTY}
-              onChange={handleOrganisationChange}
-            />
-          )}
           {isServiceAdmin && (
             <FilterAutocomplete
               label="Division"
