@@ -10,7 +10,7 @@ import { describeDifference } from '../resolveDeadlines';
  */
 
 /** Late counts, in both themes (red-dark is too dark on the dark surface). */
-export const LATE_TEXT = 'text-red-dark dark:text-red-400';
+const LATE_TEXT = 'text-red-dark dark:text-red-400';
 
 /** Rows shown before "and N more", so a row stays one glance tall. */
 const SHOWN = 3;
@@ -75,3 +75,28 @@ export const LateCount: FC<{
       0
     </span>
   );
+
+/** "Tenant. 12 open tickets, 3 late.", under a policy page's title. */
+export const TicketCountsLine: FC<{
+  /** "Tenant", "Organisation of Remondis". */
+  kind: string;
+  open: number;
+  late: number;
+  tenantId: string;
+  organisationId?: string | null;
+}> = ({ kind, open, late, tenantId, organisationId }) => (
+  <p className="text-default-600 -mt-2 mb-4 text-sm">
+    {kind}. {open} open ticket{open === 1 ? '' : 's'},{' '}
+    {late > 0 ? (
+      <NavLink
+        to={overdueTicketsHref(tenantId, organisationId)}
+        className={`${LATE_TEXT} font-semibold hover:underline`}
+      >
+        {late} late
+      </NavLink>
+    ) : (
+      '0 late'
+    )}
+    .
+  </p>
+);

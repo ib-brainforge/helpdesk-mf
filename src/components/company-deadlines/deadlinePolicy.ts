@@ -165,7 +165,7 @@ export const toPolicyInput = (
 const SHORT_DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** "05/10/2026" from "2026-10-05", without going through a Date and a time zone. */
-export const formatIsoDate = (ymd: string): string => {
+const formatIsoDate = (ymd: string): string => {
   const [y, m, d] = ymd.split('-');
   return y && m && d ? `${d}/${m}/${y}` : ymd;
 };

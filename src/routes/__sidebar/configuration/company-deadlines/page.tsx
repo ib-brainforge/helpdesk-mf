@@ -12,44 +12,34 @@ import {
   DEFAULT_POLICY_KEY,
   type TenantDeadlineRowDto,
 } from '@/api/local/company-deadlines';
-import {
-  DeadlineDifferences,
-  LateCount,
-} from '@/components/company-deadlines/components/DeadlineCells';
+import { DeadlineList } from '@/components/company-deadlines/components/DeadlineList';
 import { DeadlineSummaryCard } from '@/components/company-deadlines/components/DeadlineSummaryCard';
+import { DeadlinesAccessDenied } from '@/components/company-deadlines/components/DeadlinesAccessDenied';
 import {
   useCompanyDeadlinePolicy,
   useDeadlinesPrincipal,
   useTenantDeadlines,
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { resolveDeadlines } from '@/components/company-deadlines/resolveDeadlines';
-import { IconTip, PagedTable, usePagedTable } from '@/components/shared';
 import { useListParams } from '@/hooks/useListParams';
-import { AccessDenied } from '@/security';
-import { BaseCheckbox, BaseInput } from '@brainforgeau/components';
-import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import {
-  EmptyState,
-  PageBody,
-  PageFilters,
-  PageHeader,
-} from '@brainforgeau/components/page';
-import { NavLink, useNavigate } from '@modern-js/runtime/router';
-import { createColumnHelper } from '@tanstack/react-table';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { useNavigate } from '@modern-js/runtime/router';
+import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 
 const FLAGS = ['custom', 'hasLate', 'hasCustomOrgs'] as const;
 const SORTS = ['name', 'open', 'late'] as const;
-const FLAG_LABELS: Record<(typeof FLAGS)[number], string> = {
+const FLAG_LABELS = {
   custom: 'Custom only',
   hasLate: 'Has late tickets',
   hasCustomOrgs: 'Has custom organisations',
 };
 
 const tenantPath = (key: string) => `/configuration/company-deadlines/${key}`;
-
-const columnHelper = createColumnHelper<TenantDeadlineRowDto>();
+const rowId = (row: TenantDeadlineRowDto) => row.tenantId;
+const pathOf = (row: TenantDeadlineRowDto) => tenantPath(row.tenantId);
+const lateOf = (row: TenantDeadlineRowDto) => ({ tenantId: row.tenantId });
 
 /** "12 organisations, 3 custom". */
 const orgSummary = (orgCount: number, customOrgCount: number) => {
@@ -58,91 +48,18 @@ const orgSummary = (orgCount: number, customOrgCount: number) => {
   return customOrgCount > 0 ? `${orgs}, ${customOrgCount} custom` : orgs;
 };
 
-const columns = [
-  columnHelper.accessor('name', {
-    id: 'name',
-    header: 'Tenant',
-    cell: ({ row }) => (
-      <NavLink
-        to={tenantPath(row.original.tenantId)}
-        className="text-primary text-sm font-medium hover:underline"
-      >
-        {row.original.name}
-      </NavLink>
-    ),
-    size: 240,
-  }),
-  columnHelper.display({
-    id: 'deadlines',
-    header: 'Deadlines',
-    enableSorting: false,
-    cell: ({ row }) => {
-      const { differences, isCustom } = row.original;
-      return (
-        <div className="whitespace-normal py-1">
-          <DeadlineDifferences differences={differences} fromName="default" />
-          {isCustom && differences.length === 0 && (
-            <span className="text-default-500 text-xs"> (own copy)</span>
-          )}
-        </div>
-      );
-    },
-    size: 380,
-  }),
-  columnHelper.display({
+const ORG_COLUMN = [
+  createColumnHelper<TenantDeadlineRowDto>().display({
     id: 'organisations',
     header: 'Organisations',
-    enableSorting: false,
-    cell: ({ row }) => {
-      const { orgCount, customOrgCount } = row.original;
-      return (
-        <span className="text-default-600 text-sm">
-          {orgSummary(orgCount, customOrgCount)}
-        </span>
-      );
-    },
-    size: 200,
-  }),
-  columnHelper.accessor('open', {
-    id: 'open',
-    header: () => <span className="block text-right">Open</span>,
-    cell: ({ getValue }) => (
-      <span className="block text-right text-sm tabular-nums">
-        {getValue()}
+    cell: ({ row }) => (
+      <span className="text-default-600 text-sm">
+        {orgSummary(row.original.orgCount, row.original.customOrgCount)}
       </span>
     ),
-    size: 90,
+    size: 200,
   }),
-  columnHelper.accessor('late', {
-    id: 'late',
-    header: () => <span className="block text-right">Late</span>,
-    cell: ({ row }) => (
-      <LateCount
-        late={row.original.late}
-        tenantId={row.original.tenantId}
-        name={row.original.name}
-      />
-    ),
-    size: 90,
-  }),
-  columnHelper.display({
-    id: 'go',
-    header: () => <span className="sr-only">Open</span>,
-    enableSorting: false,
-    cell: ({ row }) => (
-      <IconTip label={`Open ${row.original.name}'s deadlines`}>
-        <NavLink
-          to={tenantPath(row.original.tenantId)}
-          aria-label={`Open ${row.original.name}'s deadlines`}
-          className="text-default-400 hover:text-primary flex h-6 w-6 items-center justify-center rounded"
-        >
-          <Icon name="ChevronRightIcon" className="h-4 w-4" />
-        </NavLink>
-      </IconTip>
-    ),
-    size: 48,
-  }),
-];
+] as ColumnDef<TenantDeadlineRowDto, unknown>[];
 
 function CompanyDeadlinesPage() {
   const navigate = useNavigate();
@@ -170,16 +87,6 @@ function CompanyDeadlinesPage() {
     enabledPrincipal,
     DEFAULT_POLICY_KEY,
   );
-
-  const table = usePagedTable({
-    data: tenants.data?.items ?? [],
-    columns,
-    total: tenants.data?.total ?? 0,
-    params,
-    onChange: patch => list.update(patch as Parameters<typeof list.update>[0]),
-    getRowId: row => row.tenantId,
-  });
-
   const resolvedDefault = useMemo(
     () =>
       defaults.data
@@ -193,18 +100,7 @@ function CompanyDeadlinesPage() {
     [defaults.data],
   );
 
-  if (!loadingAccess && !isAdmin) {
-    return (
-      <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
-        <AccessDenied
-          title="You don't have access to this page"
-          message="Tenant deadlines are set by Netcorp's helpdesk admins."
-        />
-      </div>
-    );
-  }
-
-  const total = tenants.data?.total;
+  if (!loadingAccess && !isAdmin) return <DeadlinesAccessDenied />;
 
   return (
     <PageBody>
@@ -223,7 +119,9 @@ function CompanyDeadlinesPage() {
               <BaseButton
                 variant="bordered"
                 size="sm"
-                onPress={() => navigate(tenantPath(DEFAULT_POLICY_KEY))}
+                onPress={() =>
+                  navigate(`${tenantPath(DEFAULT_POLICY_KEY)}?edit=1`)
+                }
               >
                 Edit
               </BaseButton>
@@ -231,60 +129,20 @@ function CompanyDeadlinesPage() {
           />
         </div>
       )}
-      <PageFilters
-        onClear={list.hasFilters ? list.clear : undefined}
-        hasActiveFilters={list.hasFilters}
-        rightSlot={
-          total !== undefined && (
-            <span className="text-default-500 text-sm" aria-live="polite">
-              {total} tenant{total === 1 ? '' : 's'}
-            </span>
-          )
-        }
-      >
-        <BaseInput
-          aria-label="Search tenants"
-          placeholder="Search tenants..."
-          value={list.searchText}
-          onChange={e => list.setSearchText(e.target.value)}
-          startContent={
-            <Icon
-              name="magnifying-glass"
-              className="h-4 w-4 text-default-400"
-            />
-          }
-          className="helpdesk-filter-row max-w-xs"
-        />
-        {FLAGS.map(flag => (
-          <BaseCheckbox
-            key={flag}
-            isSelected={params.flags[flag]}
-            onValueChange={checked =>
-              list.update({ flags: { ...params.flags, [flag]: checked } })
-            }
-          >
-            {FLAG_LABELS[flag]}
-          </BaseCheckbox>
-        ))}
-      </PageFilters>
-      <PagedTable
-        table={table}
-        isLoading={loadingAccess || tenants.isLoading}
-        empty={
-          <EmptyState
-            title={
-              tenants.isError
-                ? "Couldn't load the tenants"
-                : 'No tenants match these filters'
-            }
-            description={
-              tenants.isError
-                ? 'Reload the page to try again.'
-                : 'Try a different name, or clear the filters.'
-            }
-            live
-          />
-        }
+      <DeadlineList
+        list={list}
+        flagLabels={FLAG_LABELS}
+        query={{
+          data: tenants.data,
+          isError: tenants.isError,
+          isLoading: loadingAccess || tenants.isLoading,
+        }}
+        noun="tenant"
+        fromName="default"
+        getRowId={rowId}
+        pathOf={pathOf}
+        lateOf={lateOf}
+        extraColumns={ORG_COLUMN}
       />
     </PageBody>
   );

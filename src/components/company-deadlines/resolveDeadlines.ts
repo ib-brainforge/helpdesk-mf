@@ -69,7 +69,7 @@ const sameDays = (a: Policy['days'], b: Policy['days']) =>
   });
 
 /** What `own` changes from `inherited`, in the list endpoints' shape. */
-export const diffPolicies = (
+const diffPolicies = (
   own: Policy,
   inherited: Policy,
 ): DeadlineDifferenceDto[] => {
@@ -149,7 +149,7 @@ export const describeDifference = (
   }
 };
 
-export const clockOf = (p: Policy): string =>
+const clockOf = (p: Policy): string =>
   describeClock({ ...p, holidayRegion: regionOf(p) });
 
 export const resolveDeadlines = ({
