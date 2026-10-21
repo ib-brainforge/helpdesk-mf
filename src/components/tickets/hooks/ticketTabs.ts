@@ -24,6 +24,12 @@ export const TICKET_TAB_KEYS: readonly TicketTabKey[] = [
   'all',
 ];
 
+/**
+ * The tabs for someone who cannot work tickets (a customer): their open
+ * requests and all of them. Unanswered and Overdue are the team's queues.
+ */
+export const CUSTOMER_TAB_KEYS: readonly TicketTabKey[] = ['unclosed', 'all'];
+
 /** What each tab is called in the tab row (and its More menu). */
 export const TICKET_TAB_LABELS: Record<TicketTabKey, string> = {
   unanswered: 'Unanswered',

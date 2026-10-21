@@ -474,6 +474,11 @@ interface TicketFiltersProps {
   assigneeCounts?: AssigneeCounts;
   /** The signed-in user, for the "Mine" shortcut. */
   currentUserId?: string;
+  /**
+   * Whether this person works tickets. A customer sees only their own
+   * requests, so Mine, Assignee and Tags mean nothing to them.
+   */
+  isStaff?: boolean;
 }
 
 const TicketFiltersImpl: FC<TicketFiltersProps> = ({
@@ -484,6 +489,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   onCategoryChange,
   assigneeCounts,
   currentUserId,
+  isStaff = true,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
@@ -795,7 +801,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           />
         </div>
 
-        {currentUserId && (
+        {isStaff && currentUserId && (
           <BaseButton
             aria-pressed={mine}
             variant="bordered"
@@ -813,13 +819,15 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           </BaseButton>
         )}
 
-        <AssigneeFilter
-          options={assigneeOptions}
-          counts={assigneeCounts}
-          people={filters.assigneeId ?? []}
-          includeUnassigned={Boolean(filters.includeUnassigned)}
-          onChange={handleAssigneeChange}
-        />
+        {isStaff && (
+          <AssigneeFilter
+            options={assigneeOptions}
+            counts={assigneeCounts}
+            people={filters.assigneeId ?? []}
+            includeUnassigned={Boolean(filters.includeUnassigned)}
+            onChange={handleAssigneeChange}
+          />
+        )}
 
         <div className="w-40">
           <BaseTagSelect
@@ -912,21 +920,23 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           )}
 
           {/* Tags load when this filter is first opened (see wantTags). */}
-          <div
-            className="w-40"
-            onPointerDownCapture={wantTags}
-            onFocusCapture={wantTags}
-          >
-            <BaseTagSelect
-              label="Tags"
-              placeholder="Any tag"
-              classNames={{ base: 'w-full [&_svg]:my-0' }}
-              value={filters.tagIds ?? []}
-              onValueChange={handleTagsChange}
+          {isStaff && (
+            <div
+              className="w-40"
+              onPointerDownCapture={wantTags}
+              onFocusCapture={wantTags}
             >
-              {tagItems}
-            </BaseTagSelect>
-          </div>
+              <BaseTagSelect
+                label="Tags"
+                placeholder="Any tag"
+                classNames={{ base: 'w-full [&_svg]:my-0' }}
+                value={filters.tagIds ?? []}
+                onValueChange={handleTagsChange}
+              >
+                {tagItems}
+              </BaseTagSelect>
+            </div>
+          )}
         </div>
       )}
     </div>

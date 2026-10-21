@@ -38,8 +38,10 @@ import {
   useState,
 } from 'react';
 import {
+  CUSTOMER_TAB_KEYS,
   LEGACY_TABS,
   TICKET_DEFAULT_TAB,
+  TICKET_TAB_KEYS,
   TICKET_VALID_TABS,
   type TicketTabKey,
   assigneeForShortcut,
@@ -715,8 +717,11 @@ export const TicketGrid: FC = () => {
           {/* Header */}
           <div className="mb-5 flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Tickets</h1>
+            {/* Raising a ticket needs tickets.create, not tickets.update: a
+              customer can raise one but not edit it, and the button was
+              hidden from exactly the people whose main job it is. */}
             <PermissionGuard
-              requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+              requiredPermissions={[HelpdeskPermissions.Tickets.Create]}
               fallback={null}
             >
               <BaseButton
@@ -733,6 +738,7 @@ export const TicketGrid: FC = () => {
             <TicketTabsRow
               selectedTab={selectedTab}
               onTabChange={handleTabChange}
+              keys={canAssign ? TICKET_TAB_KEYS : CUSTOMER_TAB_KEYS}
               renderTitle={tabTitle}
               end={
                 <ColumnsChooser
@@ -749,6 +755,7 @@ export const TicketGrid: FC = () => {
               filters={filters}
               assigneeCounts={assigneeCounts}
               currentUserId={currentUserId}
+              isStaff={canAssign}
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}

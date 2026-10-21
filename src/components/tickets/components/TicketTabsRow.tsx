@@ -38,6 +38,8 @@ interface TicketTabsRowProps {
   renderTitle: (label: string, key: TicketTabKey) => ReactNode;
   /** At the right end of the row (the Columns button). */
   end?: ReactNode;
+  /** The tabs to offer; all of them unless the role sees fewer. */
+  keys?: readonly TicketTabKey[];
 }
 
 /**
@@ -56,6 +58,7 @@ export const TicketTabsRow: FC<TicketTabsRowProps> = ({
   onTabChange,
   renderTitle,
   end,
+  keys = TICKET_TAB_KEYS,
 }) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -72,10 +75,10 @@ export const TicketTabsRow: FC<TicketTabsRowProps> = ({
     if (!row || !copy) return;
     const items = Array.from(copy.children) as HTMLElement[];
     const tabWidths = items
-      .slice(0, TICKET_TAB_KEYS.length)
+      .slice(0, keys.length)
       .map(el => Math.ceil(el.getBoundingClientRect().width));
     const moreWidth = Math.ceil(
-      items[TICKET_TAB_KEYS.length]?.getBoundingClientRect().width ?? 0,
+      items[keys.length]?.getBoundingClientRect().width ?? 0,
     );
     const available =
       row.clientWidth - (endRef.current?.offsetWidth ?? 0) - SAFETY_PX;
@@ -87,7 +90,7 @@ export const TicketTabsRow: FC<TicketTabsRowProps> = ({
         ? prev
         : { available, tabWidths, moreWidth },
     );
-  }, []);
+  }, [keys]);
 
   // Before paint, so the row never shows a frame with tabs under Columns.
   useLayoutEffect(() => {
@@ -105,13 +108,13 @@ export const TicketTabsRow: FC<TicketTabsRowProps> = ({
    * (taking the last place if it would otherwise be hidden).
    */
   const shown = useMemo((): TicketTabKey[] => {
-    if (!space) return [...TICKET_TAB_KEYS];
+    if (!space) return [...keys];
     const { available, tabWidths, moreWidth } = space;
     const total = tabWidths.reduce((a, b) => a + b, 0);
-    if (total <= available) return [...TICKET_TAB_KEYS];
+    if (total <= available) return [...keys];
 
     const room = available - moreWidth;
-    const selectedIndex = TICKET_TAB_KEYS.indexOf(selectedTab as TicketTabKey);
+    const selectedIndex = keys.indexOf(selectedTab as TicketTabKey);
     let count = 0;
     let used = 0;
     while (count < tabWidths.length && used + tabWidths[count] <= room) {
@@ -119,17 +122,17 @@ export const TicketTabsRow: FC<TicketTabsRowProps> = ({
       count++;
     }
     if (selectedIndex < count || selectedIndex < 0) {
-      return TICKET_TAB_KEYS.slice(0, Math.max(count, 1));
+      return keys.slice(0, Math.max(count, 1));
     }
     // Make room for the open tab at the end.
     let lead = count;
     const widthOf = (n: number) =>
       tabWidths.slice(0, n).reduce((a, b) => a + b, 0);
     while (lead > 0 && widthOf(lead) + tabWidths[selectedIndex] > room) lead--;
-    return [...TICKET_TAB_KEYS.slice(0, lead), TICKET_TAB_KEYS[selectedIndex]];
-  }, [space, selectedTab]);
+    return [...keys.slice(0, lead), keys[selectedIndex]];
+  }, [space, selectedTab, keys]);
 
-  const hidden = TICKET_TAB_KEYS.filter(key => !shown.includes(key));
+  const hidden = keys.filter(key => !shown.includes(key));
 
   return (
     <div ref={rowRef} className="relative mb-5 flex items-stretch">
@@ -139,7 +142,7 @@ export const TicketTabsRow: FC<TicketTabsRowProps> = ({
         aria-hidden
         className="pointer-events-none invisible absolute left-0 top-0 flex whitespace-nowrap"
       >
-        {TICKET_TAB_KEYS.map(key => (
+        {keys.map(key => (
           <span
             key={key}
             className={`flex h-11.5 items-center font-medium ${TAB_SIZE}`}
