@@ -14,6 +14,7 @@ import {
   type DeadlinePriority,
   previewCompanyDeadline,
 } from '@/api/local/deadlines';
+import { useDebounced } from '@/hooks/useDebounced';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { usePermissions } from '@/security';
@@ -25,7 +26,6 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { CURRENT_HOLIDAY_REGIONS } from '../holidayRegions';
 
 export const COMPANY_DEADLINES_QUERY_KEY = 'company-deadlines';
@@ -203,16 +203,6 @@ export const useHolidayRegions = (principalId?: string) => {
     retry: false,
   });
   return query.data?.length ? query.data : CURRENT_HOLIDAY_REGIONS;
-};
-
-/** The value, once it has stopped changing for `ms`. */
-const useDebounced = <T>(value: T, ms: number): T => {
-  const [settled, setSettled] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setSettled(value), ms);
-    return () => clearTimeout(id);
-  }, [value, ms]);
-  return settled;
 };
 
 export interface DeadlinePreviewRequest {

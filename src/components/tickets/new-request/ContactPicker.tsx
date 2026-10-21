@@ -2,12 +2,13 @@ import {
   type HelpdeskContactListDto,
   searchContacts,
 } from '@/api/local/tickets';
+import { useDebounced } from '@/hooks/useDebounced';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
 } from '@brainforgeau/components';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { type FC, useEffect, useState } from 'react';
+import { type FC, useState } from 'react';
 
 /** The contact a request is for: someone on file, or a new name to add. */
 export type RequestContact =
@@ -19,15 +20,6 @@ export type RequestContact =
 const NEW_KEY = '__new__';
 const SELF_KEY = '__self__';
 const EMPTY_KEY = '__empty__';
-
-const useDebounced = <T,>(value: T, ms: number): T => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), ms);
-    return () => clearTimeout(id);
-  }, [value, ms]);
-  return debounced;
-};
 
 interface ContactPickerProps {
   value: RequestContact | null;
