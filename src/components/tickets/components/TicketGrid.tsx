@@ -483,7 +483,7 @@ export const TicketGrid: FC = () => {
 
   /*
    * The badges are scoped by whatever you filtered, the assignee included, so
-   * each one counts the list you would get by clicking it: with Mine on,
+   * each one counts the list you would get by clicking it: with you in Assignee,
    * Overdue reads your overdue tickets. The hook strips the tab-owned status
    * fields itself, so passing the live filters does not make the counts
    * refetch on every tab change.
