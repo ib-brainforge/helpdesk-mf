@@ -672,7 +672,7 @@ export const TicketGrid: FC = () => {
 
   /*
    * "Clear Filters" clears what you chose, not which tab you are on: the tab's
-   * own definition is put back, so Needs reply keeps its New filter.
+   * own definition is put back, so New keeps its Status filter.
    */
   const handleFiltersChange = useCallback(
     (next: TicketFiltersType) => {
@@ -689,7 +689,7 @@ export const TicketGrid: FC = () => {
         return;
       }
       // A status change may stop matching the tab (clearing New from Status
-      // on Needs reply, say), so the tab is re-chosen from the filters rather
+      // on the New tab, say), so the tab is re-chosen from the filters rather
       // than left lit over rows it no longer describes. See tabForFilters.
       const tab = tabForFilters(next, selectedTab, currentUserId);
       if (tab !== selectedTab) setSelectedTab(tab);
