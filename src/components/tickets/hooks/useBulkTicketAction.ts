@@ -24,6 +24,12 @@ export interface BulkTicketRef {
 
 export type BulkTicketActionInput = {
   tickets: BulkTicketRef[];
+  /**
+   * Assign only: who the tickets went to, for the feedback ("Assigned to
+   * Eric Isik"). Never sent; null or absent with no assignee reads
+   * "Unassigned".
+   */
+  assigneeName?: string | null;
 } & BulkTicketAction;
 
 /** How each action reads in the feedback: "assign" / "3 tickets assigned". */
@@ -167,6 +173,7 @@ export const useBulkTicketAction = () => {
   return useMutation({
     mutationFn: async ({
       tickets: refs,
+      assigneeName: _assigneeName,
       ...action
     }: BulkTicketActionInput): Promise<BulkTicketResultDto> => {
       const byCompany = new Map<string | null, string[]>();
@@ -220,7 +227,17 @@ export const useBulkTicketAction = () => {
       const ok = result.succeeded.length;
       const failed = result.failed.length;
       const reasons = reasonsOf(result);
-      if (failed === 0) {
+      if (failed === 0 && input.action === 'Assign') {
+        toast(
+          input.assigneeId
+            ? `Assigned to ${input.assigneeName ?? 'the chosen person'}`
+            : 'Unassigned',
+          {
+            description: ok > 1 ? `${tickets(ok)} ${done}` : undefined,
+            variant: 'success',
+          },
+        );
+      } else if (failed === 0) {
         toast(`${tickets(ok)} ${done}`, { variant: 'success' });
       } else if (ok === 0) {
         toast(

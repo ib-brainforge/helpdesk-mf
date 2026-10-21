@@ -63,7 +63,14 @@ import {
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
-  onUpdate?: (updates: Partial<TicketDto>) => void;
+  /**
+   * `assigneeName`, on an assignee change only, names who it went to for the
+   * feedback ("Assigned to Eric Isik"); it is not sent.
+   */
+  onUpdate?: (
+    updates: Partial<TicketDto>,
+    meta?: { assigneeName?: string | null },
+  ) => void;
   isUpdating?: boolean;
   isSubscribed?: boolean;
   isSubscribeLoading?: boolean;
@@ -456,9 +463,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               const newKey = key as string | null;
               // null, never undefined: undefined means "leave the assignee
               // alone" and the update is skipped entirely.
-              onUpdate?.({ assigneeId: newKey ?? null });
+              onUpdate?.(
+                { assigneeId: newKey ?? null },
+                {
+                  assigneeName: newKey
+                    ? (scopedAssignees.options.find(u => u.id === newKey)
+                        ?.name ?? userMap[newKey]?.name)
+                    : null,
+                },
+              );
             }}
-            onClear={() => onUpdate?.({ assigneeId: null })}
+            // No onClear: clearing also reports a null selection above, and
+            // handling both sent the change, and its feedback, twice.
             onValueChange={setAssigneeQuery}
             // Closing forgets the search, so reopening starts from everyone.
             onOpenChange={open => {
@@ -525,7 +541,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
             <button
               type="button"
               disabled={isUpdating}
-              onClick={() => onUpdate?.({ assigneeId: currentUserId })}
+              onClick={() =>
+                onUpdate?.(
+                  { assigneeId: currentUserId },
+                  { assigneeName: 'you' },
+                )
+              }
               className="mt-1.5 text-xs text-blue hover:underline disabled:opacity-50"
             >
               Assign to me

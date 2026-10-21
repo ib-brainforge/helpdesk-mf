@@ -326,7 +326,7 @@ export const NewTicketForm: FC = () => {
           {field => (
             <BaseAutocomplete
               label="Assignee"
-              placeholder="Search assignee (optional)..."
+              placeholder="Choose assignee"
               isClearable
               selectedKey={field.state.value ?? null}
               onSelectionChange={key => {

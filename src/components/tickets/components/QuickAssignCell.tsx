@@ -20,7 +20,11 @@ interface QuickAssignCellProps {
   tenantId?: string | null;
   organisationId?: string | null;
   divisionId?: string | null;
-  onAssign: (ticketId: string, assigneeId: string | null) => void;
+  onAssign: (
+    ticketId: string,
+    assigneeId: string | null,
+    assigneeName?: string | null,
+  ) => void;
 }
 
 /**
@@ -80,7 +84,7 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
           {currentUserId ? (
             <DropdownItem
               key="assign-to-me"
-              onPress={() => onAssign(ticketId, currentUserId)}
+              onPress={() => onAssign(ticketId, currentUserId, 'you')}
             >
               Assign to me
             </DropdownItem>
@@ -102,7 +106,7 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
               .map(user => (
                 <DropdownItem
                   key={user.id}
-                  onPress={() => onAssign(ticketId, user.id)}
+                  onPress={() => onAssign(ticketId, user.id, user.name)}
                   textValue={user.name}
                 >
                   <div className="flex items-center gap-2">

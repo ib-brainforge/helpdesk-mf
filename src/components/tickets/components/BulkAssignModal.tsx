@@ -20,7 +20,7 @@ interface BulkAssignModalProps {
   isOpen: boolean;
   onClose: () => void;
   /** `null` unassigns the selected tickets. */
-  onConfirm: (assigneeId: string | null) => void;
+  onConfirm: (assigneeId: string | null, assigneeName?: string | null) => void;
   ticketCount: number;
   /**
    * The scope of each selected ticket. Only people who can work every one of
@@ -60,7 +60,10 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
     assignees.options.length === 0;
 
   const handleConfirm = () => {
-    onConfirm(selectedAssigneeId ?? null);
+    onConfirm(
+      selectedAssigneeId ?? null,
+      assignees.options.find(u => u.id === selectedAssigneeId)?.name ?? null,
+    );
     setSelectedAssigneeId(null);
     setQuery('');
     onClose();

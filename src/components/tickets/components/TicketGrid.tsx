@@ -374,11 +374,16 @@ export const TicketGrid: FC = () => {
   );
 
   const handleAssign = useCallback(
-    (ticketId: string, assigneeId: string | null) => {
+    (
+      ticketId: string,
+      assigneeId: string | null,
+      assigneeName?: string | null,
+    ) => {
       ticketAction.mutate({
         tickets: [refOf(ticketId)],
         action: 'Assign',
         assigneeId,
+        assigneeName,
       });
     },
     [ticketAction.mutate, refOf],
@@ -775,7 +780,10 @@ export const TicketGrid: FC = () => {
   );
 
   const runBulk = useCallback(
-    async (verb: string, action: BulkTicketAction) => {
+    async (
+      verb: string,
+      action: BulkTicketAction & { assigneeName?: string | null },
+    ) => {
       const tickets = await resolveSelection(verb);
       if (!tickets) return;
       ticketAction.mutate(
@@ -787,13 +795,13 @@ export const TicketGrid: FC = () => {
   );
 
   const handleBulkAssignConfirm = useCallback(
-    (assigneeId: string | null) => {
+    (assigneeId: string | null, assigneeName?: string | null) => {
       // One row from its menu, or the selection from the bulk bar.
       if (assignRow?.id) {
-        handleAssign(assignRow.id, assigneeId);
+        handleAssign(assignRow.id, assigneeId, assigneeName);
         return;
       }
-      void runBulk('Assign', { action: 'Assign', assigneeId });
+      void runBulk('Assign', { action: 'Assign', assigneeId, assigneeName });
     },
     [assignRow, handleAssign, runBulk],
   );

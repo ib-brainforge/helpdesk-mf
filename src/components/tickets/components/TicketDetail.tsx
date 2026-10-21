@@ -237,8 +237,31 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const [isAddSubtaskModalOpen, setIsAddSubtaskModalOpen] = useState(false);
 
   const handleUpdate = useCallback(
-    (updates: any) => {
+    (updates: any, meta?: { assigneeName?: string | null }) => {
       if (!id) return;
+      // An assignee change says where the ticket went, or that it failed.
+      if ('assigneeId' in updates && !updates.status) {
+        updateTicketMutation.mutate(
+          { id, updates },
+          {
+            onSuccess: () => {
+              toast(
+                updates.assigneeId
+                  ? `Assigned to ${meta?.assigneeName ?? 'the chosen person'}`
+                  : 'Unassigned',
+                { variant: 'success' },
+              );
+            },
+            onError: () => {
+              toast("Couldn't change the assignee", {
+                description: 'Please try again.',
+                variant: 'danger',
+              });
+            },
+          },
+        );
+        return;
+      }
       updateTicketMutation.mutate(
         { id, updates },
         updates.status

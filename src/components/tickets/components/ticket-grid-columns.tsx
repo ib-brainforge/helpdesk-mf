@@ -140,7 +140,11 @@ const ORIGIN_LABELS: Record<string, string> = {
 
 interface CreateColumnsOptions {
   /** `null` unassigns. */
-  onAssign?: (ticketId: string, assigneeId: string | null) => void;
+  onAssign?: (
+    ticketId: string,
+    assigneeId: string | null,
+    assigneeName?: string | null,
+  ) => void;
   /** May edit tickets: shows the row menu. */
   canWrite?: boolean;
   /** Opens the assignee picker for one row (the row menu's Assign). */
