@@ -95,8 +95,28 @@ export const assigneeParams = (
   };
 };
 
+/**
+ * A multi-select's ids in the shape the ticket endpoints take: one id in the
+ * single-valued parameter every backend version reads, several as repeated
+ * `<plural>=` ("any of"), the same split as assigneeParams.
+ */
+export const putIds = (
+  params: Record<string, unknown>,
+  single: string,
+  plural: string,
+  ids: string[] | undefined,
+) => {
+  if (!ids?.length) return;
+  if (ids.length === 1) params[single] = ids[0];
+  else params[plural] = ids;
+};
+
 const extraParams = (filters: TicketFilters, includeScope: boolean) => {
   const params: Record<string, unknown> = {};
+  // One category goes in the declared `categoryId` argument; several here.
+  if ((filters.categoryId?.length ?? 0) > 1) {
+    params.categoryIds = filters.categoryId;
+  }
   const { assigneeIds, includeUnassigned } = assigneeParams(filters);
   if (assigneeIds) params.assigneeIds = assigneeIds;
   if (includeUnassigned) params.includeUnassigned = includeUnassigned;
@@ -126,8 +146,8 @@ const extraParams = (filters: TicketFilters, includeScope: boolean) => {
     params.customStatusIds = filters.customStatusIds;
   }
   if (includeScope) {
-    if (filters.tenantId) params.tenantId = filters.tenantId;
-    if (filters.organisationId) params.organisationId = filters.organisationId;
+    putIds(params, 'tenantId', 'tenantIds', filters.tenantId);
+    putIds(params, 'organisationId', 'organisationIds', filters.organisationId);
     if (filters.divisionId) params.divisionId = filters.divisionId;
   }
   return Object.keys(params).length > 0
@@ -157,7 +177,8 @@ const ticketQueryValues = (filters: TicketFilters) => ({
   priority: filters.priority?.[0]
     ? toApiTicketPriority(filters.priority[0])
     : undefined,
-  categoryId: filters.categoryId?.[0],
+  categoryId:
+    filters.categoryId?.length === 1 ? filters.categoryId[0] : undefined,
   // A wider selection goes out via extraParams (assigneeIds).
   assigneeId: assigneeParams(filters).assigneeId,
   searchTerm: filters.searchTerm,

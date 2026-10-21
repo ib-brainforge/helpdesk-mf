@@ -7,7 +7,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
 import { useSearchMatches } from './useSearchMatches';
-import { assigneeParams, withSearchMatches } from './useTickets';
+import { assigneeParams, putIds, withSearchMatches } from './useTickets';
 
 /**
  * Every badge on the ticket list, from one request.
@@ -67,13 +67,13 @@ export interface TicketCountsResponse {
  */
 const countsParams = (filters: TicketFilters): Record<string, unknown> => {
   const params: Record<string, unknown> = {};
-  // Same shapes as ticketQueryValues/extraParams in useTickets.ts: priority and
-  // category are single-valued arrays in the filter state, while the scope ids
-  // are passed through whole.
+  // Same shapes as ticketQueryValues/extraParams in useTickets.ts: priority is
+  // a single-valued array in the filter state; category, company and
+  // organisation are multi-selects (putIds).
   if (filters.priority?.[0]) {
     params.priority = toApiTicketPriority(filters.priority[0]);
   }
-  if (filters.categoryId?.[0]) params.categoryId = filters.categoryId[0];
+  putIds(params, 'categoryId', 'categoryIds', filters.categoryId);
   // The Assignee filter's selection, in the same shape the list sends.
   const assignees = assigneeParams(filters);
   if (assignees.assigneeId) params.assigneeId = assignees.assigneeId;
@@ -87,8 +87,8 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
     params.searchScopeIds = filters.searchScopeIds;
   }
   if (filters.tagIds?.length) params.tagIds = filters.tagIds;
-  if (filters.tenantId) params.tenantId = filters.tenantId;
-  if (filters.organisationId) params.organisationId = filters.organisationId;
+  putIds(params, 'tenantId', 'tenantIds', filters.tenantId);
+  putIds(params, 'organisationId', 'organisationIds', filters.organisationId);
   if (filters.divisionId) params.divisionId = filters.divisionId;
   return params;
 };
