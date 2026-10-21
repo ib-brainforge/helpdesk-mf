@@ -37,12 +37,14 @@ type Params = Record<string, string | number | boolean | undefined | null>;
  *
  * With `principalId` the company has no Helpdesk licence, so no token can be
  * issued there, and principal staff work its tickets through the principal
- * routes instead (see principalAxios): the ticket itself, and its status,
- * assignee, priority and category. Nothing else has a principal route.
+ * routes instead (see principalAxios and PRINCIPAL_ROUTES for what they
+ * cover).
  */
 export interface HelpdeskScope {
   tenantId: string;
   principalId?: string;
+  /** In principal mode, the page's ticket, for routes that carry no id. */
+  ticketId?: string;
 }
 
 /** A call with no principal route, refused before it is sent. */
@@ -218,25 +220,90 @@ const companyAxios = (scope: HelpdeskScope): AxiosInstance => {
 };
 
 /**
- * The ticket calls that have a principal route, rewritten onto it:
- * GET /v1/tickets/{id} and PATCH /v1/tickets/{id}/status|assign|priority|
- * category become /v1/principals/{principalId}/tickets/... with the same
- * body. The commands are the same ones the tenant routes send.
+ * The calls that have a principal route, rewritten onto
+ * /v1/principals/{principalId}/tickets/{ticketId}/... with the same body
+ * (the commands are the ones the tenant routes send):
+ *
+ *   GET   /v1/tickets/{id}                          the ticket
+ *   PATCH /v1/tickets/{id}/status|assign|priority|category
+ *   GET   /v1/tickets/{id}/comments                 the conversation
+ *   POST  /v1/tickets/{id}/comments                 a reply
+ *   POST  /v1/tickets/{id}/comments/internal-notes  a note
+ *   GET   /v1/tickets/{id}/history
+ *   GET   /v1/attachments/ticket/{id}               the ticket's attachments
+ *   POST  /v1/attachments/upload                    multipart, to this ticket
+ *   GET   /v1/attachments/{attachmentId}            its file, streamed (/file)
+ *
+ * The last two carry no ticket id, so they use the page's ticket. Anything
+ * else (delete an attachment, retry an email, tags, subscribe...) has no
+ * principal route and is refused.
  */
-const TICKET_ROUTE =
-  /^(.*)\/v1\/tickets\/([0-9a-fA-F-]{36})(\/(status|assign|priority|category))?$/;
+const GUID = '[0-9a-fA-F-]{36}';
+const PRINCIPAL_ROUTES: Array<{
+  method: string;
+  path: RegExp;
+  to: (m: RegExpExecArray, ticketId: string | undefined) => string | null;
+}> = [
+  {
+    method: 'GET',
+    path: new RegExp(`^/v1/tickets/(${GUID})$`),
+    to: m => `/tickets/${m[1]}`,
+  },
+  {
+    method: 'PATCH',
+    path: new RegExp(
+      `^/v1/tickets/(${GUID})/(status|assign|priority|category)$`,
+    ),
+    to: m => `/tickets/${m[1]}/${m[2]}`,
+  },
+  {
+    method: 'GET',
+    path: new RegExp(`^/v1/tickets/(${GUID})/(comments|history)$`),
+    to: m => `/tickets/${m[1]}/${m[2]}`,
+  },
+  {
+    method: 'POST',
+    path: new RegExp(`^/v1/tickets/(${GUID})/comments(/internal-notes)?$`),
+    to: m => `/tickets/${m[1]}/comments${m[2] ?? ''}`,
+  },
+  {
+    method: 'GET',
+    path: new RegExp(`^/v1/attachments/ticket/(${GUID})$`),
+    to: m => `/tickets/${m[1]}/attachments`,
+  },
+  {
+    method: 'POST',
+    path: /^\/v1\/attachments\/upload$/,
+    to: (_m, ticketId) =>
+      ticketId ? `/tickets/${ticketId}/attachments` : null,
+  },
+  {
+    method: 'GET',
+    path: new RegExp(`^/v1/attachments/(${GUID})$`),
+    to: (m, ticketId) =>
+      ticketId ? `/tickets/${ticketId}/attachments/${m[1]}/file` : null,
+  },
+];
 
 const toPrincipalUrl = (
   url: string,
   method: string,
   principalId: string,
+  ticketId: string | undefined,
 ): string | null => {
-  const m = TICKET_ROUTE.exec(url);
-  if (!m) return null;
-  const [, base, id, suffix] = m;
+  const [beforeQuery, query] = url.split('?');
+  const at = beforeQuery.indexOf('/v1/');
+  if (at < 0) return null;
+  const base = beforeQuery.slice(0, at);
+  const path = beforeQuery.slice(at);
   const verb = method.toUpperCase();
-  if ((!suffix && verb === 'GET') || (suffix && verb === 'PATCH')) {
-    return `${base}/v1/principals/${principalId}/tickets/${id}${suffix ?? ''}`;
+  for (const route of PRINCIPAL_ROUTES) {
+    if (route.method !== verb) continue;
+    const m = route.path.exec(path);
+    if (!m) continue;
+    const rest = route.to(m, ticketId);
+    if (!rest) return null;
+    return `${base}/v1/principals/${principalId}${rest}${query ? `?${query}` : ''}`;
   }
   return null;
 };
@@ -252,14 +319,19 @@ const principalInstances = new Map<string, AxiosInstance>();
  * Generated clients and the local api modules only use `request`, the HTTP
  * verbs and `defaults` on an instance, so that is the surface given here.
  */
-const principalAxios = (principalId: string): AxiosInstance => {
-  const existing = principalInstances.get(principalId);
+const principalAxios = (
+  principalId: string,
+  ticketId: string | undefined,
+): AxiosInstance => {
+  const key = `${principalId}|${ticketId ?? ''}`;
+  const existing = principalInstances.get(key);
   if (existing) return existing;
   const request = <T>(config: AxiosRequestConfig) => {
     const url = toPrincipalUrl(
       config.url ?? '',
       config.method ?? 'GET',
       principalId,
+      ticketId,
     );
     if (!url)
       return Promise.reject(new PrincipalRouteMissingError(config.url ?? ''));
@@ -288,7 +360,7 @@ const principalAxios = (principalId: string): AxiosInstance => {
     put: verb('put'),
     patch: verb('patch'),
   } as unknown as AxiosInstance;
-  principalInstances.set(principalId, instance);
+  principalInstances.set(key, instance);
   return instance;
 };
 
@@ -299,7 +371,7 @@ const principalAxios = (principalId: string): AxiosInstance => {
  */
 export const helpdeskAxios = (scope?: HelpdeskScope | null): AxiosInstance =>
   scope?.principalId
-    ? principalAxios(scope.principalId)
+    ? principalAxios(scope.principalId, scope.ticketId)
     : scope
       ? companyAxios(scope)
       : authorizedAxios;
