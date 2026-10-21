@@ -142,7 +142,10 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   const blocked = !emailing
     ? null
     : !recipient
-      ? 'This ticket has no contact email, so a reply cannot be emailed.'
+      ? // The backend tries the contact, then the requester, then whoever
+        // submitted it, skipping your own address: so this is usually a
+        // ticket you raised for yourself.
+        'Nobody on this ticket but you has an email address, so this reply cannot be emailed. Set a contact with an email first.'
       : !isConnected
         ? mailbox?.status === 'NeedsReconnect'
           ? 'Your mailbox needs reconnecting, so replies cannot be emailed.'
