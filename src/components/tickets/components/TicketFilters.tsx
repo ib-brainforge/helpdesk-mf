@@ -27,6 +27,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { isMine } from '../hooks/ticketTabs';
 import { useScopedAssignees } from '../hooks/useScopedAssignees';
 import type { AssigneeCounts } from '../hooks/useTicketTabCounts';
 
@@ -471,6 +472,8 @@ interface TicketFiltersProps {
   onCategoryChange: (categoryIds: string[]) => void;
   /** Tickets per person, from the tab counts the grid already loads. */
   assigneeCounts?: AssigneeCounts;
+  /** The signed-in user, for the "Mine" shortcut. */
+  currentUserId?: string;
 }
 
 const TicketFiltersImpl: FC<TicketFiltersProps> = ({
@@ -480,6 +483,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   searchTerm,
   onCategoryChange,
   assigneeCounts,
+  currentUserId,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
   const { customStatuses } = useCustomStatuses();
@@ -733,10 +737,52 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
     onSearch('');
   }, [onFiltersChange, onSearch]);
 
+  // "Mine": the Assignee filter set to you alone, or cleared again.
+  const mine = isMine(filters, currentUserId);
+  const toggleMine = useCallback(
+    () =>
+      onFiltersChange({
+        ...filters,
+        assigneeId: mine || !currentUserId ? undefined : [currentUserId],
+        includeUnassigned: undefined,
+      }),
+    [filters, onFiltersChange, mine, currentUserId],
+  );
+
+  /*
+   * The less used filters sit behind "More filters", so the bar is one row.
+   * How many of them are set shows on the button, and they open by themselves
+   * when the page loads with one set, so a narrowed list is never unexplained.
+   */
+  const moreCount =
+    (filters.categoryId?.length ?? 0) +
+    (filters.tagIds?.length ?? 0) +
+    (filters.organisationId?.length ?? 0) +
+    (filters.divisionId ? 1 : 0);
+  const [moreOpen, setMoreOpen] = useState(moreCount > 0);
+  const showMore = moreOpen || moreCount > 0;
+
+  const hasAnyFilter =
+    Boolean(searchTerm) ||
+    Boolean(filters.assigneeId?.length) ||
+    Boolean(filters.includeUnassigned) ||
+    Boolean(filters.status?.length) ||
+    Boolean(filters.customStatusIds?.length) ||
+    Boolean(filters.priority?.length) ||
+    Boolean(filters.tenantId?.length) ||
+    moreCount > 0;
+
+  const showCompany =
+    isServiceAdmin &&
+    (tenantOptions.length > 0 || Boolean(filters.tenantId?.length));
+  const showOrganisation =
+    isServiceAdmin &&
+    (organisationOptions.length > 0 || Boolean(filters.organisationId?.length));
+
   return (
-    <div className="flex w-full flex-wrap items-end gap-2.5">
-      <div className="contents">
-        <div className="w-60">
+    <div className="flex w-full flex-col gap-2.5">
+      <div className="flex w-full flex-wrap items-end gap-2.5">
+        <div className="w-56">
           <BaseInput
             label="Search"
             type="text"
@@ -749,9 +795,18 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           />
         </div>
 
-        {/* Written through onFiltersChange like every other filter; the grid
-          picks the tab from the result ("Assigned to you" for exactly you,
-          "Unassigned" for Unassigned alone; see tabForFilters). */}
+        {currentUserId && (
+          <BaseButton
+            aria-pressed={mine}
+            variant={mine ? 'flat' : 'bordered'}
+            color={mine ? 'primary' : 'light'}
+            onPress={toggleMine}
+            icon={<Icon name="user" className="h-4 w-4" />}
+          >
+            Mine
+          </BaseButton>
+        )}
+
         <AssigneeFilter
           options={assigneeOptions}
           counts={assigneeCounts}
@@ -760,18 +815,10 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           onChange={handleAssigneeChange}
         />
 
-        <MultiFilter
-          label="Category"
-          plural="categories"
-          options={categoryOptions}
-          value={filters.categoryId ?? EMPTY}
-          onChange={onCategoryChange}
-        />
-
         <div className="w-40">
           <BaseTagSelect
             label="Status"
-            placeholder="Filter by status"
+            placeholder="Any status"
             classNames={{ base: 'w-full [&_svg]:my-0' }}
             value={statusValue}
             onValueChange={handleStatusChange}
@@ -783,7 +830,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
         <div className="w-40">
           <BaseTagSelect
             label="Priority"
-            placeholder="Filter by priority"
+            placeholder="Any priority"
             classNames={{ base: 'w-full [&_svg]:my-0' }}
             value={filters.priority?.map(p => p.toString()) ?? []}
             onValueChange={handlePriorityChange}
@@ -792,53 +839,64 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           </BaseTagSelect>
         </div>
 
-        {/* Tags, moved out of the sidebar. They are a filter, so they sit with
-          the filters instead of in a rail two controls away from them. Always
-          shown now: whether the company has tags is only known once they
-          load, which waits for the first open. */}
-        <div
-          className="w-40"
-          onPointerDownCapture={wantTags}
-          onFocusCapture={wantTags}
+        {/* Scope, for Netcorp staff whose rows span companies. A tenant user has
+          exactly one company, so this renders nothing for them. */}
+        {showCompany && (
+          <MultiFilter
+            label="Company"
+            plural="companies"
+            options={tenantOptions}
+            value={filters.tenantId ?? EMPTY}
+            onChange={handleTenantChange}
+          />
+        )}
+
+        <BaseButton
+          variant="bordered"
+          color="light"
+          aria-expanded={showMore}
+          onPress={() => setMoreOpen(open => !(open || moreCount > 0))}
+          icon={<Icon name="filter" className="h-4 w-4" />}
         >
-          <BaseTagSelect
-            label="Tags"
-            placeholder="Filter by tag"
-            classNames={{ base: 'w-full [&_svg]:my-0' }}
-            value={filters.tagIds ?? []}
-            onValueChange={handleTagsChange}
+          More filters
+          {moreCount > 0 && (
+            <span className={COUNT_BADGE_CLASS}>{moreCount}</span>
+          )}
+        </BaseButton>
+
+        {hasAnyFilter && (
+          <BaseButton
+            variant="light"
+            color="light"
+            onPress={handleClearFilters}
+            icon={<Icon name="x" className="h-4 w-4" />}
           >
-            {tagItems}
-          </BaseTagSelect>
-        </div>
+            Clear
+          </BaseButton>
+        )}
       </div>
 
-      <div className="contents">
-        {/* Scope, for Netcorp staff whose rows span companies. A tenant user has
-          exactly one of each, so these render nothing for them. */}
-        {isServiceAdmin && (
-          <>
-            {(tenantOptions.length > 0 ||
-              Boolean(filters.tenantId?.length)) && (
-              <MultiFilter
-                label="Company"
-                plural="companies"
-                options={tenantOptions}
-                value={filters.tenantId ?? EMPTY}
-                onChange={handleTenantChange}
-              />
-            )}
-            {(organisationOptions.length > 0 ||
-              Boolean(filters.organisationId?.length)) && (
-              <MultiFilter
-                label="Organisation"
-                plural="organisations"
-                options={scopedOrganisations}
-                grouped
-                value={filters.organisationId ?? EMPTY}
-                onChange={handleOrganisationChange}
-              />
-            )}
+      {showMore && (
+        <div className="flex w-full flex-wrap items-end gap-2.5">
+          <MultiFilter
+            label="Category"
+            plural="categories"
+            options={categoryOptions}
+            value={filters.categoryId ?? EMPTY}
+            onChange={onCategoryChange}
+          />
+
+          {showOrganisation && (
+            <MultiFilter
+              label="Organisation"
+              plural="organisations"
+              options={scopedOrganisations}
+              grouped
+              value={filters.organisationId ?? EMPTY}
+              onChange={handleOrganisationChange}
+            />
+          )}
+          {isServiceAdmin && (
             <FilterAutocomplete
               label="Division"
               options={scopedDivisions}
@@ -846,25 +904,26 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
               value={filters.divisionId}
               onChange={handleDivisionChange}
             />
-          </>
-        )}
+          )}
 
-        {/* The Assignee and Category filters above are the only place to pick
-          either: the explorer rail that also did it is gone, so two controls
-          can no longer write the same field. Assignee offers the people who
-          can work tickets in the chosen scope, not the whole directory. */}
-
-        <div className="flex gap-2">
-          <BaseButton
-            variant="bordered"
-            color="light"
-            onPress={handleClearFilters}
-            icon={<Icon name="x" className="h-4 w-4" />}
+          {/* Tags load when this filter is first opened (see wantTags). */}
+          <div
+            className="w-40"
+            onPointerDownCapture={wantTags}
+            onFocusCapture={wantTags}
           >
-            Clear Filters
-          </BaseButton>
+            <BaseTagSelect
+              label="Tags"
+              placeholder="Any tag"
+              classNames={{ base: 'w-full [&_svg]:my-0' }}
+              value={filters.tagIds ?? []}
+              onValueChange={handleTagsChange}
+            >
+              {tagItems}
+            </BaseTagSelect>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
