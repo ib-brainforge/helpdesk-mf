@@ -31,17 +31,20 @@ import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
 import {
   type FC,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import {
+  LEGACY_TABS,
   TICKET_DEFAULT_TAB,
   TICKET_VALID_TABS,
   type TicketTabKey,
+  assigneeForShortcut,
   filtersForTab,
-  isPersonTab,
+  shortcutForFilters,
   tabForFilters,
 } from '../hooks/ticketTabs';
 import { useBulkTicketAction } from '../hooks/useBulkTicketAction';
@@ -139,6 +142,7 @@ export const TicketGrid: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTab = (() => {
     const param = searchParams.get('tab');
+    if (param && LEGACY_TABS[param]) return LEGACY_TABS[param].tab;
     return param && TICKET_VALID_TABS.has(param) ? param : TICKET_DEFAULT_TAB;
   })();
   const setSelectedTab = useCallback(
@@ -184,37 +188,38 @@ export const TicketGrid: FC = () => {
     isLoading,
     refetch,
   } = useTicketsData(
-    // Seeded from the URL so the very first request matches the highlighted tab.
+    // Seeded from the URL so the very first request matches the highlighted
+    // tab and the ?assignee= shortcut (an old person-tab link brings its own).
     filtersForTab(
-      (() => {
-        const param = searchParams.get('tab');
-        return param && TICKET_VALID_TABS.has(param)
-          ? param
-          : TICKET_DEFAULT_TAB;
-      })(),
-      {},
-      user?.profile?.sub,
+      selectedTab,
+      assigneeForShortcut(
+        LEGACY_TABS[searchParams.get('tab') ?? '']?.assignee ??
+          searchParams.get('assignee'),
+        user?.profile?.sub,
+      ),
     ),
     { sort, enabled: ticketsLayout.isReady },
   );
 
   /*
-   * WHO OWNS THE ASSIGNEE FILTER.
-   *
-   * "Assigned to you" and "Unassigned" are assignee selections wearing a tab's
-   * clothes (isPersonTab): opening one sets the Assignee filter to you alone,
-   * or to Unassigned alone, and choosing that selection in the filter opens
-   * the tab. On those tabs the selection belongs to the TAB:
-   *
-   *   - it must not narrow the badges beside it (All read 179 against a real
-   *     2001 when it did), and
-   *   - it must not survive leaving the tab, or clicking All afterwards still
-   *     listed only your own tickets.
-   *
-   * On every other tab the selection is YOURS: it narrows the badges and
-   * travels with you across tabs.
+   * The URL follows the Assignee filter: ?assignee=me or ?assignee=unassigned
+   * when it is exactly one of those, so the view can be linked and Back
+   * restores it. An old ?tab=assigned-to-you or ?tab=unassigned link is
+   * rewritten to the tab it now means (the filters were seeded from it above).
    */
-  const tabOwnsAssignee = isPersonTab(selectedTab);
+  const assigneeShortcut = shortcutForFilters(filters, currentUserId);
+  useEffect(() => {
+    setSearchParams(
+      prev => {
+        const legacy = LEGACY_TABS[prev.get('tab') ?? ''];
+        if (legacy) prev.set('tab', legacy.tab);
+        if (assigneeShortcut) prev.set('assignee', assigneeShortcut);
+        else prev.delete('assignee');
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [assigneeShortcut, setSearchParams]);
 
   // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
   useRealtimeTickets();
@@ -451,30 +456,14 @@ export const TicketGrid: FC = () => {
    */
 
   /*
-   * The badges are scoped by whatever YOU filtered, so each one counts the list
-   * you would get by clicking it. The hook strips the tab-owned status fields
-   * itself, so passing the live filters does not make the counts refetch on
-   * every tab change.
-   *
-   * The assignee has to be stripped here rather than in the hook, because only
-   * this component knows where it came from. On "Assigned to you" the tab sets
-   * the assignee for itself, and leaving it in scoped every other badge to your
-   * own queue: All read 179 against a real total of 2001, and Overdue 68
-   * against 814. The tab you are standing on must not narrow the tabs beside
-   * it, or the strip stops being a way to see what else is there.
+   * The badges are scoped by whatever you filtered, the assignee included, so
+   * each one counts the list you would get by clicking it: with Mine on,
+   * Overdue reads your overdue tickets. The hook strips the tab-owned status
+   * fields itself, so passing the live filters does not make the counts
+   * refetch on every tab change.
    */
-  const countsFilters = useMemo(
-    () =>
-      tabOwnsAssignee
-        ? { ...filters, assigneeId: undefined, includeUnassigned: undefined }
-        : filters,
-    [filters, tabOwnsAssignee],
-  );
   // One response for the tab badges and the Assignee filter's per-person counts.
-  const { counts, assigneeCounts } = useTicketTabCounts(
-    currentUserId,
-    countsFilters,
-  );
+  const { counts, assigneeCounts } = useTicketTabCounts(filters);
 
   /*
    * Tab label with its count beside it.
@@ -487,12 +476,6 @@ export const TicketGrid: FC = () => {
   const tabTitle = useCallback(
     (label: string, key: TicketTabKey) => {
       const count = counts?.[key];
-      /*
-       * No tab is ever disabled. "Unassigned" and "Assigned to you" used to dim
-       * while a person was chosen, since they would silently overwrite the
-       * choice. They now set the Assignee filter to what they mean, visibly,
-       * so clicking one is a choice you can see and undo.
-       */
       return (
         <span className="flex items-center gap-1 whitespace-nowrap">
           {label}
@@ -662,37 +645,24 @@ export const TicketGrid: FC = () => {
   );
 
   /*
-   * "Clear Filters" clears what YOU chose, not which tab you are on.
-   *
-   * TicketFilters signals a clear by sending `{}`, and this was wired straight
-   * to setFilters, so the tab's own definition went with it: on Assigned to you
-   * the assignee was dropped while the tab stayed lit, and the rail fell back to
-   * "All assignees" beside a header still claiming to show your queue. The same
-   * applied everywhere, Unanswered losing its New filter and so on.
-   *
-   * Re-seeding the tab keeps the highlighted tab an accurate description of the
-   * rows under it, which is the invariant the whole tab strip rests on.
+   * "Clear Filters" clears what you chose, not which tab you are on: the tab's
+   * own definition is put back, so Unanswered keeps its New filter.
    */
   const handleFiltersChange = useCallback(
     (next: TicketFiltersType) => {
       const isClear = Object.keys(next).length === 0;
       if (isClear) {
-        setFilters(filtersForTab(selectedTab, {}, currentUserId));
+        setFilters(filtersForTab(selectedTab, {}));
         return;
       }
-      // Any other change may stop matching the tab (clearing New from Status
+      // A status change may stop matching the tab (clearing New from Status
       // on Unanswered, say), so the tab is re-chosen from the filters rather
       // than left lit over rows it no longer describes. See tabForFilters.
-      const tab = tabForFilters(next, selectedTab, currentUserId, filters);
+      const tab = tabForFilters(next, selectedTab);
       if (tab !== selectedTab) setSelectedTab(tab);
-      // A person tab chosen from the Assignee filter brings its definition
-      // with it (Unassigned adds the open statuses), so the rows, the tab and
-      // its badge agree. Every other tab already matches `next` exactly.
-      setFilters(
-        isPersonTab(tab) ? filtersForTab(tab, next, currentUserId) : next,
-      );
+      setFilters(next);
     },
-    [setFilters, filters, selectedTab, setSelectedTab, currentUserId],
+    [setFilters, selectedTab, setSelectedTab],
   );
 
   const handleCategorySelect = useCallback(
@@ -709,26 +679,11 @@ export const TicketGrid: FC = () => {
     (key: string | number) => {
       const tabKey = String(key);
       setSelectedTab(tabKey);
-      // filtersForTab strips the fields a tab owns and keeps the rest, so the
-      // whole filter set is handed over rather than an allowlist of five
-      // fields. That allowlist silently dropped the chosen assignee, tenant,
-      // organisation and division on every tab click.
-      setFilters(prev =>
-        filtersForTab(
-          tabKey,
-          // Drop a tab-owned assignee selection on the way out. filtersForTab
-          // carries the selection so your own choice survives a tab change,
-          // but the one a person tab set for itself belongs to that tab:
-          // leaving it in meant clicking All next still listed only your own
-          // tickets, under a badge saying 2001.
-          tabOwnsAssignee
-            ? { ...prev, assigneeId: undefined, includeUnassigned: undefined }
-            : prev,
-          currentUserId,
-        ),
-      );
+      // filtersForTab replaces only the state fields a tab owns and keeps the
+      // rest, the assignee included, so Mine then Overdue is your overdue.
+      setFilters(prev => filtersForTab(tabKey, prev));
     },
-    [setFilters, currentUserId, setSelectedTab, tabOwnsAssignee],
+    [setFilters, setSelectedTab],
   );
 
   return (
@@ -780,6 +735,7 @@ export const TicketGrid: FC = () => {
             <TicketFilters
               filters={filters}
               assigneeCounts={assigneeCounts}
+              currentUserId={currentUserId}
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}

@@ -47,10 +47,7 @@ export interface AssigneeCounts {
  * before the key is built, so switching tabs does not invalidate the counts:
  * the six numbers do not depend on which tab is currently open.
  */
-export const useTicketTabCounts = (
-  currentUserId?: string,
-  filters: TicketFilters = {},
-) => {
+export const useTicketTabCounts = (filters: TicketFilters = {}) => {
   /*
    * All six badges now come from one request, shared with the assignee rail.
    *
@@ -83,7 +80,7 @@ export const useTicketTabCounts = (
   );
 
   return {
-    counts: tabCountsFrom(data, currentUserId),
+    counts: tabCountsFrom(data),
     assigneeCounts,
     isLoading,
   };

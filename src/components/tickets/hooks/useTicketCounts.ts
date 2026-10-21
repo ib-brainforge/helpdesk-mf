@@ -177,36 +177,12 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
 /** The tab badges, in the shape the grid already expects. */
 export const tabCountsFrom = (
   data: TicketCountsResponse | undefined,
-  currentUserId?: string,
 ): Record<TicketTabKey, number> | undefined => {
   if (!data) return undefined;
-
-  /*
-   * "Assigned to you" is read off the rail, not off tabs.assignedToMe.
-   *
-   * The rail already carries a row per assignee, and this tab is by definition
-   * that row for the signed-in user: filtersForTab('assigned-to-you') applies
-   * an assignee and nothing else, which is exactly what the rail counts. An
-   * assignee holding nothing is absent from the response, so a missing row is
-   * a true zero.
-   *
-   * It also sidesteps a real gap. tabs.assignedToMe is computed server-side
-   * from the caller's identity, and on the principal-scoped route that identity
-   * comes back null, so the badge read 0 while the same person's rail row read
-   * 179. Deriving it here is correct in both scopes and needs no server to know
-   * who is asking. tabs.assignedToMe is still preferred when present, since it
-   * is the same number by a shorter path.
-   */
-  const fromRail = currentUserId
-    ? (data.assignees.find(a => a.assigneeId === currentUserId)?.count ?? 0)
-    : 0;
-
   return {
     unanswered: data.tabs.unanswered,
     unclosed: data.tabs.unclosed,
-    unassigned: data.tabs.unassigned,
     overdue: data.tabs.overdue,
-    'assigned-to-you': currentUserId ? (data.tabs.assignedToMe ?? fromRail) : 0,
     all: data.tabs.all,
   };
 };

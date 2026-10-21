@@ -44,7 +44,7 @@ interface TicketTabsRowProps {
  * The ticket tabs, the More menu and the Columns button, on one line at every
  * width: never a scrollbar, never a second line, never under Columns.
  *
- * From about 1280 all six tabs fit. Narrower, they shrink (smaller padding and
+ * The tabs fit at most widths. Narrower, they shrink (smaller padding and
  * text). When even that runs out, the tabs that do not fit move into "More",
  * at the end of the tabs. The open tab always stays in the row, with its count.
  *
