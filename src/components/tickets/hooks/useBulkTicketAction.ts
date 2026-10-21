@@ -9,6 +9,7 @@ import {
   type BulkTicketFailureDto,
   type BulkTicketResultDto,
   bulkTicketAction,
+  bulkViaPrincipalRoutes,
 } from '@/api/local/ticket-bulk';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useScopeNames } from '@/hooks/useScopeNames';
@@ -89,7 +90,11 @@ const failAll = (
  */
 export const useBulkTicketAction = () => {
   const queryClient = useQueryClient();
-  const { tenantId: viewerTenantId } = useHelpdeskAccess();
+  const {
+    tenantId: viewerTenantId,
+    isServiceAdmin,
+    principalId,
+  } = useHelpdeskAccess();
   const { byTenantId } = useScopeNames();
   const companyName = (tenantId: string) =>
     byTenantId.get(tenantId)?.tenantName ?? 'this company';
@@ -114,6 +119,16 @@ export const useBulkTicketAction = () => {
       try {
         await getHelpdeskScopeToken(scope);
       } catch (error) {
+        // No Helpdesk there: Netcorp staff still change these tickets, one
+        // principal PATCH each. Anyone else gets "isn't enabled".
+        if (isNotLicensedError(error) && isServiceAdmin && principalId) {
+          return bulkViaPrincipalRoutes(
+            ids,
+            action,
+            principalId,
+            companyName(scope.tenantId),
+          );
+        }
         result.failed = isNotLicensedError(error)
           ? notEnabled()
           : failAll(

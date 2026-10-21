@@ -52,3 +52,53 @@ export const bulkTicketAction = async (
   );
   return data;
 };
+
+/**
+ * The same change for a company without Helpdesk, by principal staff: one
+ * principal PATCH per ticket (status, assign, priority), since the bulk route
+ * needs the company's own token. Delete has no principal route, so it fails
+ * per ticket with a reason. Each ticket succeeds or fails on its own.
+ */
+export const bulkViaPrincipalRoutes = async (
+  ticketIds: string[],
+  action: BulkTicketAction,
+  principalId: string,
+  companyName: string,
+): Promise<BulkTicketResultDto> => {
+  const result: BulkTicketResultDto = { succeeded: [], failed: [] };
+  if (action.action === 'Delete') {
+    result.failed = ticketIds.map(ticketId => ({
+      ticketId,
+      code: 'Company.NotLicensed',
+      reason: `Deleting needs Helpdesk enabled for ${companyName}`,
+    }));
+    return result;
+  }
+  const base = `${requireHelpdeskApiBaseUrl()}/v1/principals/${principalId}/tickets`;
+  const [route, body] =
+    action.action === 'Assign'
+      ? ['assign', { assigneeId: action.assigneeId }]
+      : action.action === 'SetStatus'
+        ? [
+            'status',
+            { newStatus: action.status, customStatusId: action.customStatusId },
+          ]
+        : ['priority', { newPriority: action.priority }];
+  await Promise.all(
+    ticketIds.map(async ticketId => {
+      try {
+        await helpdeskAxios().patch(`${base}/${ticketId}/${route}`, body);
+        result.succeeded.push(ticketId);
+      } catch (error) {
+        const data = (error as { response?: { data?: { detail?: string } } })
+          ?.response?.data;
+        result.failed.push({
+          ticketId,
+          code: 'Request.Failed',
+          reason: data?.detail ?? 'The change could not be saved.',
+        });
+      }
+    }),
+  );
+  return result;
+};

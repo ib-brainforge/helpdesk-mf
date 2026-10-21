@@ -68,6 +68,12 @@ interface TicketDetailSidebarProps {
   isSubscribed?: boolean;
   isSubscribeLoading?: boolean;
   onSubscribeToggle?: () => void;
+  /**
+   * Worked through the principal routes (no Helpdesk in this company): only
+   * status, priority, assignee and category can change, so the sections that
+   * need the company's own Helpdesk are hidden.
+   */
+  limited?: boolean;
 }
 
 const getOriginConfig = (origin: string) => {
@@ -123,6 +129,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   isSubscribed = false,
   isSubscribeLoading = false,
   onSubscribeToggle,
+  limited = false,
 }) => {
   const { hasPermission: hasKbPermission } = usePermissions();
   const canSeeKnowledgeBase = hasKbPermission(
@@ -594,13 +601,16 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </PermissionGuard>
       </div>
 
-      {/* Vehicles: the linked assets, moved up beside the fields they qualify. */}
-      <LinkedAssetsSection
-        ticketId={ticket.id ?? ''}
-        tenantId={ticket.tenantId}
-        organisationId={ticket.organisationId}
-      />
-
+      {!limited && (
+        <>
+          {/* Vehicles: the linked assets, moved up beside the fields they qualify. */}
+          <LinkedAssetsSection
+            ticketId={ticket.id ?? ''}
+            tenantId={ticket.tenantId}
+            organisationId={ticket.organisationId}
+          />
+        </>
+      )}
       <div className="border-t pt-6">
         {/* Requester */}
         <div className="mb-4">
@@ -750,144 +760,154 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           </p>
         </div>
 
-        {/* Subscribers */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-default-700">
-              Subscribers
-            </label>
-            {onSubscribeToggle && (
-              <BaseButton
-                size="sm"
-                variant={isSubscribed ? 'ghost' : 'bordered'}
-                color={isSubscribed ? 'primary' : undefined}
-                onPress={onSubscribeToggle}
-                isDisabled={isSubscribeLoading}
-                icon={
-                  <Icon
-                    name={isSubscribed ? 'bell' : 'bell-slash'}
-                    className="h-3.5 w-3.5"
-                  />
+        {!limited && (
+          <>
+            {/* Subscribers */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-default-700">
+                  Subscribers
+                </label>
+                {onSubscribeToggle && (
+                  <BaseButton
+                    size="sm"
+                    variant={isSubscribed ? 'ghost' : 'bordered'}
+                    color={isSubscribed ? 'primary' : undefined}
+                    onPress={onSubscribeToggle}
+                    isDisabled={isSubscribeLoading}
+                    icon={
+                      <Icon
+                        name={isSubscribed ? 'bell' : 'bell-slash'}
+                        className="h-3.5 w-3.5"
+                      />
+                    }
+                  >
+                    {isSubscribed ? 'Subscribed' : 'Subscribe me'}
+                  </BaseButton>
+                )}
+              </div>
+              {ticket.subscriberIds && ticket.subscriberIds.length > 0 ? (
+                <>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {ticket.subscriberIds.map((subscriberId: string) => {
+                      const person = userMap[subscriberId];
+                      return (
+                        <span
+                          key={subscriberId}
+                          title={person?.name ?? 'Unknown user'}
+                        >
+                          <BaseAvatar
+                            name={person?.name ?? '?'}
+                            src={person?.avatarUrl}
+                            size="xs"
+                          />
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-default-500 mt-2">
+                    {ticket.subscriberIds.length} subscriber
+                    {ticket.subscriberIds.length !== 1 ? 's' : ''}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-default-500 mt-1">
+                  No subscribers yet.
+                </p>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div>
+              <PermissionGuard
+                requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                fallback={
+                  ticket.tags && ticket.tags.length > 0 ? (
+                    <div>
+                      <label className="block text-sm font-medium text-default-700 mb-2">
+                        Tags
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {ticket.tags.map(tag => (
+                          <StatusBadge key={tag}>{tag}</StatusBadge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null
                 }
               >
-                {isSubscribed ? 'Subscribed' : 'Subscribe me'}
-              </BaseButton>
-            )}
-          </div>
-          {ticket.subscriberIds && ticket.subscriberIds.length > 0 ? (
-            <>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {ticket.subscriberIds.map((subscriberId: string) => {
-                  const person = userMap[subscriberId];
-                  return (
-                    <span
-                      key={subscriberId}
-                      title={person?.name ?? 'Unknown user'}
-                    >
-                      <BaseAvatar
-                        name={person?.name ?? '?'}
-                        src={person?.avatarUrl}
-                        size="xs"
-                      />
-                    </span>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-default-500 mt-2">
-                {ticket.subscriberIds.length} subscriber
-                {ticket.subscriberIds.length !== 1 ? 's' : ''}
-              </p>
-            </>
-          ) : (
-            <p className="text-xs text-default-500 mt-1">No subscribers yet.</p>
-          )}
-        </div>
-
-        {/* Tags */}
-        <div>
-          <PermissionGuard
-            requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-            fallback={
-              ticket.tags && ticket.tags.length > 0 ? (
-                <div>
-                  <label className="block text-sm font-medium text-default-700 mb-2">
-                    Tags
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {ticket.tags.map(tag => (
-                      <StatusBadge key={tag}>{tag}</StatusBadge>
+                <div
+                  className={isUpdating ? 'pointer-events-none opacity-50' : ''}
+                  onPointerDownCapture={wantTags}
+                  onFocusCapture={wantTags}
+                >
+                  <BaseTagSelect
+                    label="Tags"
+                    placeholder="Select tags..."
+                    value={ticketTags?.map(t => t.id) ?? []}
+                    onValueChange={handleTagsChange}
+                  >
+                    {availableTags.map(tag => (
+                      <BaseTagSelectItem key={tag.id} value={tag.id}>
+                        {tag.name}
+                      </BaseTagSelectItem>
                     ))}
-                  </div>
+                  </BaseTagSelect>
                 </div>
-              ) : null
-            }
-          >
-            <div
-              className={isUpdating ? 'pointer-events-none opacity-50' : ''}
-              onPointerDownCapture={wantTags}
-              onFocusCapture={wantTags}
-            >
-              <BaseTagSelect
-                label="Tags"
-                placeholder="Select tags..."
-                value={ticketTags?.map(t => t.id) ?? []}
-                onValueChange={handleTagsChange}
-              >
-                {availableTags.map(tag => (
-                  <BaseTagSelectItem key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </BaseTagSelectItem>
-                ))}
-              </BaseTagSelect>
+              </PermissionGuard>
             </div>
-          </PermissionGuard>
-        </div>
+          </>
+        )}
       </div>
 
-      {/* Recurring - Placeholder */}
-      <div className="border-t pt-6">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-default-700 mb-1">
-            Recurring
-          </label>
-          <p className="text-sm text-default-500">None</p>
-        </div>
+      {!limited && (
+        <>
+          {/* Recurring - Placeholder */}
+          <div className="border-t pt-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-default-700 mb-1">
+                Recurring
+              </label>
+              <p className="text-sm text-default-500">None</p>
+            </div>
 
-        {/* Parent ticket */}
-        {SUBTASKS_ENABLED && ticket.parentTicketId && (
-          <div className="mb-4">
-            {/*
+            {/* Parent ticket */}
+            {SUBTASKS_ENABLED && ticket.parentTicketId && (
+              <div className="mb-4">
+                {/*
               "Subtask of", not "Parent Ticket". Parent is no longer a field
               anyone sets: the only way a ticket gets one is by being created as
               a subtask, so this is a statement about what this ticket IS rather
               than a relationship someone chose, and it reads as the way back up
               rather than as an editable property.
             */}
-            <label className="block text-sm font-medium text-default-700 mb-1">
-              Subtask of
-            </label>
-            {/*
+                <label className="block text-sm font-medium text-default-700 mb-1">
+                  Subtask of
+                </label>
+                {/*
               A link, not blue text. This rendered the first 8 characters of the
               parent's GUID styled like a link but with no behaviour: it named
               nothing a reader recognises and could not be followed. The subject
               is what identifies a ticket to a person, so it leads, and the short
               id stays alongside it for anyone matching against a URL or a log.
             */}
-            <Link
-              to={`/tickets/${ticket.parentTicketId}`}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {parentTicket?.subject ?? `#${ticket.parentTicketId.slice(0, 8)}`}
-              {parentTicket?.subject && (
-                <span className="ml-1.5 font-mono text-xs text-default-400">
-                  #{ticket.parentTicketId.slice(0, 8)}
-                </span>
-              )}
-            </Link>
+                <Link
+                  to={`/tickets/${ticket.parentTicketId}`}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {parentTicket?.subject ??
+                    `#${ticket.parentTicketId.slice(0, 8)}`}
+                  {parentTicket?.subject && (
+                    <span className="ml-1.5 font-mono text-xs text-default-400">
+                      #{ticket.parentTicketId.slice(0, 8)}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
+        </>
+      )}
       {/* Custom Fields */}
       {ticket.customFields && ticket.customFields.length > 0 && (
         <div className="border-t pt-6">
@@ -907,21 +927,25 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested KB Articles — seeded from ticket subject. The knowledge
+      {!limited && (
+        <>
+          {/* Suggested KB Articles — seeded from ticket subject. The knowledge
           base is internal (kb.manage, the same rule as its pages), so the
           suggestions are only shown to people who may open them. */}
-      {ticket.subject && canSeeKnowledgeBase && (
-        <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-default-700 mb-2">
-            Suggested KB Articles
-          </label>
-          <KbSuggestions
-            searchText={ticket.subject}
-            minChars={3}
-            limit={5}
-            emptyMessage="No related articles found for this ticket."
-          />
-        </div>
+          {ticket.subject && canSeeKnowledgeBase && (
+            <div className="border-t pt-6">
+              <label className="block text-sm font-medium text-default-700 mb-2">
+                Suggested KB Articles
+              </label>
+              <KbSuggestions
+                searchText={ticket.subject}
+                minChars={3}
+                limit={5}
+                emptyMessage="No related articles found for this ticket."
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

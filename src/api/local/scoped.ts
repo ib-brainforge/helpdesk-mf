@@ -32,9 +32,25 @@ import { ContextsApi } from '@brainforgeau/identity-management-client';
 
 type Params = Record<string, string | number | boolean | undefined | null>;
 
-/** A company other than the app's own, by tenant id. */
+/**
+ * A company other than the app's own, by tenant id.
+ *
+ * With `principalId` the company has no Helpdesk licence, so no token can be
+ * issued there, and principal staff work its tickets through the principal
+ * routes instead (see principalAxios): the ticket itself, and its status,
+ * assignee, priority and category. Nothing else has a principal route.
+ */
 export interface HelpdeskScope {
   tenantId: string;
+  principalId?: string;
+}
+
+/** A call with no principal route, refused before it is sent. */
+export class PrincipalRouteMissingError extends Error {
+  constructor(url: string) {
+    super(`No principal route for ${url}`);
+    this.name = 'PrincipalRouteMissingError';
+  }
 }
 
 /** Where a context token is issued for: a tenant, optionally one organisation. */
@@ -202,11 +218,91 @@ const companyAxios = (scope: HelpdeskScope): AxiosInstance => {
 };
 
 /**
+ * The ticket calls that have a principal route, rewritten onto it:
+ * GET /v1/tickets/{id} and PATCH /v1/tickets/{id}/status|assign|priority|
+ * category become /v1/principals/{principalId}/tickets/... with the same
+ * body. The commands are the same ones the tenant routes send.
+ */
+const TICKET_ROUTE =
+  /^(.*)\/v1\/tickets\/([0-9a-fA-F-]{36})(\/(status|assign|priority|category))?$/;
+
+const toPrincipalUrl = (
+  url: string,
+  method: string,
+  principalId: string,
+): string | null => {
+  const m = TICKET_ROUTE.exec(url);
+  if (!m) return null;
+  const [, base, id, suffix] = m;
+  const verb = method.toUpperCase();
+  if ((!suffix && verb === 'GET') || (suffix && verb === 'PATCH')) {
+    return `${base}/v1/principals/${principalId}/tickets/${id}${suffix ?? ''}`;
+  }
+  return null;
+};
+
+const principalInstances = new Map<string, AxiosInstance>();
+
+/**
+ * Helpdesk calls for a company without Helpdesk, by principal staff: the
+ * app's own context (no company token exists), with the supported ticket
+ * routes rewritten onto the principal routes and everything else refused
+ * with PrincipalRouteMissingError rather than sent.
+ *
+ * Generated clients and the local api modules only use `request`, the HTTP
+ * verbs and `defaults` on an instance, so that is the surface given here.
+ */
+const principalAxios = (principalId: string): AxiosInstance => {
+  const existing = principalInstances.get(principalId);
+  if (existing) return existing;
+  const request = <T>(config: AxiosRequestConfig) => {
+    const url = toPrincipalUrl(
+      config.url ?? '',
+      config.method ?? 'GET',
+      principalId,
+    );
+    if (!url)
+      return Promise.reject(new PrincipalRouteMissingError(config.url ?? ''));
+    return authorizedAxios.request<T>({ ...config, url });
+  };
+  const verb =
+    (method: string) =>
+    (url: string, ...rest: unknown[]) => {
+      const withBody = ['post', 'put', 'patch'].includes(method);
+      const config = (withBody ? rest[1] : rest[0]) as
+        | AxiosRequestConfig
+        | undefined;
+      return request({
+        ...config,
+        method,
+        url,
+        ...(withBody ? { data: rest[0] } : {}),
+      });
+    };
+  const instance = {
+    defaults: authorizedAxios.defaults,
+    request,
+    get: verb('get'),
+    delete: verb('delete'),
+    post: verb('post'),
+    put: verb('put'),
+    patch: verb('patch'),
+  } as unknown as AxiosInstance;
+  principalInstances.set(principalId, instance);
+  return instance;
+};
+
+/**
  * The axios instance for Helpdesk calls in `scope`: the company's own token,
- * or the app's context when there is no scope (the viewer's own company).
+ * the principal routes for a company without Helpdesk, or the app's context
+ * when there is no scope (the viewer's own company).
  */
 export const helpdeskAxios = (scope?: HelpdeskScope | null): AxiosInstance =>
-  scope ? companyAxios(scope) : authorizedAxios;
+  scope?.principalId
+    ? principalAxios(scope.principalId)
+    : scope
+      ? companyAxios(scope)
+      : authorizedAxios;
 
 // ---------------------------------------------------------------------------
 // Calls with a token the caller already holds
