@@ -117,8 +117,10 @@ export const TicketScopeProvider: FC<{
   // licensed there. Memoised so every hook sees one stable scope.
   const principalScope = useMemo<HelpdeskScope | null>(
     () =>
-      scope && principalId ? { tenantId: scope.tenantId, principalId } : null,
-    [scope, principalId],
+      scope && principalId
+        ? { tenantId: scope.tenantId, principalId, ticketId }
+        : null,
+    [scope, principalId, ticketId],
   );
 
   const token = useQuery({

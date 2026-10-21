@@ -112,8 +112,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   /*
    * The ticket's company has no Helpdesk licence, and Netcorp staff are
    * working it through the principal routes (TicketScopeProvider). Those
-   * cover the ticket and its status, assignee, priority and category only, so
-   * everything else on the page is hidden or read only.
+   * cover the ticket, its status, assignee, priority and category, the
+   * conversation (replies and notes), attachments (not deleting) and history.
+   * Everything else (editing the subject and description, AI Assistant, the
+   * More actions menu, vehicles, subscribers, tags, satisfaction) is hidden.
    */
   const limited = !!scope?.principalId;
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
@@ -1117,100 +1119,85 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 One quiet line, not a card of its own, so the conversation is
                 on the first screen.
               */}
-              {!limited && (
-                <div className="mt-4 border-t border-divider pt-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold">
-                      Attachments
-                      <span className="ml-1.5 font-normal text-default-400">
-                        {attachmentsLoading
-                          ? 'Loading...'
-                          : attachments && attachments.length > 0
-                            ? attachments.length
-                            : 'None yet'}
-                      </span>
-                    </h3>
-                    {!showAttachments && (
-                      <PermissionGuard
-                        requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                        fallback={null}
-                      >
-                        <BaseButton
-                          size="sm"
-                          variant="bordered"
-                          color="light"
-                          className="helpdesk-print-hide"
-                          onPress={() => setShowAttachments(true)}
-                          icon={<Icon name="plus" className="h-4 w-4" />}
-                        >
-                          Add attachment
-                        </BaseButton>
-                      </PermissionGuard>
-                    )}
-                  </div>
-                  {attachments && attachments.length > 0 && (
-                    <div className="mt-2">
-                      <AttachmentList
-                        attachments={attachments}
-                        onDelete={handleDeleteAttachment}
-                        canDelete={true}
-                      />
-                    </div>
-                  )}
-                  {showAttachments && (
-                    <div className="mt-2 space-y-2 helpdesk-print-hide">
-                      <FileUploadZone
-                        onFilesSelected={handleFilesSelected}
-                        progress={uploadProgress}
-                      />
+              <div className="mt-4 border-t border-divider pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold">
+                    Attachments
+                    <span className="ml-1.5 font-normal text-default-400">
+                      {attachmentsLoading
+                        ? 'Loading...'
+                        : attachments && attachments.length > 0
+                          ? attachments.length
+                          : 'None yet'}
+                    </span>
+                  </h3>
+                  {!showAttachments && (
+                    <PermissionGuard
+                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                      fallback={null}
+                    >
                       <BaseButton
                         size="sm"
-                        variant="ghost"
-                        onPress={() => setShowAttachments(false)}
+                        variant="bordered"
+                        color="light"
+                        className="helpdesk-print-hide"
+                        onPress={() => setShowAttachments(true)}
+                        icon={<Icon name="plus" className="h-4 w-4" />}
                       >
-                        Cancel
+                        Add attachment
                       </BaseButton>
-                    </div>
+                    </PermissionGuard>
                   )}
                 </div>
-              )}
+                {attachments && attachments.length > 0 && (
+                  <div className="mt-2">
+                    <AttachmentList
+                      attachments={attachments}
+                      onDelete={handleDeleteAttachment}
+                      // Deleting has no principal route (see HelpdeskScope).
+                      canDelete={!limited}
+                    />
+                  </div>
+                )}
+                {showAttachments && (
+                  <div className="mt-2 space-y-2 helpdesk-print-hide">
+                    <FileUploadZone
+                      onFilesSelected={handleFilesSelected}
+                      progress={uploadProgress}
+                    />
+                    <BaseButton
+                      size="sm"
+                      variant="ghost"
+                      onPress={() => setShowAttachments(false)}
+                    >
+                      Cancel
+                    </BaseButton>
+                  </div>
+                )}
+              </div>
             </Box>
 
-            {/* Conversation: the thread, with the composer at its foot. Replies,
-              notes and attachments have no principal route, so a ticket in a
-              company without Helpdesk says so instead. */}
-            {limited ? (
-              <Box className={NO_EMPTY_HEADER}>
-                <h3 className="mb-1 text-base font-semibold">Conversation</h3>
-                <p className="text-sm text-default-500">
-                  Replies, internal notes and attachments need Helpdesk enabled
-                  for {companyName ?? 'this company'}.
-                </p>
-              </Box>
-            ) : (
-              <>
-                <Box className={NO_EMPTY_HEADER}>
-                  <h3 className="mb-3 text-base font-semibold">Conversation</h3>
-                  <div className="space-y-4">
-                    <CommentThread
-                      comments={comments}
-                      isLoading={commentsLoading}
-                      ticketId={id}
-                    />
-                    <div className="border-t border-divider pt-4 helpdesk-print-hide">
-                      <ReplyEditor
-                        ticketId={id ?? ''}
-                        categoryId={ticket.categoryId ?? undefined}
-                        email={{
-                          recipient: ticket.emailRecipient ?? null,
-                          onEditSignature: () => setIsSignatureOpen(true),
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Box>
-              </>
-            )}
+            {/* Conversation: the thread, with the composer at its foot. */}
+            <Box className={NO_EMPTY_HEADER}>
+              <h3 className="mb-3 text-base font-semibold">Conversation</h3>
+              <div className="space-y-4">
+                <CommentThread
+                  comments={comments}
+                  isLoading={commentsLoading}
+                  ticketId={id}
+                />
+                <div className="border-t border-divider pt-4 helpdesk-print-hide">
+                  <ReplyEditor
+                    ticketId={id ?? ''}
+                    categoryId={ticket.categoryId ?? undefined}
+                    email={{
+                      recipient: ticket.emailRecipient ?? null,
+                      onEditSignature: () => setIsSignatureOpen(true),
+                    }}
+                  />
+                </div>
+              </div>
+            </Box>
 
             {/*
               Subtasks, worked from the ticket that owns them.
@@ -1376,9 +1363,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             )}
 
             {/* Who changed what, collapsed until asked for. */}
-            {!limited && (
-              <TicketHistory ticketId={id ?? ''} tenantId={ticket.tenantId} />
-            )}
+            <TicketHistory ticketId={id ?? ''} tenantId={ticket.tenantId} />
           </div>
 
           {/* Sidebar */}
