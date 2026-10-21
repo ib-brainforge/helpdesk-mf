@@ -14,5 +14,6 @@ export {
   type BadgeColor,
 } from './StatusBadge';
 export { SummaryCard, type SummaryCardVariant } from './SummaryCard';
+export { DurationInput } from './DurationInput';
 export { UserCell } from './UserCell';
 export { UserOptionRow } from './UserOptionRow';

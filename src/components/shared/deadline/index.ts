@@ -23,4 +23,21 @@ export {
   isDeadlineMet,
   sanitiseDeadline,
 } from './deadline';
+export {
+  type ClockDay,
+  type ClockMode,
+  DAY_ORDER,
+  TIME_ZONES,
+  clockClause,
+  describeClock,
+  describeHours,
+  formatClockTime,
+  formatDeadlineSentence,
+  formatMinutes,
+  formatTarget,
+  holidaysText,
+  parseDuration,
+  timeZoneCity,
+  timeZoneLabel,
+} from './deadlineText';
 export { useMinuteTick } from './useMinuteTick';
