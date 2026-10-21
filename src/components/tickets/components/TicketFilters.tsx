@@ -186,16 +186,6 @@ const FilterAutocomplete = memo(FilterAutocompleteImpl);
 const UNASSIGNED = '__unassigned__';
 
 /**
- * What the Assignee trigger says: the one name, the first name and how many
- * more, or just how many once a list of names would be too long to read.
- */
-export const summariseAssignees = (labels: string[]): string => {
-  if (labels.length <= 1) return labels[0] ?? '';
-  if (labels.length <= 3) return `${labels[0]} +${labels.length - 1}`;
-  return `${labels.length} assignees`;
-};
-
-/**
  * A line of text in a BaseTagSelect list that is not an option ("Loading
  * tags..."). A component rather than a bare element because BaseTagSelect
  * hands every child a `value` prop, which a <div> would print as an attribute.
@@ -230,6 +220,39 @@ const ClearAssigneesRow: FC<{ onClear: () => void }> = ({ onClear }) => (
  * the list of people can be long. Unassigned is pinned at the top. The trigger
  * shows a summary rather than one chip per person, which would not fit.
  */
+/**
+ * How every multi-select in the filter bar shows what is chosen: the first
+ * value, then "+N" (for example "New +1"), on one line that never grows the
+ * field. Chips with their own X used to overflow the fixed width, so the last
+ * X sat over the next filter. The full list is in the title tooltip and, with
+ * ticks, in the open list.
+ *
+ * maxVisibleTags 0 sends every selection down BaseTagSelect's collapsed path,
+ * whose first tag is drawn as this summary and whose own count is dropped.
+ */
+const SelectionSummary: FC<{ labels: string[] }> = ({ labels }) => (
+  <span
+    className="flex min-w-0 items-center text-xs font-medium"
+    title={labels.join(', ')}
+  >
+    <span className="truncate">{labels[0]}</span>
+    {labels.length > 1 && (
+      <span className="text-default-500 ml-1 shrink-0">
+        +{labels.length - 1}
+      </span>
+    )}
+  </span>
+);
+
+const summaryProps = (labels: string[]) => ({
+  maxVisibleTags: 0,
+  renderSelectedTag: () => <SelectionSummary labels={labels} />,
+  renderCollapsedCount: () => null,
+});
+
+/** The trigger never wraps or grows: the summary truncates inside it. */
+const FIXED_TRIGGER = 'flex-nowrap overflow-hidden';
+
 const AssigneeFilterImpl: FC<{
   options: ScopeOption[];
   /** Undefined until the counts arrive; the rows then show no badge. */
@@ -264,6 +287,7 @@ const AssigneeFilterImpl: FC<{
           popover: '[&>div]:!w-[300px] [&>div]:!min-w-[300px]',
           // Let the label take the row, so the count sits at the right edge.
           item: '[&>span]:min-w-0 [&>span]:flex-1',
+          trigger: FIXED_TRIGGER,
         }}
         value={value}
         onValueChange={(next: string[]) =>
@@ -272,19 +296,7 @@ const AssigneeFilterImpl: FC<{
             next.includes(UNASSIGNED),
           )
         }
-        // Always the summary: maxVisibleTags 0 sends every selection down the
-        // collapsed path, whose first tag is drawn as the whole summary and
-        // whose "+N" is dropped (the summary already counts).
-        maxVisibleTags={0}
-        renderSelectedTag={() => (
-          <span
-            className="truncate text-xs font-medium"
-            title={labels.join(', ')}
-          >
-            {summariseAssignees(labels)}
-          </span>
-        )}
-        renderCollapsedCount={() => null}
+        {...summaryProps(labels)}
       >
         {[
           <BaseTagSelectItem
@@ -330,10 +342,6 @@ const AssigneeFilterImpl: FC<{
 };
 
 const AssigneeFilter = memo(AssigneeFilterImpl);
-
-/** The trigger text for a multi-select: one name, "first +N", or "N things". */
-const summariseSelection = (labels: string[], plural: string): string =>
-  labels.length > 3 ? `${labels.length} ${plural}` : summariseAssignees(labels);
 
 /** A company heading in the grouped Organisation list. Not an option. */
 const GroupHeading: FC<{ children: ReactNode }> = ({ children }) => (
@@ -402,19 +410,11 @@ const MultiFilterImpl: FC<{
         classNames={{
           base: 'w-full [&_svg]:my-0',
           popover: '[&>div]:!w-[280px] [&>div]:!min-w-[280px]',
+          trigger: FIXED_TRIGGER,
         }}
         value={value}
         onValueChange={onChange}
-        maxVisibleTags={0}
-        renderSelectedTag={() => (
-          <span
-            className="truncate text-xs font-medium"
-            title={labels.join(', ')}
-          >
-            {summariseSelection(labels, plural)}
-          </span>
-        )}
-        renderCollapsedCount={() => null}
+        {...summaryProps(labels)}
       >
         {[
           ...items,
@@ -696,6 +696,25 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
     ],
     [filters.status, filters.customStatusIds],
   );
+  // The words for each chosen status, priority and tag, for the summaries.
+  const statusLabels = useMemo(() => {
+    const names: Record<string, string> = {
+      [TicketStatus.New]: 'New',
+      [TicketStatus.InProgress]: 'In Progress',
+      [TicketStatus.Closed]: 'Closed',
+    };
+    for (const cs of activeCustomStatuses)
+      names[`${CUSTOM_STATUS_PREFIX}${cs.id}`] = cs.name;
+    return statusValue.map(v => names[v] ?? 'Unknown status');
+  }, [statusValue, activeCustomStatuses]);
+  const priorityValue = useMemo(
+    () => filters.priority?.map(p => p.toString()) ?? [],
+    [filters.priority],
+  );
+  const tagLabels = useMemo(() => {
+    const names = new Map(tags.map(t => [t.id as string, t.name]));
+    return (filters.tagIds ?? []).map(id => names.get(id) ?? 'Tag');
+  }, [tags, filters.tagIds]);
   const statusItems = useMemo(
     () => [
       <BaseTagSelectItem key={TicketStatus.New} value={TicketStatus.New}>
@@ -833,8 +852,9 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           <BaseTagSelect
             label="Status"
             placeholder="Any status"
-            classNames={{ base: 'w-full [&_svg]:my-0' }}
+            classNames={{ base: 'w-full [&_svg]:my-0', trigger: FIXED_TRIGGER }}
             value={statusValue}
+            {...summaryProps(statusLabels)}
             onValueChange={handleStatusChange}
           >
             {statusItems}
@@ -845,8 +865,9 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           <BaseTagSelect
             label="Priority"
             placeholder="Any priority"
-            classNames={{ base: 'w-full [&_svg]:my-0' }}
-            value={filters.priority?.map(p => p.toString()) ?? []}
+            classNames={{ base: 'w-full [&_svg]:my-0', trigger: FIXED_TRIGGER }}
+            value={priorityValue}
+            {...summaryProps(priorityValue)}
             onValueChange={handlePriorityChange}
           >
             {PRIORITY_ITEMS}
@@ -929,8 +950,12 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
               <BaseTagSelect
                 label="Tags"
                 placeholder="Any tag"
-                classNames={{ base: 'w-full [&_svg]:my-0' }}
+                classNames={{
+                  base: 'w-full [&_svg]:my-0',
+                  trigger: FIXED_TRIGGER,
+                }}
                 value={filters.tagIds ?? []}
+                {...summaryProps(tagLabels)}
                 onValueChange={handleTagsChange}
               >
                 {tagItems}
