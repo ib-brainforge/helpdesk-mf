@@ -192,9 +192,15 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   // Resolve requester / assignee names: prefer the names provided natively by
   // the generated client, falling back to identity enrichment by id (mirrors
   // the ticket grid behaviour) so the sidebar never shows a bare "—".
+  // Subscribers too, so their avatars show initials and a name rather than
+  // the first two characters of an id ("7" for 7648389d).
   const userIds = useMemo(
-    () => [ticket.requesterId, ticket.assigneeId],
-    [ticket.requesterId, ticket.assigneeId],
+    () => [
+      ticket.requesterId,
+      ticket.assigneeId,
+      ...(ticket.subscriberIds ?? []),
+    ],
+    [ticket.requesterId, ticket.assigneeId, ticket.subscriberIds],
   );
   const { userMap } = useUserEnrichment(userIds);
   const requesterDisplayName =
@@ -756,13 +762,21 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           {ticket.subscriberIds && ticket.subscriberIds.length > 0 ? (
             <>
               <div className="flex flex-wrap gap-2 mt-2">
-                {ticket.subscriberIds.map((subscriberId: string) => (
-                  <BaseAvatar
-                    key={subscriberId}
-                    name={subscriberId.substring(0, 2).toUpperCase()}
-                    size="xs"
-                  />
-                ))}
+                {ticket.subscriberIds.map((subscriberId: string) => {
+                  const person = userMap[subscriberId];
+                  return (
+                    <span
+                      key={subscriberId}
+                      title={person?.name ?? 'Unknown user'}
+                    >
+                      <BaseAvatar
+                        name={person?.name ?? '?'}
+                        src={person?.avatarUrl}
+                        size="xs"
+                      />
+                    </span>
+                  );
+                })}
               </div>
               <p className="text-xs text-default-500 mt-2">
                 {ticket.subscriberIds.length} subscriber
