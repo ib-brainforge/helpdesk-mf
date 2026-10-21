@@ -8,9 +8,9 @@ export type { TicketTabKey };
 /**
  * Tickets per person for the Assignee filter's badges, from the same response
  * as the tab badges: how many each person has LEFT. Each counts that person's
- * open tickets (New or In Progress, as the Unclosed tab means it) under the
+ * open tickets (New or In Progress, as the Open tab means it) under the
  * other active filters (company, organisation, category, priority, tags,
- * search), in the list's own scope: the number the list shows on Unclosed with
+ * search), in the list's own scope: the number the list shows on Open with
  * only that person ticked. The selected assignees never narrow it.
  */
 export interface AssigneeCounts {
@@ -47,7 +47,10 @@ export interface AssigneeCounts {
  * before the key is built, so switching tabs does not invalidate the counts:
  * the six numbers do not depend on which tab is currently open.
  */
-export const useTicketTabCounts = (filters: TicketFilters = {}) => {
+export const useTicketTabCounts = (
+  filters: TicketFilters = {},
+  currentUserId?: string,
+) => {
   /*
    * All six badges now come from one request, shared with the assignee rail.
    *
@@ -80,7 +83,7 @@ export const useTicketTabCounts = (filters: TicketFilters = {}) => {
   );
 
   return {
-    counts: tabCountsFrom(data),
+    counts: tabCountsFrom(data, currentUserId),
     assigneeCounts,
     isLoading,
   };

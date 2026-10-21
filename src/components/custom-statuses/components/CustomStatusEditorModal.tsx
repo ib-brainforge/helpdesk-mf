@@ -290,10 +290,13 @@ export function CustomStatusEditorModal({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
+          {/* color="light": bordered alone takes the primary fill, which
+            made Cancel look like the main action. */}
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
-            isDisabled={isSubmitting || isSubmitting}
+            isDisabled={isSubmitting}
           >
             Cancel
           </BaseButton>

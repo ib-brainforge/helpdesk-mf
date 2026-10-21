@@ -193,7 +193,10 @@ export const KpiCards: FC<KpiCardsProps> = ({
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    // Six across only on a wide screen: at 1440 they wrapped every line
+    // ("Was 100.0% in / August") and came out at different heights. Three by
+    // two below 1536, and every card fills its row's height.
+    <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 [&>*>*]:h-full">
       {specs.map(s => {
         const { key, href, accent, ...card } = s;
         return href ? (
@@ -201,7 +204,7 @@ export const KpiCards: FC<KpiCardsProps> = ({
             key={key}
             to={href}
             title="Open the satisfaction report"
-            className="block rounded-md transition-shadow hover:shadow-md print:pointer-events-none"
+            className="block h-full rounded-md transition-shadow hover:shadow-md print:pointer-events-none"
           >
             <SummaryCard
               {...card}
@@ -210,7 +213,7 @@ export const KpiCards: FC<KpiCardsProps> = ({
             />
           </NavLink>
         ) : (
-          <div key={key}>
+          <div key={key} className="h-full">
             <SummaryCard
               {...card}
               accentClassName={accent}
