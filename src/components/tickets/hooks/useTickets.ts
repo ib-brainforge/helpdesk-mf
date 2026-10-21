@@ -1,6 +1,8 @@
+import { helpdeskAxios } from '@/api/local/scoped';
 import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateTicketDto,
@@ -248,6 +250,51 @@ export const fetchTicketCount = async (
   return data.totalCount ?? 0;
 };
 
+/** One matching ticket, for a bulk action over every match. */
+export interface TicketIdRef {
+  id: string;
+  tenantId?: string | null;
+}
+
+export interface TicketIdsResult {
+  items: TicketIdRef[];
+  total: number;
+  /** More matched than the endpoint returns; the rest are left out. */
+  truncated: boolean;
+}
+
+/**
+ * Every ticket `filters` match, as ids and companies, for a bulk action in
+ * "all matching" mode. Same filters and the same endpoint branch as the list
+ * (GET /v1/tickets/ids, or /v1/principals/{id}/tickets/ids for principal
+ * staff), so the action covers exactly what the list counts.
+ */
+export const fetchTicketIds = async (
+  filters: TicketFilters,
+  principalId?: string,
+): Promise<TicketIdsResult> => {
+  const v = ticketQueryValues(filters);
+  const extra = extraParams(filters, Boolean(principalId));
+  const params: Record<string, unknown> = { ...(extra?.params ?? {}) };
+  for (const [k, value] of Object.entries(v)) {
+    if (value !== undefined && value !== null && value !== '')
+      params[k] = value;
+  }
+  const base = requireHelpdeskApiBaseUrl();
+  const url = principalId
+    ? `${base}/v1/principals/${principalId}/tickets/ids`
+    : `${base}/v1/tickets/ids`;
+  const { data } = await helpdeskAxios().get<TicketIdsResult>(url, {
+    params,
+    paramsSerializer: { indexes: null },
+  });
+  return {
+    items: data?.items ?? [],
+    total: data?.total ?? data?.items?.length ?? 0,
+    truncated: Boolean(data?.truncated),
+  };
+};
+
 export interface TicketsSort {
   /** The backend's SortBy key, e.g. "deadline". */
   sortBy: string;
@@ -394,6 +441,8 @@ export const useTicketsData = (
     pagination,
     setPagination,
     filters,
+    /** The filters as sent, search name matches included (for the ids). */
+    queryFilters,
     setFilters,
     isLoading,
     refetch: useCallback(() => {

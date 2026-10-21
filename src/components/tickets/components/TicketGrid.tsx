@@ -1,4 +1,5 @@
 import type {
+  BulkTicketAction,
   BulkTicketPriority,
   BulkTicketResultDto,
 } from '@/api/local/ticket-bulk';
@@ -51,7 +52,7 @@ import {
 } from '../hooks/ticketTabs';
 import { useBulkTicketAction } from '../hooks/useBulkTicketAction';
 import { useTicketTabCounts } from '../hooks/useTicketTabCounts';
-import { useTicketsData } from '../hooks/useTickets';
+import { fetchTicketIds, useTicketsData } from '../hooks/useTickets';
 import { useTicketsLayout } from '../hooks/useTicketsLayout';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { NewRequestModal } from '../new-request/NewRequestModal';
@@ -64,6 +65,12 @@ import {
   createTicketColumns,
   isTicketOverdue,
 } from './ticket-grid-columns';
+import {
+  type SelectedTicket,
+  type TicketSelection,
+  TicketSelectionContext,
+  toSelectedTicket,
+} from './ticketSelection';
 
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
@@ -186,6 +193,7 @@ export const TicketGrid: FC = () => {
     pagination,
     setPagination,
     filters,
+    queryFilters,
     setFilters,
     isLoading,
     refetch,
@@ -368,7 +376,11 @@ export const TicketGrid: FC = () => {
   // three and applied through the same status patch.
   const { customStatuses } = useCustomStatuses();
   // The company the custom statuses above belong to.
-  const { tenantId: viewerTenantId } = useHelpdeskAccess();
+  const {
+    tenantId: viewerTenantId,
+    isServiceAdmin,
+    principalId,
+  } = useHelpdeskAccess();
 
   // Tenant and organisation names for the Scope column; tickets carry ids only.
   const scopeNames = useScopeNames();
@@ -541,20 +553,109 @@ export const TicketGrid: FC = () => {
     );
   }, [totalCount, pagination, setPagination]);
 
-  const selectedRows = table.getSelectedRowModel().rows;
-  const hasSelectedRows = selectedRows.length > 0;
-  // Keyed on the selected ids, not the rows array, which is rebuilt every
-  // render and would otherwise hand the bulk picker a new scope list each time.
-  const selectedIdsKey = selectedRows.map(r => r.original.id).join(',');
+  /*
+   * THE SELECTION, across pages (see ticketSelection).
+   *
+   * Explicit picks are kept by id with their company, so paging does not lose
+   * them. "All matching" selects every ticket the filters match without
+   * listing them; a bulk action then asks /tickets/ids for the ids. Changing
+   * the filters or the tab clears both, since the selection no longer
+   * describes what is on screen.
+   */
+  const [picked, setPicked] = useState<Map<string, SelectedTicket>>(
+    () => new Map(),
+  );
+  const [allMatching, setAllMatching] = useState(false);
+  const clearSelection = useCallback(() => {
+    setPicked(new Map());
+    setAllMatching(false);
+  }, []);
+  const filtersKey = JSON.stringify(queryFilters);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cleared whenever the filters or tab change
+  useEffect(() => {
+    clearSelection();
+  }, [filtersKey, selectedTab, clearSelection]);
+
+  const pageRows = useMemo(
+    () => items.filter((t): t is typeof t & { id: string } => !!t.id),
+    [items],
+  );
+  const pageSelectedCount = allMatching
+    ? pageRows.length
+    : pageRows.filter(r => picked.has(r.id)).length;
+  const pageState: TicketSelection['pageState'] =
+    pageRows.length > 0 && pageSelectedCount === pageRows.length
+      ? 'all'
+      : pageSelectedCount > 0
+        ? 'some'
+        : 'none';
+
+  const selection = useMemo<TicketSelection>(
+    () => ({
+      allMatching,
+      isSelected: id => allMatching || picked.has(id),
+      toggle: row => {
+        if (!row.id) return;
+        const id = row.id;
+        if (allMatching) {
+          // Unticking one row leaves "all matching": what remains is this
+          // page without that row.
+          setAllMatching(false);
+          setPicked(
+            new Map(
+              pageRows
+                .filter(r => r.id !== id)
+                .map(r => [r.id, toSelectedTicket(r)]),
+            ),
+          );
+          return;
+        }
+        setPicked(prev => {
+          const next = new Map(prev);
+          if (next.has(id)) next.delete(id);
+          else next.set(id, toSelectedTicket(row));
+          return next;
+        });
+      },
+      pageState,
+      togglePage: () => {
+        if (allMatching) {
+          clearSelection();
+          return;
+        }
+        setPicked(prev => {
+          const next = new Map(prev);
+          if (pageState === 'all') for (const r of pageRows) next.delete(r.id);
+          else for (const r of pageRows) next.set(r.id, toSelectedTicket(r));
+          return next;
+        });
+      },
+    }),
+    [allMatching, picked, pageRows, pageState, clearSelection],
+  );
+
+  const selectedCount = allMatching ? totalCount : picked.size;
+  const hasSelectedRows = selectedCount > 0;
+  const pickedList = useMemo(() => [...picked.values()], [picked]);
+  // In "all matching" mode the companies are not known until the ids are
+  // fetched, so the pickers are scoped by this page's rows and any company
+  // filter: a fair guide to who can be assigned and which statuses apply.
   const selectedScopes = useMemo(
     () =>
-      selectedRows.map(r => ({
-        tenantId: r.original.tenantId,
-        organisationId: r.original.organisationId,
-        divisionId: r.original.divisionId,
+      (allMatching
+        ? [
+            ...pageRows.map(toSelectedTicket),
+            ...(filters.tenantId ?? []).map(
+              (tenantId): SelectedTicket => ({ id: '', tenantId }),
+            ),
+          ]
+        : pickedList
+      ).map(r => ({
+        tenantId: r.tenantId,
+        organisationId: r.organisationId,
+        divisionId: r.divisionId,
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedIdsKey],
+    [allMatching, pageRows, pickedList, filters.tenantId],
   );
   const assignRowScopes = useMemo(
     () =>
@@ -578,28 +679,72 @@ export const TicketGrid: FC = () => {
     setIsBulkStatusModalOpen(true);
   }, []);
 
-  // Read when the action runs, so it is always the current selection.
-  const selectedTickets = useCallback(
-    () =>
-      table
-        .getSelectedRowModel()
-        .rows.filter(row => !!row.original.id)
-        .map(row => ({
-          id: row.original.id as string,
-          tenantId: row.original.tenantId,
-        })),
-    [table],
+  /*
+   * The tickets an action covers, read when it runs: the picks, or every
+   * match from /tickets/ids. Over 100 asks first ("Update 2,020 tickets?"),
+   * and says so when the ids came back truncated. Null when cancelled.
+   */
+  const resolveSelection = useCallback(
+    async (verb: string): Promise<SelectedTicket[] | null> => {
+      let tickets: SelectedTicket[];
+      let truncatedFrom: number | null = null;
+      if (allMatching) {
+        const result = await fetchTicketIds(
+          queryFilters,
+          isServiceAdmin && principalId ? principalId : undefined,
+        );
+        tickets = result.items;
+        if (result.truncated) truncatedFrom = result.total;
+      } else {
+        tickets = pickedList;
+      }
+      if (tickets.length > 100 || truncatedFrom !== null) {
+        const n = tickets.length.toLocaleString('en-AU');
+        const ok = await confirm({
+          title: `${verb} ${n} tickets?`,
+          body:
+            truncatedFrom !== null
+              ? `${truncatedFrom.toLocaleString('en-AU')} tickets match, but only the first ${n} can be changed at once. The rest stay as they are.`
+              : `This changes all ${n} selected tickets.`,
+          confirmLabel: `${verb} ${n} tickets`,
+        });
+        if (!ok) return null;
+      }
+      return tickets;
+    },
+    [
+      allMatching,
+      queryFilters,
+      isServiceAdmin,
+      principalId,
+      pickedList,
+      confirm,
+    ],
   );
 
   // After a bulk action only the tickets that failed stay selected, so the
   // user can see which they were and try again.
   const keepFailedSelected = useCallback(
-    (result: BulkTicketResultDto) => {
-      table.setRowSelection(
-        Object.fromEntries(result.failed.map(f => [f.ticketId, true])),
+    (result: BulkTicketResultDto, tickets: SelectedTicket[]) => {
+      const failed = new Set(result.failed.map(f => f.ticketId));
+      setAllMatching(false);
+      setPicked(
+        new Map(tickets.filter(t => failed.has(t.id)).map(t => [t.id, t])),
       );
     },
-    [table],
+    [],
+  );
+
+  const runBulk = useCallback(
+    async (verb: string, action: BulkTicketAction) => {
+      const tickets = await resolveSelection(verb);
+      if (!tickets) return;
+      ticketAction.mutate(
+        { tickets, ...action },
+        { onSuccess: result => keepFailedSelected(result, tickets) },
+      );
+    },
+    [resolveSelection, ticketAction.mutate, keepFailedSelected],
   );
 
   const handleBulkAssignConfirm = useCallback(
@@ -609,49 +754,44 @@ export const TicketGrid: FC = () => {
         handleAssign(assignRow.id, assigneeId);
         return;
       }
-      ticketAction.mutate(
-        { tickets: selectedTickets(), action: 'Assign', assigneeId },
-        { onSuccess: keepFailedSelected },
-      );
+      void runBulk('Assign', { action: 'Assign', assigneeId });
     },
-    [
-      assignRow,
-      handleAssign,
-      ticketAction.mutate,
-      selectedTickets,
-      keepFailedSelected,
-    ],
+    [assignRow, handleAssign, runBulk],
   );
 
   const handleBulkStatusConfirm = useCallback(
     (status: TicketStatus, customStatusId: string | null) => {
-      ticketAction.mutate(
-        {
-          tickets: selectedTickets(),
-          action: 'SetStatus',
-          status,
-          customStatusId,
-        },
-        { onSuccess: keepFailedSelected },
-      );
+      void runBulk('Update', {
+        action: 'SetStatus',
+        status: status as 'New' | 'InProgress' | 'Closed',
+        customStatusId,
+      });
     },
-    [ticketAction.mutate, selectedTickets, keepFailedSelected],
+    [runBulk],
   );
 
   const handleBulkDelete = useCallback(async () => {
-    const selected = selectedTickets();
+    const n = selectedCount.toLocaleString('en-AU');
     const ok = await confirm({
       title: 'Delete Tickets',
-      body: `This action will permanently delete ${selected.length} ticket${selected.length !== 1 ? 's' : ''}. Are you sure you want to continue?`,
+      body: `This action will permanently delete ${n} ticket${selectedCount !== 1 ? 's' : ''}. Are you sure you want to continue?`,
       confirmLabel: 'Delete',
       destructive: true,
     });
     if (!ok) return;
+    const tickets = await resolveSelection('Delete');
+    if (!tickets) return;
     ticketAction.mutate(
-      { tickets: selected, action: 'Delete' },
-      { onSuccess: keepFailedSelected },
+      { tickets, action: 'Delete' },
+      { onSuccess: result => keepFailedSelected(result, tickets) },
     );
-  }, [selectedTickets, confirm, ticketAction.mutate, keepFailedSelected]);
+  }, [
+    selectedCount,
+    confirm,
+    resolveSelection,
+    ticketAction.mutate,
+    keepFailedSelected,
+  ]);
 
   /*
    * Functional update, not `{ ...filters, ... }`.
@@ -721,127 +861,158 @@ export const TicketGrid: FC = () => {
   );
 
   return (
-    <div
-      ref={gridRootRef}
-      style={{ height: gridHeight }}
-      // No `flex-1` here on purpose: `flex: 1 1 0%` makes the flex algorithm
-      // resolve this item's main size and overrides the measured `height`
-      // above, so the row grew right back to its content. `shrink-0` keeps the
-      // measured height authoritative.
-      className="flex min-h-0 shrink-0 gap-0 overflow-hidden"
-    >
-      {/* Main content */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto px-4 py-4 md:px-6 md:py-6">
-        <div className="shrink-0">
-          {/* Header */}
-          <div className="mb-5 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">Tickets</h1>
-            {/* Raising a ticket needs tickets.create, not tickets.update: a
+    <TicketSelectionContext.Provider value={selection}>
+      <div
+        ref={gridRootRef}
+        style={{ height: gridHeight }}
+        // No `flex-1` here on purpose: `flex: 1 1 0%` makes the flex algorithm
+        // resolve this item's main size and overrides the measured `height`
+        // above, so the row grew right back to its content. `shrink-0` keeps the
+        // measured height authoritative.
+        className="flex min-h-0 shrink-0 gap-0 overflow-hidden"
+      >
+        {/* Main content */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto px-4 py-4 md:px-6 md:py-6">
+          <div className="shrink-0">
+            {/* Header */}
+            <div className="mb-5 flex items-center justify-between">
+              <h1 className="text-2xl font-semibold">Tickets</h1>
+              {/* Raising a ticket needs tickets.create, not tickets.update: a
               customer can raise one but not edit it, and the button was
               hidden from exactly the people whose main job it is. */}
-            <PermissionGuard
-              requiredPermissions={[HelpdeskPermissions.Tickets.Create]}
-              fallback={null}
-            >
-              <BaseButton
-                onPress={() => setIsNewRequestOpen(true)}
-                icon={<Icon name="plus" className="h-4 w-4" />}
-              >
-                New Ticket
-              </BaseButton>
-            </PermissionGuard>
-          </div>
-
-          {/* Tab Bar. helpdesk-soft-borders: grey, not white, rules in dark
-            mode (src/routes/index.css). */}
-          <div className="helpdesk-soft-borders mb-4">
-            <TicketTabsRow
-              selectedTab={selectedTab}
-              onTabChange={handleTabChange}
-              keys={canAssign ? TICKET_TAB_KEYS : CUSTOMER_TAB_KEYS}
-              renderTitle={tabTitle}
-              end={
-                <ColumnsChooser
-                  layout={ticketsLayout.layout}
-                  labels={ticketsLayout.labels}
-                  hints={ticketsLayout.hints}
-                  persisted={ticketsLayout.hasSaved}
-                  onReset={() => void ticketsLayout.reset()}
-                />
-              }
-            />
-            {/* Filters */}
-            <TicketFilters
-              filters={filters}
-              assigneeCounts={assigneeCounts}
-              isStaff={canAssign}
-              baseline={clearBaseline}
-              onFiltersChange={handleFiltersChange}
-              onSearch={handleSearch}
-              searchTerm={searchTerm}
-              onCategoryChange={handleCategorySelect}
-            />
-          </div>
-
-          {/* Bulk Actions */}
-          {hasSelectedRows && (
-            <div className="mt-5 flex items-center gap-4 rounded-lg bg-default-50 p-4">
-              <span className="text-sm font-medium">
-                {selectedRows.length} ticket
-                {selectedRows.length !== 1 ? 's' : ''} selected
-              </span>
               <PermissionGuard
-                requiredPermissions={[HelpdeskPermissions.TicketAssign]}
+                requiredPermissions={[HelpdeskPermissions.Tickets.Create]}
                 fallback={null}
               >
                 <BaseButton
-                  variant="bordered"
-                  size="sm"
-                  onPress={handleBulkAssign}
-                  icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
+                  onPress={() => setIsNewRequestOpen(true)}
+                  icon={<Icon name="plus" className="h-4 w-4" />}
                 >
-                  Assign
-                </BaseButton>
-              </PermissionGuard>
-              <PermissionGuard
-                requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                fallback={null}
-              >
-                <BaseButton
-                  variant="bordered"
-                  size="sm"
-                  onPress={handleBulkChangeStatus}
-                  icon={<Icon name="refresh" className="h-4 w-4" />}
-                >
-                  Change Status
-                </BaseButton>
-              </PermissionGuard>
-              <PermissionGuard
-                requiredPermissions={[HelpdeskPermissions.TicketDelete]}
-                fallback={null}
-              >
-                <BaseButton
-                  variant="bordered"
-                  size="sm"
-                  color="danger"
-                  onPress={handleBulkDelete}
-                  icon={<Icon name="trash" className="h-4 w-4" />}
-                >
-                  Delete
+                  New Ticket
                 </BaseButton>
               </PermissionGuard>
             </div>
-          )}
-        </div>
 
-        {/* Table */}
-        {/* min-h-0 lets BaseTable's own scroll region take the overflow. Without
+            {/* Tab Bar. helpdesk-soft-borders: grey, not white, rules in dark
+            mode (src/routes/index.css). */}
+            <div className="helpdesk-soft-borders mb-4">
+              <TicketTabsRow
+                selectedTab={selectedTab}
+                onTabChange={handleTabChange}
+                keys={canAssign ? TICKET_TAB_KEYS : CUSTOMER_TAB_KEYS}
+                renderTitle={tabTitle}
+                end={
+                  <ColumnsChooser
+                    layout={ticketsLayout.layout}
+                    labels={ticketsLayout.labels}
+                    hints={ticketsLayout.hints}
+                    persisted={ticketsLayout.hasSaved}
+                    onReset={() => void ticketsLayout.reset()}
+                  />
+                }
+              />
+              {/* Filters */}
+              <TicketFilters
+                filters={filters}
+                assigneeCounts={assigneeCounts}
+                isStaff={canAssign}
+                baseline={clearBaseline}
+                onFiltersChange={handleFiltersChange}
+                onSearch={handleSearch}
+                searchTerm={searchTerm}
+                onCategoryChange={handleCategorySelect}
+              />
+            </div>
+
+            {/* Bulk Actions */}
+            {hasSelectedRows && (
+              <div className="mt-5 flex items-center gap-4 rounded-lg bg-default-50 p-4">
+                <span className="text-sm font-medium">
+                  {selectedCount.toLocaleString('en-AU')} ticket
+                  {selectedCount !== 1 ? 's' : ''} selected
+                </span>
+                {/* Gmail's pattern: a whole page selected offers every match,
+                and every match offers the way back. */}
+                {allMatching ? (
+                  <span className="text-sm text-default-600">
+                    All {totalCount.toLocaleString('en-AU')} matching tickets
+                    are selected.{' '}
+                    <button
+                      type="button"
+                      className="text-blue font-medium hover:underline"
+                      onClick={clearSelection}
+                    >
+                      Clear selection
+                    </button>
+                  </span>
+                ) : (
+                  pageState === 'all' &&
+                  totalCount > pageRows.length && (
+                    <span className="text-sm text-default-600">
+                      All {pageRows.length} on this page are selected.{' '}
+                      <button
+                        type="button"
+                        className="text-blue font-medium hover:underline"
+                        onClick={() => setAllMatching(true)}
+                      >
+                        Select all {totalCount.toLocaleString('en-AU')} matching
+                        tickets
+                      </button>
+                    </span>
+                  )
+                )}
+                <PermissionGuard
+                  requiredPermissions={[HelpdeskPermissions.TicketAssign]}
+                  fallback={null}
+                >
+                  <BaseButton
+                    variant="bordered"
+                    size="sm"
+                    onPress={handleBulkAssign}
+                    icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
+                  >
+                    Assign
+                  </BaseButton>
+                </PermissionGuard>
+                <PermissionGuard
+                  requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                  fallback={null}
+                >
+                  <BaseButton
+                    variant="bordered"
+                    size="sm"
+                    onPress={handleBulkChangeStatus}
+                    icon={<Icon name="refresh" className="h-4 w-4" />}
+                  >
+                    Change Status
+                  </BaseButton>
+                </PermissionGuard>
+                <PermissionGuard
+                  requiredPermissions={[HelpdeskPermissions.TicketDelete]}
+                  fallback={null}
+                >
+                  <BaseButton
+                    variant="bordered"
+                    size="sm"
+                    color="danger"
+                    onPress={handleBulkDelete}
+                    icon={<Icon name="trash" className="h-4 w-4" />}
+                  >
+                    Delete
+                  </BaseButton>
+                </PermissionGuard>
+              </div>
+            )}
+          </div>
+
+          {/* Table */}
+          {/* min-h-0 lets BaseTable's own scroll region take the overflow. Without
             it this flex child sizes to its content and the page scrolls instead. */}
-        <div
-          ref={tableAreaRef}
-          className="relative flex min-h-0 flex-1 flex-col"
-        >
-          {/*
+          <div
+            ref={tableAreaRef}
+            className="relative flex min-h-0 flex-1 flex-col"
+          >
+            {/*
             pageSizeOptions + onPageSizeChange together are what render the
             "per page" dropdown (BaseTable derives showPageSizeSelector from
             both being present). It sits bottom-right, opposite the page
@@ -850,7 +1021,7 @@ export const TicketGrid: FC = () => {
             pageIndex resets to 0 on change: at 25/page you can be on page 81,
             which does not exist at 100/page, and the grid would come back empty.
           */}
-          {/*
+            {/*
             Keyed by the visible columns in their order. BaseTable's body is a
             React.memo whose props do not include column visibility or order,
             so hiding or moving a column in the chooser updated the header and
@@ -859,68 +1030,69 @@ export const TicketGrid: FC = () => {
             order of columns changes. (Widths need no redraw: the table's
             colgroup sets them.)
           */}
-          <BaseTable
-            key={table
-              .getVisibleLeafColumns()
-              .map(c => c.id)
-              .join(',')}
-            table={table}
-            fullHeight
-            isLoading={isLoading || isLoadingUsers || !ticketsLayout.isReady}
-            showInfo={false}
-            getCellClassName={getCellClassName}
-            paginationTemplate={paginationTemplate}
-            pageSizeOptions={[10, 25, 50, 100]}
-            onPageSizeChange={size =>
-              setPagination({ pageIndex: 0, pageSize: size })
-            }
-          />
-          {/*
+            <BaseTable
+              key={table
+                .getVisibleLeafColumns()
+                .map(c => c.id)
+                .join(',')}
+              table={table}
+              fullHeight
+              isLoading={isLoading || isLoadingUsers || !ticketsLayout.isReady}
+              showInfo={false}
+              getCellClassName={getCellClassName}
+              paginationTemplate={paginationTemplate}
+              pageSizeOptions={[10, 25, 50, 100]}
+              onPageSizeChange={size =>
+                setPagination({ pageIndex: 0, pageSize: size })
+              }
+            />
+            {/*
             BaseTable draws nothing for an empty page on desktop (its
             emptyContent is for the mobile card list only), so a filter that
             matched no tickets left a lone header row over a blank area. Laid
             over the table body, below the header, so the columns stay visible.
           */}
-          {!isLoading &&
-            !isLoadingUsers &&
-            table.getRowModel().rows.length === 0 && (
-              <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center px-4 pt-10">
-                <EmptyState
-                  title="No tickets here"
-                  description="Nothing matches this tab and these filters. Try another category or tab, or clear the filters."
-                />
-              </div>
-            )}
-        </div>
+            {!isLoading &&
+              !isLoadingUsers &&
+              table.getRowModel().rows.length === 0 && (
+                <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center px-4 pt-10">
+                  <EmptyState
+                    title="No tickets here"
+                    description="Nothing matches this tab and these filters. Try another category or tab, or clear the filters."
+                  />
+                </div>
+              )}
+          </div>
 
-        {/* Bulk Action Modals */}
-        <BulkAssignModal
-          isOpen={isBulkAssignModalOpen || !!assignRow}
-          onClose={() => {
-            setIsBulkAssignModalOpen(false);
-            setAssignRow(null);
-          }}
-          onConfirm={handleBulkAssignConfirm}
-          ticketCount={assignRow ? 1 : selectedRows.length}
-          scopes={assignRowScopes ?? selectedScopes}
-        />
-        <BulkStatusModal
-          isOpen={isBulkStatusModalOpen}
-          onClose={() => setIsBulkStatusModalOpen(false)}
-          onConfirm={handleBulkStatusConfirm}
-          ticketCount={selectedRows.length}
-          allowCustomStatuses={customStatusesApply(
-            viewerTenantId,
-            selectedRows.map(r => r.original.tenantId),
-          )}
-        />
-        <NewRequestModal
-          isOpen={isNewRequestOpen}
-          onClose={() => setIsNewRequestOpen(false)}
-          onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
-        />
-        {confirmDialog}
+          {/* Bulk Action Modals */}
+          <BulkAssignModal
+            isOpen={isBulkAssignModalOpen || !!assignRow}
+            onClose={() => {
+              setIsBulkAssignModalOpen(false);
+              setAssignRow(null);
+            }}
+            onConfirm={handleBulkAssignConfirm}
+            ticketCount={assignRow ? 1 : selectedCount}
+            scopes={assignRowScopes ?? selectedScopes}
+          />
+          <BulkStatusModal
+            isOpen={isBulkStatusModalOpen}
+            onClose={() => setIsBulkStatusModalOpen(false)}
+            onConfirm={handleBulkStatusConfirm}
+            ticketCount={selectedCount}
+            allowCustomStatuses={customStatusesApply(
+              viewerTenantId,
+              selectedScopes.map(s => s.tenantId),
+            )}
+          />
+          <NewRequestModal
+            isOpen={isNewRequestOpen}
+            onClose={() => setIsNewRequestOpen(false)}
+            onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
+          />
+          {confirmDialog}
+        </div>
       </div>
-    </div>
+    </TicketSelectionContext.Provider>
   );
 };

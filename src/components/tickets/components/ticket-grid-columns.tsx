@@ -31,6 +31,7 @@ import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import type { TicketRow } from '../types';
 import { QuickAssignCell } from './QuickAssignCell';
+import { SelectPageCheckbox, SelectRowCheckbox } from './ticketSelection';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
@@ -234,24 +235,9 @@ export const createTicketColumns = (
   // Checkbox column for bulk actions
   columnHelper.display({
     id: 'select',
-    header: ({ table }) => (
-      <input
-        type="checkbox"
-        aria-label="Select all tickets on this page"
-        checked={table.getIsAllPageRowsSelected()}
-        onChange={table.getToggleAllPageRowsSelectedHandler()}
-        className="h-4 w-4 rounded border-default-300 text-primary focus:ring-primary"
-      />
-    ),
-    cell: ({ row }) => (
-      <input
-        type="checkbox"
-        aria-label="Select ticket"
-        checked={row.getIsSelected()}
-        onChange={row.getToggleSelectedHandler()}
-        className="h-4 w-4 rounded border-default-300 text-primary focus:ring-primary"
-      />
-    ),
+    // The selection lives in the grid (see ticketSelection), across pages.
+    header: () => <SelectPageCheckbox />,
+    cell: ({ row }) => <SelectRowCheckbox row={row.original} />,
     enableSorting: false,
     enableHiding: false,
     enableResizing: false,
