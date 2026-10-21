@@ -1,25 +1,15 @@
 import type { CompanyDeadlinePolicyDto } from '@/api/local/company-deadlines';
-import { StatusBadge } from '@/components/shared';
+import { DurationInput, StatusBadge } from '@/components/shared';
+import { formatMinutes } from '@/components/shared/deadline';
 import { getPriorityConfig } from '@/components/tickets/ticket-priority-config';
 import type { TicketPriority } from '@/types/ticket';
-import {
-  BaseNumberInput,
-  BaseSelect,
-  BaseSelectItem,
-} from '@brainforgeau/components';
-import { type FC, useEffect, useState } from 'react';
-import {
-  PRIORITIES,
-  type TargetUnit,
-  UNIT_MINUTES,
-  formatTargetMinutes,
-  unitFor,
-} from '../deadlinePolicy';
+import type { FC } from 'react';
+import { PRIORITIES } from '../deadlinePolicy';
 
 interface TargetCellProps {
   label: string;
   minutes: number;
-  /** The saved value, struck through beside the field once it is changed. */
+  /** The saved value, shown struck through once the field is changed. */
   savedMinutes?: number;
   onChange: (minutes: number) => void;
   onBlur: () => void;
@@ -27,9 +17,8 @@ interface TargetCellProps {
 }
 
 /**
- * A number and its unit. The form holds minutes; the unit is how the person
- * thinks about the number, so it is kept here and only re-derived when the
- * value can no longer be shown in it (after Reset, say).
+ * One duration field, and a fixed slot after it for the saved value. The
+ * slot is always there, so changing one row never shifts the columns.
  */
 const TargetCell: FC<TargetCellProps> = ({
   label,
@@ -39,57 +28,28 @@ const TargetCell: FC<TargetCellProps> = ({
   onBlur,
   error,
 }) => {
-  const [unit, setUnit] = useState<TargetUnit>(() => unitFor(minutes));
-  useEffect(() => {
-    if (minutes % UNIT_MINUTES[unit] !== 0) setUnit('minutes');
-  }, [minutes, unit]);
-
-  const factor = UNIT_MINUTES[unit];
   const changed = savedMinutes !== undefined && savedMinutes !== minutes;
-
   return (
-    <div>
-      <div className="flex items-center gap-2">
-        <BaseNumberInput
-          aria-label={label}
-          size="sm"
-          className="w-20"
-          minValue={1}
-          value={Number.isFinite(minutes) ? minutes / factor : undefined}
-          onValueChange={v =>
-            onChange(v === undefined ? Number.NaN : v * factor)
-          }
-          onBlur={onBlur}
-          isInvalid={Boolean(error)}
-        />
-        <BaseSelect
-          aria-label={`${label} unit`}
-          size="sm"
-          className="w-28"
-          selectedKey={unit}
-          onSelectionChange={key => {
-            const next = (key as TargetUnit) ?? unit;
-            if (next === unit) return;
-            // Keep the number, change what it means: "4" minutes becomes "4" hours.
-            const shown = minutes / factor;
-            setUnit(next);
-            if (Number.isFinite(shown)) onChange(shown * UNIT_MINUTES[next]);
-          }}
-        >
-          <BaseSelectItem key="minutes" id="minutes">
-            minutes
-          </BaseSelectItem>
-          <BaseSelectItem key="hours" id="hours">
-            hours
-          </BaseSelectItem>
-        </BaseSelect>
+    <div className="flex items-start gap-2">
+      <DurationInput
+        label={label}
+        value={minutes}
+        onChange={onChange}
+        onBlur={onBlur}
+        error={error}
+        className="w-32"
+      />
+      <span
+        className="text-default-500 w-14 shrink-0 pt-1.5 text-xs whitespace-nowrap"
+        aria-hidden={!changed}
+      >
         {changed && (
-          <span className="text-default-400 whitespace-nowrap text-xs line-through">
-            {formatTargetMinutes(savedMinutes)}
-          </span>
+          <>
+            <span className="sr-only">Was </span>
+            <s>{formatMinutes(savedMinutes)}</s>
+          </>
         )}
-      </div>
-      {error && <p className="text-danger mt-1 text-xs">{error}</p>}
+      </span>
     </div>
   );
 };
@@ -119,8 +79,8 @@ export const TargetsSection: FC<TargetsSectionProps> = ({
       Deadlines by priority
     </h2>
     <p className="text-gray mt-1 text-sm dark:text-light">
-      New tickets for {companyName} get their due dates from these, counted in
-      business hours.
+      New tickets for {companyName} get their due dates from these. Type a time
+      like 30 min or 4 h.
     </p>
     <div className="border-default-200 mt-4 overflow-x-auto rounded-md border">
       <table className="w-full text-sm">

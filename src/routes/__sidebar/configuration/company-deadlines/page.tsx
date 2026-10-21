@@ -13,15 +13,15 @@ import {
   policyKey,
 } from '@/api/local/company-deadlines';
 import {
-  describeHours,
-  formatTargetMinutes,
-} from '@/components/company-deadlines/deadlinePolicy';
-import {
   useCompanyDeadlinePolicy,
   useCompanyDeadlineSummaries,
   useDeadlinesPrincipal,
 } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { IconTip } from '@/components/shared';
+import {
+  describeHours,
+  formatMinutes as formatTargetMinutes,
+} from '@/components/shared/deadline';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { AccessDenied } from '@/security';
 import { BaseInput } from '@brainforgeau/components';

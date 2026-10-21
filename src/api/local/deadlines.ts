@@ -78,8 +78,14 @@ export interface CompanyDeadlinePolicyInput {
   clockMode: 'BusinessHours' | 'AllHours';
   /** IANA zone, e.g. "Australia/Sydney". */
   timeZoneId: string;
-  /** e.g. "AU-NSW", or null for none. */
+  /** e.g. "AU-NSW", or null for none. Superseded by holidayRegion. */
   holidayCalendar: string | null;
+  /**
+   * The state whose public holidays the clock skips: "NSW", "VIC", "QLD",
+   * "WA", "SA", "TAS", "ACT", "NT", or null for none. Being added by the
+   * backend; until then it is absent and holidayCalendar says the same.
+   */
+  holidayRegion?: string | null;
   /** Exactly 7, 0 = Sunday. Times are "HH:mm". */
   days: { dayOfWeek: number; isOpen: boolean; start: string; end: string }[];
   /** Exactly 4, fix >= reply > 0. */

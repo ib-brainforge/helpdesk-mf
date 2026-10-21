@@ -14,6 +14,7 @@ import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import type {
   CompanyDeadlinePolicyInput,
   DeadlinePolicySource,
+  DeadlinePriority,
 } from './deadlines';
 
 export type DeadlineClockMode = CompanyDeadlinePolicyInput['clockMode'];
@@ -48,6 +49,33 @@ export interface CompanyDeadlineSummaryDto extends DeadlineSummaryFields {
   tenantId: string;
   organisations: CompanyDeadlineOrganisationSummaryDto[];
 }
+
+/**
+ * One way a policy differs from the one it would otherwise use: a tenant's
+ * from the default, an organisation's from its tenant's. Sent by the list
+ * endpoints (only the differences, so a row says what is custom and nothing
+ * else) and worked out the same way on a policy page by resolveDeadlines.
+ */
+export type DeadlineDifferenceDto =
+  | {
+      field: 'reply' | 'fix';
+      priority: DeadlinePriority;
+      value: number;
+      inherited: number;
+    }
+  | {
+      /** The clock mode and the open days and hours, together. */
+      field: 'hours';
+      value: Pick<CompanyDeadlinePolicyInput, 'clockMode' | 'days'>;
+      inherited: Pick<CompanyDeadlinePolicyInput, 'clockMode' | 'days'>;
+    }
+  | { field: 'timeZone'; value: string; inherited: string }
+  | {
+      /** Region codes ("NSW"), null for none. */
+      field: 'holidays';
+      value: string | null;
+      inherited: string | null;
+    };
 
 export interface ClosedDayDto {
   /** YYYY-MM-DD */
@@ -150,14 +178,32 @@ export const revertCompanyDeadlinePolicy = async (
   await authorizedAxios.delete(`${base(principalId)}/${key}`);
 };
 
+/** `region` is a holiday region code ("NSW"); the calendar is its "AU-" form. */
 export const getHolidays = async (
   principalId: string,
-  calendar: string,
+  region: string,
   year: number,
 ): Promise<ClosedDayDto[]> => {
   const { data } = await authorizedAxios.get<ClosedDayDto[]>(
     `${base(principalId)}/holidays`,
-    { params: { calendar, year } },
+    { params: { calendar: `AU-${region}`, region, year } },
+  );
+  return data ?? [];
+};
+
+export interface HolidayRegionDto {
+  /** "NSW" */
+  code: string;
+  /** "New South Wales" */
+  name: string;
+}
+
+/** The holiday regions the backend can count. Being added by the backend. */
+export const getHolidayRegions = async (
+  principalId: string,
+): Promise<HolidayRegionDto[]> => {
+  const { data } = await authorizedAxios.get<HolidayRegionDto[]>(
+    `${base(principalId)}/holiday-regions`,
   );
   return data ?? [];
 };

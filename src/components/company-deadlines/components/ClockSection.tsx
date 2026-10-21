@@ -1,20 +1,20 @@
 import type { CompanyDeadlinePolicyDto } from '@/api/local/company-deadlines';
+import { DAY_ORDER, formatClockTime } from '@/components/shared/deadline';
 import {
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
 } from '@brainforgeau/components';
-import { BaseButton } from '@brainforgeau/components/button';
 import { type FC, useState } from 'react';
 import {
   DAY_NAMES,
-  DAY_ORDER,
-  HOLIDAY_CALENDARS,
+  NO_HOLIDAYS,
   TIME_OPTIONS,
-  formatClock,
   formatIsoDay,
   timeZoneOptions,
 } from '../deadlinePolicy';
+import { regionForTimeZone, regionName, regionOf } from '../holidayRegions';
+import { useHolidayRegions } from '../hooks/useCompanyDeadlines';
 import { HolidaysModal } from './HolidaysModal';
 
 const CLOCK_MODES = [
@@ -54,8 +54,8 @@ const TimeSelect: FC<{
     onSelectionChange={key => key && onChange(String(key))}
   >
     {TIME_OPTIONS.map(t => (
-      <BaseSelectItem key={t} id={t} textValue={formatClock(t)}>
-        {formatClock(t)}
+      <BaseSelectItem key={t} id={t} textValue={formatClockTime(t)}>
+        {formatClockTime(t)}
       </BaseSelectItem>
     ))}
   </BaseSelect>
@@ -74,7 +74,8 @@ export const ClockSection: FC<ClockSectionProps> = ({
   principalId,
 }) => {
   const [holidaysOpen, setHolidaysOpen] = useState(false);
-  const year = new Date().getFullYear();
+  const regions = useHolidayRegions(principalId);
+  const savedRegion = saved ? regionOf(saved) : null;
 
   return (
     <section>
@@ -233,7 +234,21 @@ export const ClockSection: FC<ClockSectionProps> = ({
             <BaseSelect
               label="Time zone"
               selectedKey={f.state.value}
-              onSelectionChange={key => key && f.handleChange(String(key))}
+              onSelectionChange={key => {
+                if (!key) return;
+                const next = String(key);
+                // Holidays follow the zone while they still match the old
+                // one: Melbourne suggests VIC. A region picked on purpose stays.
+                const region = form.getFieldValue('holidayRegion');
+                const suggested = regionForTimeZone(next);
+                if (
+                  region === regionForTimeZone(f.state.value) &&
+                  suggested &&
+                  regions.some(r => r.code === suggested)
+                )
+                  form.setFieldValue('holidayRegion', suggested);
+                f.handleChange(next);
+              }}
             >
               {timeZoneOptions(f.state.value).map(o => (
                 <BaseSelectItem key={o.id} id={o.id} textValue={o.label}>
@@ -246,62 +261,87 @@ export const ClockSection: FC<ClockSectionProps> = ({
         <form.Subscribe selector={(s: AnyForm) => s.values.clockMode}>
           {(clockMode: string) =>
             clockMode === 'BusinessHours' && (
-              <form.Field name="holidayCalendar">
-                {(f: AnyForm) => (
-                  <BaseSelect
-                    label="Public holidays"
-                    selectedKey={f.state.value}
-                    onSelectionChange={key =>
-                      key && f.handleChange(String(key))
-                    }
-                  >
-                    {HOLIDAY_CALENDARS.map(c => (
-                      <BaseSelectItem
-                        key={c.key}
-                        id={c.key}
-                        textValue={c.label}
-                      >
-                        {c.label}
-                      </BaseSelectItem>
-                    ))}
-                  </BaseSelect>
-                )}
+              <form.Field name="holidayRegion">
+                {(f: AnyForm) => {
+                  // What the backend counts, plus a saved region it no longer
+                  // offers, so the picker never shows a blank.
+                  const codes = regions.map(r => r.code);
+                  if (
+                    f.state.value !== NO_HOLIDAYS &&
+                    !codes.includes(f.state.value)
+                  )
+                    codes.push(f.state.value);
+                  const options = [
+                    ...codes.map(code => ({
+                      key: code,
+                      label: `${regionName(code)} (${code})`,
+                    })),
+                    { key: NO_HOLIDAYS, label: 'No public holidays' },
+                  ];
+                  return (
+                    <BaseSelect
+                      label="Public holidays"
+                      selectedKey={f.state.value}
+                      onSelectionChange={key =>
+                        key && f.handleChange(String(key))
+                      }
+                    >
+                      {options.map(o => (
+                        <BaseSelectItem
+                          key={o.key}
+                          id={o.key}
+                          textValue={o.label}
+                        >
+                          {o.label}
+                        </BaseSelectItem>
+                      ))}
+                    </BaseSelect>
+                  );
+                }}
               </form.Field>
             )
           }
         </form.Subscribe>
       </div>
 
-      {/* From the SAVED policy: the server knows the calendar, the form does not. */}
-      {saved?.clockMode === 'BusinessHours' && saved.holidayCalendar && (
-        <p className="text-default-500 mt-2 text-sm">
-          {saved.nextClosedDay && (
-            <>
-              Next closed day: {saved.nextClosedDay.name},{' '}
-              {formatIsoDay(saved.nextClosedDay.date)}.{' '}
-            </>
-          )}
-          <BaseButton
-            variant="link"
-            size="none"
-            className="text-primary text-sm"
-            onPress={() => setHolidaysOpen(true)}
-          >
-            See all {saved.closedDaysThisYear} days
-          </BaseButton>
-        </p>
-      )}
-      <HolidaysModal
-        isOpen={holidaysOpen}
-        onClose={() => setHolidaysOpen(false)}
-        principalId={principalId}
-        calendar={saved?.holidayCalendar ?? null}
-        calendarLabel={
-          HOLIDAY_CALENDARS.find(c => c.key === saved?.holidayCalendar)
-            ?.label ?? 'Public holidays'
+      <form.Subscribe
+        selector={(s: AnyForm) =>
+          s.values.clockMode === 'BusinessHours' &&
+          s.values.holidayRegion !== NO_HOLIDAYS
+            ? (s.values.holidayRegion as string)
+            : null
         }
-        year={year}
-      />
+      >
+        {(region: string | null) =>
+          region && (
+            <>
+              <p className="text-default-600 mt-2 text-sm">
+                {/* The server knows the saved region's next day off; a region
+                    just picked has no answer until it is saved. */}
+                {region === savedRegion && saved?.nextClosedDay && (
+                  <>
+                    Next closed day: {saved.nextClosedDay.name},{' '}
+                    {formatIsoDay(saved.nextClosedDay.date)}.{' '}
+                  </>
+                )}
+                <button
+                  type="button"
+                  className="text-primary font-medium underline underline-offset-2 hover:no-underline"
+                  onClick={() => setHolidaysOpen(true)}
+                >
+                  See {region} holidays for the next 12 months
+                </button>
+              </p>
+              <HolidaysModal
+                isOpen={holidaysOpen}
+                onClose={() => setHolidaysOpen(false)}
+                principalId={principalId}
+                region={region}
+              />
+            </>
+          )
+        }
+      </form.Subscribe>
     </section>
   );
 };
