@@ -176,7 +176,7 @@ function TeamTab() {
   });
 
   return (
-    <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
+    <div className="helpdesk-filter-row mt-4 flex min-h-0 flex-1 flex-col gap-4">
       {/* Named ranges rather than two calendars: see dateRangePresets.ts. */}
       <BaseSelect
         aria-label="Date range"

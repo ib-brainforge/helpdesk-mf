@@ -380,23 +380,14 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
   }
 }
 
-/* Dark mode: soft grey rules on data tables and the ticket filter bar.
+/* Dark mode: soft grey lines on the tickets tab and filter bar.
  *
- * The shared table, inputs, tag selects and bordered buttons draw their
- * lines in --color-light (#d1d9e0), which the dark theme never redefines, so
- * every cell, the header row and the frame read as bright white grids.
- *
- * Only the LINES change, never the token: the same token also colours text
- * in dark mode (tab labels, cell text), and redefining it made those almost
- * invisible. So border colours, and the 1px inset shadow bordered buttons
- * draw their outline with, are overridden by class, only under .dark, inside
- * every BaseTable frame (tickets, reports, configuration lists) and the
- * tickets tab and filter bar. Text, backgrounds, hovers and light mode are
- * untouched. */
+ * The shared inputs, tag selects and bordered buttons draw their lines in
+ * --color-light (#d1d9e0), which the dark theme never redefines, so they
+ * read as bright white. Only the LINES change, never the token: the same
+ * token colours text in dark mode (tab labels), and redefining it made that
+ * text nearly invisible. Light mode is untouched. */
 @layer utilities {
-  .dark .group\/table-scroll,
-  .dark .group\/table-scroll [class*="border-light"],
-  .dark .group\/table-scroll [class*="*:border-light"] > *,
   .dark .helpdesk-soft-borders [class*="border-light"],
   .dark .helpdesk-soft-borders [class*="*:border-light"] > * {
     border-color: rgb(255 255 255 / 0.14);
@@ -405,5 +396,58 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
     .helpdesk-soft-borders
     [class*="shadow-[inset_0_0_0_1px_var(--color-light)]"]:not(:hover) {
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  }
+}
+
+/* Dark mode: the cleaner data table, for every BaseTable in Helpdesk
+ * (tickets, reports, configuration lists), each inside its scroll frame
+ * (.group/table-scroll).
+ *
+ * The shared table gives every cell a full 1px border, which in dark mode is
+ * a white grid. Here: no vertical dividers, a faint line between rows, a
+ * slightly lighter header with one bottom line, and the frame as faint as the
+ * rows. Only border colours and widths and the header background are set:
+ * text colours, row hover and selected rows keep their own styles. The column
+ * resize handle is its own element, not a cell border, so it still shows on
+ * hover. Light mode is untouched. */
+@layer utilities {
+  .dark .group\/table-scroll {
+    border-color: rgb(255 255 255 / 0.08);
+  }
+  .dark .group\/table-scroll :is(th, td) {
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  }
+  .dark .group\/table-scroll thead :is(th, td) {
+    /* Opaque, so a sticky header never shows rows scrolling under it. */
+    background-color: color-mix(in srgb, white 4%, var(--color-dark));
+    border-bottom-color: rgb(255 255 255 / 0.12);
+  }
+  .dark .group\/table-scroll tbody tr:last-child > :is(th, td) {
+    border-bottom-width: 0;
+  }
+}
+
+/* Dark mode: readable filter text.
+ *
+ * In the shared inputs and selects the placeholder ("All assignees", "Any
+ * status", "Search tickets...") and the trigger text are mid greys meant for
+ * a white field, so on a dark field they read as disabled. Under .dark, in
+ * our filter rows only (the tickets filter bar, the Reports filters and the
+ * Company Deadlines search), placeholders become white at 70% and chosen
+ * values full white. Light mode is untouched. */
+@layer utilities {
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) input::placeholder,
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) .text-gray-300,
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) .text-light-gray {
+    color: rgb(255 255 255 / 0.7);
+  }
+  .dark
+    :is(.helpdesk-soft-borders, .helpdesk-filter-row)
+    [class*="border-light"][class*="text-gray"],
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) input {
+    color: #fff;
   }
 }
