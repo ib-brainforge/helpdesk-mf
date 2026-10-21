@@ -15,12 +15,12 @@ import { DeadlineWeekChart } from './DeadlineWeekChart';
 import { KpiCards } from './KpiCards';
 import { LateTicketsTable } from './LateTicketsTable';
 import { OpenByAgeCard } from './OpenByAgeCard';
+import { PeriodPicker } from './PeriodPicker';
 import { PolicyBanner } from './PolicyBanner';
 import {
   defaultMonth,
   monthLabel,
   monthName,
-  monthOptions,
   previousMonthKey,
 } from './kpiFormat';
 import { useKpiReport } from './useKpiReport';
@@ -109,7 +109,7 @@ export const KpiOverview: FC = () => {
   );
 
   const prevName = monthName(previousMonthKey(month));
-  const scopeLabel = company ? companyName(company) : 'All companies';
+  const scopeLabel = company ? companyName(company) : 'All tenants';
 
   return (
     <div
@@ -123,22 +123,14 @@ export const KpiOverview: FC = () => {
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="helpdesk-filter-row kpi-print-hide flex flex-wrap items-end gap-4">
-          <BaseSelect
-            label="Period"
-            className="w-48"
-            selectedKey={month}
-            onSelectionChange={key => key && setParam({ month: String(key) })}
-          >
-            {monthOptions().map(o => (
-              <BaseSelectItem key={o.key} id={o.key} textValue={o.label}>
-                {o.label}
-              </BaseSelectItem>
-            ))}
-          </BaseSelect>
+          <PeriodPicker
+            value={month}
+            onChange={next => setParam({ month: next })}
+          />
           {principalId && (
             <BaseAutocomplete
-              label="Company"
-              placeholder="All companies"
+              label="Tenant"
+              placeholder="All tenants"
               className="w-56"
               selectedKey={company ?? ALL}
               onSelectionChange={key =>
@@ -152,9 +144,9 @@ export const KpiOverview: FC = () => {
                 <BaseAutocompleteItem
                   key={ALL}
                   id={ALL}
-                  textValue="All companies"
+                  textValue="All tenants"
                 >
-                  All companies
+                  All tenants
                 </BaseAutocompleteItem>,
                 ...tenantOptions.map(t => (
                   <BaseAutocompleteItem key={t.id} id={t.id} textValue={t.name}>

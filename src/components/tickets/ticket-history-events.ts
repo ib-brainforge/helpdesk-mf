@@ -162,11 +162,11 @@ export const describeHistoryEvent = (
     case 'CompanyChanged': {
       const name = (key: string) => {
         const id = v(key);
-        return id ? (names.company(id) ?? 'another company') : undefined;
+        return id ? (names.company(id) ?? 'another tenant') : undefined;
       };
       return {
         icon: 'BuildingOfficeIcon',
-        text: change('Company', name('fromId'), name('toId')),
+        text: change('Tenant', name('fromId'), name('toId')),
       };
     }
     case 'OrganisationChanged': {

@@ -460,3 +460,32 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
     color: #fff;
   }
 }
+
+/* Dark mode: readable options in the multi-select filter lists.
+ *
+ * The shared tag select's list (Assignee, Status, Priority, Company,
+ * Organisation, the More filters selects, the Reports filters) sets no text
+ * colour of its own, so its options inherit the page's dark-mode text,
+ * --color-light (#d1d9e0), and its search placeholder is that same grey: on
+ * the dark list they read as disabled. The list renders in a portal, so it is
+ * matched by the list's own classes (a .popover dialog with the tag select's
+ * border-[#D1D9E0] and overscroll-none), not by the filter bar. Under .dark
+ * only: options and the search text full white, the placeholder white at
+ * 70%, a faint white hover on unticked rows. Ticked rows keep their accent,
+ * disabled options keep their opacity-50, and the blue "Clear" row keeps its
+ * colour. Light mode and the --color-light token are untouched. */
+@layer utilities {
+  .dark .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"] {
+    color: #fff;
+  }
+  .dark
+    .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
+    input::placeholder {
+    color: rgb(255 255 255 / 0.7);
+  }
+  .dark
+    .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
+    label.border-transparent:not(.cursor-not-allowed):hover {
+    background-color: rgb(255 255 255 / 0.06);
+  }
+}

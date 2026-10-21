@@ -26,7 +26,7 @@ const CLOCK_MODES = [
   {
     key: 'AllHours',
     title: 'All hours (24/7)',
-    hint: 'For companies that pay for round the clock cover',
+    hint: 'For tenants that pay for round the clock cover',
   },
 ] as const;
 

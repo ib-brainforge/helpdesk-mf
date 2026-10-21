@@ -107,7 +107,7 @@ export const HELPDESK_NAV: NavSections = {
           // Netcorp staff only: deadlines are set per company by the principal,
           // never by the company itself, and the API takes principal admin to
           // save. The page checks the same roles.
-          label: 'Company Deadlines',
+          label: 'Tenant Deadlines',
           href: '/configuration/company-deadlines',
           icon: 'clock',
           testId: 'nav-configuration-company-deadlines',

@@ -39,15 +39,19 @@ import {
   useState,
 } from 'react';
 import {
+  initialFiltersFromUrl,
+  paginationFromUrl,
+  sortFromUrl,
+  writeListToUrl,
+} from '../hooks/ticketListUrl';
+import {
   CUSTOMER_TAB_KEYS,
   LEGACY_TABS,
   TICKET_DEFAULT_TAB,
   TICKET_TAB_KEYS,
   TICKET_VALID_TABS,
   type TicketTabKey,
-  assigneeForShortcut,
   filtersForTab,
-  shortcutForFilters,
   tabForFilters,
 } from '../hooks/ticketTabs';
 import { useBulkTicketAction } from '../hooks/useBulkTicketAction';
@@ -91,7 +95,6 @@ export const TicketGrid: FC = () => {
   const timezone = useTimezone();
   const { user } = useAuth();
   const currentUserId = user?.profile?.sub;
-  const [searchTerm, setSearchTerm] = useState('');
 
   /*
    * Locks this page to the visible viewport so it never scrolls as a whole.
@@ -149,6 +152,9 @@ export const TicketGrid: FC = () => {
   }, []);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get('q') ?? '',
+  );
   const selectedTab = (() => {
     const param = searchParams.get('tab');
     if (param && LEGACY_TABS[param]) return LEGACY_TABS[param].tab;
@@ -172,7 +178,28 @@ export const TicketGrid: FC = () => {
    * the right order rather than once by default and again by preference.
    */
   const ticketsLayout = useTicketsLayout(selectedTab);
-  const activeSort = ticketsLayout.layout.state.sorting[0];
+  /*
+   * A sort named in the URL (a copied link) wins over the saved one until
+   * the user sorts or changes tab; it is not saved as their preference.
+   */
+  const [urlSort, setUrlSort] = useState(() =>
+    sortFromUrl(searchParams, id => id in TICKET_SORT_KEYS),
+  );
+  const savedLayout = ticketsLayout.layout;
+  const listLayout = useMemo(() => {
+    if (!urlSort) return savedLayout;
+    const sorting = [urlSort];
+    return {
+      ...savedLayout,
+      state: { ...savedLayout.state, sorting },
+      onSortingChange: ((updater: unknown) => {
+        const next = typeof updater === 'function' ? updater(sorting) : updater;
+        setUrlSort(null);
+        savedLayout.onSortingChange(next);
+      }) as typeof savedLayout.onSortingChange,
+    };
+  }, [urlSort, savedLayout]);
+  const activeSort = listLayout.state.sorting[0];
   const sortBy = activeSort ? TICKET_SORT_KEYS[activeSort.id] : undefined;
   const sort = useMemo(
     () =>
@@ -198,49 +225,61 @@ export const TicketGrid: FC = () => {
     isLoading,
     refetch,
   } = useTicketsData(
-    // Seeded from the URL so the very first request matches the highlighted
-    // tab and the ?assignee= shortcut (an old person-tab link brings its own).
-    // ?tenant= and ?organisation= come from links elsewhere (a company's
-    // late count on Company Deadlines).
-    filtersForTab(
+    // Seeded from the URL, so a copied link reopens the same list and the
+    // first request already matches it (see ticketListUrl). An old
+    // ?tab=unassigned link brings its own assignee; ?tenant= and
+    // ?organisation= also come from links elsewhere (a company's late count
+    // on Company Deadlines).
+    initialFiltersFromUrl(
       selectedTab,
-      {
-        ...assigneeForShortcut(
-          LEGACY_TABS[searchParams.get('tab') ?? '']?.assignee ??
-            searchParams.get('assignee'),
-          user?.profile?.sub,
-        ),
-        ...(searchParams.get('tenant')
-          ? { tenantId: [searchParams.get('tenant') as string] }
-          : {}),
-        ...(searchParams.get('organisation')
-          ? { organisationId: [searchParams.get('organisation') as string] }
-          : {}),
-      },
+      searchParams,
       user?.profile?.sub,
+      LEGACY_TABS[searchParams.get('tab') ?? '']?.assignee,
     ),
-    { sort, enabled: ticketsLayout.isReady },
+    {
+      sort,
+      enabled: ticketsLayout.isReady,
+      initialPagination: paginationFromUrl(searchParams),
+    },
   );
 
   /*
-   * The URL follows the Assignee filter: ?assignee=me or ?assignee=unassigned
-   * when it is exactly one of those, so the view can be linked and Back
-   * restores it. An old ?tab=unassigned link is
-   * rewritten to the tab it now means (the filters were seeded from it above).
+   * The address bar follows the list: every filter, the sort, the page size
+   * and the page (see ticketListUrl). Replaced, not pushed, so typing and
+   * paging do not fill Back, and held for a moment so a search being typed
+   * is written once. An old ?tab=unassigned link is rewritten to the tab it
+   * now means (the filters were seeded from it above).
    */
-  const assigneeShortcut = shortcutForFilters(filters, currentUserId);
   useEffect(() => {
-    setSearchParams(
-      prev => {
-        const legacy = LEGACY_TABS[prev.get('tab') ?? ''];
-        if (legacy) prev.set('tab', legacy.tab);
-        if (assigneeShortcut) prev.set('assignee', assigneeShortcut);
-        else prev.delete('assignee');
-        return prev;
-      },
-      { replace: true },
-    );
-  }, [assigneeShortcut, setSearchParams]);
+    if (!ticketsLayout.isReady) return undefined;
+    const timer = setTimeout(() => {
+      setSearchParams(
+        prev => {
+          const legacy = LEGACY_TABS[prev.get('tab') ?? ''];
+          if (legacy) prev.set('tab', legacy.tab);
+          return writeListToUrl(prev, {
+            tab: selectedTab,
+            filters,
+            sort: activeSort
+              ? { id: activeSort.id, desc: activeSort.desc }
+              : null,
+            pagination,
+            currentUserId,
+          });
+        },
+        { replace: true },
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [
+    ticketsLayout.isReady,
+    selectedTab,
+    filters,
+    activeSort,
+    pagination,
+    currentUserId,
+    setSearchParams,
+  ]);
 
   // REVIEW: Real-time updates via SignalR - auto-refreshes grid when tickets change
   useRealtimeTickets();
@@ -335,11 +374,16 @@ export const TicketGrid: FC = () => {
   );
 
   const handleAssign = useCallback(
-    (ticketId: string, assigneeId: string | null) => {
+    (
+      ticketId: string,
+      assigneeId: string | null,
+      assigneeName?: string | null,
+    ) => {
       ticketAction.mutate({
         tickets: [refOf(ticketId)],
         action: 'Assign',
         assigneeId,
+        assigneeName,
       });
     },
     [ticketAction.mutate, refOf],
@@ -452,7 +496,7 @@ export const TicketGrid: FC = () => {
     totalCount,
     pagination,
     onPaginationChange: setPagination,
-    layout: ticketsLayout.layout,
+    layout: listLayout,
     columnSizing,
   });
 
@@ -736,7 +780,10 @@ export const TicketGrid: FC = () => {
   );
 
   const runBulk = useCallback(
-    async (verb: string, action: BulkTicketAction) => {
+    async (
+      verb: string,
+      action: BulkTicketAction & { assigneeName?: string | null },
+    ) => {
       const tickets = await resolveSelection(verb);
       if (!tickets) return;
       ticketAction.mutate(
@@ -748,13 +795,13 @@ export const TicketGrid: FC = () => {
   );
 
   const handleBulkAssignConfirm = useCallback(
-    (assigneeId: string | null) => {
+    (assigneeId: string | null, assigneeName?: string | null) => {
       // One row from its menu, or the selection from the bulk bar.
       if (assignRow?.id) {
-        handleAssign(assignRow.id, assigneeId);
+        handleAssign(assignRow.id, assigneeId, assigneeName);
         return;
       }
-      void runBulk('Assign', { action: 'Assign', assigneeId });
+      void runBulk('Assign', { action: 'Assign', assigneeId, assigneeName });
     },
     [assignRow, handleAssign, runBulk],
   );
@@ -852,6 +899,8 @@ export const TicketGrid: FC = () => {
     (key: string | number) => {
       const tabKey = String(key);
       setSelectedTab(tabKey);
+      // Each tab has its own default sort; a linked one no longer applies.
+      setUrlSort(null);
       // filtersForTab replaces only the state fields a tab owns and keeps the
       // rest, the assignee included: "Assigned to you" then Overdue is your
       // overdue tickets, with you still shown (and removable) in Assignee.

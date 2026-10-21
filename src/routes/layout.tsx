@@ -123,7 +123,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.categories.new': 'New Category',
   'helpdesk.configuration.custom-statuses': 'Custom Statuses',
   'helpdesk.configuration.custom-priorities': 'Custom Priorities',
-  'helpdesk.configuration.company-deadlines': 'Company Deadlines',
+  'helpdesk.configuration.company-deadlines': 'Tenant Deadlines',
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
   'helpdesk.configuration.integrations': 'Integrations',

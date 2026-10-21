@@ -57,7 +57,7 @@ export function PrincipalSidenav({
     {
       // Deadlines are edited per company under Configuration, the one place
       // for them. This console's own SLA policy pages were retired.
-      label: 'Company Deadlines',
+      label: 'Tenant Deadlines',
       href: '/configuration/company-deadlines',
       icon: 'clock',
       testId: 'nav-principal-company-deadlines',

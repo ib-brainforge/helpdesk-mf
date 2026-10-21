@@ -83,11 +83,7 @@ import { InlineEditable } from './InlineEditable';
 import { LinkTicketModal } from './LinkTicketModal';
 import { MarkSpamModal } from './MarkSpamModal';
 import { MergeTicketModal } from './MergeTicketModal';
-import {
-  CompanyPill,
-  OrganisationPill,
-  useTicketScopeNames,
-} from './ScopePills';
+import { ScopePath, useTicketScopeNames } from './ScopePills';
 import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { TicketHistory } from './TicketHistory';
@@ -237,8 +233,31 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const [isAddSubtaskModalOpen, setIsAddSubtaskModalOpen] = useState(false);
 
   const handleUpdate = useCallback(
-    (updates: any) => {
+    (updates: any, meta?: { assigneeName?: string | null }) => {
       if (!id) return;
+      // An assignee change says where the ticket went, or that it failed.
+      if ('assigneeId' in updates && !updates.status) {
+        updateTicketMutation.mutate(
+          { id, updates },
+          {
+            onSuccess: () => {
+              toast(
+                updates.assigneeId
+                  ? `Assigned to ${meta?.assigneeName ?? 'the chosen person'}`
+                  : 'Unassigned',
+                { variant: 'success' },
+              );
+            },
+            onError: () => {
+              toast("Couldn't change the assignee", {
+                description: 'Please try again.',
+                variant: 'danger',
+              });
+            },
+          },
+        );
+        return;
+      }
       updateTicketMutation.mutate(
         { id, updates },
         updates.status
@@ -1104,11 +1123,11 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 />
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {companyName && <CompanyPill name={companyName} />}
-                {/* The organisation repeats nothing when it shares the company's name. */}
-                {organisationName && organisationName !== companyName && (
-                  <OrganisationPill name={organisationName} />
-                )}
+                {/* Tenant then organisation, as everywhere a ticket shows both. */}
+                <ScopePath
+                  tenantName={companyName}
+                  organisationName={organisationName}
+                />
                 {requesterName && (
                   <span className="border-l border-default-200 pl-2 text-sm text-default-600">
                     {requesterName}
