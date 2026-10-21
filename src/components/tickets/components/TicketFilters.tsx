@@ -805,7 +805,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           <BaseButton
             aria-pressed={mine}
             variant="bordered"
-            color={mine ? 'primary' : 'light'}
+            color={mine ? 'info' : 'light'}
             onPress={toggleMine}
             icon={<Icon name="user" className="h-4 w-4" />}
           >
