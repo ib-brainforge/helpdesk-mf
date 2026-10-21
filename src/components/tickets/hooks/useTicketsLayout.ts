@@ -37,9 +37,13 @@ const PINNED_END = ['actions'];
 
 /**
  * Queues where the next deadline is the question open the list sorts by it,
- * most overdue first. All and Unanswered keep the server's default (newest).
+ * most overdue first. All and Needs reply keep the server's default (newest).
  */
-const DEADLINE_FIRST_TABS = new Set<string>(['unclosed', 'overdue']);
+const DEADLINE_FIRST_TABS = new Set<string>([
+  'unclosed',
+  'overdue',
+  'assigned-to-you',
+]);
 
 export const useTicketsLayout = (tab: TicketTabKey | string) => {
   const pref = useUserPreference<TableLayoutPreference>('tickets.list.layout');

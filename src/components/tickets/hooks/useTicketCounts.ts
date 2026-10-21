@@ -177,9 +177,17 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
 /** The tab badges, in the shape the grid already expects. */
 export const tabCountsFrom = (
   data: TicketCountsResponse | undefined,
+  currentUserId?: string,
 ): Record<TicketTabKey, number> | undefined => {
   if (!data) return undefined;
   return {
+    // Your OPEN tickets: your row in the assignee rail, the same number the
+    // Assignee filter shows beside your name. tabs.assignedToMe counted
+    // closed ones too (181 against 118 open).
+    'assigned-to-you': currentUserId
+      ? (data.assignees.find(a => a.assigneeId === currentUserId)?.openCount ??
+        0)
+      : 0,
     unanswered: data.tabs.unanswered,
     unclosed: data.tabs.unclosed,
     overdue: data.tabs.overdue,

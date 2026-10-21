@@ -194,26 +194,30 @@ export const TicketGrid: FC = () => {
     // tab and the ?assignee= shortcut (an old person-tab link brings its own).
     // ?tenant= and ?organisation= come from links elsewhere (a company's
     // late count on Company Deadlines).
-    filtersForTab(selectedTab, {
-      ...assigneeForShortcut(
-        LEGACY_TABS[searchParams.get('tab') ?? '']?.assignee ??
-          searchParams.get('assignee'),
-        user?.profile?.sub,
-      ),
-      ...(searchParams.get('tenant')
-        ? { tenantId: [searchParams.get('tenant') as string] }
-        : {}),
-      ...(searchParams.get('organisation')
-        ? { organisationId: [searchParams.get('organisation') as string] }
-        : {}),
-    }),
+    filtersForTab(
+      selectedTab,
+      {
+        ...assigneeForShortcut(
+          LEGACY_TABS[searchParams.get('tab') ?? '']?.assignee ??
+            searchParams.get('assignee'),
+          user?.profile?.sub,
+        ),
+        ...(searchParams.get('tenant')
+          ? { tenantId: [searchParams.get('tenant') as string] }
+          : {}),
+        ...(searchParams.get('organisation')
+          ? { organisationId: [searchParams.get('organisation') as string] }
+          : {}),
+      },
+      user?.profile?.sub,
+    ),
     { sort, enabled: ticketsLayout.isReady },
   );
 
   /*
    * The URL follows the Assignee filter: ?assignee=me or ?assignee=unassigned
    * when it is exactly one of those, so the view can be linked and Back
-   * restores it. An old ?tab=assigned-to-you or ?tab=unassigned link is
+   * restores it. An old ?tab=unassigned link is
    * rewritten to the tab it now means (the filters were seeded from it above).
    */
   const assigneeShortcut = shortcutForFilters(filters, currentUserId);
@@ -485,7 +489,7 @@ export const TicketGrid: FC = () => {
    * refetch on every tab change.
    */
   // One response for the tab badges and the Assignee filter's per-person counts.
-  const { counts, assigneeCounts } = useTicketTabCounts(filters);
+  const { counts, assigneeCounts } = useTicketTabCounts(filters, currentUserId);
 
   /*
    * Tab label with its count beside it.
@@ -668,23 +672,30 @@ export const TicketGrid: FC = () => {
 
   /*
    * "Clear Filters" clears what you chose, not which tab you are on: the tab's
-   * own definition is put back, so Unanswered keeps its New filter.
+   * own definition is put back, so Needs reply keeps its New filter.
    */
   const handleFiltersChange = useCallback(
     (next: TicketFiltersType) => {
       const isClear = Object.keys(next).length === 0;
       if (isClear) {
-        setFilters(filtersForTab(selectedTab, {}));
+        // On "Assigned to you" the assignee is one of the values cleared, so
+        // that tab no longer describes the list: All does.
+        if (selectedTab === 'assigned-to-you') {
+          setSelectedTab('all');
+          setFilters({});
+          return;
+        }
+        setFilters(filtersForTab(selectedTab, {}, currentUserId));
         return;
       }
       // A status change may stop matching the tab (clearing New from Status
-      // on Unanswered, say), so the tab is re-chosen from the filters rather
+      // on Needs reply, say), so the tab is re-chosen from the filters rather
       // than left lit over rows it no longer describes. See tabForFilters.
-      const tab = tabForFilters(next, selectedTab);
+      const tab = tabForFilters(next, selectedTab, currentUserId);
       if (tab !== selectedTab) setSelectedTab(tab);
       setFilters(next);
     },
-    [setFilters, selectedTab, setSelectedTab],
+    [setFilters, selectedTab, setSelectedTab, currentUserId],
   );
 
   const handleCategorySelect = useCallback(
@@ -702,10 +713,11 @@ export const TicketGrid: FC = () => {
       const tabKey = String(key);
       setSelectedTab(tabKey);
       // filtersForTab replaces only the state fields a tab owns and keeps the
-      // rest, the assignee included, so Mine then Overdue is your overdue.
-      setFilters(prev => filtersForTab(tabKey, prev));
+      // rest, the assignee included: "Assigned to you" then Overdue is your
+      // overdue tickets, with you still shown (and removable) in Assignee.
+      setFilters(prev => filtersForTab(tabKey, prev, currentUserId));
     },
-    [setFilters, setSelectedTab],
+    [setFilters, setSelectedTab, currentUserId],
   );
 
   return (
@@ -761,7 +773,6 @@ export const TicketGrid: FC = () => {
             <TicketFilters
               filters={filters}
               assigneeCounts={assigneeCounts}
-              currentUserId={currentUserId}
               isStaff={canAssign}
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}

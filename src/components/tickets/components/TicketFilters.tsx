@@ -27,7 +27,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { isMine } from '../hooks/ticketTabs';
 import { useScopedAssignees } from '../hooks/useScopedAssignees';
 import type { AssigneeCounts } from '../hooks/useTicketTabCounts';
 
@@ -472,11 +471,9 @@ interface TicketFiltersProps {
   onCategoryChange: (categoryIds: string[]) => void;
   /** Tickets per person, from the tab counts the grid already loads. */
   assigneeCounts?: AssigneeCounts;
-  /** The signed-in user, for the "Mine" shortcut. */
-  currentUserId?: string;
   /**
    * Whether this person works tickets. A customer sees only their own
-   * requests, so Mine, Assignee and Tags mean nothing to them.
+   * requests, so Assignee and Tags mean nothing to them.
    */
   isStaff?: boolean;
 }
@@ -488,7 +485,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   searchTerm,
   onCategoryChange,
   assigneeCounts,
-  currentUserId,
   isStaff = true,
 }) => {
   // Custom (tenant-defined) ticket statuses, merged into the Status dropdown.
@@ -762,18 +758,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
     onSearch('');
   }, [onFiltersChange, onSearch]);
 
-  // "Mine": the Assignee filter set to you alone, or cleared again.
-  const mine = isMine(filters, currentUserId);
-  const toggleMine = useCallback(
-    () =>
-      onFiltersChange({
-        ...filters,
-        assigneeId: mine || !currentUserId ? undefined : [currentUserId],
-        includeUnassigned: undefined,
-      }),
-    [filters, onFiltersChange, mine, currentUserId],
-  );
-
   /*
    * The less used filters sit behind "More filters", so the bar is one row.
    * How many of them are set shows on the button, and they open by themselves
@@ -819,24 +803,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             }
           />
         </div>
-
-        {isStaff && currentUserId && (
-          <BaseButton
-            aria-pressed={mine}
-            variant="bordered"
-            color={mine ? 'info' : 'light'}
-            onPress={toggleMine}
-            icon={<Icon name="user" className="h-4 w-4" />}
-          >
-            Mine
-            {/* Your OPEN tickets, the same count as your row in Assignee. */}
-            {assigneeCounts && (
-              <span className={COUNT_BADGE_CLASS}>
-                {assigneeCounts.byId.get(currentUserId) ?? 0}
-              </span>
-            )}
-          </BaseButton>
-        )}
 
         {isStaff && (
           <AssigneeFilter
