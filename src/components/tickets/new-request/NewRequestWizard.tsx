@@ -3,6 +3,7 @@ import { issueScopeToken } from '@/api/local/scoped';
 import { ScopeSelect } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { useHelpdeskLicensedTenants } from '@/hooks/useHelpdeskLicensedTenants';
 import { useMailbox } from '@/hooks/useMailbox';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { useAuth, usePermissions } from '@/security';
@@ -151,7 +152,19 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
    * visible to the organisation it belongs to.
    */
   const appContext = useAtomValue(selectedContextAtom);
-  const { tenantOptions, organisationOptions } = useScopeNames();
+  const { tenantOptions: allTenantOptions, organisationOptions } =
+    useScopeNames();
+  // Only companies where Helpdesk is licensed: picking one that is not, and
+  // only then being told, was the commonest dead end (5 of 7 tried).
+  const allTenantIds = useMemo(
+    () => allTenantOptions.map(t => t.id),
+    [allTenantOptions],
+  );
+  const { isLicensed } = useHelpdeskLicensedTenants(allTenantIds);
+  const tenantOptions = useMemo(
+    () => allTenantOptions.filter(t => isLicensed(t.id)),
+    [allTenantOptions, isLicensed],
+  );
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [organisationId, setOrganisationId] = useState<string | null>(null);
   const orgsForTenant = useMemo(

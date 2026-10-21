@@ -165,6 +165,17 @@ export const getHelpdeskScopeToken = (
   return pending;
 };
 
+/**
+ * Whether the token issuer has already refused Helpdesk for this company in
+ * this session (a remembered licence refusal), without asking again.
+ */
+export const isKnownUnlicensed = (tenantId: string): boolean => {
+  const cached = tokens.get(tenantId);
+  return (
+    !!cached?.error && Date.now() - (cached.failedAt ?? 0) < REFUSAL_TTL_MS
+  );
+};
+
 const scopeInstances = new Map<string, AxiosInstance>();
 
 type RetriableConfig = AxiosRequestConfig & { _scopeRetried?: boolean };
