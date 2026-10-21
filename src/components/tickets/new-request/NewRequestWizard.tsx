@@ -237,7 +237,17 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         : '';
   const newContactEmailValid =
     contact?.kind !== 'new' ||
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newContactEmail.trim());
+    (contact.displayName.trim().length > 0 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newContactEmail.trim()));
+
+  /*
+   * Staff start with themselves as the contact, so the step never blocks on a
+   * company with no contacts on file (most have none yet). They can pick a
+   * client's contact, or add one inline with a name and an email.
+   */
+  useEffect(() => {
+    if (isStaff && contact === null) setContact({ kind: 'self' });
+  }, [isStaff, contact]);
 
   const pickContact = (next: RequestContact | null) => {
     setContact(next);
@@ -652,21 +662,54 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 </div>
                 {isStaff ? (
                   <>
-                    {/* Staff pick the client's contact; replies go to them. */}
+                    {/* Staff pick the client's contact, or add a new one
+                      here; replies go to them. */}
                     <div>
-                      <ContactPicker
-                        value={contact}
-                        onChange={pickContact}
-                        selfName={accountName || accountEmail || 'you'}
-                        isRequired
-                        isInvalid={showErrors && !contact}
-                        errorMessage="Choose who this request is for"
-                        scopeKey={`${tenantId ?? ''}|${organisationId ?? ''}`}
-                        scopeToken={inAppContext ? undefined : scopeToken.data}
-                        isReady={
-                          scopeComplete && (inAppContext || !!scopeToken.data)
-                        }
-                      />
+                      {contact?.kind === 'new' ? (
+                        <BaseInput
+                          label="New contact name"
+                          isRequired
+                          placeholder="Who rang or emailed"
+                          value={contact.displayName}
+                          onValueChange={v =>
+                            setContact({ kind: 'new', displayName: v })
+                          }
+                          isInvalid={showErrors && !contact.displayName.trim()}
+                          errorMessage="A name is required for a new contact"
+                        />
+                      ) : (
+                        <ContactPicker
+                          value={contact}
+                          onChange={pickContact}
+                          selfName={accountName || accountEmail || 'you'}
+                          isRequired
+                          isInvalid={showErrors && !contact}
+                          errorMessage="Choose who this request is for"
+                          scopeKey={`${tenantId ?? ''}|${organisationId ?? ''}`}
+                          scopeToken={
+                            inAppContext ? undefined : scopeToken.data
+                          }
+                          isReady={
+                            scopeComplete && (inAppContext || !!scopeToken.data)
+                          }
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="text-blue mt-1 text-xs hover:underline"
+                        onClick={() => {
+                          setNewContactEmail('');
+                          setContact(
+                            contact?.kind === 'new'
+                              ? { kind: 'self' }
+                              : { kind: 'new', displayName: '' },
+                          );
+                        }}
+                      >
+                        {contact?.kind === 'new'
+                          ? 'Choose an existing contact instead'
+                          : 'Add a new contact'}
+                      </button>
                     </div>
                     {contact?.kind === 'new' ? (
                       <BaseInput
