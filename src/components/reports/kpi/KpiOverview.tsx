@@ -15,12 +15,12 @@ import { DeadlineWeekChart } from './DeadlineWeekChart';
 import { KpiCards } from './KpiCards';
 import { LateTicketsTable } from './LateTicketsTable';
 import { OpenByAgeCard } from './OpenByAgeCard';
+import { PeriodPicker } from './PeriodPicker';
 import { PolicyBanner } from './PolicyBanner';
 import {
   defaultMonth,
   monthLabel,
   monthName,
-  monthOptions,
   previousMonthKey,
 } from './kpiFormat';
 import { useKpiReport } from './useKpiReport';
@@ -123,18 +123,10 @@ export const KpiOverview: FC = () => {
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="helpdesk-filter-row kpi-print-hide flex flex-wrap items-end gap-4">
-          <BaseSelect
-            label="Period"
-            className="w-48"
-            selectedKey={month}
-            onSelectionChange={key => key && setParam({ month: String(key) })}
-          >
-            {monthOptions().map(o => (
-              <BaseSelectItem key={o.key} id={o.key} textValue={o.label}>
-                {o.label}
-              </BaseSelectItem>
-            ))}
-          </BaseSelect>
+          <PeriodPicker
+            value={month}
+            onChange={next => setParam({ month: next })}
+          />
           {principalId && (
             <BaseAutocomplete
               label="Tenant"

@@ -435,7 +435,8 @@ const MultiFilterImpl: FC<{
   );
 };
 
-const MultiFilter = memo(MultiFilterImpl);
+/** Also Reports > Team's Tenant and Organisation filters. */
+export const MultiFilter = memo(MultiFilterImpl);
 
 /** A stable empty selection, so a memoised picker is not re-rendered by `[]`. */
 const EMPTY: string[] = [];
