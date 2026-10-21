@@ -20,7 +20,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { usePermissions } from '@/security';
-import { PermissionGuard, useTimezone } from '@/security';
+import { PermissionGuard, useAuth, useTimezone } from '@/security';
 import {
   buildStatusOptions,
   encodeCustomStatusKey,
@@ -133,6 +133,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     HelpdeskPermissions.KnowledgeBase.Manage,
   );
   const timezone = useTimezone();
+  const currentUserId = useAuth().user?.profile?.sub;
   const statusConfig = getStatusConfig(ticket.status as TicketStatus);
 
   /*
@@ -429,10 +430,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
-          fallback={<p className="text-sm">{assigneeDisplayName}</p>}
+          fallback={
+            <p className="text-sm">{assigneeDisplayName ?? 'Unassigned'}</p>
+          }
         >
           <BaseAutocomplete
-            placeholder="Search assignee..."
+            placeholder="Unassigned"
             isClearable
             selectedKey={ticket.assigneeId ?? null}
             onSelectionChange={key => {
@@ -502,6 +505,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               </BaseAutocompleteItem>
             ))}
           </BaseAutocomplete>
+          {/* Taking a ticket yourself is the most common assignment, so it is
+            one click, as on the list's assignee cell. */}
+          {currentUserId && ticket.assigneeId !== currentUserId && (
+            <button
+              type="button"
+              disabled={isUpdating}
+              onClick={() => onUpdate?.({ assigneeId: currentUserId })}
+              className="mt-1.5 text-xs text-blue hover:underline disabled:opacity-50"
+            >
+              Assign to me
+            </button>
+          )}
         </PermissionGuard>
       </div>
 
