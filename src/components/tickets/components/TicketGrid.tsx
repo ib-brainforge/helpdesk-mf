@@ -678,13 +678,7 @@ export const TicketGrid: FC = () => {
     (next: TicketFiltersType) => {
       const isClear = Object.keys(next).length === 0;
       if (isClear) {
-        // On "Assigned to you" the assignee is one of the values cleared, so
-        // that tab no longer describes the list: All does.
-        if (selectedTab === 'assigned-to-you') {
-          setSelectedTab('all');
-          setFilters({});
-          return;
-        }
+        // Back to exactly what the tab sets; the tab stays.
         setFilters(filtersForTab(selectedTab, {}, currentUserId));
         return;
       }
@@ -706,6 +700,12 @@ export const TicketGrid: FC = () => {
       }));
     },
     [setFilters],
+  );
+
+  // What the open tab sets by itself, so Clear filters knows what is yours.
+  const clearBaseline = useMemo(
+    () => filtersForTab(selectedTab, {}, currentUserId),
+    [selectedTab, currentUserId],
   );
 
   const handleTabChange = useCallback(
@@ -774,6 +774,7 @@ export const TicketGrid: FC = () => {
               filters={filters}
               assigneeCounts={assigneeCounts}
               isStaff={canAssign}
+              baseline={clearBaseline}
               onFiltersChange={handleFiltersChange}
               onSearch={handleSearch}
               searchTerm={searchTerm}

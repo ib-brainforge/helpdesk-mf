@@ -69,7 +69,9 @@ export const TicketNotEnabled: FC<{ tenantId?: string | null }> = ({
  * useHelpdeskScope. A ticket in the viewer's own company needs nothing extra
  * and runs exactly as before.
  *
- * Where Helpdesk is not licensed the token is refused, and the page says so
+ * Where Helpdesk is not licensed the token is refused. Principal staff then
+ * get the ticket through the principal routes, limited to what those routes
+ * cover (see TicketDetail's notice); anyone else gets a page saying so
  * instead of failing request by request.
  */
 export const TicketScopeProvider: FC<{
@@ -111,6 +113,14 @@ export const TicketScopeProvider: FC<{
     [tenantId, viewerTenantId],
   );
 
+  // The same company through the principal routes, for when Helpdesk is not
+  // licensed there. Memoised so every hook sees one stable scope.
+  const principalScope = useMemo<HelpdeskScope | null>(
+    () =>
+      scope && principalId ? { tenantId: scope.tenantId, principalId } : null,
+    [scope, principalId],
+  );
+
   const token = useQuery({
     queryKey: ['helpdesk-scope-token', scope?.tenantId],
     enabled: !!scope,
@@ -130,6 +140,16 @@ export const TicketScopeProvider: FC<{
   if (scope && token.isLoading) return <AppLoadingSplash />;
   if (scope && token.isError) {
     if (isNotLicensedError(token.error)) {
+      // Netcorp staff still work and close these tickets, through the
+      // principal routes (one switch in the scope: see HelpdeskScope).
+      // Everyone else gets the not-enabled page.
+      if (crossCompany && principalScope) {
+        return (
+          <HelpdeskScopeContext.Provider value={principalScope}>
+            {children}
+          </HelpdeskScopeContext.Provider>
+        );
+      }
       return <TicketNotEnabled tenantId={scope.tenantId} />;
     }
     return (
