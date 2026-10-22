@@ -9,7 +9,7 @@ import { UserCell, formatDuration } from '@/components/shared';
 import { MultiFilter } from '@/components/tickets/components/TicketFilters';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { useUserEnrichment } from '@/hooks/useUserEnrichment';
+import { type UserInfo, useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { BaseTable } from '@brainforgeau/components';
 import { Link, useSearchParams } from '@modern-js/runtime/router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -31,6 +31,9 @@ const monthBounds = (month: string) => {
 };
 
 const EMPTY: string[] = [];
+
+/** A row with its technician resolved: undefined while looking, null if not found. */
+type TeamRow = TeamReportRowDto & { user: UserInfo | null | undefined };
 
 /** "1h 42m", or a dash when there is nothing to measure. */
 const duration = (minutes: number | null | undefined) =>
@@ -114,16 +117,31 @@ export const TeamReport: FC = () => {
     placeholderData: keepPreviousData,
   });
 
-  const { userMap } = useUserEnrichment(
-    (data?.items ?? []).map(r => r.assigneeId).filter(Boolean) as string[],
+  /*
+   * Names and avatars: helpdesk stores neither, so the report sends ids and
+   * they are resolved by useUserEnrichment, the same batched, cached lookup
+   * the tickets list and the assignee picker use (no extra request when
+   * those already know the person). The person is put on the row itself:
+   * BaseTable's body is memoised on its rows, so names carried only by the
+   * column definitions never reached cells drawn before they arrived, and
+   * every technician stayed "Unknown user".
+   */
+  const assigneeIds = useMemo(
+    () =>
+      (data?.items ?? []).flatMap(r => (r.assigneeId ? [r.assigneeId] : [])),
+    [data],
   );
+  const { userMap, isLoading: loadingNames } = useUserEnrichment(assigneeIds);
 
   const rows = useMemo(
-    () =>
-      [...(data?.items ?? [])].sort(
-        (a, b) => b.late - a.late || b.open - a.open,
-      ),
-    [data],
+    (): TeamRow[] =>
+      [...(data?.items ?? [])]
+        .sort((a, b) => b.late - a.late || b.open - a.open)
+        .map(r => ({
+          ...r,
+          user: r.assigneeId ? userMap[r.assigneeId] : undefined,
+        })),
+    [data, userMap],
   );
 
   // The tickets list, overdue, for one person, in the same tenants and
@@ -142,7 +160,7 @@ export const TeamReport: FC = () => {
     [tenantIds, organisationIds],
   );
 
-  const columns: ColumnDef<TeamReportRowDto, any>[] = useMemo(
+  const columns: ColumnDef<TeamRow, unknown>[] = useMemo(
     () => [
       {
         id: 'person',
@@ -151,16 +169,17 @@ export const TeamReport: FC = () => {
           const r = row.original;
           if (!r.assigneeId)
             return <span className="text-default-600">Unassigned</span>;
-          const user = userMap[r.assigneeId];
-          const fallback =
-            r.name || r.avatarUrl
-              ? {
-                  id: r.assigneeId,
-                  name: r.name ?? '',
-                  avatarUrl: r.avatarUrl ?? undefined,
-                }
-              : null;
-          return <UserCell userInfo={user ?? fallback} fallbackName={r.name} />;
+          return (
+            <UserCell
+              userInfo={
+                r.user ??
+                (r.avatarUrl && r.name
+                  ? { id: r.assigneeId, name: r.name, avatarUrl: r.avatarUrl }
+                  : null)
+              }
+              fallbackName={r.name}
+            />
+          );
         },
       },
       {
@@ -199,8 +218,8 @@ export const TeamReport: FC = () => {
         cell: ({ row }) => duration(row.original.medianFixMinutes),
       },
     ],
-    // The Technician cell reads userMap, and Late links carry the filters.
-    [userMap, lateHref],
+    // Late links carry the filters; names come on the rows.
+    [lateHref],
   );
 
   const table = useReactTable({
@@ -234,7 +253,9 @@ export const TeamReport: FC = () => {
       <div className="flex min-h-0 flex-1 flex-col">
         <BaseTable
           table={table}
-          isLoading={isLoading}
+          // Waits for the names as the tickets list does, so no row is drawn
+          // as "Unknown user" while the lookup is still on its way.
+          isLoading={isLoading || loadingNames}
           loading={{ title: 'Loading the team...' }}
           fullHeight
         />
