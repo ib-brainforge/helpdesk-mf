@@ -1,12 +1,12 @@
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { TicketFilters } from '@/types/ticket';
-import { toApiTicketPriority } from '@/utils/typeMappers';
 import {
   type HelpdeskApplicationTicketsDTOsTicketCountsDto,
   PrincipalTicketsApi,
   TicketsApi,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { TicketFilters } from '@/types/ticket';
+import { toApiTicketPriority } from '@/utils/typeMappers';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';

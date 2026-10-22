@@ -1,13 +1,13 @@
+import type {
+  ServicesCoreAbstractionsRecordMeta,
+  ServicesCoreAbstractionsScopePatch,
+  ServicesCoreScopeAspNetCoreControllersBulkScopePatchResponse,
+} from '@/api/helpdesk-client';
 import type { BulkScopeSaveResult } from '@brainforgeau/components/bulk-scope-editor';
 import type {
   ScopePatchWire,
   WireRecordMeta,
 } from '@brainforgeau/components/scope-list';
-import type {
-  ServicesCoreAbstractionsRecordMeta,
-  ServicesCoreAbstractionsScopePatch,
-  ServicesCoreScopeAspNetCoreControllersBulkScopePatchResponse,
-} from '@brainforgeau/helpdesk-client';
 
 export {
   toScopeMeta,
@@ -51,7 +51,7 @@ export function toWireMeta(
  * shape on the byte level (a string), so this is a cast, not a runtime
  * transform -- nothing in this repo's scope UI currently offers `'Own'` as a
  * selectable value, so the gap is unreachable today. Re-generate
- * `@brainforgeau/helpdesk-client` (which will add `'Own'` to
+ * the vendored helpdesk client (which will add `'Own'` to
  * `ServicesCoreAbstractionsVisibility`) to close it and drop this cast.
  */
 export function toHelpdeskScopePatch(

@@ -1,7 +1,7 @@
+import { KnowledgeBaseApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { BaseCard } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import { Link } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';
 import type { FC } from 'react';

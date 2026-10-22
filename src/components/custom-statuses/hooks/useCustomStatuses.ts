@@ -1,10 +1,10 @@
+import { CustomStatusesApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateCustomStatusRequest,
   CustomTicketStatusDto,
   UpdateCustomStatusRequest,
 } from '@/types/custom-status';
-import { CustomStatusesApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const QUERY_KEY = 'helpdesk-custom-statuses';

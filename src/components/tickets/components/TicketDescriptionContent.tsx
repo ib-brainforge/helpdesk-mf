@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import type { FC } from 'react';
+import { decodePlainText } from '../portal';
 
 /**
  * Does this string carry markup, or is it plain text that merely contains
@@ -37,17 +38,24 @@ export const looksLikeHtml = (value: string): boolean =>
 export const TicketDescriptionContent: FC<{
   value: string;
   className?: string;
-}> = ({ value, className = '' }) => (
-  <div
-    className={`prose max-w-none [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 ${className}`}
-  >
-    {looksLikeHtml(value) ? (
-      <div
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: the value is passed through DOMPurify.sanitize on this same line. Ticket descriptions are untrusted (any requester, or an inbound email, controls the string) and the backend sanitiser is currently wired to knowledge-base articles only, so this is the gate.
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value) }}
-      />
-    ) : (
-      <p className="whitespace-pre-wrap">{value}</p>
-    )}
-  </div>
-);
+  /** Customer-authored text: shown as text only, never interpreted as HTML. */
+  isPlainText?: boolean;
+}> = ({ value, className = '', isPlainText = false }) =>
+  isPlainText ? (
+    <p className={`whitespace-pre-wrap text-sm ${className}`}>
+      {decodePlainText(value)}
+    </p>
+  ) : (
+    <div
+      className={`prose max-w-none [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 ${className}`}
+    >
+      {looksLikeHtml(value) ? (
+        <div
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: the value is passed through DOMPurify.sanitize on this same line. Ticket descriptions are untrusted (any requester, or an inbound email, controls the string) and the backend sanitiser is currently wired to knowledge-base articles only, so this is the gate.
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value) }}
+        />
+      ) : (
+        <p className="whitespace-pre-wrap">{value}</p>
+      )}
+    </div>
+  );

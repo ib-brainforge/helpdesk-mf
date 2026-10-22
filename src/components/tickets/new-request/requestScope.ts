@@ -1,8 +1,8 @@
+import { TicketsApi } from '@/api/helpdesk-client';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiConfiguration } from '@/state/helpdeskApiClient';
 import { createScopedApiClient } from '@/state/scopedApiClient';
 import { toApiTicketPriority } from '@/utils/typeMappers';
-import { TicketsApi } from '@brainforgeau/helpdesk-client';
 import { ensureCrossAppToken } from '@brainforgeau/security';
 import { createContext, useContext } from 'react';
 

@@ -10,6 +10,10 @@
  * Tab state is URL-synced via `?tab=` using useTabSearchParam + useDetailTabState.
  */
 
+import {
+  HelpdeskDomainTicketsEnumsTicketPriority,
+  HelpdeskDomainTicketsEnumsTicketStatus,
+} from '@/api/helpdesk-client';
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { CommentThread, ReplyEditor, useComments } from '@/components/comments';
 import { StatusBadge } from '@/components/shared';
@@ -34,10 +38,6 @@ import {
   useEntityForm,
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import {
-  HelpdeskDomainTicketsEnumsTicketPriority,
-  HelpdeskDomainTicketsEnumsTicketStatus,
-} from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';

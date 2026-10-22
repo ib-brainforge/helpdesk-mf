@@ -1,3 +1,11 @@
+import {
+  type HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
+  type HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
+  type HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto,
+  type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
+  type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
+  KnowledgeBaseApi,
+} from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateKnowledgeBaseArticleDto,
@@ -8,14 +16,6 @@ import type {
   UpdateKnowledgeBaseArticleDto,
 } from '@/types';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
-import {
-  type HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto,
-  type HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto,
-  type HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto,
-  type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
-  type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
-  KnowledgeBaseApi,
-} from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -71,13 +71,8 @@ function flattenCategoryTree(
       parentId,
       articleCount: node.articleCount ?? 0,
       order: node.sortOrder ?? 0,
-      // `meta` intentionally omitted here, not dropped: `node` (the generated
-      // HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto backing
-      // v1KbCategoriesGet) has no `meta` property to read yet -- see
-      // KnowledgeBaseCategoryDto's own doc comment (@/types/knowledge-base)
-      // for the pending helpdesk-backend PR. Once that ships and this client
-      // regenerates, add `meta: node.meta` here so the scope strip becomes
-      // wireable on this screen the same way it already is for Sections.
+      meta: node.meta,
+      portalSection: node.portalSection,
     };
     const children = node.children
       ? flattenCategoryTree(node.children, flat.id)
@@ -570,6 +565,7 @@ export const useDuplicateKbCategory = () => {
         // Unlike flattenCategoryTree above, KbCategoryDto (this endpoint's
         // response) has always carried `meta` -- carry it through.
         meta: cat.meta,
+        portalSection: cat.portalSection,
       };
     },
     onSuccess: () => {

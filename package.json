@@ -12,6 +12,7 @@
     "serve": "modern serve",
     "new": "modern new",
     "lint": "biome check",
+    "test": "vitest run",
     "prepare": "simple-git-hooks",
     "upgrade": "modern upgrade",
     "dev:with-packages": "echo \"Start package servers first, then run: npm run dev\"",
@@ -39,7 +40,6 @@
   "dependencies": {
     "@brainforgeau/asset-backend-client": "0.5.1322-develop.bcacb39",
     "@brainforgeau/components": "0.5.736",
-    "@brainforgeau/helpdesk-client": "0.5.373-develop.b2dcb21",
     "@brainforgeau/identity-management-client": "0.5.1239-develop.d6b2cdf",
     "@brainforgeau/observability": "0.5.116",
     "@brainforgeau/rules-ui": "0.5.182",
@@ -98,14 +98,18 @@
     "@rspack/core": "1.7.11",
     "@tailwindcss/postcss": "^4.3.0",
     "@tanstack/eslint-plugin-query": "^5.90.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/dompurify": "^3.2.0",
     "@types/jest": "~29.2.4",
     "@types/node": "~18.11.9",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^6.0.2",
     "allure-commandline": "^2.34.1",
     "allure-playwright": "^3.4.3",
     "compression-webpack-plugin": "^11.1.0",
+    "jsdom": "^29.1.1",
     "lint-staged": "~15.4.0",
     "oidc-client-ts": "^3.3.0",
     "postcss": "^8.5.6",
@@ -114,7 +118,8 @@
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.11.1",
     "tailwindcss": "4.3.0",
-    "typescript": "~5.7.3"
+    "typescript": "~5.7.3",
+    "vitest": "^4.1.7"
   },
   "pnpm": {
     "overrides": {

@@ -1,4 +1,4 @@
-import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
+import type { ServicesCoreAbstractionsRecordMeta } from '@/api/helpdesk-client';
 import type { AccessLevel } from './category';
 
 export interface CustomFieldDefinitionDto {

@@ -1,6 +1,6 @@
+import { AdminUsersApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { TenantUserDto, UserRoleDto } from '@/types/admin-user';
-import { AdminUsersApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const TENANT_USERS_KEY = 'helpdesk-admin-tenant-users';

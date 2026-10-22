@@ -1,3 +1,4 @@
+import { ScopeApi } from '@/api/helpdesk-client';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -16,7 +17,6 @@ import { ListScopeStrip } from '@brainforgeau/components/list-scope-strip';
 import { EmptyState } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
   PlatformPermissions,
   useAccessScope,

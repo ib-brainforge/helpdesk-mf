@@ -10,6 +10,7 @@ import {
   useCustomFieldsTable,
 } from '@components/custom-fields';
 
+import { CustomFieldsApi, ScopeApi } from '@/api/helpdesk-client';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -25,7 +26,6 @@ import {
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
   PlatformPermissions,
   useAccessScope,

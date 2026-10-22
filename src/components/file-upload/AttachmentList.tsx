@@ -1,9 +1,9 @@
+import { AttachmentsApi } from '@/api/helpdesk-client';
 import { useAttachmentBlobUrl } from '@/components/attachments/hooks/useAttachmentBlobUrl';
 import { IconTip } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AttachmentDto } from '@/types';
 import { Icon } from '@brainforgeau/components/base';
-import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
 import type { FC } from 'react';
 
 interface AttachmentListProps {

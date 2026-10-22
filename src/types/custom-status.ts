@@ -1,7 +1,7 @@
 // Local DTO projections used by hooks; the CustomStatusesApi is now published in helpdesk-client.
 // Keeping local copies to keep the hook layer decoupled from the generated long type names.
 
-import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
+import type { ServicesCoreAbstractionsRecordMeta } from '@/api/helpdesk-client';
 
 export enum TicketStatus {
   New = 1,

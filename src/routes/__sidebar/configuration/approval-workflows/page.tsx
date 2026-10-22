@@ -7,6 +7,10 @@ import { IconTip, ScopeLabel } from '@/components/shared';
  */
 
 import {
+  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
+  ScopeApi,
+} from '@/api/helpdesk-client';
+import {
   useApprovalWorkflows,
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
@@ -31,10 +35,6 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
-import {
-  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
-  ScopeApi,
-} from '@brainforgeau/helpdesk-client';
 import {
   PlatformPermissions,
   useAccessScope,

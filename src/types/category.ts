@@ -1,4 +1,4 @@
-import type { ServicesCoreAbstractionsRecordMeta } from '@brainforgeau/helpdesk-client';
+import type { ServicesCoreAbstractionsRecordMeta } from '@/api/helpdesk-client';
 
 export interface CategoryDto {
   id: string;
@@ -15,6 +15,8 @@ export interface CategoryDto {
   isActive: boolean;
   sortOrder: number;
   customFieldIds?: string[];
+  /** True for the tenant's single category that customer-portal enquiries are filed under. */
+  isPortalEnquiryCategory?: boolean;
 }
 
 export interface SectionDto {

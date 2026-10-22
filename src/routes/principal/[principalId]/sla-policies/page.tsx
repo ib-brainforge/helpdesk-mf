@@ -6,6 +6,7 @@ import { IconTip } from '@/components/shared';
  * Async breadcrumb param principalName uses PendingCrumb permanently.
  */
 
+import type { HelpdeskApplicationSlaDTOsSlaPolicyDto } from '@/api/helpdesk-client';
 import { AppAuthSplash } from '@/components/AppSplash';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -20,7 +21,6 @@ import {
   PendingCrumb,
   useConfirm,
 } from '@brainforgeau/components/page';
-import type { HelpdeskApplicationSlaDTOsSlaPolicyDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {

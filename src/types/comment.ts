@@ -4,11 +4,11 @@ export {
   type HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand,
   type HelpdeskApplicationCommentsCommandsAddInternalNoteAddInternalNoteCommand,
   HelpdeskDomainCommentsEnumsCommentType,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 
 // Local type aliases for convenience
-import type { HelpdeskApplicationCommentsDTOsCommentDto as GeneratedCommentDto } from '@brainforgeau/helpdesk-client';
-import { HelpdeskDomainCommentsEnumsCommentType } from '@brainforgeau/helpdesk-client';
+import type { HelpdeskApplicationCommentsDTOsCommentDto as GeneratedCommentDto } from '@/api/helpdesk-client';
+import { HelpdeskDomainCommentsEnumsCommentType } from '@/api/helpdesk-client';
 
 export type CommentDto = GeneratedCommentDto & {
   // Add any UI-specific fields

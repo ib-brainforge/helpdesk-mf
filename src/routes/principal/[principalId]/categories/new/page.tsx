@@ -4,6 +4,7 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@/api/helpdesk-client';
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -18,7 +19,6 @@ import {
   PendingCrumb,
   useEntityForm,
 } from '@brainforgeau/components/page';
-import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import {
   useNavigate,

@@ -1,4 +1,3 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   ApprovalWorkflowsApi,
   ApprovalsApi,
@@ -6,7 +5,8 @@ import {
   type HelpdeskApplicationApprovalsCommandsMakeApprovalDecisionMakeApprovalDecisionCommand,
   type HelpdeskApplicationApprovalsCommandsRequestApprovalRequestApprovalCommand,
   type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { toast } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 

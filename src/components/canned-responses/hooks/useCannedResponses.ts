@@ -1,10 +1,10 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CannedResponseDto } from '@/types/canned-response';
 import {
   CannedResponsesApi,
   type HelpdeskApplicationCannedResponsesCommandsCreateCannedResponseCreateCannedResponseCommand,
   type HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CannedResponseDto } from '@/types/canned-response';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useCannedResponses = (

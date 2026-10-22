@@ -11,6 +11,10 @@ import { IconTip } from '@/components/shared';
  * whether steps can be lifted into the schema as z.array(stepSchema).
  */
 
+import {
+  type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowStepDto as ApprovalWorkflowStepDto,
+  HelpdeskDomainApprovalsEnumsApprovalMode,
+} from '@/api/helpdesk-client';
 import { useCreateApprovalWorkflow } from '@/components/approvals';
 import { useUsersData } from '@/components/users/hooks/useUsersData';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
@@ -25,10 +29,6 @@ import {
   Icon,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
-import {
-  type HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowStepDto as ApprovalWorkflowStepDto,
-  HelpdeskDomainApprovalsEnumsApprovalMode,
-} from '@brainforgeau/helpdesk-client';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';

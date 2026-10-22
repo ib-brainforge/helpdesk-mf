@@ -1,3 +1,7 @@
+import type {
+  ServicesCoreAbstractionsRecordMeta,
+  ServicesCoreAbstractionsScopePatch,
+} from '@/api/helpdesk-client';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
@@ -10,10 +14,6 @@ import {
 import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import type { ScopeStripPatch, SelectOption } from '@brainforgeau/components';
 import type { RecordMeta } from '@brainforgeau/components/scope-badge';
-import type {
-  ServicesCoreAbstractionsRecordMeta,
-  ServicesCoreAbstractionsScopePatch,
-} from '@brainforgeau/helpdesk-client';
 import {
   PlatformPermissions,
   useAccessScope,

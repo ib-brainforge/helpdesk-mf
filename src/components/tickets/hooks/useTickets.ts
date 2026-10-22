@@ -1,3 +1,8 @@
+import {
+  IdeasApi,
+  PrincipalTicketsApi,
+  TicketsApi,
+} from '@/api/helpdesk-client';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -16,11 +21,6 @@ import {
   toWireLink,
 } from '@/types/ticket-links';
 import { toApiTicketPriority, toApiTicketStatus } from '@/utils/typeMappers';
-import {
-  IdeasApi,
-  PrincipalTicketsApi,
-  TicketsApi,
-} from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';

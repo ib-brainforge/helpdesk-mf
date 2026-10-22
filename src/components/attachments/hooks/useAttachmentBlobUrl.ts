@@ -1,5 +1,5 @@
+import { AttachmentsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
 import { useEffect, useState } from 'react';
 
 /**

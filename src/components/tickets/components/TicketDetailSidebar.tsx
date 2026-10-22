@@ -55,6 +55,7 @@ import {
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
+import { LinkedRecordsSection } from './LinkedRecordsSection';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -73,6 +74,8 @@ const getOriginConfig = (origin: string) => {
       return { label: 'Email', color: 'secondary' as const };
     case 'Api':
       return { label: 'API', color: 'success' as const };
+    case 'Portal':
+      return { label: 'Portal', color: 'primary' as const };
     default:
       return { label: origin || 'Unknown', color: 'default' as const };
   }
@@ -719,6 +722,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           tenantId={ticket.tenantId}
           organisationId={ticket.organisationId}
         />
+
+        <LinkedRecordsSection linkedEntities={ticket.linkedEntities} />
 
         {/* Parent ticket */}
         {ticket.parentTicketId && (

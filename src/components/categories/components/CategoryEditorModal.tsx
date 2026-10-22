@@ -1,3 +1,9 @@
+import { CategoriesApi } from '@/api/helpdesk-client';
+import type {
+  HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand,
+  HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand,
+  HelpdeskDomainCategoriesEnumsAccessLevel,
+} from '@/api/helpdesk-client';
 import { ModalHeader } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
@@ -12,12 +18,6 @@ import {
   BaseToggle,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
-import type {
-  HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand,
-  HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand,
-  HelpdeskDomainCategoriesEnumsAccessLevel,
-} from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

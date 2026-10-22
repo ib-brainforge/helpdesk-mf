@@ -1,4 +1,4 @@
-// These types match the regenerated @brainforgeau/helpdesk-client report DTOs.
+// These types match the regenerated the vendored helpdesk client report DTOs.
 // The breakdown DTOs share the shape { <key>, name, count, percentage } where
 // <key> is the type-specific identifier field (status / priority / category /
 // technician). Kept as local aliases so the report hook layer stays decoupled

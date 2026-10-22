@@ -1,6 +1,6 @@
+import { CommentsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CommentDto } from '@/types/comment';
-import { CommentsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useComments = (ticketId: string) => {

@@ -1,8 +1,8 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   CustomPrioritiesApi,
   type HelpdeskApplicationCustomPrioritiesDTOsCustomPriorityDto,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export type CustomPriorityDto =

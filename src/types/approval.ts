@@ -5,7 +5,7 @@
 // ApprovalWorkflowListDto, etc.) for a backend client that didn't yet exist.
 // The real generated client ships string-backed enums and DTOs that differ
 // from those placeholders — consumers now import directly from
-// '@brainforgeau/helpdesk-client' (see src/components/approvals/,
+// '@/api/helpdesk-client' (see src/components/approvals/,
 // src/hooks/usePrincipalApprovalWorkflows.ts, src/constants/approvalLabels.ts).
 export {
   HelpdeskDomainApprovalsEnumsApprovalMode,
@@ -21,4 +21,4 @@ export {
   type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand,
   type HelpdeskApplicationApprovalsCommandsRequestApprovalRequestApprovalCommand,
   type HelpdeskApplicationApprovalsCommandsMakeApprovalDecisionMakeApprovalDecisionCommand,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';

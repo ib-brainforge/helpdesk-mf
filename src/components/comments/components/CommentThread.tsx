@@ -1,4 +1,5 @@
 import { StatusBadge } from '@/components/shared';
+import { decodePlainText } from '@/components/tickets/portal';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { type CommentDto, CommentType } from '@/types/comment';
 import { fromApiCommentType } from '@/utils/typeMappers';
@@ -10,6 +11,11 @@ import DOMPurify from 'dompurify';
 interface CommentThreadProps {
   comments: CommentDto[];
   isLoading?: boolean;
+  /**
+   * Replies by this author are customer-authored plain text (portal tickets):
+   * shown as text only, never interpreted as HTML.
+   */
+  plainTextAuthorId?: string;
 }
 
 const getCommentTypeColor = (type: CommentType) => {
@@ -50,6 +56,7 @@ const getCommentTextClass = (type: CommentType): string => {
 export const CommentThread: React.FC<CommentThreadProps> = ({
   comments,
   isLoading,
+  plainTextAuthorId,
 }) => {
   const timezone = useTimezone();
 
@@ -114,12 +121,22 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 {formatDateTime(comment.createdAt, { timezone })}
               </span>
             </div>
-            <div
-              className={`text-sm ${getCommentTextClass(commentType)}`}
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(comment.body ?? ''),
-              }}
-            />
+            {plainTextAuthorId &&
+            comment.authorId === plainTextAuthorId &&
+            commentType === CommentType.Reply ? (
+              <p
+                className={`whitespace-pre-wrap text-sm ${getCommentTextClass(commentType)}`}
+              >
+                {decodePlainText(comment.body ?? '')}
+              </p>
+            ) : (
+              <div
+                className={`text-sm ${getCommentTextClass(commentType)}`}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(comment.body ?? ''),
+                }}
+              />
+            )}
           </div>
         );
       })}

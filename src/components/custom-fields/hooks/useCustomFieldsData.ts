@@ -1,6 +1,6 @@
+import { CustomFieldsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';

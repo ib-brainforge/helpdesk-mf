@@ -3,7 +3,7 @@
  * Import from here; do not re-define locally in pages.
  */
 
-import type { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
+import type { HelpdeskDomainApprovalsEnumsApprovalMode } from '@/api/helpdesk-client';
 
 export const APPROVAL_MODE_LABELS: Record<
   HelpdeskDomainApprovalsEnumsApprovalMode,

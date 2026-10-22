@@ -1,9 +1,9 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationCategoriesCommandsCreateCategoryCreatePrincipalCategoryCommand,
   type HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdatePrincipalCategoryCommand,
   PrincipalCategoriesApi,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const QUERY_KEY = 'principal-categories';

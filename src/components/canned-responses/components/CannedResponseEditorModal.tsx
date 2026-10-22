@@ -1,3 +1,4 @@
+import { ScopeApi } from '@/api/helpdesk-client';
 import { IconTip, ModalHeader } from '@/components/shared';
 import {
   BaseInput,
@@ -12,7 +13,6 @@ import {
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
-import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import Placeholder from '@tiptap/extension-placeholder';

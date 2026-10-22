@@ -5,6 +5,7 @@
  * Single "details" tab is form-bearing; formActions wired to that tab only.
  */
 
+import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@/api/helpdesk-client';
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -24,7 +25,6 @@ import {
   useDetailTabState,
   useEntityForm,
 } from '@brainforgeau/components/page';
-import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useOutletContext, useParams } from '@modern-js/runtime/router';
 import { z } from 'zod';

@@ -6,6 +6,7 @@
  * No form-bearing tabs — no formActions. "Edit Article" is a headerActions button.
  */
 
+import { ScopeApi } from '@/api/helpdesk-client';
 import { AppLoadingSplash } from '@/components/AppSplash';
 import { EntityMovedScreen } from '@/components/EntityMovedScreen';
 import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
@@ -32,7 +33,6 @@ import {
   useDetailTabState,
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { useTimezone } from '@brainforgeau/security';
 import { Separator } from '@heroui/react';
 import { Link, useNavigate, useParams } from '@modern-js/runtime/router';

@@ -1,8 +1,8 @@
+import { SlaApi } from '@/api/helpdesk-client';
+import type { HelpdeskApplicationSlaDTOsTicketSlaStatusDto } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { SlaIndicatorDto } from '@/types';
 import { SlaStatus } from '@/types';
-import { SlaApi } from '@brainforgeau/helpdesk-client';
-import type { HelpdeskApplicationSlaDTOsTicketSlaStatusDto } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /**

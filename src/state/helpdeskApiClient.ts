@@ -1,6 +1,6 @@
+import { Configuration } from '@/api/helpdesk-client';
 import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
-import { Configuration } from '@brainforgeau/helpdesk-client';
 
 /**
  * helpdesk-backend's own named key (`HELPDESK_API_BASE_URL` ->

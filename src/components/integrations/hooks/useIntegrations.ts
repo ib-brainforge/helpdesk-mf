@@ -1,10 +1,10 @@
+import { IntegrationsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   AddIntegrationRequest,
   IntegrationConfigDto,
   UpdateIntegrationRequest,
 } from '@/types/integration';
-import { IntegrationsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const INTEGRATIONS_KEY = 'helpdesk-integrations';

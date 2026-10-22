@@ -1,6 +1,6 @@
+import { PlatformMyCategoriesApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AccessLevel, type CategoryDto } from '@/types/category';
-import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 

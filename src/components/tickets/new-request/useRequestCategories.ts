@@ -1,5 +1,5 @@
+import { PlatformMyCategoriesApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 
 /**
