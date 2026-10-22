@@ -17,7 +17,6 @@ import {
 import { TagChip } from '@/components/tags';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { useTimezone } from '@/security';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   BaseButton,
@@ -34,6 +33,7 @@ import {
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
+import { useTimezone } from '@brainforgeau/security';
 import { Separator } from '@heroui/react';
 import { Link, useNavigate, useParams } from '@modern-js/runtime/router';
 import { useQueryClient } from '@tanstack/react-query';

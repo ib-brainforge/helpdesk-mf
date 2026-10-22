@@ -9,9 +9,9 @@
  */
 import { AppAuthSplash } from '@/components/AppSplash';
 import { PageBreadcrumbs } from '@/components/Breadcrumbs';
-import { withAuthenticationRequired } from '@/security';
 import { WorkflowListPage } from '@/workflow-editor';
 import { PageBody } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function WorkflowsListRoute() {

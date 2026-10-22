@@ -1,4 +1,4 @@
-import { AccessDenied } from '@/security';
+import { AccessDenied } from '@brainforgeau/security';
 import type { FC } from 'react';
 
 /** Every Tenant Deadlines page, for anyone but Netcorp's helpdesk admins. */

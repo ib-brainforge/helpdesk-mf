@@ -5,7 +5,7 @@
  */
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { ruleForPath } from '@/routes/route-permissions';
-import type { GuardedItem } from '@/security';
+import type { GuardedItem } from '@brainforgeau/security';
 
 export interface NavItem {
   label: string;

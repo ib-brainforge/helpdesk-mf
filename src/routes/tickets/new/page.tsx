@@ -6,7 +6,7 @@
  * the wizard already open.
  */
 import { AppAuthSplash } from '@/components/AppSplash';
-import { withAuthenticationRequired } from '@/security';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { Navigate } from '@modern-js/runtime/router';
 
 function NewTicketRedirect() {

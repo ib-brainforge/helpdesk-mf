@@ -3,12 +3,12 @@ import { CSATRatingDistributionChart } from '@/components/satisfaction/CSATRatin
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { SummaryCard } from '@/components/shared';
 import { useCSATReport } from '@/hooks/useSatisfaction';
-import { withAuthenticationRequired } from '@/security';
 import { CSATGroupBy } from '@/types';
 import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
 
 // REVIEW: Following DashboardPage pattern — summary cards + chart grid

@@ -1,5 +1,5 @@
-import { getAccessToken, getContextToken } from '@/security';
 import { hubConnectedAtom, requireHelpdeskHubUrl } from '@/state/config';
+import { getAccessToken, getContextToken } from '@brainforgeau/security';
 import {
   type HubConnection,
   HubConnectionBuilder,

@@ -1,6 +1,5 @@
 import { useDeletedTicketsReport } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
-import { useTimezone } from '@/security';
 import type { DeletedTicketDto } from '@/types';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
@@ -8,6 +7,7 @@ import { Icon } from '@brainforgeau/components/base';
 import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import { ListPage } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import {
   type ColumnDef,
   type SortingState,

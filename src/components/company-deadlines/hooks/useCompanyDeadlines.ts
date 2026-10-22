@@ -20,7 +20,7 @@ import {
 import { useDebounced } from '@/hooks/useDebounced';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
-import { usePermissions } from '@/security';
+import { usePermissions } from '@brainforgeau/security';
 import {
   type QueryClient,
   keepPreviousData,

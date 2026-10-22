@@ -30,12 +30,12 @@ import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { PermissionGuard, usePermissions } from '@/security';
 import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
+import { PermissionGuard, usePermissions } from '@brainforgeau/security';
 import {
   Dropdown,
   DropdownItem,

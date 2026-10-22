@@ -15,7 +15,6 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { PermissionGuard, usePermissions, useTimezone } from '@/security';
 import { customStatusesApply } from '@/types/custom-status';
 import type {
   TicketFilters as TicketFiltersType,
@@ -28,6 +27,11 @@ import {
   Icon,
   TablePagination,
 } from '@brainforgeau/components';
+import {
+  PermissionGuard,
+  usePermissions,
+  useTimezone,
+} from '@brainforgeau/security';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
 import {
   type FC,
@@ -79,8 +83,8 @@ import {
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
 import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { useAuth } from '@/security';
 import { EmptyState, useConfirm } from '@brainforgeau/components/page';
+import { useAuth } from '@brainforgeau/security';
 import type { TicketRow } from '../types';
 
 /**

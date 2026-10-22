@@ -9,7 +9,7 @@
 
 import { AppAuthSplash } from '@/components/AppSplash';
 import { TicketGrid } from '@/components/tickets/components/TicketGrid';
-import { withAuthenticationRequired } from '@/security';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function TicketsPage() {

@@ -9,13 +9,13 @@ import { AppAuthSplash } from '@/components/AppSplash';
 import { PrincipalCategorySelect } from '@/components/principal/PrincipalCategorySelect';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
-import { withAuthenticationRequired } from '@/security';
 import { BaseInput, BaseTextarea } from '@brainforgeau/components';
 import {
   FormPage,
   PendingCrumb,
   useEntityForm,
 } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { z } from 'zod';
 

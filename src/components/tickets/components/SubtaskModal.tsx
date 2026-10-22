@@ -1,6 +1,5 @@
 import { ModalHeader, StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { PermissionGuard } from '@/security';
 import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import {
   BaseButton,
@@ -9,6 +8,7 @@ import {
   BaseModalContent,
   BaseModalFooter,
 } from '@brainforgeau/components';
+import { PermissionGuard } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import DOMPurify from 'dompurify';
 import type { FC } from 'react';

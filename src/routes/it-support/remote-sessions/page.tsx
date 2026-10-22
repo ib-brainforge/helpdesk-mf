@@ -6,7 +6,7 @@
  */
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ItSupportComingSoon } from '@/components/it-support/ItSupportComingSoon';
-import { withAuthenticationRequired } from '@/security';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 
 function RemoteSessionsPage() {
   return <ItSupportComingSoon breadcrumbsKey="it-support.remote-sessions" />;

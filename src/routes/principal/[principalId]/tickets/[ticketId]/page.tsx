@@ -20,8 +20,6 @@ import {
   useUpdatePrincipalTicketStatus,
 } from '@/hooks/usePrincipalTicket';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { withAuthenticationRequired } from '@/security';
-import { useTimezone } from '@/security';
 import {
   BaseButton,
   BaseSelect,
@@ -40,6 +38,8 @@ import {
   HelpdeskDomainTicketsEnumsTicketPriority,
   HelpdeskDomainTicketsEnumsTicketStatus,
 } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { useTimezone } from '@brainforgeau/security';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { z } from 'zod';
 

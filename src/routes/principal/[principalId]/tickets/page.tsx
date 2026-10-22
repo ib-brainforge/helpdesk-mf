@@ -14,8 +14,6 @@ import {
   usePrincipalTickets,
 } from '@/hooks/usePrincipalTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { withAuthenticationRequired } from '@/security';
-import { useTimezone } from '@/security';
 import type { TicketListDto } from '@/types/ticket';
 import {
   BaseButton,
@@ -34,6 +32,8 @@ import {
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
+import { useTimezone } from '@brainforgeau/security';
 import { useOverlayState } from '@heroui/react';
 import { useParams } from '@modern-js/runtime/router';
 import { NavLink } from '@modern-js/runtime/router';

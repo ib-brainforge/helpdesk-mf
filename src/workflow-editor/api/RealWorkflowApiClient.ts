@@ -3,9 +3,6 @@
 // Backend serializes enums as strings (JsonStringEnumConverter). Frontend enums are
 // now string-backed (Task 1) so round-trips match directly.
 
-// REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
-// to avoid a direct `import from 'axios'` that is not in project dependencies.
-import type { authorizedAxios as _AuthorizedAxios } from '@/security';
 import type { Configuration } from '@brainforgeau/helpdesk-client';
 import {
   PrincipalWorkflowsApi,
@@ -20,6 +17,9 @@ import type {
   HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftStateInput as UpdateWorkflowDraftStateInput,
   HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftTransitionInput as UpdateWorkflowDraftTransitionInput,
 } from '@brainforgeau/helpdesk-client';
+// REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
+// to avoid a direct `import from 'axios'` that is not in project dependencies.
+import type { authorizedAxios as _AuthorizedAxios } from '@brainforgeau/security';
 type AxiosInstance = typeof _AuthorizedAxios;
 import type {
   CloneDefinitionInput,

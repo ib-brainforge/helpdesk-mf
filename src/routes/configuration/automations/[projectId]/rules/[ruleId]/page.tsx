@@ -10,7 +10,7 @@
  */
 import { AutomationDetailPage } from '@/automations-editor';
 import { AppAuthSplash } from '@/components/AppSplash';
-import { withAuthenticationRequired } from '@/security';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function AutomationDetailRoute() {

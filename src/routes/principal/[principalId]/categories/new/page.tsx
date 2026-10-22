@@ -8,7 +8,6 @@ import { AppAuthSplash } from '@/components/AppSplash';
 import { ACCESS_LEVEL_LABELS } from '@/constants/categoryLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalCategory } from '@/hooks/usePrincipalCategories';
-import { withAuthenticationRequired } from '@/security';
 import {
   BaseInput,
   BaseSelect,
@@ -20,6 +19,7 @@ import {
   useEntityForm,
 } from '@brainforgeau/components/page';
 import { HelpdeskDomainCategoriesEnumsAccessLevel } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import {
   useNavigate,
   useOutletContext,

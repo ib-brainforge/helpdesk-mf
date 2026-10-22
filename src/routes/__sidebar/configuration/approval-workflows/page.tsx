@@ -11,11 +11,6 @@ import {
   useDeleteApprovalWorkflow,
 } from '@/components/approvals';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
-import {
-  PlatformPermissions,
-  useAccessScope,
-  usePermissions,
-} from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -40,6 +35,11 @@ import {
   type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto,
   ScopeApi,
 } from '@brainforgeau/helpdesk-client';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import {
   createColumnHelper,

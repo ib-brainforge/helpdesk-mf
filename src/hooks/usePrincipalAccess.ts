@@ -25,7 +25,7 @@
  * roles there.
  */
 
-import { useAuth } from '@/security';
+import { useAuth } from '@brainforgeau/security';
 import { useMemo } from 'react';
 
 export type PrincipalAccessLevel = 'admin' | 'agent' | null;

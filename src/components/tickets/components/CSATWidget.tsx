@@ -1,10 +1,10 @@
 import { StarRating } from '@/components/satisfaction/StarRating';
 import { useSatisfactionRatingByTicket } from '@/hooks/useSatisfaction';
-import { useTimezone } from '@/security';
 import { TicketStatus } from '@/types/ticket';
 import { Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
 
 // REVIEW: Widget component for ticket detail page - shows CSAT if exists

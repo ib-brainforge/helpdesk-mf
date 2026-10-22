@@ -1,9 +1,9 @@
 import { formatDateTimeAmPm, formatDeadlineDayTime } from '@/components/shared';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { type UserInfo, useUserEnrichment } from '@/hooks/useUserEnrichment';
-import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
+import { useTimezone } from '@brainforgeau/security';
 import { type FC, useMemo, useRef, useState } from 'react';
 import { useAssetsByIds } from '../hooks/useAssets';
 import { useTicketHistory } from '../hooks/useTicketHistory';

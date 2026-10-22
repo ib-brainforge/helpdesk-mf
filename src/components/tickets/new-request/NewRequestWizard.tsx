@@ -6,7 +6,6 @@ import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useHelpdeskLicensedTenants } from '@/hooks/useHelpdeskLicensedTenants';
 import { useMailbox } from '@/hooks/useMailbox';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { useAuth, usePermissions } from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import {
   BaseButton,
@@ -14,6 +13,7 @@ import {
   BaseToggle,
   Icon,
 } from '@brainforgeau/components';
+import { useAuth, usePermissions } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';

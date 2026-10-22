@@ -1,5 +1,4 @@
 import { TIME_TRACKING_ENABLED } from '@/constants/features';
-import { useTimezone } from '@/security';
 import type { CustomReportRequestDto, CustomReportResultDto } from '@/types';
 import { TicketPriority, TicketStatus } from '@/types';
 import {
@@ -13,6 +12,7 @@ import { Box } from '@brainforgeau/components/base';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import {
   type ColumnDef,
   getCoreRowModel,

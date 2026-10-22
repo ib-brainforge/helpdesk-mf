@@ -10,7 +10,6 @@ import { AppAuthSplash } from '@/components/AppSplash';
 import { SummaryCard } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { usePrincipalTicketVolume } from '@/hooks/usePrincipalReports';
-import { withAuthenticationRequired } from '@/security';
 import { BaseButton, BaseTable } from '@brainforgeau/components';
 import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
 import {
@@ -18,6 +17,7 @@ import {
   EmptyState,
   PendingCrumb,
 } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 import {
   createColumnHelper,

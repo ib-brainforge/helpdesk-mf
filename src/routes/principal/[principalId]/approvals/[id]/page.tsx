@@ -14,7 +14,6 @@ import {
   useUpdatePrincipalApprovalWorkflow,
 } from '@/hooks/usePrincipalApprovalWorkflows';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
-import { withAuthenticationRequired } from '@/security';
 import {
   BaseCheckbox,
   BaseInput,
@@ -28,6 +27,7 @@ import {
   useEntityForm,
 } from '@brainforgeau/components/page';
 import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useOutletContext, useParams } from '@modern-js/runtime/router';
 import { z } from 'zod';
 import type { PrincipalOutletContext } from '../../layout';

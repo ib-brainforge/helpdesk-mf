@@ -13,7 +13,7 @@ import {
 } from '@brainforgeau/components';
 
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { usePermissions } from '@/security';
+import { usePermissions } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { type FC, useEffect, useMemo, useState } from 'react';
 import {

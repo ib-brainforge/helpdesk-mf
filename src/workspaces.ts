@@ -11,7 +11,7 @@
 import { IT_SUPPORT_WORKSPACE_ENABLED } from '@/constants/features';
 import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { HELPDESK_NAV, IT_SUPPORT_NAV, type NavSections } from '@/navigation';
-import { usePermissions } from '@/security';
+import { usePermissions } from '@brainforgeau/security';
 import { ComputerDesktopIcon, TicketIcon } from '@heroicons/react/24/outline';
 import { type ComponentType, type SVGProps, useMemo } from 'react';
 

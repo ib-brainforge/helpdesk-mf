@@ -1,7 +1,7 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { TicketDetail } from '@/components/tickets';
 import { TicketScopeProvider } from '@/components/tickets/components/TicketScopeProvider';
-import { withAuthenticationRequired } from '@/security';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useParams } from '@modern-js/runtime/router';
 import React from 'react';
 

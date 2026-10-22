@@ -1,4 +1,8 @@
-import { type AuthState, getAuthState, subscribeToAuthState } from '@/security';
+import {
+  type AuthState,
+  getAuthState,
+  subscribeToAuthState,
+} from '@brainforgeau/security';
 import { atom } from 'jotai';
 
 /**

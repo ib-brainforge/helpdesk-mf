@@ -52,8 +52,7 @@
           "level": "error",
           "options": {
             "paths": {
-              "axios": "Import authorizedAxios from '@/state/authorizedAxios' (or use a generated @brainforgeau/*-client such as createHelpdeskApiClient). Raw axios is banned (Hard Gate #3, raw-fetch sweep 2026-07-06).",
-              "@brainforgeau/security": "Import from '@/security' instead. It re-exports the package and routes usePermissions, PermissionGuard and withAuthorizationRequired through the development-only role preview; a direct import silently skips it."
+              "axios": "Import authorizedAxios from '@/state/authorizedAxios' (or use a generated @brainforgeau/*-client such as createHelpdeskApiClient). Raw axios is banned (Hard Gate #3, raw-fetch sweep 2026-07-06)."
             }
           }
         }
@@ -99,23 +98,6 @@
     }
   },
   "overrides": [
-    {
-      "include": ["src/security/**", "src/state/config/**"],
-      "linter": {
-        "rules": {
-          "nursery": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "paths": {
-                  "axios": "Import authorizedAxios from '@/state/authorizedAxios' (or use a generated @brainforgeau/*-client such as createHelpdeskApiClient). Raw axios is banned (Hard Gate #3, raw-fetch sweep 2026-07-06)."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     {
       "include": ["src/state/authorizedAxios.ts", "src/utils/*ApiClient.ts"],
       "linter": {

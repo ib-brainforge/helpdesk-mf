@@ -1,5 +1,5 @@
 import { HelpdeskPermissions as P } from '@/constants/permissions';
-import { AccessDenied, usePermissions } from '@/security';
+import { AccessDenied, usePermissions } from '@brainforgeau/security';
 import type { FC, ReactNode } from 'react';
 
 /**

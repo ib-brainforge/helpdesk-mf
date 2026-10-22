@@ -1,6 +1,5 @@
 import { useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
-import { useTimezone } from '@/security';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { KnowledgeBaseStatus } from '@/types';
 import { BaseCard, BaseInput, Icon } from '@brainforgeau/components';
@@ -11,6 +10,7 @@ import {
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
+import { useTimezone } from '@brainforgeau/security';
 import { Chip } from '@heroui/react';
 import { Link, useParams } from '@modern-js/runtime/router';
 import { useQuery } from '@tanstack/react-query';

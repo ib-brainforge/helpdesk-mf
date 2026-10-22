@@ -13,7 +13,6 @@ import {
   useDeletePrincipalCategory,
   usePrincipalCategories,
 } from '@/hooks/usePrincipalCategories';
-import { withAuthenticationRequired } from '@/security';
 import { BaseButton } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import {
@@ -23,6 +22,7 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import type { HelpdeskApplicationCategoriesModelsCategoryDto } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import {
   useNavigate,

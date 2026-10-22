@@ -8,7 +8,6 @@ import { AppAuthSplash } from '@/components/AppSplash';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalApprovalWorkflow } from '@/hooks/usePrincipalApprovalWorkflows';
-import { withAuthenticationRequired } from '@/security';
 import {
   BaseCheckbox,
   BaseInput,
@@ -21,6 +20,7 @@ import {
   useEntityForm,
 } from '@brainforgeau/components/page';
 import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import {
   useNavigate,
   useOutletContext,

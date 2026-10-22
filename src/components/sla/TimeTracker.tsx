@@ -1,10 +1,10 @@
 import { DurationInput, IconTip, formatMinutes } from '@/components/shared';
 import type { TicketTimeTrackingDto } from '@/components/sla/hooks/useTimeTracking';
-import { useTimezone } from '@/security';
 import { BaseInput, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { formatDateTime } from '@brainforgeau/components/utils';
+import { useTimezone } from '@brainforgeau/security';
 import type { FC } from 'react';
 import { useCallback, useState } from 'react';
 

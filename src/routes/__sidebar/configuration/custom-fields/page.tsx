@@ -10,11 +10,6 @@ import {
   useCustomFieldsTable,
 } from '@components/custom-fields';
 
-import {
-  PlatformPermissions,
-  useAccessScope,
-  usePermissions,
-} from '@/security';
 import { selectedContextAtom } from '@/state/auth-atoms';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -31,6 +26,11 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
+import {
+  PlatformPermissions,
+  useAccessScope,
+  usePermissions,
+} from '@brainforgeau/security';
 import { toast } from '@heroui/react';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { useMutation } from '@tanstack/react-query';

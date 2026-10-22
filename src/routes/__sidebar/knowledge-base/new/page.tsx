@@ -17,7 +17,6 @@ import {
   useCreateKnowledgeBaseArticle,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
-import { withAuthenticationRequired } from '@/security';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
   BaseInput,
@@ -25,6 +24,7 @@ import {
   BaseSelectItem,
 } from '@brainforgeau/components';
 import { FormPage, useEntityForm } from '@brainforgeau/components/page';
+import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { z } from 'zod';
 

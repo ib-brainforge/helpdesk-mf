@@ -1,8 +1,8 @@
 import type React from 'react';
 
 import { AppLoading } from '@/components/AppLoading';
-import { FlexibleAuthProvider } from '@/security';
 import { configAtom, getAppConfig } from '@/state/config';
+import { FlexibleAuthProvider } from '@brainforgeau/security';
 import { useAtomValue } from 'jotai';
 
 declare const __HELPDESK_STANDALONE__: boolean;
