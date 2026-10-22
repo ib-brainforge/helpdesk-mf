@@ -944,17 +944,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           base is internal (kb.manage, the same rule as its pages), so the
           suggestions are only shown to people who may open them. */}
           {ticket.subject && canSeeKnowledgeBase && (
-            <div className="border-t pt-6">
-              <label className="block text-sm font-medium text-default-700 mb-2">
-                Suggested KB Articles
-              </label>
-              <KbSuggestions
-                searchText={ticket.subject}
-                minChars={3}
-                limit={5}
-                emptyMessage="No related articles found for this ticket."
-              />
-            </div>
+            <KbSuggestions
+              searchText={ticket.subject}
+              minChars={3}
+              limit={5}
+              className="border-t pt-6"
+            />
           )}
         </>
       )}

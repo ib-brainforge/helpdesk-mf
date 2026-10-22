@@ -2,6 +2,7 @@ import type { TicketDeadlineDto } from '@/api/local/deadlines';
 import {
   DeadlineChip,
   formatDeadlineDateTime,
+  formatDeadlineSentence,
   formatDuration,
   sanitiseDeadline,
 } from '@/components/shared/deadline';
@@ -47,12 +48,13 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
 
   // Whose policy set these deadlines: the organisation's own, the company's,
   // or the defaults.
-  const policyOwner =
+  const owner =
     policy?.source === 'Organisation'
       ? (organisationName ?? companyName)
       : policy?.source === 'Company'
         ? companyName
-        : 'Default deadlines';
+        : null;
+  const policyOwner = owner ? `${owner}'s deadlines` : 'Default deadlines';
 
   const replyRow = (() => {
     if (deadline.repliedAt) {
@@ -102,12 +104,9 @@ export const SlaIndicator: FC<SlaIndicatorProps> = ({
       </div>
       {policy && (
         <div className="rounded-[3px] bg-default-100 px-3 py-2 text-xs">
-          <p className="font-semibold text-foreground">
-            {policyOwner ? `${policyOwner}, ` : ''}
-            {policy.priority} priority
-          </p>
+          <p className="font-semibold text-foreground">{policyOwner}</p>
           <p className="text-default-600">
-            {policy.targetsText} {policy.hoursText}
+            {formatDeadlineSentence(policy, policy.hoursText)}
           </p>
         </div>
       )}

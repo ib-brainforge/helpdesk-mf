@@ -9,39 +9,33 @@ import { BaseButton } from '@brainforgeau/components/button';
 import { Spinner } from '@heroui/react';
 import type { FC } from 'react';
 import { formatIsoDay } from '../deadlinePolicy';
-import { useHolidays } from '../hooks/useCompanyDeadlines';
+import { useUpcomingHolidays } from '../hooks/useCompanyDeadlines';
 
 interface HolidaysModalProps {
   isOpen: boolean;
   onClose: () => void;
   principalId?: string;
-  calendar: string | null;
-  calendarLabel: string;
-  year: number;
+  /** A holiday region code ("NSW"). */
+  region: string | null;
 }
 
-/** The public holidays the clock skips this year. Loaded only when opened. */
+/** The public holidays the clock skips in the next 12 months. Loaded only when opened. */
 export const HolidaysModal: FC<HolidaysModalProps> = ({
   isOpen,
   onClose,
   principalId,
-  calendar,
-  calendarLabel,
-  year,
+  region,
 }) => {
-  const { data, isLoading, isError } = useHolidays(
+  const { days, isLoading, isError } = useUpcomingHolidays(
     principalId,
-    calendar,
-    year,
+    region,
     isOpen,
   );
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <ModalHeader>
-          {calendarLabel}, {year}
-        </ModalHeader>
+        <ModalHeader>{region} public holidays, next 12 months</ModalHeader>
         <BaseModalBody>
           {isLoading ? (
             <div className="flex justify-center py-6">
@@ -53,7 +47,7 @@ export const HolidaysModal: FC<HolidaysModalProps> = ({
             </p>
           ) : (
             <ul className="divide-default-200 divide-y text-sm">
-              {(data ?? []).map(h => (
+              {days.map(h => (
                 <li key={h.date} className="flex justify-between gap-4 py-2">
                   <span>{h.name}</span>
                   <span className="text-default-500 tabular-nums">

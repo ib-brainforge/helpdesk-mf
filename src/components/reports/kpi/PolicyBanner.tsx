@@ -1,5 +1,5 @@
 import type { KpiPolicySummaryDto } from '@/api/local/kpi';
-import { formatTargetMinutes } from '@/components/company-deadlines/deadlinePolicy';
+import { formatMinutes } from '@/components/shared/deadline';
 import { NavLink } from '@modern-js/runtime/router';
 import type { FC } from 'react';
 
@@ -52,7 +52,7 @@ export const PolicyBanner: FC<PolicyBannerProps> = ({
             </th>
             {policy.targets.map(t => (
               <td key={t.priority} className="px-2">
-                {formatTargetMinutes(t[field])}
+                {formatMinutes(t[field])}
               </td>
             ))}
           </tr>

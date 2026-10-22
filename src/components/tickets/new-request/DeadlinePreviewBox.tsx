@@ -1,5 +1,8 @@
 import { type DeadlinePriority, previewDeadline } from '@/api/local/deadlines';
-import { formatDeadlineDateTime } from '@/components/shared/deadline';
+import {
+  formatDeadlineDateTime,
+  formatDeadlineSentence,
+} from '@/components/shared/deadline';
 import { useTimezone } from '@/security';
 import { Icon } from '@brainforgeau/components/base';
 import { useQuery } from '@tanstack/react-query';
@@ -74,9 +77,8 @@ export const DeadlinePreviewBox: FC<DeadlinePreviewBoxProps> = ({
           </div>
           {data.policy && (
             <p className="text-light-gray mt-2 text-xs">
-              {companyName ? `${companyName}, ` : ''}
-              {data.policy.priority} priority: {data.policy.targetsText}{' '}
-              {data.policy.hoursText}
+              {companyName ? `${companyName}. ` : ''}
+              {formatDeadlineSentence(data.policy, data.policy.hoursText)}
             </p>
           )}
         </>

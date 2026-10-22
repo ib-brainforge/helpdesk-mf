@@ -9,7 +9,6 @@ import { Icon } from '@brainforgeau/components/base';
 import { BaseDateTimePicker } from '@brainforgeau/components/date-picker';
 import { Spinner } from '@heroui/react';
 import { parseAbsolute, toZoned } from '@internationalized/date';
-import { useStore } from '@tanstack/react-form';
 import { type FC, useMemo, useState } from 'react';
 import {
   PRIORITIES,
@@ -20,8 +19,10 @@ import {
 import { useDeadlinePreview } from '../hooks/useCompanyDeadlines';
 
 interface WorkedExampleProps {
-  // biome-ignore lint/suspicious/noExplicitAny: useEntityForm exposes the TanStack form untyped
-  form: any;
+  /** The policy as it stands: the form while editing, the saved one otherwise. */
+  values: PolicyFormValues;
+  /** Editing: say that the answer follows the fields. */
+  live?: boolean;
   principalId?: string;
   /** Null for the default policy. */
   tenantId: string | null;
@@ -49,23 +50,20 @@ const ResultBox: FC<{ label: string; iso?: string | null; tz: string }> = ({
  * that will set the real ticket's due dates.
  */
 export const WorkedExample: FC<WorkedExampleProps> = ({
-  form,
+  values,
+  live = false,
   principalId,
   tenantId,
   organisationId = null,
 }) => {
-  const values = useStore(
-    form.store,
-    // biome-ignore lint/suspicious/noExplicitAny: the form's store is untyped (see the prop)
-    (s: any) => s.values as PolicyFormValues,
-  );
-  const [priority, setPriority] = useState<DeadlinePriority>('High');
+  // Critical first, as everywhere else: the question people bring here.
+  const [priority, setPriority] = useState<DeadlinePriority>('Critical');
   const [startAt, setStartAt] = useState(() => new Date().toISOString());
 
   // A draft that breaks the rules gets its errors beside the fields, not a
   // round trip that the server would refuse anyway.
   const request = useMemo(() => {
-    if (!values || !policyFormSchema.safeParse(values).success) return null;
+    if (!policyFormSchema.safeParse(values).success) return null;
     const { applyToOpenTickets: _, ...policy } = values;
     return {
       tenantId,
@@ -77,7 +75,7 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
   }, [values, tenantId, organisationId, priority, startAt]);
 
   const preview = useDeadlinePreview(principalId, request);
-  const tz = values?.timeZoneId ?? 'Australia/Sydney';
+  const tz = values.timeZoneId;
   const data = request ? preview.data : undefined;
 
   return (
@@ -86,9 +84,11 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
         <h3 className="text-dark text-base font-semibold dark:text-white">
           Check it with an example
         </h3>
-        <span className="bg-lighter-blue text-blue rounded-full px-2 py-0.5 text-[11px] font-medium">
-          Updates as you type
-        </span>
+        {live && (
+          <span className="bg-default-100 text-default-700 rounded-full px-2 py-0.5 text-[11px] font-medium">
+            Updates as you type
+          </span>
+        )}
       </header>
       <div className="space-y-3 p-4">
         <div className="grid gap-3 sm:grid-cols-[10rem_1fr]">
@@ -139,7 +139,9 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
         </div>
 
         <div className="border-default-200 flex flex-wrap items-center gap-2 border-t pt-3 text-sm">
-          <span className="text-default-600">On tickets:</span>
+          <span className="text-default-600">
+            How tickets show a deadline (examples):
+          </span>
           <DeadlineStateChip
             state="onTrack"
             label={`On track, ${formatDuration(200)}`}

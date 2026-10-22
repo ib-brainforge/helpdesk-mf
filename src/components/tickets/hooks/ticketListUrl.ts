@@ -192,3 +192,16 @@ export const writeListToUrl = (
     put('size', String(pagination.pageSize));
   return params;
 };
+
+/**
+ * The Overdue tab of the Tickets list for one tenant, or one of its
+ * organisations: where every "N late" count links to.
+ */
+export const overdueTicketsHref = (
+  tenantId: string,
+  organisationId?: string | null,
+): string => {
+  const params = new URLSearchParams({ tab: 'overdue', tenant: tenantId });
+  if (organisationId) params.set('organisation', organisationId);
+  return `/tickets?${params}`;
+};

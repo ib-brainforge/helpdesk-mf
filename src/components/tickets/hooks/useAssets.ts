@@ -1,10 +1,10 @@
 import { issueScopeToken, scopedRequest } from '@/api/local/scoped';
+import { useDebounced } from '@/hooks/useDebounced';
 import {
   requireAssetApiBaseUrl,
   requireTrackingApiBaseUrl,
 } from '@/state/config';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 
 /**
  * Assets from asset-backend, for a ticket's linked assets.
@@ -55,15 +55,6 @@ export const assetLabel = (a: Asset): string => {
     .filter(Boolean)
     .join(' · ');
   return extra ? `${name} (${extra})` : name;
-};
-
-const useDebounced = <T>(value: T, ms: number): T => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), ms);
-    return () => clearTimeout(id);
-  }, [value, ms]);
-  return debounced;
 };
 
 /**
