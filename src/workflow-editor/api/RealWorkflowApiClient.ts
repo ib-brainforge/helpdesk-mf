@@ -1,4 +1,4 @@
-// RealWorkflowApiClient — full implementation against @brainforgeau/helpdesk-client.
+// RealWorkflowApiClient — full implementation against the vendored helpdesk client.
 //
 // Backend serializes enums as strings (JsonStringEnumConverter). Frontend enums are
 // now string-backed (Task 1) so round-trips match directly.

@@ -12,7 +12,7 @@ import {
   PORTAL_SECTION_OPTIONS,
   portalSectionLabel,
 } from '@/components/knowledge-base/portalSection';
-import { ModalHeader } from '@/components/shared';
+import { ModalHeader, StatusBadge } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseCategoryDto } from '@/types';
 import { BaseInput } from '@brainforgeau/components';
@@ -32,7 +32,6 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import {
-  Chip,
   Dropdown,
   DropdownItem,
   DropdownMenu,
@@ -324,9 +323,9 @@ function KbCategoriesPage() {
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{cat.name}</p>
                     {cat.portalSection && cat.portalSection !== 'None' && (
-                      <Chip size="sm" color="accent" variant="soft">
+                      <StatusBadge color="primary">
                         Portal: {portalSectionLabel(cat.portalSection)}
-                      </Chip>
+                      </StatusBadge>
                     )}
                   </div>
                   {cat.description && (

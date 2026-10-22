@@ -13,7 +13,7 @@ import { requireHelpdeskApiBaseUrl } from '@/state/config';
  * `RulesApiClient` interface expected by `@brainforgeau/rules-ui`.
  *
  * Uses generated `RuleProjectsApi` + `RuleGraphsApi` from
- * `@brainforgeau/helpdesk-client` (v0.1.80-develop.f275df9+).
+ * the vendored helpdesk client.
  *
  * DTO mapping: the generated client marks all fields optional (OpenAPI generator
  * quirk). We coerce them to the required shapes expected by rules-ui, falling

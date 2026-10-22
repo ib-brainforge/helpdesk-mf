@@ -157,6 +157,10 @@ export function useCategoryTable({
                       : 'Use for customer portal enquiries'
                   }
                   aria-pressed={row.original.isPortalEnquiryCategory ?? false}
+                  isDisabled={
+                    !row.original.isActive &&
+                    !row.original.isPortalEnquiryCategory
+                  }
                   onPress={() => onTogglePortalEnquiry(row.original)}
                   icon={<Icon name="chat" className="h-4 w-4" />}
                 />

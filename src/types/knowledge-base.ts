@@ -1,4 +1,4 @@
-// Enums use string values that match the generated @brainforgeau/helpdesk-client types
+// Enums use string values that match the generated the vendored helpdesk client types
 // (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
 // This allows direct comparison against values returned from the backend without any casting.
 

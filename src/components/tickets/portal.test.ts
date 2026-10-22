@@ -34,6 +34,22 @@ describe('findConsignmentLink', () => {
     expect(link?.displayReference).toBe('C-1');
   });
 
+  it('compares link times as dates, not strings', () => {
+    const link = findConsignmentLink([
+      {
+        entityType: 'freight.consignment',
+        displayReference: 'first-by-instant',
+        linkedAt: '2026-01-01T10:00:00+02:00',
+      },
+      {
+        entityType: 'freight.consignment',
+        displayReference: 'second-by-instant',
+        linkedAt: '2026-01-01T09:00:00Z',
+      },
+    ]);
+    expect(link?.displayReference).toBe('first-by-instant');
+  });
+
   it('returns undefined when there is no consignment link', () => {
     expect(findConsignmentLink([])).toBeUndefined();
     expect(findConsignmentLink(undefined)).toBeUndefined();
@@ -52,20 +68,27 @@ describe('linkedEntityTypeLabel', () => {
 });
 
 describe('decodePlainText', () => {
-  it('restores encoded characters without producing markup', () => {
+  it('decodes named and numeric entities', () => {
     expect(decodePlainText('Tom &amp; Jerry &lt;b&gt;hi&lt;/b&gt;')).toBe(
       'Tom & Jerry <b>hi</b>',
     );
-    expect(decodePlainText('say &quot;hi&quot; it&#39;s')).toBe(
-      'say "hi" it\'s',
+    expect(decodePlainText('caf&#233;')).toBe('café');
+    expect(decodePlainText('&#128512;')).toBe('\u{1F600}');
+    expect(decodePlainText('it&#x27;s')).toBe("it's");
+  });
+
+  it('decodes once, so a double-encoded entity stays literal text', () => {
+    expect(decodePlainText('&amp;#39;')).toBe('&#39;');
+  });
+
+  it('keeps a raw tag as text instead of parsing it', () => {
+    expect(decodePlainText('<img src=x onerror=alert(1)>')).toBe(
+      '<img src=x onerror=alert(1)>',
     );
   });
 
-  it('decodes once, so an encoded entity stays literal text', () => {
-    expect(decodePlainText('&amp;lt;')).toBe('&lt;');
-  });
-
-  it('keeps line breaks and leaves plain text alone', () => {
+  it('keeps line breaks and handles empty input', () => {
     expect(decodePlainText('a\nb')).toBe('a\nb');
+    expect(decodePlainText(undefined)).toBe('');
   });
 });

@@ -7,7 +7,7 @@
  * Used by the navbar widget to display the current user's platform tickets.
  *
  * NOTE: PlatformSelfServiceTicketsApi does not yet exist in the published
- * @brainforgeau/helpdesk-client. These hooks are stubbed for when the backend
+ * the vendored helpdesk client. These hooks are stubbed for when the backend
  * publishes the /v1/platform/my-tickets route. Use PlatformTicketsApi in the
  * interim if needed.
  * REVIEW: Re-wire once helpdesk-backend publishes /v1/platform/my-tickets endpoints.
