@@ -134,6 +134,7 @@ function KnowledgeBaseArticlePage() {
         <Link to={`/knowledge-base/${slug}/edit`}>
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             icon={<Icon name="pencil" className="h-4 w-4" />}
           >
@@ -240,7 +241,7 @@ function KnowledgeBaseArticlePage() {
         <div className="space-y-6">
           {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
               width, above the narrower metadata card below. */}
-          <ContextScopeStrip {...scopeStripProps} />
+          {scopeStripProps && <ContextScopeStrip {...scopeStripProps} />}
           <MetadataPanel
             meta={metaForPanel}
             scopeBadge={scopeBadge}

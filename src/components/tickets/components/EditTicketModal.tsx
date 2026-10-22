@@ -88,6 +88,7 @@ export const EditTicketModal: FC<EditTicketModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={updateMutation.isPending || updateMutation.isPending}
           >

@@ -282,6 +282,7 @@ export function PrincipalAutomationDetailPage() {
           <BaseButton
             size="sm"
             variant="bordered"
+            color="light"
             onPress={() => setShowVersionsSidebar(prev => !prev)}
           >
             Versions
@@ -290,6 +291,7 @@ export function PrincipalAutomationDetailPage() {
             <BaseButton
               size="sm"
               variant="bordered"
+              color="light"
               isDisabled={isSaving}
               onPress={handleSaveDraft}
             >

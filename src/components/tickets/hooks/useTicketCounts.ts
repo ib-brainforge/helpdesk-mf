@@ -121,10 +121,11 @@ export const ticketCountsQueryOptions = (
         ? `${base}/v1/principals/${scopedPrincipalId}/tickets/counts`
         : `${base}/v1/tickets/counts`;
 
-      // authorizedAxios rather than the generated client: this endpoint is
-      // newer than the checked-in OpenAPI spec, so helpdesk-client has no
-      // method for it yet. Swap to the generated call once the client is
-      // regenerated; the shape below already matches the DTO.
+      // authorizedAxios rather than the generated v1TicketsCountsGet: the
+      // regenerated client predates the multi-select filters sent here
+      // (categoryIds, assigneeIds, includeUnassigned, tenantIds,
+      // organisationIds) and the assignees' openCount. Swap to the generated
+      // call once it declares them.
       const { data } = await authorizedAxios.get<TicketCountsResponse>(url, {
         params,
         // tagIds and assigneeIds go out as repeated `tagIds=` rather than

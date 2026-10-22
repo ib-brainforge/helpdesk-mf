@@ -143,7 +143,7 @@ export const KbImportModal: FC<KbImportModalProps> = ({ isOpen, onClose }) => {
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={handleClose}>
+          <BaseButton variant="bordered" color="light" onPress={handleClose}>
             {result ? 'Close' : 'Cancel'}
           </BaseButton>
           {!result && (

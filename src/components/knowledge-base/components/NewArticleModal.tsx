@@ -112,7 +112,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
             />
 
             <div>
-              <label className="block text-sm font-medium mb-2">Details</label>
+              <label className="mb-2 block text-sm font-medium">Details</label>
               <TipTapEditor
                 content={details}
                 onChange={setDetails}
@@ -156,7 +156,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="light" onPress={handleCancel}>
+          <BaseButton variant="bordered" color="light" onPress={handleCancel}>
             Cancel
           </BaseButton>
           <BaseButton

@@ -1,9 +1,19 @@
-import { issueScopeToken, scopedRequest } from '@/api/local/scoped';
 import { useDebounced } from '@/hooks/useDebounced';
 import {
   requireAssetApiBaseUrl,
   requireTrackingApiBaseUrl,
 } from '@/state/config';
+import { createScopedApiClient } from '@/state/scopedApiClient';
+import {
+  Configuration as AssetConfiguration,
+  type AssetDto,
+  type AssetListItemDto,
+  AssetsApi,
+} from '@brainforgeau/asset-backend-client';
+import {
+  TrackablesApi,
+  Configuration as TrackingConfiguration,
+} from '@brainforgeau/tracking-client';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 
 /**
@@ -15,10 +25,11 @@ import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
  * SCOPE
  * asset-backend ignores TenantId and OrganisationId query parameters. It
  * answers only for the tenant, organisation and division named by the
- * X-Context-Token it receives. To list another organisation's assets, a
- * context token for THAT scope is issued from identity-management
- * (POST /v1/contexts/issue) and sent with these calls only. The app's own
- * context token is never replaced, so nothing else in helpdesk moves.
+ * X-Context-Token it receives. To list another organisation's assets, the
+ * calls go through a client scoped to THAT organisation (see
+ * createScopedApiClient), which sends a context token issued for it with these
+ * calls only. The app's own context token is never replaced, so nothing else
+ * in helpdesk moves.
  *
  * The token is issued for the 'asset' app, not 'helpdesk': helpdesk is not
  * licensed for every tenant (Remondis refuses it with CTX_APP_NOT_LICENSED),
@@ -26,23 +37,16 @@ import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
  * asset-scoped token returns 443 assets for Remondis and 119 for Remondis NSW.
  */
 
-export interface Asset {
-  /** The id a linked asset stores. */
-  id: string;
-  /** The human asset number, e.g. "11". */
-  assetId?: string | null;
-  assetName?: string | null;
-  registrationNo?: string | null;
-}
+/**
+ * The fields of an asset the helpdesk shows. The registration number is only
+ * on the single-asset DTO; asset-backend's list items do not carry it.
+ */
+export type Asset = Pick<AssetListItemDto, 'id' | 'assetId' | 'assetName'> &
+  Partial<Pick<AssetDto, 'registrationNo'>>;
 
 export interface AssetScope {
   tenantId?: string | null;
   organisationId?: string | null;
-}
-
-interface AssetsPage {
-  assets?: Asset[];
-  totalCount?: number;
 }
 
 const PAGE_SIZE = 25;
@@ -58,40 +62,16 @@ export const assetLabel = (a: Asset): string => {
 };
 
 /**
- * A context token for one scope, for asset-backend calls only. Cached per
- * scope until shortly before it expires.
+ * The asset-backend client for a scope. Calls are answered for that scope;
+ * with no tenant they use the app's own context, for tickets that carry none.
  */
-const useScopeToken = (
-  scope: AssetScope,
-  enabled: boolean,
-  app: 'asset' | 'tracking' = 'asset',
-) =>
-  useQuery({
-    queryKey: [
-      'assets',
-      'scope-token',
-      app,
-      scope.tenantId ?? null,
-      scope.organisationId ?? null,
-    ],
-    enabled: enabled && !!scope.tenantId,
-    // Tokens last hours; refresh well before expiry rather than on a failed call.
-    staleTime: 30 * 60 * 1000,
-    queryFn: () => issueScopeToken(scope, app),
-  });
-
-/**
- * GET from asset-backend or tracking-backend. With a scope token the call is
- * answered for that scope; without one it falls back to the app's own context,
- * for tickets that carry no tenant.
- */
-const scopedGet = <T>(
-  baseUrl: string,
-  path: string,
-  scopeToken: string | undefined,
-  params?: Record<string, string | number | undefined>,
-): Promise<T> =>
-  scopedRequest<T>({ url: `${baseUrl}${path}`, token: scopeToken, params });
+const assetsApi = (scope: AssetScope) =>
+  createScopedApiClient(
+    AssetsApi,
+    new AssetConfiguration({ basePath: requireAssetApiBaseUrl() }),
+    'asset',
+    scope,
+  );
 
 /**
  * One page of the scope's assets matching `search`, searched and paged by
@@ -104,7 +84,6 @@ export const useAssetSearch = (
   { enabled = true } = {},
 ) => {
   const term = useDebounced(search.trim(), DEBOUNCE_MS);
-  const token = useScopeToken(scope, enabled);
 
   const query = useQuery({
     queryKey: [
@@ -114,27 +93,37 @@ export const useAssetSearch = (
       scope.organisationId ?? null,
       term,
     ],
-    enabled: enabled && !!scope.tenantId && !!token.data,
+    enabled: enabled && !!scope.tenantId,
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
-    queryFn: () =>
-      scopedGet<AssetsPage>(
-        requireAssetApiBaseUrl(),
-        '/v1/assets',
-        token.data,
-        {
-          Search: term || undefined,
-          Page: 1,
-          PageSize: PAGE_SIZE,
-        },
-      ),
+    queryFn: async () => {
+      const client = await assetsApi(scope);
+      const { data } = await client.v1AssetsGet(
+        undefined, // status
+        undefined, // assetTypeId
+        undefined, // assetSubTypeId
+        undefined, // assetGroupId
+        undefined, // assetSubGroupId
+        undefined, // manufacturerId
+        undefined, // manufacturerModelId
+        term || undefined, // search
+        undefined, // fuelType
+        undefined, // isPowered
+        undefined, // hasServiceExclusions
+        undefined, // ownershipModel
+        1, // page
+        PAGE_SIZE, // pageSize
+      );
+      return data;
+    },
   });
 
+  const assets: Asset[] = query.data?.assets ?? [];
   return {
-    assets: query.data?.assets ?? [],
+    assets,
     totalCount: query.data?.totalCount ?? 0,
-    isLoading: token.isFetching || query.isFetching,
-    isError: token.isError || query.isError,
+    isLoading: query.isFetching,
+    isError: query.isError,
   };
 };
 
@@ -151,22 +140,16 @@ export const useAssetsByIds = (
   ids: string[],
   ticketTenantId?: string | null,
 ) => {
-  const token = useScopeToken({ tenantId: ticketTenantId }, ids.length > 0);
-  const ready = !ticketTenantId || !!token.data || token.isError;
-
   const results = useQueries({
     queries: ids.map(id => ({
       queryKey: ['assets', 'by-id', ticketTenantId ?? null, id],
-      enabled: ready,
       staleTime: 5 * 60 * 1000,
       retry: false,
       queryFn: async (): Promise<Asset | null> => {
         try {
-          return await scopedGet<Asset>(
-            requireAssetApiBaseUrl(),
-            `/v1/assets/${id}`,
-            token.data,
-          );
+          const client = await assetsApi({ tenantId: ticketTenantId });
+          const { data } = await client.v1AssetsIdGet(id);
+          return data;
         } catch {
           return null;
         }
@@ -181,14 +164,6 @@ export const useAssetsByIds = (
   return byId;
 };
 
-interface TrackablesPage {
-  items?: Array<{
-    subjectSource?: string | null;
-    subjectExternalId?: string | null;
-  }>;
-  totalCount?: number;
-}
-
 const TRACKABLES_PAGE = 500;
 const TRACKABLES_MAX = 5000;
 
@@ -201,14 +176,13 @@ const TRACKABLES_MAX = 5000;
  * missing here has not been connected.
  *
  * tracking-backend ignores filters on /v1/trackables but pages up to 500, so a
- * scope's trackables are read whole (one call for every tenant on dev; Netcorp
- * has 30) and matched here. The token is issued for the 'tracking' app.
+ * scope's trackables are read whole (a single call for a small tenant) and
+ * matched here. The client is scoped to the 'tracking' app.
  */
 export const useTrackedAssetIds = (
   scope: AssetScope,
   { enabled = true } = {},
 ) => {
-  const token = useScopeToken(scope, enabled, 'tracking');
   const query = useQuery({
     queryKey: [
       'assets',
@@ -216,17 +190,31 @@ export const useTrackedAssetIds = (
       scope.tenantId ?? null,
       scope.organisationId ?? null,
     ],
-    enabled: enabled && (!scope.tenantId || !!token.data),
+    enabled,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Set<string>> => {
+      const client = await createScopedApiClient(
+        TrackablesApi,
+        new TrackingConfiguration({ basePath: requireTrackingApiBaseUrl() }),
+        'tracking',
+        scope,
+      );
       const ids = new Set<string>();
       let seen = 0;
       for (let page = 1; seen < TRACKABLES_MAX; page++) {
-        const data = await scopedGet<TrackablesPage>(
-          requireTrackingApiBaseUrl(),
-          '/v1/trackables',
-          token.data,
-          { Page: page, PageSize: TRACKABLES_PAGE },
+        const { data } = await client.v1TrackablesGet(
+          undefined, // search
+          undefined, // groupId
+          undefined, // displayProfileName
+          undefined, // visibilityGroupId
+          undefined, // displayProfileId
+          undefined, // isTrackingActive
+          undefined, // hasTracker
+          undefined, // trackerConnected
+          page,
+          TRACKABLES_PAGE, // pageSize
+          undefined, // orderBy
+          undefined, // sortDirection
         );
         const items = data?.items ?? [];
         for (const t of items) {
@@ -244,7 +232,7 @@ export const useTrackedAssetIds = (
   });
   return {
     trackedIds: query.data,
-    isLoading: token.isFetching || query.isFetching,
-    isError: token.isError || query.isError,
+    isLoading: query.isFetching,
+    isError: query.isError,
   };
 };

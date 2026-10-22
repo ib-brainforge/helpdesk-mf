@@ -134,7 +134,7 @@ export function UserRolesModal({
           )}
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose}>
+          <BaseButton variant="bordered" color="light" onPress={onClose}>
             Close
           </BaseButton>
         </BaseModalFooter>

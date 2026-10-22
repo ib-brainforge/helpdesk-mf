@@ -14,7 +14,6 @@ import {
   usePrincipalTickets,
 } from '@/hooks/usePrincipalTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import type { TicketListDto } from '@/types/ticket';
 import {
   BaseButton,
   BaseInput,
@@ -46,13 +45,8 @@ import {
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 
-/*
- * Bound to the local TicketListDto, not the generated one. The local type is
- * the generated shape plus tenantId and organisationId, which the backend now
- * returns but the generated client will not declare until CI regenerates it
- * from the merged OpenAPI spec.
- */
-const columnHelper = createColumnHelper<TicketListDto>();
+const columnHelper =
+  createColumnHelper<HelpdeskApplicationTicketsDTOsTicketListDto>();
 
 function PrincipalTicketsPage() {
   const { principalId } = useParams<{ principalId: string }>();

@@ -200,7 +200,9 @@ export function CustomStatusEditorModal({
           {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
               meaningful once the record exists (has an id/meta); the create
               form has nothing to place yet. */}
-          {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+          {isEditing && scopeStripProps && (
+            <ContextScopeStrip {...scopeStripProps} />
+          )}
           {isEditing && (
             <MetadataPanel
               meta={metaForPanel}

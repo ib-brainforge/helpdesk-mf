@@ -251,7 +251,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
               )}
             </form.Field>
 
-            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
+            {isEdit && scopeStripProps && (
+              <ContextScopeStrip {...scopeStripProps} />
+            )}
             {isEdit && (
               <MetadataPanel
                 meta={metaForPanel}
@@ -443,6 +445,7 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             <div className="flex justify-end gap-2 mt-4">
               <BaseButton
                 variant="bordered"
+                color="light"
                 onPress={handleClose}
                 type="button"
               >

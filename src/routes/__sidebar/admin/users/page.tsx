@@ -63,6 +63,7 @@ function AdminUsersPage() {
             >
               <BaseButton
                 variant="bordered"
+                color="light"
                 icon={
                   <Icon name="arrow-top-right-on-square" className="h-4 w-4" />
                 }

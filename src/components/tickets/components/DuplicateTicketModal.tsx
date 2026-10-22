@@ -35,6 +35,7 @@ export const DuplicateTicketModal: FC<DuplicateTicketModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={onClose}
             isDisabled={isLoading || isLoading}
           >

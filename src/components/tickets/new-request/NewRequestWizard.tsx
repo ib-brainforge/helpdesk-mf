@@ -841,7 +841,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 Review your request
               </p>
               <p className="text-light-gray mb-3 text-[13px]">
-                This is how your ticket will look to Netcorp support.
+                This is how your ticket will look to the support team.
               </p>
               {/*
               A preview of the ticket itself rather than a summary of the form:
@@ -869,7 +869,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                       </span>
                     )}
                     <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
-                      Goes to Netcorp support
+                      Goes to support
                     </span>
                   </div>
                 </div>

@@ -25,18 +25,6 @@ export interface PrincipalTicketFilters {
   divisionId?: string;
 }
 
-/** Builds the axios options for the params the generated client does not know. */
-const scopeParams = (filters?: PrincipalTicketFilters) => {
-  const params: Record<string, unknown> = {};
-  if (filters?.tenantId) params.tenantId = filters.tenantId;
-  if (filters?.organisationId) params.organisationId = filters.organisationId;
-  if (filters?.divisionId) params.divisionId = filters.divisionId;
-  if (filters?.tagIds?.length) params.tagIds = filters.tagIds;
-  return Object.keys(params).length > 0
-    ? { params, paramsSerializer: { indexes: null as null } }
-    : undefined;
-};
-
 export function usePrincipalTickets(
   principalId: string,
   filters?: PrincipalTicketFilters,
@@ -53,6 +41,7 @@ export function usePrincipalTickets(
       const response = await client.v1PrincipalsPrincipalIdTicketsGet(
         principalId,
         filters?.status,
+        undefined, // statuses
         undefined, // customStatusId — not surfaced in the principal tickets view
         filters?.priority,
         filters?.categoryId,
@@ -62,26 +51,14 @@ export function usePrincipalTickets(
         filters?.unreadOnly,
         undefined, // overdueOnly — not surfaced in the principal tickets view
         undefined, // unassignedOnly — not used for principal tickets view
+        filters?.tenantId || undefined,
+        filters?.organisationId || undefined,
+        filters?.divisionId || undefined,
+        filters?.tagIds?.length ? filters.tagIds : undefined,
         pagination.pageIndex + 1,
         pagination.pageSize,
         'createdAt',
         'desc',
-        /*
-         * Scope and tag filters, sent through the raw axios config rather than
-         * as named arguments. The backend accepts tenantId, organisationId,
-         * divisionId and tagIds (see GetTicketsQuery), but
-         * @brainforgeau/helpdesk-client is generated from the OpenAPI spec by
-         * CI, so the generated signature will not carry them until
-         * generate-client.yml runs against the merged backend change.
-         *
-         * `indexes: null` makes axios emit `tagIds=a&tagIds=b` rather than its
-         * default `tagIds[]=a`, which is the form ASP.NET Core model binding
-         * expects for a Guid[] query parameter.
-         *
-         * REPLACE WITH the generated named arguments once the client is
-         * regenerated, and drop this options object.
-         */
-        scopeParams(filters),
       );
       return response.data;
     },

@@ -261,11 +261,15 @@ function CustomFieldsPage() {
       }
       sidebar={sidebar}
       subheader={
-        selectedTab === 'tickets' ? (
-          <ListScopeStrip {...scope.bannerProps}>
-            {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
-          </ListScopeStrip>
-        ) : undefined
+        selectedTab === 'tickets'
+          ? scope.bannerProps && (
+              <ListScopeStrip {...scope.bannerProps}>
+                {scope.isExpanded && scope.editorProps && (
+                  <BulkScopeEditor {...scope.editorProps} />
+                )}
+              </ListScopeStrip>
+            )
+          : undefined
       }
       empty={
         <EmptyState

@@ -501,9 +501,9 @@ export const createTicketColumns = (
           <IconTip label="Ticket actions">
             <DropdownTrigger
               aria-label="Ticket actions"
-              className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
+              className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue mx-auto flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
             >
-              <Icon name="dotsV" className="h-4 w-4" />
+              <Icon name="dots" className="h-4 w-4" />
             </DropdownTrigger>
           </IconTip>
           <DropdownPopover className="helpdesk-dropdown-popover">

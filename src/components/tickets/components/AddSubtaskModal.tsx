@@ -80,6 +80,7 @@ export const AddSubtaskModal: FC<AddSubtaskModalProps> = ({
         <BaseModalFooter>
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleClose}
             isDisabled={isLoading || isLoading}
           >

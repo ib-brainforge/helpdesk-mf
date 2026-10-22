@@ -91,7 +91,7 @@ function ReportsPage() {
       */}
       <BaseTabs
         className="flex min-h-0 flex-1 flex-col"
-        classNames={{ panel: 'flex min-h-0 flex-1 flex-col' }}
+        classNames={{ panel: 'flex min-h-0 flex-1 flex-col pt-5' }}
         selectedKey={selectedTab}
         onSelectionChange={key => setSelectedTab(key as string)}
       >
@@ -107,7 +107,7 @@ function ReportsPage() {
 
         {/* Custom Tab */}
         <BaseTab key="custom" title="Custom">
-          <div className="mt-4 min-h-0 flex-1 overflow-auto">
+          <div className="min-h-0 flex-1 overflow-auto">
             <CustomReportBuilder onExport={handleExportCustom} />
           </div>
         </BaseTab>

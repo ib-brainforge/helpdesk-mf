@@ -2,6 +2,7 @@ import { COMMENT_ERRORS } from '@/api/local/comments';
 import type { EmailSignaturePreference } from '@/api/local/preferences';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
 import { AttachmentList, FileUploadZone } from '@/components/file-upload';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { MAILBOX_QUERY_KEY, useMailbox } from '@/hooks/useMailbox';
 import { useUserPreference } from '@/hooks/useUserPreference';
 import type { AttachmentDto } from '@/types';
@@ -11,6 +12,7 @@ import { BaseButtonSelect } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { RichTextEditor } from '@brainforgeau/components/text-editor';
+import { usePermissions } from '@brainforgeau/security';
 import { CannedResponsePicker } from '@components/canned-responses';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -102,7 +104,15 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   email,
 }) => {
   const initial = useMemo(() => readDraft(ticketId), [ticketId]);
-  const [mode, setMode] = useState<ComposerMode>(initial?.mode ?? 'reply');
+  // Posting an internal note needs tickets.update, as its endpoint does.
+  // Without it the note mode is hidden so the request is never made, and a
+  // saved note draft opens as a reply.
+  const { hasPermission } = usePermissions();
+  const canPostInternalNote = hasPermission(HelpdeskPermissions.Tickets.Update);
+  const [selectedMode, setMode] = useState<ComposerMode>(
+    initial?.mode ?? 'reply',
+  );
+  const mode: ComposerMode = canPostInternalNote ? selectedMode : 'reply';
   const [body, setBody] = useState(initial?.body ?? '');
   const [cc, setCc] = useState<string[]>(initial?.cc ?? []);
   const [ccInput, setCcInput] = useState('');
@@ -307,31 +317,35 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   return (
     <div className="space-y-3" onKeyDown={handleKeyDown}>
       <div className="flex items-center justify-between gap-2">
-        <BaseButtonSelect<ComposerMode>
-          ariaLabel="Reply or internal note"
-          value={mode}
-          onChange={setMode}
-          options={[
-            {
-              value: 'reply',
-              label: (
-                <span className="flex items-center gap-1.5">
-                  <Icon name="email" className="h-4 w-4" />
-                  {email ? 'Reply by email' : 'Reply'}
-                </span>
-              ),
-            },
-            {
-              value: 'note',
-              label: (
-                <span className="flex items-center gap-1.5">
-                  <Icon name="lock" className="h-4 w-4" />
-                  Internal note
-                </span>
-              ),
-            },
-          ]}
-        />
+        {canPostInternalNote ? (
+          <BaseButtonSelect<ComposerMode>
+            ariaLabel="Reply or internal note"
+            value={mode}
+            onChange={setMode}
+            options={[
+              {
+                value: 'reply',
+                label: (
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="email" className="h-4 w-4" />
+                    {email ? 'Reply by email' : 'Reply'}
+                  </span>
+                ),
+              },
+              {
+                value: 'note',
+                label: (
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="lock" className="h-4 w-4" />
+                    Internal note
+                  </span>
+                ),
+              },
+            ]}
+          />
+        ) : (
+          <span />
+        )}
         <BaseButton
           variant="bordered"
           color="light"

@@ -1020,6 +1020,7 @@ export const TicketGrid: FC = () => {
                 >
                   <BaseButton
                     variant="bordered"
+                    color="light"
                     size="sm"
                     onPress={handleBulkAssign}
                     icon={<Icon name="UserPlusIcon" className="h-4 w-4" />}
@@ -1033,6 +1034,7 @@ export const TicketGrid: FC = () => {
                 >
                   <BaseButton
                     variant="bordered"
+                    color="light"
                     size="sm"
                     onPress={handleBulkChangeStatus}
                     icon={<Icon name="refresh" className="h-4 w-4" />}

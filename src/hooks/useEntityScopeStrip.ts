@@ -99,6 +99,7 @@ export function useEntityScopeStrip<TEntity>(
     PlatformPermissions.Scope.Manage,
   );
   const canViewScope = hasPlatformPermission(PlatformPermissions.Scope.Read);
+  const currentTenantId = selectedContext?.tenantId;
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
   const currentContextName =
@@ -212,30 +213,34 @@ export function useEntityScopeStrip<TEntity>(
     | undefined;
 
   return {
-    /** Spread directly onto `<ContextScopeStrip {...stripProps} />`. */
-    stripProps: {
-      meta: recordMeta,
-      ownerName: scopeOwnerName,
-      ownerDivisionName: scopeOwnerDivisionName,
-      currentContextName,
-      currentOrganisationId,
-      currentDivisionId,
-      organisationCount,
-      // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc
-      // comment in scopeTestingBypass.ts. Remove this line to revert.
-      bypassSingleOrganisationSuppressionForTesting:
-        SCOPE_TESTING_BYPASS_SINGLE_ORG,
-      canManageScope,
-      canViewScope,
-      organisations: scopeOrganisations,
-      divisions: scopeDivisions,
-      users: [] as SelectOption[],
-      ownerUserName: scopeOwnerUserName,
-      // allowClearUser intentionally omitted (defaults false) -- no picker
-      // for this level yet, see this module's own doc comment.
-      onOrganisationChange: setScopeEditOrganisationId,
-      onSave: handleScopeSave,
-    },
+    /** Spread directly onto `<ContextScopeStrip {...stripProps} />`; undefined when the
+     * selected context has no tenant (render nothing). */
+    stripProps: currentTenantId
+      ? {
+          meta: recordMeta,
+          ownerName: scopeOwnerName,
+          ownerDivisionName: scopeOwnerDivisionName,
+          currentContextName,
+          currentTenantId,
+          currentOrganisationId,
+          currentDivisionId,
+          organisationCount,
+          // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc
+          // comment in scopeTestingBypass.ts. Remove this line to revert.
+          bypassSingleOrganisationSuppressionForTesting:
+            SCOPE_TESTING_BYPASS_SINGLE_ORG,
+          canManageScope,
+          canViewScope,
+          organisations: scopeOrganisations,
+          divisions: scopeDivisions,
+          users: [] as SelectOption[],
+          ownerUserName: scopeOwnerUserName,
+          // allowClearUser intentionally omitted (defaults false) -- no picker
+          // for this level yet, see this module's own doc comment.
+          onOrganisationChange: setScopeEditOrganisationId,
+          onSave: handleScopeSave,
+        }
+      : undefined,
     /** `RecordMeta`, ready for `<MetadataPanel meta={metaForPanel} .../>`. */
     metaForPanel: recordMeta,
     /** Ready for `<MetadataPanel scopeBadge={scopeBadge} .../>`. */

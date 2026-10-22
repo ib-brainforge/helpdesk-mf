@@ -95,6 +95,9 @@ const fetchHelpdeskAssignments = async ({
       undefined, // keycloakUserId: everyone
       appId,
       undefined, // tenantId: all, placement is matched per scope below
+      undefined, // organisationId
+      undefined, // divisionId
+      undefined, // effectiveAtContext
       true, // isActive
       false, // includeScopes
       page,

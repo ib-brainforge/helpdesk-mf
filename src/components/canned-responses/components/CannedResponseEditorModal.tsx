@@ -183,7 +183,9 @@ export function CannedResponseEditorModal({
               isRequired
             />
 
-            {isEditing && <ContextScopeStrip {...scopeStripProps} />}
+            {isEditing && scopeStripProps && (
+              <ContextScopeStrip {...scopeStripProps} />
+            )}
             {isEditing && (
               <MetadataPanel
                 meta={metaForPanel}
@@ -301,7 +303,7 @@ export function CannedResponseEditorModal({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
-          <BaseButton variant="bordered" onPress={onClose}>
+          <BaseButton variant="bordered" color="light" onPress={onClose}>
             Cancel
           </BaseButton>
           <BaseButton

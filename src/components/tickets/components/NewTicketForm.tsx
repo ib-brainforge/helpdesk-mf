@@ -424,6 +424,7 @@ export const NewTicketForm: FC = () => {
         <div className="flex items-center justify-end gap-4 pt-6 border-t">
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleCancel}
             isDisabled={
               createTicketMutation.isPending || createTicketMutation.isPending

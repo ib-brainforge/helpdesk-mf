@@ -220,7 +220,11 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
               </div>
             </BaseModalBody>
             <BaseModalFooter>
-              <BaseButton variant="bordered" onPress={modalOnClose}>
+              <BaseButton
+                variant="bordered"
+                color="light"
+                onPress={modalOnClose}
+              >
                 Cancel
               </BaseButton>
             </BaseModalFooter>

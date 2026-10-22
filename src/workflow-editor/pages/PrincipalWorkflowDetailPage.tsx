@@ -253,6 +253,7 @@ export function PrincipalWorkflowDetailPage() {
               <BaseButton
                 size="sm"
                 variant="bordered"
+                color="light"
                 onPress={() => setCloneOpen(true)}
               >
                 Clone
@@ -290,6 +291,7 @@ export function PrincipalWorkflowDetailPage() {
           <BaseButton
             size="sm"
             variant="bordered"
+            color="light"
             onPress={() => setShowVersionsSidebar(prev => !prev)}
           >
             Versions

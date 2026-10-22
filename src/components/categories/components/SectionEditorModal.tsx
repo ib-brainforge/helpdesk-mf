@@ -160,7 +160,9 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
             {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
                 meaningful once the record exists (has an id/meta); the create
                 form has nothing to place yet. */}
-            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
+            {isEdit && scopeStripProps && (
+              <ContextScopeStrip {...scopeStripProps} />
+            )}
             {isEdit && (
               <MetadataPanel
                 meta={metaForPanel}
@@ -197,6 +199,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
             <div className="flex justify-end gap-2 mt-4">
               <BaseButton
                 variant="bordered"
+                color="light"
                 onPress={handleClose}
                 type="button"
               >

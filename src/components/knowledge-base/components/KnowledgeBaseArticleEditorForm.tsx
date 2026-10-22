@@ -222,6 +222,7 @@ export const KnowledgeBaseArticleEditorForm: FC<
         {mode === 'edit' && article?.slug && (
           <BaseButton
             variant="bordered"
+            color="light"
             size="sm"
             onPress={handleViewArticle}
             icon={<Icon name="eye" className="h-4 w-4" />}
@@ -400,6 +401,7 @@ export const KnowledgeBaseArticleEditorForm: FC<
         <div className="flex items-center justify-between pt-6 border-t">
           <BaseButton
             variant="bordered"
+            color="light"
             onPress={handleCancel}
             isDisabled={publishArticleMutation.isPending || isLoading}
           >
