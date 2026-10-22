@@ -1,8 +1,17 @@
+import {
+  type HelpdeskDomainKnowledgeBaseEnumsKbPortalSection as KbPortalSection,
+  KnowledgeBaseApi,
+} from '@/api/helpdesk-client';
 import { DuplicateCategoryModal } from '@/components/knowledge-base/components/DuplicateCategoryModal';
 import {
   useDuplicateKbCategory,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import {
+  PORTAL_SECTION_HINT,
+  PORTAL_SECTION_OPTIONS,
+  portalSectionLabel,
+} from '@/components/knowledge-base/portalSection';
 import { ModalHeader } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseCategoryDto } from '@/types';
@@ -22,8 +31,8 @@ import {
   PageHeader,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
 import {
+  Chip,
   Dropdown,
   DropdownItem,
   DropdownMenu,
@@ -51,6 +60,9 @@ function CategoryFormModal({
   const [name, setName] = useState(category?.name ?? '');
   const [description, setDescription] = useState(category?.description ?? '');
   const [parentId, setParentId] = useState<string>(category?.parentId ?? '');
+  const [portalSection, setPortalSection] = useState<KbPortalSection>(
+    category?.portalSection ?? 'None',
+  );
 
   const queryClient = useQueryClient();
 
@@ -62,6 +74,7 @@ function CategoryFormModal({
         description: description || undefined,
         parentId: parentId || undefined,
         sortOrder: 0,
+        portalSection,
       });
       return response.data;
     },
@@ -82,6 +95,7 @@ function CategoryFormModal({
         id: category.id,
         name,
         description: description || undefined,
+        portalSection,
       });
       return response.data;
     },
@@ -132,6 +146,24 @@ function CategoryFormModal({
               onChange={e => setDescription(e.target.value)}
               placeholder="Optional description"
             />
+            <div>
+              <BaseSelect
+                label="Show in customer portal"
+                selectedKey={portalSection}
+                onSelectionChange={key =>
+                  setPortalSection(key as KbPortalSection)
+                }
+              >
+                {PORTAL_SECTION_OPTIONS.map(option => (
+                  <BaseSelectItem key={option.id} id={option.id}>
+                    {option.label}
+                  </BaseSelectItem>
+                ))}
+              </BaseSelect>
+              <p className="text-default-500 mt-1 text-xs">
+                {PORTAL_SECTION_HINT}
+              </p>
+            </div>
             {mode === 'create' && (
               <BaseSelect
                 label="Parent category (optional)"
@@ -289,7 +321,14 @@ function KbCategoriesPage() {
                   <span className="bg-default-300 ml-4 h-px w-4" />
                 )}
                 <div>
-                  <p className="font-medium">{cat.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{cat.name}</p>
+                    {cat.portalSection && cat.portalSection !== 'None' && (
+                      <Chip size="sm" color="accent" variant="soft">
+                        Portal: {portalSectionLabel(cat.portalSection)}
+                      </Chip>
+                    )}
+                  </div>
                   {cat.description && (
                     <p className="text-default-500 mt-0.5 text-xs">
                       {cat.description}

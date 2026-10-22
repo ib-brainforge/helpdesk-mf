@@ -12,6 +12,7 @@
     "serve": "modern serve",
     "new": "modern new",
     "lint": "biome check",
+    "test": "vitest run",
     "prepare": "simple-git-hooks",
     "upgrade": "modern upgrade",
     "dev:with-packages": "echo \"Start package servers first, then run: npm run dev\"",
@@ -39,7 +40,6 @@
   "dependencies": {
     "@brainforgeau/asset-backend-client": "0.5.1322-develop.bcacb39",
     "@brainforgeau/components": "0.5.736",
-    "@brainforgeau/helpdesk-client": "0.5.373-develop.b2dcb21",
     "@brainforgeau/identity-management-client": "0.5.1239-develop.d6b2cdf",
     "@brainforgeau/observability": "0.5.116",
     "@brainforgeau/rules-ui": "0.5.182",
@@ -114,7 +114,8 @@
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.11.1",
     "tailwindcss": "4.3.0",
-    "typescript": "~5.7.3"
+    "typescript": "~5.7.3",
+    "vitest": "^4.1.7"
   },
   "pnpm": {
     "overrides": {

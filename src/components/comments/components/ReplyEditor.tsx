@@ -1,3 +1,4 @@
+import { CommentsApi } from '@/api/helpdesk-client';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
 import {
   AttachmentList,
@@ -13,7 +14,6 @@ import { BaseToggle } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { RichTextEditor } from '@brainforgeau/components/text-editor';
-import { CommentsApi } from '@brainforgeau/helpdesk-client';
 import { usePermissions } from '@brainforgeau/security';
 import { CannedResponsePicker } from '@components/canned-responses';
 import { toast } from '@heroui/react';

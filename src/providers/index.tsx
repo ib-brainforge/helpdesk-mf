@@ -1,3 +1,4 @@
+import { Configuration } from '@/api/helpdesk-client';
 import { ObservabilityProvider } from '@/observability';
 import {
   authorizedAxios,
@@ -11,7 +12,6 @@ import {
 } from '@/workflow-editor';
 import { ErrorBoundary } from '@brainforgeau/components';
 import { ScopeVisibilityProvider } from '@brainforgeau/components/scope-visibility';
-import { Configuration } from '@brainforgeau/helpdesk-client';
 import { PlatformPermissions, usePermissions } from '@brainforgeau/security';
 import type React from 'react';
 import { useEffect } from 'react';

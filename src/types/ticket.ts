@@ -8,14 +8,14 @@ export {
   HelpdeskDomainTicketsEnumsTicketStatus,
   HelpdeskDomainTicketsEnumsTicketPriority,
   HelpdeskDomainTicketsEnumsTicketOrigin,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 
 // Keep local enum aliases for easier use in the UI
 import {
   HelpdeskDomainTicketsEnumsTicketOrigin,
   HelpdeskDomainTicketsEnumsTicketPriority,
   HelpdeskDomainTicketsEnumsTicketStatus,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 
 export enum TicketStatus {
   New = 'New',
@@ -42,7 +42,7 @@ import type {
   HelpdeskApplicationCommonPagedResultTicketListDto as GeneratedPagedResult,
   HelpdeskApplicationTicketsDTOsTicketDto as GeneratedTicketDto,
   HelpdeskApplicationTicketsDTOsTicketListDto as GeneratedTicketListDto,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 
 export type TicketListDto = GeneratedTicketListDto & {
   // requesterName / assigneeName are now provided natively by the generated

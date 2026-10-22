@@ -1,3 +1,7 @@
+import {
+  HelpdeskDomainApprovalsEnumsApprovalDecisionType as ApprovalDecisionType,
+  HelpdeskDomainApprovalsEnumsApprovalState as ApprovalState,
+} from '@/api/helpdesk-client';
 import { ModalHeader, StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import {
@@ -12,10 +16,6 @@ import {
 import { Box } from '@brainforgeau/components/base';
 import { useConfirm } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import {
-  HelpdeskDomainApprovalsEnumsApprovalDecisionType as ApprovalDecisionType,
-  HelpdeskDomainApprovalsEnumsApprovalState as ApprovalState,
-} from '@brainforgeau/helpdesk-client';
 import { PermissionGuard, useTimezone } from '@brainforgeau/security';
 import { type FC, useCallback, useState } from 'react';
 import {

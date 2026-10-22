@@ -1,13 +1,13 @@
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import type {
   ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
   ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
   ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
-} from '@brainforgeau/helpdesk-client';
-import { Configuration } from '@brainforgeau/helpdesk-client';
-import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
-import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
+} from '@/api/helpdesk-client';
+import { Configuration } from '@/api/helpdesk-client';
+import { RuleGraphsApi } from '@/api/helpdesk-client/api/rule-graphs-api';
+import { RuleProjectsApi } from '@/api/helpdesk-client/api/rule-projects-api';
+import { authorizedAxios } from '@/state/authorizedAxios';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 /**
  * Adapter that exposes helpdesk-mf's rule API functions as the structural
  * `RulesApiClient` interface expected by `@brainforgeau/rules-ui`.

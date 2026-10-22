@@ -1,13 +1,13 @@
+import type {
+  ServicesCoreAbstractionsRecordMeta,
+  ServicesCoreAbstractionsScopePatch,
+  ServicesCoreScopeAspNetCoreControllersBulkScopePatchResponse,
+} from '@/api/helpdesk-client';
 import type { BulkScopeSaveResult } from '@brainforgeau/components/bulk-scope-editor';
 import type {
   ScopePatchWire,
   WireRecordMeta,
 } from '@brainforgeau/components/scope-list';
-import type {
-  ServicesCoreAbstractionsRecordMeta,
-  ServicesCoreAbstractionsScopePatch,
-  ServicesCoreScopeAspNetCoreControllersBulkScopePatchResponse,
-} from '@brainforgeau/helpdesk-client';
 
 export {
   toScopeMeta,

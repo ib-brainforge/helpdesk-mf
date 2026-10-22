@@ -1,3 +1,4 @@
+import { ScopeApi } from '@/api/helpdesk-client';
 import { CannedResponseEditorModal } from '@/components/canned-responses/components/CannedResponseEditorModal';
 import {
   useCannedResponses,
@@ -27,7 +28,6 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
-import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
   PlatformPermissions,
   useAccessScope,

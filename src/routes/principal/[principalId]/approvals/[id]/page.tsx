@@ -6,6 +6,7 @@
  * Steps display is read-only within the form section — step editor is future work.
  */
 
+import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@/api/helpdesk-client';
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -26,7 +27,6 @@ import {
   useDetailTabState,
   useEntityForm,
 } from '@brainforgeau/components/page';
-import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useOutletContext, useParams } from '@modern-js/runtime/router';
 import { z } from 'zod';

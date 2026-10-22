@@ -1,3 +1,10 @@
+import type {
+  ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
+  ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
+  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
+} from '@/api/helpdesk-client';
+import { RuleGraphsApi } from '@/api/helpdesk-client/api/rule-graphs-api';
+import { RuleProjectsApi } from '@/api/helpdesk-client/api/rule-projects-api';
 /**
  * TanStack Query hooks for rule projects and rule graphs in helpdesk-mf.
  *
@@ -6,17 +13,10 @@
  * the tenant context changes.
  *
  * Uses generated `RuleProjectsApi` + `RuleGraphsApi` from
- * `@brainforgeau/helpdesk-client` via `createHelpdeskApiClient`.
+ * the vendored helpdesk client (`src/api/helpdesk-client`) via `createHelpdeskApiClient`.
  */
 import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type {
-  ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
-  ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
-  ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
-} from '@brainforgeau/helpdesk-client';
-import { RuleGraphsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-graphs-api';
-import { RuleProjectsApi } from '@brainforgeau/helpdesk-client/dist/api/rule-projects-api';
 import type { RuleGraphContent } from '@brainforgeau/rules-ui';
 import type {
   RuleGraphDto,

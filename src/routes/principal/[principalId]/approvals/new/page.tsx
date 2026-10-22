@@ -4,6 +4,7 @@
  * W1-P8: Migrated from raw useState form to <FormPage> with useEntityForm.
  */
 
+import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@/api/helpdesk-client';
 import { AppAuthSplash } from '@/components/AppSplash';
 import { APPROVAL_MODE_LABELS } from '@/constants/approvalLabels';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -19,7 +20,6 @@ import {
   PendingCrumb,
   useEntityForm,
 } from '@brainforgeau/components/page';
-import { HelpdeskDomainApprovalsEnumsApprovalMode } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import {
   useNavigate,

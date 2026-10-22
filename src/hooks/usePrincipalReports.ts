@@ -1,8 +1,8 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationReportingQueriesGetPrincipalTicketVolumePrincipalTicketVolumeDto,
   PrincipalReportsApi,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useQuery } from '@tanstack/react-query';
 
 const QUERY_KEY = 'principal-reports-ticket-volume';

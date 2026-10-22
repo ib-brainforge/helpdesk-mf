@@ -13,6 +13,13 @@ import { IconTip } from '@/components/shared';
  * Change" is enabled.
  */
 
+import {
+  type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowStepDto as ApprovalWorkflowStepFormDto,
+  ApprovalWorkflowsApi,
+  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDetailDto,
+  HelpdeskDomainApprovalsEnumsApprovalMode,
+  ScopeApi,
+} from '@/api/helpdesk-client';
 import { AppLoadingSplash } from '@/components/AppSplash';
 import { EntityMovedScreen } from '@/components/EntityMovedScreen';
 import {
@@ -45,13 +52,6 @@ import {
   useDetailTabState,
   useEntityForm,
 } from '@brainforgeau/components/page';
-import {
-  type HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowStepDto as ApprovalWorkflowStepFormDto,
-  ApprovalWorkflowsApi,
-  type HelpdeskApplicationApprovalsDTOsApprovalWorkflowDetailDto,
-  HelpdeskDomainApprovalsEnumsApprovalMode,
-  ScopeApi,
-} from '@brainforgeau/helpdesk-client';
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';

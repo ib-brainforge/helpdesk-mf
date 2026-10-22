@@ -166,14 +166,27 @@ the boot path. A navbar load failure degrades to that `<ErrorBoundary>`'s
 fallback around `<TopNavbar>` instead of killing the whole app, and is
 surfaced as a `bf:mf-remote-error` window event.
 
+### Helpdesk API client
+
+The helpdesk TypeScript client is vendored under `src/api/helpdesk-client` and
+generated from helpdesk-backend's committed `openapi/swagger.json`. Never edit
+those files by hand; after a backend API change regenerate with:
+
+```bash
+tool/openapi/generate-clients.sh   # needs openapi-generator-cli 7.16.0 and a helpdesk-backend clone
+```
+
+Set `BACKENDS_ROOT` if the backend clones are not under `~/Projects/bf-github/ib`.
+
 ### Common gates before pushing
 
 ```bash
-pnpm exec tsc --noEmit
+pnpm install --frozen-lockfile
 pnpm run lint        # biome check
+pnpm exec tsc --noEmit
+pnpm test            # vitest, pure-logic unit tests
 pnpm build
 ```
 
-Note: unlike asset-mf, helpdesk-mf has no `test:unit` (Vitest) script — only
-Playwright e2e (`pnpm run test:e2e`, separate suite/setup, not a required
-local gate before pushing).
+Playwright e2e (`pnpm run test:e2e`) is a separate suite and not a required
+local gate before pushing.

@@ -21,6 +21,7 @@ import {
 import { NavLink } from '@modern-js/runtime/router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
+import { isPortalTicket } from '../portal';
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import type { TicketRow } from '../types';
@@ -203,6 +204,9 @@ export const createTicketColumns = (
           >
             {value ?? 'Untitled Ticket'}
           </NavLink>
+          {isPortalTicket(row.original.origin) && (
+            <StatusBadge color="primary">Portal</StatusBadge>
+          )}
         </div>
       );
     },

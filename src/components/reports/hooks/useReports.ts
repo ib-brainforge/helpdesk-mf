@@ -1,3 +1,4 @@
+import { ReportsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   AgentUtilizationDto,
@@ -17,7 +18,6 @@ import type {
   TicketByStatusDto,
   TicketSummaryReportDto,
 } from '@/types';
-import { ReportsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 export const useTicketSummaryReport = (

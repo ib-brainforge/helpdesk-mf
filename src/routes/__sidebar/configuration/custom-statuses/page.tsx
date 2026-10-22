@@ -1,3 +1,4 @@
+import { ScopeApi } from '@/api/helpdesk-client';
 import { CustomStatusEditorModal } from '@/components/custom-statuses/components/CustomStatusEditorModal';
 import {
   useCustomStatuses,
@@ -34,7 +35,6 @@ import {
   useConfirm,
 } from '@brainforgeau/components/page';
 import { useScopeList } from '@brainforgeau/components/scope-list';
-import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import {
   PlatformPermissions,
   useAccessScope,

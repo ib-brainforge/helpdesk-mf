@@ -49,6 +49,7 @@ interface UseCategoryTableOptions {
   isLoading?: boolean;
   onEditCategory: (category: CategoryDto) => void;
   onDeleteCategory: (categoryId: string) => void;
+  onTogglePortalEnquiry: (category: CategoryDto) => void;
   /**
    * Categories the tenant may use but does not own (the Netcorp presets).
    * They are listed so the set matches what the request form offers, but they
@@ -64,6 +65,7 @@ export function useCategoryTable({
   searchTerm,
   onEditCategory,
   onDeleteCategory,
+  onTogglePortalEnquiry,
   presetIds,
 }: UseCategoryTableOptions) {
   const columns = useMemo(
@@ -105,6 +107,17 @@ export function useCategoryTable({
         size: 150,
       }),
       columnHelper.display({
+        id: 'portalEnquiries',
+        header: 'Customer portal',
+        cell: ({ row }) =>
+          row.original.isPortalEnquiryCategory ? (
+            <StatusBadge color="primary">Portal enquiries</StatusBadge>
+          ) : (
+            <span className="text-sm text-default-400">—</span>
+          ),
+        size: 160,
+      }),
+      columnHelper.display({
         id: 'actions',
         header: '',
         cell: ({ row }) => {
@@ -123,6 +136,31 @@ export function useCategoryTable({
           }
           return (
             <div className="-my-1.5 flex items-center justify-end gap-1">
+              <IconTip
+                label={
+                  row.original.isPortalEnquiryCategory
+                    ? 'Stop using for customer portal enquiries'
+                    : 'Use for customer portal enquiries'
+                }
+              >
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className={
+                    row.original.isPortalEnquiryCategory
+                      ? 'text-blue'
+                      : 'text-dark dark:text-light hover:text-blue'
+                  }
+                  aria-label={
+                    row.original.isPortalEnquiryCategory
+                      ? 'Stop using for customer portal enquiries'
+                      : 'Use for customer portal enquiries'
+                  }
+                  aria-pressed={row.original.isPortalEnquiryCategory ?? false}
+                  onPress={() => onTogglePortalEnquiry(row.original)}
+                  icon={<Icon name="chat" className="h-4 w-4" />}
+                />
+              </IconTip>
               <IconTip label={'Edit category'}>
                 <BaseButton
                   variant="link"
@@ -151,7 +189,7 @@ export function useCategoryTable({
         size: 100,
       }),
     ],
-    [onEditCategory, onDeleteCategory, presetIds],
+    [onEditCategory, onDeleteCategory, onTogglePortalEnquiry, presetIds],
   );
 
   // Build flat rows with section grouping info

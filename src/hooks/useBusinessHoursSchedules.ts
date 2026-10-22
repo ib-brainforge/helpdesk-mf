@@ -1,8 +1,8 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationSlaQueriesGetBusinessHoursSchedulesBusinessHoursScheduleSummaryDto,
   SlaApi,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useQuery } from '@tanstack/react-query';
 
 export type BusinessHoursScheduleSummary =

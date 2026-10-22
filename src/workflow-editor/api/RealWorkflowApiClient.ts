@@ -3,11 +3,8 @@
 // Backend serializes enums as strings (JsonStringEnumConverter). Frontend enums are
 // now string-backed (Task 1) so round-trips match directly.
 
-import type { Configuration } from '@brainforgeau/helpdesk-client';
-import {
-  PrincipalWorkflowsApi,
-  WorkflowsApi,
-} from '@brainforgeau/helpdesk-client';
+import type { Configuration } from '@/api/helpdesk-client';
+import { PrincipalWorkflowsApi, WorkflowsApi } from '@/api/helpdesk-client';
 import type {
   HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowDefinitionDto as BackendWorkflowDefinitionDto,
   HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowStateDto as BackendWorkflowStateDto,
@@ -16,7 +13,7 @@ import type {
   HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowVersionDto as BackendWorkflowVersionDto,
   HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftStateInput as UpdateWorkflowDraftStateInput,
   HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftTransitionInput as UpdateWorkflowDraftTransitionInput,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 // REVIEW: AxiosInstance type sourced from @brainforgeau/security (which re-exports from axios)
 // to avoid a direct `import from 'axios'` that is not in project dependencies.
 import type { authorizedAxios as _AuthorizedAxios } from '@brainforgeau/security';

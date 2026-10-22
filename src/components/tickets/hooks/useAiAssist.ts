@@ -1,5 +1,5 @@
+import { AiAssistApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { AiAssistApi } from '@brainforgeau/helpdesk-client';
 import { useMutation } from '@tanstack/react-query';
 
 export interface AiAssistResult {

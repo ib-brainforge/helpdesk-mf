@@ -18,6 +18,8 @@ interface InlineEditableProps {
   emptyLabel?: string;
   /** False renders display-only, with no double-click affordance. */
   canEdit?: boolean;
+  /** The value is customer-authored plain text and is shown as text only. */
+  isPlainText?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export const InlineEditable: FC<InlineEditableProps> = ({
   variant,
   emptyLabel = 'Click to add',
   canEdit = true,
+  isPlainText = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -103,7 +106,7 @@ export const InlineEditable: FC<InlineEditableProps> = ({
         title={title}
       >
         {value ? (
-          <TicketDescriptionContent value={value} />
+          <TicketDescriptionContent value={value} isPlainText={isPlainText} />
         ) : (
           <p className="text-sm text-default-400 italic">{emptyLabel}</p>
         )}

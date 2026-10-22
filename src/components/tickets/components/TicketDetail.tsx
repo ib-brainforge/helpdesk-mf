@@ -70,6 +70,7 @@ import {
   useUpdateTicket,
 } from '../hooks/useTickets';
 import { NewRequestModal } from '../new-request/NewRequestModal';
+import { findConsignmentLink, isPortalTicket } from '../portal';
 import { getStatusConfig } from '../ticket-status-config';
 import { AddSubtaskModal } from './AddSubtaskModal';
 import { AiAssistantModal } from './AiAssistantModal';
@@ -784,6 +785,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   // State-conflict derived flags — fields are extended on TicketDto until helpdesk-client is regenerated
   const isDeleted = !!ticket.isDeleted;
   const isSpam = !!ticket.isSpam;
+  const isPortal = isPortalTicket(ticket.origin);
+  const consignmentLink = findConsignmentLink(ticket.linkedEntities);
   // Tickets that are spam or deleted cannot be moderated further
   const canModerate = !isDeleted && !isSpam && canModerateTickets;
   // All actions are disabled when ticket is deleted
@@ -856,6 +859,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                       The badges below stay: they are exceptional states with no
                       control of their own on this page.
                     */}
+                    {isPortal && (
+                      <StatusBadge color="primary">Portal</StatusBadge>
+                    )}
                     {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
                     {ticket.isProblem && (
                       <StatusBadge color="danger">Problem</StatusBadge>
@@ -866,6 +872,15 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                       </StatusBadge>
                     )}
                   </div>
+                  {consignmentLink && (
+                    <p className="text-sm text-default-600">
+                      Consignment{' '}
+                      <span className="text-base font-semibold text-foreground">
+                        {consignmentLink.displayReference ||
+                          consignmentLink.entityId}
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -1136,7 +1151,8 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 value={ticket.description ?? ''}
                 onSave={next => handleInlineSave('description', next)}
                 isSaving={updateTicketMutation.isPending}
-                canEdit={!actionsDisabled && canWriteTicket}
+                canEdit={!actionsDisabled && canWriteTicket && !isPortal}
+                isPlainText={isPortal}
                 emptyLabel="No description yet."
               />
             </Box>
@@ -1294,6 +1310,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 </div>
                 <CommentThread
                   comments={visibleComments}
+                  plainTextAuthorId={isPortal ? ticket.requesterId : undefined}
                   isLoading={commentsLoading}
                 />
                 <div ref={replyEditorRef} className="helpdesk-print-hide">

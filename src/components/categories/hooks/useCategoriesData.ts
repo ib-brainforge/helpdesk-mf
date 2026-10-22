@@ -1,11 +1,11 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import type { CategoryDto, SectionDto } from '@/types/category';
-import { AccessLevel } from '@/types/category';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
+import { CategoriesApi } from '@/api/helpdesk-client';
 import type {
   HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto,
   HelpdeskApplicationCategoriesModelsCategoryDto,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import type { CategoryDto, SectionDto } from '@/types/category';
+import { AccessLevel } from '@/types/category';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useDuplicateCategory = () => {
@@ -18,6 +18,26 @@ export const useDuplicateCategory = () => {
       return response.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
+    },
+  });
+};
+
+/**
+ * Marks or unmarks a category as the tenant's customer-portal enquiry category.
+ * Marking one moves the mark off the previous one on the server.
+ */
+export const useSetPortalEnquiryCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (args: { categoryId: string; isMarked: boolean }) => {
+      const client = await createHelpdeskApiClient(CategoriesApi);
+      await client.v1CategoriesIdPortalEnquiryPatch(args.categoryId, {
+        isPortalEnquiryCategory: args.isMarked,
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
     },
   });
@@ -53,6 +73,7 @@ function mapGeneratedCategory(
     isActive: cat.isActive ?? true,
     sortOrder: cat.sortOrder ?? 0,
     customFieldIds: cat.customFieldIds ?? undefined,
+    isPortalEnquiryCategory: cat.isPortalEnquiryCategory ?? false,
   };
 }
 

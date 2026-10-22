@@ -10,7 +10,7 @@ import {
   type HelpdeskDomainCommentsEnumsCommentType,
   type HelpdeskDomainTicketsEnumsTicketPriority,
   type HelpdeskDomainTicketsEnumsTicketStatus,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 
 import type { TicketPriority, TicketStatus } from '@/types/ticket';
 

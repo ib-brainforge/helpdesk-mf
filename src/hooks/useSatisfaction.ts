@@ -1,13 +1,13 @@
+import {
+  type HelpdeskApplicationSatisfactionCommandsSubmitSatisfactionRatingSubmitSatisfactionRatingCommand,
+  type HelpdeskApplicationSatisfactionCommandsUpdateSatisfactionRatingUpdateSatisfactionRatingCommand,
+  SatisfactionApi,
+} from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CSATReportFilters,
   SatisfactionRatingsListFilters,
 } from '@/types';
-import {
-  type HelpdeskApplicationSatisfactionCommandsSubmitSatisfactionRatingSubmitSatisfactionRatingCommand,
-  type HelpdeskApplicationSatisfactionCommandsUpdateSatisfactionRatingUpdateSatisfactionRatingCommand,
-  SatisfactionApi,
-} from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useSatisfactionRatingByTicket = (ticketId: string) => {

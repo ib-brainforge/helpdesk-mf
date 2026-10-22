@@ -5,6 +5,7 @@
  * W1-review-fixes: usePrincipal() wired; principalName resolves from identity-management.
  */
 
+import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@/api/helpdesk-client';
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ModalHeader, ScopeCell, StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
@@ -29,7 +30,6 @@ import {
   PendingCrumb,
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
-import type { HelpdeskApplicationTicketsDTOsTicketListDto } from '@brainforgeau/helpdesk-client';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useTimezone } from '@brainforgeau/security';
 import { useOverlayState } from '@heroui/react';

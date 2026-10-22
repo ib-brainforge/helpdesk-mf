@@ -1,6 +1,6 @@
+import { TagsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CreateTagDto, TagDto } from '@/types';
-import { TagsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useTags = (searchTerm?: string) => {

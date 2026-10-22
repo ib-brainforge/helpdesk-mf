@@ -1,3 +1,4 @@
+import { CategoriesApi, ScopeApi } from '@/api/helpdesk-client';
 import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -16,7 +17,6 @@ import {
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
-import { CategoriesApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

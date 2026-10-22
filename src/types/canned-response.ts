@@ -5,10 +5,10 @@ export {
   type HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand,
   HelpdeskDomainCannedResponsesEnumsCannedResponseScope,
   HelpdeskDomainCannedResponsesEnumsCannedResponseScope as CannedResponseScope,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
 
 // Local type aliases for convenience
-import type { HelpdeskApplicationCannedResponsesDTOsCannedResponseDto as GeneratedCannedResponseDto } from '@brainforgeau/helpdesk-client';
+import type { HelpdeskApplicationCannedResponsesDTOsCannedResponseDto as GeneratedCannedResponseDto } from '@/api/helpdesk-client';
 
 export type CannedResponseDto = GeneratedCannedResponseDto & {
   // Add any UI-specific fields

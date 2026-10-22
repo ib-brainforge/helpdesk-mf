@@ -1,8 +1,8 @@
+import { CustomFieldsApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CustomFieldUsageType } from '@/types/custom-field';
 import type { CustomFieldDefinitionDto } from '@/types/custom-field';
 import { toApiCustomFieldUsageType } from '@/utils/typeMappers';
-import { CustomFieldsApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import {

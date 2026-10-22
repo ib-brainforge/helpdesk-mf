@@ -1,10 +1,10 @@
+import { AttachmentsApi } from '@/api/helpdesk-client';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import {
   createHelpdeskApiClient,
   createHelpdeskApiConfiguration,
 } from '@/state/helpdeskApiClient';
 import type { AttachmentDto, FileUploadProgress } from '@/types';
-import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 

@@ -1,10 +1,10 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand,
   type HelpdeskDomainTicketsEnumsTicketPriority,
   type HelpdeskDomainTicketsEnumsTicketStatus,
   PrincipalTicketsApi,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useState } from 'react';

@@ -9,17 +9,22 @@ import {
   useCategoriesData,
   useCategoryTable,
   usePresetCategories,
+  useSetPortalEnquiryCategory,
 } from '@components/categories';
 
+import { CategoriesApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
-import { extractErrorMessage, isServerError } from '@/utils/error-handling';
+import {
+  extractErrorMessage,
+  isConflictError,
+  isServerError,
+} from '@/utils/error-handling';
 import {
   EmptyState,
   ListPage,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -175,6 +180,58 @@ function CategoriesPage() {
     if (ok) deleteCategoryMutation.mutate(categoryId);
   };
 
+  const setPortalEnquiry = useSetPortalEnquiryCategory();
+
+  const handleTogglePortalEnquiry = async (category: CategoryDto) => {
+    const isMarking = !category.isPortalEnquiryCategory;
+    const current = categories.find(
+      c => c.isPortalEnquiryCategory && c.id !== category.id,
+    );
+    if (isMarking && current) {
+      const ok = await confirm({
+        title: 'Move customer portal enquiries?',
+        body: `"${current.name}" is currently used for customer portal enquiries. New enquiries will be filed under "${category.name}" instead. Existing tickets are not changed.`,
+        confirmLabel: 'Move',
+      });
+      if (!ok) return;
+    } else if (!isMarking) {
+      const ok = await confirm({
+        title: 'Stop customer portal enquiries?',
+        body: `Customers will not be able to raise enquiries from the portal until another category is chosen.`,
+        confirmLabel: 'Stop',
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    setPortalEnquiry.mutate(
+      { categoryId: category.id, isMarked: isMarking },
+      {
+        onSuccess: () =>
+          toast(
+            isMarking
+              ? `"${category.name}" now receives customer portal enquiries`
+              : `"${category.name}" no longer receives customer portal enquiries`,
+            { variant: 'success' },
+          ),
+        onError: error => {
+          if (isConflictError(error)) {
+            toast('Customer portal enquiry category changed', {
+              description:
+                'Another change was made at the same time. The list has been refreshed; try again.',
+              variant: 'warning',
+            });
+            return;
+          }
+          if (isServerError(error)) return;
+          toast("Couldn't update the customer portal enquiry category", {
+            description: extractErrorMessage(error, 'Please try again.'),
+            variant: 'danger',
+          });
+        },
+      },
+    );
+  };
+
   const handleDeleteSection = async (section: SectionDto) => {
     const ok = await confirm({
       title: 'Delete section?',
@@ -197,6 +254,7 @@ function CategoriesPage() {
     isLoading: isLoading || isLoadingPresets,
     onEditCategory: handleEditCategory,
     onDeleteCategory: handleDeleteCategory,
+    onTogglePortalEnquiry: handleTogglePortalEnquiry,
     presetIds,
   });
 

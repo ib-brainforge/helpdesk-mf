@@ -1,10 +1,10 @@
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand,
   type HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand,
   type HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand,
   PrincipalTicketsApi,
-} from '@brainforgeau/helpdesk-client';
+} from '@/api/helpdesk-client';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function usePrincipalTicket(principalId: string, ticketId: string) {
