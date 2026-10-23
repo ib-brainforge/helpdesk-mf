@@ -25,7 +25,7 @@ import { useAtomValue } from 'jotai';
 import { useState } from 'react';
 
 /**
- * DTO tenancy/scope metadata initiative -- shared `ContextScopeStrip`
+ * DTO tenancy/scope metadata initiative -- shared `RecordStrip`
  * wiring hook for helpdesk-mf detail (or detail-equivalent, e.g. an entity
  * editor modal) screens. Ported from asset-mf's `useEntityScopeStrip`
  * (PR #369) rather than hand-authoring the same ~80 lines once per screen.
@@ -45,6 +45,8 @@ interface UseEntityScopeStripArgsBase {
   entityLabel: string;
   /** The record's embedded wire-shape `meta` (e.g. `status.meta`). */
   meta: ServicesCoreAbstractionsRecordMeta | null | undefined;
+  /** The record's own id, shown in the strip's "Record details" popover. */
+  recordId?: string | null;
   /** Calls `ScopeApi.v1ScopeEntityTypeIdPatch(entityType, id, patch)` -- entityType/id already bound by the caller. */
   patchScope: (patch: ServicesCoreAbstractionsScopePatch) => Promise<unknown>;
 }
@@ -88,7 +90,7 @@ export type UseEntityScopeStripArgs<TEntity> =
 export function useEntityScopeStrip<TEntity>(
   args: UseEntityScopeStripArgs<TEntity>,
 ) {
-  const { entityLabel, meta, patchScope } = args;
+  const { entityLabel, meta, recordId, patchScope } = args;
   const selectedContext = useAtomValue(selectedContextAtom);
   const { accessScope, organisationCount } = useAccessScope(
     selectedContext?.tenantId,
@@ -110,9 +112,9 @@ export function useEntityScopeStrip<TEntity>(
 
   const scopeOrganisations: SelectOption[] = (accessScope?.organisations ?? [])
     .filter((org): org is typeof org & { id: string } => Boolean(org.id))
-    .map(org => ({ id: org.id, name: org.name ?? org.id }));
+    .map(org => ({ id: org.id, name: org.name ?? 'Unnamed organisation' }));
 
-  // Mirrors ContextScopeStrip's internally-selected Organisation so the
+  // Mirrors RecordStrip's internally-selected Organisation so the
   // Division options can be re-filtered as the user changes it.
   const [scopeEditOrganisationId, setScopeEditOrganisationId] = useState<
     string | null
@@ -125,7 +127,7 @@ export function useEntityScopeStrip<TEntity>(
       : []
   )
     .filter((div): div is typeof div & { id: string } => Boolean(div.id))
-    .map(div => ({ id: div.id, name: div.name ?? div.id }));
+    .map(div => ({ id: div.id, name: div.name ?? 'Unnamed division' }));
 
   const scopeOwnerOrganisation = accessScope?.organisations?.find(
     org => org.id === meta?.organisationId,
@@ -212,40 +214,41 @@ export function useEntityScopeStrip<TEntity>(
     | null
     | undefined;
 
+  const canViewMetadata = hasPlatformPermission(
+    PlatformPermissions.Metadata.Read,
+  );
+
   return {
-    /** Spread directly onto `<ContextScopeStrip {...stripProps} />`; undefined when the
-     * selected context has no tenant (render nothing). */
-    stripProps: currentTenantId
-      ? {
-          meta: recordMeta,
-          ownerName: scopeOwnerName,
-          ownerDivisionName: scopeOwnerDivisionName,
-          currentContextName,
-          currentTenantId,
-          currentOrganisationId,
-          currentDivisionId,
-          organisationCount,
-          // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc
-          // comment in scopeTestingBypass.ts. Remove this line to revert.
-          bypassSingleOrganisationSuppressionForTesting:
-            SCOPE_TESTING_BYPASS_SINGLE_ORG,
-          canManageScope,
-          canViewScope,
-          organisations: scopeOrganisations,
-          divisions: scopeDivisions,
-          users: [] as SelectOption[],
-          ownerUserName: scopeOwnerUserName,
-          // allowClearUser intentionally omitted (defaults false) -- no picker
-          // for this level yet, see this module's own doc comment.
-          onOrganisationChange: setScopeEditOrganisationId,
-          onSave: handleScopeSave,
-        }
-      : undefined,
-    /** `RecordMeta`, ready for `<MetadataPanel meta={metaForPanel} .../>`. */
-    metaForPanel: recordMeta,
-    /** Ready for `<MetadataPanel scopeBadge={scopeBadge} .../>`. */
-    scopeBadge: { organisationCount, currentOrganisationId, currentDivisionId },
-    /** Ready for `<MetadataPanel canViewMetadata={canViewMetadata} .../>`. */
-    canViewMetadata: hasPlatformPermission(PlatformPermissions.Metadata.Read),
+    /** Spread directly onto `<RecordStrip {...recordStripProps} />`. Always returned:
+     * without a tenant the audit line still renders and out-of-context
+     * detection is skipped by RecordStrip. */
+    recordStripProps: {
+      meta: recordMeta,
+      recordId: recordId ?? undefined,
+      ownerName: scopeOwnerName,
+      ownerDivisionName: scopeOwnerDivisionName,
+      tenantName:
+        accessScope?.tenantName ?? selectedContext?.tenantName ?? undefined,
+      currentContextName,
+      currentTenantId,
+      currentOrganisationId,
+      currentDivisionId,
+      organisationCount,
+      // REVIEW: TEMPORARY -- see SCOPE_TESTING_BYPASS_SINGLE_ORG's doc
+      // comment in scopeTestingBypass.ts. Remove this line to revert.
+      bypassSingleOrganisationSuppressionForTesting:
+        SCOPE_TESTING_BYPASS_SINGLE_ORG,
+      canManageScope,
+      canViewScope,
+      canViewMetadata,
+      organisations: scopeOrganisations,
+      divisions: scopeDivisions,
+      users: [] as SelectOption[],
+      ownerUserName: scopeOwnerUserName,
+      // allowClearUser intentionally omitted (defaults false) -- no picker
+      // for this level yet, see this module's own doc comment.
+      onOrganisationChange: setScopeEditOrganisationId,
+      onSave: handleScopeSave,
+    },
   };
 }

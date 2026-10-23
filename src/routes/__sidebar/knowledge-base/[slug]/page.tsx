@@ -21,10 +21,9 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   BaseButton,
   BaseCard,
-  ContextScopeStrip,
   Icon,
+  RecordStrip,
 } from '@brainforgeau/components';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import {
   DetailPage,
   PendingCrumb,
@@ -67,15 +66,11 @@ function KnowledgeBaseArticlePage() {
     destinationName: string | null;
   } | null>(null);
 
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Article',
     meta: article?.meta,
+    recordId: article?.id,
     queryClient,
     queryKey: ['knowledge-base', 'article', slug ?? ''],
     fetchEntity: () => fetchKnowledgeBaseArticleBySlug(slug ?? ''),
@@ -238,16 +233,7 @@ function KnowledgeBaseArticlePage() {
 
       {/* Info tab — article metadata + related articles. No formActions (read-only). */}
       <DetailPage.Tab id="info" title="Info">
-        <div className="space-y-6">
-          {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
-              width, above the narrower metadata card below. */}
-          {scopeStripProps && <ContextScopeStrip {...scopeStripProps} />}
-          <MetadataPanel
-            meta={metaForPanel}
-            scopeBadge={scopeBadge}
-            canViewMetadata={canViewMetadata}
-          />
-        </div>
+        {recordStripProps && <RecordStrip {...recordStripProps} />}
         <div className="mt-6 max-w-sm space-y-6">
           <BaseCard>
             <h3 className="mb-3 text-lg font-semibold">Article Info</h3>

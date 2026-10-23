@@ -120,7 +120,7 @@ function CustomStatusesPage() {
   // border (see the REVIEW note by the `<ListPage>` call re: the
   // `selectionColumn` half of `tableProps`). List-side re-scoping remains
   // "Change all N out-of-context records" only; per-record scope editing is
-  // always available from the edit modal's own `ContextScopeStrip`.
+  // always available from the edit modal's own `RecordStrip`.
   const scope = useScopeList({
     rows: customStatuses,
     getMeta: row => toWireMeta(row.meta),
