@@ -6,8 +6,8 @@ import {
   BaseTextarea,
   Icon,
 } from '@brainforgeau/components';
+import { usePageTitle } from '@brainforgeau/components/page';
 import { Card } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { type FC, useEffect, useState } from 'react';
 
@@ -21,6 +21,12 @@ function SatisfactionSurveyPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const submitMutation = useSubmitSatisfactionRating();
+
+  let pageTitle = 'Customer Satisfaction Survey';
+  if (!token) pageTitle = 'Survey Link Invalid';
+  else if (submitted) pageTitle = 'Thank You!';
+  else if (submitMutation.isError) pageTitle = 'Survey Error';
+  usePageTitle(pageTitle);
 
   // REVIEW: Check if token exists
   useEffect(() => {
@@ -49,9 +55,6 @@ function SatisfactionSurveyPage() {
   if (!token) {
     return (
       <>
-        <Helmet>
-          <title>Survey Link Invalid</title>
-        </Helmet>
         <div className="flex min-h-screen items-center justify-center bg-default-50">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
@@ -76,9 +79,6 @@ function SatisfactionSurveyPage() {
   if (submitted) {
     return (
       <>
-        <Helmet>
-          <title>Thank You!</title>
-        </Helmet>
         <div className="flex min-h-screen items-center justify-center bg-default-50">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
@@ -105,9 +105,6 @@ function SatisfactionSurveyPage() {
 
     return (
       <>
-        <Helmet>
-          <title>Survey Error</title>
-        </Helmet>
         <div className="flex min-h-screen items-center justify-center bg-default-50">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
@@ -132,9 +129,6 @@ function SatisfactionSurveyPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Customer Satisfaction Survey</title>
-      </Helmet>
       <div className="flex min-h-screen items-center justify-center bg-default-50 p-4">
         <BaseCard className="w-full max-w-lg">
           <div className="mb-6 text-center">

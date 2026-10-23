@@ -27,7 +27,7 @@ import { TicketStatus } from '@/types/ticket';
 import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { useConfirm } from '@brainforgeau/components/page';
+import { useConfirm, usePageTitle } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import {
   PermissionGuard,
@@ -100,6 +100,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   const currentUserId = user?.profile?.sub;
   const replyEditorRef = useRef<HTMLDivElement>(null);
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
+  usePageTitle(ticket?.subject ? `Ticket: ${ticket.subject}` : 'Ticket');
   const updateTicketMutation = useUpdateTicket();
 
   // Tenant tickets have full feature set

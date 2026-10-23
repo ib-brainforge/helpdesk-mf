@@ -12,7 +12,7 @@ import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
 import { PageSpinner } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { EmptyState } from '@brainforgeau/components/page';
+import { EmptyState, usePageTitle } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import {
   useTimezone,
@@ -24,6 +24,7 @@ import { useState } from 'react';
 const PAGE_SIZE = 20;
 
 function IdeasForumPage() {
+  usePageTitle('Ideas Forum');
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const timezone = useTimezone();

@@ -9,10 +9,12 @@
 
 import { AppAuthSplash } from '@/components/AppSplash';
 import { TicketGrid } from '@/components/tickets/components/TicketGrid';
+import { usePageTitle } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function TicketsPage() {
+  usePageTitle('Tickets');
   return (
     // `flex-1 min-h-0`, not `h-full`: `h-full` resolved against a parent with
     // no definite height and collapsed to auto.

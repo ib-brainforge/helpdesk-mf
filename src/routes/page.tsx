@@ -1,5 +1,6 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { usePageTitle } from '@brainforgeau/components/page';
 import {
   usePermissions,
   withAuthenticationRequired,
@@ -13,6 +14,7 @@ import React from 'react';
  * tickets instead of a page that would say Access Denied.
  */
 function Page() {
+  usePageTitle('Helpdesk');
   const { hasPermission, isLoading } = usePermissions();
   if (isLoading) return <AppAuthSplash />;
   return (

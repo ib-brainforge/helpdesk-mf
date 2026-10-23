@@ -127,7 +127,7 @@ function KnowledgeBaseArticlePage() {
         slug: slug!,
         title: article.title ?? PendingCrumb,
       }}
-      documentTitle={`${article.title} – Knowledge Base`}
+      documentTitle={article.title}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       headerActions={

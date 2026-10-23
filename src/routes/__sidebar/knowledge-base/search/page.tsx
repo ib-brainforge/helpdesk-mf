@@ -59,9 +59,7 @@ function KnowledgeBaseSearchPage() {
         title="Search Knowledge Base"
         breadcrumbsKey="knowledge-base.search"
         documentTitle={
-          searchTerm
-            ? `Search: ${searchTerm} – Knowledge Base`
-            : 'Search Knowledge Base'
+          searchTerm ? `Search: ${searchTerm}` : 'Search Knowledge Base'
         }
       >
         {searchTerm && (

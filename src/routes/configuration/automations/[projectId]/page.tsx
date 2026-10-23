@@ -10,11 +10,12 @@
  */
 import { RuleGraphsListPage } from '@/automations-editor';
 import { AppAuthSplash } from '@/components/AppSplash';
-import { PageBody } from '@brainforgeau/components/page';
+import { PageBody, usePageTitle } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function AutomationRuleGraphsRoute() {
+  usePageTitle('Automation Rules');
   return (
     <PageBody>
       <RuleGraphsListPage />
