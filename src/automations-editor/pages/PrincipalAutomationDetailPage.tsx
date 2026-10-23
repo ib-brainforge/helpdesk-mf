@@ -241,10 +241,11 @@ export function PrincipalAutomationDetailPage() {
     );
   }
 
-  // REVIEW: flex-1 min-h-0 fills the app-shell flex parent. -m-5 kept to bleed
-  // to the page edge (matching the tracking-mf full-canvas pattern).
+  // Fills the viewport below the shell's top block (navbar + alert strip +
+  // subscription banner), published as --bf-shell-top-offset. The principal
+  // layout adds no padding, so no negative margin is needed.
   return (
-    <div className="-m-5 flex flex-1 min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900 dark:text-zinc-100">
+    <div className="flex min-h-0 h-[calc(100dvh-var(--bf-shell-top-offset,55px))] flex-col overflow-hidden bg-white dark:bg-zinc-900 dark:text-zinc-100">
       {/* Top bar */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex min-w-0 items-center gap-3">

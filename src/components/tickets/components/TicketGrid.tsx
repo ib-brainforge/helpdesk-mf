@@ -75,61 +75,6 @@ export const TicketGrid: FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const mobileSidebarState = useOverlayState();
 
-  /*
-   * Locks this page to the visible viewport so it never scrolls as a whole.
-   *
-   * This has to be measured rather than expressed in CSS. Nothing above this
-   * component has a height: the chain is html > body > div#root >
-   * div.flex.flex-1, and every one of those is a plain block box sized by its
-   * content. So `h-full` resolves to auto and `flex-1` has no free space to
-   * distribute — a tall sidebar simply grows the page. (The theme ships a
-   * [data-overlay-container] rule with min-height:100dvh that would have given
-   * us a floor, but that element is not rendered in this app — verified by
-   * walking the live ancestor chain, not assumed.)
-   *
-   * `100dvh - <our distance from the top>` is not expressible in CSS either,
-   * and hardcoding the navbar height is what the workflow and automation
-   * editors were explicitly changed away from (see their REVIEW comments) —
-   * it broke the moment the navbar's height changed. Measuring is exact in
-   * both the standalone and shell-embedded layouts.
-   *
-   * The ResizeObserver on <body> is what makes it self-correcting: the navbar
-   * mounts lazily via Suspense, which shifts our top edge down, and that
-   * changes body's height, which re-triggers the measurement. The 1px
-   * threshold stops the observer feeding back into itself forever.
-   */
-  const gridRootRef = useRef<HTMLDivElement>(null);
-  const [gridHeight, setGridHeight] = useState<number>();
-
-  useLayoutEffect(() => {
-    const el = gridRootRef.current;
-    if (!el) return undefined;
-
-    let frame = 0;
-    const measure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        // scrollY keeps this correct even if the page is scrolled when we run.
-        const top = el.getBoundingClientRect().top + window.scrollY;
-        const next = Math.max(320, Math.round(window.innerHeight - top));
-        setGridHeight(prev =>
-          prev !== undefined && Math.abs(prev - next) <= 1 ? prev : next,
-        );
-      });
-    };
-
-    measure();
-    window.addEventListener('resize', measure);
-    const observer = new ResizeObserver(measure);
-    observer.observe(document.body);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('resize', measure);
-      observer.disconnect();
-    };
-  }, []);
-
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTab = (() => {
     const param = searchParams.get('tab');
@@ -791,20 +736,21 @@ export const TicketGrid: FC = () => {
 
   return (
     <div
-      ref={gridRootRef}
-      style={{ height: gridHeight }}
+      // Fills the viewport below the shell's top block (navbar + alert strip +
+      // subscription banner), which the shell publishes as --bf-shell-top-offset.
+      style={{ height: 'calc(100dvh - var(--bf-shell-top-offset, 55px))' }}
       // No `flex-1` here on purpose: `flex: 1 1 0%` makes the flex algorithm
-      // resolve this item's main size and overrides the measured `height`
+      // resolve this item's main size and overrides the explicit `height`
       // above, so the row grew right back to its content. `shrink-0` keeps the
-      // measured height authoritative.
+      // explicit height authoritative.
       className="flex min-h-0 shrink-0 gap-0 overflow-hidden"
     >
       {/* Desktop sidebar — always visible, hidden on mobile */}
       {/*
         No height of its own — it stretches to the row, which is now sized by the
         flex chain above. An earlier attempt used `h-screen self-start`, but the
-        row starts BELOW the top navbar, so a 100vh sidebar hung roughly a
-        navbar-height past the bottom of the viewport: that alone made the page
+        row starts BELOW the shell's top block, so a 100vh sidebar hung roughly
+        that block's height past the bottom of the viewport: that alone made the page
         scrollable and stretched the ticket column, which then rendered one extra
         row.
 
