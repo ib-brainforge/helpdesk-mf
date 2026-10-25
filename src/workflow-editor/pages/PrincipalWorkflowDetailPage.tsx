@@ -212,10 +212,11 @@ export function PrincipalWorkflowDetailPage() {
     [data.versions],
   );
 
-  // REVIEW: flex-1 min-h-0 fills the app-shell flex parent. -m-5 kept to bleed
-  // to the page edge (matching the tracking-mf full-canvas pattern).
+  // Fills the viewport below the shell's top block (navbar + alert strip +
+  // subscription banner), published as --bf-shell-top-offset. The principal
+  // layout adds no padding, so no negative margin is needed.
   return (
-    <div className="-m-5 flex flex-1 min-h-0 flex-col overflow-hidden">
+    <div className="flex min-h-0 h-[calc(100dvh-var(--bf-shell-top-offset,55px))] flex-col overflow-hidden">
       {/* Single top bar: breadcrumb + badges on the left, all actions on the right */}
       <div className="border-light flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-content1 px-4 py-2">
         <div className="flex min-w-0 items-center gap-3">

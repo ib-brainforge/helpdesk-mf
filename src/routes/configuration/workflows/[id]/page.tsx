@@ -10,10 +10,12 @@
  */
 import { AppAuthSplash } from '@/components/AppSplash';
 import { WorkflowDetailPage } from '@/workflow-editor';
+import { usePageTitle } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function WorkflowDetailRoute() {
+  usePageTitle('Workflow');
   return <WorkflowDetailPage />;
 }
 

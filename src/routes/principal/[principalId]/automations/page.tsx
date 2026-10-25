@@ -30,7 +30,6 @@ function PrincipalAutomationListRoute() {
           principalId: principalId!,
           principalName: principal?.name ?? PendingCrumb,
         }}
-        documentTitle={false}
       />
       <PrincipalAutomationProjectsListPage showTitle={false} />
     </>

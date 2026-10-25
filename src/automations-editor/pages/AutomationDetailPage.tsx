@@ -3,7 +3,7 @@
  *
  * Layout follows the exact same pattern as WorkflowDetailPage:
  * - Single top bar: breadcrumb + version badge on left, actions on right
- * - Full-height canvas: -m-5 override + h-[calc(100vh-4rem)]
+ * - Full-height canvas: h-[calc(100dvh-var(--bf-shell-top-offset,55px))]
  * - GraphEditor from @brainforgeau/rules-ui with helpdesk catalogs
  * - Versions sidebar on the right
  * - Key the GraphEditor by active version id so canvas remounts on version switch
@@ -249,11 +249,10 @@ export function AutomationDetailPage() {
     );
   }
 
-  // REVIEW: flex-1 min-h-0 fills the app-shell flex parent instead of hardcoding
-  // calc(100vh-4rem) which assumed a fixed 4rem navbar and caused the editor to
-  // overlap the TopNavbar.
+  // Fills the viewport below the shell's top block (navbar + alert strip +
+  // subscription banner), published as --bf-shell-top-offset.
   return (
-    <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900 dark:text-zinc-100">
+    <div className="flex min-h-0 h-[calc(100dvh-var(--bf-shell-top-offset,55px))] flex-col overflow-hidden bg-white dark:bg-zinc-900 dark:text-zinc-100">
       {/* Top bar: breadcrumb + badges left, actions right */}
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-white px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex min-w-0 items-center gap-3">

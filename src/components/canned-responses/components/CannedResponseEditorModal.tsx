@@ -7,11 +7,10 @@ import {
   BaseModalFooter,
   BaseSelect,
   BaseSelectItem,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -59,15 +58,11 @@ export function CannedResponseEditorModal({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // response exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEditing` below).
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Canned response',
     meta: cannedResponse?.meta,
+    recordId: cannedResponse?.id,
     patchScope: async patch => {
       if (!cannedResponse?.id) return;
       const client = await createHelpdeskApiClient(ScopeApi);
@@ -175,6 +170,9 @@ export function CannedResponseEditorModal({
         </ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
+            {isEditing && recordStripProps && (
+              <RecordStrip {...recordStripProps} />
+            )}
             <BaseInput
               label="Name"
               placeholder="Enter response name"
@@ -182,17 +180,6 @@ export function CannedResponseEditorModal({
               onChange={e => setTitle(e.target.value)}
               isRequired
             />
-
-            {isEditing && scopeStripProps && (
-              <ContextScopeStrip {...scopeStripProps} />
-            )}
-            {isEditing && (
-              <MetadataPanel
-                meta={metaForPanel}
-                scopeBadge={scopeBadge}
-                canViewMetadata={canViewMetadata}
-              />
-            )}
 
             <div>
               <label className="block text-sm font-medium mb-2">Body</label>

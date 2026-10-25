@@ -22,8 +22,8 @@ import QueryProvider from './QueryProvider';
 // Resolves the viewer's real platform permissions once, under `AuthProvider`
 // (where `usePermissions()` has a context to read from), and feeds them to
 // `ScopeVisibilityProvider` as the ambient default for every scope-aware
-// component in `@brainforgeau/components` (`ScopeBadge`, `ContextScopeStrip`,
-// `ListScopeStrip`, `useScopeList`, `MetadataPanel`, `BaseTable`'s row
+// component in `@brainforgeau/components` (`ScopeBadge`, `RecordStrip`,
+// `ListScopeStrip`, `useScopeList`, `BaseTable`'s row
 // marker). Explicit `canViewScope`/`canManageScope`/`canViewMetadata` props
 // passed directly to those components still override this context.
 function ScopeVisibilityMount({ children }: { children: React.ReactNode }) {

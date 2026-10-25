@@ -30,7 +30,6 @@ function PrincipalWorkflowListRoute() {
           principalId: principalId!,
           principalName: principal?.name ?? PendingCrumb,
         }}
-        documentTitle={false}
       />
       <PrincipalWorkflowListPage showTitle={false} />
     </>

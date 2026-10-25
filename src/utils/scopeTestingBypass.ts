@@ -4,7 +4,7 @@
  * Mirrors asset-mf's/hr-mf's `SCOPE_TESTING_BYPASS_SINGLE_ORG` (DTO tenancy/
  * scope metadata initiative, ported to helpdesk-mf). The D6 single-
  * organisation suppression rule hides the entire scope UI (`ScopeBadge`/
- * `ListScopeStrip`/`ContextScopeStrip`) for any tenant with zero or one
+ * `ListScopeStrip`/`RecordStrip`) for any tenant with zero or one
  * organisation -- there is nothing to test against otherwise. Setting this
  * `true` bypasses that suppression at every call site that references it
  * (every `useScopeList` call and every `useEntityScopeStrip` call) so the

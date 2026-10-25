@@ -17,11 +17,10 @@ import {
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { CustomFieldsApi, ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
@@ -81,15 +80,11 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
   // DTO tenancy/scope metadata initiative -- only meaningful once the field
   // exists (has an id/meta); the create form has nothing to place yet
   // (gated on `isEdit` below).
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom field',
     meta: field?.meta,
+    recordId: field?.id,
     patchScope: async patch => {
       if (!field) return;
       const client = await createHelpdeskApiClient(ScopeApi);
@@ -237,6 +232,9 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
             }}
             className="flex flex-col gap-4 pb-4"
           >
+            {isEdit && recordStripProps && (
+              <RecordStrip {...recordStripProps} />
+            )}
             <form.Field name="name">
               {field => (
                 <BaseInput
@@ -250,17 +248,6 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
                 />
               )}
             </form.Field>
-
-            {isEdit && scopeStripProps && (
-              <ContextScopeStrip {...scopeStripProps} />
-            )}
-            {isEdit && (
-              <MetadataPanel
-                meta={metaForPanel}
-                scopeBadge={scopeBadge}
-                canViewMetadata={canViewMetadata}
-              />
-            )}
 
             <div className="grid grid-cols-2 gap-4">
               <form.Field name="fieldType">

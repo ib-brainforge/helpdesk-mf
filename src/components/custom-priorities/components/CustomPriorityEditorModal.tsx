@@ -8,10 +8,9 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -55,15 +54,11 @@ export function CustomPriorityEditorModal({
   const queryClient = useQueryClient();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom priority',
     meta: priority?.meta,
+    recordId: priority?.id,
     // entityType is the backend's CLR class name (DbSet<CustomPriority>).
     patchScope: async patch => {
       if (!priority?.id) return;
@@ -144,6 +139,9 @@ export function CustomPriorityEditorModal({
           {isEditing ? 'Edit Custom Priority' : 'Create Custom Priority'}
         </ModalHeader>
         <BaseModalBody className="space-y-4">
+          {isEditing && recordStripProps && (
+            <RecordStrip {...recordStripProps} />
+          )}
           <BaseInput
             label="Name"
             placeholder="e.g. Urgent, VIP"
@@ -154,18 +152,6 @@ export function CustomPriorityEditorModal({
             maxLength={100}
             isRequired
           />
-
-          {/* Placement only exists once the record does. */}
-          {isEditing && scopeStripProps && (
-            <ContextScopeStrip {...scopeStripProps} />
-          )}
-          {isEditing && (
-            <MetadataPanel
-              meta={metaForPanel}
-              scopeBadge={scopeBadge}
-              canViewMetadata={canViewMetadata}
-            />
-          )}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">

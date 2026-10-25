@@ -34,7 +34,7 @@ import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { useConfirm } from '@brainforgeau/components/page';
+import { useConfirm, usePageTitle } from '@brainforgeau/components/page';
 import { PermissionGuard, usePermissions } from '@brainforgeau/security';
 import {
   Dropdown,
@@ -115,6 +115,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
    */
   const limited = !!scope?.principalId;
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
+  usePageTitle(ticket?.subject ? `Ticket: ${ticket.subject}` : 'Ticket');
   const updateTicketMutation = useUpdateTicket();
 
   // Tenant tickets have full feature set
