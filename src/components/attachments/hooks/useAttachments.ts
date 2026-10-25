@@ -1,3 +1,4 @@
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import {
   createHelpdeskApiClient,
@@ -13,12 +14,13 @@ const getApiBaseUrl = (): string => {
 };
 
 export const useAttachments = (ticketId?: string) => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, refetch } = useQuery<AttachmentDto[]>({
     queryKey: ['attachments', ticketId],
     queryFn: async () => {
       if (!ticketId) return [];
 
-      const client = await createHelpdeskApiClient(AttachmentsApi);
+      const client = await createHelpdeskApiClient(AttachmentsApi, scope);
       const response = await client.v1AttachmentsTicketTicketIdGet(ticketId);
       const baseUrl = getApiBaseUrl();
 
@@ -50,6 +52,7 @@ export const useAttachments = (ticketId?: string) => {
 };
 
 export const useUploadAttachment = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
   const [uploadProgress, setUploadProgress] = useState<FileUploadProgress[]>(
     [],
@@ -67,7 +70,7 @@ export const useUploadAttachment = () => {
       commentId?: string;
       isInlineImage?: boolean;
     }) => {
-      const client = await createHelpdeskApiClient(AttachmentsApi);
+      const client = await createHelpdeskApiClient(AttachmentsApi, scope);
 
       // Update progress tracking
       setUploadProgress(prev => [
@@ -160,9 +163,10 @@ export const useUploadAttachment = () => {
 };
 
 export const useDownloadAttachment = () => {
+  const scope = useHelpdeskScope();
   return useMutation({
     mutationFn: async (attachmentId: string) => {
-      const client = await createHelpdeskApiClient(AttachmentsApi);
+      const client = await createHelpdeskApiClient(AttachmentsApi, scope);
 
       // REVIEW: Backend returns presigned URL directly
       const response = await client.v1AttachmentsIdGet(attachmentId);
@@ -179,11 +183,12 @@ export const useDownloadAttachment = () => {
 };
 
 export const useDeleteAttachment = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (attachmentId: string) => {
-      const client = await createHelpdeskApiClient(AttachmentsApi);
+      const client = await createHelpdeskApiClient(AttachmentsApi, scope);
       await client.v1AttachmentsIdDelete(attachmentId);
       return attachmentId;
     },

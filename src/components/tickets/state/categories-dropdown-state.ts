@@ -1,3 +1,4 @@
+import type { HelpdeskScope } from '@/api/local/scoped';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
 import { atomWithMutation } from 'jotai-tanstack-query';
@@ -10,11 +11,18 @@ export interface CategoryOption {
 
 export const categoriesMutationAtom = atomWithMutation<
   CategoryOption[],
-  { query: string }
+  /** `scope`: the ticket's company, whose categories these are. */
+  { query: string; scope?: HelpdeskScope | null }
 >(() => ({
   mutationKey: ['categories-search'],
-  mutationFn: async ({ query }: { query: string }) => {
-    const client = await createHelpdeskApiClient(PlatformMyCategoriesApi);
+  mutationFn: async ({
+    query,
+    scope,
+  }: { query: string; scope?: HelpdeskScope | null }) => {
+    const client = await createHelpdeskApiClient(
+      PlatformMyCategoriesApi,
+      scope,
+    );
     const { data } = await client.v1PlatformMyCategoriesGet();
 
     // data is a flat CategoryDto[] — no hierarchy unwrapping needed.

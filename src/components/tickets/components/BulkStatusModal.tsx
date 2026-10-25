@@ -22,6 +22,11 @@ interface BulkStatusModalProps {
    */
   onConfirm: (status: TicketStatus, customStatusId: string | null) => void;
   ticketCount: number;
+  /**
+   * False when the selection includes another company's tickets. Custom
+   * statuses belong to one company, so only the built-in three are offered.
+   */
+  allowCustomStatuses?: boolean;
 }
 
 export const BulkStatusModal: FC<BulkStatusModalProps> = ({
@@ -29,8 +34,13 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
   onClose,
   onConfirm,
   ticketCount,
+  allowCustomStatuses = true,
 }) => {
-  const { customStatuses } = useCustomStatuses();
+  const { customStatuses: ownStatuses } = useCustomStatuses();
+  const customStatuses = useMemo(
+    () => (allowCustomStatuses ? ownStatuses : []),
+    [allowCustomStatuses, ownStatuses],
+  );
   // No current ticket to preserve a retired status for: a bulk action applies
   // one status to many tickets, so only the active ones are offerable.
   const statusOptions = useMemo(
@@ -72,6 +82,12 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
               </BaseSelectItem>
             ))}
           </BaseSelect>
+          {!allowCustomStatuses && (
+            <p className="mt-2 text-xs text-default-500">
+              Custom statuses are offered when every selected ticket is in your
+              company.
+            </p>
+          )}
         </BaseModalBody>
         <BaseModalFooter>
           <BaseButton variant="bordered" color="light" onPress={onClose}>

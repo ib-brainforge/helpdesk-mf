@@ -1,13 +1,27 @@
+import { helpdeskScopeKey, useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CreateTagDto, TagDto } from '@/types';
 import { TagsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export const useTags = (searchTerm?: string) => {
+/**
+ * The company's tags. `enabled: false` holds the request until it is wanted
+ * (the Tickets list asks only once its Tags filter is opened); the key is the
+ * same either way, so the list is cached for every later caller.
+ */
+export const useTags = (
+  searchTerm?: string,
+  { enabled = true }: { enabled?: boolean } = {},
+) => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, refetch } = useQuery<TagDto[]>({
-    queryKey: ['tags', searchTerm],
+    enabled,
+    // Tags belong to a company, so the list is per company.
+    queryKey: ['tags', helpdeskScopeKey(scope), searchTerm],
+    // Reference data; creating a tag invalidates it.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TagsApi);
+      const client = await createHelpdeskApiClient(TagsApi, scope);
 
       // REVIEW: Using search endpoint for autocomplete functionality
       const response = await client.v1TagsSearchGet(searchTerm);
@@ -23,10 +37,11 @@ export const useTags = (searchTerm?: string) => {
 };
 
 export const useTicketTags = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, refetch } = useQuery<TagDto[]>({
     queryKey: ['ticket-tags', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TagsApi);
+      const client = await createHelpdeskApiClient(TagsApi, scope);
       const response = await client.v1TagsTicketTicketIdGet(ticketId);
       return (response.data ?? []) as unknown as TagDto[];
     },
@@ -41,11 +56,12 @@ export const useTicketTags = (ticketId: string) => {
 };
 
 export const useCreateTag = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (tag: CreateTagDto) => {
-      const client = await createHelpdeskApiClient(TagsApi);
+      const client = await createHelpdeskApiClient(TagsApi, scope);
       const response = await client.v1TagsPost({
         name: tag.name,
         color: tag.color,
@@ -59,6 +75,7 @@ export const useCreateTag = () => {
 };
 
 export const useAddTagToTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -66,7 +83,7 @@ export const useAddTagToTicket = () => {
       ticketId,
       tagId,
     }: { ticketId: string; tagId: string }) => {
-      const client = await createHelpdeskApiClient(TagsApi);
+      const client = await createHelpdeskApiClient(TagsApi, scope);
 
       // REVIEW: Backend endpoint adds tag by tagId (must exist first)
       const response = await client.v1TagsTicketIdTagsTagIdPost(
@@ -88,6 +105,7 @@ export const useAddTagToTicket = () => {
 };
 
 export const useRemoveTagFromTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -95,7 +113,7 @@ export const useRemoveTagFromTicket = () => {
       ticketId,
       tagId,
     }: { ticketId: string; tagId: string }) => {
-      const client = await createHelpdeskApiClient(TagsApi);
+      const client = await createHelpdeskApiClient(TagsApi, scope);
       await client.v1TagsTicketIdTagsTagIdDelete(ticketId, tagId);
       return { ticketId, tagId };
     },

@@ -2,9 +2,11 @@
  * PrincipalSidenav — left navigation for /principal/[principalId]/* routes.
  *
  * Always visible: Tickets, Reports
- * Admin-only:     SLA policies, Categories, Automation, Approvals, Settings
+ * Admin-only:     Company Deadlines, Categories, Automation, Approvals, Settings
+ *                 (Approvals only while APPROVALS_ENABLED)
  */
 
+import { APPROVALS_ENABLED } from '@/constants/features';
 import type { PrincipalAccessLevel } from '@/hooks/usePrincipalAccess';
 import {
   SideNav,
@@ -53,10 +55,12 @@ export function PrincipalSidenav({
 
   const adminOnlyItems: NavItem[] = [
     {
-      label: 'SLA policies',
-      href: `${base}/sla-policies`,
+      // Deadlines are edited per company under Configuration, the one place
+      // for them. This console's own SLA policy pages were retired.
+      label: 'Tenant Deadlines',
+      href: '/configuration/company-deadlines',
       icon: 'clock',
-      testId: 'nav-principal-sla-policies',
+      testId: 'nav-principal-company-deadlines',
     },
     {
       label: 'Categories',
@@ -70,12 +74,17 @@ export function PrincipalSidenav({
       icon: 'bolt',
       testId: 'nav-principal-automation',
     },
-    {
-      label: 'Approvals',
-      href: `${base}/approvals`,
-      icon: 'check-badge',
-      testId: 'nav-principal-approvals',
-    },
+    // Switched off with the rest of approvals (APPROVALS_ENABLED).
+    ...(APPROVALS_ENABLED
+      ? [
+          {
+            label: 'Approvals',
+            href: `${base}/approvals`,
+            icon: 'check-badge',
+            testId: 'nav-principal-approvals',
+          },
+        ]
+      : []),
     {
       label: 'Settings',
       href: `${base}/settings`,

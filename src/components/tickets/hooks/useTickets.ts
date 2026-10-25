@@ -1,4 +1,8 @@
+import { helpdeskAxios } from '@/api/local/scoped';
+import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateTicketDto,
@@ -21,7 +25,12 @@ import {
   PrincipalTicketsApi,
   TicketsApi,
 } from '@brainforgeau/helpdesk-client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchMatches } from './useSearchMatches';
@@ -35,6 +44,96 @@ export const withSearchMatches = (
   ...filters,
   searchUserIds: userIds.length > 0 ? userIds : undefined,
   searchScopeIds: scopeIds.length > 0 ? scopeIds : undefined,
+});
+
+/**
+ * The Assignee filter's selection as the ticket endpoints take it, worked out
+ * once for the list, the counts and fetchTicketCount.
+ *
+ * One person and nothing else goes in the plain `assigneeId`, which the
+ * generated client declares and the "Assigned to you" tab has always sent.
+ * Anything wider (several people, or Unassigned ticked) goes out as repeated
+ * `assigneeIds=` plus `includeUnassigned`, which the backend matches as "any
+ * of" and the generated client predates.
+ */
+export const assigneeParams = (
+  filters: TicketFilters,
+): {
+  assigneeId?: string;
+  assigneeIds?: string[];
+  includeUnassigned?: true;
+} => {
+  const people = filters.assigneeId ?? [];
+  if (people.length === 1 && !filters.includeUnassigned) {
+    return { assigneeId: people[0] };
+  }
+  return {
+    assigneeIds: people.length > 0 ? people : undefined,
+    includeUnassigned: filters.includeUnassigned ? true : undefined,
+  };
+};
+
+/**
+ * A multi-select's ids in the shape the ticket endpoints take: one id in the
+ * single-valued parameter every backend version reads, several as repeated
+ * `<plural>=` ("any of"), the same split as assigneeParams.
+ */
+export const putIds = (
+  params: Record<string, unknown>,
+  single: string,
+  plural: string,
+  ids: string[] | undefined,
+) => {
+  if (!ids?.length) return;
+  if (ids.length === 1) params[single] = ids[0];
+  else params[plural] = ids;
+};
+
+/**
+ * Query parameters the generated client does not declare, sent through the
+ * call's options alongside its positional arguments.
+ *
+ * The regenerated client takes statuses, customStatusIds, tagIds, the search
+ * matches and a single tenant, organisation and division. It predates the
+ * multi-select forms, so several categories, several people or Unassigned in
+ * the Assignee filter, and several companies or organisations go out here as
+ * repeated `<plural>=` params ("any of"). `indexes: null` makes axios emit
+ * `ids=a&ids=b` rather than `ids[]=a`, the form ASP.NET Core binds.
+ */
+const extraParams = (filters: TicketFilters, includeScope: boolean) => {
+  const params: Record<string, unknown> = {};
+  // One category goes in the declared `categoryId` argument; several here.
+  if ((filters.categoryId?.length ?? 0) > 1) {
+    params.categoryIds = filters.categoryId;
+  }
+  const { assigneeIds, includeUnassigned } = assigneeParams(filters);
+  if (assigneeIds) params.assigneeIds = assigneeIds;
+  if (includeUnassigned) params.includeUnassigned = includeUnassigned;
+  if (includeScope) {
+    // One company or organisation goes in the declared argument (scopeValues).
+    if ((filters.tenantId?.length ?? 0) > 1)
+      params.tenantIds = filters.tenantId;
+    if ((filters.organisationId?.length ?? 0) > 1) {
+      params.organisationIds = filters.organisationId;
+    }
+  }
+  return Object.keys(params).length > 0
+    ? { params, paramsSerializer: { indexes: null as null } }
+    : undefined;
+};
+
+/**
+ * The scope filters the principal endpoint declares: one company, one
+ * organisation, one division. Several companies or organisations go out via
+ * extraParams instead, never both.
+ */
+const scopeValues = (filters: TicketFilters) => ({
+  tenantId: filters.tenantId?.length === 1 ? filters.tenantId[0] : undefined,
+  organisationId:
+    filters.organisationId?.length === 1
+      ? filters.organisationId[0]
+      : undefined,
+  divisionId: filters.divisionId || undefined,
 });
 
 /**
@@ -72,13 +171,12 @@ const ticketQueryValues = (filters: TicketFilters) => ({
   priority: filters.priority?.[0]
     ? toApiTicketPriority(filters.priority[0])
     : undefined,
-  categoryId: filters.categoryId?.[0],
-  // When unassignedOnly is active, clear assigneeId so the backend is not asked
-  // for both at once, which matches nothing.
-  assigneeId: filters.unassignedOnly ? undefined : filters.assigneeId?.[0],
+  categoryId:
+    filters.categoryId?.length === 1 ? filters.categoryId[0] : undefined,
+  // A wider selection goes out via extraParams (assigneeIds).
+  assigneeId: assigneeParams(filters).assigneeId,
   searchTerm: filters.searchTerm,
   overdueOnly: filters.overdueOnly ? true : undefined,
-  unassignedOnly: filters.unassignedOnly ? true : undefined,
   tagIds: filters.tagIds?.length ? filters.tagIds : undefined,
   // Name matches for the search box, resolved by useSearchMatches.
   searchUserIds: filters.searchUserIds?.length
@@ -106,6 +204,7 @@ export const fetchTicketCount = async (
   principalId?: string,
 ): Promise<number> => {
   const v = ticketQueryValues(filters);
+  const scope = scopeValues(filters);
 
   if (principalId) {
     const principalClient = await createHelpdeskApiClient(PrincipalTicketsApi);
@@ -121,10 +220,10 @@ export const fetchTicketCount = async (
       v.searchTerm,
       undefined, // unreadOnly
       v.overdueOnly,
-      v.unassignedOnly,
-      filters.tenantId || undefined,
-      filters.organisationId || undefined,
-      filters.divisionId || undefined,
+      undefined, // unassignedOnly: Unassigned is includeUnassigned now
+      scope.tenantId,
+      scope.organisationId,
+      scope.divisionId,
       v.tagIds,
       1, // page
       1, // pageSize
@@ -133,6 +232,7 @@ export const fetchTicketCount = async (
       v.searchUserIds,
       v.searchScopeIds,
       v.customStatusIds,
+      extraParams(filters, true),
     );
     return data.totalCount ?? 0;
   }
@@ -153,7 +253,7 @@ export const fetchTicketCount = async (
     undefined, // unreadOnly
     v.overdueOnly,
     undefined, // spamOnly
-    v.unassignedOnly,
+    undefined, // unassignedOnly: Unassigned is includeUnassigned now
     1, // page
     1, // pageSize
     undefined, // sortBy
@@ -161,9 +261,62 @@ export const fetchTicketCount = async (
     v.searchUserIds,
     v.searchScopeIds,
     v.customStatusIds,
+    extraParams(filters, false),
   );
   return data.totalCount ?? 0;
 };
+
+/** One matching ticket, for a bulk action over every match. */
+export interface TicketIdRef {
+  id: string;
+  tenantId?: string | null;
+}
+
+export interface TicketIdsResult {
+  items: TicketIdRef[];
+  total: number;
+  /** More matched than the endpoint returns; the rest are left out. */
+  truncated: boolean;
+}
+
+/**
+ * Every ticket `filters` match, as ids and companies, for a bulk action in
+ * "all matching" mode. Same filters and the same endpoint branch as the list
+ * (GET /v1/tickets/ids, or /v1/principals/{id}/tickets/ids for principal
+ * staff), so the action covers exactly what the list counts.
+ */
+export const fetchTicketIds = async (
+  filters: TicketFilters,
+  principalId?: string,
+): Promise<TicketIdsResult> => {
+  const v = ticketQueryValues(filters);
+  const extra = extraParams(filters, Boolean(principalId));
+  const params: Record<string, unknown> = { ...(extra?.params ?? {}) };
+  const declared = principalId ? { ...v, ...scopeValues(filters) } : v;
+  for (const [k, value] of Object.entries(declared)) {
+    if (value !== undefined && value !== null && value !== '')
+      params[k] = value;
+  }
+  const base = requireHelpdeskApiBaseUrl();
+  const url = principalId
+    ? `${base}/v1/principals/${principalId}/tickets/ids`
+    : `${base}/v1/tickets/ids`;
+  const { data } = await helpdeskAxios().get<TicketIdsResult>(url, {
+    params,
+    paramsSerializer: { indexes: null },
+  });
+  return {
+    items: data?.items ?? [],
+    total: data?.total ?? data?.items?.length ?? 0,
+    truncated: Boolean(data?.truncated),
+  };
+};
+
+export interface TicketsSort {
+  /** The backend's SortBy key, e.g. "deadline". */
+  sortBy: string;
+  sortDirection: 'asc' | 'desc';
+}
 
 /**
  * @param initialFilters Applied on the FIRST render only.
@@ -174,11 +327,24 @@ export const fetchTicketCount = async (
  * selected, then corrected itself. That was both a wasted round trip and, until
  * the correction landed, a list that disagreed with its own highlighted tab.
  */
-export const useTicketsData = (initialFilters?: TicketFilters) => {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+export const useTicketsData = (
+  initialFilters?: TicketFilters,
+  {
+    sort,
+    enabled = true,
+    initialPagination,
+  }: {
+    /** Server-side sort across every page; omitted is the server's default. */
+    sort?: TicketsSort | null;
+    /** Held while the caller waits on something the first request depends on. */
+    enabled?: boolean;
+    /** The first page and page size (from the URL); a seed, like the filters. */
+    initialPagination?: PaginationState;
+  } = {},
+) => {
+  const [pagination, setPagination] = useState<PaginationState>(
+    () => initialPagination ?? { pageIndex: 0, pageSize: 25 },
+  );
   // Lazy initialiser: `initialFilters` is a seed, not a controlled value, so
   // later renders must not reset what the user has since changed.
   const [filters, setFilters] = useState<TicketFilters>(
@@ -219,12 +385,23 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
     // Held while a name lookup the search depends on is running, so the grid
     // asks once with the full search rather than once without it and again.
-    enabled: search.ready,
-    queryKey: ['tickets', pagination, queryFilters, principalId ?? 'tenant'],
+    enabled: search.ready && enabled,
+    // Ticking several assignees (or paging, or switching tab) keeps the rows
+    // on screen until the new ones arrive, instead of blanking the grid to a
+    // loading state on every click.
+    placeholderData: keepPreviousData,
+    queryKey: [
+      'tickets',
+      pagination,
+      queryFilters,
+      principalId ?? 'tenant',
+      sort ?? null,
+    ],
     queryFn: async () => {
       // The same mapping fetchTicketCount uses. Written once so the rows and
       // the badge above them cannot ask different questions.
       const v = ticketQueryValues(queryFilters);
+      const scope = scopeValues(queryFilters);
 
       if (usePrincipalScope) {
         const principalClient =
@@ -242,18 +419,19 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
             v.searchTerm,
             undefined, // unreadOnly
             v.overdueOnly,
-            v.unassignedOnly,
-            queryFilters.tenantId || undefined,
-            queryFilters.organisationId || undefined,
-            queryFilters.divisionId || undefined,
+            undefined, // unassignedOnly: Unassigned is includeUnassigned now
+            scope.tenantId,
+            scope.organisationId,
+            scope.divisionId,
             v.tagIds,
             pagination.pageIndex + 1,
             pagination.pageSize,
-            undefined, // sortBy
-            undefined, // sortDirection
+            sort?.sortBy,
+            sort?.sortDirection,
             v.searchUserIds,
             v.searchScopeIds,
             v.customStatusIds,
+            extraParams(queryFilters, true),
           );
         const principalResult = principalResponse.data;
         return {
@@ -279,15 +457,16 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
         undefined, // divisionId
         undefined, // unreadOnly
         v.overdueOnly,
-        undefined, // spamOnly — default view excludes spam
-        v.unassignedOnly,
+        undefined, // spamOnly: the default view excludes spam
+        undefined, // unassignedOnly: Unassigned is includeUnassigned now
         pagination.pageIndex + 1,
         pagination.pageSize,
-        undefined, // sortBy
-        undefined, // sortDirection
+        sort?.sortBy,
+        sort?.sortDirection,
         v.searchUserIds,
         v.searchScopeIds,
         v.customStatusIds,
+        extraParams(queryFilters, false),
       );
 
       const result = response.data;
@@ -306,6 +485,8 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
     pagination,
     setPagination,
     filters,
+    /** The filters as sent, search name matches included (for the ids). */
+    queryFilters,
     setFilters,
     isLoading,
     refetch: useCallback(() => {
@@ -315,10 +496,11 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
 };
 
 export const useTicketDetail = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, error } = useQuery<TicketDto>({
     queryKey: ['ticket', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdGet(ticketId);
       return response.data as TicketDto;
     },
@@ -351,6 +533,7 @@ export const useCreateTicket = () => {
 };
 
 export const useUpdateTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -358,7 +541,7 @@ export const useUpdateTicket = () => {
       id,
       updates,
     }: { id: string; updates: UpdateTicketDto }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
 
       // REVIEW: Backend has separate endpoints for different updates
       // Basic fields (subject, description)
@@ -418,86 +601,8 @@ export const useUpdateTicket = () => {
   });
 };
 
-export const useBulkUpdateTickets = () => {
-  const queryClient = useQueryClient();
-
-  // REVIEW: Using simple loop for bulk updates - backend doesn't have dedicated bulk endpoint
-  return useMutation({
-    mutationFn: async ({
-      ids,
-      updates,
-    }: { ids: string[]; updates: UpdateTicketDto }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
-      const promises = ids.map(async id => {
-        // Basic fields
-        if (updates.subject || updates.description) {
-          await client.v1TicketsIdPut(id, {
-            subject: updates.subject,
-            description: updates.description,
-          });
-        }
-
-        // Status change. Same contract as the single-ticket path: the custom
-        // id is always sent, so null detaches one from every selected ticket
-        // that had it.
-        if (updates.status) {
-          await client.v1TicketsIdStatusPatch(id, {
-            newStatus: toApiTicketStatus(updates.status),
-            customStatusId: updates.customStatusId ?? null,
-          });
-        }
-
-        // Priority change
-        if (updates.priority) {
-          await client.v1TicketsIdPriorityPatch(id, {
-            newPriority: toApiTicketPriority(updates.priority),
-          });
-        }
-
-        // Category change
-        if (updates.categoryId) {
-          await client.v1TicketsIdCategoryPatch(id, {
-            newCategoryId: updates.categoryId,
-          });
-        }
-
-        // Assignment change. Same null-vs-undefined contract as the
-        // single-ticket path, so a bulk unassign reaches the API.
-        if (updates.assigneeId !== undefined) {
-          await client.v1TicketsIdAssignPatch(id, {
-            assigneeId: updates.assigneeId ?? null,
-          });
-        }
-      });
-      await Promise.all(promises);
-      return { ids, updates };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    },
-  });
-};
-
-export const useBulkDeleteTickets = () => {
-  const queryClient = useQueryClient();
-
-  // REVIEW: Using simple loop for bulk delete - backend doesn't have dedicated bulk endpoint
-  return useMutation({
-    mutationFn: async (ids: string[]) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
-      const promises = ids.map(async id => {
-        await client.v1TicketsIdDelete(id);
-      });
-      await Promise.all(promises);
-      return ids;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    },
-  });
-};
-
 export const useMergeTickets = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -505,7 +610,7 @@ export const useMergeTickets = () => {
       primaryTicketId,
       ticketIdToMerge,
     }: { primaryTicketId: string; ticketIdToMerge: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdMergePost(primaryTicketId, {
         mergedTicketId: ticketIdToMerge,
       });
@@ -524,6 +629,7 @@ export const useMergeTickets = () => {
 };
 
 export const useLinkTickets = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -545,7 +651,7 @@ export const useLinkTickets = () => {
       semantic: TicketLinkSemantic;
     }) => {
       const wire = toWireLink(semantic, currentTicketId, otherTicketId);
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdLinksPost(wire.sourceTicketId, {
         targetTicketId: wire.targetTicketId,
         linkType: wire.linkType,
@@ -568,18 +674,20 @@ export const useLinkTickets = () => {
 
 /** Every link on a ticket, as source or as target. */
 export const useTicketLinks = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['ticket-links', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdLinksGet(ticketId);
       return (response.data ?? []) as TicketLink[];
     },
-    enabled: !!ticketId,
+    enabled: TICKET_LINKS_ENABLED && !!ticketId,
   });
 };
 
 export const useUnlinkTickets = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -587,7 +695,7 @@ export const useUnlinkTickets = () => {
       ticketId,
       linkId,
     }: { ticketId: string; linkId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdLinksLinkIdDelete(ticketId, linkId);
       return { ticketId };
     },
@@ -601,11 +709,12 @@ export const useUnlinkTickets = () => {
 };
 
 export const useDeleteTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdDelete(ticketId);
       return ticketId;
     },
@@ -616,10 +725,11 @@ export const useDeleteTicket = () => {
 };
 
 export const useMyTicketSubscription = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery<boolean>({
     queryKey: ['ticket-subscription', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdSubscribeMeGet(ticketId);
       return response.data as boolean;
     },
@@ -628,11 +738,12 @@ export const useMyTicketSubscription = (ticketId: string) => {
 };
 
 export const useSubscribeToTicket = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdSubscribePost(ticketId);
     },
     onSuccess: () => {
@@ -644,11 +755,12 @@ export const useSubscribeToTicket = (ticketId: string) => {
 };
 
 export const useUnsubscribeFromTicket = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdSubscribeDelete(ticketId);
     },
     onSuccess: () => {
@@ -660,11 +772,12 @@ export const useUnsubscribeFromTicket = (ticketId: string) => {
 };
 
 export const useMarkTicketAsSpam = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdMarkSpamPost(ticketId);
       return ticketId;
     },
@@ -675,11 +788,12 @@ export const useMarkTicketAsSpam = () => {
 };
 
 export const useUnmarkTicketAsSpam = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdUnmarkSpamPost(ticketId);
       return ticketId;
     },
@@ -692,6 +806,7 @@ export const useUnmarkTicketAsSpam = () => {
 // Wave 3 hooks
 
 export const useForwardTicket = () => {
+  const scope = useHelpdeskScope();
   return useMutation({
     mutationFn: async ({
       ticketId,
@@ -708,7 +823,7 @@ export const useForwardTicket = () => {
       body: string;
       includeAttachments: boolean;
     }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdForwardPost(ticketId, {
         to,
         cc: cc ?? null,
@@ -721,11 +836,12 @@ export const useForwardTicket = () => {
 };
 
 export const useDuplicateTicket = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdDuplicatePost(ticketId);
       return response.data as string;
     },
@@ -736,6 +852,7 @@ export const useDuplicateTicket = () => {
 };
 
 export const useConvertToReply = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -743,7 +860,7 @@ export const useConvertToReply = () => {
       ticketId,
       parentTicketId,
     }: { ticketId: string; parentTicketId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdConvertToReplyPost(ticketId, { parentTicketId });
     },
     onSuccess: () => {
@@ -753,22 +870,24 @@ export const useConvertToReply = () => {
 };
 
 export const useTicketChildren = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['ticket-children', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdChildrenGet(ticketId, 1, 50);
       return response.data?.items ?? [];
     },
-    enabled: !!ticketId,
+    enabled: SUBTASKS_ENABLED && !!ticketId,
   });
 };
 
 export const useLinkedAssets = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['ticket-linked-assets', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdLinkedAssetsGet(ticketId);
       return response.data ?? [];
     },
@@ -777,6 +896,7 @@ export const useLinkedAssets = (ticketId: string) => {
 };
 
 export const useLinkAsset = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -784,7 +904,7 @@ export const useLinkAsset = () => {
       ticketId,
       assetId,
     }: { ticketId: string; assetId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsIdLinkedAssetsPost(ticketId, {
         assetId,
       });
@@ -799,6 +919,7 @@ export const useLinkAsset = () => {
 };
 
 export const useUnlinkAsset = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -806,7 +927,7 @@ export const useUnlinkAsset = () => {
       ticketId,
       assetId,
     }: { ticketId: string; assetId: string }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdLinkedAssetsAssetIdDelete(ticketId, assetId);
     },
     onSuccess: (_, variables) => {
@@ -828,6 +949,7 @@ export type CreateSubtaskDto = {
 };
 
 export const useCreateSubtask = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -835,7 +957,7 @@ export const useCreateSubtask = () => {
       parentTicketId,
       data,
     }: { parentTicketId: string; data: CreateSubtaskDto }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       const response = await client.v1TicketsParentIdSubtasksPost(
         parentTicketId,
         data as never,
@@ -855,11 +977,12 @@ export const useCreateSubtask = () => {
 };
 
 export const useMarkTicketAsProblem = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdMarkProblemPost(ticketId);
       return ticketId;
     },
@@ -870,11 +993,12 @@ export const useMarkTicketAsProblem = () => {
 };
 
 export const useUnmarkTicketAsProblem = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdUnmarkProblemPost(ticketId);
       return ticketId;
     },
@@ -885,11 +1009,12 @@ export const useUnmarkTicketAsProblem = () => {
 };
 
 export const usePublishTicketAsIdea = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdPublishAsIdeaPost(ticketId);
       return ticketId;
     },
@@ -901,11 +1026,12 @@ export const usePublishTicketAsIdea = () => {
 };
 
 export const useUnpublishTicketAsIdea = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ticketId: string) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
+      const client = await createHelpdeskApiClient(TicketsApi, scope);
       await client.v1TicketsIdUnpublishAsIdeaPost(ticketId);
       return ticketId;
     },

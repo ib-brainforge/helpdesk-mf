@@ -1,3 +1,8 @@
+import { DefaultAssigneeModal } from '@/components/categories/components/DefaultAssigneeModal';
+import { useCategoryOpenCounts } from '@/components/categories/hooks/useCategoryDefaults';
+import { useDeadlinesPrincipal } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
+import { PageHint } from '@/components/shared';
+import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -22,11 +27,21 @@ import {
 import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+/*
+ * Presets only, for now: every company uses Netcorp's preset categories, so
+ * adding categories and sections (and the Sections panel and column that only
+ * make sense with them) is switched off. Set this to true to bring all of it
+ * back; nothing else needs to change.
+ */
+const CATEGORY_AUTHORING_ENABLED = false;
 
 function CategoriesPage() {
   const queryClient = useQueryClient();
-  const { categories, sections, isLoading } = useCategoriesData();
+  const { categories, sections, isLoading } = useCategoriesData({
+    withSections: true,
+  });
 
   /*
    * The Netcorp presets are listed alongside the tenant's own categories. They
@@ -76,6 +91,19 @@ function CategoriesPage() {
   );
   const [searchTerm, setSearchTerm] = useState('');
   const { confirm, dialog } = useConfirm();
+
+  // Default assignee and open counts belong to the principal (Netcorp staff):
+  // the default is one routing rule for every company, and the counts span
+  // companies. Without principal admin the column is read only and the
+  // counts are not shown.
+  const { principalId, isAdmin } = useDeadlinesPrincipal();
+  const { counts: openCounts } = useCategoryOpenCounts(principalId);
+  const { userMap } = useUserEnrichment(
+    allCategories.map(c => c.defaultAssigneeId),
+  );
+  const [assigneeCategory, setAssigneeCategory] = useState<
+    CategoryDto | undefined
+  >(undefined);
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: string) => {
@@ -134,10 +162,11 @@ function CategoriesPage() {
     },
   });
 
-  const handleEditCategory = (category: CategoryDto) => {
+  // Stable, so the table's memoised columns are not rebuilt on every render.
+  const handleEditCategory = useCallback((category: CategoryDto) => {
     setEditingCategory(category);
     setIsCategoryModalOpen(true);
-  };
+  }, []);
 
   const handleEditSection = (section: SectionDto) => {
     setEditingSection(section);
@@ -164,16 +193,20 @@ function CategoriesPage() {
     setEditingSection(undefined);
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    const cat = categories.find(c => c.id === categoryId);
-    const ok = await confirm({
-      title: 'Delete category?',
-      body: `Delete "${cat?.name ?? 'this category'}"? This cannot be undone.`,
-      confirmLabel: 'Delete',
-      destructive: true,
-    });
-    if (ok) deleteCategoryMutation.mutate(categoryId);
-  };
+  const deleteCategory = deleteCategoryMutation.mutate;
+  const handleDeleteCategory = useCallback(
+    async (categoryId: string) => {
+      const cat = categories.find(c => c.id === categoryId);
+      const ok = await confirm({
+        title: 'Delete category?',
+        body: `Delete "${cat?.name ?? 'this category'}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (ok) deleteCategory(categoryId);
+    },
+    [categories, confirm, deleteCategory],
+  );
 
   const handleDeleteSection = async (section: SectionDto) => {
     const ok = await confirm({
@@ -198,6 +231,11 @@ function CategoriesPage() {
     onEditCategory: handleEditCategory,
     onDeleteCategory: handleDeleteCategory,
     presetIds,
+    showSections: CATEGORY_AUTHORING_ENABLED,
+    openCounts,
+    userMap,
+    onSetDefaultAssignee:
+      isAdmin && principalId ? setAssigneeCategory : undefined,
   });
 
   return (
@@ -211,35 +249,45 @@ function CategoriesPage() {
       table={table}
       isLoading={isLoading}
       sidebar={
-        <SectionsPanel
-          sections={sections}
-          countsBySection={countsBySection}
-          unsectionedCount={allCategories.filter(c => !c.sectionId).length}
-          totalCount={allCategories.length}
-          value={sectionFilter}
-          onChange={setSectionFilter}
-          onEdit={handleEditSection}
-          onDelete={handleDeleteSection}
-        />
+        CATEGORY_AUTHORING_ENABLED && (
+          <SectionsPanel
+            sections={sections}
+            countsBySection={countsBySection}
+            unsectionedCount={allCategories.filter(c => !c.sectionId).length}
+            totalCount={allCategories.length}
+            value={sectionFilter}
+            onChange={setSectionFilter}
+            onEdit={handleEditSection}
+            onDelete={handleDeleteSection}
+          />
+        )
+      }
+      subheader={
+        <PageHint>
+          {presets.length} preset categories, shared by every tenant. Clients
+          pick from these when they log a request.
+        </PageHint>
       }
       actions={
-        <div className="flex gap-2.5">
-          <BaseButton
-            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-            onPress={handleCreateSection}
-            variant="bordered"
-            color="light"
-          >
-            Add Section
-          </BaseButton>
-          <BaseButton
-            color="primary"
-            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-            onPress={handleCreateCategory}
-          >
-            Add New Category
-          </BaseButton>
-        </div>
+        CATEGORY_AUTHORING_ENABLED && (
+          <div className="flex gap-2.5">
+            <BaseButton
+              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+              onPress={handleCreateSection}
+              variant="bordered"
+              color="light"
+            >
+              Add Section
+            </BaseButton>
+            <BaseButton
+              color="primary"
+              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+              onPress={handleCreateCategory}
+            >
+              Add New Category
+            </BaseButton>
+          </div>
+        )
       }
       filters={
         <BaseInput
@@ -268,7 +316,7 @@ function CategoriesPage() {
               : 'Add your first category to start organizing tickets.'
           }
           action={
-            !searchTerm ? (
+            !searchTerm && CATEGORY_AUTHORING_ENABLED ? (
               <BaseButton color="primary" onPress={handleCreateCategory}>
                 Add First Category
               </BaseButton>
@@ -289,6 +337,11 @@ function CategoriesPage() {
             isOpen={isSectionModalOpen}
             onClose={handleCloseSectionModal}
             section={editingSection}
+          />
+          <DefaultAssigneeModal
+            category={assigneeCategory}
+            principalId={principalId}
+            onClose={() => setAssigneeCategory(undefined)}
           />
           {dialog}
         </>

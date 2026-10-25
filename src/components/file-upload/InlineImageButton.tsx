@@ -19,7 +19,7 @@ export const InlineImageButton: FC<InlineImageButtonProps> = ({
       variant="light"
       onPress={onInsertImage}
       isDisabled={disabled}
-      icon={<Icon name="photo" className="h-4 w-4" />}
+      icon={<Icon name="PhotoIcon" className="h-4 w-4" />}
     >
       Insert Image
     </BaseButton>

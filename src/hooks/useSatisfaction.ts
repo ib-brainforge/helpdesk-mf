@@ -1,3 +1,4 @@
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CSATReportFilters,
@@ -11,12 +12,24 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useSatisfactionRatingByTicket = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   return useQuery({
     queryKey: ['satisfaction', 'ticket', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(SatisfactionApi);
-      const { data } = await client.v1SatisfactionTicketTicketIdGet(ticketId);
-      return data;
+      const client = await createHelpdeskApiClient(SatisfactionApi, scope);
+      try {
+        const { data } = await client.v1SatisfactionTicketTicketIdGet(ticketId);
+        return data;
+      } catch (error) {
+        // 404 is the normal answer for a ticket nobody has rated yet: an
+        // empty result, not a failure to retry.
+        if (
+          (error as { response?: { status?: number } })?.response?.status ===
+          404
+        )
+          return null;
+        throw error;
+      }
     },
     enabled: !!ticketId,
   });

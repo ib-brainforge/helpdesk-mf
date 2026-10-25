@@ -1,3 +1,5 @@
+import { TIME_TRACKING_ENABLED } from '@/constants/features';
+import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationTimeTrackingDTOsTimeEntryDto,
@@ -14,10 +16,11 @@ export interface TicketTimeTrackingDto {
 }
 
 export const useTimeTracking = (ticketId: string) => {
+  const scope = useHelpdeskScope();
   const { data, isLoading, refetch } = useQuery<TicketTimeTrackingDto>({
     queryKey: ['time-tracking', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(TimeTrackingApi);
+      const client = await createHelpdeskApiClient(TimeTrackingApi, scope);
       const response =
         await client.v1TimeTrackingTicketsTicketIdEntriesGet(ticketId);
       const entries = response.data ?? [];
@@ -33,7 +36,7 @@ export const useTimeTracking = (ticketId: string) => {
         entries,
       };
     },
-    enabled: Boolean(ticketId),
+    enabled: TIME_TRACKING_ENABLED && Boolean(ticketId),
   });
 
   return {
@@ -44,6 +47,7 @@ export const useTimeTracking = (ticketId: string) => {
 };
 
 export const useAddTimeEntry = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -58,7 +62,7 @@ export const useAddTimeEntry = () => {
       description?: string;
       entryDate?: string;
     }) => {
-      const client = await createHelpdeskApiClient(TimeTrackingApi);
+      const client = await createHelpdeskApiClient(TimeTrackingApi, scope);
       const response = await client.v1TimeTrackingEntriesPost({
         ticketId,
         durationMinutes,
@@ -76,6 +80,7 @@ export const useAddTimeEntry = () => {
 };
 
 export const useUpdateTimeEntry = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -92,7 +97,7 @@ export const useUpdateTimeEntry = () => {
       description?: string;
       entryDate?: string;
     }) => {
-      const client = await createHelpdeskApiClient(TimeTrackingApi);
+      const client = await createHelpdeskApiClient(TimeTrackingApi, scope);
       const response = await client.v1TimeTrackingEntriesIdPut(entryId, {
         durationMinutes,
         description,
@@ -109,6 +114,7 @@ export const useUpdateTimeEntry = () => {
 };
 
 export const useDeleteTimeEntry = () => {
+  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -116,7 +122,7 @@ export const useDeleteTimeEntry = () => {
       entryId,
       ticketId,
     }: { entryId: string; ticketId: string }) => {
-      const client = await createHelpdeskApiClient(TimeTrackingApi);
+      const client = await createHelpdeskApiClient(TimeTrackingApi, scope);
       await client.v1TimeTrackingEntriesIdDelete(entryId);
       return { entryId, ticketId };
     },

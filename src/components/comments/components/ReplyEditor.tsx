@@ -1,42 +1,122 @@
+import { COMMENT_ERRORS } from '@/api/local/comments';
+import type { EmailSignaturePreference } from '@/api/local/preferences';
 import { useUploadAttachment } from '@/components/attachments/hooks/useAttachments';
-import {
-  AttachmentList,
-  FileUploadZone,
-  InlineImageButton,
-} from '@/components/file-upload';
+import { AttachmentList, FileUploadZone } from '@/components/file-upload';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
+import { MAILBOX_QUERY_KEY, useMailbox } from '@/hooks/useMailbox';
+import { useUserPreference } from '@/hooks/useUserPreference';
 import type { AttachmentDto } from '@/types';
 import type { CannedResponseDto } from '@/types/canned-response';
-import { CommentType } from '@/types/comment';
-import { BaseToggle } from '@brainforgeau/components';
+import type { TicketEmailRecipientDto } from '@/types/ticket';
+import { BaseButtonSelect } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import { RichTextEditor } from '@brainforgeau/components/text-editor';
-import { CommentsApi } from '@brainforgeau/helpdesk-client';
 import { usePermissions } from '@brainforgeau/security';
 import { CannedResponsePicker } from '@components/canned-responses';
 import { toast } from '@heroui/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { useAddComment, useAddInternalNote } from '../hooks/useComments';
+import { SignatureBlock } from './SignatureBlock';
+
+type ComposerMode = 'reply' | 'note';
+
+/** What the composer needs to email a reply. Omit for a plain public reply. */
+export interface ReplyEmailContext {
+  /** The ticket's contact; null when there is nobody to email. */
+  recipient: TicketEmailRecipientDto | null;
+  /** Opens the signature and mailbox settings (screen 08). */
+  onEditSignature: () => void;
+}
 
 interface ReplyEditorProps {
   ticketId: string;
   categoryId?: string;
   onCommentAdded?: () => void;
+  /**
+   * Present on the ticket page, where a public reply is emailed. Without it
+   * (the principal console) a reply is posted to the ticket only.
+   */
+  email?: ReplyEmailContext;
 }
+
+const MAX_CC = 10;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface Draft {
+  body: string;
+  mode: ComposerMode;
+  cc: string[];
+}
+
+/*
+ * The draft survives a full page round trip. Connecting a mailbox sends the
+ * browser to Microsoft and back, and losing a half-written reply to that
+ * would be worse than not offering the connect link at all. Per ticket, in
+ * sessionStorage, cleared once the reply is sent.
+ */
+const draftKey = (ticketId: string) => `helpdesk:reply-draft:${ticketId}`;
+
+const readDraft = (ticketId: string): Draft | null => {
+  try {
+    const raw = sessionStorage.getItem(draftKey(ticketId));
+    return raw ? (JSON.parse(raw) as Draft) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeDraft = (ticketId: string, draft: Draft | null) => {
+  try {
+    if (draft)
+      sessionStorage.setItem(draftKey(ticketId), JSON.stringify(draft));
+    else sessionStorage.removeItem(draftKey(ticketId));
+  } catch {
+    // Storage unavailable (private window): the draft just is not kept.
+  }
+};
+
+const isMac = () =>
+  typeof navigator !== 'undefined' &&
+  /mac/i.test(
+    (navigator as Navigator & { userAgentData?: { platform?: string } })
+      .userAgentData?.platform ?? navigator.platform,
+  );
+
+const errorCode = (error: unknown): string | undefined => {
+  const data = (error as { response?: { data?: unknown } })?.response?.data as
+    | { code?: string; errors?: { code?: string }[] }
+    | undefined;
+  return data?.errors?.[0]?.code ?? data?.code;
+};
 
 export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   ticketId,
   categoryId,
   onCommentAdded,
+  email,
 }) => {
+  const initial = useMemo(() => readDraft(ticketId), [ticketId]);
   // Posting an internal note needs tickets.update, as its endpoint does.
-  // Without it the toggle is hidden so the request is never made.
+  // Without it the note mode is hidden so the request is never made, and a
+  // saved note draft opens as a reply.
   const { hasPermission } = usePermissions();
   const canPostInternalNote = hasPermission(HelpdeskPermissions.Tickets.Update);
-  const [internalNoteSelected, setIsInternalNote] = useState(false);
-  const isInternalNote = canPostInternalNote && internalNoteSelected;
+  const [selectedMode, setMode] = useState<ComposerMode>(
+    initial?.mode ?? 'reply',
+  );
+  const mode: ComposerMode = canPostInternalNote ? selectedMode : 'reply';
+  const [body, setBody] = useState(initial?.body ?? '');
+  const [cc, setCc] = useState<string[]>(initial?.cc ?? []);
+  const [ccInput, setCcInput] = useState('');
+  const [showCc, setShowCc] = useState((initial?.cc.length ?? 0) > 0);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<AttachmentDto[]>(
@@ -44,67 +124,149 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   );
   const queryClient = useQueryClient();
   const { uploadFiles, uploadProgress, isUploading } = useUploadAttachment();
+  const addComment = useAddComment();
+  const addNote = useAddInternalNote();
+  const isPending = addComment.isPending || addNote.isPending;
 
-  /*
-   * The body as HTML, held here rather than inside a TipTap instance.
-   *
-   * This screen used to build its own TipTap editor and hand-roll a toolbar out
-   * of BaseButtons, which is why the comment box looked nothing like the
-   * description field directly above it: same job, two implementations, two
-   * appearances. RichTextEditor is the design system's editor and is what the
-   * description already uses, so the two now match and the toolbar styling is
-   * not this file's problem any more.
-   *
-   * It is a controlled component (content + onChange), so "is there anything to
-   * send" and "clear it" become plain state questions.
-   */
-  const [body, setBody] = useState('');
+  const { mailbox, isConnected } = useMailbox();
+  const signature =
+    useUserPreference<EmailSignaturePreference>('email.signature');
 
   /** TipTap emits "<p></p>" for an empty document, so length alone lies. */
   const isBodyEmpty = body.replace(/<[^>]*>/g, '').trim().length === 0;
 
-  const mutation = useMutation({
-    mutationFn: async (body: string) => {
-      const client = await createHelpdeskApiClient(CommentsApi);
+  useEffect(() => {
+    writeDraft(
+      ticketId,
+      isBodyEmpty && cc.length === 0 ? null : { body, mode, cc },
+    );
+  }, [ticketId, body, mode, cc, isBodyEmpty]);
 
-      // REVIEW: attachmentIds not yet supported in API command - will be added in backend implementation
-      if (isInternalNote) {
-        return await client.v1TicketsTicketIdCommentsInternalNotesPost(
-          ticketId,
-          {
-            body,
-            idempotencyKey: `comment-${Date.now()}`,
-          },
-        );
-      } else {
-        return await client.v1TicketsTicketIdCommentsPost(ticketId, {
-          body,
-          idempotencyKey: `comment-${Date.now()}`,
-        });
+  const emailing = mode === 'reply' && !!email;
+  const recipient = email?.recipient ?? null;
+  const recipientName = recipient?.name?.trim() || recipient?.address || '';
+  const recipientFirstName = recipient?.name?.trim()
+    ? recipient.name.trim().split(/\s+/)[0]
+    : (recipient?.address ?? '');
+  /** Why an emailed reply cannot go right now, if it cannot. */
+  const blocked = !emailing
+    ? null
+    : !recipient
+      ? // The backend tries the contact, then the requester, then whoever
+        // submitted it, skipping your own address: so this is usually a
+        // ticket you raised for yourself.
+        'Nobody on this ticket but you has an email address, so this reply cannot be emailed. Set a contact with an email first.'
+      : !isConnected
+        ? mailbox?.status === 'NeedsReconnect'
+          ? 'Your mailbox needs reconnecting, so replies cannot be emailed.'
+          : "Your mailbox isn't connected, replies can't be emailed."
+        : null;
+
+  const reset = useCallback(() => {
+    setBody('');
+    setCc([]);
+    setCcInput('');
+    setShowCc(false);
+    setPendingAttachments([]);
+    setShowFileUpload(false);
+    writeDraft(ticketId, null);
+  }, [ticketId]);
+
+  const addCc = useCallback(
+    (raw: string) => {
+      const address = raw.trim().replace(/[,;]$/, '');
+      if (!address) return;
+      if (!EMAIL_PATTERN.test(address)) {
+        toast(`"${address}" is not an email address`, { variant: 'warning' });
+        return;
       }
+      if (cc.length >= MAX_CC) {
+        toast(`At most ${MAX_CC} Cc recipients`, { variant: 'warning' });
+        return;
+      }
+      if (!cc.includes(address)) setCc(prev => [...prev, address]);
+      setCcInput('');
     },
-    onSuccess: () => {
-      toast(isInternalNote ? 'Internal note added' : 'Reply added', {
-        variant: 'success',
-      });
-      setBody('');
-      setPendingAttachments([]);
-      setShowFileUpload(false);
-      queryClient.invalidateQueries({
-        queryKey: ['helpdesk-comments', ticketId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['attachments', ticketId] });
-      onCommentAdded?.();
-    },
-    onError: () => {
-      // Error handled by global axios interceptor
-    },
-  });
+    [cc],
+  );
 
   const handleSubmit = useCallback(() => {
-    if (isBodyEmpty) return;
-    mutation.mutate(body);
-  }, [body, isBodyEmpty, mutation]);
+    if (isBodyEmpty || isPending || blocked) return;
+    const idempotencyKey = `comment-${Date.now()}`;
+    if (mode === 'note') {
+      addNote.mutate(
+        { ticketId, body, idempotencyKey },
+        {
+          onSuccess: () => {
+            toast('Internal note added', { variant: 'success' });
+            reset();
+            onCommentAdded?.();
+          },
+        },
+      );
+      return;
+    }
+    addComment.mutate(
+      {
+        ticketId,
+        body,
+        idempotencyKey,
+        sendEmail: emailing,
+        cc: emailing && cc.length > 0 ? cc : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast(
+            emailing ? `Email sent to ${recipientFirstName}` : 'Reply added',
+            { variant: 'success' },
+          );
+          reset();
+          queryClient.invalidateQueries({
+            queryKey: ['attachments', ticketId],
+          });
+          onCommentAdded?.();
+        },
+        onError: error => {
+          const code = errorCode(error);
+          if (code === COMMENT_ERRORS.mailboxNotConnected) {
+            queryClient.invalidateQueries({ queryKey: MAILBOX_QUERY_KEY });
+            toast("Your mailbox isn't connected", {
+              description: 'Connect it from Edit signature, then send again.',
+              variant: 'danger',
+            });
+          } else if (code === COMMENT_ERRORS.noEmailRecipient) {
+            toast('Nobody to email', {
+              description: 'This ticket has no contact email address.',
+              variant: 'danger',
+            });
+          } else if (
+            (error as { response?: { status?: number } })?.response?.status ===
+            400
+          ) {
+            toast('Reply not sent', {
+              description: 'Check the Cc addresses and try again.',
+              variant: 'danger',
+            });
+          }
+        },
+      },
+    );
+  }, [
+    isBodyEmpty,
+    isPending,
+    blocked,
+    mode,
+    addNote,
+    addComment,
+    ticketId,
+    body,
+    emailing,
+    cc,
+    recipientFirstName,
+    reset,
+    queryClient,
+    onCommentAdded,
+  ]);
 
   const handleCannedResponseSelect = useCallback(
     (response: CannedResponseDto) => {
@@ -127,7 +289,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
             variant: 'success',
           });
         }
-      } catch (error) {
+      } catch {
         toast('Upload failed', { variant: 'danger' });
       }
     },
@@ -138,95 +300,248 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
     setPendingAttachments(prev => prev.filter(a => a.id !== attachmentId));
   }, []);
 
-  const handleInsertImage = useCallback(() => {
-    // REVIEW: For now, just show file upload zone
-    // When TipTap is integrated, this will insert inline image in editor
-    setShowFileUpload(true);
-  }, []);
+  // Ctrl+Enter (Cmd+Enter on a Mac) sends, from anywhere inside the composer.
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
-  // REVIEW: Keyboard shortcut for submit (Cmd+Enter or Ctrl+Enter)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        handleSubmit();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleSubmit]);
+  const sig = signature.value;
+  const showSignature = emailing && !!sig?.addToReplies && !!sig.html.trim();
+  // The signature is sent in full but shown folded: six lines of footer
+  // between the editor and Send pushed the button off the first screen.
+  const [signatureOpen, setSignatureOpen] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Add Comment</h3>
-        <div className="flex items-center gap-2">
-          <BaseButton
-            variant="bordered"
-            color="light"
-            size="sm"
-            onPress={() => setIsPickerOpen(true)}
-            icon={<Icon name="document-text" className="h-4 w-4" />}
-          >
-            Canned Response
-          </BaseButton>
-          {canPostInternalNote && (
-            <BaseToggle
-              isSelected={isInternalNote}
-              onChange={setIsInternalNote}
-            >
-              Internal Note
-            </BaseToggle>
-          )}
-        </div>
+    <div className="space-y-3" onKeyDown={handleKeyDown}>
+      <div className="flex items-center justify-between gap-2">
+        {canPostInternalNote ? (
+          <BaseButtonSelect<ComposerMode>
+            ariaLabel="Reply or internal note"
+            value={mode}
+            onChange={setMode}
+            options={[
+              {
+                value: 'reply',
+                label: (
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="email" className="h-4 w-4" />
+                    {email ? 'Reply by email' : 'Reply'}
+                  </span>
+                ),
+              },
+              {
+                value: 'note',
+                label: (
+                  <span className="flex items-center gap-1.5">
+                    <Icon name="lock" className="h-4 w-4" />
+                    Internal note
+                  </span>
+                ),
+              },
+            ]}
+          />
+        ) : (
+          <span />
+        )}
+        <BaseButton
+          variant="bordered"
+          color="light"
+          onPress={() => setIsPickerOpen(true)}
+        >
+          Canned Response
+        </BaseButton>
       </div>
 
+      {blocked && (
+        <div className="flex items-center gap-2 rounded-[3px] bg-[#f8e6a0] px-3 py-2 text-xs text-[#7f5f01]">
+          <Icon name="warning" className="h-4 w-4 shrink-0" />
+          <span>{blocked}</span>
+          {recipient && (
+            <button
+              type="button"
+              onClick={email?.onEditSignature}
+              className="ml-auto shrink-0 font-semibold underline"
+            >
+              {mailbox?.status === 'NeedsReconnect'
+                ? 'Reconnect mailbox'
+                : 'Connect mailbox'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/*
-        The design system's editor, the same component the ticket description
-        uses. The internal-note tint stays on the wrapper so the box still turns
-        amber when the toggle is on.
+        One box: the address lines, the editor and the signature, so it reads
+        as the email it will send. In note mode it turns yellow and loses the
+        addressing, which is the cue that nothing leaves the building.
       */}
       <div
-        className={`rounded-lg border ${
-          isInternalNote
-            ? 'bg-warning-50 dark:bg-warning-100/10 border-warning-200 dark:border-warning-800'
-            : 'bg-content1 border-divider'
+        className={`overflow-hidden rounded-[3px] border ${
+          mode === 'note'
+            ? 'border-[#d8b84a] bg-[#fdf8e6]'
+            : 'border-divider bg-content1 focus-within:border-blue'
         }`}
       >
+        {mode === 'note' ? (
+          <div className="flex items-center gap-2 border-b border-[#d8b84a] px-3 py-2 text-xs text-[#7f5f01]">
+            <Icon name="lock" className="h-3.5 w-3.5" />
+            <span>
+              <span className="font-semibold">
+                Only your team can see this.
+              </span>{' '}
+              {recipientName || 'The requester'} will not get an email.
+            </span>
+          </div>
+        ) : (
+          email && (
+            <div className="divide-y divide-divider border-b border-divider text-xs">
+              <div className="flex items-center gap-3 px-3 py-2">
+                <span className="w-8 shrink-0 text-default-500">From</span>
+                <span className="truncate">
+                  {mailbox?.address
+                    ? `${mailbox.displayName ?? ''} <${mailbox.address}>`.trim()
+                    : 'No mailbox connected'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 px-3 py-1.5">
+                <span className="w-8 shrink-0 text-default-500">To</span>
+                {recipient ? (
+                  <span
+                    className="inline-flex h-6 items-center rounded-[3px] bg-default-100 px-2"
+                    title={recipient.address}
+                  >
+                    {recipientName}
+                  </span>
+                ) : (
+                  <span className="text-default-400">No contact email</span>
+                )}
+                {!showCc && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCc(true)}
+                    className="ml-auto text-blue hover:underline"
+                  >
+                    + Cc
+                  </button>
+                )}
+              </div>
+              {showCc && (
+                <div className="flex flex-wrap items-center gap-2 px-3 py-1.5">
+                  <span className="w-8 shrink-0 text-default-500">Cc</span>
+                  {cc.map(address => (
+                    <span
+                      key={address}
+                      className="inline-flex h-6 items-center gap-1 rounded-[3px] bg-default-100 pr-1 pl-2"
+                    >
+                      {address}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${address}`}
+                        onClick={() =>
+                          setCc(prev => prev.filter(a => a !== address))
+                        }
+                        className="text-default-500 hover:text-danger"
+                      >
+                        <Icon name="x" className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="email"
+                    aria-label="Add a Cc address"
+                    placeholder={cc.length ? '' : 'name@example.com'}
+                    value={ccInput}
+                    onChange={e => setCcInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
+                        if (e.ctrlKey || e.metaKey) return;
+                        e.preventDefault();
+                        addCc(ccInput);
+                      } else if (
+                        e.key === 'Backspace' &&
+                        !ccInput &&
+                        cc.length > 0
+                      ) {
+                        setCc(prev => prev.slice(0, -1));
+                      }
+                    }}
+                    onBlur={() => addCc(ccInput)}
+                    className="min-w-40 flex-1 bg-transparent outline-none"
+                  />
+                </div>
+              )}
+            </div>
+          )
+        )}
+
         <RichTextEditor
           content={body}
           onChange={setBody}
           placeholder={
-            isInternalNote
-              ? 'Add an internal note (only visible to agents)...'
+            mode === 'note'
+              ? 'Add an internal note (only visible to your team)...'
               : 'Write your reply...'
           }
         />
-      </div>
 
-      {/* File Attachment Controls */}
-      <div className="flex items-center gap-2">
-        <BaseButton
-          variant="light"
-          size="sm"
-          onPress={() => setShowFileUpload(!showFileUpload)}
-          icon={<Icon name="paper-clip" className="h-4 w-4" />}
-        >
-          {showFileUpload ? 'Hide' : 'Attach Files'}
-        </BaseButton>
-        <InlineImageButton
-          onInsertImage={handleInsertImage}
-          disabled={isUploading}
-        />
-        {pendingAttachments.length > 0 && (
-          <span className="text-default-500 text-xs">
-            {pendingAttachments.length} file(s) attached
-          </span>
+        {emailing && (
+          <div className="flex items-start justify-between gap-3 px-3 pb-3">
+            {showSignature ? (
+              signatureOpen ? (
+                <SignatureBlock html={sig.html} />
+              ) : (
+                <span className="text-xs text-default-400">
+                  Your signature is added to this reply.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSignatureOpen(true)}
+                    className="text-blue hover:underline"
+                  >
+                    Show
+                  </button>
+                </span>
+              )
+            ) : (
+              <span className="text-xs text-default-400">
+                {sig?.html.trim()
+                  ? 'Signature off for replies.'
+                  : 'No signature yet.'}{' '}
+                <button
+                  type="button"
+                  onClick={email?.onEditSignature}
+                  className="text-blue hover:underline"
+                >
+                  {sig?.html.trim() ? 'Turn it on' : 'Add signature'}
+                </button>
+              </span>
+            )}
+            {showSignature && (
+              <span className="flex shrink-0 gap-3">
+                {signatureOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setSignatureOpen(false)}
+                    className="text-xs text-blue hover:underline"
+                  >
+                    Hide
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={email?.onEditSignature}
+                  className="text-xs text-blue hover:underline"
+                >
+                  Edit signature
+                </button>
+              </span>
+            )}
+          </div>
         )}
       </div>
 
-      {/* File Upload Zone */}
       {showFileUpload && (
         <div className="space-y-3">
           <FileUploadZone
@@ -235,64 +550,55 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
             multiple={true}
           />
           {pendingAttachments.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-default-600 text-xs font-medium">
-                Pending Attachments:
-              </p>
-              <AttachmentList
-                attachments={pendingAttachments}
-                onDelete={handleRemovePendingAttachment}
-                canDelete={true}
-              />
-            </div>
+            <AttachmentList
+              attachments={pendingAttachments}
+              onDelete={handleRemovePendingAttachment}
+              canDelete={true}
+            />
           )}
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <span className="text-default-400 text-xs">
-          Press{' '}
-          <kbd className="bg-default-100 rounded px-1 py-0.5 text-xs">
-            {/* REVIEW: navigator.userAgentData?.platform is the modern API; fall back to
-                navigator.platform for browsers that don't support it (Firefox, Safari).
-                Both return a string containing "Mac" on macOS. */}
-            {typeof navigator !== 'undefined' &&
-            /mac/i.test(
-              (
-                navigator as Navigator & {
-                  userAgentData?: { platform?: string };
-                }
-              ).userAgentData?.platform ?? navigator.platform,
-            )
-              ? 'Cmd+Enter'
-              : 'Ctrl+Enter'}
-          </kbd>{' '}
-          to send
-        </span>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <BaseButton
             variant="bordered"
             color="light"
-            size="sm"
-            onPress={() => {
-              setBody('');
-              setPendingAttachments([]);
-            }}
-            isDisabled={
-              (isBodyEmpty && pendingAttachments.length === 0) ||
-              mutation.isPending
-            }
+            onPress={() => setShowFileUpload(!showFileUpload)}
+            icon={<Icon name="clip" className="h-4 w-4" />}
           >
-            Clear
+            {showFileUpload ? 'Hide attachments' : 'Attach Files'}
           </BaseButton>
-          <BaseButton
-            size="sm"
-            onPress={handleSubmit}
-            isDisabled={mutation.isPending || isUploading || isBodyEmpty}
-          >
-            {isInternalNote ? 'Add Internal Note' : 'Send Reply'}
-          </BaseButton>
+          {pendingAttachments.length > 0 && !showFileUpload && (
+            <span className="text-xs text-default-500">
+              {pendingAttachments.length} file(s) attached
+            </span>
+          )}
+          <span className="hidden text-xs text-default-400 sm:inline">
+            Press{' '}
+            <kbd className="rounded bg-default-100 px-1 py-0.5 font-mono text-xs">
+              {isMac() ? 'Cmd+Enter' : 'Ctrl+Enter'}
+            </kbd>{' '}
+            to {mode === 'note' ? 'save' : 'send'}
+          </span>
         </div>
+        <BaseButton
+          onPress={handleSubmit}
+          isLoading={isPending}
+          isDisabled={isPending || isUploading || isBodyEmpty || !!blocked}
+          icon={
+            <Icon
+              name={mode === 'note' ? 'lock' : 'send'}
+              className="h-4 w-4"
+            />
+          }
+        >
+          {mode === 'note'
+            ? 'Add internal note'
+            : emailing
+              ? `Send email to ${recipientFirstName || 'contact'}`
+              : 'Send reply'}
+        </BaseButton>
       </div>
 
       <CannedResponsePicker

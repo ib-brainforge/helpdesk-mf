@@ -1,15 +1,28 @@
+import type { DeadlinePriority } from '@/api/local/deadlines';
+import { issueScopeToken } from '@/api/local/scoped';
 import { ScopeSelect } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { useHelpdeskLicensedTenants } from '@/hooks/useHelpdeskLicensedTenants';
+import { useMailbox } from '@/hooks/useMailbox';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { selectedContextAtom } from '@/state/auth-atoms';
-import { BaseButton, BaseInput, Icon } from '@brainforgeau/components';
+import {
+  BaseButton,
+  BaseInput,
+  BaseToggle,
+  Icon,
+} from '@brainforgeau/components';
 import { useAuth, usePermissions } from '@brainforgeau/security';
+import { toast } from '@heroui/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { type FC, useEffect, useMemo, useState } from 'react';
+import { scopePath } from '../components/ScopePills';
 import { TicketDescriptionContent } from '../components/TicketDescriptionContent';
-import { useCreateTicket, useLinkAsset } from '../hooks/useTickets';
 import type { PickedAsset } from './AssetPicker';
+import { ContactPicker, type RequestContact } from './ContactPicker';
+import { DeadlinePreviewBox } from './DeadlinePreviewBox';
 import { RequestFieldRenderer } from './RequestFieldRenderer';
 import { buildDescription, urgencyToPriority } from './formatAnswers';
 import {
@@ -20,11 +33,7 @@ import {
   paginateFields,
   resolveRequestCategory,
 } from './request-field-schema';
-import {
-  RequestScopeContext,
-  createTicketInScope,
-  ensureRequestScopeAvailable,
-} from './requestScope';
+import { RequestScopeContext, createTicketInScope } from './requestScope';
 import { useRequestCategories } from './useRequestCategories';
 
 /**
@@ -92,8 +101,6 @@ interface Props {
 
 export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const { user } = useAuth();
-  const createTicket = useCreateTicket();
-  const linkAsset = useLinkAsset();
   // Linking needs tickets.update, which a Customer raising a request does not
   // have. They still get their vehicles named in the description; the link is
   // only attempted when it can succeed.
@@ -103,10 +110,23 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   // Why the last create failed, shown on the review step. Cleared as soon as
   // the requester moves, so a stale message never sits over a fixed form.
   const [submitError, setSubmitError] = useState<string | null>(null);
-  // Covers the vehicle links made after the ticket exists, so Create cannot be
-  // pressed a second time while they finish.
+  // Covers the create and the vehicle links made after the ticket exists, so
+  // Create cannot be pressed a second time while they finish.
   const [isFinishing, setIsFinishing] = useState(false);
-  const isBusy = createTicket.isPending || isFinishing;
+  const isBusy = isFinishing;
+
+  /*
+   * Staff raising a request for a client pick the client's contact, and may
+   * email them a confirmation from their own mailbox. Clients raise their own
+   * request, so for them the contact is their account, read only, as before.
+   */
+  const { isServiceAdmin: isStaff } = useHelpdeskAccess();
+  const { isConnected: mailboxConnected } = useMailbox();
+  const [contact, setContact] = useState<RequestContact | null>(null);
+  const [newContactEmail, setNewContactEmail] = useState('');
+  // Off until asked for: on by default, a client was nearly emailed by
+  // someone who had not noticed the switch.
+  const [notifyContact, setNotifyContact] = useState(false);
 
   const [stepIndex, setStepIndex] = useState(0);
   const [categoryKey, setCategoryKey] = useState<string>('');
@@ -133,7 +153,19 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
    * visible to the organisation it belongs to.
    */
   const appContext = useAtomValue(selectedContextAtom);
-  const { tenantOptions, organisationOptions } = useScopeNames();
+  const { tenantOptions: allTenantOptions, organisationOptions } =
+    useScopeNames();
+  // Only companies where Helpdesk is licensed: picking one that is not, and
+  // only then being told, was the commonest dead end (5 of 7 tried).
+  const allTenantIds = useMemo(
+    () => allTenantOptions.map(t => t.id),
+    [allTenantOptions],
+  );
+  const { isLicensed } = useHelpdeskLicensedTenants(allTenantIds);
+  const tenantOptions = useMemo(
+    () => allTenantOptions.filter(t => isLicensed(t.id)),
+    [allTenantOptions, isLicensed],
+  );
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [organisationId, setOrganisationId] = useState<string | null>(null);
   const orgsForTenant = useMemo(
@@ -182,19 +214,16 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
    * A ticket can only be raised where Helpdesk is licensed, and identity
    * refuses a token anywhere else. Asked as soon as the scope is chosen, so
    * the requester learns it on the Details step instead of after answering
-   * every question. Create then reuses the token this issued.
+   * every question. The token it returns is the one Create then uses.
    */
-  const scopeAvailable = useQuery({
+  const scopeToken = useQuery({
     queryKey: ['new-request', 'scope-token', tenantId, organisationId],
     enabled: scopeComplete && !inAppContext,
     staleTime: 30 * 60 * 1000,
     retry: false,
-    queryFn: async () => {
-      await ensureRequestScopeAvailable(requestScope);
-      return true;
-    },
+    queryFn: () => issueScopeToken(requestScope, 'helpdesk'),
   });
-  const scopeUnavailable = !inAppContext && scopeAvailable.isError;
+  const scopeUnavailable = !inAppContext && scopeToken.isError;
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState('');
   const [showErrors, setShowErrors] = useState(false);
@@ -203,8 +232,43 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const [questionPage, setQuestionPage] = useState(0);
 
   const profile = (user?.profile ?? {}) as Record<string, unknown>;
-  const contactName = (profile.name as string) ?? '';
-  const contactEmail = (profile.email as string) ?? '';
+  const accountName = (profile.name as string) ?? '';
+  const accountEmail = (profile.email as string) ?? '';
+  const isSelf = !isStaff || contact?.kind === 'self';
+  const contactName = isSelf
+    ? accountName
+    : contact?.kind === 'existing'
+      ? contact.contact.displayName
+      : contact?.kind === 'new'
+        ? contact.displayName
+        : '';
+  const contactEmail = isSelf
+    ? accountEmail
+    : contact?.kind === 'existing'
+      ? contact.contact.email
+      : contact?.kind === 'new'
+        ? newContactEmail.trim()
+        : '';
+  const newContactEmailValid =
+    contact?.kind !== 'new' ||
+    (contact.displayName.trim().length > 0 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newContactEmail.trim()));
+
+  /*
+   * Staff start with themselves as the contact, so the step never blocks on a
+   * company with no contacts on file (most have none yet). They can pick a
+   * client's contact, or add one inline with a name and an email.
+   */
+  useEffect(() => {
+    if (isStaff && contact === null) setContact({ kind: 'self' });
+  }, [isStaff, contact]);
+
+  const pickContact = (next: RequestContact | null) => {
+    setContact(next);
+    if (next?.kind === 'existing' && next.contact.phone) {
+      setPhone(next.contact.phone);
+    }
+  };
 
   const category: CategorySpec | undefined = useMemo(
     () => REQUEST_CATEGORIES.find(c => c.key === categoryKey),
@@ -212,6 +276,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   );
 
   const step = STEPS[stepIndex];
+  const siteDetailsRequired = !category?.remote;
 
   const questionPages = useMemo(
     () => (category ? paginateFields(category.fields) : []),
@@ -239,16 +304,16 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const canAdvance = (): boolean => {
     if (step.id === 'category') return !!category;
     if (step.id === 'details') {
-      // Phone and location are required like every other question: the point of
-      // the form is to arrive at something actionable without a round trip.
-      // Name and email are not checked because they come from the account and
-      // are read only.
+      // Phone and location are required where someone may need to ring or
+      // visit; a portal, account or app question needs neither.
       return (
         scopeComplete &&
         !scopeUnavailable &&
         subject.trim().length > 0 &&
-        phone.trim().length > 0 &&
-        location.trim().length > 0
+        (!siteDetailsRequired ||
+          (phone.trim().length > 0 && location.trim().length > 0)) &&
+        (!isStaff || !!contact) &&
+        newContactEmailValid
       );
     }
     if (step.id === 'questions') {
@@ -287,7 +352,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
     setStepIndex(i => Math.max(i - 1, 0));
   };
 
-  const contact = {
+  const contactDetails = {
     location,
     name: contactName,
     phone,
@@ -305,6 +370,9 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
     if ('tenantId' in next) {
       setTenantId(next.tenantId ?? null);
       setOrganisationId(null);
+      // Contacts belong to a company, so another company starts again.
+      setContact(null);
+      setNewContactEmail('');
     }
     if ('organisationId' in next) {
       setOrganisationId(next.organisationId ?? null);
@@ -324,44 +392,58 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const submit = async () => {
     if (!category || !resolvedCategoryId) return;
     setSubmitError(null);
+    const notify =
+      isStaff && notifyContact && !!contact && contact.kind !== 'self';
     const ticket = {
       subject: subject.trim(),
-      description: buildDescription({ category, answers, contact }),
+      description: buildDescription({
+        category,
+        answers,
+        contact: contactDetails,
+      }),
       priority: urgencyToPriority(answers.urgency),
       categoryId: resolvedCategoryId,
-    };
-
-    if (inAppContext) {
-      createTicket.mutate(ticket, {
-        onSuccess: async id => {
-          setIsFinishing(true);
-          try {
-            if (canLinkAssets) {
-              await linkPickedAssets(String(id), assetId =>
-                linkAsset.mutateAsync({ ticketId: String(id), assetId }),
-              );
-            }
-          } finally {
-            setIsFinishing(false);
+      ...(isStaff && contact?.kind === 'existing'
+        ? { contactId: contact.contact.id }
+        : {}),
+      ...(isStaff && contact?.kind === 'new'
+        ? {
+            newContact: {
+              displayName: contact.displayName,
+              email: newContactEmail.trim(),
+              phone: phone.trim() || undefined,
+            },
           }
-          onCreated?.(String(id));
-        },
-        // The dialog stays open with everything as entered, so the requester
-        // can fix the cause and press Create again rather than start over.
-        onError: error => setSubmitError(describeCreateError(error)),
-      });
-      return;
-    }
+        : {}),
+      ...(notify ? { notifyContact: true } : {}),
+    };
 
     setIsFinishing(true);
     try {
-      const created = await createTicketInScope(requestScope, ticket);
+      // One path whichever scope was chosen: the app's own context needs no
+      // token (null), any other uses the one issued on the Details step.
+      const created = await createTicketInScope(
+        requestScope,
+        ticket,
+        inAppContext ? null : scopeToken.data,
+      );
       if (canLinkAssets) {
         await linkPickedAssets(created.id, created.linkAsset);
       }
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      // The create response carries no send result, and the ticket exists
+      // either way, so the mailbox status already known here decides it.
+      if (notify && !mailboxConnected) {
+        toast('Ticket created', {
+          description:
+            "The confirmation email wasn't sent because your mailbox isn't connected.",
+          variant: 'warning',
+        });
+      }
       onCreated?.(created.id);
     } catch (error) {
+      // The dialog stays open with everything as entered, so the requester
+      // can fix the cause and press Create again rather than start over.
       setSubmitError(describeCreateError(error));
     } finally {
       setIsFinishing(false);
@@ -481,6 +563,10 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                         setAnswers({});
                         setPickedAssets({});
                         setQuestionPage(0);
+                        // One choice and nothing else on this step, so
+                        // picking it moves on.
+                        setSubmitError(null);
+                        setStepIndex(1);
                       }}
                       className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                         selected
@@ -527,23 +613,24 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 Tell us who and where
               </p>
               <p className="text-light-gray mb-3 text-[13px]">
-                Who the request is for, and how to reach you. Your name and
-                email come from your account.
+                {isStaff
+                  ? 'Who the request is for, and how to reach them.'
+                  : 'How to reach you. Your name and email come from your account.'}
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {tenantLocked ? (
                   <BaseInput
-                    label="Company"
+                    label="Tenant"
                     value={tenantName ?? ''}
                     isReadOnly
                   />
                 ) : (
                   <ScopeSelect
-                    label="Company"
+                    label="Tenant"
                     options={tenantOptions}
                     value={tenantId}
                     onChange={id => changeScope({ tenantId: id })}
-                    placeholder="Choose a company"
+                    placeholder="Choose a tenant"
                   />
                 )}
                 {orgLocked ? (
@@ -565,15 +652,15 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 {scopeUnavailable && (
                   <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
                     Helpdesk isn't enabled for {tenantName ?? 'this company'},
-                    so requests can't be raised there. Choose another company,
-                    or ask an admin to enable Helpdesk for it.
+                    so requests can't be raised there. Choose another tenant, or
+                    ask an admin to enable Helpdesk for it.
                   </p>
                 )}
                 {showErrors && !scopeComplete && (
                   <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
                     {tenantId
                       ? 'Choose the organisation this request is for.'
-                      : 'Choose the company this request is for.'}
+                      : 'Choose the tenant this request is for.'}
                   </p>
                 )}
                 <div className="sm:col-span-2">
@@ -587,34 +674,117 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                     errorMessage="A subject is required"
                   />
                 </div>
-                {/* Identity comes from the signed in account and is shown read only:
-                editing it here would not change who the ticket is actually from. */}
-                <BaseInput
-                  label="Contact name"
-                  value={contactName}
-                  isReadOnly
-                />
-                <BaseInput
-                  label="Contact email"
-                  value={contactEmail}
-                  isReadOnly
-                />
+                {isStaff ? (
+                  <>
+                    {/* Staff pick the client's contact, or add a new one
+                      here; replies go to them. */}
+                    <div>
+                      {contact?.kind === 'new' ? (
+                        <BaseInput
+                          label="New contact name"
+                          isRequired
+                          placeholder="Who rang or emailed"
+                          value={contact.displayName}
+                          onValueChange={v =>
+                            setContact({ kind: 'new', displayName: v })
+                          }
+                          isInvalid={showErrors && !contact.displayName.trim()}
+                          errorMessage="A name is required for a new contact"
+                        />
+                      ) : (
+                        <ContactPicker
+                          value={contact}
+                          onChange={pickContact}
+                          selfName={accountName || accountEmail || 'you'}
+                          isRequired
+                          isInvalid={showErrors && !contact}
+                          errorMessage="Choose who this request is for"
+                          scopeKey={`${tenantId ?? ''}|${organisationId ?? ''}`}
+                          scopeToken={
+                            inAppContext ? undefined : scopeToken.data
+                          }
+                          isReady={
+                            scopeComplete && (inAppContext || !!scopeToken.data)
+                          }
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="text-blue mt-1 text-xs hover:underline"
+                        onClick={() => {
+                          setNewContactEmail('');
+                          setContact(
+                            contact?.kind === 'new'
+                              ? { kind: 'self' }
+                              : { kind: 'new', displayName: '' },
+                          );
+                        }}
+                      >
+                        {contact?.kind === 'new'
+                          ? 'Choose an existing contact instead'
+                          : 'Add a new contact'}
+                      </button>
+                    </div>
+                    {contact?.kind === 'new' ? (
+                      <BaseInput
+                        label="Contact email"
+                        isRequired
+                        placeholder="name@company.com.au"
+                        value={newContactEmail}
+                        onValueChange={setNewContactEmail}
+                        isInvalid={showErrors && !newContactEmailValid}
+                        errorMessage="A valid email is required for a new contact"
+                      />
+                    ) : (
+                      <BaseInput
+                        label="Contact email"
+                        value={contactEmail}
+                        isReadOnly
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Identity comes from the signed in account and is shown read
+                    only: editing it here would not change who the ticket is from. */}
+                    <BaseInput
+                      label="Contact name"
+                      value={contactName}
+                      isReadOnly
+                    />
+                    <BaseInput
+                      label="Contact email"
+                      value={contactEmail}
+                      isReadOnly
+                    />
+                  </>
+                )}
                 <BaseInput
                   label="Contact phone"
-                  isRequired
-                  placeholder="Enter a phone number"
+                  isRequired={siteDetailsRequired}
+                  placeholder={
+                    siteDetailsRequired
+                      ? 'Enter a phone number'
+                      : 'Optional for this request'
+                  }
                   value={phone}
                   onValueChange={setPhone}
-                  isInvalid={showErrors && !phone.trim()}
+                  isInvalid={showErrors && siteDetailsRequired && !phone.trim()}
                   errorMessage="A phone number is required"
                 />
                 <BaseInput
                   label="Location"
-                  isRequired
-                  placeholder="Enter a location"
+                  isRequired={siteDetailsRequired}
+                  placeholder={
+                    siteDetailsRequired
+                      ? 'Where the vehicle or site is'
+                      : 'Optional for this request'
+                  }
                   value={location}
                   onValueChange={setLocation}
-                  isInvalid={showErrors && !location.trim()}
+                  isInvalid={
+                    showErrors && siteDetailsRequired && !location.trim()
+                  }
                   errorMessage="A location is required"
                 />
               </div>
@@ -695,9 +865,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                     </span>
                     {tenantName && (
                       <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
-                        {[tenantName, organisationName]
-                          .filter(Boolean)
-                          .join(' · ')}
+                        {scopePath(tenantName, organisationName)}
                       </span>
                     )}
                     <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
@@ -707,9 +875,49 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 </div>
                 <div className="max-h-[min(36vh,320px)] overflow-y-auto px-4 py-1 text-sm">
                   <TicketDescriptionContent
-                    value={buildDescription({ category, answers, contact })}
+                    value={buildDescription({
+                      category,
+                      answers,
+                      contact: contactDetails,
+                    })}
                   />
                 </div>
+              </div>
+              {/*
+                What happens next: the deadline the tenant's policy gives this
+                ticket, and (staff only) the confirmation to the contact.
+              */}
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <DeadlinePreviewBox
+                  priority={
+                    urgencyToPriority(answers.urgency) as DeadlinePriority
+                  }
+                  scopeKey={`${tenantId ?? ''}|${organisationId ?? ''}`}
+                  scopeToken={inAppContext ? undefined : scopeToken.data}
+                  isReady={inAppContext || !!scopeToken.data}
+                  companyName={tenantName}
+                />
+                {isStaff && contact?.kind !== 'self' && (
+                  <div className="border-light rounded-lg border px-4 py-3 text-sm">
+                    <BaseToggle
+                      isSelected={notifyContact && !!contact}
+                      isDisabled={!contact}
+                      onChange={setNotifyContact}
+                    >
+                      <span className="font-semibold">
+                        Notify contact by email
+                      </span>
+                    </BaseToggle>
+                    <p className="text-light-gray mt-2 text-xs">
+                      {contact
+                        ? `${contactName} gets a confirmation with the ticket number, sent from your own mailbox. Their replies come back into the ticket.`
+                        : 'Choose a contact on the Details step to email them a confirmation.'}
+                      {notifyContact && contact && !mailboxConnected
+                        ? " Your mailbox isn't connected, so it won't be sent."
+                        : ''}
+                    </p>
+                  </div>
+                )}
               </div>
               {!categoriesLoading && !resolvedCategory && (
                 <p className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm">

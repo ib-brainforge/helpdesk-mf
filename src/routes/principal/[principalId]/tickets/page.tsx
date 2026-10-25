@@ -6,6 +6,7 @@
  */
 
 import { AppAuthSplash } from '@/components/AppSplash';
+import { PrincipalCategorySelect } from '@/components/principal/PrincipalCategorySelect';
 import { ModalHeader, ScopeCell, StatusBadge } from '@/components/shared';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import {
@@ -72,6 +73,8 @@ function PrincipalTicketsPage() {
   const createMutation = useCreatePrincipalTicket(principalId ?? '');
   const [newSubject, setNewSubject] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  // Required: a ticket cannot exist without a category.
+  const [newCategoryId, setNewCategoryId] = useState('');
 
   const pid = principalId ?? '';
 
@@ -197,14 +200,16 @@ function PrincipalTicketsPage() {
   });
 
   const handleCreate = async (onClose: () => void) => {
-    if (!newSubject.trim()) return;
+    if (!newSubject.trim() || !newCategoryId) return;
     try {
       await createMutation.mutateAsync({
         subject: newSubject,
         description: newDescription,
+        categoryId: newCategoryId,
       });
       setNewSubject('');
       setNewDescription('');
+      setNewCategoryId('');
       onClose();
     } catch {
       // Error handled by global axios interceptor
@@ -280,6 +285,11 @@ function PrincipalTicketsPage() {
                     onValueChange={setNewSubject}
                     isRequired
                   />
+                  <PrincipalCategorySelect
+                    principalId={principalId ?? ''}
+                    value={newCategoryId}
+                    onChange={setNewCategoryId}
+                  />
                   <BaseTextarea
                     label="Description"
                     value={newDescription}
@@ -293,7 +303,11 @@ function PrincipalTicketsPage() {
                   </BaseButton>
                   <BaseButton
                     color="primary"
-                    isDisabled={createMutation.isPending || !newSubject.trim()}
+                    isDisabled={
+                      createMutation.isPending ||
+                      !newSubject.trim() ||
+                      !newCategoryId
+                    }
                     onPress={() => handleCreate(onClose)}
                   >
                     Create

@@ -42,10 +42,13 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/configuration/categories/page.tsx
 // routes/__sidebar/configuration/custom-statuses/page.tsx
 // routes/__sidebar/configuration/custom-priorities/page.tsx
+// routes/__sidebar/configuration/company-deadlines/page.tsx
+// routes/__sidebar/configuration/company-deadlines/[tenantId]/page.tsx
+// routes/__sidebar/configuration/company-deadlines/[tenantId]/organisations/[organisationId]/page.tsx
 // routes/__sidebar/configuration/custom-fields/page.tsx
 // routes/__sidebar/configuration/canned-responses/page.tsx
-// routes/__sidebar/configuration/integrations/page.tsx
-// routes/__sidebar/configuration/live-chat/page.tsx
+// components/integrations/IntegrationsConfigPage.tsx (hidden, no route)
+// components/live-chat/LiveChatConfigPage.tsx (hidden, no route)
 // routes/__sidebar/configuration/import-export/page.tsx
 // routes/__sidebar/configuration/approval-workflows/page.tsx
 // routes/__sidebar/configuration/approval-workflows/new/page.tsx
@@ -63,19 +66,10 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // ---------------------------------------------------------------------------
 
 // routes/__sidebar/reports/page.tsx
-// routes/__sidebar/reports-hub/page.tsx
-// routes/__sidebar/reports/summary/page.tsx
-// routes/__sidebar/reports/by-category/page.tsx
-// routes/__sidebar/reports/by-priority/page.tsx
-// routes/__sidebar/reports/by-status/page.tsx
-// routes/__sidebar/reports/sla/page.tsx
 // routes/__sidebar/reports/satisfaction/page.tsx
-// routes/__sidebar/reports/utilization/page.tsx
-// routes/__sidebar/reports/overdue/page.tsx
 // routes/__sidebar/reports/deleted/page.tsx
 // routes/__sidebar/reports/audit/page.tsx
 // routes/__sidebar/reports/assets/page.tsx
-// routes/__sidebar/reports/companies/page.tsx
 
 // ---------------------------------------------------------------------------
 // Approvals (tenant-scoped)
@@ -103,6 +97,13 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/knowledge-base/settings/page.tsx
 
 // ---------------------------------------------------------------------------
+// IT Support workspace  /it-support/...
+// ---------------------------------------------------------------------------
+
+// routes/it-support/page.tsx
+// routes/it-support/remote-sessions/page.tsx
+
+// ---------------------------------------------------------------------------
 // Principal-scoped routes  /principal/[principalId]/...
 // ---------------------------------------------------------------------------
 
@@ -116,9 +117,6 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/principal/[principalId]/categories/page.tsx
 // routes/principal/[principalId]/categories/new/page.tsx
 // routes/principal/[principalId]/categories/[id]/page.tsx
-// routes/principal/[principalId]/sla-policies/page.tsx
-// routes/principal/[principalId]/sla-policies/new/page.tsx
-// routes/principal/[principalId]/sla-policies/[id]/page.tsx
 // routes/principal/[principalId]/workflows/page.tsx
 // routes/principal/[principalId]/workflows/[id]/page.tsx
 // routes/principal/[principalId]/automations/page.tsx
@@ -208,6 +206,46 @@ export const breadcrumbs = {
     },
   ],
 
+  /** routes/__sidebar/configuration/company-deadlines/page.tsx */
+  'configuration.company-deadlines.list': () => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.configuration' },
+    {
+      labelKey: 'helpdesk.configuration.company-deadlines',
+      href: '/configuration/company-deadlines',
+    },
+  ],
+
+  /** routes/__sidebar/configuration/company-deadlines/[tenantId]/page.tsx (also "default") */
+  'configuration.company-deadlines.detail': (params: { name: string }) => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.configuration' },
+    {
+      labelKey: 'helpdesk.configuration.company-deadlines',
+      href: '/configuration/company-deadlines',
+    },
+    { label: params.name },
+  ],
+
+  /** routes/__sidebar/configuration/company-deadlines/[tenantId]/organisations/[organisationId]/page.tsx */
+  'configuration.company-deadlines.organisation': (params: {
+    tenantId: string;
+    companyName: string;
+    name: string;
+  }) => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.configuration' },
+    {
+      labelKey: 'helpdesk.configuration.company-deadlines',
+      href: '/configuration/company-deadlines',
+    },
+    {
+      label: params.companyName,
+      href: `/configuration/company-deadlines/${params.tenantId}`,
+    },
+    { label: params.name },
+  ],
+
   /** routes/__sidebar/configuration/custom-fields/page.tsx */
   'configuration.custom-fields.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
@@ -228,7 +266,7 @@ export const breadcrumbs = {
     },
   ],
 
-  /** routes/__sidebar/configuration/integrations/page.tsx */
+  /** components/integrations/IntegrationsConfigPage.tsx (hidden, no route; kept for its return) */
   'configuration.integrations.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.configuration' },
@@ -238,7 +276,7 @@ export const breadcrumbs = {
     },
   ],
 
-  /** routes/__sidebar/configuration/live-chat/page.tsx */
+  /** components/live-chat/LiveChatConfigPage.tsx (hidden, no route; kept for its return) */
   'configuration.live-chat': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.configuration' },
@@ -383,66 +421,11 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk.reports', href: '/reports' },
   ],
 
-  /** routes/__sidebar/reports-hub/page.tsx */
-  'reports.hub': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-  ],
-
-  /** routes/__sidebar/reports/summary/page.tsx */
-  'reports.summary': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.summary' },
-  ],
-
-  /** routes/__sidebar/reports/by-category/page.tsx */
-  'reports.by-category': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-category' },
-  ],
-
-  /** routes/__sidebar/reports/by-priority/page.tsx */
-  'reports.by-priority': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-priority' },
-  ],
-
-  /** routes/__sidebar/reports/by-status/page.tsx */
-  'reports.by-status': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-status' },
-  ],
-
-  /** routes/__sidebar/reports/sla/page.tsx — "SLA" is an acronym, use label not labelKey */
-  'reports.sla': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { label: 'SLA' },
-  ],
-
   /** routes/__sidebar/reports/satisfaction/page.tsx */
   'reports.satisfaction': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.reports', href: '/reports' },
     { labelKey: 'helpdesk.reports.satisfaction' },
-  ],
-
-  /** routes/__sidebar/reports/utilization/page.tsx */
-  'reports.utilization': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.utilization' },
-  ],
-
-  /** routes/__sidebar/reports/overdue/page.tsx */
-  'reports.overdue': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.overdue' },
   ],
 
   /** routes/__sidebar/reports/deleted/page.tsx */
@@ -464,13 +447,6 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.reports', href: '/reports' },
     { labelKey: 'helpdesk.reports.assets' },
-  ],
-
-  /** routes/__sidebar/reports/companies/page.tsx */
-  'reports.companies': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.companies' },
   ],
 
   // -------------------------------------------------------------------------
@@ -555,6 +531,20 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.knowledge-base', href: '/knowledge-base' },
     { labelKey: 'helpdesk.knowledge-base.settings' },
+  ],
+
+  // -------------------------------------------------------------------------
+  // IT Support workspace. Its own trail: it is not part of Helpdesk, so the
+  // leading crumb is IT Support, not Helpdesk.
+  // -------------------------------------------------------------------------
+
+  /** routes/it-support/page.tsx */
+  'it-support.overview': () => [{ labelKey: 'it-support' }],
+
+  /** routes/it-support/remote-sessions/page.tsx */
+  'it-support.remote-sessions': () => [
+    { labelKey: 'it-support', href: '/it-support' },
+    { labelKey: 'it-support.remote-sessions' },
   ],
 
   // -------------------------------------------------------------------------
@@ -727,58 +717,6 @@ export const breadcrumbs = {
     {
       labelKey: 'helpdesk.configuration.categories',
       href: `/principal/${params.principalId}/categories`,
-    },
-    { label: params.name },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/page.tsx — "SLA" is an acronym */
-  'principal.sla-policies.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/new/page.tsx */
-  'principal.sla-policies.new': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-    { label: 'New SLA Policy' },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/[id]/page.tsx */
-  'principal.sla-policies.detail': (params: {
-    principalId: string;
-    principalName: string;
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
     },
     { label: params.name },
   ],

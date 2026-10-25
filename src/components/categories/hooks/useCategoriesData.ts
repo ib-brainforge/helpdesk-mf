@@ -23,6 +23,14 @@ export const useDuplicateCategory = () => {
   });
 };
 
+/**
+ * The category's default assignee. Newer than the generated client, so it is
+ * read off the response as sent; replace with the generated field once the
+ * client is regenerated.
+ */
+export const defaultAssigneeOf = (cat: object): string | undefined =>
+  (cat as { defaultAssigneeId?: string | null }).defaultAssigneeId ?? undefined;
+
 // Map a generated CategoryDto to the local CategoryDto shape.
 // Fields fromEmailAddress / fromEmailName / useFromAddressAsReplyTo replace the old
 // emailRoutingAddress / emailRoutingProtocol fields that did not exist on the backend DTO.
@@ -46,7 +54,7 @@ function mapGeneratedCategory(
     sectionId: cat.sectionId ?? undefined,
     sectionName,
     accessLevel,
-    defaultAssigneeId: undefined,
+    defaultAssigneeId: defaultAssigneeOf(cat),
     fromEmailAddress: cat.fromEmailAddress ?? undefined,
     fromEmailName: cat.fromEmailName ?? undefined,
     useFromAddressAsReplyTo: cat.useFromAddressAsReplyTo ?? false,
@@ -56,13 +64,24 @@ function mapGeneratedCategory(
   };
 }
 
-export const useCategoriesData = () => {
+/** Categories and sections are reference data that rarely change; saves refresh them. */
+const REFERENCE_STALE_MS = 10 * 60 * 1000;
+
+/**
+ * The company's categories, and with `withSections` its sections too. Only
+ * the Categories configuration page shows sections, so the list and the
+ * reports no longer fetch them.
+ */
+export const useCategoriesData = ({
+  withSections = false,
+}: { withSections?: boolean } = {}) => {
   const {
     data: hierarchyData,
     isLoading: isLoadingCategories,
     refetch: refetchCategories,
   } = useQuery<CategoryDto[]>({
     queryKey: ['helpdesk-categories'],
+    staleTime: REFERENCE_STALE_MS,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesGet();
@@ -94,6 +113,8 @@ export const useCategoriesData = () => {
     refetch: refetchSections,
   } = useQuery<SectionDto[]>({
     queryKey: ['helpdesk-sections'],
+    enabled: withSections,
+    staleTime: REFERENCE_STALE_MS,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesSectionsGet();
@@ -114,7 +135,7 @@ export const useCategoriesData = () => {
   return {
     categories: hierarchyData ?? [],
     sections: sectionsData ?? [],
-    isLoading: isLoadingCategories || isLoadingSections,
+    isLoading: isLoadingCategories || (withSections && isLoadingSections),
     refetchCategories,
     refetchSections,
     refetchAll: () => {

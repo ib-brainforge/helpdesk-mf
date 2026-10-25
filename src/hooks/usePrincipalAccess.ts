@@ -35,7 +35,8 @@ export interface UsePrincipalAccessResult {
   level: PrincipalAccessLevel;
 }
 
-const ADMIN_ROLES = [
+/** Roles that make someone an admin of a principal's helpdesk (Netcorp staff). */
+export const PRINCIPAL_ADMIN_ROLES = [
   'multitenant.admin',
   'multitenant.identity',
   'principal.admin',
@@ -93,7 +94,7 @@ export function usePrincipalAccess(
       roles,
     );
 
-    const isAdmin = ADMIN_ROLES.some(r => roles.has(r));
+    const isAdmin = PRINCIPAL_ADMIN_ROLES.some(r => roles.has(r));
     if (isAdmin) return 'admin';
 
     const isAgent = AGENT_ROLES.some(r => roles.has(r));

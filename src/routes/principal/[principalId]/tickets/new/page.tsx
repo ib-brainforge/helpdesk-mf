@@ -6,6 +6,7 @@
  */
 
 import { AppAuthSplash } from '@/components/AppSplash';
+import { PrincipalCategorySelect } from '@/components/principal/PrincipalCategorySelect';
 import { usePrincipal } from '@/hooks/usePrincipal';
 import { useCreatePrincipalTicket } from '@/hooks/usePrincipalTickets';
 import { BaseInput, BaseTextarea } from '@brainforgeau/components';
@@ -25,6 +26,8 @@ import { z } from 'zod';
 const principalTicketSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
   description: z.string(),
+  // A ticket cannot exist without a category.
+  categoryId: z.string().min(1, 'Choose a category'),
 });
 
 type PrincipalTicketFormData = z.infer<typeof principalTicketSchema>;
@@ -44,11 +47,13 @@ function NewPrincipalTicketPage() {
     defaultValues: {
       subject: '',
       description: '',
+      categoryId: '',
     },
     onSubmit: async (values: PrincipalTicketFormData) => {
       await createMutation.mutateAsync({
         subject: values.subject,
         description: values.description,
+        categoryId: values.categoryId,
       });
       navigate(`/principal/${principalId}/tickets`);
     },
@@ -79,6 +84,18 @@ function NewPrincipalTicketPage() {
               value={field.state.value}
               onChange={e => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
+              isInvalid={field.state.meta.errors.length > 0}
+              errorMessage={field.state.meta.errors.map(String).join(', ')}
+            />
+          )}
+        </f.Field>
+
+        <f.Field name="categoryId">
+          {field => (
+            <PrincipalCategorySelect
+              principalId={principalId ?? ''}
+              value={field.state.value}
+              onChange={field.handleChange}
               isInvalid={field.state.meta.errors.length > 0}
               errorMessage={field.state.meta.errors.map(String).join(', ')}
             />

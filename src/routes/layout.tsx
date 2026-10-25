@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { RouteGuard, ruleForPath } from './route-permissions';
+import { RouteGuard } from './route-permissions';
 
 // css-base-split: helpdesk-mf's single, permanent base stylesheet —
 // precompiled Tailwind preflight + @brainforgeau/theme tokens (`:root`) +
@@ -77,26 +77,30 @@ import {
   PageTemplateProvider,
 } from '@brainforgeau/components/page';
 import {
-  type GuardedItem,
   LicenseGuard,
   useAuth,
   usePermissions,
   useWhitelabel,
 } from '@brainforgeau/security';
-import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
+import {
+  NavLink,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from '@modern-js/runtime/router';
 
 const TopNavbar = lazyWithRetry(
   () => import('@brainforgeau/navbar/Navbar'),
   m => m?.TopNavbar,
 );
 import { Logo } from '@/components/Logo';
+import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { TEST_IDS } from '@/constants/testIds';
 import { PageTracker } from '@/observability';
-import { hubConnectedAtom } from '@/state/config';
 import { getAppConfig } from '@/state/config';
-import { SignalIcon } from '@heroicons/react/24/solid';
-import { useAtomValue } from 'jotai';
+import { WORKSPACE_FALLBACK_PATH, useWorkspaces } from '@/workspaces';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -118,6 +122,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.categories.new': 'New Category',
   'helpdesk.configuration.custom-statuses': 'Custom Statuses',
   'helpdesk.configuration.custom-priorities': 'Custom Priorities',
+  'helpdesk.configuration.company-deadlines': 'Tenant Deadlines',
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
   'helpdesk.configuration.integrations': 'Integrations',
@@ -130,17 +135,10 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.workflows.rule-migration-report':
     'Rule Migration Report',
   'helpdesk.reports': 'Reports',
-  'helpdesk.reports.summary': 'Summary',
-  'helpdesk.reports.by-category': 'By Category',
-  'helpdesk.reports.by-priority': 'By Priority',
-  'helpdesk.reports.by-status': 'By Status',
   'helpdesk.reports.satisfaction': 'Satisfaction',
-  'helpdesk.reports.utilization': 'Utilization',
-  'helpdesk.reports.overdue': 'Overdue',
   'helpdesk.reports.deleted': 'Deleted',
   'helpdesk.reports.audit': 'Audit',
   'helpdesk.reports.assets': 'Assets',
-  'helpdesk.reports.companies': 'Companies',
   'helpdesk.approvals': 'Approvals',
   'helpdesk.approvals.new': 'New Approval',
   'helpdesk.admin': 'Admin',
@@ -152,143 +150,13 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
+  'it-support': 'IT Support',
+  'it-support.remote-sessions': 'Remote sessions',
 };
 
 function breadcrumbI18nResolver(key: string): string {
   return BREADCRUMB_LABELS[key] ?? key;
 }
-
-interface NavItem {
-  label: string;
-  href?: string;
-  icon: string;
-  testId?: string;
-  children?: NavItem[];
-}
-
-/**
- * A menu item needs the same permission as the page it opens, taken from the
- * route table (routes/route-permissions.tsx), so the menu never offers a page
- * that would say Access Denied, and never hides one the user may open. Items
- * whose page has no rule stay visible. Groups (Configuration) are hidden by
- * the shell when none of their children survive.
- */
-const withRoutePermissions = (
-  items: GuardedItem<NavItem>[],
-): GuardedItem<NavItem>[] =>
-  items.map(item => {
-    const children = (item as { children?: GuardedItem<NavItem>[] }).children;
-    const href = (item as { href?: string }).href;
-    const rule = href ? ruleForPath(href) : undefined;
-    return {
-      ...item,
-      ...(children ? { children: withRoutePermissions(children) } : {}),
-      ...(rule ? { requiredPermissions: rule.anyOf } : {}),
-    };
-  });
-
-// Navigation items for the sidebar
-const navItemsTop: GuardedItem<NavItem>[] = withRoutePermissions([
-  {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: 'grids',
-    testId: 'nav-dashboard',
-  },
-  {
-    label: 'Tickets',
-    href: '/tickets',
-    icon: 'text',
-    testId: 'nav-tickets',
-  },
-  {
-    label: 'Knowledge Base',
-    href: '/knowledge-base',
-    icon: 'learning',
-    testId: 'nav-knowledge-base',
-  },
-  {
-    label: 'Reports',
-    href: '/reports',
-    icon: 'analytics',
-    testId: 'nav-reports',
-  },
-  // Ideas Forum is deliberately NOT linked here. The publish/unpublish path and
-  // the /ideas feed both work, but voting and commenting do not exist at any
-  // layer: GetIdeasQueryHandler returns a hardcoded 0 for VoteCount and there
-  // is no vote table. Giving a read-only list the same prominence as Tickets
-  // made a half-built feature look broken. The route is left in place, so the
-  // page is still reachable directly and nothing is deleted.
-]);
-
-const navItemsBottom: GuardedItem<NavItem>[] = withRoutePermissions([
-  // Principal Picker + helpdesk principal routes are accessible via /principal/{id}/*
-  {
-    label: 'Configuration',
-    icon: 'settings',
-    testId: 'nav-configuration',
-    children: [
-      {
-        label: 'Ticket Categories',
-        href: '/configuration/categories',
-        icon: 'folder',
-        testId: 'nav-configuration-categories',
-      },
-      {
-        label: 'Custom Statuses',
-        href: '/configuration/custom-statuses',
-        icon: 'tag',
-        testId: 'nav-configuration-custom-statuses',
-      },
-      {
-        label: 'Custom Priorities',
-        href: '/configuration/custom-priorities',
-        icon: 'flag',
-        testId: 'nav-configuration-custom-priorities',
-      },
-      {
-        label: 'Automation',
-        href: '/configuration/automations',
-        icon: 'cube',
-        testId: 'nav-configuration-automations',
-      },
-      {
-        label: 'Workflows',
-        href: '/configuration/workflows',
-        icon: 'matching',
-        testId: 'nav-configuration-workflows',
-      },
-      {
-        label: 'Integrations',
-        href: '/configuration/integrations',
-        icon: 'plug',
-        testId: 'nav-configuration-integrations',
-      },
-      {
-        label: 'Live Chat',
-        href: '/configuration/live-chat',
-        icon: 'chatO',
-        testId: 'nav-configuration-live-chat',
-      },
-    ],
-  },
-]);
-
-const HelpdeskAction = () => {
-  const hubConnected = useAtomValue(hubConnectedAtom);
-  return (
-    <div className="flex items-center gap-1.5">
-      {hubConnected && (
-        <span
-          className="flex items-center gap-1 text-green-500"
-          title="Live connection active"
-        >
-          <SignalIcon className="h-3.5 w-3.5" />
-        </span>
-      )}
-    </div>
-  );
-};
 
 export default function Layout() {
   // Desktop sidebar: extended (full) or collapsed (icons only)
@@ -346,6 +214,15 @@ export default function Layout() {
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
   const { setAction } = useNavbarAction();
+  const navigate = useNavigate();
+  // Which workspace the URL is in picks the side menu, and opening one the
+  // user cannot use redirects (workspaces.ts).
+  const {
+    active: workspace,
+    available: workspaces,
+    blocked: workspaceBlocked,
+    isLoading: loadingWorkspaces,
+  } = useWorkspaces(location.pathname);
 
   const { config: whitelabelConfig, isLoading: whitelabelLoading } =
     useWhitelabel();
@@ -357,19 +234,28 @@ export default function Layout() {
     [location.pathname],
   );
 
+  // The navbar draws this outside Helpdesk's router, so it gets navigate and
+  // the active workspace from here, and is set again whenever they change.
   useEffect(() => {
-    setAction(<HelpdeskAction />);
-    return () => setAction(null);
-  }, [setAction]);
+    setAction(
+      <HelpdeskNavbarAction
+        workspaces={workspaces}
+        activeKey={workspace.key}
+        onNavigate={navigate}
+      />,
+    );
+  }, [setAction, workspaces, workspace.key, navigate]);
+  // Cleared once, on leaving Helpdesk, not between the updates above.
+  useEffect(() => () => setAction(null), [setAction]);
 
   // Filter navigation items based on user permissions
   // Include permissions in deps to ensure re-render when context token changes
   const navSections = useMemo(
     () => [
-      { key: 'top', items: filterNavItems(navItemsTop) },
-      { key: 'bottom', items: filterNavItems(navItemsBottom) },
+      { key: 'top', items: filterNavItems(workspace.nav.top) },
+      { key: 'bottom', items: filterNavItems(workspace.nav.bottom) },
     ],
-    [filterNavItems, permissions],
+    [filterNavItems, permissions, workspace],
   );
 
   // Someone whose role reaches only the Tickets page (a Customer, Platform
@@ -463,6 +349,7 @@ export default function Layout() {
                 }) => (
                   <NavLink
                     to={item.href}
+                    end={item.end}
                     data-testid={item.testId}
                     className={({ isActive }: { isActive: boolean }) =>
                       isActive ? activeClassName : className
@@ -483,10 +370,19 @@ export default function Layout() {
               <div className="flex flex-1 min-w-0">
                 <ErrorBoundary>
                   <LicenseGuard appId="helpdesk">
-                    {/* Page permissions: see routes/route-permissions.tsx. */}
-                    <RouteGuard pathname={location.pathname}>
-                      <Outlet />
-                    </RouteGuard>
+                    {/* A workspace the user cannot open (switched off, or
+                        not their role) sends them to Tickets; nothing renders
+                        while roles are still loading, so an admin is never
+                        bounced. Page permissions: routes/route-permissions.tsx. */}
+                    {workspaceBlocked ? (
+                      loadingWorkspaces ? null : (
+                        <Navigate to={WORKSPACE_FALLBACK_PATH} replace />
+                      )
+                    ) : (
+                      <RouteGuard pathname={location.pathname}>
+                        <Outlet />
+                      </RouteGuard>
+                    )}
                   </LicenseGuard>
                 </ErrorBoundary>
               </div>

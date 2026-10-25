@@ -117,6 +117,23 @@ export interface StatusPickerOption {
 }
 
 /**
+ * Whether the viewer's custom statuses may be offered for these tickets.
+ *
+ * Custom statuses belong to one company, and the list the app loads is the
+ * viewer's own. The backend refuses one on another company's ticket
+ * (CustomStatus.OtherCompany), so a ticket, or any ticket in a selection,
+ * outside the viewer's company is offered New, In Progress and Closed only.
+ * The one rule for the list's row menu and bulk Change Status. (The ticket
+ * page needs no rule: it runs in its ticket's company and loads that
+ * company's own statuses.)
+ */
+export const customStatusesApply = (
+  viewerTenantId: string | null | undefined,
+  ticketTenantIds: ReadonlyArray<string | null | undefined>,
+): boolean =>
+  !!viewerTenantId && ticketTenantIds.every(id => id === viewerTenantId);
+
+/**
  * The options every ticket status picker should offer.
  *
  * Built in three places by hand before this existed: the ticket sidebar, the

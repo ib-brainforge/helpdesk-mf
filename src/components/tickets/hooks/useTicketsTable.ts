@@ -1,11 +1,10 @@
+import type { TableLayoutController } from '@/components/shared/table-layout';
 import {
   type ColumnDef,
+  type ColumnSizingState,
   type PaginationState,
   type RowSelectionState,
-  type SortingState,
-  type VisibilityState,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { useState } from 'react';
@@ -17,6 +16,10 @@ interface UseTicketsTableProps {
   totalCount: number;
   pagination: PaginationState;
   onPaginationChange?: (pagination: PaginationState) => void;
+  /** The user's saved column order, visibility and sort. */
+  layout: TableLayoutController;
+  /** Widths that follow the content (useFitColumns). */
+  columnSizing: ColumnSizingState;
 }
 
 export const useTicketsTable = ({
@@ -25,25 +28,36 @@ export const useTicketsTable = ({
   totalCount,
   pagination,
   onPaginationChange,
+  layout,
+  columnSizing,
 }: UseTicketsTableProps) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const table = useReactTable({
     data,
     columns,
     state: {
-      sorting,
-      columnVisibility,
+      ...layout.state,
+      columnSizing,
       pagination,
       rowSelection,
+    },
+    initialState: {
+      // The checkbox and the row menu stay put while the grid scrolls
+      // sideways. Subject is not pinned: it can sit anywhere in the order.
+      columnPinning: { left: ['select'], right: ['actions'] },
     },
     getRowId: row => row.id ?? '',
     manualPagination: true,
     pageCount: Math.max(1, Math.ceil(totalCount / pagination.pageSize)),
     rowCount: totalCount,
+    /*
+     * Sorted on the server, across every page. It used to sort only the page
+     * in hand, so "oldest first" meant oldest of these 25.
+     */
+    manualSorting: true,
     enableSorting: true,
+    enableSortingRemoval: true,
     /*
      * No client-side search. The rows are the server's search results already:
      * it matches assignee and requester names, category, scope, status and the
@@ -54,8 +68,11 @@ export const useTicketsTable = ({
     enableGlobalFilter: false,
     enableColumnFilters: false,
     enableRowSelection: true,
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
+    // Widths follow the content, so there is nothing to resize. Columns are
+    // reordered in the Columns chooser.
+    enableColumnResizing: false,
+    onSortingChange: layout.onSortingChange,
+    onColumnVisibilityChange: layout.onColumnVisibilityChange,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: updater => {
       if (onPaginationChange) {
@@ -65,7 +82,6 @@ export const useTicketsTable = ({
       }
     },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   return { table };

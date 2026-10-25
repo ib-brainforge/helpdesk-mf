@@ -59,7 +59,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
   // Reports, including the satisfaction report under /reports/satisfaction.
   // NOT /satisfaction: that is the public survey a customer opens from the
   // emailed link, authorised by the token in the URL, so it has no rule here.
-  { path: /^\/reports(-hub)?(\/|$)/, anyOf: [P.Reports.Read] },
+  { path: /^\/reports(\/|$)/, anyOf: [P.Reports.Read] },
 
   // Approvals
   { path: /^\/approvals(\/|$)/, anyOf: [P.Approvals.Read] },

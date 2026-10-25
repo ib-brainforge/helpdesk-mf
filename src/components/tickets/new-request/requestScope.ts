@@ -1,9 +1,6 @@
-import { requireIdentityApiBaseUrl } from '@/state/config';
-import { createHelpdeskApiConfiguration } from '@/state/helpdeskApiClient';
-import { createScopedApiClient } from '@/state/scopedApiClient';
-import { toApiTicketPriority } from '@/utils/typeMappers';
-import { TicketsApi } from '@brainforgeau/helpdesk-client';
-import { ensureCrossAppToken } from '@brainforgeau/security';
+import { issueScopeToken, scopedRequest } from '@/api/local/scoped';
+import type { CreateTicketContactFields } from '@/api/local/tickets';
+import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { createContext, useContext } from 'react';
 
 /**
@@ -25,46 +22,12 @@ export const RequestScopeContext = createContext<RequestScope | null>(null);
 export const useRequestScope = (): RequestScope | null =>
   useContext(RequestScopeContext);
 
-interface NewTicket {
+interface NewTicket extends CreateTicketContactFields {
   subject: string;
   description: string;
   priority: string;
   categoryId: string;
 }
-
-/**
- * Confirms Helpdesk can be used for `scope` by issuing (and caching) a context
- * token for it. Identity refuses one where Helpdesk is not licensed, and an
- * embedding host whose security package predates the `context` override mints
- * for the wrong context (CrossAppTargetContextMismatchError); both are
- * reported as the same failure, in the axios-error shape the wizard reads
- * ({ response: { status, data } }).
- */
-export const ensureRequestScopeAvailable = async (
-  scope: RequestScope,
-): Promise<void> => {
-  try {
-    if (!scope.tenantId) throw new Error('No tenant chosen');
-    await ensureCrossAppToken({
-      contextIssuerBaseUrl: requireIdentityApiBaseUrl(),
-      targetApp: 'helpdesk',
-      context: {
-        tenantId: scope.tenantId,
-        organisationId: scope.organisationId,
-      },
-    });
-  } catch {
-    throw Object.assign(new Error('scope token'), {
-      response: {
-        status: 403,
-        data: {
-          detail:
-            "Helpdesk isn't available for the chosen organisation. Choose another, or ask an admin to enable Helpdesk for it.",
-        },
-      },
-    });
-  }
-};
 
 /**
  * Creates the ticket in `scope` and returns its id, plus a function that links
@@ -73,29 +36,51 @@ export const ensureRequestScopeAvailable = async (
  *
  * The backend stamps a new ticket's tenant and organisation from the context
  * token, not from the body, so raising a request for an organisation other
- * than the one the app is in means sending a token issued for it.
+ * than the one the app is in means sending a token issued for that
+ * organisation. Pass `issuedToken: null` when the scope IS the app's own
+ * context; the request then goes out in it, with no token to issue.
+ *
+ * A failure is thrown in the shape of an axios error ({ response: { status,
+ * data } }) so the wizard explains it the same way whichever path was taken.
  */
 export const createTicketInScope = async (
   scope: RequestScope,
   ticket: NewTicket,
+  /** A token already issued for `scope`; null for the app's own context. */
+  issuedToken?: string | null,
 ): Promise<{ id: string; linkAsset: (assetId: string) => Promise<void> }> => {
-  await ensureRequestScopeAvailable(scope);
-  const client = await createScopedApiClient(
-    TicketsApi,
-    createHelpdeskApiConfiguration(),
-    'helpdesk',
-    scope,
-  );
-  const { data: id } = await client.v1TicketsPost({
-    subject: ticket.subject,
-    description: ticket.description,
-    priority: toApiTicketPriority(ticket.priority),
-    categoryId: ticket.categoryId,
+  let token: string | undefined;
+  if (issuedToken !== null) {
+    try {
+      token = issuedToken ?? (await issueScopeToken(scope, 'helpdesk'));
+    } catch {
+      throw Object.assign(new Error('scope token'), {
+        response: {
+          status: 403,
+          data: {
+            detail:
+              "Helpdesk isn't available for the chosen organisation. Choose another, or ask an admin to enable Helpdesk for it.",
+          },
+        },
+      });
+    }
+  }
+  const base = requireHelpdeskApiBaseUrl();
+  const id = await scopedRequest<string>({
+    method: 'POST',
+    url: `${base}/v1/tickets`,
+    token,
+    body: ticket,
   });
   return {
     id: String(id),
     linkAsset: async assetId => {
-      await client.v1TicketsIdLinkedAssetsPost(String(id), { assetId });
+      await scopedRequest({
+        method: 'POST',
+        url: `${base}/v1/tickets/${id}/linked-assets`,
+        token,
+        body: { assetId },
+      });
     },
   };
 };

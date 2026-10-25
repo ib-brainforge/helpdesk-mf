@@ -40,14 +40,19 @@ const colorClasses: Record<BadgeColor, string> = {
 interface StatusBadgeProps {
   color?: BadgeColor;
   children: ReactNode;
+  /** "sm": 16px high, for chips under a table row's title. */
+  size?: 'md' | 'sm';
 }
 
 export const StatusBadge = ({
   color = 'default',
   children,
+  size = 'md',
 }: StatusBadgeProps) => (
   <div
-    className={`rounded-xs inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-0 text-xs font-semibold text-white ${colorClasses[color]}`}
+    className={`rounded-xs inline-flex items-center gap-1 whitespace-nowrap font-semibold text-white ${
+      size === 'sm' ? 'h-4 px-1.5 text-[11px] leading-4' : 'px-2.5 py-0 text-xs'
+    } ${colorClasses[color]}`}
   >
     {children}
   </div>

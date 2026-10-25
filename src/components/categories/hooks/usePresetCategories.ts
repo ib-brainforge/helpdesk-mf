@@ -3,6 +3,7 @@ import { AccessLevel, type CategoryDto } from '@/types/category';
 import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { defaultAssigneeOf } from './useCategoriesData';
 
 /**
  * The ids of categories the tenant can use but does not own.
@@ -75,6 +76,7 @@ export const usePresetCategories = (ownedIds: string[]) => {
         sectionId: c.sectionId ?? undefined,
         sectionName: c.sectionName ?? undefined,
         accessLevel: toAccessLevel(c.accessLevel),
+        defaultAssigneeId: defaultAssigneeOf(c),
         fromEmailAddress: c.fromEmailAddress ?? undefined,
         fromEmailName: c.fromEmailName ?? undefined,
         useFromAddressAsReplyTo: c.useFromAddressAsReplyTo ?? false,

@@ -2,10 +2,13 @@ import { requireIdentityApiBaseUrl } from '@/state/config';
 import { getSessionId } from '@brainforgeau/observability';
 import {
   createCrossAppAxios,
+  getAccessToken,
   parseAppPermissions,
   authorizedAxios as sharedAuthorizedAxios,
 } from '@brainforgeau/security';
-import type { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
+
+export type { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 export {
   createAuthorizedAxios,
@@ -326,3 +329,26 @@ const authorizedAxios: AxiosInstance = IS_SHELL_EMBEDDED
 attachObservabilityHeaders(sharedAuthorizedAxios);
 
 export { authorizedAxios };
+
+/**
+ * A plain instance for calls answered in a scope other than the app's own:
+ * the same session's Authorization, and the context token `contextToken`
+ * returns (or one set on the request itself). The shared instance cannot do
+ * this, because its interceptor always overwrites X-Context-Token with the
+ * app's own. Used only by api/local/scoped.ts, the one scoping mechanism.
+ */
+export const createScopedAxios = (
+  contextToken?: () => Promise<string>,
+): AxiosInstance => {
+  const instance = axios.create();
+  attachObservabilityHeaders(instance);
+  instance.interceptors.request.use(async config => {
+    config.headers.set('Authorization', `Bearer ${await getAccessToken()}`);
+    config.headers.set('Accept', 'application/json');
+    if (contextToken) {
+      config.headers.set('X-Context-Token', await contextToken());
+    }
+    return config;
+  });
+  return instance;
+};
