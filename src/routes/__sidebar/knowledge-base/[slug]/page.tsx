@@ -232,11 +232,7 @@ function KnowledgeBaseArticlePage() {
 
       {/* Info tab — article metadata + related articles. No formActions (read-only). */}
       <DetailPage.Tab id="info" title="Info">
-        <div className="space-y-6">
-          {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
-              width, above the narrower metadata card below. */}
-          <RecordStrip {...scopeStripProps} />
-        </div>
+        <RecordStrip {...scopeStripProps} />
         <div className="mt-6 max-w-sm space-y-6">
           <BaseCard>
             <h3 className="mb-3 text-lg font-semibold">Article Info</h3>
