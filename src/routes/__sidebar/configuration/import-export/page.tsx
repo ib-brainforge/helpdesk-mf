@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 
 const NOT_IMPLEMENTED_COPY =
   'This feature is coming in a future release. For immediate data migration or export needs, ' +
-  'contact BrainForge support at support@brainforge.au — our team will work with you directly.';
+  'contact your platform support team — they will work with you directly.';
 
 function ImportExportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -197,8 +197,7 @@ function ImportExportPage() {
               <h2 className="text-base font-semibold">Import tenant data</h2>
               <p className="text-default-500 mt-1 text-sm">
                 Upload a .zip archive to import tickets and configuration into
-                this tenant. Only archives exported from BrainForge Helpdesk are
-                supported.
+                this tenant. Only archives exported from Helpdesk are supported.
               </p>
 
               {/* Hidden native file input */}

@@ -22,10 +22,9 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   BaseButton,
   BaseCard,
-  ContextScopeStrip,
   Icon,
+  RecordStrip,
 } from '@brainforgeau/components';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import {
   DetailPage,
   PendingCrumb,
@@ -67,12 +66,7 @@ function KnowledgeBaseArticlePage() {
     destinationName: string | null;
   } | null>(null);
 
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Article',
     meta: article?.meta,
@@ -241,12 +235,7 @@ function KnowledgeBaseArticlePage() {
         <div className="space-y-6">
           {/* Scope strip (DTO tenancy/scope metadata initiative) -- full
               width, above the narrower metadata card below. */}
-          <ContextScopeStrip {...scopeStripProps} />
-          <MetadataPanel
-            meta={metaForPanel}
-            scopeBadge={scopeBadge}
-            canViewMetadata={canViewMetadata}
-          />
+          <RecordStrip {...scopeStripProps} />
         </div>
         <div className="mt-6 max-w-sm space-y-6">
           <BaseCard>

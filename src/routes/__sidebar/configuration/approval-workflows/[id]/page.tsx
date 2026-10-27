@@ -41,10 +41,9 @@ import {
   BaseSelectItem,
   BaseTextarea,
   BaseToggle,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import {
   DetailPage,
   EmptyState,
@@ -121,12 +120,7 @@ function EditApprovalWorkflowPage() {
     destinationName: string | null;
   } | null>(null);
 
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Approval workflow',
     meta: workflow?.meta,
@@ -345,12 +339,7 @@ function EditApprovalWorkflowPage() {
             {/* Scope strip (DTO tenancy/scope metadata initiative) -- sits
                 above the form fields, same relative placement as asset-mf's/
                 hr-mf's detail pages (between header and content). */}
-            <ContextScopeStrip {...scopeStripProps} />
-            <MetadataPanel
-              meta={metaForPanel}
-              scopeBadge={scopeBadge}
-              canViewMetadata={canViewMetadata}
-            />
+            <RecordStrip {...scopeStripProps} />
 
             <BaseCard>
               <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">

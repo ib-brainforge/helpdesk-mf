@@ -13,10 +13,9 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseToggle,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { toast } from '@heroui/react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -47,12 +46,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // section exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEdit` below).
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Section',
     meta: section?.meta,
@@ -160,14 +154,7 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
             {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
                 meaningful once the record exists (has an id/meta); the create
                 form has nothing to place yet. */}
-            {isEdit && <ContextScopeStrip {...scopeStripProps} />}
-            {isEdit && (
-              <MetadataPanel
-                meta={metaForPanel}
-                scopeBadge={scopeBadge}
-                canViewMetadata={canViewMetadata}
-              />
-            )}
+            {isEdit && <RecordStrip {...scopeStripProps} />}
 
             <form.Field name="sortOrder">
               {field => (

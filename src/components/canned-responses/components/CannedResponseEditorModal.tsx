@@ -8,11 +8,10 @@ import {
   BaseModalFooter,
   BaseSelect,
   BaseSelectItem,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -59,12 +58,7 @@ export function CannedResponseEditorModal({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // response exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEditing` below).
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Canned response',
     meta: cannedResponse?.meta,
@@ -183,14 +177,7 @@ export function CannedResponseEditorModal({
               isRequired
             />
 
-            {isEditing && <ContextScopeStrip {...scopeStripProps} />}
-            {isEditing && (
-              <MetadataPanel
-                meta={metaForPanel}
-                scopeBadge={scopeBadge}
-                canViewMetadata={canViewMetadata}
-              />
-            )}
+            {isEditing && <RecordStrip {...scopeStripProps} />}
 
             <div>
               <label className="block text-sm font-medium mb-2">Body</label>

@@ -25,7 +25,7 @@ import { useAtomValue } from 'jotai';
 import { useState } from 'react';
 
 /**
- * DTO tenancy/scope metadata initiative -- shared `ContextScopeStrip`
+ * DTO tenancy/scope metadata initiative -- shared `RecordStrip`
  * wiring hook for helpdesk-mf detail (or detail-equivalent, e.g. an entity
  * editor modal) screens. Ported from asset-mf's `useEntityScopeStrip`
  * (PR #369) rather than hand-authoring the same ~80 lines once per screen.
@@ -111,7 +111,7 @@ export function useEntityScopeStrip<TEntity>(
     .filter((org): org is typeof org & { id: string } => Boolean(org.id))
     .map(org => ({ id: org.id, name: org.name ?? org.id }));
 
-  // Mirrors ContextScopeStrip's internally-selected Organisation so the
+  // Mirrors RecordStrip's internally-selected Organisation so the
   // Division options can be re-filtered as the user changes it.
   const [scopeEditOrganisationId, setScopeEditOrganisationId] = useState<
     string | null
@@ -212,7 +212,7 @@ export function useEntityScopeStrip<TEntity>(
     | undefined;
 
   return {
-    /** Spread directly onto `<ContextScopeStrip {...stripProps} />`. */
+    /** Spread directly onto `<RecordStrip {...stripProps} />`. */
     stripProps: {
       meta: recordMeta,
       ownerName: scopeOwnerName,
@@ -227,6 +227,7 @@ export function useEntityScopeStrip<TEntity>(
         SCOPE_TESTING_BYPASS_SINGLE_ORG,
       canManageScope,
       canViewScope,
+      canViewMetadata: hasPlatformPermission(PlatformPermissions.Metadata.Read),
       organisations: scopeOrganisations,
       divisions: scopeDivisions,
       users: [] as SelectOption[],
@@ -236,11 +237,5 @@ export function useEntityScopeStrip<TEntity>(
       onOrganisationChange: setScopeEditOrganisationId,
       onSave: handleScopeSave,
     },
-    /** `RecordMeta`, ready for `<MetadataPanel meta={metaForPanel} .../>`. */
-    metaForPanel: recordMeta,
-    /** Ready for `<MetadataPanel scopeBadge={scopeBadge} .../>`. */
-    scopeBadge: { organisationCount, currentOrganisationId, currentDivisionId },
-    /** Ready for `<MetadataPanel canViewMetadata={canViewMetadata} .../>`. */
-    canViewMetadata: hasPlatformPermission(PlatformPermissions.Metadata.Read),
   };
 }

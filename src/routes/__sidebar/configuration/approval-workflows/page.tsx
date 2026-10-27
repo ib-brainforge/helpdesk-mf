@@ -238,9 +238,12 @@ function ApprovalWorkflowsPage() {
       // selection, same as `rowMarker`'s per-row scope border.
       tableProps={scope.tableProps}
       subheader={
-        <ListScopeStrip {...scope.bannerProps}>
-          {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
-        </ListScopeStrip>
+        scope.bannerProps &&
+        scope.editorProps && (
+          <ListScopeStrip {...scope.bannerProps}>
+            {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+          </ListScopeStrip>
+        )
       }
       actions={
         <BaseButton
