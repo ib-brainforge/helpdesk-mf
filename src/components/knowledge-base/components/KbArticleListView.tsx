@@ -199,9 +199,11 @@ export function KbArticleListView({
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/* Out-of-context banner + bulk re-scoping (DTO tenancy/scope metadata
           initiative) -- entirely driven by `useScopeList`. */}
-      <ListScopeStrip {...scope.bannerProps}>
-        {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
-      </ListScopeStrip>
+      {scope.bannerProps && scope.editorProps && (
+        <ListScopeStrip {...scope.bannerProps}>
+          {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+        </ListScopeStrip>
+      )}
 
       {articles.length === 0 ? (
         <EmptyState title="No articles found" live />

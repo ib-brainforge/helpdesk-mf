@@ -9,10 +9,9 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  ContextScopeStrip,
+  RecordStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
-import { MetadataPanel } from '@brainforgeau/components/metadata-panel';
 import { toast } from '@heroui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -55,12 +54,7 @@ export function CustomPriorityEditorModal({
   const queryClient = useQueryClient();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const {
-    stripProps: scopeStripProps,
-    metaForPanel,
-    scopeBadge,
-    canViewMetadata,
-  } = useEntityScopeStrip({
+  const { stripProps: scopeStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom priority',
     meta: priority?.meta,
@@ -156,14 +150,7 @@ export function CustomPriorityEditorModal({
           />
 
           {/* Placement only exists once the record does. */}
-          {isEditing && <ContextScopeStrip {...scopeStripProps} />}
-          {isEditing && (
-            <MetadataPanel
-              meta={metaForPanel}
-              scopeBadge={scopeBadge}
-              canViewMetadata={canViewMetadata}
-            />
-          )}
+          {isEditing && <RecordStrip {...scopeStripProps} />}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">

@@ -349,7 +349,6 @@ export default function Layout() {
 
   const { config: whitelabelConfig, isLoading: whitelabelLoading } =
     useWhitelabel();
-  const brandName = whitelabelConfig?.branding?.appTitle ?? 'BrainForge';
 
   // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
   const isPrincipalRoute = useMemo(
@@ -393,7 +392,10 @@ export default function Layout() {
 
   return (
     <Providers>
-      <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
+      <PageTemplateProvider
+        brandName={whitelabelConfig?.branding?.appTitle}
+        isLoading={whitelabelLoading}
+      >
         <BreadcrumbRegistryProvider
           registry={breadcrumbs}
           // REVIEW: i18nResolver maps each full labelKey to its intended leaf label so
