@@ -31,8 +31,8 @@ importers:
         specifier: 0.5.182
         version: 0.5.182(gslmacqlgcjszeic5ybtxpkhui)
       '@brainforgeau/security':
-        specifier: 0.5.454-develop.f677a9c
-        version: 0.5.454-develop.f677a9c(@brainforgeau/observability@0.5.123-develop.8536af9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
+        specifier: 0.5.460-develop.d99299c
+        version: 0.5.460-develop.d99299c(@brainforgeau/observability@0.5.123-develop.8536af9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
         specifier: 0.5.110
         version: 0.5.110(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
@@ -975,8 +975,8 @@ packages:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@brainforgeau/security@0.5.454-develop.f677a9c':
-    resolution: {integrity: sha512-eKcfcGunjC09tSWsso84pYd4wRbynJ5BOHgGSgSVLxGn6tKL56izN8t0HlsoEZcz6X0FL31ur75+DZoJlRtxjA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.454-develop.f677a9c/da65b79ace012e5319225c57d9324ea5c1784a63}
+  '@brainforgeau/security@0.5.460-develop.d99299c':
+    resolution: {integrity: sha512-7D2jYfj+oFOxT5q1NKJ55qFf0DYw7SW7+iqKvuUb1A2Trn8DzXVWp7MHegPEJnqTCGW5jAImPjpScQp5eXlwVQ==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.460-develop.d99299c/8b2622d2084b745b75ea77d5eeb418d31a4102dd}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@brainforgeau/observability': '*'
@@ -8551,7 +8551,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@brainforgeau/security@0.5.454-develop.f677a9c(@brainforgeau/observability@0.5.123-develop.8536af9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/security@0.5.460-develop.d99299c(@brainforgeau/observability@0.5.123-develop.8536af9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@brainforgeau/observability': 0.5.123-develop.8536af9(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tanstack/react-query': 5.100.9(react@19.2.6)

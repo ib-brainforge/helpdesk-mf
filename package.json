@@ -43,7 +43,7 @@
     "@brainforgeau/identity-management-client": "0.5.1239-develop.d6b2cdf",
     "@brainforgeau/observability": "0.5.123-develop.8536af9",
     "@brainforgeau/rules-ui": "0.5.182",
-    "@brainforgeau/security": "0.5.454-develop.f677a9c",
+    "@brainforgeau/security": "0.5.460-develop.d99299c",
     "@brainforgeau/theme": "0.5.110",
     "@brainforgeau/tracking-client": "0.5.2214-develop.755cbc4",
     "@brainforgeau/workflow-ui": "0.5.25",
