@@ -27,8 +27,7 @@ import {
   authorizedAxios,
   createScopedAxios,
 } from '@/state/authorizedAxios';
-import { createIdentityApiClient } from '@/utils/identityApiClient';
-import { ContextsApi } from '@brainforgeau/identity-management-client';
+import { getOrIssueContextToken } from '@brainforgeau/security';
 
 type Params = Record<string, string | number | boolean | undefined | null>;
 
@@ -64,24 +63,22 @@ export interface TokenScope {
 /**
  * Asks identity for a context token for one tenant (and organisation). Calls
  * made with it are answered for that scope rather than the app's own context.
+ * `force` skips the shared token cache. A refusal rejects with the axios
+ * error, which isNotLicensedError reads.
  */
 export const issueScopeToken = async (
   scope: TokenScope,
   app: 'asset' | 'tracking' | 'helpdesk',
+  force = false,
 ): Promise<string> => {
-  // A licence refusal is explained by the page that asked (the ticket
-  // page's not-enabled state, New Request's notice), so it must not also
-  // raise the app-wide "Access Denied" banner. Other failures still do.
-  const client = await createIdentityApiClient(ContextsApi, {
-    isExpectedError: isNotLicensedError,
-  });
-  const { data } = await client.v1ContextsIssuePost({
+  const issued = await getOrIssueContextToken({
     tenantId: scope.tenantId as string,
     organisationId: scope.organisationId ?? null,
     app,
+    force,
   });
-  if (!data?.token) throw new Error('No context token issued');
-  return data.token;
+  if (issued.status !== 'issued') throw new Error('No context token issued');
+  return issued.token;
 };
 
 /**
@@ -151,9 +148,10 @@ const expiryOf = (token: string): number => {
  */
 export const getHelpdeskScopeToken = (
   scope: HelpdeskScope,
+  force = false,
 ): Promise<string> => {
   const now = Date.now();
-  const cached = tokens.get(scope.tenantId);
+  const cached = force ? undefined : tokens.get(scope.tenantId);
   if (cached?.token && (cached.expiresAt ?? 0) - REFRESH_MARGIN_MS > now) {
     return Promise.resolve(cached.token);
   }
@@ -164,6 +162,7 @@ export const getHelpdeskScopeToken = (
   const pending = issueScopeToken(
     { tenantId: scope.tenantId, organisationId: null },
     'helpdesk',
+    force,
   ).then(
     token => {
       tokens.set(scope.tenantId, { token, expiresAt: expiryOf(token) });
@@ -210,7 +209,8 @@ const companyAxios = (scope: HelpdeskScope): AxiosInstance => {
     const status = error?.response?.status;
     if (config && !config._scopeRetried && (status === 419 || status === 401)) {
       config._scopeRetried = true;
-      tokens.delete(scope.tenantId);
+      // Forced, because the shared cache may still hold the rejected token.
+      await getHelpdeskScopeToken(scope, true);
       return instance.request(config);
     }
     throw error;
