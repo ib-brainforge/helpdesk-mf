@@ -53,7 +53,7 @@ export const useProviderCategories = (enabled = true) =>
 
 /**
  * Every preset category of the provider's office, in order: its current default
- * assignee and its open and overdue tickets in the customers and with the Provider.
+ * assignee and its open and overdue tickets in the tenants and with the Provider.
  */
 export const useProviderCategoryOpenCounts = () =>
   useQuery({
@@ -153,7 +153,7 @@ export const useRaisedTicketComments = (id: string | undefined) =>
 
 /**
  * Moves one of the tenant's tickets to its provider's office ("From
- * customers" there). The ticket keeps its history and submitter and leaves
+ * tenants" there). The ticket keeps its history and submitter and leaves
  * this tenant's list.
  */
 export const useForwardTicketToProvider = () => {

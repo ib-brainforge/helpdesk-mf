@@ -24,7 +24,7 @@ const EXPANDED_TAIL = 2;
  * A system log line ("Ticket forwarded to ...") rather than a message. The
  * conversation is messages only: who changed what lives in the ticket's
  * History. A system line that carries an email (the New Request confirmation
- * sent to the contact) is a message the customer received, so it stays and
+ * sent to the contact) is a message the tenant received, so it stays and
  * renders like any other email, with its status and Retry.
  */
 const isLogLine = (comment: CommentDto): boolean =>

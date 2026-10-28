@@ -1,7 +1,7 @@
 /**
  * The two views Helpdesk offers: Tenant (the tenant's own tickets, knowledge
  * base and "Raised with our provider") and Provider (a provider's office
- * working its customers' tickets). Which views a person holds comes from the
+ * working its tenants' tickets). Which views a person holds comes from the
  * `pos` claim, read through usePosition; this file only says which URLs belong
  * to which view.
  *

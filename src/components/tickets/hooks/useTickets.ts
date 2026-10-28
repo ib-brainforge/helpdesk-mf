@@ -152,7 +152,7 @@ const ticketQueryValues = (filters: TicketFilters) => ({
 
 /**
  * Positional arguments shared by GET /v1/tickets and GET
- * /v1/provider-support/customer-tickets (the provider's "From customers"
+ * /v1/provider-support/customer-tickets (the provider's "From tenants"
  * queue, which needs the provider.support permission): the same 26 filters in
  * the same order, so the list, the count and the ids all ask one question.
  */
@@ -194,12 +194,12 @@ const listArgs = (
   ] as const;
 };
 
-/** One page of the tenant's own tickets, or of the provider's From customers queue. */
+/** One page of the tenant's own tickets, or of the provider's From tenants queue. */
 const fetchTicketPage = async (
-  fromCustomers: boolean,
+  fromTenants: boolean,
   args: ReturnType<typeof listArgs>,
 ) =>
-  fromCustomers
+  fromTenants
     ? (
         await (
           await createHelpdeskApiClient(ProviderCustomerTicketsApi)
@@ -213,13 +213,13 @@ const fetchTicketPage = async (
  *
  * pageSize 1, and only `totalCount` is read off the paged envelope; the single
  * row that comes back is discarded. It must ask the same queue as the list
- * (`fromCustomers`), or the badge counts a different population than the rows.
+ * (`fromTenants`), or the badge counts a different population than the rows.
  */
 export const fetchTicketCount = async (
   filters: TicketFilters,
-  fromCustomers = false,
+  fromTenants = false,
 ): Promise<number> => {
-  const data = await fetchTicketPage(fromCustomers, listArgs(filters, 1, 1));
+  const data = await fetchTicketPage(fromTenants, listArgs(filters, 1, 1));
   return data.totalCount ?? 0;
 };
 
@@ -241,10 +241,10 @@ export interface TicketIdsResult {
  */
 export const fetchTicketIds = async (
   filters: TicketFilters,
-  fromCustomers = false,
+  fromTenants = false,
 ): Promise<TicketIdsResult> => {
   const args = listArgs(filters);
-  const data = fromCustomers
+  const data = fromTenants
     ? (
         await (
           await createHelpdeskApiClient(ProviderCustomerTicketsApi)
@@ -284,7 +284,7 @@ export const useTicketsData = (
     sort,
     enabled = true,
     initialPagination,
-    fromCustomers = false,
+    fromTenants = false,
   }: {
     /** Server-side sort across every page; omitted is the server's default. */
     sort?: TicketsSort | null;
@@ -292,8 +292,8 @@ export const useTicketsData = (
     enabled?: boolean;
     /** The first page and page size (from the URL); a seed, like the filters. */
     initialPagination?: PaginationState;
-    /** The provider's "From customers" queue instead of the tenant's own tickets. */
-    fromCustomers?: boolean;
+    /** The provider's "From tenants" queue instead of the tenant's own tickets. */
+    fromTenants?: boolean;
   } = {},
 ) => {
   const [pagination, setPagination] = useState<PaginationState>(
@@ -328,14 +328,14 @@ export const useTicketsData = (
       'tickets',
       pagination,
       queryFilters,
-      fromCustomers ? 'from-customers' : 'own',
+      fromTenants ? 'from-tenants' : 'own',
       sort ?? null,
     ],
     queryFn: async () => {
       // The same mapping fetchTicketCount uses. Written once so the rows and
       // the badge above them cannot ask different questions.
       const result = await fetchTicketPage(
-        fromCustomers,
+        fromTenants,
         listArgs(
           queryFilters,
           pagination.pageIndex + 1,

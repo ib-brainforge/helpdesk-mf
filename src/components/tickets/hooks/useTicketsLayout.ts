@@ -6,7 +6,7 @@ import {
 import { useUserPreference } from '@/hooks/useUserPreference';
 import { useCallback, useMemo } from 'react';
 import {
-  FROM_CUSTOMERS_COLUMN_LABELS,
+  FROM_TENANTS_COLUMN_LABELS,
   TICKET_COLUMN_HINTS,
   TICKET_COLUMN_LABELS,
   TICKET_DEFAULT_HIDDEN,
@@ -48,7 +48,7 @@ const DEADLINE_FIRST_TABS = new Set<string>([
 
 export const useTicketsLayout = (
   tab: TicketTabKey | string,
-  { fromCustomers = false }: { fromCustomers?: boolean } = {},
+  { fromTenants = false }: { fromTenants?: boolean } = {},
 ) => {
   const pref = useUserPreference<TableLayoutPreference>('tickets.list.layout');
 
@@ -95,7 +95,7 @@ export const useTicketsLayout = (
 
   return {
     layout,
-    labels: fromCustomers ? FROM_CUSTOMERS_COLUMN_LABELS : TICKET_COLUMN_LABELS,
+    labels: fromTenants ? FROM_TENANTS_COLUMN_LABELS : TICKET_COLUMN_LABELS,
     hints: TICKET_COLUMN_HINTS,
     isReady: pref.isReady,
     hasSaved: pref.value !== null,

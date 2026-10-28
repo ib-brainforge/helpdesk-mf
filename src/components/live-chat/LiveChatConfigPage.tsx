@@ -240,7 +240,7 @@ function LiveChatForm({
           <div className="flex-1">
             <h3 className="text-sm font-semibold">Enable live chat widget</h3>
             <p className="text-default-500 mt-1 text-xs">
-              When enabled, the widget will be served to customers on your
+              When enabled, the widget will be served to tenants on your
               website.
             </p>
           </div>

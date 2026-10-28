@@ -137,7 +137,7 @@ export const buildDescription = ({
  *
  * The wizard asks "Urgency" because that is the word the requester understands,
  * while the ticket stores Priority. Keeping them as one value would make the
- * form speak the helpdesk's language instead of the customer's; mapping keeps
+ * form speak the helpdesk's language instead of the tenant's; mapping keeps
  * both. Anything unrecognised falls to Normal rather than guessing upward,
  * since an inflated priority is a real cost to whoever triages the queue.
  */

@@ -36,10 +36,10 @@ export const TICKET_TAB_KEYS: readonly TicketTabKey[] = [
 ];
 
 /**
- * The tabs for someone who cannot work tickets (a customer): their open
+ * The tabs for someone who cannot work tickets (a tenant): their open
  * requests and all of them. New and Overdue are the team's queues.
  */
-export const CUSTOMER_TAB_KEYS: readonly TicketTabKey[] = ['unclosed', 'all'];
+export const TENANT_TAB_KEYS: readonly TicketTabKey[] = ['unclosed', 'all'];
 
 /** What each tab is called in the tab row (and its More menu). */
 export const TICKET_TAB_LABELS: Record<TicketTabKey, string> = {

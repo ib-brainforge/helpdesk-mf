@@ -8,7 +8,7 @@ import { PRIORITIES } from '../deadlinePolicy';
 
 /*
  * A policy read in plain sentences, one per priority and one for the clock.
- * Every customer's page while it is not being edited: the values in force are
+ * Every tenant's page while it is not being edited: the values in force are
  * only ever shown here, never in a greyed-out form.
  */
 

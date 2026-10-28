@@ -1,7 +1,7 @@
 /**
  * Tickets Page — the list of the current tenant's own tickets.
  *
- * A provider's queue of customer tickets is the Provider view's From customers
+ * A provider's queue of tenant tickets is the Provider view's From tenants
  * page (/provider/tickets).
  */
 

@@ -10,7 +10,7 @@ import { Navigate } from '@modern-js/runtime/router';
 import React from 'react';
 
 /**
- * The Provider view's landing redirect: From customers for staff who work the
+ * The Provider view's landing redirect: From tenants for staff who work the
  * queue, the dashboard for those who only read reports.
  */
 function Redirect() {

@@ -160,7 +160,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.settings': 'Settings',
   'helpdesk.contact-provider': 'Contact your provider',
   'helpdesk.provider-raised': 'Raised with our provider',
-  'helpdesk.provider-deadlines': 'Customer Deadlines',
+  'helpdesk.provider-deadlines': 'Tenant Deadlines',
   'helpdesk.provider-categories': 'Provider Categories',
 };
 
@@ -291,7 +291,7 @@ export default function Layout() {
     ];
   }, [filterNavItems, permissions, view, canContactProvider]);
 
-  // Someone whose role reaches only the Tickets page (a Customer) gets no side
+  // Someone whose role reaches only the Tickets page (a Tenant) gets no side
   // menu at all: a menu with one
   // entry is just a frame around the page they are already on.
   // Counted by destination, not by entry: a group such as Configuration can

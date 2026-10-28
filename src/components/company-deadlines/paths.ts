@@ -1,2 +1,2 @@
-/** The Provider view's Customer Deadlines list; a customer's page is below it. */
-export const CUSTOMER_DEADLINES_PATH = '/provider/deadlines';
+/** The Provider view's Tenant Deadlines list; a tenant's page is below it. */
+export const TENANT_DEADLINES_PATH = '/provider/deadlines';

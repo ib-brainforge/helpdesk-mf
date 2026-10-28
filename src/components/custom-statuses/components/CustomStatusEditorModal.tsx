@@ -186,7 +186,7 @@ export function CustomStatusEditorModal({
           )}
           <BaseInput
             label="Name"
-            placeholder="e.g. Awaiting Customer Reply"
+            placeholder="e.g. Awaiting Tenant Reply"
             value={name}
             onChange={e => setName(e.target.value)}
             isInvalid={!!nameError}

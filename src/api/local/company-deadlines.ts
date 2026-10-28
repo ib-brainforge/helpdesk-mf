@@ -1,5 +1,5 @@
 /*
- * A provider's customer deadline policies (Provider view > Customer Deadlines),
+ * A provider's tenant deadline policies (Provider view > Tenant Deadlines),
  * through the generated client. The generated DTOs leave every field optional;
  * these concrete shapes are what the editor works with, filled in once here.
  * Every duration is in minutes.
@@ -38,13 +38,13 @@ export interface ClosedDayDto {
 }
 
 /**
- * One customer's deadlines. The policy fields are the EFFECTIVE values: a
- * customer without its own shows the provider default, so the page can read
+ * One tenant's deadlines. The policy fields are the EFFECTIVE values: a
+ * tenant without its own shows the provider default, so the page can read
  * them before anyone sets its own.
  */
 export interface CompanyDeadlinePolicyDto extends CompanyDeadlinePolicyInput {
   tenantId: string;
-  /** Whether the customer has its own policy rather than the default. */
+  /** Whether the tenant has its own policy rather than the default. */
   isCustom: boolean;
   openTickets: number;
   lateTickets: number;
@@ -64,7 +64,7 @@ export interface HolidayRegionDto {
   name: string;
 }
 
-export interface CustomerDeadlineRowDto {
+export interface TenantDeadlineRowDto {
   tenantId: string;
   name: string;
   isCustom: boolean;
@@ -72,22 +72,22 @@ export interface CustomerDeadlineRowDto {
   late: number;
 }
 
-export interface CustomerDeadlinePage {
-  items: CustomerDeadlineRowDto[];
+export interface TenantDeadlinePage {
+  items: TenantDeadlineRowDto[];
   /** Rows matching the filters, across every page. */
   total: number;
 }
 
-export type CustomerDeadlineSort = 'name' | 'open' | 'late';
+export type TenantDeadlineSort = 'name' | 'open' | 'late';
 
 /** `page` is 1-based; `pageSize` at most 100. */
-export interface CustomerDeadlineParams {
+export interface TenantDeadlineParams {
   search?: string;
-  /** Only customers with deadlines of their own. */
+  /** Only tenants with deadlines of their own. */
   custom?: boolean;
-  /** Only customers with late open tickets. */
+  /** Only tenants with late open tickets. */
   hasLate?: boolean;
-  sort?: CustomerDeadlineSort;
+  sort?: TenantDeadlineSort;
   dir?: 'asc' | 'desc';
   page: number;
   pageSize: number;
@@ -120,10 +120,10 @@ const toPolicy = (p: GeneratedPolicy): CompanyDeadlinePolicyDto => ({
 
 const client = () => createHelpdeskApiClient(ProviderCompanyDeadlinesApi);
 
-/** Every customer, a page at a time, filtered and sorted on the server. */
-export const getCustomerDeadlines = async (
-  p: CustomerDeadlineParams,
-): Promise<CustomerDeadlinePage> => {
+/** Every tenant, a page at a time, filtered and sorted on the server. */
+export const getTenantDeadlines = async (
+  p: TenantDeadlineParams,
+): Promise<TenantDeadlinePage> => {
   const { data } = await (await client()).v1ProviderSupportCompanyDeadlinesGet(
     p.search || undefined,
     p.custom || undefined,
@@ -167,7 +167,7 @@ export const saveCompanyDeadlinePolicy = async (
   };
 };
 
-/** Drops the customer's own policy, so it uses the provider default again. */
+/** Drops the tenant's own policy, so it uses the provider default again. */
 export const revertCompanyDeadlinePolicy = async (
   tenantId: string,
 ): Promise<void> => {

@@ -24,7 +24,7 @@ interface ProviderViewGuardProps {
  *    link behaves the same way.
  *  - In the provider's office: the page, provided the person holds the page's
  *    permission. That check sits here, after the view check, because the
- *    permissions in a customer's context token say nothing about the office.
+ *    permissions in a tenant's context token say nothing about the office.
  */
 export const ProviderViewGuard: FC<ProviderViewGuardProps> = ({
   requiredPermissions,

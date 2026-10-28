@@ -1,4 +1,4 @@
-import type { CustomerDeadlineRowDto } from '@/api/local/company-deadlines';
+import type { TenantDeadlineRowDto } from '@/api/local/company-deadlines';
 import { PagedTable, usePagedTable } from '@/components/shared';
 import type { useListParams } from '@/hooks/useListParams';
 import { BaseCheckbox, BaseInput } from '@brainforgeau/components';
@@ -7,10 +7,10 @@ import { EmptyState, PageFilters } from '@brainforgeau/components/page';
 import { NavLink } from '@modern-js/runtime/router';
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type { FC } from 'react';
-import { CUSTOMER_DEADLINES_PATH } from '../paths';
+import { TENANT_DEADLINES_PATH } from '../paths';
 
 /*
- * The customers a provider supports, a page at a time: name, whether it has
+ * The tenants a provider supports, a page at a time: name, whether it has
  * deadlines of its own or uses the provider default, open and late tickets.
  * The server searches, filters, sorts and pages.
  */
@@ -23,15 +23,15 @@ const FLAG_LABELS: Record<string, string> = {
   hasLate: 'Has late tickets',
 };
 
-const col = createColumnHelper<CustomerDeadlineRowDto>();
+const col = createColumnHelper<TenantDeadlineRowDto>();
 
 const columns = [
   col.accessor(row => row.name, {
     id: 'name',
-    header: 'Customer',
+    header: 'Tenant',
     cell: ({ row }) => (
       <NavLink
-        to={`${CUSTOMER_DEADLINES_PATH}/${row.original.tenantId}`}
+        to={`${TENANT_DEADLINES_PATH}/${row.original.tenantId}`}
         state={{ name: row.original.name }}
         className="text-primary text-sm font-medium hover:underline"
       >
@@ -78,20 +78,20 @@ const columns = [
     ),
     size: 90,
   }),
-] as ColumnDef<CustomerDeadlineRowDto, unknown>[];
+] as ColumnDef<TenantDeadlineRowDto, unknown>[];
 
-const rowId = (row: CustomerDeadlineRowDto) => row.tenantId;
+const rowId = (row: TenantDeadlineRowDto) => row.tenantId;
 
-interface CustomerDeadlineListProps {
+interface TenantDeadlineListProps {
   list: AnyList;
   query: {
-    data?: { items: CustomerDeadlineRowDto[]; total: number };
+    data?: { items: TenantDeadlineRowDto[]; total: number };
     isLoading: boolean;
     isError: boolean;
   };
 }
 
-export const CustomerDeadlineList: FC<CustomerDeadlineListProps> = ({
+export const TenantDeadlineList: FC<TenantDeadlineListProps> = ({
   list,
   query,
 }) => {
@@ -114,14 +114,14 @@ export const CustomerDeadlineList: FC<CustomerDeadlineListProps> = ({
         rightSlot={
           total !== undefined && (
             <span className="text-default-500 text-sm" aria-live="polite">
-              {total} {total === 1 ? 'customer' : 'customers'}
+              {total} {total === 1 ? 'tenant' : 'tenants'}
             </span>
           )
         }
       >
         <BaseInput
-          aria-label="Search customers"
-          placeholder="Search customers..."
+          aria-label="Search tenants"
+          placeholder="Search tenants..."
           value={list.searchText}
           onChange={e => list.setSearchText(e.target.value)}
           startContent={
@@ -151,8 +151,8 @@ export const CustomerDeadlineList: FC<CustomerDeadlineListProps> = ({
           <EmptyState
             title={
               query.isError
-                ? "Couldn't load the customers"
-                : 'No customers match these filters'
+                ? "Couldn't load the tenants"
+                : 'No tenants match these filters'
             }
             description={
               query.isError

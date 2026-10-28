@@ -102,7 +102,7 @@ interface Props {
 
 export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const { user } = useAuth();
-  // Linking needs tickets.update, which a Customer raising a request does not
+  // Linking needs tickets.update, which a Tenant raising a request does not
   // have. They still get their vehicles named in the description; the link is
   // only attempted when it can succeed.
   const { hasPermission } = usePermissions();

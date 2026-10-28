@@ -22,7 +22,7 @@ function SatisfactionSurveyPage() {
 
   const submitMutation = useSubmitSatisfactionRating();
 
-  let pageTitle = 'Customer Satisfaction Survey';
+  let pageTitle = 'Tenant Satisfaction Survey';
   if (!token) pageTitle = 'Survey Link Invalid';
   else if (submitted) pageTitle = 'Thank You!';
   else if (submitMutation.isError) pageTitle = 'Survey Error';

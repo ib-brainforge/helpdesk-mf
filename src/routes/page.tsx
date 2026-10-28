@@ -9,7 +9,7 @@ import { Navigate } from '@modern-js/runtime/router';
 import React from 'react';
 
 /**
- * The landing redirect. The dashboard is built from reports, which Customers
+ * The landing redirect. The dashboard is built from reports, which Tenants
  * cannot read, so they land on their tickets instead of a page that would say
  * Access Denied.
  */

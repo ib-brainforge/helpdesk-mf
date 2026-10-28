@@ -21,7 +21,7 @@ import {
 import { type FC, useMemo } from 'react';
 
 /*
- * The preset categories of the Provider's own office: what customers can raise
+ * The preset categories of the Provider's own office: what tenants can raise
  * a request under, who tickets in each go to by default, and how much is open
  * in each. All of it comes from one endpoint (category-open-counts). Staff with
  * categories.manage set the default assignee here; the categories themselves
@@ -83,7 +83,7 @@ export const ProviderCategories: FC = () => {
         description={
           presets.isError
             ? 'Reload the page to try again.'
-            : 'Preset categories are added by the platform and appear here once they are open to your customers.'
+            : 'Preset categories are added by the platform and appear here once they are open to your tenants.'
         }
         live
       />
@@ -99,7 +99,7 @@ export const ProviderCategories: FC = () => {
             <th className="px-3 py-2.5">Default assignee</th>
             <th className="px-3 py-2.5 text-right">Open with Provider</th>
             <th className="px-3 py-2.5 text-right">Overdue</th>
-            <th className="px-3 py-2.5 text-right">Open in customers</th>
+            <th className="px-3 py-2.5 text-right">Open in tenants</th>
             <th className="px-3 py-2.5 text-right">Overdue</th>
           </tr>
         </thead>
@@ -117,7 +117,7 @@ export const ProviderCategories: FC = () => {
                 <td className="px-3 py-2 align-top">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{c.name}</span>
-                    <PresetPill hint="A category the Provider offers every customer. Customers use it but cannot change it." />
+                    <PresetPill hint="A category the Provider offers every tenant. Tenants use it but cannot change it." />
                   </div>
                   {c.description && (
                     <p className="text-default-500 text-xs">{c.description}</p>

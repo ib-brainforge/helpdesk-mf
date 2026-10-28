@@ -167,11 +167,11 @@ interface CreateColumnsOptions {
   /** Resolved tenant and organisation names for their columns. */
   scopeNames: UseScopeNamesResult;
   /**
-   * The provider's "From customers" queue: the Tenant column becomes
-   * Customer (the submitting tenant, with "Forwarded by" when a customer
+   * The provider's "From tenants" queue: the Tenant column becomes
+   * Tenant (the submitting tenant, with "Forwarded by" when a tenant
    * forwarded the ticket) and Requester reads Raised by.
    */
-  fromCustomers?: boolean;
+  fromTenants?: boolean;
   /** Where a ticket's page lives; defaults to the Tenant view's /tickets. */
   ticketBasePath?: string;
 }
@@ -210,10 +210,10 @@ export const TICKET_DEFAULT_HIDDEN = [
   'origin',
   'id',
 ];
-/** Column names in the provider's "From customers" queue. */
-export const FROM_CUSTOMERS_COLUMN_LABELS: Record<string, string> = {
+/** Column names in the provider's "From tenants" queue. */
+export const FROM_TENANTS_COLUMN_LABELS: Record<string, string> = {
   ...TICKET_COLUMN_LABELS,
-  company: 'Customer',
+  company: 'Tenant',
   requester: 'Raised by',
 };
 /** Muted notes beside hidden columns in the chooser. */
@@ -319,12 +319,12 @@ export const createTicketColumns = (
    */
   columnHelper.display({
     id: 'company',
-    header: options.fromCustomers ? 'Customer' : 'Tenant',
+    header: 'Tenant',
     cell: ({ row }) => {
       const tenantNameOf = (id: string) =>
         options.scopeNames.byTenantId.get(id)?.tenantName;
-      if (options.fromCustomers) {
-        const customer = scopeName(
+      if (options.fromTenants) {
+        const tenant = scopeName(
           row.original.submitterTenantId ?? row.original.tenantId,
           tenantNameOf,
         );
@@ -334,12 +334,12 @@ export const createTicketColumns = (
         );
         return (
           <span className="block min-w-0 text-xs leading-4">
-            {customer && (
+            {tenant && (
               <span
                 className="block truncate font-medium text-foreground"
-                title={customer}
+                title={tenant}
               >
-                {customer}
+                {tenant}
               </span>
             )}
             {forwardedBy && (
@@ -421,7 +421,7 @@ export const createTicketColumns = (
   }),
   columnHelper.display({
     id: 'requester',
-    header: options.fromCustomers ? 'Raised by' : 'Requester',
+    header: options.fromTenants ? 'Raised by' : 'Requester',
     cell: ({ row }) => {
       const { requesterUserInfo, requesterName } = row.original;
       // An email-only contact has no user account, only a name: it still

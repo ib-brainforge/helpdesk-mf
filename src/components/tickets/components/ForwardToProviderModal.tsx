@@ -27,7 +27,7 @@ interface ForwardToProviderModalProps {
 const NO_CATEGORY = 'none';
 
 /**
- * Moves a ticket to the tenant's provider ("From customers" in the provider's
+ * Moves a ticket to the tenant's provider ("From tenants" in the provider's
  * office). The ticket keeps its history and its submitter and leaves this
  * tenant's list. The category in the provider's office is optional.
  */

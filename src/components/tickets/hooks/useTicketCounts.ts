@@ -105,7 +105,7 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
  */
 export const ticketCountsQueryOptions = (
   filters: TicketFilters,
-  fromCustomers: boolean,
+  fromTenants: boolean,
 ) => {
   const params = countsParams(filters);
   return {
@@ -115,7 +115,7 @@ export const ticketCountsQueryOptions = (
     queryKey: [
       'tickets',
       'counts',
-      fromCustomers ? 'from-customers' : 'own',
+      fromTenants ? 'from-tenants' : 'own',
       params,
     ],
     // A count that is a few seconds stale is fine; re-counting on every focus
@@ -124,7 +124,7 @@ export const ticketCountsQueryOptions = (
     staleTime: 30 * 1000,
     queryFn: async (): Promise<TicketCountsResponse> => {
       // Both endpoints take the same filters in the same order: the tenant's
-      // own tickets, or the provider's From customers queue.
+      // own tickets, or the provider's From tenants queue.
       const args = [
         undefined, // customStatusId
         params.priority as HelpdeskDomainTicketsEnumsTicketPriority | undefined,
@@ -144,7 +144,7 @@ export const ticketCountsQueryOptions = (
         params.searchUserIds as string[] | undefined,
         params.searchScopeIds as string[] | undefined,
       ] as const;
-      const { data } = fromCustomers
+      const { data } = fromTenants
         ? await (
             await createHelpdeskApiClient(ProviderCustomerTicketsApi)
           ).v1ProviderSupportCustomerTicketsCountsGet(...args)
@@ -158,7 +158,7 @@ export const ticketCountsQueryOptions = (
 
 export const useTicketCounts = (
   filters: TicketFilters = {},
-  { fromCustomers = false }: { fromCustomers?: boolean } = {},
+  { fromTenants = false }: { fromTenants?: boolean } = {},
 ) => {
   // Same name matching as the grid, so a badge counts exactly the rows the
   // search lists.
@@ -168,7 +168,7 @@ export const useTicketCounts = (
     [filters, search.userIds, search.scopeIds],
   );
   const query = useQuery({
-    ...ticketCountsQueryOptions(searched, fromCustomers),
+    ...ticketCountsQueryOptions(searched, fromTenants),
     enabled: search.ready,
     // The badges keep their numbers while a changed filter is recounted,
     // rather than vanishing and reappearing on every tick of the Assignee

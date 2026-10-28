@@ -7,23 +7,23 @@ import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 /**
- * From customers: the provider's support queue, the tickets in this office
- * that a customer raised or forwarded. The Tenant ticket list, asking for that
+ * From tenants: the provider's support queue, the tickets in this office
+ * that a tenant raised or forwarded. The Tenant ticket list, asking for that
  * queue.
  */
-function FromCustomersPage() {
-  usePageTitle('From customers');
+function FromTenantsPage() {
+  usePageTitle('From tenants');
   return (
     <ProviderViewGuard
       requiredPermissions={[HelpdeskPermissions.Provider.Support]}
     >
       <div className="flex w-full min-h-0 flex-1 flex-col">
-        <TicketGrid fromCustomers />
+        <TicketGrid fromTenants />
       </div>
     </ProviderViewGuard>
   );
 }
 
-export default withAuthenticationRequired(FromCustomersPage, {
+export default withAuthenticationRequired(FromTenantsPage, {
   OnRedirecting: () => <AppAuthSplash />,
 });

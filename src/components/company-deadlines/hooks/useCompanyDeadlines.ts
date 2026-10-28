@@ -1,12 +1,12 @@
 import {
   type CompanyDeadlinePolicyDto,
   type CompanyDeadlinePolicyInput,
-  type CustomerDeadlineParams,
   type SaveCompanyDeadlineResult,
+  type TenantDeadlineParams,
   getCompanyDeadlinePolicy,
-  getCustomerDeadlines,
   getHolidayRegions,
   getHolidays,
+  getTenantDeadlines,
   previewCompanyDeadline,
   revertCompanyDeadlinePolicy,
   saveCompanyDeadlinePolicy,
@@ -28,8 +28,8 @@ export const COMPANY_DEADLINES_QUERY_KEY = 'company-deadlines';
 const STALE = 60_000;
 
 export const deadlineKeys = {
-  /** Every page of the customers list; add the params for one page. */
-  customers: () => [COMPANY_DEADLINES_QUERY_KEY, 'customers'],
+  /** Every page of the tenants list; add the params for one page. */
+  tenants: () => [COMPANY_DEADLINES_QUERY_KEY, 'tenants'],
   policy: (tenantId?: string) => [
     COMPANY_DEADLINES_QUERY_KEY,
     'policy',
@@ -37,11 +37,11 @@ export const deadlineKeys = {
   ],
 };
 
-/** One page of the customers list. The last page stays on screen while the next loads. */
-export const useCustomerDeadlines = (params: CustomerDeadlineParams) =>
+/** One page of the tenants list. The last page stays on screen while the next loads. */
+export const useTenantDeadlines = (params: TenantDeadlineParams) =>
   useQuery({
-    queryKey: [...deadlineKeys.customers(), params],
-    queryFn: () => getCustomerDeadlines(params),
+    queryKey: [...deadlineKeys.tenants(), params],
+    queryFn: () => getTenantDeadlines(params),
     placeholderData: keepPreviousData,
     staleTime: STALE,
   });
@@ -59,7 +59,7 @@ const invalidateAfterChange = (
   queryClient: QueryClient,
   ticketsChanged: boolean,
 ) => {
-  queryClient.invalidateQueries({ queryKey: deadlineKeys.customers() });
+  queryClient.invalidateQueries({ queryKey: deadlineKeys.tenants() });
   queryClient.invalidateQueries({ queryKey: ['reports'] });
   if (ticketsChanged) {
     queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -86,7 +86,7 @@ export const useSaveCompanyDeadlinePolicy = (tenantId?: string) => {
   });
 };
 
-/** Drops the customer's own policy, so it uses the provider default again. */
+/** Drops the tenant's own policy, so it uses the provider default again. */
 export const useRevertCompanyDeadlinePolicy = (tenantId?: string) => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, void>({

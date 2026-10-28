@@ -47,8 +47,8 @@ import {
   writeListToUrl,
 } from '../hooks/ticketListUrl';
 import {
-  CUSTOMER_TAB_KEYS,
   LEGACY_TABS,
+  TENANT_TAB_KEYS,
   TICKET_DEFAULT_TAB,
   TICKET_TAB_KEYS,
   TICKET_VALID_TABS,
@@ -93,13 +93,13 @@ const FIT_SKIP = ['select', 'subject'];
 
 interface TicketGridProps {
   /**
-   * The provider's "From customers" queue (tickets raised by or forwarded
+   * The provider's "From tenants" queue (tickets raised by or forwarded
    * from a customer tenant) instead of the tenant's own tickets.
    */
-  fromCustomers?: boolean;
+  fromTenants?: boolean;
 }
 
-export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
+export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
   const navigate = useNavigate();
   const timezone = useTimezone();
   const { user } = useAuth();
@@ -131,7 +131,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
    * alongside everything else on this page), so the list is fetched once in
    * the right order rather than once by default and again by preference.
    */
-  const ticketsLayout = useTicketsLayout(selectedTab, { fromCustomers });
+  const ticketsLayout = useTicketsLayout(selectedTab, { fromTenants });
   /*
    * A sort named in the URL (a copied link) wins over the saved one until
    * the user sorts or changes tab; it is not saved as their preference.
@@ -194,7 +194,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
       sort,
       enabled: ticketsLayout.isReady,
       initialPagination: paginationFromUrl(searchParams),
-      fromCustomers,
+      fromTenants,
     },
   );
 
@@ -382,8 +382,8 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
           timezone,
           scopeNames,
           customStatuses,
-          fromCustomers,
-          ticketBasePath: fromCustomers ? '/provider/tickets' : '/tickets',
+          fromTenants,
+          ticketBasePath: fromTenants ? '/provider/tickets' : '/tickets',
         }),
         // Subject fills the rest; the checkbox and row menu have fixed sizes.
         { skipIds: FIT_SKIP, isSortable: id => id in TICKET_SORT_KEYS },
@@ -398,7 +398,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
       timezone,
       scopeNames,
       customStatuses,
-      fromCustomers,
+      fromTenants,
     ],
   );
 
@@ -483,7 +483,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
     filters,
     currentUserId,
     {
-      fromCustomers,
+      fromTenants,
     },
   );
 
@@ -665,7 +665,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
       let tickets: SelectedTicket[];
       let truncatedFrom: number | null = null;
       if (allMatching) {
-        const result = await fetchTicketIds(queryFilters, fromCustomers);
+        const result = await fetchTicketIds(queryFilters, fromTenants);
         tickets = result.items;
         if (result.truncated) truncatedFrom = result.total;
       } else {
@@ -685,7 +685,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
       }
       return tickets;
     },
-    [allMatching, queryFilters, fromCustomers, pickedList, confirm],
+    [allMatching, queryFilters, fromTenants, pickedList, confirm],
   );
 
   // After a bulk action only the tickets that failed stay selected, so the
@@ -849,12 +849,12 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
             {/* Header */}
             <div className="mb-5 flex items-center justify-between">
               <h1 className="text-2xl font-semibold">
-                {fromCustomers ? 'From customers' : 'Tickets'}
+                {fromTenants ? 'From tenants' : 'Tickets'}
               </h1>
               {/* Raising a ticket needs tickets.create, not tickets.update: a
-              customer can raise one but not edit it, and the button was
+              tenant can raise one but not edit it, and the button was
               hidden from exactly the people whose main job it is. */}
-              {!fromCustomers && (
+              {!fromTenants && (
                 <PermissionGuard
                   requiredPermissions={[HelpdeskPermissions.Tickets.Create]}
                   fallback={null}
@@ -875,7 +875,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
               <TicketTabsRow
                 selectedTab={selectedTab}
                 onTabChange={handleTabChange}
-                keys={canAssign ? TICKET_TAB_KEYS : CUSTOMER_TAB_KEYS}
+                keys={canAssign ? TICKET_TAB_KEYS : TENANT_TAB_KEYS}
                 renderTitle={tabTitle}
                 end={
                   <ColumnsChooser

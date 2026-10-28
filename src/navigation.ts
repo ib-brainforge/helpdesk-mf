@@ -144,9 +144,9 @@ export const HELPDESK_NAV: NavSections = {
 };
 
 /**
- * The Provider view: a provider's office working its customers' tickets.
+ * The Provider view: a provider's office working its tenants' tickets.
  * Items carry the permission of the page they open (the Provider.Support
- * permission for From customers).
+ * permission for From tenants).
  */
 export const PROVIDER_NAV: NavSections = {
   top: [
@@ -158,14 +158,14 @@ export const PROVIDER_NAV: NavSections = {
       requiredPermissions: [HelpdeskPermissions.Reports.Read],
     },
     {
-      label: 'From customers',
+      label: 'From tenants',
       href: '/provider/tickets',
       icon: 'text',
       testId: 'nav-provider-tickets',
       requiredPermissions: [HelpdeskPermissions.Provider.Support],
     },
     {
-      label: 'Customer Deadlines',
+      label: 'Tenant Deadlines',
       href: '/provider/deadlines',
       icon: 'clock',
       testId: 'nav-provider-deadlines',

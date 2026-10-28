@@ -343,7 +343,7 @@ interface TicketFiltersProps {
   /** What the open tab sets by itself: Clear filters goes back to this. */
   baseline?: TicketFiltersType;
   /**
-   * Whether this person works tickets. A customer sees only their own
+   * Whether this person works tickets. A tenant sees only their own
    * requests, so Assignee and Tags mean nothing to them.
    */
   isStaff?: boolean;

@@ -24,7 +24,7 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
 
   if (isLoading) {
     return (
-      <Box title="Customer Satisfaction">
+      <Box title="Tenant Satisfaction">
         <div className="flex items-center gap-2">
           <Icon
             name="star"
@@ -40,22 +40,22 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
 
   if (!rating) {
     return (
-      <Box title="Customer Satisfaction">
+      <Box title="Tenant Satisfaction">
         <div className="flex items-center gap-2">
           <Icon name="star" className="h-5 w-5 text-default-400" />
           <p className="text-sm text-default-600">
-            No customer satisfaction rating yet
+            No tenant satisfaction rating yet
           </p>
         </div>
         <p className="text-xs text-default-500 mt-1">
-          Customer will receive a survey email after ticket closure.
+          Tenant will receive a survey email after ticket closure.
         </p>
       </Box>
     );
   }
 
   return (
-    <Box title="Customer Satisfaction">
+    <Box title="Tenant Satisfaction">
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div>
@@ -68,7 +68,7 @@ export const CSATWidget: FC<CSATWidgetProps> = ({ ticketId, ticketStatus }) => {
 
         {rating.comment && (
           <div className="pt-2 border-t border-default-200">
-            <p className="text-sm font-medium mb-1">Customer Feedback:</p>
+            <p className="text-sm font-medium mb-1">Tenant Feedback:</p>
             <p className="text-sm text-default-700 italic">
               "{rating.comment}"
             </p>

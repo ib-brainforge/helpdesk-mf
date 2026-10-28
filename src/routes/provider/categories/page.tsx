@@ -7,7 +7,7 @@ import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 /**
- * Provider Categories: the preset categories customers raise requests under,
+ * Provider Categories: the preset categories tenants raise requests under,
  * with each one's default assignee and open tickets.
  */
 function ProviderCategoriesPage() {

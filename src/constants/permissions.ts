@@ -89,7 +89,7 @@ export const HelpdeskPermissions = {
     Delete: 'rulegraphs.delete',
   },
   Provider: {
-    /** Work the "From customers" queue in a provider's office. */
+    /** Work the "From tenants" queue in a provider's office. */
     Support: 'provider.support',
   },
 

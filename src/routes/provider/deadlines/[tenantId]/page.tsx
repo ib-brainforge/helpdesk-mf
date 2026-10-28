@@ -1,5 +1,5 @@
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
-import { CustomerDeadlinePage } from '@/components/company-deadlines/components/CustomerDeadlinePage';
+import { TenantDeadlinePage } from '@/components/company-deadlines/components/TenantDeadlinePage';
 import { useCompanyDeadlinePolicy } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
 import { HelpdeskPermissions } from '@/constants/permissions';
@@ -8,8 +8,8 @@ import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useLocation, useParams } from '@modern-js/runtime/router';
 import React from 'react';
 
-/** One customer's deadlines, for provider staff: read, edit, revert to default. */
-function CustomerDeadlinesDetail() {
+/** One tenant's deadlines, for provider staff: read, edit, revert to default. */
+function TenantDeadlinesDetail() {
   const { tenantId = '' } = useParams<{ tenantId: string }>();
   const { data: policy, isLoading } = useCompanyDeadlinePolicy(tenantId);
   const { byTenantId } = useScopeNames();
@@ -18,11 +18,11 @@ function CustomerDeadlinesDetail() {
   const name =
     (state as { name?: string } | null)?.name ??
     byTenantId.get(tenantId)?.tenantName ??
-    'Customer';
+    'Tenant';
 
   if (isLoading || !policy) return <AppLoadingSplash />;
   return (
-    <CustomerDeadlinePage
+    <TenantDeadlinePage
       // A new page, never the last one's mode or draft.
       key={tenantId}
       tenantId={tenantId}
@@ -37,7 +37,7 @@ function Page() {
     <ProviderViewGuard
       requiredPermissions={[HelpdeskPermissions.Provider.Support]}
     >
-      <CustomerDeadlinesDetail />
+      <TenantDeadlinesDetail />
     </ProviderViewGuard>
   );
 }

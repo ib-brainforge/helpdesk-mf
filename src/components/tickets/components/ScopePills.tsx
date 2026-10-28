@@ -37,7 +37,7 @@ export const OrganisationPill: FC<{ name: string }> = ({ name }) => (
 
 /**
  * A ticket's place, always tenant first then organisation: "Remondis ·
- * Remondis NSW". A tenant is the customer; its organisations work
+ * Remondis NSW". A tenant is the account; its organisations work
  * separately, so the two are never merged into one name. The organisation is
  * left out only when it is missing or carries exactly the tenant's name.
  */

@@ -33,7 +33,7 @@ export const regionOf = (
 
 /**
  * The region a time zone suggests ("Australia/Melbourne" is VIC). The
- * customer's own state is not known to Helpdesk, so the time zone is the best
+ * tenant's own state is not known to Helpdesk, so the time zone is the best
  * guess.
  */
 export const regionForTimeZone = (timeZoneId: string): string | null =>

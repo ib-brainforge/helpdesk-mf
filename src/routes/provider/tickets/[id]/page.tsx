@@ -5,7 +5,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
-/** A customer's ticket in the provider's office, opened from From customers. */
+/** A tenant's ticket in the provider's office, opened from From tenants. */
 function ProviderTicketDetailPage() {
   return (
     <ProviderViewGuard

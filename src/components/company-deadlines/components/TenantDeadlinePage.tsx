@@ -29,19 +29,19 @@ import { TargetsSection } from './TargetsSection';
 import { WorkedExample } from './WorkedExample';
 
 /*
- * One customer's deadlines, for provider staff: read, edit, save and revert
+ * One tenant's deadlines, for provider staff: read, edit, save and revert
  * to the provider default.
  *
- * It opens READING the deadlines in force, in sentences. A customer on the
+ * It opens READING the deadlines in force, in sentences. A tenant on the
  * provider default never shows editable fields: "Set own deadlines" opens the
  * form, starting from the default's values, and nothing changes until Save.
  * Save is the only primary button; Cancel and Reset are plain. Leaving with
  * unsaved edits, by Cancel or by any link, asks "Discard changes?".
  */
 
-export interface CustomerDeadlinePageProps {
+export interface TenantDeadlinePageProps {
   tenantId: string;
-  /** The customer's name, in the title, buttons and toasts. */
+  /** The tenant's name, in the title, buttons and toasts. */
   name: string;
   policy: CompanyDeadlinePolicyDto;
 }
@@ -66,7 +66,7 @@ const TicketCounts: FC<{ open: number; late: number }> = ({ open, late }) => (
   </p>
 );
 
-export const CustomerDeadlinePage: FC<CustomerDeadlinePageProps> = props => {
+export const TenantDeadlinePage: FC<TenantDeadlinePageProps> = props => {
   // ?edit=1 opens straight on the form.
   const [searchParams] = useSearchParams();
   const [editing, setEditing] = useState(searchParams.get('edit') === '1');
@@ -77,7 +77,7 @@ export const CustomerDeadlinePage: FC<CustomerDeadlinePageProps> = props => {
   );
 };
 
-const PolicyReader: FC<CustomerDeadlinePageProps & { onEdit: () => void }> = ({
+const PolicyReader: FC<TenantDeadlinePageProps & { onEdit: () => void }> = ({
   tenantId,
   name,
   policy,
@@ -128,7 +128,7 @@ const PolicyReader: FC<CustomerDeadlinePageProps & { onEdit: () => void }> = ({
           description={
             policy.isCustom
               ? undefined
-              : 'Shown as they are; set its own to change them for this customer alone.'
+              : 'Shown as they are; set its own to change them for this tenant alone.'
           }
           policy={policy}
           actions={
@@ -155,7 +155,7 @@ const PolicyReader: FC<CustomerDeadlinePageProps & { onEdit: () => void }> = ({
   );
 };
 
-const PolicyEditor: FC<CustomerDeadlinePageProps & { onDone: () => void }> = ({
+const PolicyEditor: FC<TenantDeadlinePageProps & { onDone: () => void }> = ({
   tenantId,
   name,
   policy,

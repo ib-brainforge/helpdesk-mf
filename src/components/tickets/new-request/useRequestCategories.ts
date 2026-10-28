@@ -8,7 +8,7 @@ const STALE_MS = 10 * 60 * 1000;
 /**
  * The categories a requester may choose, with their real ids: the tenant's own
  * categories plus the Provider's preset categories (/v1/categories/available),
- * so a customer with no categories of its own can still raise a request. The
+ * so a tenant with no categories of its own can still raise a request. The
  * ticket create command rejects a request with no CategoryId, so the wizard
  * resolves its request types against this list.
  */

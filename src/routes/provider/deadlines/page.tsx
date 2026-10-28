@@ -1,6 +1,6 @@
 import { AppAuthSplash } from '@/components/AppSplash';
-import { CustomerDeadlineList } from '@/components/company-deadlines/components/CustomerDeadlineList';
-import { useCustomerDeadlines } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
+import { TenantDeadlineList } from '@/components/company-deadlines/components/TenantDeadlineList';
+import { useTenantDeadlines } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useListParams } from '@/hooks/useListParams';
@@ -12,17 +12,17 @@ const FLAGS = ['custom', 'hasLate'] as const;
 const SORTS = ['name', 'open', 'late'] as const;
 
 /**
- * Customer Deadlines: the customers a provider supports. Pick one to read or
- * change its deadlines; a customer without its own uses the Provider default.
+ * Tenant Deadlines: the tenants a provider supports. Pick one to read or
+ * change its deadlines; a tenant without its own uses the Provider default.
  */
-function CustomerDeadlinesPage() {
+function TenantDeadlinesPage() {
   const list = useListParams({
     flags: FLAGS,
     sorts: SORTS,
     defaultSort: 'name',
   });
   const { params } = list;
-  const customers = useCustomerDeadlines({
+  const tenants = useTenantDeadlines({
     search: params.search,
     custom: params.flags.custom,
     hasLate: params.flags.hasLate,
@@ -35,10 +35,10 @@ function CustomerDeadlinesPage() {
   return (
     <PageBody>
       <PageHeader
-        title="Customer Deadlines"
+        title="Tenant Deadlines"
         breadcrumbsKey="provider.deadlines.list"
       />
-      <CustomerDeadlineList list={list} query={customers} />
+      <TenantDeadlineList list={list} query={tenants} />
     </PageBody>
   );
 }
@@ -48,7 +48,7 @@ function Page() {
     <ProviderViewGuard
       requiredPermissions={[HelpdeskPermissions.Provider.Support]}
     >
-      <CustomerDeadlinesPage />
+      <TenantDeadlinesPage />
     </ProviderViewGuard>
   );
 }
