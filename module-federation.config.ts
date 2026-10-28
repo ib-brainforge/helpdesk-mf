@@ -88,6 +88,12 @@ export default createModuleFederationConfig({
     //   singleton: true,
     //   requiredVersion: false,
     // },
+    // Root key stays private here (see note above); only subpaths are shared with the shell.
+    // Prefix share: MF share keys match exact names, so the subpath
+    // imports (@brainforgeau/components/alert, /icons, ...) need this to
+    // resolve to the shell's singleton instead of a private copy.
+    // Mirrors app/module-federation.config.ts.
+    '@brainforgeau/components/': { singleton: true, requiredVersion: false },
     // Security MUST be shared as singleton for auth context to work across module federation
     '@brainforgeau/security': {
       singleton: true,
