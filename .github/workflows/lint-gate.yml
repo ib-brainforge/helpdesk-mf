@@ -7,7 +7,7 @@ name: Lint Gate
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [develop, main]
 
 # One run per workflow and ref. A newer push to a PR branch cancels the run it
@@ -19,13 +19,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  pick-runner:
-    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
-    secrets: inherit
   biome:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Biome CI (format + lint)
-    needs: pick-runner
-    runs-on: ${{ needs.pick-runner.outputs.label }}
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
