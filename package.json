@@ -40,7 +40,7 @@
     "@brainforgeau/asset-backend-client": "0.5.1322-develop.bcacb39",
     "@brainforgeau/components": "0.5.774-develop.c514798",
     "@brainforgeau/helpdesk-client": "0.5.425-develop.920133f",
-    "@brainforgeau/identity-management-client": "0.5.1239-develop.d6b2cdf",
+    "@brainforgeau/identity-management-client": "0.5.1439-develop.403a995",
     "@brainforgeau/observability": "0.5.123-develop.8536af9",
     "@brainforgeau/rules-ui": "0.5.182",
     "@brainforgeau/security": "0.5.461-develop.20c6f6b",
