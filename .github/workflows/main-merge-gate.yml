@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [main]
 
+# One run per workflow and ref. A newer push to a PR branch cancels the run it
+# supersedes; a push to develop/main never cancels a run in flight (a package
+# publish or image push must not stop halfway) — the newest pending run simply
+# replaces any older pending one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   pick-runner:
     uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
