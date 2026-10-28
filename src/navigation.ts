@@ -1,10 +1,11 @@
 /**
- * The side menu of each workspace (see workspaces.ts, which picks one by URL).
+ * The side menu of each view (see views.ts, which says which URLs belong to which).
  * Kept out of routes/layout.tsx so the layout only decides which menu to
  * show, not what is in it.
  */
-import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { ruleForPath } from '@/routes/route-permissions';
+import { RAISED_WITH_PROVIDER_PATH } from '@/views';
 import type { GuardedItem } from '@brainforgeau/security';
 
 export interface NavItem {
@@ -44,7 +45,7 @@ const withRoutePermissions = (
     };
   });
 
-/** Helpdesk, the ticketing workspace. */
+/** The Tenant view. */
 export const HELPDESK_NAV: NavSections = {
   top: withRoutePermissions([
     {
@@ -71,6 +72,13 @@ export const HELPDESK_NAV: NavSections = {
       icon: 'analytics',
       testId: 'nav-reports',
     },
+    {
+      // Hidden by the layout where the tenant has no provider above it.
+      label: 'Raised with our provider',
+      href: RAISED_WITH_PROVIDER_PATH,
+      icon: 'chatO',
+      testId: 'nav-provider-raised',
+    },
     // Ideas Forum is deliberately NOT linked here. The publish/unpublish path and
     // the /ideas feed both work, but voting and commenting do not exist at any
     // layer: GetIdeasQueryHandler returns a hardcoded 0 for VoteCount and there
@@ -79,7 +87,6 @@ export const HELPDESK_NAV: NavSections = {
     // page is still reachable directly and nothing is deleted.
   ]),
   bottom: withRoutePermissions([
-    // Principal Picker + helpdesk principal routes are accessible via /principal/{id}/*
     {
       label: 'Configuration',
       icon: 'settings',
@@ -102,16 +109,6 @@ export const HELPDESK_NAV: NavSections = {
           href: '/configuration/custom-priorities',
           icon: 'flag',
           testId: 'nav-configuration-custom-priorities',
-        },
-        {
-          // Netcorp staff only: deadlines are set per company by the principal,
-          // never by the company itself, and the API takes principal admin to
-          // save. The page checks the same roles.
-          label: 'Tenant Deadlines',
-          href: '/configuration/company-deadlines',
-          icon: 'clock',
-          testId: 'nav-configuration-company-deadlines',
-          requiredRoles: [...PRINCIPAL_ADMIN_ROLES],
         },
         {
           label: 'Automation',
@@ -147,24 +144,46 @@ export const HELPDESK_NAV: NavSections = {
 };
 
 /**
- * IT Support, the remote support workspace under /it-support. Both pages are
- * placeholders until remote access lands. Who may open the workspace at all
- * is decided once, in workspaces.ts, so the items carry no rules of their own.
+ * The Provider view: a provider's office working its customers' tickets.
+ * Items carry the permission of the page they open (the Provider.Support
+ * permission for From customers).
  */
-export const IT_SUPPORT_NAV: NavSections = {
+export const PROVIDER_NAV: NavSections = {
   top: [
     {
-      label: 'Overview',
-      href: '/it-support',
-      end: true,
+      label: 'Dashboard',
+      href: '/provider/dashboard',
       icon: 'grids',
-      testId: 'nav-it-support-overview',
+      testId: 'nav-provider-dashboard',
+      requiredPermissions: [HelpdeskPermissions.Reports.Read],
     },
     {
-      label: 'Remote sessions',
-      href: '/it-support/remote-sessions',
-      icon: 'pc',
-      testId: 'nav-it-support-remote-sessions',
+      label: 'From customers',
+      href: '/provider/tickets',
+      icon: 'text',
+      testId: 'nav-provider-tickets',
+      requiredPermissions: [HelpdeskPermissions.Provider.Support],
+    },
+    {
+      label: 'Customer Deadlines',
+      href: '/provider/deadlines',
+      icon: 'clock',
+      testId: 'nav-provider-deadlines',
+      requiredPermissions: [HelpdeskPermissions.Provider.Support],
+    },
+    {
+      label: 'Provider Categories',
+      href: '/provider/categories',
+      icon: 'tag',
+      testId: 'nav-provider-categories',
+      requiredPermissions: [HelpdeskPermissions.Provider.Support],
+    },
+    {
+      label: 'Reports',
+      href: '/provider/reports',
+      icon: 'analytics',
+      testId: 'nav-provider-reports',
+      requiredPermissions: [HelpdeskPermissions.Reports.Read],
     },
   ],
   bottom: [],

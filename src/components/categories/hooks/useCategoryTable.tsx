@@ -5,8 +5,7 @@
  * The table owns search-filtered rows. The page owns searchTerm state and passes
  * it in, allowing <ListPage filters={...}> to wire the search input.
  */
-import { IconTip, StatusBadge, UserCell } from '@/components/shared';
-import type { UserInfo } from '@/hooks/useUserEnrichment';
+import { IconTip, StatusBadge } from '@/components/shared';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
 import { Icon } from '@brainforgeau/components/base';
@@ -46,21 +45,6 @@ interface UseCategoryTableOptions {
   isLoading?: boolean;
   onEditCategory: (category: CategoryDto) => void;
   onDeleteCategory: (categoryId: string) => void;
-  /**
-   * Categories the tenant may use but does not own (the Netcorp presets).
-   * They are listed so the set matches what the request form offers, but they
-   * belong to the principal, so editing or deleting one here is not the
-   * tenant's to do.
-   */
-  presetIds?: Set<string>;
-  /** Show the Section column. Off while categories are presets only. */
-  showSections?: boolean;
-  /** Open tickets per category id; undefined hides the counts (tenant users). */
-  openCounts?: Map<string, number>;
-  /** Names for the Default assignee column, from useUserEnrichment. */
-  userMap?: Record<string, UserInfo | null | undefined>;
-  /** Opens the default assignee picker; undefined makes the column read only. */
-  onSetDefaultAssignee?: (category: CategoryDto) => void;
 }
 
 export function useCategoryTable({
@@ -69,49 +53,34 @@ export function useCategoryTable({
   searchTerm,
   onEditCategory,
   onDeleteCategory,
-  presetIds,
-  showSections = true,
-  openCounts,
-  userMap,
-  onSetDefaultAssignee,
 }: UseCategoryTableOptions) {
   const columns = useMemo(
     (): ColumnDef<CategoryRow, any>[] => [
       columnHelper.display({
         id: 'name',
         header: 'Name',
-        // The preset names are long: truncated here, whole in the tooltip.
-        cell: ({ row }) =>
-          presetIds?.has(row.original.id) ? (
-            <span className="block truncate" title={row.original.name}>
-              {row.original.name}
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => onEditCategory(row.original)}
-              className="text-primary block max-w-full truncate font-medium hover:underline"
-              title={row.original.name}
-            >
-              {row.original.name}
-            </button>
-          ),
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => onEditCategory(row.original)}
+            className="text-primary block max-w-full truncate font-medium hover:underline"
+            title={row.original.name}
+          >
+            {row.original.name}
+          </button>
+        ),
         size: 360,
       }),
-      ...(showSections
-        ? [
-            columnHelper.display({
-              id: 'section',
-              header: 'Section',
-              cell: ({ row }) => (
-                <span className="text-sm text-default-600">
-                  {row.original.sectionName ?? '–'}
-                </span>
-              ),
-              size: 200,
-            }),
-          ]
-        : []),
+      columnHelper.display({
+        id: 'section',
+        header: 'Section',
+        cell: ({ row }) => (
+          <span className="text-sm text-default-600">
+            {row.original.sectionName ?? '–'}
+          </span>
+        ),
+        size: 200,
+      }),
       columnHelper.display({
         id: 'accessLevel',
         header: 'Who can use it',
@@ -121,58 +90,9 @@ export function useCategoryTable({
         size: 160,
       }),
       columnHelper.display({
-        id: 'defaultAssignee',
-        header: 'Default assignee',
-        cell: ({ row }) => {
-          const id = row.original.defaultAssigneeId;
-          const content = id ? (
-            <UserCell userInfo={userMap?.[id]} />
-          ) : (
-            <span className="text-default-400 text-sm">Not set</span>
-          );
-          if (!onSetDefaultAssignee) return content;
-          return (
-            <IconTip label="Set default assignee">
-              <button
-                type="button"
-                className="-mx-1 flex w-full items-center rounded px-1 py-0.5 text-left hover:bg-default-100"
-                aria-label={`Set default assignee for ${row.original.name}`}
-                onClick={() => onSetDefaultAssignee(row.original)}
-              >
-                {content}
-              </button>
-            </IconTip>
-          );
-        },
-        size: 240,
-      }),
-      columnHelper.display({
-        id: 'openTickets',
-        header: () => <span className="block text-right">Open tickets</span>,
-        cell: ({ row }) => (
-          <span className="block text-right tabular-nums">
-            {openCounts ? (openCounts.get(row.original.id) ?? 0) : '–'}
-          </span>
-        ),
-        size: 110,
-      }),
-      columnHelper.display({
         id: 'actions',
         header: '',
         cell: ({ row }) => {
-          const isPreset = presetIds?.has(row.original.id) ?? false;
-          if (isPreset) {
-            return (
-              <div className="-my-1.5 flex items-center justify-end gap-2">
-                <span
-                  className="bg-lighter-blue text-blue rounded-full px-2 py-0.5 text-[11px] font-medium"
-                  title="Provided by the platform. Cannot be edited or deleted here."
-                >
-                  Preset
-                </span>
-              </div>
-            );
-          }
           return (
             <div className="-my-1.5 flex items-center justify-end gap-1">
               <IconTip label={'Edit category'}>
@@ -203,15 +123,7 @@ export function useCategoryTable({
         size: 100,
       }),
     ],
-    [
-      onEditCategory,
-      onDeleteCategory,
-      presetIds,
-      showSections,
-      openCounts,
-      userMap,
-      onSetDefaultAssignee,
-    ],
+    [onEditCategory, onDeleteCategory],
   );
 
   // Build flat rows with section grouping info

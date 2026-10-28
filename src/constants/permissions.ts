@@ -18,7 +18,7 @@
  *
  * The names are not app-prefixed, and the list usePermissions() checks is
  * flattened across every app in the token. Today the helpdesk context token
- * carries helpdesk and platform permissions, which do not overlap.
+ * carries helpdesk and provider permissions, which do not overlap.
  */
 export const HelpdeskPermissions = {
   Tickets: {
@@ -88,13 +88,9 @@ export const HelpdeskPermissions = {
     Publish: 'rulegraphs.publish',
     Delete: 'rulegraphs.delete',
   },
-  Platform: {
-    Read: 'platform.read',
-    Manage: 'platform.manage',
-  },
-  Principal: {
-    Read: 'principal.read',
-    Manage: 'principal.manage',
+  Provider: {
+    /** Work the "From customers" queue in a provider's office. */
+    Support: 'provider.support',
   },
 
   // The original flat keys, kept so existing call sites keep working. They

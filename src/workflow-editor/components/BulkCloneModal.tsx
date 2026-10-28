@@ -19,9 +19,7 @@ export interface BulkCloneModalProps {
   onOpenChange: (next: boolean) => void;
   sourceDefinitionId: string;
   sourceDefinitionName: string;
-  /** If provided, clones into principal scope */
-  principalId?: string;
-  /** Navigate to tenant or principal detail URL after clone */
+  /** Where the cloned workflow's page lives. */
   getDetailUrl: (newId: string) => string;
 }
 
@@ -30,7 +28,6 @@ export function BulkCloneModal({
   onOpenChange,
   sourceDefinitionId,
   sourceDefinitionName,
-  principalId,
   getDetailUrl,
 }: BulkCloneModalProps) {
   const navigate = useNavigate();
@@ -45,7 +42,6 @@ export function BulkCloneModal({
         sourceDefinitionId,
         newName: newName.trim(),
         newDescription: newDescription.trim() || undefined,
-        principalId,
       });
       toast(`Cloned as "${result.name}"`, { variant: 'success' });
       onClose();

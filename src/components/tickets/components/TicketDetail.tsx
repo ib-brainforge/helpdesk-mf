@@ -1,4 +1,3 @@
-import { isNotLicensedError } from '@/api/local/scoped';
 import { AppLoadingSplash } from '@/components/AppSplash';
 import { TicketApprovalPanel } from '@/components/approvals';
 import {
@@ -26,8 +25,8 @@ import {
   TIME_TRACKING_ENABLED,
 } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useMailboxConnectResult } from '@/hooks/useMailbox';
+import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { type TicketPriority, TicketStatus } from '@/types/ticket';
@@ -79,6 +78,7 @@ import { ConvertToReplyModal } from './ConvertToReplyModal';
 import { DuplicateTicketModal } from './DuplicateTicketModal';
 import { EditTicketModal } from './EditTicketModal';
 import { ForwardTicketModal } from './ForwardTicketModal';
+import { ForwardToProviderModal } from './ForwardToProviderModal';
 import { InlineEditable } from './InlineEditable';
 import { LinkTicketModal } from './LinkTicketModal';
 import { MarkSpamModal } from './MarkSpamModal';
@@ -87,10 +87,11 @@ import { ScopePath, useTicketScopeNames } from './ScopePills';
 import { SubtaskModal } from './SubtaskModal';
 import { TicketDetailSidebar } from './TicketDetailSidebar';
 import { TicketHistory } from './TicketHistory';
-import { TicketNotEnabled } from './TicketScopeProvider';
 
 export interface TicketDetailProps {
   ticketId?: string;
+  /** Where the ticket list lives; ticket links are built under it. */
+  basePath?: string;
 }
 
 /**
@@ -99,21 +100,13 @@ export interface TicketDetailProps {
  */
 const NO_EMPTY_HEADER = '[&>[data-slot=card-header]:empty]:hidden';
 
-export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
+export const TicketDetail: FC<TicketDetailProps> = ({
+  ticketId,
+  basePath = '/tickets',
+}) => {
   const { id: urlId } = useParams<{ id: string }>();
   const id = ticketId ?? urlId;
   const navigate = useNavigate();
-  // The ticket's company, when it is not the viewer's (TicketScopeProvider).
-  const scope = useHelpdeskScope();
-  /*
-   * The ticket's company has no Helpdesk licence, and Netcorp staff are
-   * working it through the principal routes (TicketScopeProvider). Those
-   * cover the ticket, its status, assignee, priority and category, the
-   * conversation (replies and notes), attachments (not deleting) and history.
-   * Everything else (editing the subject and description, AI Assistant, the
-   * More actions menu, vehicles, subscribers, tags, satisfaction) is hidden.
-   */
-  const limited = !!scope?.principalId;
   const { data: ticket, isLoading, error } = useTicketDetail(id ?? '');
   usePageTitle(ticket?.subject ? `Ticket: ${ticket.subject}` : 'Ticket');
   const updateTicketMutation = useUpdateTicket();
@@ -226,6 +219,9 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   // Wave 3 modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isForwardModalOpen, setIsForwardModalOpen] = useState(false);
+  const [isForwardToProviderOpen, setIsForwardToProviderOpen] = useState(false);
+  const { data: providerContext } = useProviderSupportContext();
+  const canContactProvider = providerContext?.canContactProvider === true;
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const [isConvertToReplyModalOpen, setIsConvertToReplyModalOpen] =
     useState(false);
@@ -318,7 +314,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
   );
 
   const handleBack = useCallback(() => {
-    navigate('/tickets');
+    navigate(basePath);
   }, [navigate]);
 
   const handleMerge = useCallback(() => {
@@ -394,7 +390,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           description: 'The ticket has been moved to trash.',
           variant: 'success',
         });
-        navigate('/tickets');
+        navigate(basePath);
       },
       onError: () => {
         toast('Error', {
@@ -476,7 +472,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           variant: 'success',
         });
         setIsMarkSpamModalOpen(false);
-        navigate('/tickets');
+        navigate(basePath);
       },
       onError: () => {
         toast('Error', {
@@ -517,7 +513,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               description: `Ticket merged into ${targetTicketId.substring(0, 8)}`,
               variant: 'success',
             });
-            navigate(`/tickets/${targetTicketId}`);
+            navigate(`${basePath}/${targetTicketId}`);
           },
         },
       );
@@ -613,7 +609,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           variant: 'success',
         });
         setIsDuplicateModalOpen(false);
-        navigate(`/tickets/${newTicketId}`);
+        navigate(`${basePath}/${newTicketId}`);
       },
       onError: () => {
         toast('Error', {
@@ -637,7 +633,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               variant: 'success',
             });
             setIsConvertToReplyModalOpen(false);
-            navigate(`/tickets/${parentTicketId}`);
+            navigate(`${basePath}/${parentTicketId}`);
           },
           onError: () => {
             toast('Error', {
@@ -769,12 +765,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
     return <AppLoadingSplash />;
   }
 
-  // The company's token was accepted by identity but the API refused it for
-  // the licence: the same message as when identity refuses it.
-  if (isNotLicensedError(error)) {
-    return <TicketNotEnabled tenantId={scope?.tenantId} />;
-  }
-
   if (error || !ticket) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -891,17 +881,15 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     fallback={null}
                   >
-                    {!limited && (
-                      <BaseButton
-                        variant="bordered"
-                        color="light"
-                        onPress={handleAiAssistant}
-                        isDisabled={actionsDisabled}
-                        icon={<Icon name="flash" className="h-4 w-4" />}
-                      >
-                        AI Assistant
-                      </BaseButton>
-                    )}
+                    <BaseButton
+                      variant="bordered"
+                      color="light"
+                      onPress={handleAiAssistant}
+                      isDisabled={actionsDisabled}
+                      icon={<Icon name="flash" className="h-4 w-4" />}
+                    >
+                      AI Assistant
+                    </BaseButton>
                     {/* Close while open; Reopen once closed, rather than a
                       Close button that can do nothing. */}
                     {ticket.status === TicketStatus.Closed ? (
@@ -926,190 +914,193 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                       </BaseButton>
                     )}
                   </PermissionGuard>
-                  {!limited && (
-                    <PermissionGuard
-                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                      fallback={null}
-                    >
-                      <Dropdown>
-                        <IconTip label="More ticket actions">
-                          <DropdownTrigger
-                            aria-label="More ticket actions"
-                            className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 h-8 w-8"
-                          >
-                            <Icon name="dotsV" className="h-4 w-4" />
-                          </DropdownTrigger>
-                        </IconTip>
-                        <DropdownPopover className="helpdesk-dropdown-popover">
-                          <DropdownMenu
-                            aria-label="Ticket actions"
-                            disabledKeys={
-                              actionsDisabled
-                                ? [
-                                    'edit',
-                                    'print',
-                                    'summary',
-                                    'subtask',
-                                    'parent',
-                                    'convert',
-                                    'link-asset',
-                                    'duplicate',
-                                    'forward',
-                                    'spam',
-                                    'unspam',
-                                    'problem',
-                                    'publish',
-                                  ]
-                                : []
-                            }
-                          >
-                            {/* Edit & View */}
-                            <DropdownSection>
-                              <DropdownItem
-                                key="edit"
-                                onPress={() => setIsEditModalOpen(true)}
-                              >
-                                Edit
-                              </DropdownItem>
-                              <DropdownItem key="print" onPress={handlePrint}>
-                                Print
-                              </DropdownItem>
-                              <DropdownItem
-                                key="summary"
-                                onPress={() =>
-                                  handleComingSoon('Ticket Summary')
-                                }
-                              >
-                                Ticket Summary
-                              </DropdownItem>
-                            </DropdownSection>
+                  <PermissionGuard
+                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                    fallback={null}
+                  >
+                    <Dropdown>
+                      <IconTip label="More ticket actions">
+                        <DropdownTrigger
+                          aria-label="More ticket actions"
+                          className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 h-8 w-8"
+                        >
+                          <Icon name="dotsV" className="h-4 w-4" />
+                        </DropdownTrigger>
+                      </IconTip>
+                      <DropdownPopover className="helpdesk-dropdown-popover">
+                        <DropdownMenu
+                          aria-label="Ticket actions"
+                          disabledKeys={
+                            actionsDisabled
+                              ? [
+                                  'edit',
+                                  'print',
+                                  'summary',
+                                  'subtask',
+                                  'parent',
+                                  'convert',
+                                  'link-asset',
+                                  'duplicate',
+                                  'forward',
+                                  'forward-provider',
+                                  'spam',
+                                  'unspam',
+                                  'problem',
+                                  'publish',
+                                ]
+                              : []
+                          }
+                        >
+                          {/* Edit & View */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="edit"
+                              onPress={() => setIsEditModalOpen(true)}
+                            >
+                              Edit
+                            </DropdownItem>
+                            <DropdownItem key="print" onPress={handlePrint}>
+                              Print
+                            </DropdownItem>
+                            <DropdownItem
+                              key="summary"
+                              onPress={() => handleComingSoon('Ticket Summary')}
+                            >
+                              Ticket Summary
+                            </DropdownItem>
+                          </DropdownSection>
 
-                            {/* Relate */}
-                            <DropdownSection>
-                              {/* Subtasks are switched off (SUBTASKS_ENABLED). */}
-                              {SUBTASKS_ENABLED ? (
-                                <DropdownItem
-                                  key="subtask"
-                                  onPress={() => setIsAddSubtaskModalOpen(true)}
-                                  isDisabled={!canCreateTickets}
-                                >
-                                  Add Subtask
-                                </DropdownItem>
-                              ) : null}
-                              {/*
+                          {/* Relate */}
+                          <DropdownSection>
+                            {/* Subtasks are switched off (SUBTASKS_ENABLED). */}
+                            {SUBTASKS_ENABLED ? (
+                              <DropdownItem
+                                key="subtask"
+                                onPress={() => setIsAddSubtaskModalOpen(true)}
+                                isDisabled={!canCreateTickets}
+                              >
+                                Add Subtask
+                              </DropdownItem>
+                            ) : null}
+                            {/*
                               Was "Add Parent". Parent is no longer something a
                               caller assigns: nesting comes from creating a
                               ticket as a subtask, and a relationship between two
                               independent tickets is a link. This slot now opens
                               the link picker, which existed but had no way in.
                             */}
-                              {/* Linked work items are switched off (TICKET_LINKS_ENABLED). */}
-                              {TICKET_LINKS_ENABLED ? (
-                                <DropdownItem key="link" onPress={handleLink}>
-                                  Link Ticket
-                                </DropdownItem>
-                              ) : null}
+                            {/* Linked work items are switched off (TICKET_LINKS_ENABLED). */}
+                            {TICKET_LINKS_ENABLED ? (
+                              <DropdownItem key="link" onPress={handleLink}>
+                                Link Ticket
+                              </DropdownItem>
+                            ) : null}
+                            <DropdownItem
+                              key="convert"
+                              onPress={() => setIsConvertToReplyModalOpen(true)}
+                            >
+                              Convert to Reply
+                            </DropdownItem>
+                            <DropdownItem
+                              key="link-asset"
+                              onPress={() => handleComingSoon('Link Asset')}
+                            >
+                              Link Asset
+                            </DropdownItem>
+                            <DropdownItem
+                              key="duplicate"
+                              onPress={() => setIsDuplicateModalOpen(true)}
+                              isDisabled={!canCreateTickets}
+                            >
+                              Duplicate
+                            </DropdownItem>
+                          </DropdownSection>
+
+                          {/* Lifecycle */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="forward"
+                              onPress={() => setIsForwardModalOpen(true)}
+                              isDisabled={!canForwardTickets}
+                            >
+                              Forward by Email
+                            </DropdownItem>
+                            {canContactProvider ? (
                               <DropdownItem
-                                key="convert"
-                                onPress={() =>
-                                  setIsConvertToReplyModalOpen(true)
+                                key="forward-provider"
+                                onPress={() => setIsForwardToProviderOpen(true)}
+                              >
+                                Forward to provider
+                              </DropdownItem>
+                            ) : null}
+                            {canModerate ? (
+                              <DropdownItem
+                                key="problem"
+                                onPress={handleToggleProblem}
+                                isDisabled={
+                                  markAsProblemMutation.isPending ||
+                                  unmarkAsProblemMutation.isPending
                                 }
                               >
-                                Convert to Reply
+                                {ticket?.isProblem
+                                  ? 'Unmark as Problem'
+                                  : 'Mark as Problem'}
                               </DropdownItem>
-                              <DropdownItem
-                                key="link-asset"
-                                onPress={() => handleComingSoon('Link Asset')}
-                              >
-                                Link Asset
+                            ) : (
+                              <DropdownItem key="problem" isDisabled>
+                                {ticket?.isProblem
+                                  ? 'Unmark as Problem'
+                                  : 'Mark as Problem'}
                               </DropdownItem>
+                            )}
+                            {canModerate ? (
                               <DropdownItem
-                                key="duplicate"
-                                onPress={() => setIsDuplicateModalOpen(true)}
-                                isDisabled={!canCreateTickets}
-                              >
-                                Duplicate
-                              </DropdownItem>
-                            </DropdownSection>
-
-                            {/* Lifecycle */}
-                            <DropdownSection>
-                              <DropdownItem
-                                key="forward"
-                                onPress={() => setIsForwardModalOpen(true)}
-                                isDisabled={!canForwardTickets}
-                              >
-                                Forward by Email
-                              </DropdownItem>
-                              {canModerate ? (
-                                <DropdownItem
-                                  key="problem"
-                                  onPress={handleToggleProblem}
-                                  isDisabled={
-                                    markAsProblemMutation.isPending ||
-                                    unmarkAsProblemMutation.isPending
-                                  }
-                                >
-                                  {ticket?.isProblem
-                                    ? 'Unmark as Problem'
-                                    : 'Mark as Problem'}
-                                </DropdownItem>
-                              ) : (
-                                <DropdownItem key="problem" isDisabled>
-                                  {ticket?.isProblem
-                                    ? 'Unmark as Problem'
-                                    : 'Mark as Problem'}
-                                </DropdownItem>
-                              )}
-                              {canModerate ? (
-                                <DropdownItem
-                                  key="publish"
-                                  onPress={handleTogglePublishAsIdea}
-                                  isDisabled={
-                                    publishAsIdeaMutation.isPending ||
-                                    unpublishAsIdeaMutation.isPending
-                                  }
-                                >
-                                  {ticket?.isPublishedAsIdea
-                                    ? 'Remove from Ideas Forum'
-                                    : 'Publish to Ideas Forum'}
-                                </DropdownItem>
-                              ) : (
-                                <DropdownItem key="publish" isDisabled>
-                                  {ticket?.isPublishedAsIdea
-                                    ? 'Remove from Ideas Forum'
-                                    : 'Publish to Ideas Forum'}
-                                </DropdownItem>
-                              )}
-                              <DropdownItem
-                                key="spam"
-                                isDisabled={!canModerateTickets}
-                                onPress={
-                                  isSpam
-                                    ? handleUnmarkSpam
-                                    : () => setIsMarkSpamModalOpen(true)
+                                key="publish"
+                                onPress={handleTogglePublishAsIdea}
+                                isDisabled={
+                                  publishAsIdeaMutation.isPending ||
+                                  unpublishAsIdeaMutation.isPending
                                 }
                               >
-                                {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
+                                {ticket?.isPublishedAsIdea
+                                  ? 'Remove from Ideas Forum'
+                                  : 'Publish to Ideas Forum'}
                               </DropdownItem>
-                            </DropdownSection>
+                            ) : (
+                              <DropdownItem key="publish" isDisabled>
+                                {ticket?.isPublishedAsIdea
+                                  ? 'Remove from Ideas Forum'
+                                  : 'Publish to Ideas Forum'}
+                              </DropdownItem>
+                            )}
+                            <DropdownItem
+                              key="spam"
+                              isDisabled={!canModerateTickets}
+                              onPress={
+                                isSpam
+                                  ? handleUnmarkSpam
+                                  : () => setIsMarkSpamModalOpen(true)
+                              }
+                            >
+                              {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
+                            </DropdownItem>
+                          </DropdownSection>
 
-                            {/* Danger Zone */}
-                            <DropdownSection>
-                              <DropdownItem
-                                key="delete"
-                                className="text-danger"
-                                onPress={handleDeleteTicket}
-                                isDisabled={!canDeleteTickets}
-                              >
-                                Delete
-                              </DropdownItem>
-                            </DropdownSection>
-                          </DropdownMenu>
-                        </DropdownPopover>
-                      </Dropdown>
-                    </PermissionGuard>
-                  )}
+                          {/* Danger Zone */}
+                          <DropdownSection>
+                            <DropdownItem
+                              key="delete"
+                              className="text-danger"
+                              onPress={handleDeleteTicket}
+                              isDisabled={!canDeleteTickets}
+                            >
+                              Delete
+                            </DropdownItem>
+                          </DropdownSection>
+                        </DropdownMenu>
+                      </DropdownPopover>
+                    </Dropdown>
+                  </PermissionGuard>
                 </div>
               </div>
 
@@ -1119,7 +1110,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                   value={ticket.subject ?? ''}
                   onSave={next => handleInlineSave('subject', next)}
                   isSaving={updateTicketMutation.isPending}
-                  canEdit={!actionsDisabled && canWriteTicket && !limited}
+                  canEdit={!actionsDisabled && canWriteTicket}
                   emptyLabel="Untitled ticket"
                 />
               </div>
@@ -1154,13 +1145,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
               </div>
             </Box>
 
-            {limited && (
-              <div className="rounded-md border border-default-200 bg-default-50 px-4 py-3 text-sm text-default-700">
-                Helpdesk isn't enabled for {companyName ?? 'this company'}. You
-                can still update and close this ticket.
-              </div>
-            )}
-
             {/* Description */}
             <Box className={NO_EMPTY_HEADER}>
               <InlineEditable
@@ -1168,7 +1152,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 value={ticket.description ?? ''}
                 onSave={next => handleInlineSave('description', next)}
                 isSaving={updateTicketMutation.isPending}
-                canEdit={!actionsDisabled && canWriteTicket && !limited}
+                canEdit={!actionsDisabled && canWriteTicket}
                 emptyLabel="No description yet."
               />
 
@@ -1213,8 +1197,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                     <AttachmentList
                       attachments={attachments}
                       onDelete={handleDeleteAttachment}
-                      // Deleting has no principal route (see HelpdeskScope).
-                      canDelete={!limited}
                     />
                   </div>
                 )}
@@ -1382,7 +1364,7 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                           <button
                             type="button"
                             onClick={() =>
-                              navigate(`/tickets/${otherTicketId}`)
+                              navigate(`${basePath}/${otherTicketId}`)
                             }
                             className="min-w-0 flex-1 truncate text-left text-sm text-blue-600 hover:underline"
                           >
@@ -1436,7 +1418,6 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
                 isSubscribed={isSubscribed}
                 isSubscribeLoading={isSubscribeLoading}
                 onSubscribeToggle={handleSubscribeToggle}
-                limited={limited}
               />
             </Box>
 
@@ -1455,12 +1436,10 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
             {APPROVALS_ENABLED && <TicketApprovalPanel ticketId={id ?? ''} />}
 
             {/* CSAT Widget */}
-            {!limited && (
-              <CSATWidget
-                ticketId={id ?? ''}
-                ticketStatus={ticket.status as TicketStatus}
-              />
-            )}
+            <CSATWidget
+              ticketId={id ?? ''}
+              ticketStatus={ticket.status as TicketStatus}
+            />
           </div>
         </div>
 
@@ -1477,6 +1456,12 @@ export const TicketDetail: FC<TicketDetailProps> = ({ ticketId }) => {
           onClose={() => setIsForwardModalOpen(false)}
           ticketId={id ?? ''}
           defaultSubject={`Fwd: ${ticket.subject ?? ''}`}
+        />
+        <ForwardToProviderModal
+          isOpen={isForwardToProviderOpen}
+          onClose={() => setIsForwardToProviderOpen(false)}
+          ticketId={id ?? ''}
+          onForwarded={() => navigate(basePath)}
         />
         <DuplicateTicketModal
           isOpen={isDuplicateModalOpen}

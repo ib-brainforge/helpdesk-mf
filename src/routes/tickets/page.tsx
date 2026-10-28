@@ -1,10 +1,8 @@
 /**
- * Tenant Tickets Page — single list of tenant-scoped tickets.
+ * Tickets Page — the list of the current tenant's own tickets.
  *
- * The former 3-tab UI (My Tickets / Platform Tickets / Tenant Viewer) has been removed:
- * - Platform self-service tickets are now handled via the navbar widget (/v1/platform/my-tickets).
- * - The principal admin/agent console lives at /principal/{id}/tickets.
- * - The flat helpdesk.platform.manage role and Tenant Viewer have been deleted.
+ * A provider's queue of customer tickets is the Provider view's From customers
+ * page (/provider/tickets).
  */
 
 import { AppAuthSplash } from '@/components/AppSplash';

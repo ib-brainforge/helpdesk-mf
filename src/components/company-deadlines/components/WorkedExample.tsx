@@ -23,11 +23,7 @@ interface WorkedExampleProps {
   values: PolicyFormValues;
   /** Editing: say that the answer follows the fields. */
   live?: boolean;
-  principalId?: string;
-  /** Null for the default policy. */
-  tenantId: string | null;
-  /** Set on an organisation's page. */
-  organisationId?: string | null;
+  tenantId: string;
 }
 
 const ResultBox: FC<{ label: string; iso?: string | null; tz: string }> = ({
@@ -52,9 +48,7 @@ const ResultBox: FC<{ label: string; iso?: string | null; tz: string }> = ({
 export const WorkedExample: FC<WorkedExampleProps> = ({
   values,
   live = false,
-  principalId,
   tenantId,
-  organisationId = null,
 }) => {
   // Critical first, as everywhere else: the question people bring here.
   const [priority, setPriority] = useState<DeadlinePriority>('Critical');
@@ -66,15 +60,13 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
     if (!policyFormSchema.safeParse(values).success) return null;
     const { applyToOpenTickets: _, ...policy } = values;
     return {
-      tenantId,
-      organisationId,
       policy: toPolicyInput(policy),
       priority,
       startAt,
     };
-  }, [values, tenantId, organisationId, priority, startAt]);
+  }, [values, priority, startAt]);
 
-  const preview = useDeadlinePreview(principalId, request);
+  const preview = useDeadlinePreview(tenantId, request);
   const tz = values.timeZoneId;
   const data = request ? preview.data : undefined;
 
@@ -134,7 +126,7 @@ export const WorkedExample: FC<WorkedExampleProps> = ({
               ? 'Fix the highlighted fields to see an example.'
               : preview.isError
                 ? "Couldn't work out the example. Check the hours and targets."
-                : (data?.explanation.text ?? '')}
+                : (data?.explanation?.text ?? '')}
           </span>
         </div>
 

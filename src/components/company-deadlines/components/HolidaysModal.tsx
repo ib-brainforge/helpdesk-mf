@@ -14,7 +14,6 @@ import { useUpcomingHolidays } from '../hooks/useCompanyDeadlines';
 interface HolidaysModalProps {
   isOpen: boolean;
   onClose: () => void;
-  principalId?: string;
   /** A holiday region code ("NSW"). */
   region: string | null;
 }
@@ -23,14 +22,9 @@ interface HolidaysModalProps {
 export const HolidaysModal: FC<HolidaysModalProps> = ({
   isOpen,
   onClose,
-  principalId,
   region,
 }) => {
-  const { days, isLoading, isError } = useUpcomingHolidays(
-    principalId,
-    region,
-    isOpen,
-  );
+  const { days, isLoading, isError } = useUpcomingHolidays(region, isOpen);
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">

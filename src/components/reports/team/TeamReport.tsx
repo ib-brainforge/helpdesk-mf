@@ -1,8 +1,4 @@
-import {
-  type TeamReportRowDto,
-  getTeamReport,
-  getTenantTeamReport,
-} from '@/api/local/teamReport';
+import { type TeamReportRowDto, getTeamReport } from '@/api/local/teamReport';
 import { PeriodPicker } from '@/components/reports/kpi/PeriodPicker';
 import { defaultMonth } from '@/components/reports/kpi/kpiFormat';
 import { UserCell, formatDuration } from '@/components/shared';
@@ -60,59 +56,23 @@ export const TeamReport: FC = () => {
     [setSearchParams],
   );
 
-  const { principalId } = useHelpdeskAccess();
-  const { tenantOptions, organisationOptions } = useScopeNames();
-  const [tenantIds, setTenantIds] = useState<string[]>(EMPTY);
+  const { tenantId: ownTenantId } = useHelpdeskAccess();
+  const { organisationOptions } = useScopeNames();
   const [organisationIds, setOrganisationIds] = useState<string[]>(EMPTY);
 
-  // As on the tickets list: organisations under the chosen tenants, grouped
-  // by tenant, and unticking a tenant drops its organisations.
-  const scopedOrganisations = useMemo(() => {
-    const shown = tenantIds.length
-      ? organisationOptions.filter(
-          o => o.parentId && tenantIds.includes(o.parentId),
-        )
-      : organisationOptions;
-    return [...shown].sort(
-      (a, b) =>
-        (a.parentName ?? '').localeCompare(b.parentName ?? '') ||
-        a.name.localeCompare(b.name),
-    );
-  }, [organisationOptions, tenantIds]);
-  const handleTenantChange = useCallback(
-    (ids: string[]) => {
-      const parentOf = new Map(
-        organisationOptions.map(o => [o.id, o.parentId]),
-      );
-      setTenantIds(ids.length ? ids : EMPTY);
-      if (ids.length)
-        setOrganisationIds(prev =>
-          prev.filter(id => {
-            const parent = parentOf.get(id);
-            return parent !== undefined && ids.includes(parent);
-          }),
-        );
-    },
-    [organisationOptions],
+  // The organisations of the tenant the user is working in.
+  const ownOrganisations = useMemo(
+    () =>
+      [...organisationOptions]
+        .filter(o => !ownTenantId || o.parentId === ownTenantId)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [organisationOptions, ownTenantId],
   );
 
   const { from, to } = monthBounds(month);
   const { data, isLoading } = useQuery({
-    queryKey: [
-      'reports',
-      'team',
-      principalId ?? 'tenant',
-      from,
-      to,
-      tenantIds,
-      organisationIds,
-    ],
-    queryFn: () => {
-      const query = { from, to, tenantIds, organisationIds };
-      return principalId
-        ? getTeamReport(principalId, query)
-        : getTenantTeamReport(query);
-    },
+    queryKey: ['reports', 'team', from, to, organisationIds],
+    queryFn: () => getTeamReport({ from, to, organisationIds }),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
@@ -144,21 +104,14 @@ export const TeamReport: FC = () => {
     [data, userMap],
   );
 
-  // The tickets list, overdue, for one person, in the same tenants and
-  // organisations as this report (see ticketListUrl for the keys).
-  const lateHref = useCallback(
-    (row: TeamReportRowDto) => {
-      const params = new URLSearchParams({
-        tab: 'overdue',
-        assignee: row.assigneeId ?? 'unassigned',
-      });
-      if (tenantIds.length) params.set('tenant', tenantIds.join(','));
-      if (organisationIds.length)
-        params.set('organisation', organisationIds.join(','));
-      return `/tickets?${params.toString()}`;
-    },
-    [tenantIds, organisationIds],
-  );
+  // The tickets list, overdue, for one person (see ticketListUrl for the keys).
+  const lateHref = useCallback((row: TeamReportRowDto) => {
+    const params = new URLSearchParams({
+      tab: 'overdue',
+      assignee: row.assigneeId ?? 'unassigned',
+    });
+    return `/tickets?${params.toString()}`;
+  }, []);
 
   const columns: ColumnDef<TeamRow, unknown>[] = useMemo(
     () => [
@@ -232,20 +185,10 @@ export const TeamReport: FC = () => {
     <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
       <div className="helpdesk-filter-row flex flex-wrap items-end gap-4">
         <PeriodPicker value={month} onChange={setMonth} />
-        {principalId && (
-          <MultiFilter
-            label="Tenant"
-            plural="tenants"
-            options={tenantOptions}
-            value={tenantIds}
-            onChange={handleTenantChange}
-          />
-        )}
         <MultiFilter
           label="Organisation"
           plural="organisations"
-          options={scopedOrganisations}
-          grouped={Boolean(principalId)}
+          options={ownOrganisations}
           value={organisationIds}
           onChange={ids => setOrganisationIds(ids.length ? ids : EMPTY)}
         />

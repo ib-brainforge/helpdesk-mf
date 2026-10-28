@@ -1,8 +1,3 @@
-import { DefaultAssigneeModal } from '@/components/categories/components/DefaultAssigneeModal';
-import { useCategoryOpenCounts } from '@/components/categories/hooks/useCategoryDefaults';
-import { useDeadlinesPrincipal } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
-import { PageHint } from '@/components/shared';
-import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -13,7 +8,6 @@ import {
   SectionsPanel,
   useCategoriesData,
   useCategoryTable,
-  usePresetCategories,
 } from '@components/categories';
 
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -29,37 +23,11 @@ import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
-/*
- * Presets only, for now: every company uses Netcorp's preset categories, so
- * adding categories and sections (and the Sections panel and column that only
- * make sense with them) is switched off. Set this to true to bring all of it
- * back; nothing else needs to change.
- */
-const CATEGORY_AUTHORING_ENABLED = false;
-
 function CategoriesPage() {
   const queryClient = useQueryClient();
   const { categories, sections, isLoading } = useCategoriesData({
     withSections: true,
   });
-
-  /*
-   * The Netcorp presets are listed alongside the tenant's own categories. They
-   * are what the request form offers, so leaving them out of Configuration
-   * would make the screen contradict the form. They are marked and made read
-   * only rather than hidden, because "you may use this but not change it" is
-   * the true state and hiding it just raises the question elsewhere.
-   */
-  const {
-    presets,
-    presetIds,
-    isLoading: isLoadingPresets,
-  } = usePresetCategories(categories.map(c => c.id));
-
-  const allCategories = useMemo(
-    () => [...categories, ...presets],
-    [categories, presets],
-  );
 
   // Which section the table shows: null for every category, NO_SECTION for
   // those in none, or a section id. Chosen in the Sections panel.
@@ -75,11 +43,11 @@ function CategoriesPage() {
   const visibleCategories = useMemo(
     () =>
       sectionFilter === null
-        ? allCategories
+        ? categories
         : sectionFilter === NO_SECTION
-          ? allCategories.filter(c => !c.sectionId)
-          : allCategories.filter(c => c.sectionId === sectionFilter),
-    [allCategories, sectionFilter],
+          ? categories.filter(c => !c.sectionId)
+          : categories.filter(c => c.sectionId === sectionFilter),
+    [categories, sectionFilter],
   );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
@@ -92,19 +60,6 @@ function CategoriesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { confirm, dialog } = useConfirm();
 
-  // Default assignee and open counts belong to the principal (Netcorp staff):
-  // the default is one routing rule for every company, and the counts span
-  // companies. Without principal admin the column is read only and the
-  // counts are not shown.
-  const { principalId, isAdmin } = useDeadlinesPrincipal();
-  const { counts: openCounts } = useCategoryOpenCounts(principalId);
-  const { userMap } = useUserEnrichment(
-    allCategories.map(c => c.defaultAssigneeId),
-  );
-  const [assigneeCategory, setAssigneeCategory] = useState<
-    CategoryDto | undefined
-  >(undefined);
-
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: string) => {
       const client = await createHelpdeskApiClient(CategoriesApi);
@@ -116,11 +71,6 @@ function CategoriesPage() {
       // and the section's category count should also reflect the change.
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
-      // And the presets. A row is marked Preset when it is in the list of
-      // categories the tenant may use but not in the list it owns. Refreshing
-      // only the owned list left the deleted category in the other, cached one,
-      // so for up to ten minutes it came back as a Preset row instead of going.
-      queryClient.invalidateQueries({ queryKey: ['preset-categories'] });
     },
     onError: (error, categoryId) => {
       // The shell's error banner covers server failures. A refusal, such as a
@@ -227,15 +177,9 @@ function CategoriesPage() {
     categories: visibleCategories,
     sections,
     searchTerm,
-    isLoading: isLoading || isLoadingPresets,
+    isLoading,
     onEditCategory: handleEditCategory,
     onDeleteCategory: handleDeleteCategory,
-    presetIds,
-    showSections: CATEGORY_AUTHORING_ENABLED,
-    openCounts,
-    userMap,
-    onSetDefaultAssignee:
-      isAdmin && principalId ? setAssigneeCategory : undefined,
   });
 
   return (
@@ -249,45 +193,35 @@ function CategoriesPage() {
       table={table}
       isLoading={isLoading}
       sidebar={
-        CATEGORY_AUTHORING_ENABLED && (
-          <SectionsPanel
-            sections={sections}
-            countsBySection={countsBySection}
-            unsectionedCount={allCategories.filter(c => !c.sectionId).length}
-            totalCount={allCategories.length}
-            value={sectionFilter}
-            onChange={setSectionFilter}
-            onEdit={handleEditSection}
-            onDelete={handleDeleteSection}
-          />
-        )
-      }
-      subheader={
-        <PageHint>
-          {presets.length} preset categories, shared by every tenant. Clients
-          pick from these when they log a request.
-        </PageHint>
+        <SectionsPanel
+          sections={sections}
+          countsBySection={countsBySection}
+          unsectionedCount={categories.filter(c => !c.sectionId).length}
+          totalCount={categories.length}
+          value={sectionFilter}
+          onChange={setSectionFilter}
+          onEdit={handleEditSection}
+          onDelete={handleDeleteSection}
+        />
       }
       actions={
-        CATEGORY_AUTHORING_ENABLED && (
-          <div className="flex gap-2.5">
-            <BaseButton
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-              onPress={handleCreateSection}
-              variant="bordered"
-              color="light"
-            >
-              Add Section
-            </BaseButton>
-            <BaseButton
-              color="primary"
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-              onPress={handleCreateCategory}
-            >
-              Add New Category
-            </BaseButton>
-          </div>
-        )
+        <div className="flex gap-2.5">
+          <BaseButton
+            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            onPress={handleCreateSection}
+            variant="bordered"
+            color="light"
+          >
+            Add Section
+          </BaseButton>
+          <BaseButton
+            color="primary"
+            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            onPress={handleCreateCategory}
+          >
+            Add New Category
+          </BaseButton>
+        </div>
       }
       filters={
         <BaseInput
@@ -316,7 +250,7 @@ function CategoriesPage() {
               : 'Add your first category to start organizing tickets.'
           }
           action={
-            !searchTerm && CATEGORY_AUTHORING_ENABLED ? (
+            !searchTerm ? (
               <BaseButton color="primary" onPress={handleCreateCategory}>
                 Add First Category
               </BaseButton>
@@ -337,11 +271,6 @@ function CategoriesPage() {
             isOpen={isSectionModalOpen}
             onClose={handleCloseSectionModal}
             section={editingSection}
-          />
-          <DefaultAssigneeModal
-            category={assigneeCategory}
-            principalId={principalId}
-            onClose={() => setAssigneeCategory(undefined)}
           />
           {dialog}
         </>

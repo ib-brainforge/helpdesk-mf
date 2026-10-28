@@ -1,4 +1,3 @@
-import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AttachmentsApi } from '@brainforgeau/helpdesk-client';
 import { useEffect, useState } from 'react';
@@ -33,7 +32,6 @@ export const useAttachmentBlobUrl = (
   attachmentId: string | undefined,
   enabled: boolean,
 ): { url?: string; isLoading: boolean; hasFailed: boolean } => {
-  const scope = useHelpdeskScope();
   const [url, setUrl] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
@@ -51,7 +49,7 @@ export const useAttachmentBlobUrl = (
 
     (async () => {
       try {
-        const client = await createHelpdeskApiClient(AttachmentsApi, scope);
+        const client = await createHelpdeskApiClient(AttachmentsApi);
         const response = await client.v1AttachmentsIdGet(attachmentId, {
           responseType: 'blob',
         });
@@ -71,7 +69,7 @@ export const useAttachmentBlobUrl = (
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [attachmentId, enabled, scope]);
+  }, [attachmentId, enabled]);
 
   return { url, isLoading, hasFailed };
 };

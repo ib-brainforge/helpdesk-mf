@@ -4,10 +4,7 @@
 // now string-backed (Task 1) so round-trips match directly.
 
 import type { Configuration } from '@brainforgeau/helpdesk-client';
-import {
-  PrincipalWorkflowsApi,
-  WorkflowsApi,
-} from '@brainforgeau/helpdesk-client';
+import { WorkflowsApi } from '@brainforgeau/helpdesk-client';
 import type {
   HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowDefinitionDto as BackendWorkflowDefinitionDto,
   HelpdeskApplicationWorkflowsQueriesGetWorkflowDefinitionWorkflowStateDto as BackendWorkflowStateDto,
@@ -24,14 +21,11 @@ type AxiosInstance = typeof _AuthorizedAxios;
 import type {
   CloneDefinitionInput,
   CreateDefinitionInput,
-  CreatePrincipalDefinitionInput,
   IWorkflowApiClient,
   MigrationResult,
   PublishDraftInput,
-  PublishPrincipalDraftInput,
   RuleMigrationReportItem,
   UpdateDraftInput,
-  UpdatePrincipalDraftInput,
   ValidationResult,
   WorkflowDefinitionDto,
   WorkflowDefinitionVersionDto,
@@ -292,12 +286,16 @@ function fromTransitionDto(
 
 // ── Factory ──────────────────────────────────────────────────────────────────────
 
+const notSupported = (): Promise<never> =>
+  Promise.reject(
+    new Error('[RealWorkflowApiClient] Provider-scoped workflows were removed'),
+  );
+
 export function createRealWorkflowApiClient(
   configuration: Configuration,
   axios?: AxiosInstance,
 ): IWorkflowApiClient {
   const workflows = new WorkflowsApi(configuration, undefined, axios);
-  const principal = new PrincipalWorkflowsApi(configuration, undefined, axios);
 
   return {
     // ── Tenant-scoped ────────────────────────────────────────────────────────────
@@ -410,119 +408,18 @@ export function createRealWorkflowApiClient(
       };
     },
 
-    // ── Principal-scoped ─────────────────────────────────────────────────────────
+    // ── Provider-scoped (removed) ────────────────────────────────────────────────
+    //
+    // The shared workflow-ui contract still declares these. Workflows are now
+    // tenant-owned only, so there is nothing to call; each rejects.
 
-    async listPrincipalDefinitions(
-      principalId: string,
-    ): Promise<WorkflowDefinitionDto[]> {
-      const res =
-        await principal.v1PrincipalsPrincipalIdWorkflowsGet(principalId);
-      return (res.data ?? []).map(toDefinitionDtoFromSummary);
-    },
-
-    async getPrincipalDefinition(
-      principalId: string,
-      id: string,
-    ): Promise<WorkflowDefinitionDto> {
-      const res = await principal.v1PrincipalsPrincipalIdWorkflowsIdGet(
-        principalId,
-        id,
-      );
-      return toDefinitionDto(res.data);
-    },
-
-    async createPrincipalDefinition(
-      input: CreatePrincipalDefinitionInput,
-    ): Promise<WorkflowDefinitionDto> {
-      const createRes = await principal.v1PrincipalsPrincipalIdWorkflowsPost(
-        input.principalId,
-        {
-          principalId: input.principalId,
-          name: input.name,
-          description: input.description ?? null,
-        },
-      );
-      const definitionId = createRes.data.definitionId!;
-      return this.getPrincipalDefinition(input.principalId, definitionId);
-    },
-
-    async deletePrincipalDefinition(
-      principalId: string,
-      id: string,
-    ): Promise<void> {
-      await principal.v1PrincipalsPrincipalIdWorkflowsIdDelete(principalId, id);
-    },
-
-    async createPrincipalDraft(
-      principalId: string,
-      definitionId: string,
-    ): Promise<WorkflowDefinitionVersionDto> {
-      await principal.v1PrincipalsPrincipalIdWorkflowsIdDraftsPost(
-        principalId,
-        definitionId,
-      );
-      const def = await this.getPrincipalDefinition(principalId, definitionId);
-      if (!def.draftVersion) {
-        throw new Error(
-          `[RealWorkflowApiClient] createPrincipalDraft: no draftVersion on definition ${definitionId} after create`,
-        );
-      }
-      return def.draftVersion;
-    },
-
-    async updatePrincipalDraft(
-      input: UpdatePrincipalDraftInput,
-    ): Promise<WorkflowDefinitionVersionDto> {
-      await principal.v1PrincipalsPrincipalIdWorkflowsIdDraftsVersionIdPut(
-        input.principalId,
-        input.definitionId,
-        input.versionId,
-        {
-          principalId: input.principalId,
-          definitionId: input.definitionId,
-          versionId: input.versionId,
-          startStateId: input.startStateId as string | undefined,
-          states: input.states.map(fromStateDto),
-          transitions: input.transitions.map(fromTransitionDto),
-        },
-      );
-      const def = await this.getPrincipalDefinition(
-        input.principalId,
-        input.definitionId,
-      );
-      if (!def.draftVersion) {
-        throw new Error(
-          `[RealWorkflowApiClient] updatePrincipalDraft: no draftVersion on definition ${input.definitionId} after update`,
-        );
-      }
-      return def.draftVersion;
-    },
-
-    async publishPrincipalDraft(
-      input: PublishPrincipalDraftInput,
-    ): Promise<WorkflowDefinitionVersionDto> {
-      await principal.v1PrincipalsPrincipalIdWorkflowsIdDraftsVersionIdPublishPost(
-        input.principalId,
-        input.definitionId,
-        input.versionId,
-        {
-          principalId: input.principalId,
-          definitionId: input.definitionId,
-          versionId: input.versionId,
-          publishNote: input.publishNote ?? null,
-        },
-      );
-      const def = await this.getPrincipalDefinition(
-        input.principalId,
-        input.definitionId,
-      );
-      if (!def.latestVersion) {
-        throw new Error(
-          `[RealWorkflowApiClient] publishPrincipalDraft: no latestVersion on definition ${input.definitionId} after publish`,
-        );
-      }
-      return def.latestVersion;
-    },
+    listPrincipalDefinitions: notSupported,
+    getPrincipalDefinition: notSupported,
+    createPrincipalDefinition: notSupported,
+    deletePrincipalDefinition: notSupported,
+    createPrincipalDraft: notSupported,
+    updatePrincipalDraft: notSupported,
+    publishPrincipalDraft: notSupported,
 
     // ── Admin — rule migration ───────────────────────────────────────────────────
 
@@ -574,39 +471,20 @@ export function createRealWorkflowApiClient(
       input: CloneDefinitionInput,
     ): Promise<WorkflowDefinitionDto> {
       // 1. Get source to copy states and transitions
-      const source = input.principalId
-        ? await this.getPrincipalDefinition(
-            input.principalId,
-            input.sourceDefinitionId,
-          )
-        : await this.getDefinition(input.sourceDefinitionId);
+      const source = await this.getDefinition(input.sourceDefinitionId);
 
       const sourceVersion = source.latestVersion ?? source.draftVersion;
 
       // 2. Create the new definition
-      let newDef: WorkflowDefinitionDto;
-      if (input.principalId) {
-        newDef = await this.createPrincipalDefinition({
-          principalId: input.principalId,
-          name: input.newName,
-          description: input.newDescription,
-        });
-      } else {
-        newDef = await this.createDefinition({
-          name: input.newName,
-          description: input.newDescription,
-        });
-      }
+      const newDef = await this.createDefinition({
+        name: input.newName,
+        description: input.newDescription,
+      });
 
       // 3. Use the initial draft created by the backend, or create one if missing
       let draftVersion: WorkflowDefinitionVersionDto;
       if (newDef.draftVersion) {
         draftVersion = newDef.draftVersion;
-      } else if (input.principalId) {
-        draftVersion = await this.createPrincipalDraft(
-          input.principalId,
-          newDef.id,
-        );
       } else {
         draftVersion = await this.createDraft(newDef.id);
       }
@@ -638,30 +516,17 @@ export function createRealWorkflowApiClient(
 
       // 5. Update the draft with the cloned content
       try {
-        if (input.principalId) {
-          await this.updatePrincipalDraft({
-            principalId: input.principalId,
-            definitionId: newDef.id,
-            versionId: draftVersion.id,
-            states: clonedStates,
-            transitions: clonedTransitions,
-            startStateId: newStartStateId,
-          });
-        } else {
-          await this.updateDraft({
-            definitionId: newDef.id,
-            versionId: draftVersion.id,
-            states: clonedStates,
-            transitions: clonedTransitions,
-            startStateId: newStartStateId,
-          });
-        }
+        await this.updateDraft({
+          definitionId: newDef.id,
+          versionId: draftVersion.id,
+          states: clonedStates,
+          transitions: clonedTransitions,
+          startStateId: newStartStateId,
+        });
       } catch (copyErr) {
         // Definition was created but content copy failed.
         // Return the empty definition so the caller can still navigate to it.
-        const partial = input.principalId
-          ? await this.getPrincipalDefinition(input.principalId, newDef.id)
-          : await this.getDefinition(newDef.id);
+        const partial = await this.getDefinition(newDef.id);
         const msg =
           copyErr instanceof Error ? copyErr.message : String(copyErr);
         const err = new Error(
@@ -672,9 +537,7 @@ export function createRealWorkflowApiClient(
       }
 
       // 6. Return the final definition with draft
-      return input.principalId
-        ? this.getPrincipalDefinition(input.principalId, newDef.id)
-        : this.getDefinition(newDef.id);
+      return this.getDefinition(newDef.id);
     },
   };
 }

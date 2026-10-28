@@ -6,10 +6,6 @@ import { KpiPanel } from './KpiPanel';
 interface OpenByAgeCardProps {
   openByAge: KpiReportDto['openByAge'];
   totalOpen: number;
-  /** Tenant id to name, for the oldest ticket's company. */
-  companyName: (tenantId: string) => string | undefined;
-  /** Hide the company in the "Oldest" line when the report is one company's. */
-  showCompany: boolean;
 }
 
 const BUCKETS = [
@@ -23,8 +19,6 @@ const BUCKETS = [
 export const OpenByAgeCard: FC<OpenByAgeCardProps> = ({
   openByAge,
   totalOpen,
-  companyName,
-  showCompany,
 }) => {
   const max = Math.max(1, ...BUCKETS.map(b => openByAge[b.key]));
   const oldest = openByAge.oldest;
@@ -53,13 +47,7 @@ export const OpenByAgeCard: FC<OpenByAgeCardProps> = ({
       </div>
       {oldest && (
         <div className="border-default-200 text-default-600 flex items-center justify-between gap-3 border-t px-5 py-2.5 text-xs">
-          <span>
-            Oldest:{' '}
-            {showCompany && companyName(oldest.tenantId)
-              ? `${companyName(oldest.tenantId)}, `
-              : ''}
-            {oldest.ageDays} days
-          </span>
+          <span>Oldest: {oldest.ageDays} days</span>
           <NavLink
             to={`/tickets/${oldest.ticketId}`}
             className="text-primary hover:underline print:hidden"

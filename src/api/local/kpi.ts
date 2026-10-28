@@ -34,18 +34,6 @@ export interface KpiWeekDto {
   ticketCount: number;
 }
 
-export interface KpiCompanyRowDto {
-  tenantId: string;
-  tickets: number;
-  deadlineMetPct: number | null;
-  avgFirstReplyMinutes: number | null;
-  avgFixMinutes: number | null;
-  cameBackPct: number | null;
-  csatAverage: number | null;
-  openNow: number;
-  lateNow: number;
-}
-
 export interface KpiLateItemDto {
   ticketId: string;
   subject: string;
@@ -55,16 +43,6 @@ export interface KpiLateItemDto {
   missed: 'Reply' | 'Fix';
   lateByMinutes: number;
   assigneeId: string | null;
-}
-
-export interface KpiPolicySummaryDto {
-  clockMode: 'BusinessHours' | 'AllHours';
-  hoursText: string;
-  targets: {
-    priority: DeadlinePriority;
-    replyMinutes: number;
-    fixMinutes: number;
-  }[];
 }
 
 export interface KpiReportDto {
@@ -81,11 +59,7 @@ export interface KpiReportDto {
     over30Days: number;
     oldest: { ticketId: string; tenantId: string; ageDays: number } | null;
   };
-  /** Every company, worst deadline record first. Null when a company is chosen. */
-  companies: KpiCompanyRowDto[] | null;
-  /** The chosen company's saved policy. */
-  policySummary: KpiPolicySummaryDto | null;
-  /** The chosen company's late tickets, most late first, at most 50. */
+  /** The late tickets, most late first, at most 50. */
   late: {
     missedCount: number;
     totalCount: number;
@@ -96,29 +70,10 @@ export interface KpiReportDto {
 export interface KpiQuery {
   /** YYYY-MM, a Sydney calendar month. */
   month: string;
-  tenantId?: string | null;
   organisationId?: string | null;
 }
 
-/** Principal staff: every company, or one with `tenantId`. */
-export const getKpiReport = async (
-  principalId: string,
-  { month, tenantId, organisationId }: KpiQuery,
-): Promise<KpiReportDto> => {
-  const { data } = await authorizedAxios.get<KpiReportDto>(
-    `${requireHelpdeskApiBaseUrl()}/v1/principals/${principalId}/reports/kpi`,
-    {
-      params: {
-        month,
-        tenantId: tenantId || undefined,
-        organisationId: organisationId || undefined,
-      },
-    },
-  );
-  return data;
-};
-
-/** Tenant users: their own company, from the token. No companies list. */
+/** The caller's own tenant, from the token. */
 export const getTenantKpiReport = async ({
   month,
   organisationId,

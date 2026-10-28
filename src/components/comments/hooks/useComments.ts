@@ -3,18 +3,16 @@ import {
   addPublicComment,
   retryCommentEmail,
 } from '@/api/local/comments';
-import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CommentDto } from '@/types/comment';
 import { CommentsApi } from '@brainforgeau/helpdesk-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useComments = (ticketId: string) => {
-  const scope = useHelpdeskScope();
   const { data, isLoading, refetch } = useQuery<CommentDto[]>({
     queryKey: ['helpdesk-comments', ticketId],
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(CommentsApi, scope);
+      const client = await createHelpdeskApiClient(CommentsApi);
       const response = await client.v1TicketsTicketIdCommentsGet(ticketId);
       return (response.data.items ?? []) as CommentDto[];
     },
@@ -35,7 +33,6 @@ export const useComments = (ticketId: string) => {
  * `sendEmail` or `cc` yet.
  */
 export const useAddComment = () => {
-  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -43,7 +40,7 @@ export const useAddComment = () => {
       ticketId,
       ...body
     }: { ticketId: string } & AddPublicCommentBody) =>
-      addPublicComment(ticketId, body, scope),
+      addPublicComment(ticketId, body),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['helpdesk-comments', variables.ticketId],
@@ -57,7 +54,6 @@ export const useAddComment = () => {
 
 /** Resends an outbound email that failed. */
 export const useRetryCommentEmail = () => {
-  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -65,7 +61,7 @@ export const useRetryCommentEmail = () => {
       ticketId,
       commentId,
     }: { ticketId: string; commentId: string }) =>
-      retryCommentEmail(ticketId, commentId, scope),
+      retryCommentEmail(ticketId, commentId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['helpdesk-comments', variables.ticketId],
@@ -75,7 +71,6 @@ export const useRetryCommentEmail = () => {
 };
 
 export const useAddInternalNote = () => {
-  const scope = useHelpdeskScope();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -84,7 +79,7 @@ export const useAddInternalNote = () => {
       body,
       idempotencyKey,
     }: { ticketId: string; body: string; idempotencyKey?: string }) => {
-      const client = await createHelpdeskApiClient(CommentsApi, scope);
+      const client = await createHelpdeskApiClient(CommentsApi);
       const response = await client.v1TicketsTicketIdCommentsInternalNotesPost(
         ticketId,
         { body, idempotencyKey },

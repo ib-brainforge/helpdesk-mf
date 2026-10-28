@@ -1,7 +1,5 @@
-import type { HelpdeskScope } from '@/api/local/scoped';
 import { useAttachmentBlobUrl } from '@/components/attachments/hooks/useAttachmentBlobUrl';
 import { IconTip } from '@/components/shared';
-import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { AttachmentDto } from '@/types';
 import { Icon } from '@brainforgeau/components/base';
@@ -43,11 +41,8 @@ const getFileExtLabel = (fileName: string) => {
  * Authorization header, so the endpoint answered 401 and the "download" opened
  * an error page instead of a file.
  */
-const downloadAttachment = async (
-  attachment: AttachmentDto,
-  scope: HelpdeskScope | null,
-) => {
-  const client = await createHelpdeskApiClient(AttachmentsApi, scope);
+const downloadAttachment = async (attachment: AttachmentDto) => {
+  const client = await createHelpdeskApiClient(AttachmentsApi);
   const response = await client.v1AttachmentsIdGet(attachment.id, {
     responseType: 'blob',
   });
@@ -66,7 +61,6 @@ const AttachmentTile: FC<{
   onDelete?: (id: string) => void;
   canDelete: boolean;
 }> = ({ attachment, onDelete, canDelete }) => {
-  const scope = useHelpdeskScope();
   const isImage = attachment.contentType?.startsWith('image/');
   // Only images are fetched. Everything else draws an icon, so pulling the
   // bytes down would be a download nobody asked for.
@@ -109,7 +103,7 @@ const AttachmentTile: FC<{
             type="button"
             onClick={e => {
               e.stopPropagation();
-              void downloadAttachment(attachment, scope);
+              void downloadAttachment(attachment);
             }}
             className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
           >

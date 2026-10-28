@@ -23,14 +23,6 @@ export const useDuplicateCategory = () => {
   });
 };
 
-/**
- * The category's default assignee. Newer than the generated client, so it is
- * read off the response as sent; replace with the generated field once the
- * client is regenerated.
- */
-export const defaultAssigneeOf = (cat: object): string | undefined =>
-  (cat as { defaultAssigneeId?: string | null }).defaultAssigneeId ?? undefined;
-
 // Map a generated CategoryDto to the local CategoryDto shape.
 // Fields fromEmailAddress / fromEmailName / useFromAddressAsReplyTo replace the old
 // emailRoutingAddress / emailRoutingProtocol fields that did not exist on the backend DTO.
@@ -54,7 +46,6 @@ function mapGeneratedCategory(
     sectionId: cat.sectionId ?? undefined,
     sectionName,
     accessLevel,
-    defaultAssigneeId: defaultAssigneeOf(cat),
     fromEmailAddress: cat.fromEmailAddress ?? undefined,
     fromEmailName: cat.fromEmailName ?? undefined,
     useFromAddressAsReplyTo: cat.useFromAddressAsReplyTo ?? false,

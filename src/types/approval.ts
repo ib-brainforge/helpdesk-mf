@@ -6,7 +6,7 @@
 // The real generated client ships string-backed enums and DTOs that differ
 // from those placeholders — consumers now import directly from
 // '@brainforgeau/helpdesk-client' (see src/components/approvals/,
-// src/hooks/usePrincipalApprovalWorkflows.ts, src/constants/approvalLabels.ts).
+// src/constants/approvalLabels.ts).
 export {
   HelpdeskDomainApprovalsEnumsApprovalMode,
   HelpdeskDomainApprovalsEnumsApprovalState,

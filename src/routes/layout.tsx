@@ -69,6 +69,7 @@ import {
   ErrorBoundary,
   SideNav,
   type SideNavDesktopMode,
+  type ViewSwitchSegment,
   lazyWithRetry,
   useNavbarAction,
 } from '@brainforgeau/components';
@@ -78,13 +79,14 @@ import {
 } from '@brainforgeau/components/page';
 import {
   LicenseGuard,
+  VIEW_DEFINITIONS,
   useAuth,
   usePermissions,
+  usePosition,
   useWhitelabel,
 } from '@brainforgeau/security';
 import {
   NavLink,
-  Navigate,
   Outlet,
   useLocation,
   useNavigate,
@@ -98,9 +100,16 @@ import { Logo } from '@/components/Logo';
 import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { TEST_IDS } from '@/constants/testIds';
+import { useProviderSupportContext } from '@/hooks/useProviderSupport';
+import { HELPDESK_NAV, PROVIDER_NAV } from '@/navigation';
 import { PageTracker } from '@/observability';
 import { getAppConfig } from '@/state/config';
-import { WORKSPACE_FALLBACK_PATH, useWorkspaces } from '@/workspaces';
+import {
+  PROVIDER_VIEW_HOME,
+  RAISED_WITH_PROVIDER_PATH,
+  TENANT_VIEW_HOME,
+  viewForPath,
+} from '@/views';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -122,7 +131,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.categories.new': 'New Category',
   'helpdesk.configuration.custom-statuses': 'Custom Statuses',
   'helpdesk.configuration.custom-priorities': 'Custom Priorities',
-  'helpdesk.configuration.company-deadlines': 'Tenant Deadlines',
   'helpdesk.configuration.custom-fields': 'Custom Fields',
   'helpdesk.configuration.canned-responses': 'Canned Responses',
   'helpdesk.configuration.integrations': 'Integrations',
@@ -150,8 +158,10 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
-  'it-support': 'IT Support',
-  'it-support.remote-sessions': 'Remote sessions',
+  'helpdesk.contact-provider': 'Contact your provider',
+  'helpdesk.provider-raised': 'Raised with our provider',
+  'helpdesk.provider-deadlines': 'Customer Deadlines',
+  'helpdesk.provider-categories': 'Provider Categories',
 };
 
 function breadcrumbI18nResolver(key: string): string {
@@ -215,51 +225,74 @@ export default function Layout() {
   const location = useLocation();
   const { setAction } = useNavbarAction();
   const navigate = useNavigate();
-  // Which workspace the URL is in picks the side menu, and opening one the
-  // user cannot use redirects (workspaces.ts).
-  const {
-    active: workspace,
-    available: workspaces,
-    blocked: workspaceBlocked,
-    isLoading: loadingWorkspaces,
-  } = useWorkspaces(location.pathname);
+  // Which view the URL is in picks the side menu. The Provider view's pages
+  // guard themselves (ProviderViewGuard); the layout only draws the chrome.
+  const view = viewForPath(location.pathname);
+  const { views } = usePosition();
+  const holdsProviderView = views.includes('provider');
+
+  // "Raised with our provider" only makes sense where a provider sits above
+  // the tenant; the owner's own office has none.
+  const { data: providerContext } = useProviderSupportContext();
+  const canContactProvider = providerContext?.canContactProvider === true;
 
   const { config: whitelabelConfig, isLoading: whitelabelLoading } =
     useWhitelabel();
   const brandName = whitelabelConfig?.branding?.appTitle || undefined;
 
-  // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
-  const isPrincipalRoute = useMemo(
-    () => location.pathname.startsWith('/principal/'),
-    [location.pathname],
+  // The view switch in the shared navbar. It draws outside Helpdesk's router,
+  // so it gets navigate from here, and is set again whenever the views or the
+  // active view change.
+  const segments = useMemo<ViewSwitchSegment[]>(
+    () => [
+      {
+        id: 'tenant',
+        label: VIEW_DEFINITIONS.tenant.label,
+        icon: VIEW_DEFINITIONS.tenant.icon,
+        isActive: view === 'tenant',
+        onNavigate: () => navigate(TENANT_VIEW_HOME),
+        testId: TEST_IDS.navbar.viewTenant,
+      },
+      ...(holdsProviderView
+        ? [
+            {
+              id: 'provider',
+              label: VIEW_DEFINITIONS.provider.label,
+              icon: VIEW_DEFINITIONS.provider.icon,
+              isActive: view === 'provider',
+              // From another tenant this lands on the wrong-context page
+              // (ProviderViewGuard); it never switches context by itself.
+              onNavigate: () => navigate(PROVIDER_VIEW_HOME),
+              testId: TEST_IDS.navbar.viewProvider,
+            },
+          ]
+        : []),
+    ],
+    [view, holdsProviderView, navigate],
   );
-
-  // The navbar draws this outside Helpdesk's router, so it gets navigate and
-  // the active workspace from here, and is set again whenever they change.
   useEffect(() => {
-    setAction(
-      <HelpdeskNavbarAction
-        workspaces={workspaces}
-        activeKey={workspace.key}
-        onNavigate={navigate}
-      />,
-    );
-  }, [setAction, workspaces, workspace.key, navigate]);
+    setAction(<HelpdeskNavbarAction segments={segments} />);
+  }, [setAction, segments]);
   // Cleared once, on leaving Helpdesk, not between the updates above.
   useEffect(() => () => setAction(null), [setAction]);
 
   // Filter navigation items based on user permissions
   // Include permissions in deps to ensure re-render when context token changes
-  const navSections = useMemo(
-    () => [
-      { key: 'top', items: filterNavItems(workspace.nav.top) },
-      { key: 'bottom', items: filterNavItems(workspace.nav.bottom) },
-    ],
-    [filterNavItems, permissions, workspace],
-  );
+  const navSections = useMemo(() => {
+    const nav = view === 'provider' ? PROVIDER_NAV : HELPDESK_NAV;
+    const top = nav.top.filter(
+      item =>
+        canContactProvider ||
+        (item as { href?: string }).href !== RAISED_WITH_PROVIDER_PATH,
+    );
+    return [
+      { key: 'top', items: filterNavItems(top) },
+      { key: 'bottom', items: filterNavItems(nav.bottom) },
+    ];
+  }, [filterNavItems, permissions, view, canContactProvider]);
 
-  // Someone whose role reaches only the Tickets page (a Customer, Platform
-  // Support, a Principal Agent) gets no side menu at all: a menu with one
+  // Someone whose role reaches only the Tickets page (a Customer) gets no side
+  // menu at all: a menu with one
   // entry is just a frame around the page they are already on.
   // Counted by destination, not by entry: a group such as Configuration can
   // survive filtering with none of its pages left in it.
@@ -314,7 +347,7 @@ export default function Layout() {
             </ErrorBoundary>
           )}
           <div className="flex flex-1">
-            {isAuthenticated && !isPrincipalRoute && hasSideMenu && (
+            {isAuthenticated && hasSideMenu && (
               <SideNav
                 data-testid={TEST_IDS.navbar.side}
                 sections={navSections}
@@ -360,33 +393,20 @@ export default function Layout() {
                 )}
               />
             )}
-            {isPrincipalRoute ? (
+            <div className="flex flex-1 min-w-0">
               <ErrorBoundary>
                 <LicenseGuard appId="helpdesk">
-                  <Outlet />
+                  {/* Page permissions: routes/route-permissions.tsx. The
+                      Provider view's pages are checked inside
+                      ProviderViewGuard instead, after the view check, so a
+                      wrong-context visit shows the switch-context page rather
+                      than Access Denied. */}
+                  <RouteGuard pathname={location.pathname}>
+                    <Outlet />
+                  </RouteGuard>
                 </LicenseGuard>
               </ErrorBoundary>
-            ) : (
-              <div className="flex flex-1 min-w-0">
-                <ErrorBoundary>
-                  <LicenseGuard appId="helpdesk">
-                    {/* A workspace the user cannot open (switched off, or
-                        not their role) sends them to Tickets; nothing renders
-                        while roles are still loading, so an admin is never
-                        bounced. Page permissions: routes/route-permissions.tsx. */}
-                    {workspaceBlocked ? (
-                      loadingWorkspaces ? null : (
-                        <Navigate to={WORKSPACE_FALLBACK_PATH} replace />
-                      )
-                    ) : (
-                      <RouteGuard pathname={location.pathname}>
-                        <Outlet />
-                      </RouteGuard>
-                    )}
-                  </LicenseGuard>
-                </ErrorBoundary>
-              </div>
-            )}
+            </div>
           </div>
         </BreadcrumbRegistryProvider>
       </PageTemplateProvider>

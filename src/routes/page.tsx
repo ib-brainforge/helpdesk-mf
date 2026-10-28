@@ -9,9 +9,9 @@ import { Navigate } from '@modern-js/runtime/router';
 import React from 'react';
 
 /**
- * The landing redirect. The dashboard is built from reports, which Customers,
- * Platform Support and Principal Agents cannot read, so they land on their
- * tickets instead of a page that would say Access Denied.
+ * The landing redirect. The dashboard is built from reports, which Customers
+ * cannot read, so they land on their tickets instead of a page that would say
+ * Access Denied.
  */
 function Page() {
   usePageTitle('Helpdesk');

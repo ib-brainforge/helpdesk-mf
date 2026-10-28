@@ -1,5 +1,5 @@
 /*
- * Reports > Team (one endpoint, a principal and a tenant route).
+ * Reports > Team.
  *
  * Built against the agreed contract before the backend lands; replace with
  * the generated client once it is regenerated. Durations are in minutes.
@@ -27,43 +27,24 @@ export interface TeamReportDto {
 export interface TeamReportQuery {
   from: string;
   to: string;
-  tenantIds?: string[];
   organisationIds?: string[];
 }
 
-const paramsOf = ({
+/** The caller's own tenant, from the token. */
+export const getTeamReport = async ({
   from,
   to,
-  tenantIds,
   organisationIds,
-}: TeamReportQuery) => ({
-  from,
-  to,
-  tenantIds: tenantIds?.length ? tenantIds : undefined,
-  organisationIds: organisationIds?.length ? organisationIds : undefined,
-});
-
-/** Principal staff: every tenant, or the ones in `tenantIds`. */
-export const getTeamReport = async (
-  principalId: string,
-  query: TeamReportQuery,
-): Promise<TeamReportDto> => {
-  const { data } = await authorizedAxios.get<TeamReportDto>(
-    `${requireHelpdeskApiBaseUrl()}/v1/principals/${principalId}/reports/team`,
-    // Repeated keys (tenantIds=a&tenantIds=b), not tenantIds[]=a.
-    { params: paramsOf(query), paramsSerializer: { indexes: null } },
-  );
-  return data;
-};
-
-/** Tenant users: their own tenant, from the token. */
-export const getTenantTeamReport = async (
-  query: TeamReportQuery,
-): Promise<TeamReportDto> => {
+}: TeamReportQuery): Promise<TeamReportDto> => {
   const { data } = await authorizedAxios.get<TeamReportDto>(
     `${requireHelpdeskApiBaseUrl()}/v1/reports/team`,
     {
-      params: paramsOf({ ...query, tenantIds: undefined }),
+      params: {
+        from,
+        to,
+        organisationIds: organisationIds?.length ? organisationIds : undefined,
+      },
+      // Repeated keys (organisationIds=a&organisationIds=b), not organisationIds[]=a.
       paramsSerializer: { indexes: null },
     },
   );

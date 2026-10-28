@@ -6,17 +6,15 @@
  * deadlineText and is not repeated here. Nothing here works out a deadline:
  * the backend does, and the worked example asks it.
  */
-import type {
-  CompanyDeadlinePolicyInput,
-  DeadlinePriority,
-} from '@/api/local/deadlines';
+import type { CompanyDeadlinePolicyInput } from '@/api/local/company-deadlines';
+import type { DeadlinePriority } from '@/api/local/deadlines';
 import {
   DAY_ORDER,
   TIME_ZONES,
   timeZoneLabel,
 } from '@/components/shared/deadline';
 import { z } from 'zod';
-import { regionFields, regionOf } from './holidayRegions';
+import { regionOf } from './holidayRegions';
 
 export const DAY_NAMES: Record<number, string> = {
   0: 'Sunday',
@@ -157,7 +155,7 @@ export const toPolicyInput = (
 ): CompanyDeadlinePolicyInput => ({
   clockMode: v.clockMode,
   timeZoneId: v.timeZoneId,
-  ...regionFields(v.holidayRegion === NO_HOLIDAYS ? null : v.holidayRegion),
+  holidayRegion: v.holidayRegion === NO_HOLIDAYS ? null : v.holidayRegion,
   days: v.days.map(d => ({ ...d })),
   targets: v.targets.map(t => ({ ...t })),
 });

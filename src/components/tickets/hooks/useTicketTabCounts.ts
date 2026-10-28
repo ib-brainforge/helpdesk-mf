@@ -50,6 +50,7 @@ export interface AssigneeCounts {
 export const useTicketTabCounts = (
   filters: TicketFilters = {},
   currentUserId?: string,
+  { fromCustomers = false }: { fromCustomers?: boolean } = {},
 ) => {
   /*
    * All six badges now come from one request, shared with the assignee rail.
@@ -66,7 +67,7 @@ export const useTicketTabCounts = (
    */
   const { status: _status, overdueOnly: _overdueOnly, ...base } = filters;
 
-  const { data, isLoading } = useTicketCounts(base);
+  const { data, isLoading } = useTicketCounts(base, { fromCustomers });
 
   // The rail half of the same response, for the Assignee filter: no request of
   // its own. Someone absent from it holds no matching ticket.

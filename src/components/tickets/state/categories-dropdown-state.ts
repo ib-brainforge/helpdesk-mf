@@ -1,6 +1,5 @@
-import type { HelpdeskScope } from '@/api/local/scoped';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
-import { PlatformMyCategoriesApi } from '@brainforgeau/helpdesk-client';
+import { CategoriesApi } from '@brainforgeau/helpdesk-client';
 import { atomWithMutation } from 'jotai-tanstack-query';
 
 export interface CategoryOption {
@@ -11,27 +10,30 @@ export interface CategoryOption {
 
 export const categoriesMutationAtom = atomWithMutation<
   CategoryOption[],
-  /** `scope`: the ticket's company, whose categories these are. */
-  { query: string; scope?: HelpdeskScope | null }
+  { query: string }
 >(() => ({
   mutationKey: ['categories-search'],
-  mutationFn: async ({
-    query,
-    scope,
-  }: { query: string; scope?: HelpdeskScope | null }) => {
-    const client = await createHelpdeskApiClient(
-      PlatformMyCategoriesApi,
-      scope,
-    );
-    const { data } = await client.v1PlatformMyCategoriesGet();
+  mutationFn: async ({ query }: { query: string }) => {
+    const client = await createHelpdeskApiClient(CategoriesApi);
+    const { data } = await client.v1CategoriesGet();
 
-    // data is a flat CategoryDto[] — no hierarchy unwrapping needed.
-    const categories: CategoryOption[] = (data ?? [])
-      .filter(cat => cat.isActive !== false)
-      .map(cat => ({
+    const categories: CategoryOption[] = [
+      ...(data.sections ?? []).flatMap(section =>
+        (section.categories ?? []).map(cat => ({
+          cat,
+          sectionName: section.name ?? undefined,
+        })),
+      ),
+      ...(data.unsectionedCategories ?? []).map(cat => ({
+        cat,
+        sectionName: undefined,
+      })),
+    ]
+      .filter(({ cat }) => cat.isActive !== false)
+      .map(({ cat, sectionName }) => ({
         id: cat.id ?? '',
         name: cat.name ?? 'Unnamed Category',
-        sectionName: cat.sectionName ?? undefined,
+        sectionName,
       }));
 
     // Filter by query if provided.

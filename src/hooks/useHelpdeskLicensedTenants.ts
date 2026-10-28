@@ -1,4 +1,3 @@
-import { isKnownUnlicensed } from '@/api/local/scoped';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
 import { TenantsApi } from '@brainforgeau/identity-management-client';
 import { useQueries } from '@tanstack/react-query';
@@ -15,8 +14,7 @@ const HELPDESK_APP = 'helpdesk';
  * has no apps field yet, so this asks once per company and caches it for the
  * session. A company whose licence cannot be read (the route refused, or it
  * is still loading) is kept: hiding a company someone can use would be worse
- * than the message they get today. A company the token issuer has already
- * refused for Helpdesk this session is dropped either way.
+ * than the message they get today.
  */
 export const useHelpdeskLicensedTenants = (tenantIds: string[]) => {
   const results = useQueries({
@@ -37,7 +35,7 @@ export const useHelpdeskLicensedTenants = (tenantIds: string[]) => {
   const unlicensedKey = tenantIds
     .filter((id, i) => {
       const apps = results[i]?.data;
-      return isKnownUnlicensed(id) || (apps && !apps.includes(HELPDESK_APP));
+      return apps && !apps.includes(HELPDESK_APP);
     })
     .join('|');
   const isLoading = results.some(r => r.isLoading);

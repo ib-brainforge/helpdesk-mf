@@ -26,7 +26,7 @@ const CLOCK_MODES = [
   {
     key: 'AllHours',
     title: 'All hours (24/7)',
-    hint: 'For tenants that pay for round the clock cover',
+    hint: 'For customers that pay for round the clock cover',
   },
 ] as const;
 
@@ -64,17 +64,12 @@ const TimeSelect: FC<{
 interface ClockSectionProps {
   form: AnyForm;
   saved?: CompanyDeadlinePolicyDto;
-  principalId?: string;
 }
 
 /** "How the clock counts": business hours or all hours, the week, zone and holidays. */
-export const ClockSection: FC<ClockSectionProps> = ({
-  form,
-  saved,
-  principalId,
-}) => {
+export const ClockSection: FC<ClockSectionProps> = ({ form, saved }) => {
   const [holidaysOpen, setHolidaysOpen] = useState(false);
-  const regions = useHolidayRegions(principalId);
+  const regions = useHolidayRegions();
   const savedRegion = saved ? regionOf(saved) : null;
 
   return (
@@ -335,7 +330,6 @@ export const ClockSection: FC<ClockSectionProps> = ({
               <HolidaysModal
                 isOpen={holidaysOpen}
                 onClose={() => setHolidaysOpen(false)}
-                principalId={principalId}
                 region={region}
               />
             </>

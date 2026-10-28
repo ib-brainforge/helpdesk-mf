@@ -13,10 +13,7 @@ import {
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 import type { UserOption } from '../state/users-dropdown-state';
-import {
-  ticketCountsQueryOptions,
-  useCountsPrincipal,
-} from './useTicketCounts';
+import { ticketCountsQueryOptions } from './useTicketCounts';
 
 /**
  * Who a ticket can be assigned to.
@@ -149,10 +146,9 @@ const covers = (a: RoleAssignment, s: AssigneeScope): boolean => {
   return true;
 };
 
-/** The counts endpoint's filters for a scope, only the levels it names. */
+/** The counts endpoint's filters for a scope, only the levels it names. The tenant is always the caller's own. */
 const scopeFilters = (s: AssigneeScope): TicketFilters => {
   const f: TicketFilters = {};
-  if (s.tenantId) f.tenantId = [s.tenantId];
   if (s.organisationId) f.organisationId = [s.organisationId];
   if (s.divisionId) f.divisionId = s.divisionId;
   return f;
@@ -211,11 +207,10 @@ export const useScopedAssignees = (
   { enabled = true }: { enabled?: boolean } = {},
 ): ScopedAssignees => {
   const contextKey = useAtomValue(contextQueryKeyAtom);
-  const principal = useCountsPrincipal();
 
   const roles = useQuery({ ...rolesQuery(contextKey), enabled });
   const counts = useQuery({
-    ...ticketCountsQueryOptions(scopeFilters(scope), principal),
+    ...ticketCountsQueryOptions(scopeFilters(scope), false),
     enabled,
   });
 
@@ -260,7 +255,6 @@ export const useScopedAssigneesIntersection = (
   { enabled = true }: { enabled?: boolean } = {},
 ): ScopedAssignees & { scopeCount: number } => {
   const contextKey = useAtomValue(contextQueryKeyAtom);
-  const principal = useCountsPrincipal();
 
   const distinct = useMemo(() => {
     const seen = new Map<string, AssigneeScope>();
@@ -271,7 +265,7 @@ export const useScopedAssigneesIntersection = (
   const roles = useQuery({ ...rolesQuery(contextKey), enabled });
   const counts = useQueries({
     queries: distinct.map(s => ({
-      ...ticketCountsQueryOptions(scopeFilters(s), principal),
+      ...ticketCountsQueryOptions(scopeFilters(s), false),
       enabled,
     })),
   });

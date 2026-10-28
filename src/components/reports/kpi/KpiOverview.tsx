@@ -1,22 +1,13 @@
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
-import { PRINCIPAL_ADMIN_ROLES } from '@/hooks/usePrincipalAccess';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import {
-  BaseAutocomplete,
-  BaseAutocompleteItem,
-  BaseSelect,
-  BaseSelectItem,
-} from '@brainforgeau/components';
-import { usePermissions } from '@brainforgeau/security';
+import { BaseSelect, BaseSelectItem } from '@brainforgeau/components';
 import { useSearchParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useMemo } from 'react';
-import { CompaniesTable } from './CompaniesTable';
 import { DeadlineWeekChart } from './DeadlineWeekChart';
 import { KpiCards } from './KpiCards';
 import { LateTicketsTable } from './LateTicketsTable';
 import { OpenByAgeCard } from './OpenByAgeCard';
 import { PeriodPicker } from './PeriodPicker';
-import { PolicyBanner } from './PolicyBanner';
 import {
   defaultMonth,
   monthLabel,
@@ -49,21 +40,13 @@ const PRINT_CSS = `
 `;
 
 /**
- * Reports > Overview (04) and, with a company chosen, that company's view
- * (04b). Every figure comes from the one KPI endpoint. The filters live in the
+ * Reports > Overview. Every figure comes from the one KPI endpoint, for the
+ * tenant the user is working in. The filters live in the
  * URL, so a view can be shared and the back button works.
  */
 export const KpiOverview: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const month = searchParams.get('month') ?? defaultMonth();
-  const { principalId, tenantId: ownTenantId } = useHelpdeskAccess();
-  const { hasAnyRole } = usePermissions();
-  const canEditDeadlines = hasAnyRole([...PRINCIPAL_ADMIN_ROLES]);
-
-  // Netcorp staff pick a company; anyone else only ever sees their own.
-  const company = principalId
-    ? searchParams.get('company') || null
-    : (ownTenantId ?? null);
   const organisation = searchParams.get('org') || null;
 
   const setParam = useCallback(
@@ -81,35 +64,26 @@ export const KpiOverview: FC = () => {
     [setSearchParams],
   );
 
-  const { data, isLoading, isFetching } = useKpiReport(principalId, {
+  const { data, isLoading, isFetching } = useKpiReport({
     month,
-    tenantId: principalId ? company : null,
     organisationId: organisation,
   });
 
-  const { byTenantId, byOrganisationId, tenantOptions, organisationOptions } =
-    useScopeNames();
-  const companyName = useCallback(
-    (id: string) => byTenantId.get(id)?.tenantName ?? id.slice(0, 8),
-    [byTenantId],
-  );
+  const { tenantId: ownTenantId } = useHelpdeskAccess();
+  const { byOrganisationId, organisationOptions } = useScopeNames();
   const organisationName = useCallback(
     (id: string | null) => (id ? byOrganisationId.get(id) : undefined),
     [byOrganisationId],
   );
-  const companyOrgs = useMemo(
+  const ownOrgs = useMemo(
     () =>
-      company ? organisationOptions.filter(o => o.parentId === company) : [],
-    [company, organisationOptions],
-  );
-
-  const selectCompany = useCallback(
-    (id: string) => setParam({ company: id, org: null }),
-    [setParam],
+      ownTenantId
+        ? organisationOptions.filter(o => o.parentId === ownTenantId)
+        : [],
+    [ownTenantId, organisationOptions],
   );
 
   const prevName = monthName(previousMonthKey(month));
-  const scopeLabel = company ? companyName(company) : 'All tenants';
 
   return (
     <div
@@ -117,7 +91,7 @@ export const KpiOverview: FC = () => {
     >
       <style>{PRINT_CSS}</style>
       <h1 className="hidden text-xl font-semibold print:block">
-        Reports: {monthLabel(month)}, {scopeLabel}
+        Reports: {monthLabel(month)}
         {organisation && `, ${organisationName(organisation) ?? ''}`}
       </h1>
 
@@ -127,39 +101,9 @@ export const KpiOverview: FC = () => {
             value={month}
             onChange={next => setParam({ month: next })}
           />
-          {principalId && (
-            <BaseAutocomplete
-              label="Tenant"
-              placeholder="All tenants"
-              className="w-56"
-              selectedKey={company ?? ALL}
-              onSelectionChange={key =>
-                setParam({
-                  company: key && key !== ALL ? String(key) : null,
-                  org: null,
-                })
-              }
-            >
-              {[
-                <BaseAutocompleteItem
-                  key={ALL}
-                  id={ALL}
-                  textValue="All tenants"
-                >
-                  All tenants
-                </BaseAutocompleteItem>,
-                ...tenantOptions.map(t => (
-                  <BaseAutocompleteItem key={t.id} id={t.id} textValue={t.name}>
-                    {t.name}
-                  </BaseAutocompleteItem>
-                )),
-              ]}
-            </BaseAutocomplete>
-          )}
           <BaseSelect
             label="Organisation"
             className="w-56"
-            isDisabled={!company}
             selectedKey={organisation ?? ALL}
             onSelectionChange={key =>
               setParam({ org: key && key !== ALL ? String(key) : null })
@@ -167,11 +111,9 @@ export const KpiOverview: FC = () => {
           >
             {[
               <BaseSelectItem key={ALL} id={ALL} textValue="All organisations">
-                {company
-                  ? `All organisations (${companyOrgs.length})`
-                  : 'All organisations'}
+                {`All organisations (${ownOrgs.length})`}
               </BaseSelectItem>,
-              ...companyOrgs.map(o => (
+              ...ownOrgs.map(o => (
                 <BaseSelectItem key={o.id} id={o.id} textValue={o.name}>
                   {o.name}
                 </BaseSelectItem>
@@ -179,20 +121,9 @@ export const KpiOverview: FC = () => {
             ]}
           </BaseSelect>
         </div>
-        {company && data?.policySummary ? (
-          <div className="ml-auto">
-            <PolicyBanner
-              companyName={companyName(company)}
-              tenantId={company}
-              policy={data.policySummary}
-              canEdit={canEditDeadlines && Boolean(principalId)}
-            />
-          </div>
-        ) : (
-          <span className="text-default-500 pb-2 text-xs">
-            Compared with {monthLabel(previousMonthKey(month))}
-          </span>
-        )}
+        <span className="text-default-500 pb-2 text-xs">
+          Compared with {monthLabel(previousMonthKey(month))}
+        </span>
       </div>
 
       <KpiCards
@@ -207,26 +138,15 @@ export const KpiOverview: FC = () => {
           <DeadlineWeekChart
             weekly={data.weekly}
             targetPct={data.cards.deadlineTargetPct}
-            scopeLabel={scopeLabel}
           />
           <OpenByAgeCard
             openByAge={data.openByAge}
             totalOpen={data.cards.openTickets}
-            companyName={id => byTenantId.get(id)?.tenantName}
-            showCompany={!company}
           />
         </div>
       )}
 
-      {data?.companies && !company && (
-        <CompaniesTable
-          companies={data.companies}
-          targetPct={data.cards.deadlineTargetPct}
-          companyName={companyName}
-          onSelectCompany={selectCompany}
-        />
-      )}
-      {data?.late && company && (
+      {data?.late && (
         <LateTicketsTable late={data.late} monthName={monthName(month)} />
       )}
     </div>

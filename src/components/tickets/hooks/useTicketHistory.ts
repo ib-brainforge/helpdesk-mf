@@ -2,7 +2,6 @@ import {
   type TicketHistoryItemDto,
   getTicketHistory,
 } from '@/api/local/ticket-history';
-import { useHelpdeskScope } from '@/hooks/useHelpdeskScope';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
@@ -24,11 +23,10 @@ export const ticketHistoryQueryKey = (ticketId: string) =>
  * collapsing and expanding again is instant.
  */
 export const useTicketHistory = (ticketId: string, enabled: boolean) => {
-  const scope = useHelpdeskScope();
   const query = useInfiniteQuery({
     queryKey: ticketHistoryQueryKey(ticketId),
     queryFn: ({ pageParam }) =>
-      getTicketHistory(ticketId, pageParam, PAGE_SIZE, scope),
+      getTicketHistory(ticketId, pageParam, PAGE_SIZE),
     initialPageParam: 1,
     getNextPageParam: last =>
       last.page * last.pageSize < last.totalCount ? last.page + 1 : undefined,

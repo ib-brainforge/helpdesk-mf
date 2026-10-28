@@ -1,6 +1,5 @@
 import type { KpiLateItemDto, KpiReportDto } from '@/api/local/kpi';
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
-import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { StatusBadge } from '@/components/shared';
 import { formatDuration } from '@/components/shared/deadline';
 import { getPriorityConfig } from '@/components/tickets/ticket-priority-config';
@@ -39,16 +38,15 @@ export const LateTicketsTable: FC<LateTicketsTableProps> = ({
   // Names for the ids the report sends, from lists other screens already
   // cache (same query keys), and only while a late list is on screen.
   const { categories } = useCategoriesData();
-  const { presets } = usePresetCategories([]);
   const { byOrganisationId } = useScopeNames();
   const { userMap: users } = useUserEnrichment(
     useMemo(() => late.items.map(i => i.assigneeId), [late.items]),
   );
   const categoryName = useMemo(() => {
     const names = new Map<string, string>();
-    for (const c of [...categories, ...presets]) names.set(c.id, c.name);
+    for (const c of categories) names.set(c.id, c.name);
     return (id: string | null) => (id ? names.get(id) : undefined);
-  }, [categories, presets]);
+  }, [categories]);
   const organisationName = useCallback(
     (id: string | null) => (id ? byOrganisationId.get(id) : undefined),
     [byOrganisationId],

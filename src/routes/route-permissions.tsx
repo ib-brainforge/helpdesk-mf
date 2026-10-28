@@ -25,11 +25,6 @@ import type { FC, ReactNode } from 'react';
  * Rules are matched in order, first match wins, so more specific paths come
  * before the section they sit in. A path that matches no rule is not
  * restricted here.
- *
- * NOT COVERED
- * /principal/... pages are left out on purpose. The backend guards those by
- * principal membership (RequirePrincipalAccess), not by these permissions, and
- * a Helpdesk Principal Agent works principal tickets without principal.read.
  */
 interface RouteRule {
   /** Matches the pathname, without the app's base path. */

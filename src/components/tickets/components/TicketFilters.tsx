@@ -1,9 +1,7 @@
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
-import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
 import { useTags } from '@/components/tags/hooks/useTags';
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
-import { type ScopeOption, useScopeNames } from '@/hooks/useScopeNames';
+import type { ScopeOption } from '@/hooks/useScopeNames';
 import { CUSTOM_STATUS_PREFIX } from '@/types/custom-status';
 import {
   type TicketFilters as TicketFiltersType,
@@ -38,6 +36,9 @@ import type { AssigneeCounts } from '../hooks/useTicketTabCounts';
 export const COUNT_BADGE_CLASS =
   'bg-lighter-blue text-blue inline-block min-w-[3rem] shrink-0 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums';
 
+const scopeLabel = (option: ScopeOption) =>
+  option.parentName ? `${option.name} (${option.parentName})` : option.name;
+
 /** An option row: the name, and the person's ticket count at the right. */
 const AssigneeOptionLabel: FC<{ name: string; count?: number }> = ({
   name,
@@ -48,138 +49,6 @@ const AssigneeOptionLabel: FC<{ name: string; count?: number }> = ({
     {count !== undefined && <span className={COUNT_BADGE_CLASS}>{count}</span>}
   </span>
 );
-
-const scopeLabel = (option: ScopeOption) =>
-  option.parentName ? `${option.name} (${option.parentName})` : option.name;
-
-/**
- * One searchable single-select filter: a scope level or a category. Rendered only when that level has more than one option.
- *
- * A picker offering a single value narrows nothing and just reads as a control
- * that does not work. Division is the live case: no context or ticket carries
- * one today, so it stays hidden until they exist rather than showing an empty
- * list and implying the data failed to load.
- */
-const FilterAutocompleteImpl: FC<{
-  label: string;
-  /** "All tenants"; defaults to "All {label}s". */
-  placeholder?: string;
-  options: ScopeOption[];
-  /**
-   * Whether this level exists anywhere in the estate, before the cascade
-   * narrows it. Decides whether the control is shown at all; `options` only
-   * decides what it offers.
-   */
-  levelExists: boolean;
-  value?: string;
-  onChange: (id?: string) => void;
-}> = ({ label, placeholder, options, levelExists, value, onChange }) => {
-  /*
-   * Typeable rather than a plain select. A principal can hold hundreds of
-   * tenants, and a list that long can only be found by scrolling, which is the
-   * same reason the assignee picker was a search box.
-   *
-   * The filtering is done here on purpose. BaseAutocomplete renders the search
-   * field and reports what was typed, but it mounts RAC's AutocompleteFilter
-   * with `filter: () => true`, so it never removes an item itself: whatever
-   * children it is given are exactly what the popover lists. The assignee
-   * version satisfied that by re-querying the directory; these options are
-   * already in memory, so they are matched here and nothing is fetched.
-   */
-  const [query, setQuery] = useState('');
-
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return options;
-    return options.filter(option =>
-      scopeLabel(option).toLowerCase().includes(needle),
-    );
-  }, [options, query]);
-
-  /*
-   * After the hooks, never before.
-   *
-   * Hidden only when the level does not exist in the estate at all and nothing
-   * is chosen, so the control is either always there or never there.
-   *
-   * It used to hide whenever the CASCADED list was empty. Picking a tenant that
-   * owns no organisations then removed the Organisation control, the search
-   * box grew into the gap, and every filter to its right slid across by one
-   * control's width under the pointer. A tenant with nothing beneath it now
-   * keeps the control in place, disabled and saying so.
-   *
-   * Before that it hid at fewer than two options, on the reasoning that a picker
-   * offering one value narrows nothing. That held while every level listed the
-   * whole estate and so never had fewer than two. Once the levels cascade it is
-   * actively wrong: choosing a tenant that owns a single organisation would
-   * drop this list to one and make the Organisation control disappear, so the
-   * filter bar reshuffled as you picked a tenant, and a selection already made
-   * could no longer be seen or cleared. A control that stays put and offers one
-   * value is better than one that comes and goes.
-   */
-  if (!levelExists && !value) return null;
-
-  const isEmpty = options.length === 0 && !value;
-  const anyLabel = isEmpty
-    ? `No ${label.toLowerCase()}s`
-    : (placeholder ?? `All ${label.toLowerCase()}s`);
-  const selected = options.find(option => option.id === value);
-
-  return (
-    <div className="w-40">
-      <BaseAutocomplete
-        label={label}
-        placeholder={anyLabel}
-        isDisabled={isEmpty}
-        className="w-full"
-        // null, not a sentinel key: "All tenants" is the empty state, so
-        // nothing is selected when no scope is chosen. Pointing selectedKey at
-        // a key the list no longer contains would leave the control believing
-        // in an item that is not there.
-        selectedKey={value ?? null}
-        onSelectionChange={key => {
-          onChange(typeof key === 'string' ? key : undefined);
-        }}
-        // Typing narrows the list; closing forgets it, so reopening always
-        // starts from the full set rather than the last search.
-        onValueChange={setQuery}
-        onOpenChange={open => {
-          if (!open) setQuery('');
-        }}
-        renderSelectedItem={() => (
-          <span className="truncate text-xs font-medium">
-            {selected ? scopeLabel(selected) : anyLabel}
-          </span>
-        )}
-      >
-        {/*
-          Only real scopes are listed. "All tenants" is the placeholder shown
-          while nothing is chosen, not a row you pick, which is how the tracker
-          pool's tenant and organisation filters read. Offering it as an item
-          made the empty state look like a choice among the others and put a
-          synthetic entry at the top of every list. Resetting is what the Clear
-          Filters button is for.
-        */}
-        {visible.map(option => (
-          <BaseAutocompleteItem
-            key={option.id}
-            id={option.id}
-            textValue={scopeLabel(option)}
-          >
-            {scopeLabel(option)}
-          </BaseAutocompleteItem>
-        ))}
-      </BaseAutocomplete>
-    </div>
-  );
-};
-
-/**
- * Memoised, with stable props from TicketFilters: the grid re-renders often
- * (rows, counts, realtime), and each render used to rebuild every option of
- * every picker.
- */
-const FilterAutocomplete = memo(FilterAutocompleteImpl);
 
 /** The Unassigned option's value in the Assignee select. Never a user id. */
 const UNASSIGNED = '__unassigned__';
@@ -435,7 +304,6 @@ const MultiFilterImpl: FC<{
   );
 };
 
-/** Also Reports > Team's Tenant and Organisation filters. */
 export const MultiFilter = memo(MultiFilterImpl);
 
 /** A stable empty selection, so a memoised picker is not re-rendered by `[]`. */
@@ -488,9 +356,6 @@ const FILTER_KEYS = [
   'status',
   'customStatusIds',
   'priority',
-  'tenantId',
-  'organisationId',
-  'divisionId',
   'categoryId',
   'tagIds',
   'overdueOnly',
@@ -533,87 +398,26 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   const { tags, isLoading: loadingTags } = useTags(undefined, {
     enabled: tagsWanted || Boolean(filters.tagIds?.length),
   });
-  const { isServiceAdmin } = useHelpdeskAccess();
-  const { tenantOptions, organisationOptions, divisionOptions } =
-    useScopeNames();
 
-  /*
-   * The scope pickers cascade: each list shows only what sits under the level
-   * chosen above it, the same way the tracker pool's tenant and organisation
-   * filters behave.
-   *
-   * WHY. These three used to list the whole estate regardless of each other,
-   * so the Organisation dropdown offered every organisation under every tenant
-   * while a tenant was already selected. Most of what it offered could only
-   * ever return nothing, and picking one of those silently emptied the grid.
-   * Labelling each option with its tenant name made that legible but still left
-   * the work of avoiding the impossible combinations to the person reading it.
-   *
-   * With no tenant chosen the full list is correct and stays.
-   */
-  const scopedOrganisations = useMemo(() => {
-    const tenants = filters.tenantId;
-    const shown = tenants?.length
-      ? organisationOptions.filter(
-          o => o.parentId && tenants.includes(o.parentId),
-        )
-      : organisationOptions;
-    // Grouped by company in the list, so sorted by company then name.
-    return [...shown].sort(
-      (a, b) =>
-        (a.parentName ?? '').localeCompare(b.parentName ?? '') ||
-        a.name.localeCompare(b.name),
-    );
-  }, [organisationOptions, filters.tenantId]);
-
-  const scopedDivisions = useMemo(
-    () =>
-      filters.organisationId?.length
-        ? divisionOptions.filter(
-            d => d.parentId && filters.organisationId?.includes(d.parentId),
-          )
-        : // No organisation chosen, but a tenant might be: fall back to every
-          // division under those tenants' organisations rather than the estate.
-          filters.tenantId?.length
-          ? divisionOptions.filter(d =>
-              scopedOrganisations.some(o => o.id === d.parentId),
-            )
-          : divisionOptions,
-    [
-      divisionOptions,
-      scopedOrganisations,
-      filters.organisationId,
-      filters.tenantId,
-    ],
-  );
   /*
    * Assignee and Category options come from queries this page already runs
    * (the assign picker and the Category column), so they add no request.
-   * Assignees are the people who can work tickets in the chosen company and
-   * organisation; categories are the tenant's own plus the Netcorp presets.
+   * Assignees are the people who can work tickets in the tenant; categories
+   * are the tenant's own.
    */
-  // One company or organisation narrows the people offered; several offer
-  // everyone, since the picker matches a single scope.
-  const { options: assigneeUsers } = useScopedAssignees({
-    tenantId: filters.tenantId?.length === 1 ? filters.tenantId[0] : undefined,
-    organisationId:
-      filters.organisationId?.length === 1
-        ? filters.organisationId[0]
-        : undefined,
-  });
+  const { options: assigneeUsers } = useScopedAssignees({});
   const assigneeOptions: ScopeOption[] = useMemo(
     () => assigneeUsers.map(u => ({ id: u.id, name: u.name })),
     [assigneeUsers],
   );
   const { categories: ownedCategories } = useCategoriesData();
-  const { presets } = usePresetCategories(ownedCategories.map(c => c.id));
   const categoryOptions: ScopeOption[] = useMemo(() => {
     const byId = new Map<string, ScopeOption>();
-    for (const c of [...ownedCategories, ...presets]) {
+    for (const c of ownedCategories) {
       if (c.id) byId.set(c.id, { id: c.id, name: c.name });
     }
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [ownedCategories, presets]);
+  }, [ownedCategories]);
 
   const activeCustomStatuses = useMemo(
     () => customStatuses.filter(s => s.isActive),
@@ -665,46 +469,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
         assigneeId: people.length > 0 ? people : undefined,
         includeUnassigned: includeUnassigned || undefined,
       }),
-    [filters, onFiltersChange],
-  );
-  // Changing the tenant drops the organisation and division with it. They sit
-  // underneath the old tenant, so keeping them would leave a combination that
-  // describes nothing: "this tenant, and an organisation belonging to a
-  // different one" matches no ticket, and the grid would read empty for a
-  // reason nothing on screen explains.
-  // With several companies, only the organisations under a company that is
-  // still ticked are kept, and the division goes with any change.
-  const handleTenantChange = useCallback(
-    (ids: string[]) => {
-      const parentOf = new Map(
-        organisationOptions.map(o => [o.id, o.parentId]),
-      );
-      const orgs = ids.length
-        ? filters.organisationId?.filter(id => {
-            const parent = parentOf.get(id);
-            return parent !== undefined && ids.includes(parent);
-          })
-        : filters.organisationId;
-      onFiltersChange({
-        ...filters,
-        tenantId: ids.length > 0 ? ids : undefined,
-        organisationId: orgs?.length ? orgs : undefined,
-        divisionId: undefined,
-      });
-    },
-    [filters, onFiltersChange, organisationOptions],
-  );
-  const handleOrganisationChange = useCallback(
-    (ids: string[]) =>
-      onFiltersChange({
-        ...filters,
-        organisationId: ids.length > 0 ? ids : undefined,
-        divisionId: undefined,
-      }),
-    [filters, onFiltersChange],
-  );
-  const handleDivisionChange = useCallback(
-    (id?: string) => onFiltersChange({ ...filters, divisionId: id }),
     [filters, onFiltersChange],
   );
   const handleTagsChange = useCallback(
@@ -797,9 +561,7 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
    * when the page loads with one set, so a narrowed list is never unexplained.
    */
   const moreCount =
-    (filters.categoryId?.length ?? 0) +
-    (filters.tagIds?.length ?? 0) +
-    (filters.divisionId ? 1 : 0);
+    (filters.categoryId?.length ?? 0) + (filters.tagIds?.length ?? 0);
   const [moreOpen, setMoreOpen] = useState(moreCount > 0);
   const showMore = moreOpen || moreCount > 0;
 
@@ -807,13 +569,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
   // Clear filters only appears when there is something of yours to clear.
   const hasAnyFilter =
     Boolean(searchTerm) || !sameFilters(filters, baseline ?? {});
-
-  const showCompany =
-    isServiceAdmin &&
-    (tenantOptions.length > 0 || Boolean(filters.tenantId?.length));
-  const showOrganisation =
-    isServiceAdmin &&
-    (organisationOptions.length > 0 || Boolean(filters.organisationId?.length));
 
   return (
     <div className="flex w-full flex-col gap-2.5">
@@ -867,30 +622,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
           </BaseTagSelect>
         </div>
 
-        {/* Scope, for Netcorp staff whose rows span companies. A tenant user has
-          exactly one company, so this renders nothing for them. */}
-        {showCompany && (
-          <MultiFilter
-            label="Tenant"
-            plural="tenants"
-            options={tenantOptions}
-            value={filters.tenantId ?? EMPTY}
-            onChange={handleTenantChange}
-          />
-        )}
-        {/* Straight after Company: one company has many organisations, and
-          the list narrows to the companies picked. */}
-        {showOrganisation && (
-          <MultiFilter
-            label="Organisation"
-            plural="organisations"
-            options={scopedOrganisations}
-            grouped
-            value={filters.organisationId ?? EMPTY}
-            onChange={handleOrganisationChange}
-          />
-        )}
-
         <BaseButton
           variant="bordered"
           color="light"
@@ -910,8 +641,8 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             onPress={handleClearFilters}
             icon={<Icon name="x" className="h-4 w-4" />}
           >
-            {/* Resets every filter, those under More filters and Company and
-              Organisation included, and the search. The tab stays. */}
+            {/* Resets every filter, those under More filters included, and the
+              search. The tab stays. */}
             Clear filters
           </BaseButton>
         )}
@@ -926,16 +657,6 @@ const TicketFiltersImpl: FC<TicketFiltersProps> = ({
             value={filters.categoryId ?? EMPTY}
             onChange={onCategoryChange}
           />
-
-          {isServiceAdmin && (
-            <FilterAutocomplete
-              label="Division"
-              options={scopedDivisions}
-              levelExists={divisionOptions.length > 0}
-              value={filters.divisionId}
-              onChange={handleDivisionChange}
-            />
-          )}
 
           {/* Tags load when this filter is first opened (see wantTags). */}
           {isStaff && (

@@ -11,7 +11,7 @@ interface FeatureOutletProps {
 /**
  * The layout for a route section that belongs to a switchable feature. While
  * the feature is on it is a plain outlet (passing the parent's outlet context
- * through, which the principal pages read); while off, every URL in the
+ * through); while off, every URL in the
  * section redirects, so an old bookmark or link never opens a page whose data
  * is not wanted, and none of the section's pages mount or fetch.
  */

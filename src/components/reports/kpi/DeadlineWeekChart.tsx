@@ -10,8 +10,6 @@ const BELOW = '#e17100';
 interface DeadlineWeekChartProps {
   weekly: KpiWeekDto[];
   targetPct: number;
-  /** "All companies" or the company's name. */
-  scopeLabel: string;
 }
 
 /**
@@ -22,7 +20,6 @@ interface DeadlineWeekChartProps {
 export const DeadlineWeekChart: FC<DeadlineWeekChartProps> = ({
   weekly,
   targetPct,
-  scopeLabel,
 }) => {
   const data = useMemo(
     () =>
@@ -42,7 +39,7 @@ export const DeadlineWeekChart: FC<DeadlineWeekChartProps> = ({
   return (
     <KpiPanel
       title="Deadline met by week"
-      aside={`${scopeLabel}, last ${weekly.length} weeks`}
+      aside={`Last ${weekly.length} weeks`}
     >
       <div className="px-5 pt-3 pb-4">
         <BarChart
@@ -54,7 +51,7 @@ export const DeadlineWeekChart: FC<DeadlineWeekChartProps> = ({
               ? `Week of ${label}: no finished tickets`
               : `Week of ${label}: ${formatPct(value)} of ${weekly[index]?.ticketCount ?? 0} tickets`
           }
-          ariaLabel={`Deadline met by week, ${scopeLabel}`}
+          ariaLabel="Deadline met by week"
         />
         <div className="text-default-600 mt-2 flex flex-wrap items-center justify-center gap-4 text-xs">
           <span className="flex items-center gap-1.5">

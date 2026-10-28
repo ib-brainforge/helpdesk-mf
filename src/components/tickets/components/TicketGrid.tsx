@@ -15,7 +15,6 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { customStatusesApply } from '@/types/custom-status';
 import type {
   TicketFilters as TicketFiltersType,
   TicketPriority,
@@ -80,7 +79,6 @@ import {
 } from './ticketSelection';
 
 import { useCategoriesData } from '@/components/categories/hooks/useCategoriesData';
-import { usePresetCategories } from '@/components/categories/hooks/usePresetCategories';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import { EmptyState, useConfirm } from '@brainforgeau/components/page';
 import { useAuth } from '@brainforgeau/security';
@@ -93,7 +91,15 @@ import type { TicketRow } from '../types';
  */
 const FIT_SKIP = ['select', 'subject'];
 
-export const TicketGrid: FC = () => {
+interface TicketGridProps {
+  /**
+   * The provider's "From customers" queue (tickets raised by or forwarded
+   * from a customer tenant) instead of the tenant's own tickets.
+   */
+  fromCustomers?: boolean;
+}
+
+export const TicketGrid: FC<TicketGridProps> = ({ fromCustomers = false }) => {
   const navigate = useNavigate();
   const timezone = useTimezone();
   const { user } = useAuth();
@@ -125,7 +131,7 @@ export const TicketGrid: FC = () => {
    * alongside everything else on this page), so the list is fetched once in
    * the right order rather than once by default and again by preference.
    */
-  const ticketsLayout = useTicketsLayout(selectedTab);
+  const ticketsLayout = useTicketsLayout(selectedTab, { fromCustomers });
   /*
    * A sort named in the URL (a copied link) wins over the saved one until
    * the user sorts or changes tab; it is not saved as their preference.
@@ -175,8 +181,8 @@ export const TicketGrid: FC = () => {
   } = useTicketsData(
     // Seeded from the URL, so a copied link reopens the same list and the
     // first request already matches it (see ticketListUrl). An old
-    // ?tab=unassigned link brings its own assignee; ?tenant= and
-    // ?organisation= also come from links elsewhere (a company's late count
+    // ?tab=unassigned link brings its own assignee; ?tenant= also
+    // comes from links elsewhere (a company's late count
     // on Company Deadlines).
     initialFiltersFromUrl(
       selectedTab,
@@ -188,6 +194,7 @@ export const TicketGrid: FC = () => {
       sort,
       enabled: ticketsLayout.isReady,
       initialPagination: paginationFromUrl(searchParams),
+      fromCustomers,
     },
   );
 
@@ -253,22 +260,15 @@ export const TicketGrid: FC = () => {
    * Deliberately NOT filtered by isActive: a ticket filed under a category
    * that was later deactivated still needs its name shown.
    *
-   * The presets are merged in for the same reason the sidebar merges them.
-   * /v1/categories returns only Audience=Tenant rows, and tickets raised
-   * through the request form sit in the Netcorp categories, which are
-   * Audience=Principal. Reading the tenant list alone put every one of those
-   * rows back on the "—" fallback, which is exactly the bug this block was
-   * written to fix.
    */
   const { categories: ownedCategories } = useCategoriesData();
-  const { presets } = usePresetCategories(ownedCategories.map(c => c.id));
   const categoryNameById = useMemo(() => {
     const byId = new Map<string, string>();
-    for (const category of [...ownedCategories, ...presets]) {
+    for (const category of ownedCategories) {
       if (category.id) byId.set(category.id, category.name);
     }
     return byId;
-  }, [ownedCategories, presets]);
+  }, [ownedCategories]);
 
   const enrichedItems: TicketRow[] = useMemo(
     () =>
@@ -311,15 +311,7 @@ export const TicketGrid: FC = () => {
   }, [searchParams, setSearchParams]);
   const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
 
-  // A row's company, which decides the token its change is sent with.
-  const tenantById = useMemo(
-    () => new Map(items.map(t => [t.id ?? '', t.tenantId])),
-    [items],
-  );
-  const refOf = useCallback(
-    (id: string) => ({ id, tenantId: tenantById.get(id) }),
-    [tenantById],
-  );
+  const refOf = useCallback((id: string) => ({ id }), []);
 
   const handleAssign = useCallback(
     (
@@ -367,13 +359,6 @@ export const TicketGrid: FC = () => {
   // Tenant-defined statuses, offered by the row menu alongside the built-in
   // three and applied through the same status patch.
   const { customStatuses } = useCustomStatuses();
-  // The company the custom statuses above belong to.
-  const {
-    tenantId: viewerTenantId,
-    isServiceAdmin,
-    principalId,
-  } = useHelpdeskAccess();
-
   // Tenant and organisation names for the Scope column; tickets carry ids only.
   const scopeNames = useScopeNames();
 
@@ -397,7 +382,8 @@ export const TicketGrid: FC = () => {
           timezone,
           scopeNames,
           customStatuses,
-          customStatusTenantId: viewerTenantId,
+          fromCustomers,
+          ticketBasePath: fromCustomers ? '/provider/tickets' : '/tickets',
         }),
         // Subject fills the rest; the checkbox and row menu have fixed sizes.
         { skipIds: FIT_SKIP, isSortable: id => id in TICKET_SORT_KEYS },
@@ -412,7 +398,7 @@ export const TicketGrid: FC = () => {
       timezone,
       scopeNames,
       customStatuses,
-      viewerTenantId,
+      fromCustomers,
     ],
   );
 
@@ -493,7 +479,13 @@ export const TicketGrid: FC = () => {
    * refetch on every tab change.
    */
   // One response for the tab badges and the Assignee filter's per-person counts.
-  const { counts, assigneeCounts } = useTicketTabCounts(filters, currentUserId);
+  const { counts, assigneeCounts } = useTicketTabCounts(
+    filters,
+    currentUserId,
+    {
+      fromCustomers,
+    },
+  );
 
   /*
    * Tab label with its count beside it.
@@ -629,25 +621,17 @@ export const TicketGrid: FC = () => {
   const selectedCount = allMatching ? totalCount : picked.size;
   const hasSelectedRows = selectedCount > 0;
   const pickedList = useMemo(() => [...picked.values()], [picked]);
-  // In "all matching" mode the companies are not known until the ids are
-  // fetched, so the pickers are scoped by this page's rows and any company
-  // filter: a fair guide to who can be assigned and which statuses apply.
+  // In "all matching" mode the rows are not known until the ids are fetched,
+  // so the pickers are scoped by this page's rows: a fair guide to who can be
+  // assigned and which statuses apply.
   const selectedScopes = useMemo(
     () =>
-      (allMatching
-        ? [
-            ...pageRows.map(toSelectedTicket),
-            ...(filters.tenantId ?? []).map(
-              (tenantId): SelectedTicket => ({ id: '', tenantId }),
-            ),
-          ]
-        : pickedList
-      ).map(r => ({
+      (allMatching ? pageRows.map(toSelectedTicket) : pickedList).map(r => ({
         tenantId: r.tenantId,
         organisationId: r.organisationId,
         divisionId: r.divisionId,
       })),
-    [allMatching, pageRows, pickedList, filters.tenantId],
+    [allMatching, pageRows, pickedList],
   );
   const assignRowScopes = useMemo(
     () =>
@@ -681,10 +665,7 @@ export const TicketGrid: FC = () => {
       let tickets: SelectedTicket[];
       let truncatedFrom: number | null = null;
       if (allMatching) {
-        const result = await fetchTicketIds(
-          queryFilters,
-          isServiceAdmin && principalId ? principalId : undefined,
-        );
+        const result = await fetchTicketIds(queryFilters, fromCustomers);
         tickets = result.items;
         if (result.truncated) truncatedFrom = result.total;
       } else {
@@ -704,14 +685,7 @@ export const TicketGrid: FC = () => {
       }
       return tickets;
     },
-    [
-      allMatching,
-      queryFilters,
-      isServiceAdmin,
-      principalId,
-      pickedList,
-      confirm,
-    ],
+    [allMatching, queryFilters, fromCustomers, pickedList, confirm],
   );
 
   // After a bulk action only the tickets that failed stay selected, so the
@@ -874,21 +848,25 @@ export const TicketGrid: FC = () => {
           <div className="shrink-0">
             {/* Header */}
             <div className="mb-5 flex items-center justify-between">
-              <h1 className="text-2xl font-semibold">Tickets</h1>
+              <h1 className="text-2xl font-semibold">
+                {fromCustomers ? 'From customers' : 'Tickets'}
+              </h1>
               {/* Raising a ticket needs tickets.create, not tickets.update: a
               customer can raise one but not edit it, and the button was
               hidden from exactly the people whose main job it is. */}
-              <PermissionGuard
-                requiredPermissions={[HelpdeskPermissions.Tickets.Create]}
-                fallback={null}
-              >
-                <BaseButton
-                  onPress={() => setIsNewRequestOpen(true)}
-                  icon={<Icon name="plus" className="h-4 w-4" />}
+              {!fromCustomers && (
+                <PermissionGuard
+                  requiredPermissions={[HelpdeskPermissions.Tickets.Create]}
+                  fallback={null}
                 >
-                  New Ticket
-                </BaseButton>
-              </PermissionGuard>
+                  <BaseButton
+                    onPress={() => setIsNewRequestOpen(true)}
+                    icon={<Icon name="plus" className="h-4 w-4" />}
+                  >
+                    New Ticket
+                  </BaseButton>
+                </PermissionGuard>
+              )}
             </div>
 
             {/* Tab Bar. helpdesk-soft-borders: grey, not white, rules in dark
@@ -1080,10 +1058,6 @@ export const TicketGrid: FC = () => {
             onClose={() => setIsBulkStatusModalOpen(false)}
             onConfirm={handleBulkStatusConfirm}
             ticketCount={selectedCount}
-            allowCustomStatuses={customStatusesApply(
-              viewerTenantId,
-              selectedScopes.map(s => s.tenantId),
-            )}
           />
           <NewRequestModal
             isOpen={isNewRequestOpen}

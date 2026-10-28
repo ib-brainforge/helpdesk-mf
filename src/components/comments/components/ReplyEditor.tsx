@@ -41,8 +41,8 @@ interface ReplyEditorProps {
   categoryId?: string;
   onCommentAdded?: () => void;
   /**
-   * Present on the ticket page, where a public reply is emailed. Without it
-   * (the principal console) a reply is posted to the ticket only.
+   * Present on the ticket page, where a public reply is emailed. Without it a
+   * reply is posted to the ticket only.
    */
   email?: ReplyEmailContext;
 }

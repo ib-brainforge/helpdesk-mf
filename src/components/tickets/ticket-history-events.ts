@@ -263,6 +263,16 @@ export const describeHistoryEvent = (
         icon: 'ArrowUturnRightIcon',
         text: v('to') ? `Ticket forwarded to ${v('to')}` : 'Ticket forwarded',
       };
+    case 'ForwardedToProvider': {
+      const toId = v('toTenantId');
+      const provider = toId ? names.company(toId) : undefined;
+      return {
+        icon: 'ArrowUturnRightIcon',
+        text: provider
+          ? `Ticket forwarded to provider ${provider}`
+          : 'Ticket forwarded to the provider',
+      };
+    }
     case 'ContactChanged': {
       const to = person(v('to'));
       return {

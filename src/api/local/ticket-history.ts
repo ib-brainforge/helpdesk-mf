@@ -5,7 +5,7 @@
  * Replace with the generated client once it is regenerated. Shapes mirror the
  * backend exactly (agreed with Ben; the repo's PagedResult).
  */
-import { type HelpdeskScope, helpdeskAxios } from '@/api/local/scoped';
+import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 
 /**
@@ -38,10 +38,8 @@ export const getTicketHistory = async (
   ticketId: string,
   page: number,
   pageSize: number,
-  /** The ticket's company when it is not the app's own. */
-  scope?: HelpdeskScope | null,
 ): Promise<TicketHistoryPageDto> => {
-  const { data } = await helpdeskAxios(scope).get<TicketHistoryPageDto>(
+  const { data } = await authorizedAxios.get<TicketHistoryPageDto>(
     `${requireHelpdeskApiBaseUrl()}/v1/tickets/${ticketId}/history`,
     { params: { page, pageSize } },
   );

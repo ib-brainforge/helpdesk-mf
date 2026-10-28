@@ -1,8 +1,11 @@
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
-import { authorizedAxios } from '@/state/authorizedAxios';
-import { requireHelpdeskApiBaseUrl } from '@/state/config';
+import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { TicketFilters } from '@/types/ticket';
 import { toApiTicketPriority } from '@/utils/typeMappers';
+import {
+  type HelpdeskDomainTicketsEnumsTicketPriority,
+  ProviderCustomerTicketsApi,
+  TicketsApi,
+} from '@brainforgeau/helpdesk-client';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
@@ -67,9 +70,9 @@ export interface TicketCountsResponse {
  */
 const countsParams = (filters: TicketFilters): Record<string, unknown> => {
   const params: Record<string, unknown> = {};
-  // Same shapes as ticketQueryValues/extraParams in useTickets.ts: priority is
-  // a single-valued array in the filter state; category, company and
-  // organisation are multi-selects (putIds).
+  // Same shapes as ticketQueryValues/multiValues in useTickets.ts: priority is
+  // a single-valued array in the filter state; category is a multi-select
+  // (putIds).
   if (filters.priority?.[0]) {
     params.priority = toApiTicketPriority(filters.priority[0]);
   }
@@ -87,7 +90,6 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
     params.searchScopeIds = filters.searchScopeIds;
   }
   if (filters.tagIds?.length) params.tagIds = filters.tagIds;
-  putIds(params, 'tenantId', 'tenantIds', filters.tenantId);
   putIds(params, 'organisationId', 'organisationIds', filters.organisationId);
   if (filters.divisionId) params.divisionId = filters.divisionId;
   return params;
@@ -103,59 +105,61 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
  */
 export const ticketCountsQueryOptions = (
   filters: TicketFilters,
-  scopedPrincipalId: string | undefined,
+  fromCustomers: boolean,
 ) => {
   const params = countsParams(filters);
   return {
     // Prefixed with 'tickets' so the invalidateQueries({ queryKey: ['tickets'] })
     // that every ticket mutation and every realtime event already fires reaches
     // these badges too. TanStack matches by prefix.
-    queryKey: ['tickets', 'counts', scopedPrincipalId ?? 'tenant', params],
+    queryKey: [
+      'tickets',
+      'counts',
+      fromCustomers ? 'from-customers' : 'own',
+      params,
+    ],
     // A count that is a few seconds stale is fine; re-counting on every focus
     // change is not. This is the ceiling when nothing invalidates, not the
     // normal path.
     staleTime: 30 * 1000,
     queryFn: async (): Promise<TicketCountsResponse> => {
-      const base = requireHelpdeskApiBaseUrl();
-      const url = scopedPrincipalId
-        ? `${base}/v1/principals/${scopedPrincipalId}/tickets/counts`
-        : `${base}/v1/tickets/counts`;
-
-      // authorizedAxios rather than the generated v1TicketsCountsGet: the
-      // regenerated client predates the multi-select filters sent here
-      // (categoryIds, assigneeIds, includeUnassigned, tenantIds,
-      // organisationIds) and the assignees' openCount. Swap to the generated
-      // call once it declares them.
-      const { data } = await authorizedAxios.get<TicketCountsResponse>(url, {
-        params,
-        // tagIds and assigneeIds go out as repeated `tagIds=` rather than
-        // `tagIds[0]=`, matching how the ticket list serialises them.
-        paramsSerializer: { indexes: null },
-      });
+      // Both endpoints take the same filters in the same order: the tenant's
+      // own tickets, or the provider's From customers queue.
+      const args = [
+        undefined, // customStatusId
+        params.priority as HelpdeskDomainTicketsEnumsTicketPriority | undefined,
+        params.categoryId as string | undefined,
+        params.assigneeId as string | undefined,
+        undefined, // requesterId
+        params.searchTerm as string | undefined,
+        params.tagIds as string[] | undefined,
+        params.organisationId as string | undefined,
+        params.divisionId as string | undefined,
+        undefined, // unreadOnly
+        undefined, // spamOnly
+        params.assigneeIds as string[] | undefined,
+        params.includeUnassigned as boolean | undefined,
+        params.categoryIds as string[] | undefined,
+        params.organisationIds as string[] | undefined,
+        params.searchUserIds as string[] | undefined,
+        params.searchScopeIds as string[] | undefined,
+      ] as const;
+      const { data } = fromCustomers
+        ? await (
+            await createHelpdeskApiClient(ProviderCustomerTicketsApi)
+          ).v1ProviderSupportCustomerTicketsCountsGet(...args)
+        : await (await createHelpdeskApiClient(TicketsApi)).v1TicketsCountsGet(
+            ...args,
+          );
       return data;
     },
   };
 };
 
-/**
- * Whether counts read the principal route, and for which principal. The same
- * rule the grid uses, so a badge and the rows beneath it always come from the
- * same population.
- */
-export const useCountsPrincipal = (): string | undefined => {
-  const { isServiceAdmin, principalId } = useHelpdeskAccess();
-  return isServiceAdmin && principalId ? principalId : undefined;
-};
-
-export const useTicketCounts = (filters: TicketFilters = {}) => {
-  /*
-   * Same scope branch as the grid and as the hooks this replaces. Counting in
-   * the tenant scope while the rows come from the principal scope is the exact
-   * defect the old assignee rail's counts were written to stop repeating, so the
-   * principal has its own counts route rather than a tenant-scoped
-   * approximation.
-   */
-  const scopedPrincipalId = useCountsPrincipal();
+export const useTicketCounts = (
+  filters: TicketFilters = {},
+  { fromCustomers = false }: { fromCustomers?: boolean } = {},
+) => {
   // Same name matching as the grid, so a badge counts exactly the rows the
   // search lists.
   const search = useSearchMatches(filters.searchTerm);
@@ -164,7 +168,7 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
     [filters, search.userIds, search.scopeIds],
   );
   const query = useQuery({
-    ...ticketCountsQueryOptions(searched, scopedPrincipalId),
+    ...ticketCountsQueryOptions(searched, fromCustomers),
     enabled: search.ready,
     // The badges keep their numbers while a changed filter is recounted,
     // rather than vanishing and reappearing on every tick of the Assignee

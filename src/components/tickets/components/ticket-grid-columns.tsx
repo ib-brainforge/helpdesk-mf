@@ -11,7 +11,6 @@ import type { UserInfo } from '@/hooks/useUserEnrichment';
 import {
   type CustomTicketStatusDto,
   buildStatusOptions,
-  customStatusesApply,
   resolveStatusKey,
 } from '@/types/custom-status';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
@@ -163,16 +162,18 @@ interface CreateColumnsOptions {
   ) => void;
   /** Tenant-defined statuses to offer alongside the built-in three. */
   customStatuses?: CustomTicketStatusDto[];
-  /**
-   * The company those custom statuses belong to (the viewer's). Another
-   * company's row is offered the built-in three only: the backend refuses a
-   * custom status from a different company.
-   */
-  customStatusTenantId?: string;
   onChangePriority?: (ticketId: string, priority: TicketPriority) => void;
   timezone?: string | null;
-  /** Resolved company (tenant) and organisation names for their columns. */
+  /** Resolved tenant and organisation names for their columns. */
   scopeNames: UseScopeNamesResult;
+  /**
+   * The provider's "From customers" queue: the Tenant column becomes
+   * Customer (the submitting tenant, with "Forwarded by" when a customer
+   * forwarded the ticket) and Requester reads Raised by.
+   */
+  fromCustomers?: boolean;
+  /** Where a ticket's page lives; defaults to the Tenant view's /tickets. */
+  ticketBasePath?: string;
 }
 
 /*
@@ -209,6 +210,12 @@ export const TICKET_DEFAULT_HIDDEN = [
   'origin',
   'id',
 ];
+/** Column names in the provider's "From customers" queue. */
+export const FROM_CUSTOMERS_COLUMN_LABELS: Record<string, string> = {
+  ...TICKET_COLUMN_LABELS,
+  company: 'Customer',
+  requester: 'Raised by',
+};
 /** Muted notes beside hidden columns in the chooser. */
 export const TICKET_COLUMN_HINTS: Record<string, string> = {
   status: '(shown under Subject)',
@@ -278,9 +285,7 @@ export const createTicketColumns = (
               </span>
             )}
             <NavLink
-              to={`/tickets/${row.original.id}`}
-              // The ticket page runs in the ticket's own company.
-              state={{ tenantId: row.original.tenantId }}
+              to={`${options.ticketBasePath ?? '/tickets'}/${row.original.id}`}
               title={value}
               className="min-w-0 truncate text-[13px] leading-[18px] font-medium text-foreground hover:text-blue hover:underline"
             >
@@ -314,12 +319,41 @@ export const createTicketColumns = (
    */
   columnHelper.display({
     id: 'company',
-    header: 'Tenant',
+    header: options.fromCustomers ? 'Customer' : 'Tenant',
     cell: ({ row }) => {
-      const company = scopeName(
-        row.original.tenantId,
-        id => options.scopeNames.byTenantId.get(id)?.tenantName,
-      );
+      const tenantNameOf = (id: string) =>
+        options.scopeNames.byTenantId.get(id)?.tenantName;
+      if (options.fromCustomers) {
+        const customer = scopeName(
+          row.original.submitterTenantId ?? row.original.tenantId,
+          tenantNameOf,
+        );
+        const forwardedBy = scopeName(
+          row.original.forwardedFromTenantId,
+          tenantNameOf,
+        );
+        return (
+          <span className="block min-w-0 text-xs leading-4">
+            {customer && (
+              <span
+                className="block truncate font-medium text-foreground"
+                title={customer}
+              >
+                {customer}
+              </span>
+            )}
+            {forwardedBy && (
+              <span
+                className="block truncate text-[#8c8f97]"
+                title={`Forwarded by ${forwardedBy}`}
+              >
+                Forwarded by {forwardedBy}
+              </span>
+            )}
+          </span>
+        );
+      }
+      const company = scopeName(row.original.tenantId, tenantNameOf);
       const organisation = scopeName(row.original.organisationId, id =>
         options.scopeNames.byOrganisationId.get(id),
       );
@@ -387,7 +421,7 @@ export const createTicketColumns = (
   }),
   columnHelper.display({
     id: 'requester',
-    header: 'Requester',
+    header: options.fromCustomers ? 'Raised by' : 'Requester',
     cell: ({ row }) => {
       const { requesterUserInfo, requesterName } = row.original;
       // An email-only contact has no user account, only a name: it still
@@ -527,11 +561,7 @@ export const createTicketColumns = (
                 be applied from the ticket page but not from the grid.
               */}
               {buildStatusOptions(
-                customStatusesApply(options.customStatusTenantId, [
-                  row.original.tenantId,
-                ])
-                  ? (options.customStatuses ?? [])
-                  : [],
+                options.customStatuses ?? [],
                 row.original.customStatusId,
               ).map(opt => (
                 <DropdownItem

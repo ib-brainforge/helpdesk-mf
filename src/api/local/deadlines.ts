@@ -10,17 +10,12 @@
  * This is the ONE client for the preview. Team B imports it (by cherry-pick),
  * so do not add a second copy anywhere.
  */
-import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 import { scopedRequest } from './scoped';
 
 export type DeadlinePriority = 'Critical' | 'High' | 'Normal' | 'Low';
 
-/**
- * Where a policy's effective values come from: the organisation's own, its
- * company's, the principal's default, or the built-in default when the
- * principal has saved nothing.
- */
+/** Where a policy's effective values come from. */
 export type DeadlinePolicySource =
   | 'Organisation'
   | 'Company'
@@ -74,28 +69,6 @@ export interface DeadlinePreviewDto extends TicketDeadlineDto {
   };
 }
 
-export interface CompanyDeadlinePolicyInput {
-  clockMode: 'BusinessHours' | 'AllHours';
-  /** IANA zone, e.g. "Australia/Sydney". */
-  timeZoneId: string;
-  /** e.g. "AU-NSW", or null for none. Superseded by holidayRegion. */
-  holidayCalendar: string | null;
-  /**
-   * The state whose public holidays the clock skips: "NSW", "VIC", "QLD",
-   * "WA", "SA", "TAS", "ACT", "NT", or null for none. Being added by the
-   * backend; until then it is absent and holidayCalendar says the same.
-   */
-  holidayRegion?: string | null;
-  /** Exactly 7, 0 = Sunday. Times are "HH:mm". */
-  days: { dayOfWeek: number; isOpen: boolean; start: string; end: string }[];
-  /** Exactly 4, fix >= reply > 0. */
-  targets: {
-    priority: DeadlinePriority;
-    replyMinutes: number;
-    fixMinutes: number;
-  }[];
-}
-
 /**
  * Deadline a new ticket would get, for the New Request review step. The
  * company comes from the scoped token, never the body, so pass the token
@@ -111,25 +84,3 @@ export const previewDeadline = (
     token: scopeToken,
     body,
   });
-
-/**
- * Deadline preview for the Company Deadlines worked example (principal
- * admins). A draft `policy` wins; without one, the organisation's policy, then
- * the company's, then the principal default applies.
- */
-export const previewCompanyDeadline = async (
-  principalId: string,
-  body: {
-    tenantId?: string | null;
-    organisationId?: string | null;
-    policy?: CompanyDeadlinePolicyInput;
-    priority: DeadlinePriority;
-    startAt?: string;
-  },
-): Promise<DeadlinePreviewDto> => {
-  const { data } = await authorizedAxios.post<DeadlinePreviewDto>(
-    `${requireHelpdeskApiBaseUrl()}/v1/principals/${principalId}/company-deadlines/preview`,
-    body,
-  );
-  return data;
-};

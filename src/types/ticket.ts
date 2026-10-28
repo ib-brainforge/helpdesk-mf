@@ -46,29 +46,30 @@ import type {
   HelpdeskApplicationTicketsDTOsTicketListDto as GeneratedTicketListDto,
 } from '@brainforgeau/helpdesk-client';
 
-export type TicketListDto = GeneratedTicketListDto & {
+export type TicketListDto = Omit<GeneratedTicketListDto, 'deadline'> & {
   // requesterName / assigneeName are now provided natively by the generated
   // client; categoryName remains a UI-only enrichment field.
   categoryName?: string;
   /**
    * The ticket's deadlines (first reply and fix), computed by the backend in
-   * the company's business hours. `policy` is always null on the list.
-   * Declared here until the client is regenerated.
+   * the tenant's business hours. `policy` is null on the list. Typed here with
+   * every instant present (null when none), where the generated type leaves
+   * them optional.
    */
   deadline?: TicketDeadlineDto | null;
 };
 
-export type TicketDto = GeneratedTicketDto & {
+export type TicketDto = Omit<GeneratedTicketDto, 'deadline'> & {
   // requesterName / assigneeName / isProblem / isPublishedAsIdea /
   // publishedAsIdeaAt are now provided natively by the generated client.
   // categoryName remains a UI-only enrichment field.
   categoryName?: string;
   customFields?: CustomFieldValueDto[];
+  /** Deadlines with the policy summary filled. */
+  deadline?: TicketDeadlineDto | null;
   // TODO: Remove these when helpdesk-backend-client exposes isDeleted and isSpam in TicketDto
   isDeleted?: boolean;
   isSpam?: boolean;
-  /** Deadlines with the policy summary filled. Until the client is regenerated. */
-  deadline?: TicketDeadlineDto | null;
   /**
    * Who a public reply is emailed to (the ticket's contact). Null when there is
    * nobody to email, which disables "Reply by email". Until the client is
@@ -131,15 +132,10 @@ export interface TicketFilters {
    */
   customStatusIds?: string[];
   /*
-   * Scope narrowing, for a service admin whose rows span tenants.
-   *
-   * Ignored on the tenant-scoped endpoint, which already answers for exactly
-   * one tenant and one organisation, so there is nothing for these to narrow.
-   *
-   * Companies and organisations are multi-selects, matched as "any of", like
-   * categoryId and assigneeId. Division stays single.
+   * Organisation and division narrowing within the caller's own tenant.
+   * Organisations are a multi-select, matched as "any of", like categoryId and
+   * assigneeId. Division stays single.
    */
-  tenantId?: string[];
   organisationId?: string[];
   divisionId?: string;
 }

@@ -2,11 +2,12 @@ import type { DeadlinePriority } from '@/api/local/deadlines';
 import { issueScopeToken } from '@/api/local/scoped';
 import { ScopeSelect } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useHelpdeskLicensedTenants } from '@/hooks/useHelpdeskLicensedTenants';
 import { useMailbox } from '@/hooks/useMailbox';
+import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { selectedContextAtom } from '@/state/auth-atoms';
+import { CONTACT_PROVIDER_PATH } from '@/views';
 import {
   BaseButton,
   BaseInput,
@@ -15,6 +16,7 @@ import {
 } from '@brainforgeau/components';
 import { useAuth, usePermissions } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
+import { NavLink } from '@modern-js/runtime/router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { type FC, useEffect, useMemo, useState } from 'react';
@@ -48,9 +50,8 @@ import { useRequestCategories } from './useRequestCategories';
  * ONE DESTINATION
  * Every request goes to Netcorp. The form does not ask, because there is no
  * other answer: the product rule is a two way conversation between the client
- * and Netcorp, so neither an internal lane nor the platform lane (BrainForge
- * engineering, Audience=Platform) belongs here. A third party in the thread
- * breaks the model.
+ * and Netcorp, so neither an internal lane nor a separate engineering lane
+ * belongs here. A third party in the thread breaks the model.
  */
 
 type StepId = 'category' | 'details' | 'questions' | 'review';
@@ -106,6 +107,14 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   // only attempted when it can succeed.
   const { hasPermission } = usePermissions();
   const canLinkAssets = hasPermission(HelpdeskPermissions.Tickets.Update);
+  // Staff raising a request for a client use the same tickets.update grant as
+  // linking assets; a separate name keeps the two meanings from blurring.
+  const canActOnBehalf = hasPermission(HelpdeskPermissions.Tickets.Update);
+  const canAuthorCategories = hasPermission(
+    HelpdeskPermissions.Categories.Manage,
+  );
+  const { data: providerContext } = useProviderSupportContext();
+  const canContactProvider = providerContext?.canContactProvider === true;
   const { categories, isLoading: categoriesLoading } = useRequestCategories();
   // Why the last create failed, shown on the review step. Cleared as soon as
   // the requester moves, so a stale message never sits over a fixed form.
@@ -116,11 +125,12 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const isBusy = isFinishing;
 
   /*
-   * Staff raising a request for a client pick the client's contact, and may
-   * email them a confirmation from their own mailbox. Clients raise their own
-   * request, so for them the contact is their account, read only, as before.
+   * Staff (agents who can edit tickets) raising a request for a client pick the
+   * client's contact, and may email them a confirmation from their own
+   * mailbox. Clients raise their own request, so for them the contact is their
+   * account, read only, as before.
    */
-  const { isServiceAdmin: isStaff } = useHelpdeskAccess();
+  const isStaff = canActOnBehalf;
   const { isConnected: mailboxConnected } = useMailbox();
   const [contact, setContact] = useState<RequestContact | null>(null);
   const [newContactEmail, setNewContactEmail] = useState('');
@@ -525,16 +535,48 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         </div>
 
         <div className="min-h-[240px]">
-          {step.id === 'category' && (
-            <div>
-              <p className="mb-0.5 text-[15px] font-semibold">
-                What is your request about?
-              </p>
-              <p className="text-light-gray mb-3 text-[13px]">
-                Pick a category. The questions on the next steps are tailored to
-                your choice.
-              </p>
-              {/*
+          {step.id === 'category' &&
+            !categoriesLoading &&
+            categories.length === 0 && (
+              <div role="status" className="py-6 text-center">
+                <p className="mb-1 text-[15px] font-semibold">
+                  No request types yet
+                </p>
+                <p className="text-light-gray mb-3 text-[13px]">
+                  There are no categories to raise a request under, so requests
+                  cannot be created here yet.
+                </p>
+                <div className="flex flex-col items-center gap-1 text-sm">
+                  {canAuthorCategories && (
+                    <NavLink
+                      to="/configuration/categories"
+                      className="text-primary hover:underline"
+                    >
+                      Add categories in Configuration
+                    </NavLink>
+                  )}
+                  {canContactProvider && (
+                    <NavLink
+                      to={CONTACT_PROVIDER_PATH}
+                      className="text-primary hover:underline"
+                    >
+                      Contact your provider
+                    </NavLink>
+                  )}
+                </div>
+              </div>
+            )}
+          {step.id === 'category' &&
+            (categoriesLoading || categories.length > 0) && (
+              <div>
+                <p className="mb-0.5 text-[15px] font-semibold">
+                  What is your request about?
+                </p>
+                <p className="text-light-gray mb-3 text-[13px]">
+                  Pick a category. The questions on the next steps are tailored
+                  to your choice.
+                </p>
+                {/*
               Cards rather than bare text buttons: an icon to scan by, the
               request type, and one line on what it is for, so the choice can
               be made without reading every label in full. One choice only, so
@@ -545,67 +587,69 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               on a screen too short for that (under 620px of page height) the
               summaries drop out and the labels alone carry the choice.
             */}
-              <div
-                role="radiogroup"
-                aria-label="Request category"
-                className="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
-              >
-                {REQUEST_CATEGORIES.map(c => {
-                  const selected = categoryKey === c.key;
-                  return (
-                    <button
-                      key={c.key}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => {
-                        setCategoryKey(c.key);
-                        setAnswers({});
-                        setPickedAssets({});
-                        setQuestionPage(0);
-                        // One choice and nothing else on this step, so
-                        // picking it moves on.
-                        setSubmitError(null);
-                        setStepIndex(1);
-                      }}
-                      className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
-                        selected
-                          ? 'border-blue bg-lighter-blue'
-                          : 'border-light hover:border-light-gray hover:bg-light/40'
-                      }`}
-                    >
-                      <span
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                <div
+                  role="radiogroup"
+                  aria-label="Request category"
+                  className="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
+                >
+                  {REQUEST_CATEGORIES.map(c => {
+                    const selected = categoryKey === c.key;
+                    return (
+                      <button
+                        key={c.key}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => {
+                          setCategoryKey(c.key);
+                          setAnswers({});
+                          setPickedAssets({});
+                          setQuestionPage(0);
+                          // One choice and nothing else on this step, so
+                          // picking it moves on.
+                          setSubmitError(null);
+                          setStepIndex(1);
+                        }}
+                        className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
                           selected
-                            ? 'bg-blue text-white'
-                            : 'bg-lighter-blue text-blue'
+                            ? 'border-blue bg-lighter-blue'
+                            : 'border-light hover:border-light-gray hover:bg-light/40'
                         }`}
                       >
-                        <Icon name={c.icon} className="h-5 w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
-                          {c.label}
+                        <span
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                            selected
+                              ? 'bg-blue text-white'
+                              : 'bg-lighter-blue text-blue'
+                          }`}
+                        >
+                          <Icon name={c.icon} className="h-5 w-5" />
                         </span>
-                        <span className="text-light-gray mt-0.5 block text-xs leading-snug [@media(max-height:620px)]:hidden">
-                          {c.summary}
+                        <span className="min-w-0 flex-1">
+                          <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
+                            {c.label}
+                          </span>
+                          <span className="text-light-gray mt-0.5 block text-xs leading-snug [@media(max-height:620px)]:hidden">
+                            {c.summary}
+                          </span>
                         </span>
-                      </span>
-                      {selected && (
-                        <Icon
-                          name="CheckCircleIcon"
-                          className="text-blue h-5 w-5 shrink-0"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
+                        {selected && (
+                          <Icon
+                            name="CheckCircleIcon"
+                            className="text-blue h-5 w-5 shrink-0"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {showErrors && !category && (
+                  <p className="text-red-dark mt-2 text-sm">
+                    Choose a category.
+                  </p>
+                )}
               </div>
-              {showErrors && !category && (
-                <p className="text-red-dark mt-2 text-sm">Choose a category.</p>
-              )}
-            </div>
-          )}
+            )}
 
           {step.id === 'details' && (
             <div>

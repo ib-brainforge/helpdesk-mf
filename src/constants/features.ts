@@ -20,8 +20,7 @@ export const TICKET_LINKS_ENABLED = false;
 
 /**
  * Approvals: the Approval card on a ticket, the Approvals pages (/approvals,
- * Configuration's /configuration/approval-workflows and the principal
- * console's /principal/:id/approvals) with their menu entry, the "Request
+ * Configuration's /configuration/approval-workflows) with their menu entry, the "Request
  * Approval" automation action and the "Require approval" step on a workflow
  * transition. Off by product decision: Helpdesk does not need approvals.
  * While off, the routes redirect away and nothing fetches approval data.
@@ -35,11 +34,3 @@ export const APPROVALS_ENABLED = false;
  * fetching time entries.
  */
 export const TIME_TRACKING_ENABLED = false;
-
-/**
- * The IT Support workspace: the Helpdesk / IT Support switcher in the navbar,
- * the /it-support pages and their own side menu (see src/workspaces.ts). On,
- * for principal admins only. While off, the switcher is hidden and every
- * /it-support URL redirects to Tickets.
- */
-export const IT_SUPPORT_WORKSPACE_ENABLED = false;

@@ -6,9 +6,8 @@ import { type TicketTabKey, filtersForTab } from './ticketTabs';
  *
  * Every filter, the sort, the page size and the page are written to the query
  * string and read back on load, so a copied link reopens the same list. Lists
- * are comma separated. ?tab=, ?assignee=me|unassigned, ?tenant= and
- * ?organisation= keep the meaning older links gave them (a single id is a
- * list of one). Nothing is written for a default: page 1, 25 rows, and the
+ * are comma separated. ?tab=, ?assignee=me|unassigned, and ?tenant= keep
+ * the meaning older links gave them (a single id is a list of one). Nothing is written for a default: page 1, 25 rows, and the
  * statuses a tab sets by itself, so Clear filters leaves a clean URL.
  */
 
@@ -20,7 +19,6 @@ const KEYS = [
   'cstatus',
   'priority',
   'tenant',
-  'organisation',
   'category',
   'tag',
   'division',
@@ -68,8 +66,6 @@ export const filtersFromUrl = (
   set('status', list(params.get('status')));
   set('customStatusIds', list(params.get('cstatus')));
   set('priority', list(params.get('priority')));
-  set('tenantId', list(params.get('tenant')));
-  set('organisationId', list(params.get('organisation')));
   set('categoryId', list(params.get('category')));
   set('tagIds', list(params.get('tag')));
   set('divisionId', params.get('division') || undefined);
@@ -178,8 +174,6 @@ export const writeListToUrl = (
     if (filters.overdueOnly) put('overdue', '1');
   }
   put('priority', filters.priority);
-  put('tenant', filters.tenantId);
-  put('organisation', filters.organisationId);
   put('category', filters.categoryId);
   put('tag', filters.tagIds);
   put('division', filters.divisionId);
@@ -191,17 +185,4 @@ export const writeListToUrl = (
   if (pagination.pageSize !== DEFAULT_PAGE_SIZE)
     put('size', String(pagination.pageSize));
   return params;
-};
-
-/**
- * The Overdue tab of the Tickets list for one tenant, or one of its
- * organisations: where every "N late" count links to.
- */
-export const overdueTicketsHref = (
-  tenantId: string,
-  organisationId?: string | null,
-): string => {
-  const params = new URLSearchParams({ tab: 'overdue', tenant: tenantId });
-  if (organisationId) params.set('organisation', organisationId);
-  return `/tickets?${params}`;
 };
