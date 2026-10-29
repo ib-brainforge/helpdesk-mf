@@ -1,9 +1,11 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ProviderCategories } from '@/components/provider/ProviderCategories';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
+import {
+  ProviderPermissions,
+  withAuthenticationRequired,
+} from '@brainforgeau/security';
 import React from 'react';
 
 /**
@@ -12,9 +14,7 @@ import React from 'react';
  */
 function ProviderCategoriesPage() {
   return (
-    <ProviderViewGuard
-      requiredPermissions={[HelpdeskPermissions.Provider.Support]}
-    >
+    <ProviderViewGuard requiredPermissions={[ProviderPermissions.Support]}>
       <PageBody>
         <PageHeader
           title="Provider Categories"

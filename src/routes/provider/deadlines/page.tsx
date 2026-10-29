@@ -2,10 +2,12 @@ import { AppAuthSplash } from '@/components/AppSplash';
 import { TenantDeadlineList } from '@/components/company-deadlines/components/TenantDeadlineList';
 import { useTenantDeadlines } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { useListParams } from '@/hooks/useListParams';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
-import { withAuthenticationRequired } from '@brainforgeau/security';
+import {
+  ProviderPermissions,
+  withAuthenticationRequired,
+} from '@brainforgeau/security';
 import React from 'react';
 
 const FLAGS = ['custom', 'hasLate'] as const;
@@ -45,9 +47,7 @@ function TenantDeadlinesPage() {
 
 function Page() {
   return (
-    <ProviderViewGuard
-      requiredPermissions={[HelpdeskPermissions.Provider.Support]}
-    >
+    <ProviderViewGuard requiredPermissions={[ProviderPermissions.Support]}>
       <TenantDeadlinesPage />
     </ProviderViewGuard>
   );

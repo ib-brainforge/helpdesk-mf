@@ -6,6 +6,7 @@
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { ruleForPath } from '@/routes/route-permissions';
 import { RAISED_WITH_PROVIDER_PATH } from '@/views';
+import { ProviderPermissions } from '@brainforgeau/security';
 import type { GuardedItem } from '@brainforgeau/security';
 
 export interface NavItem {
@@ -145,8 +146,12 @@ export const HELPDESK_NAV: NavSections = {
 
 /**
  * The Provider view: a provider's office working its tenants' tickets.
- * Items carry the permission of the page they open (the Provider.Support
- * permission for From tenants).
+ * Items carry the permission of the page they open (the provider.support
+ * permission for From tenants). The check is flat across the context token's
+ * app entries and honours elevated access, so the key is accepted from the
+ * `provider` entry or from the old `helpdesk` entry while identity-management
+ * PR-2c is pending; there is no second code path, and nothing to remove later
+ * except this comment.
  */
 export const PROVIDER_NAV: NavSections = {
   top: [
@@ -162,21 +167,21 @@ export const PROVIDER_NAV: NavSections = {
       href: '/provider/tickets',
       icon: 'text',
       testId: 'nav-provider-tickets',
-      requiredPermissions: [HelpdeskPermissions.Provider.Support],
+      requiredPermissions: [ProviderPermissions.Support],
     },
     {
       label: 'Tenant Deadlines',
       href: '/provider/deadlines',
       icon: 'clock',
       testId: 'nav-provider-deadlines',
-      requiredPermissions: [HelpdeskPermissions.Provider.Support],
+      requiredPermissions: [ProviderPermissions.Support],
     },
     {
       label: 'Provider Categories',
       href: '/provider/categories',
       icon: 'tag',
       testId: 'nav-provider-categories',
-      requiredPermissions: [HelpdeskPermissions.Provider.Support],
+      requiredPermissions: [ProviderPermissions.Support],
     },
     {
       label: 'Reports',

@@ -2,9 +2,11 @@ import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
 import { TenantDeadlinePage } from '@/components/company-deadlines/components/TenantDeadlinePage';
 import { useCompanyDeadlinePolicy } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { useScopeNames } from '@/hooks/useScopeNames';
-import { withAuthenticationRequired } from '@brainforgeau/security';
+import {
+  ProviderPermissions,
+  withAuthenticationRequired,
+} from '@brainforgeau/security';
 import { useLocation, useParams } from '@modern-js/runtime/router';
 import React from 'react';
 
@@ -34,9 +36,7 @@ function TenantDeadlinesDetail() {
 
 function Page() {
   return (
-    <ProviderViewGuard
-      requiredPermissions={[HelpdeskPermissions.Provider.Support]}
-    >
+    <ProviderViewGuard requiredPermissions={[ProviderPermissions.Support]}>
       <TenantDeadlinesDetail />
     </ProviderViewGuard>
   );

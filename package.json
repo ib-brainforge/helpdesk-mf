@@ -12,6 +12,7 @@
     "serve": "modern serve",
     "new": "modern new",
     "lint": "biome check",
+    "test": "vitest run",
     "prepare": "simple-git-hooks",
     "upgrade": "modern upgrade",
     "dev:with-packages": "echo \"Start package servers first, then run: npm run dev\"",
@@ -43,7 +44,7 @@
     "@brainforgeau/identity-management-client": "0.5.1439-develop.403a995",
     "@brainforgeau/observability": "0.5.123-develop.8536af9",
     "@brainforgeau/rules-ui": "0.5.182",
-    "@brainforgeau/security": "0.5.461-develop.20c6f6b",
+    "@brainforgeau/security": "0.5.480-develop.0fd1aae",
     "@brainforgeau/theme": "0.5.110",
     "@brainforgeau/tracking-client": "0.5.2214-develop.755cbc4",
     "@brainforgeau/workflow-ui": "0.5.25",
@@ -114,7 +115,8 @@
     "rimraf": "^6.0.1",
     "simple-git-hooks": "^2.11.1",
     "tailwindcss": "4.3.0",
-    "typescript": "~5.7.3"
+    "typescript": "~5.7.3",
+    "vitest": "^5.0.5"
   },
   "pnpm": {
     "overrides": {

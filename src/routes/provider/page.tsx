@@ -1,8 +1,8 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
-import { HelpdeskPermissions } from '@/constants/permissions';
 import { usePageTitle } from '@brainforgeau/components/page';
 import {
+  ProviderPermissions,
   usePermissions,
   withAuthenticationRequired,
 } from '@brainforgeau/security';
@@ -19,7 +19,7 @@ function Redirect() {
   return (
     <Navigate
       to={
-        hasPermission(HelpdeskPermissions.Provider.Support)
+        hasPermission(ProviderPermissions.Support)
           ? '/provider/tickets'
           : '/provider/dashboard'
       }
