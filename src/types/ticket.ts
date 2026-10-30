@@ -1,3 +1,5 @@
+import type { TicketDeadlineDto } from '@/api/local/deadlines';
+
 // Re-export types from generated client
 export {
   type HelpdeskApplicationTicketsDTOsTicketListDto,
@@ -44,22 +46,44 @@ import type {
   HelpdeskApplicationTicketsDTOsTicketListDto as GeneratedTicketListDto,
 } from '@/api/helpdesk-client';
 
-export type TicketListDto = GeneratedTicketListDto & {
+export type TicketListDto = Omit<GeneratedTicketListDto, 'deadline'> & {
   // requesterName / assigneeName are now provided natively by the generated
   // client; categoryName remains a UI-only enrichment field.
   categoryName?: string;
+  /**
+   * The ticket's deadlines (first reply and fix), computed by the backend in
+   * the tenant's business hours. `policy` is null on the list. Typed here with
+   * every instant present (null when none), where the generated type leaves
+   * them optional.
+   */
+  deadline?: TicketDeadlineDto | null;
 };
 
-export type TicketDto = GeneratedTicketDto & {
+export type TicketDto = Omit<GeneratedTicketDto, 'deadline'> & {
   // requesterName / assigneeName / isProblem / isPublishedAsIdea /
   // publishedAsIdeaAt are now provided natively by the generated client.
   // categoryName remains a UI-only enrichment field.
   categoryName?: string;
   customFields?: CustomFieldValueDto[];
+  /** Deadlines with the policy summary filled. */
+  deadline?: TicketDeadlineDto | null;
   // TODO: Remove these when helpdesk-backend-client exposes isDeleted and isSpam in TicketDto
   isDeleted?: boolean;
   isSpam?: boolean;
+  /**
+   * Who a public reply is emailed to (the ticket's contact). Null when there is
+   * nobody to email, which disables "Reply by email". Until the client is
+   * regenerated.
+   */
+  emailRecipient?: TicketEmailRecipientDto | null;
 };
+
+export interface TicketEmailRecipientDto {
+  contactId: string | null;
+  /** Null when the contact has no display name; show the address instead. */
+  name: string | null;
+  address: string;
+}
 
 export interface CustomFieldValueDto {
   fieldId: string;
@@ -78,7 +102,18 @@ export interface TicketFilters {
   status?: string[]; // API takes single value, but UI may filter multiple
   priority?: string[];
   categoryId?: string[];
+  /**
+   * People chosen in the Assignee filter, matched as "any of" (together with
+   * unassigned tickets when includeUnassigned is set). The "Assigned to you"
+   * tab sets this to the current user.
+   */
   assigneeId?: string[];
+  /**
+   * The Assignee filter's "Unassigned" option: unassigned tickets are part of
+   * the selection. On its own it means unassigned only, which with the open
+   * statuses is what the "Unassigned" tab is.
+   */
+  includeUnassigned?: boolean;
   searchTerm?: string;
   /**
    * People and places whose NAME matched searchTerm, resolved on this side
@@ -88,7 +123,6 @@ export interface TicketFilters {
   searchUserIds?: string[];
   searchScopeIds?: string[];
   tagIds?: string[]; // Filter by tag IDs
-  unassignedOnly?: boolean;
   /** When true, only tickets past their due date are returned (backend OverdueOnly param). */
   overdueOnly?: boolean;
   /**
@@ -98,13 +132,11 @@ export interface TicketFilters {
    */
   customStatusIds?: string[];
   /*
-   * Scope narrowing, for a service admin whose rows span tenants.
-   *
-   * Ignored on the tenant-scoped endpoint, which already answers for exactly
-   * one tenant and one organisation, so there is nothing for these to narrow.
+   * Organisation and division narrowing within the caller's own tenant.
+   * Organisations are a multi-select, matched as "any of", like categoryId and
+   * assigneeId. Division stays single.
    */
-  tenantId?: string;
-  organisationId?: string;
+  organisationId?: string[];
   divisionId?: string;
 }
 

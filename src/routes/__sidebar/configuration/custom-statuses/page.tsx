@@ -120,7 +120,7 @@ function CustomStatusesPage() {
   // border (see the REVIEW note by the `<ListPage>` call re: the
   // `selectionColumn` half of `tableProps`). List-side re-scoping remains
   // "Change all N out-of-context records" only; per-record scope editing is
-  // always available from the edit modal.
+  // always available from the edit modal's own `RecordStrip`.
   const scope = useScopeList({
     rows: customStatuses,
     getMeta: row => toWireMeta(row.meta),
@@ -366,13 +366,15 @@ function CustomStatusesPage() {
           {/* Out-of-context banner + bulk re-scoping (DTO tenancy/scope
               metadata initiative) -- entirely driven by `useScopeList`
               (`scope.bannerProps`/`scope.editorProps`/`scope.isExpanded`). */}
-          {scope.bannerProps && scope.editorProps && (
-            <div className="mt-3">
+          <div className="mt-3">
+            {scope.bannerProps && (
               <ListScopeStrip {...scope.bannerProps}>
-                {scope.isExpanded && <BulkScopeEditor {...scope.editorProps} />}
+                {scope.isExpanded && scope.editorProps && (
+                  <BulkScopeEditor {...scope.editorProps} />
+                )}
               </ListScopeStrip>
-            </div>
-          )}
+            )}
+          </div>
         </>
       }
       empty={

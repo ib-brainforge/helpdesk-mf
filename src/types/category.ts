@@ -6,7 +6,6 @@ export interface CategoryDto {
   sectionId?: string;
   sectionName?: string;
   accessLevel: AccessLevel;
-  defaultAssigneeId?: string;
   // Correct field names from HelpdeskApplicationCategoriesModelsCategoryDto.
   // The old emailRoutingAddress / emailRoutingProtocol fields did not exist on the backend DTO.
   fromEmailAddress?: string;
@@ -38,7 +37,6 @@ export interface CreateCategoryCommand {
   name: string;
   sectionId?: string;
   accessLevel: AccessLevel;
-  defaultAssigneeId?: string;
   fromEmailAddress?: string;
   fromEmailName?: string;
   useFromAddressAsReplyTo?: boolean;
@@ -51,7 +49,6 @@ export interface UpdateCategoryCommand {
   name: string;
   sectionId?: string;
   accessLevel: AccessLevel;
-  defaultAssigneeId?: string;
   fromEmailAddress?: string;
   fromEmailName?: string;
   useFromAddressAsReplyTo?: boolean;

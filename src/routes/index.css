@@ -362,3 +362,148 @@ tr:has([data-preset-row]) td:has(input[type="checkbox"]) > * {
   border-color: #3f3f46 !important;
   color: #a1a1aa !important;
 }
+
+/* Tabs: the underline is the only indicator.
+ *
+ * BaseTabs (shared library) gives the selected tab
+ * `shadow-[0_1px_0_0_blue,inset_0_-1px_0_0_blue]` on top of its border-b-2
+ * underline, and HeroUI's focus style adds a ring. At fractional scaling
+ * (125% on a 1280 laptop) those shadows bleed into thin blue lines down the
+ * tab's sides. Every tab in the app goes through .tabs__tab, so this covers
+ * all of them: no shadow, ring, outline or side borders, ever. Keyboard focus
+ * stays visible as a lighter underline on a tab that is not selected. */
+@layer utilities {
+  .tabs__tab,
+  .tabs__tab[data-selected="true"],
+  .tabs__tab[data-focus-visible="true"],
+  .tabs__tab:focus-visible {
+    box-shadow: none !important;
+    outline: none !important;
+    border-top-width: 0 !important;
+    border-left-width: 0 !important;
+    border-right-width: 0 !important;
+  }
+  .tabs__tab[data-focus-visible="true"]:not([data-selected="true"]),
+  .tabs__tab:focus-visible:not([data-selected="true"]) {
+    border-bottom-color: color-mix(in oklab, var(--color-blue) 50%, transparent) !important;
+  }
+}
+
+/* Dark mode: soft grey lines on the tickets tab and filter bar.
+ *
+ * The shared inputs, tag selects and bordered buttons draw their lines in
+ * --color-light (#d1d9e0), which the dark theme never redefines, so they
+ * read as bright white. Only the LINES change, never the token: the same
+ * token colours text in dark mode (tab labels), and redefining it made that
+ * text nearly invisible. Light mode is untouched. */
+@layer utilities {
+  .dark .helpdesk-soft-borders [class*="border-light"],
+  .dark .helpdesk-soft-borders [class*="*:border-light"] > * {
+    border-color: rgb(255 255 255 / 0.14);
+  }
+  .dark
+    .helpdesk-soft-borders
+    [class*="shadow-[inset_0_0_0_1px_var(--color-light)]"]:not(:hover) {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  }
+}
+
+/* The clean data table, in both themes, for every BaseTable in Helpdesk
+ * (tickets, reports, configuration lists), each inside its scroll frame
+ * (.group/table-scroll).
+ *
+ * The shared table gives every cell a full 1px border, a grid. Here: no
+ * vertical dividers, a faint line between rows, a lightly tinted header with
+ * one bottom line, and a frame as faint as the rows. One set of rules; only
+ * the colours differ per theme, through our own --hd-table-* properties (the
+ * theme's tokens are left alone, since they also colour text). Only border
+ * colours and widths and the header background are set: text, row hover and
+ * selected rows keep their own styles. The column resize handle is its own
+ * element, not a cell border, so it still shows on hover. */
+@layer utilities {
+  .group\/table-scroll {
+    --hd-table-line: rgb(0 0 0 / 0.07);
+    --hd-table-head-line: rgb(0 0 0 / 0.12);
+    --hd-table-head-bg: color-mix(in srgb, black 3%, white);
+    border-color: var(--hd-table-line);
+  }
+  .dark .group\/table-scroll {
+    --hd-table-line: rgb(255 255 255 / 0.08);
+    --hd-table-head-line: rgb(255 255 255 / 0.12);
+    /* Opaque, so a sticky header never shows rows scrolling under it. */
+    --hd-table-head-bg: color-mix(in srgb, white 4%, var(--color-dark));
+  }
+  .group\/table-scroll :is(th, td) {
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom: 1px solid var(--hd-table-line);
+  }
+  .group\/table-scroll thead :is(th, td) {
+    background-color: var(--hd-table-head-bg);
+    border-bottom-color: var(--hd-table-head-line);
+  }
+  .group\/table-scroll tbody tr:last-child > :is(th, td) {
+    border-bottom-width: 0;
+  }
+}
+
+/* Dark mode: readable filter text.
+ *
+ * In the shared inputs and selects the placeholder ("All assignees", "Any
+ * status", "Search tickets...") and the trigger text are mid greys meant for
+ * a white field, so on a dark field they read as disabled. Under .dark, in
+ * our filter rows only (the tickets filter bar, the Reports filters and the
+ * Company Deadlines search), placeholders become white at 70% and chosen
+ * values full white. Light mode is untouched. */
+@layer utilities {
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) input::placeholder,
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) .text-gray-300,
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) .text-light-gray {
+    color: rgb(255 255 255 / 0.7);
+  }
+  .dark
+    :is(.helpdesk-soft-borders, .helpdesk-filter-row)
+    [class*="border-light"][class*="text-gray"],
+  .dark :is(.helpdesk-soft-borders, .helpdesk-filter-row) input {
+    color: #fff;
+  }
+}
+
+/* Dark mode: readable options in the multi-select filter lists.
+ *
+ * The shared tag select's list (Assignee, Status, Priority, Company,
+ * Organisation, the More filters selects, the Reports filters) sets no text
+ * colour of its own, so its options inherit the page's dark-mode text,
+ * --color-light (#d1d9e0), and its search placeholder is that same grey: on
+ * the dark list they read as disabled. The list renders in a portal, so it is
+ * matched by the list's own classes (a .popover dialog with the tag select's
+ * border-[#D1D9E0] and overscroll-none), not by the filter bar. Under .dark
+ * only: options and the search text full white, the placeholder white at
+ * 70%, a faint white hover on unticked rows. Ticked rows keep their accent,
+ * disabled options keep their opacity-50, and the blue "Clear" row keeps its
+ * colour. Light mode and the --color-light token are untouched. */
+@layer utilities {
+  .dark .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"] {
+    color: #fff;
+  }
+  /* Each option's text is a span with its own text-gray-300 (a mid grey on
+   * dark), so the colour above never reaches it. Ticked rows use the same
+   * span; a disabled option's row keeps its opacity-50, so it stays dimmed. */
+  .dark
+    .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
+    label
+    > span.text-gray-300 {
+    color: #fff;
+  }
+  .dark
+    .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
+    input::placeholder {
+    color: rgb(255 255 255 / 0.7);
+  }
+  .dark
+    .popover[class*="border-[#D1D9E0]"][class*="overscroll-none"]
+    label.border-transparent:not(.cursor-not-allowed):hover {
+    background-color: rgb(255 255 255 / 0.06);
+  }
+}

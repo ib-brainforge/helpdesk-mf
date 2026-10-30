@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { RouteGuard, ruleForPath } from './route-permissions';
+import { RouteGuard } from './route-permissions';
 
 // css-base-split: helpdesk-mf's single, permanent base stylesheet —
 // precompiled Tailwind preflight + @brainforgeau/theme tokens (`:root`) +
@@ -69,6 +69,7 @@ import {
   ErrorBoundary,
   SideNav,
   type SideNavDesktopMode,
+  type ViewSwitchSegment,
   lazyWithRetry,
   useNavbarAction,
 } from '@brainforgeau/components';
@@ -77,26 +78,38 @@ import {
   PageTemplateProvider,
 } from '@brainforgeau/components/page';
 import {
-  type GuardedItem,
   LicenseGuard,
+  VIEW_DEFINITIONS,
   useAuth,
   usePermissions,
+  usePosition,
   useWhitelabel,
 } from '@brainforgeau/security';
-import { NavLink, Outlet, useLocation } from '@modern-js/runtime/router';
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from '@modern-js/runtime/router';
 
 const TopNavbar = lazyWithRetry(
   () => import('@brainforgeau/navbar/Navbar'),
   m => m?.TopNavbar,
 );
 import { Logo } from '@/components/Logo';
+import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
 import { TEST_IDS } from '@/constants/testIds';
+import { useProviderSupportContext } from '@/hooks/useProviderSupport';
+import { HELPDESK_NAV, PROVIDER_NAV } from '@/navigation';
 import { PageTracker } from '@/observability';
-import { hubConnectedAtom } from '@/state/config';
 import { getAppConfig } from '@/state/config';
-import { SignalIcon } from '@heroicons/react/24/solid';
-import { useAtomValue } from 'jotai';
+import {
+  PROVIDER_VIEW_HOME,
+  RAISED_WITH_PROVIDER_PATH,
+  TENANT_VIEW_HOME,
+  viewForPath,
+} from '@/views';
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -130,17 +143,10 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.configuration.workflows.rule-migration-report':
     'Rule Migration Report',
   'helpdesk.reports': 'Reports',
-  'helpdesk.reports.summary': 'Summary',
-  'helpdesk.reports.by-category': 'By Category',
-  'helpdesk.reports.by-priority': 'By Priority',
-  'helpdesk.reports.by-status': 'By Status',
   'helpdesk.reports.satisfaction': 'Satisfaction',
-  'helpdesk.reports.utilization': 'Utilization',
-  'helpdesk.reports.overdue': 'Overdue',
   'helpdesk.reports.deleted': 'Deleted',
   'helpdesk.reports.audit': 'Audit',
   'helpdesk.reports.assets': 'Assets',
-  'helpdesk.reports.companies': 'Companies',
   'helpdesk.approvals': 'Approvals',
   'helpdesk.approvals.new': 'New Approval',
   'helpdesk.admin': 'Admin',
@@ -152,145 +158,22 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
+  'helpdesk.contact-provider': 'Contact your provider',
+  'helpdesk.provider-raised': 'Raised with our provider',
+  'helpdesk.provider-deadlines': 'Tenant Deadlines',
+  'helpdesk.provider-categories': 'Provider Categories',
 };
 
 function breadcrumbI18nResolver(key: string): string {
   return BREADCRUMB_LABELS[key] ?? key;
 }
 
-interface NavItem {
-  label: string;
-  href?: string;
-  icon: string;
-  testId?: string;
-  children?: NavItem[];
-}
-
-/**
- * A menu item needs the same permission as the page it opens, taken from the
- * route table (routes/route-permissions.tsx), so the menu never offers a page
- * that would say Access Denied, and never hides one the user may open. Items
- * whose page has no rule stay visible. Groups (Configuration) are hidden by
- * the shell when none of their children survive.
- */
-const withRoutePermissions = (
-  items: GuardedItem<NavItem>[],
-): GuardedItem<NavItem>[] =>
-  items.map(item => {
-    const children = (item as { children?: GuardedItem<NavItem>[] }).children;
-    const href = (item as { href?: string }).href;
-    const rule = href ? ruleForPath(href) : undefined;
-    return {
-      ...item,
-      ...(children ? { children: withRoutePermissions(children) } : {}),
-      ...(rule ? { requiredPermissions: rule.anyOf } : {}),
-    };
-  });
-
-// Navigation items for the sidebar
-const navItemsTop: GuardedItem<NavItem>[] = withRoutePermissions([
-  {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: 'grids',
-    testId: 'nav-dashboard',
-  },
-  {
-    label: 'Tickets',
-    href: '/tickets',
-    icon: 'text',
-    testId: 'nav-tickets',
-  },
-  {
-    label: 'Knowledge Base',
-    href: '/knowledge-base',
-    icon: 'learning',
-    testId: 'nav-knowledge-base',
-  },
-  {
-    label: 'Reports',
-    href: '/reports',
-    icon: 'analytics',
-    testId: 'nav-reports',
-  },
-  // Ideas Forum is deliberately NOT linked here. The publish/unpublish path and
-  // the /ideas feed both work, but voting and commenting do not exist at any
-  // layer: GetIdeasQueryHandler returns a hardcoded 0 for VoteCount and there
-  // is no vote table. Giving a read-only list the same prominence as Tickets
-  // made a half-built feature look broken. The route is left in place, so the
-  // page is still reachable directly and nothing is deleted.
-]);
-
-const navItemsBottom: GuardedItem<NavItem>[] = withRoutePermissions([
-  // Principal Picker + helpdesk principal routes are accessible via /principal/{id}/*
-  {
-    label: 'Configuration',
-    icon: 'settings',
-    testId: 'nav-configuration',
-    children: [
-      {
-        label: 'Ticket Categories',
-        href: '/configuration/categories',
-        icon: 'folder',
-        testId: 'nav-configuration-categories',
-      },
-      {
-        label: 'Custom Statuses',
-        href: '/configuration/custom-statuses',
-        icon: 'tag',
-        testId: 'nav-configuration-custom-statuses',
-      },
-      {
-        label: 'Custom Priorities',
-        href: '/configuration/custom-priorities',
-        icon: 'flag',
-        testId: 'nav-configuration-custom-priorities',
-      },
-      {
-        label: 'Automation',
-        href: '/configuration/automations',
-        icon: 'cube',
-        testId: 'nav-configuration-automations',
-      },
-      {
-        label: 'Workflows',
-        href: '/configuration/workflows',
-        icon: 'matching',
-        testId: 'nav-configuration-workflows',
-      },
-      {
-        label: 'Integrations',
-        href: '/configuration/integrations',
-        icon: 'plug',
-        testId: 'nav-configuration-integrations',
-      },
-      {
-        label: 'Live Chat',
-        href: '/configuration/live-chat',
-        icon: 'chatO',
-        testId: 'nav-configuration-live-chat',
-      },
-    ],
-  },
-]);
-
-const HelpdeskAction = () => {
-  const hubConnected = useAtomValue(hubConnectedAtom);
-  return (
-    <div className="flex items-center gap-1.5">
-      {hubConnected && (
-        <span
-          className="flex items-center gap-1 text-green-500"
-          title="Live connection active"
-        >
-          <SignalIcon className="h-3.5 w-3.5" />
-        </span>
-      )}
-    </div>
-  );
-};
-
-export default function Layout() {
+// Everything below runs under `Providers`: the shell body calls react-query
+// hooks (useProviderSupportContext) and security hooks, which need the
+// QueryClientProvider and AuthProvider that `Providers` mounts. Calling them in
+// the component that renders `<Providers>` itself runs them above those
+// providers ("No QueryClient set").
+function LayoutShell() {
   // Desktop sidebar: extended (full) or collapsed (icons only)
   const [desktopMode, setDesktopMode] =
     useState<SideNavDesktopMode>('extended');
@@ -346,33 +229,75 @@ export default function Layout() {
   const { filterNavItems, permissions } = usePermissions();
   const location = useLocation();
   const { setAction } = useNavbarAction();
+  const navigate = useNavigate();
+  // Which view the URL is in picks the side menu. The Provider view's pages
+  // guard themselves (ProviderViewGuard); the layout only draws the chrome.
+  const view = viewForPath(location.pathname);
+  const { views } = usePosition();
+  const holdsProviderView = views.includes('provider');
+
+  // "Raised with our provider" only makes sense where a provider sits above
+  // the tenant; the owner's own office has none.
+  const { data: providerContext } = useProviderSupportContext();
+  const canContactProvider = providerContext?.canContactProvider === true;
 
   const { config: whitelabelConfig, isLoading: whitelabelLoading } =
     useWhitelabel();
+  const brandName = whitelabelConfig?.branding?.appTitle || undefined;
 
-  // Detect principal-scoped routes — hides tenant sidenav, mirrors billing-mf pattern
-  const isPrincipalRoute = useMemo(
-    () => location.pathname.startsWith('/principal/'),
-    [location.pathname],
+  // The view switch in the shared navbar. It draws outside Helpdesk's router,
+  // so it gets navigate from here, and is set again whenever the views or the
+  // active view change.
+  const segments = useMemo<ViewSwitchSegment[]>(
+    () => [
+      {
+        id: 'tenant',
+        label: VIEW_DEFINITIONS.tenant.label,
+        icon: VIEW_DEFINITIONS.tenant.icon,
+        isActive: view === 'tenant',
+        onNavigate: () => navigate(TENANT_VIEW_HOME),
+        testId: TEST_IDS.navbar.viewTenant,
+      },
+      ...(holdsProviderView
+        ? [
+            {
+              id: 'provider',
+              label: VIEW_DEFINITIONS.provider.label,
+              icon: VIEW_DEFINITIONS.provider.icon,
+              isActive: view === 'provider',
+              // From another tenant this lands on the wrong-context page
+              // (ProviderViewGuard); it never switches context by itself.
+              onNavigate: () => navigate(PROVIDER_VIEW_HOME),
+              testId: TEST_IDS.navbar.viewProvider,
+            },
+          ]
+        : []),
+    ],
+    [view, holdsProviderView, navigate],
   );
-
   useEffect(() => {
-    setAction(<HelpdeskAction />);
-    return () => setAction(null);
-  }, [setAction]);
+    setAction(<HelpdeskNavbarAction segments={segments} />);
+  }, [setAction, segments]);
+  // Cleared once, on leaving Helpdesk, not between the updates above.
+  useEffect(() => () => setAction(null), [setAction]);
 
   // Filter navigation items based on user permissions
   // Include permissions in deps to ensure re-render when context token changes
-  const navSections = useMemo(
-    () => [
-      { key: 'top', items: filterNavItems(navItemsTop) },
-      { key: 'bottom', items: filterNavItems(navItemsBottom) },
-    ],
-    [filterNavItems, permissions],
-  );
+  const navSections = useMemo(() => {
+    const nav = view === 'provider' ? PROVIDER_NAV : HELPDESK_NAV;
+    const top = nav.top.filter(
+      item =>
+        canContactProvider ||
+        (item as { href?: string }).href !== RAISED_WITH_PROVIDER_PATH,
+    );
+    return [
+      { key: 'top', items: filterNavItems(top) },
+      { key: 'bottom', items: filterNavItems(nav.bottom) },
+    ];
+  }, [filterNavItems, permissions, view, canContactProvider]);
 
-  // Someone whose role reaches only the Tickets page (a Customer, Platform
-  // Support, a Principal Agent) gets no side menu at all: a menu with one
+  // Someone whose role reaches only the Tickets page (a Tenant) gets no side
+  // menu at all: a menu with one
   // entry is just a frame around the page they are already on.
   // Counted by destination, not by entry: a group such as Configuration can
   // survive filtering with none of its pages left in it.
@@ -391,111 +316,111 @@ export default function Layout() {
     ) > 1;
 
   return (
-    <Providers>
-      <PageTemplateProvider
-        brandName={whitelabelConfig?.branding?.appTitle}
-        isLoading={whitelabelLoading}
+    <PageTemplateProvider brandName={brandName} isLoading={whitelabelLoading}>
+      <BreadcrumbRegistryProvider
+        registry={breadcrumbs}
+        // REVIEW: i18nResolver maps each full labelKey to its intended leaf label so
+        // breadcrumbs show "Email Settings" not "Helpdesk Configuration Email Settings".
+        i18nResolver={breadcrumbI18nResolver}
+        renderLink={renderBreadcrumbLink}
       >
-        <BreadcrumbRegistryProvider
-          registry={breadcrumbs}
-          // REVIEW: i18nResolver maps each full labelKey to its intended leaf label so
-          // breadcrumbs show "Email Settings" not "Helpdesk Configuration Email Settings".
-          i18nResolver={breadcrumbI18nResolver}
-          renderLink={renderBreadcrumbLink}
-        >
-          <PageTracker category="helpdesk" />
-          {!isEmbedded && (
-            <ErrorBoundary>
-              <Suspense fallback={<NavbarSkeleton />}>
-                {isAuthenticated && (
-                  <TopNavbar
-                    data-testid={TEST_IDS.navbar.top}
-                    config={{
-                      // Named per-service keys, resolved `rc ?? baked` in
-                      // src/state/config (which console.errors each by name
-                      // when missing). `notificationHubUrl` is the NOTIFICATION
-                      // bell hub: it used to be handed `api.signalRHubUrl`,
-                      // which was helpdesk-backend's OWN ticket hub — the bell
-                      // was subscribing to the wrong service entirely.
-                      identityBaseUrl: appConfig.identityApiBaseUrl,
-                      notificationHubUrl: appConfig.notificationSignalRHubUrl,
-                      notificationApiUrl: appConfig.notificationApiBaseUrl,
-                      app: 'helpdesk',
-                    }}
-                    onExtend={handleNavExtend}
-                    logoComponent={<Logo hideOnMobile />}
-                  />
-                )}
-              </Suspense>
-            </ErrorBoundary>
+        <PageTracker category="helpdesk" />
+        {!isEmbedded && (
+          <ErrorBoundary>
+            <Suspense fallback={<NavbarSkeleton />}>
+              {isAuthenticated && (
+                <TopNavbar
+                  data-testid={TEST_IDS.navbar.top}
+                  config={{
+                    // Named per-service keys, resolved `rc ?? baked` in
+                    // src/state/config (which console.errors each by name
+                    // when missing). `notificationHubUrl` is the NOTIFICATION
+                    // bell hub: it used to be handed `api.signalRHubUrl`,
+                    // which was helpdesk-backend's OWN ticket hub — the bell
+                    // was subscribing to the wrong service entirely.
+                    identityBaseUrl: appConfig.identityApiBaseUrl,
+                    notificationHubUrl: appConfig.notificationSignalRHubUrl,
+                    notificationApiUrl: appConfig.notificationApiBaseUrl,
+                    app: 'helpdesk',
+                  }}
+                  onExtend={handleNavExtend}
+                  logoComponent={<Logo hideOnMobile />}
+                />
+              )}
+            </Suspense>
+          </ErrorBoundary>
+        )}
+        <div className="flex flex-1">
+          {isAuthenticated && hasSideMenu && (
+            <SideNav
+              data-testid={TEST_IDS.navbar.side}
+              sections={navSections}
+              // SideNav renders this as the version label pinned at the
+              // bottom of the nav, the same "x.y.z-develop.<sha>" line the
+              // other apps show. It lives in the nav rather than the page so
+              // it costs no vertical space in any route's content area.
+              //
+              // Suppressed when the build injected no version: local dev
+              // leaves it as the literal string "unknown", and a nav footer
+              // reading "unknown" looks like a defect rather than a build id.
+              version={
+                appConfig.version && appConfig.version !== 'unknown'
+                  ? appConfig.version
+                  : undefined
+              }
+              desktopMode={desktopMode}
+              onDesktopModeChange={setDesktopMode}
+              isMobileOpen={isMobileOpen}
+              onMobileOpenChange={setIsMobileOpen}
+              mobileHeader={<Logo />}
+              renderLink={({
+                item,
+                className,
+                activeClassName,
+                children,
+              }: {
+                item: any;
+                className: string;
+                activeClassName: string;
+                children: React.ReactNode;
+              }) => (
+                <NavLink
+                  to={item.href}
+                  end={item.end}
+                  data-testid={item.testId}
+                  className={({ isActive }: { isActive: boolean }) =>
+                    isActive ? activeClassName : className
+                  }
+                >
+                  {children}
+                </NavLink>
+              )}
+            />
           )}
-          <div className="flex flex-1">
-            {isAuthenticated && !isPrincipalRoute && hasSideMenu && (
-              <SideNav
-                data-testid={TEST_IDS.navbar.side}
-                sections={navSections}
-                // SideNav renders this as the version label pinned at the
-                // bottom of the nav, the same "x.y.z-develop.<sha>" line the
-                // other apps show. It lives in the nav rather than the page so
-                // it costs no vertical space in any route's content area.
-                //
-                // Suppressed when the build injected no version: local dev
-                // leaves it as the literal string "unknown", and a nav footer
-                // reading "unknown" looks like a defect rather than a build id.
-                version={
-                  appConfig.version && appConfig.version !== 'unknown'
-                    ? appConfig.version
-                    : undefined
-                }
-                desktopMode={desktopMode}
-                onDesktopModeChange={setDesktopMode}
-                isMobileOpen={isMobileOpen}
-                onMobileOpenChange={setIsMobileOpen}
-                mobileHeader={<Logo />}
-                renderLink={({
-                  item,
-                  className,
-                  activeClassName,
-                  children,
-                }: {
-                  item: any;
-                  className: string;
-                  activeClassName: string;
-                  children: React.ReactNode;
-                }) => (
-                  <NavLink
-                    to={item.href}
-                    data-testid={item.testId}
-                    className={({ isActive }: { isActive: boolean }) =>
-                      isActive ? activeClassName : className
-                    }
-                  >
-                    {children}
-                  </NavLink>
-                )}
-              />
-            )}
-            {isPrincipalRoute ? (
-              <ErrorBoundary>
-                <LicenseGuard appId="helpdesk">
+          <div className="flex flex-1 min-w-0">
+            <ErrorBoundary>
+              <LicenseGuard appId="helpdesk">
+                {/* Page permissions: routes/route-permissions.tsx. The
+                      Provider view's pages are checked inside
+                      ProviderViewGuard instead, after the view check, so a
+                      wrong-context visit shows the switch-context page rather
+                      than Access Denied. */}
+                <RouteGuard pathname={location.pathname}>
                   <Outlet />
-                </LicenseGuard>
-              </ErrorBoundary>
-            ) : (
-              <div className="flex flex-1 min-w-0">
-                <ErrorBoundary>
-                  <LicenseGuard appId="helpdesk">
-                    {/* Page permissions: see routes/route-permissions.tsx. */}
-                    <RouteGuard pathname={location.pathname}>
-                      <Outlet />
-                    </RouteGuard>
-                  </LicenseGuard>
-                </ErrorBoundary>
-              </div>
-            )}
+                </RouteGuard>
+              </LicenseGuard>
+            </ErrorBoundary>
           </div>
-        </BreadcrumbRegistryProvider>
-      </PageTemplateProvider>
+        </div>
+      </BreadcrumbRegistryProvider>
+    </PageTemplateProvider>
+  );
+}
+
+export default function Layout() {
+  return (
+    <Providers>
+      <LayoutShell />
     </Providers>
   );
 }

@@ -97,9 +97,7 @@ function KnowledgeBaseCategoryPage() {
           categorySlug: categorySlug ?? '',
           categoryName: category ? category.name : PendingCrumb,
         }}
-        documentTitle={
-          category ? `${category.name} – Knowledge Base` : 'Knowledge Base'
-        }
+        documentTitle={category ? category.name : 'Knowledge Base'}
       >
         {category?.description && (
           <PageHeader.Meta>{category.description}</PageHeader.Meta>

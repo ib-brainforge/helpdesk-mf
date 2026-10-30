@@ -24,23 +24,19 @@ export type CategoryRow = CategoryDto & { sectionName?: string };
 
 const columnHelper = createColumnHelper<CategoryRow>();
 
-const getAccessLevelColor = (level: AccessLevel) => {
-  const colors: Record<AccessLevel, 'default' | 'primary' | 'warning'> = {
-    [AccessLevel.Everyone]: 'default',
-    [AccessLevel.AgentsOnly]: 'primary',
-    [AccessLevel.AdminsOnly]: 'warning',
-  };
-  return colors[level] ?? 'default';
-};
-
-const getAccessLevelName = (level: AccessLevel): string => {
-  const names: Record<AccessLevel, string> = {
-    [AccessLevel.Everyone]: 'Everyone',
-    [AccessLevel.AgentsOnly]: 'Agents Only',
-    [AccessLevel.AdminsOnly]: 'Admins Only',
-  };
-  return names[level] ?? 'Unknown';
-};
+/**
+ * Who can log a ticket in the category, in the words the request form's users
+ * would use. Everyone is the ordinary case and stays plain text; the
+ * restricted levels get a solid chip so they stand out.
+ */
+const WhoCanUseIt = ({ level }: { level: AccessLevel }) =>
+  level === AccessLevel.AgentsOnly ? (
+    <StatusBadge color="primary">Techs only</StatusBadge>
+  ) : level === AccessLevel.AdminsOnly ? (
+    <StatusBadge color="warning">Admins only</StatusBadge>
+  ) : (
+    <span className="text-default-600 text-sm">Clients and techs</span>
+  );
 
 interface UseCategoryTableOptions {
   categories: CategoryDto[];
@@ -50,13 +46,6 @@ interface UseCategoryTableOptions {
   onEditCategory: (category: CategoryDto) => void;
   onDeleteCategory: (categoryId: string) => void;
   onTogglePortalEnquiry: (category: CategoryDto) => void;
-  /**
-   * Categories the tenant may use but does not own (the Netcorp presets).
-   * They are listed so the set matches what the request form offers, but they
-   * belong to the principal, so editing or deleting one here is not the
-   * tenant's to do.
-   */
-  presetIds?: Set<string>;
 }
 
 export function useCategoryTable({
@@ -66,7 +55,6 @@ export function useCategoryTable({
   onEditCategory,
   onDeleteCategory,
   onTogglePortalEnquiry,
-  presetIds,
 }: UseCategoryTableOptions) {
   const columns = useMemo(
     (): ColumnDef<CategoryRow, any>[] => [
@@ -77,34 +65,31 @@ export function useCategoryTable({
           <button
             type="button"
             onClick={() => onEditCategory(row.original)}
-            className="text-primary hover:underline font-medium"
+            className="text-primary block max-w-full truncate font-medium hover:underline"
+            title={row.original.name}
           >
             {row.original.name}
           </button>
         ),
-        size: 300,
+        size: 360,
       }),
       columnHelper.display({
         id: 'section',
         header: 'Section',
         cell: ({ row }) => (
           <span className="text-sm text-default-600">
-            {row.original.sectionName ?? '—'}
+            {row.original.sectionName ?? '–'}
           </span>
         ),
         size: 200,
       }),
       columnHelper.display({
         id: 'accessLevel',
-        header: 'Access Type',
+        header: 'Who can use it',
         cell: ({ row }) => (
-          <StatusBadge
-            color={getAccessLevelColor(row.original.accessLevel as AccessLevel)}
-          >
-            {getAccessLevelName(row.original.accessLevel as AccessLevel)}
-          </StatusBadge>
+          <WhoCanUseIt level={row.original.accessLevel as AccessLevel} />
         ),
-        size: 150,
+        size: 160,
       }),
       columnHelper.display({
         id: 'portalEnquiries',
@@ -121,19 +106,6 @@ export function useCategoryTable({
         id: 'actions',
         header: '',
         cell: ({ row }) => {
-          const isPreset = presetIds?.has(row.original.id) ?? false;
-          if (isPreset) {
-            return (
-              <div className="-my-1.5 flex items-center justify-end gap-2">
-                <span
-                  className="bg-lighter-blue text-blue rounded-full px-2 py-0.5 text-[11px] font-medium"
-                  title="Provided by Netcorp. Cannot be edited or deleted here."
-                >
-                  Preset
-                </span>
-              </div>
-            );
-          }
           return (
             <div className="-my-1.5 flex items-center justify-end gap-1">
               <IconTip
@@ -193,7 +165,7 @@ export function useCategoryTable({
         size: 100,
       }),
     ],
-    [onEditCategory, onDeleteCategory, onTogglePortalEnquiry, presetIds],
+    [onEditCategory, onDeleteCategory, onTogglePortalEnquiry],
   );
 
   // Build flat rows with section grouping info

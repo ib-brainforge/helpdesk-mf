@@ -14,12 +14,8 @@ on:
         type: string
 
 jobs:
-  pick-runner:
-    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
-    secrets: inherit
   prepare:
-    needs: pick-runner
-    runs-on: ${{ needs.pick-runner.outputs.label }}
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     outputs:
       image_tag: ${{ steps.tag.outputs.image_tag }}
     steps:
@@ -30,10 +26,9 @@ jobs:
           echo "image_tag=${IMAGE_NAME}:${{ inputs.tag }}" >> $GITHUB_OUTPUT
 
   deploy:
-    needs: [pick-runner, prepare]
+    needs: [prepare]
     uses: BrainForgeAU/.github/.github/workflows/deploy-to-flux.yml@main
     with:
-      runner_label: ${{ needs.pick-runner.outputs.label }}
       environment_name: ${{ inputs.environment }}
       image_tag: ${{ needs.prepare.outputs.image_tag }}
     secrets: inherit

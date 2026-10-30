@@ -21,5 +21,7 @@ export interface HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand 
     'ticketId'?: string;
     'body'?: string;
     'idempotencyKey'?: string | null;
+    'sendEmail'?: boolean;
+    'cc'?: Array<string> | null;
 }
 

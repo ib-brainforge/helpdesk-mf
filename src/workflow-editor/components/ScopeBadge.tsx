@@ -20,13 +20,6 @@ export function ScopeBadge({ ownerScope }: ScopeBadgeProps) {
       </Chip>
     );
   }
-  if (ownerScope.startsWith('principal:')) {
-    return (
-      <Chip color="default" size="sm">
-        Principal
-      </Chip>
-    );
-  }
   return (
     <Chip color="default" size="sm">
       Unknown

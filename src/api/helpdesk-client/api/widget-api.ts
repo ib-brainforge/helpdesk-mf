@@ -38,7 +38,7 @@ export const WidgetApiAxiosParamCreator = function (configuration?: Configuratio
     return {
         /**
          * 
-         * @summary Returns categories available in the widget dropdown, grouped by audience. Includes Tenant-specific categories for the user\'s tenant, Platform-wide categories, and Principal-scoped categories where applicable.
+         * @summary Returns the categories available in the widget dropdown: the active categories of the user\'s tenant.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -75,7 +75,7 @@ export const WidgetApiAxiosParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
-         * @summary Returns the current user\'s own tickets, regardless of audience. Supports optional status filtering and basic pagination.
+         * @summary Returns the current user\'s own tickets, including those raised with their provider. Supports optional status filtering and basic pagination.
          * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
@@ -127,7 +127,7 @@ export const WidgetApiAxiosParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
-         * @summary Submits a new ticket from the widget. Audience is derived from the selected category; if no category is provided the ticket is routed to BrainForge engineering (Audience=Platform).
+         * @summary Submits a new ticket from the widget. Files the ticket in the caller\'s own tenant helpdesk. If no category is provided the tenant\'s fallback category is used.
          * @param {HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand} [helpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -177,7 +177,7 @@ export const WidgetApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Returns categories available in the widget dropdown, grouped by audience. Includes Tenant-specific categories for the user\'s tenant, Platform-wide categories, and Principal-scoped categories where applicable.
+         * @summary Returns the categories available in the widget dropdown: the active categories of the user\'s tenant.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -189,7 +189,7 @@ export const WidgetApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Returns the current user\'s own tickets, regardless of audience. Supports optional status filtering and basic pagination.
+         * @summary Returns the current user\'s own tickets, including those raised with their provider. Supports optional status filtering and basic pagination.
          * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
@@ -204,7 +204,7 @@ export const WidgetApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Submits a new ticket from the widget. Audience is derived from the selected category; if no category is provided the ticket is routed to BrainForge engineering (Audience=Platform).
+         * @summary Submits a new ticket from the widget. Files the ticket in the caller\'s own tenant helpdesk. If no category is provided the tenant\'s fallback category is used.
          * @param {HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand} [helpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -226,7 +226,7 @@ export const WidgetApiFactory = function (configuration?: Configuration, basePat
     return {
         /**
          * 
-         * @summary Returns categories available in the widget dropdown, grouped by audience. Includes Tenant-specific categories for the user\'s tenant, Platform-wide categories, and Principal-scoped categories where applicable.
+         * @summary Returns the categories available in the widget dropdown: the active categories of the user\'s tenant.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -235,7 +235,7 @@ export const WidgetApiFactory = function (configuration?: Configuration, basePat
         },
         /**
          * 
-         * @summary Returns the current user\'s own tickets, regardless of audience. Supports optional status filtering and basic pagination.
+         * @summary Returns the current user\'s own tickets, including those raised with their provider. Supports optional status filtering and basic pagination.
          * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
@@ -247,7 +247,7 @@ export const WidgetApiFactory = function (configuration?: Configuration, basePat
         },
         /**
          * 
-         * @summary Submits a new ticket from the widget. Audience is derived from the selected category; if no category is provided the ticket is routed to BrainForge engineering (Audience=Platform).
+         * @summary Submits a new ticket from the widget. Files the ticket in the caller\'s own tenant helpdesk. If no category is provided the tenant\'s fallback category is used.
          * @param {HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand} [helpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -264,7 +264,7 @@ export const WidgetApiFactory = function (configuration?: Configuration, basePat
 export interface WidgetApiInterface {
     /**
      * 
-     * @summary Returns categories available in the widget dropdown, grouped by audience. Includes Tenant-specific categories for the user\'s tenant, Platform-wide categories, and Principal-scoped categories where applicable.
+     * @summary Returns the categories available in the widget dropdown: the active categories of the user\'s tenant.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -272,7 +272,7 @@ export interface WidgetApiInterface {
 
     /**
      * 
-     * @summary Returns the current user\'s own tickets, regardless of audience. Supports optional status filtering and basic pagination.
+     * @summary Returns the current user\'s own tickets, including those raised with their provider. Supports optional status filtering and basic pagination.
      * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
@@ -283,7 +283,7 @@ export interface WidgetApiInterface {
 
     /**
      * 
-     * @summary Submits a new ticket from the widget. Audience is derived from the selected category; if no category is provided the ticket is routed to BrainForge engineering (Audience=Platform).
+     * @summary Submits a new ticket from the widget. Files the ticket in the caller\'s own tenant helpdesk. If no category is provided the tenant\'s fallback category is used.
      * @param {HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand} [helpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -298,7 +298,7 @@ export interface WidgetApiInterface {
 export class WidgetApi extends BaseAPI implements WidgetApiInterface {
     /**
      * 
-     * @summary Returns categories available in the widget dropdown, grouped by audience. Includes Tenant-specific categories for the user\'s tenant, Platform-wide categories, and Principal-scoped categories where applicable.
+     * @summary Returns the categories available in the widget dropdown: the active categories of the user\'s tenant.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -308,7 +308,7 @@ export class WidgetApi extends BaseAPI implements WidgetApiInterface {
 
     /**
      * 
-     * @summary Returns the current user\'s own tickets, regardless of audience. Supports optional status filtering and basic pagination.
+     * @summary Returns the current user\'s own tickets, including those raised with their provider. Supports optional status filtering and basic pagination.
      * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
@@ -321,7 +321,7 @@ export class WidgetApi extends BaseAPI implements WidgetApiInterface {
 
     /**
      * 
-     * @summary Submits a new ticket from the widget. Audience is derived from the selected category; if no category is provided the ticket is routed to BrainForge engineering (Audience=Platform).
+     * @summary Submits a new ticket from the widget. Files the ticket in the caller\'s own tenant helpdesk. If no category is provided the tenant\'s fallback category is used.
      * @param {HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand} [helpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

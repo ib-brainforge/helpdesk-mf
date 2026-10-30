@@ -82,17 +82,28 @@ export default createModuleFederationConfig({
       strictVersion: true,
       eager: true,
     },
-    // Components is not shared because it requires webpack SVG transformations
-    // The navbar remote will bundle its own copy of components
-    // '@brainforgeau/components': {
-    //   singleton: true,
-    //   requiredVersion: false,
-    // },
-    // Security MUST be shared as singleton for auth context to work across module federation
+    // One copy of the component library for the shell and every remote. Both
+    // the root key and the trailing-slash prefix key are shared so the barrel
+    // and the subpath imports (@brainforgeau/components/alert, /icons, ...)
+    // resolve to the same shared instance. Not eager: the shell loads it from
+    // its own async chunk.
+    '@brainforgeau/components': { singleton: true, requiredVersion: false },
+    '@brainforgeau/components/': { singleton: true, requiredVersion: false },
+    // Security MUST be shared as singleton for auth context to work across
+    // module federation. It is NOT eager here: the shell provides the eager
+    // copy, and an eager share in a remote forces security and its dependency
+    // tree (identity client, oidc, axios, a second react-dom) into the remote's
+    // entry file. Standalone boot is safe because Modern.js entries are
+    // async-bootstrapped (shared scope initialised before use). Mirrors
+    // tracking-mf #1576.
     '@brainforgeau/security': {
       singleton: true,
       requiredVersion: false,
-      eager: true, // Load eagerly since auth is needed immediately
+    },
+    // Generated identity client: one copy for the shell and every remote; the shell provides it.
+    '@brainforgeau/identity-management-client': {
+      singleton: true,
+      requiredVersion: false,
     },
     jotai: {
       singleton: true,

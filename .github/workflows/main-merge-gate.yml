@@ -2,16 +2,21 @@ name: Main Branch Merge Gate
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
 
+# One run per workflow and ref. A newer push to a PR branch cancels the run it
+# supersedes; a push to develop/main never cancels a run in flight (a package
+# publish or image push must not stop halfway) — the newest pending run simply
+# replaces any older pending one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  pick-runner:
-    uses: BrainForgeAU/.github/.github/workflows/pick-runner.yml@main
-    secrets: inherit
   check-source-branch:
-    needs: pick-runner
-    if: github.base_ref == 'main'
-    runs-on: ${{ needs.pick-runner.outputs.label }}
+    if: (github.base_ref == 'main') && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    runs-on: ${{ vars.RUNNER_TARGET || 'ubuntu-latest' }}
     steps:
       - name: Verify source branch
         run: |

@@ -1,17 +1,16 @@
 import {
-  type HelpdeskApplicationTicketsDTOsTicketCountsDto,
-  PrincipalTicketsApi,
+  type HelpdeskDomainTicketsEnumsTicketPriority,
+  ProviderCustomerTicketsApi,
   TicketsApi,
 } from '@/api/helpdesk-client';
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { TicketFilters } from '@/types/ticket';
 import { toApiTicketPriority } from '@/utils/typeMappers';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { TicketTabKey } from './ticketTabs';
 import { useSearchMatches } from './useSearchMatches';
-import { withSearchMatches } from './useTickets';
+import { assigneeParams, putIds, withSearchMatches } from './useTickets';
 
 /**
  * Every badge on the ticket list, from one request.
@@ -27,10 +26,10 @@ import { withSearchMatches } from './useTickets';
  * 1.6ms. The expense was the round trips, so the fix is to stop making them.
  * Locally the fan-out measured 76-382ms and this measures 18-35ms.
  *
- * WHY BOTH HOOKS CALL THIS RATHER THAN THE ENDPOINT DIRECTLY
- * useTicketTabCounts and useAssigneeTicketCounts both render on the tickets
- * page. They pass the same filters, so they build the same query key, and React
- * Query serves both from a single in-flight request. Two hooks, one call.
+ * WHY THE HOOKS CALL THIS RATHER THAN THE ENDPOINT DIRECTLY
+ * useTicketTabCounts and useScopedAssignees both render on the tickets page.
+ * When they pass the same filters they build the same query key, and React
+ * Query serves both from a single in-flight request.
  *
  * WHY THE COUNTS ARE INTERNALLY CONSISTENT
  * The server answers from a single GROUP BY, so every number comes from one
@@ -40,45 +39,61 @@ import { withSearchMatches } from './useTickets';
  * part of a second.
  */
 
-export type TicketCountsResponse =
-  HelpdeskApplicationTicketsDTOsTicketCountsDto;
+export interface TicketCountsResponse {
+  tabs: {
+    unanswered: number;
+    unclosed: number;
+    unassigned: number;
+    overdue: number;
+    /** Null when the caller has no user id, so the tab can be hidden rather than read zero. */
+    assignedToMe: number | null;
+    all: number;
+  };
+  assignees: {
+    assigneeId: string;
+    /** Matching tickets in any status. */
+    count: number;
+    /** Matching tickets still open (New or In Progress): the work left. */
+    openCount: number;
+  }[];
+  /** Tickets matching the filters with nobody assigned, in any status. */
+  unassigned: number;
+}
 
 /**
  * The filters the endpoint accepts.
  *
- * status, statuses, custom statuses, overdueOnly and unassignedOnly are
- * deliberately absent:
+ * status, statuses, custom statuses and overdueOnly are deliberately absent:
  * each tab defines those for itself server-side. Sending them would make every
  * badge depend on whichever tab happened to be open, which is the bug
  * ticketTabs.ts exists to prevent.
  */
-const countsParams = (
-  filters: TicketFilters,
-  scopedPrincipalId: string | undefined,
-) => ({
-  // Same shapes as ticketQueryValues in useTickets.ts: priority and
-  // category are single-valued arrays in the filter state, while the scope ids
-  // are passed through whole.
-  priority: filters.priority?.[0]
-    ? toApiTicketPriority(filters.priority[0])
-    : undefined,
-  categoryId: filters.categoryId?.[0],
-  assigneeId: filters.assigneeId?.[0],
-  searchTerm: filters.searchTerm || undefined,
+const countsParams = (filters: TicketFilters): Record<string, unknown> => {
+  const params: Record<string, unknown> = {};
+  // Same shapes as ticketQueryValues/multiValues in useTickets.ts: priority is
+  // a single-valued array in the filter state; category is a multi-select
+  // (putIds).
+  if (filters.priority?.[0]) {
+    params.priority = toApiTicketPriority(filters.priority[0]);
+  }
+  putIds(params, 'categoryId', 'categoryIds', filters.categoryId);
+  // The Assignee filter's selection, in the same shape the list sends.
+  const assignees = assigneeParams(filters);
+  if (assignees.assigneeId) params.assigneeId = assignees.assigneeId;
+  if (assignees.assigneeIds) params.assigneeIds = assignees.assigneeIds;
+  if (assignees.includeUnassigned) params.includeUnassigned = true;
+  if (filters.searchTerm) params.searchTerm = filters.searchTerm;
   // Name matches for the search box, resolved by useSearchMatches.
-  searchUserIds: filters.searchUserIds?.length
-    ? filters.searchUserIds
-    : undefined,
-  searchScopeIds: filters.searchScopeIds?.length
-    ? filters.searchScopeIds
-    : undefined,
-  tagIds: filters.tagIds?.length ? filters.tagIds : undefined,
-  // Only the principal route takes tenantId; the tenant route reads its tenant
-  // from the token, so it is left out there and cannot split the cache key.
-  tenantId: scopedPrincipalId ? filters.tenantId || undefined : undefined,
-  organisationId: filters.organisationId || undefined,
-  divisionId: filters.divisionId || undefined,
-});
+  if (filters.searchUserIds?.length)
+    params.searchUserIds = filters.searchUserIds;
+  if (filters.searchScopeIds?.length) {
+    params.searchScopeIds = filters.searchScopeIds;
+  }
+  if (filters.tagIds?.length) params.tagIds = filters.tagIds;
+  putIds(params, 'organisationId', 'organisationIds', filters.organisationId);
+  if (filters.divisionId) params.divisionId = filters.divisionId;
+  return params;
+};
 
 /**
  * The counts query for one set of filters, as options rather than a hook.
@@ -90,83 +105,61 @@ const countsParams = (
  */
 export const ticketCountsQueryOptions = (
   filters: TicketFilters,
-  scopedPrincipalId: string | undefined,
+  fromTenants: boolean,
 ) => {
-  const params = countsParams(filters, scopedPrincipalId);
+  const params = countsParams(filters);
   return {
     // Prefixed with 'tickets' so the invalidateQueries({ queryKey: ['tickets'] })
     // that every ticket mutation and every realtime event already fires reaches
     // these badges too. TanStack matches by prefix.
-    queryKey: ['tickets', 'counts', scopedPrincipalId ?? 'tenant', params],
+    queryKey: [
+      'tickets',
+      'counts',
+      fromTenants ? 'from-tenants' : 'own',
+      params,
+    ],
     // A count that is a few seconds stale is fine; re-counting on every focus
     // change is not. This is the ceiling when nothing invalidates, not the
     // normal path.
     staleTime: 30 * 1000,
     queryFn: async (): Promise<TicketCountsResponse> => {
-      if (scopedPrincipalId) {
-        const principalClient =
-          await createHelpdeskApiClient(PrincipalTicketsApi);
-        const { data } =
-          await principalClient.v1PrincipalsPrincipalIdTicketsCountsGet(
-            scopedPrincipalId,
-            undefined, // customStatusId
-            params.priority,
-            params.categoryId,
-            params.assigneeId,
-            undefined, // requesterId
-            params.searchTerm,
-            params.tagIds,
-            params.tenantId,
-            params.organisationId,
-            params.divisionId,
-            undefined, // unreadOnly
-            undefined, // spamOnly
-            params.searchUserIds,
-            params.searchScopeIds,
-          );
-        return data;
-      }
-
-      const client = await createHelpdeskApiClient(TicketsApi);
-      const { data } = await client.v1TicketsCountsGet(
+      // Both endpoints take the same filters in the same order: the tenant's
+      // own tickets, or the provider's From tenants queue.
+      const args = [
         undefined, // customStatusId
-        params.priority,
-        params.categoryId,
-        params.assigneeId,
+        params.priority as HelpdeskDomainTicketsEnumsTicketPriority | undefined,
+        params.categoryId as string | undefined,
+        params.assigneeId as string | undefined,
         undefined, // requesterId
-        params.searchTerm,
-        params.tagIds,
-        params.organisationId,
-        params.divisionId,
+        params.searchTerm as string | undefined,
+        params.tagIds as string[] | undefined,
+        params.organisationId as string | undefined,
+        params.divisionId as string | undefined,
         undefined, // unreadOnly
         undefined, // spamOnly
-        params.searchUserIds,
-        params.searchScopeIds,
-      );
+        params.assigneeIds as string[] | undefined,
+        params.includeUnassigned as boolean | undefined,
+        params.categoryIds as string[] | undefined,
+        params.organisationIds as string[] | undefined,
+        params.searchUserIds as string[] | undefined,
+        params.searchScopeIds as string[] | undefined,
+      ] as const;
+      const { data } = fromTenants
+        ? await (
+            await createHelpdeskApiClient(ProviderCustomerTicketsApi)
+          ).v1ProviderSupportCustomerTicketsCountsGet(...args)
+        : await (await createHelpdeskApiClient(TicketsApi)).v1TicketsCountsGet(
+            ...args,
+          );
       return data;
     },
   };
 };
 
-/**
- * Whether counts read the principal route, and for which principal. The same
- * rule the grid uses, so a badge and the rows beneath it always come from the
- * same population.
- */
-export const useCountsPrincipal = (): string | undefined => {
-  const { isServiceAdmin, principalId } = useHelpdeskAccess();
-  return isServiceAdmin && principalId ? principalId : undefined;
-};
-
-export const useTicketCounts = (filters: TicketFilters = {}) => {
-  /*
-   * Same scope branch as the grid and as the hooks this replaces. Counting in
-   * the tenant scope while the rows come from the principal scope is the exact
-   * defect useAssigneeTicketCounts was written to stop repeating, so the
-   * principal has its own counts route rather than a tenant-scoped
-   * approximation.
-   */
-  const scopedPrincipalId = useCountsPrincipal();
+export const useTicketCounts = (
+  filters: TicketFilters = {},
+  { fromTenants = false }: { fromTenants?: boolean } = {},
+) => {
   // Same name matching as the grid, so a badge counts exactly the rows the
   // search lists.
   const search = useSearchMatches(filters.searchTerm);
@@ -175,8 +168,12 @@ export const useTicketCounts = (filters: TicketFilters = {}) => {
     [filters, search.userIds, search.scopeIds],
   );
   const query = useQuery({
-    ...ticketCountsQueryOptions(searched, scopedPrincipalId),
+    ...ticketCountsQueryOptions(searched, fromTenants),
     enabled: search.ready,
+    // The badges keep their numbers while a changed filter is recounted,
+    // rather than vanishing and reappearing on every tick of the Assignee
+    // filter.
+    placeholderData: keepPreviousData,
   });
 
   return { data: query.data, isLoading: query.isLoading };
@@ -188,33 +185,17 @@ export const tabCountsFrom = (
   currentUserId?: string,
 ): Record<TicketTabKey, number> | undefined => {
   if (!data) return undefined;
-
-  /*
-   * "Assigned to you" is read off the rail, not off tabs.assignedToMe.
-   *
-   * The rail already carries a row per assignee, and this tab is by definition
-   * that row for the signed-in user: filtersForTab('assigned-to-you') applies
-   * an assignee and nothing else, which is exactly what the rail counts. An
-   * assignee holding nothing is absent from the response, so a missing row is
-   * a true zero.
-   *
-   * It also sidesteps a real gap. tabs.assignedToMe is computed server-side
-   * from the caller's identity, and on the principal-scoped route that identity
-   * comes back null, so the badge read 0 while the same person's rail row read
-   * 179. Deriving it here is correct in both scopes and needs no server to know
-   * who is asking. tabs.assignedToMe is still preferred when present, since it
-   * is the same number by a shorter path.
-   */
-  const fromRail = currentUserId
-    ? (data.assignees.find(a => a.assigneeId === currentUserId)?.count ?? 0)
-    : 0;
-
   return {
+    // Your OPEN tickets: your row in the assignee rail, the same number the
+    // Assignee filter shows beside your name. tabs.assignedToMe counted
+    // closed ones too (181 against 118 open).
+    'assigned-to-you': currentUserId
+      ? (data.assignees.find(a => a.assigneeId === currentUserId)?.openCount ??
+        0)
+      : 0,
     unanswered: data.tabs.unanswered,
     unclosed: data.tabs.unclosed,
-    unassigned: data.tabs.unassigned,
     overdue: data.tabs.overdue,
-    'assigned-to-you': currentUserId ? (data.tabs.assignedToMe ?? fromRail) : 0,
     all: data.tabs.all,
   };
 };

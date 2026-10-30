@@ -1,3 +1,4 @@
+import { formatDate } from '@brainforgeau/components/utils';
 import {
   type Answers,
   type CategorySpec,
@@ -40,6 +41,9 @@ const renderValue = (spec: FieldSpec, value: unknown): string => {
   ) {
     return value.join(', ');
   }
+  // Dates as DD/MM/YYYY, the way Netcorp reads them, not the picker's ISO value.
+  if (spec.kind === 'date')
+    return formatDate(String(value ?? ''), { emptyLabel: '' });
   return String(value ?? '').trim();
 };
 
@@ -133,7 +137,7 @@ export const buildDescription = ({
  *
  * The wizard asks "Urgency" because that is the word the requester understands,
  * while the ticket stores Priority. Keeping them as one value would make the
- * form speak the helpdesk's language instead of the customer's; mapping keeps
+ * form speak the helpdesk's language instead of the tenant's; mapping keeps
  * both. Anything unrecognised falls to Normal rather than guessing upward,
  * since an inflated priority is a real cost to whoever triages the queue.
  */

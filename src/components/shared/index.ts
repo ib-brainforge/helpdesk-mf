@@ -1,4 +1,6 @@
+export * from './deadline';
 export { IconTip } from './IconTip';
+export { FeatureOutlet } from './FeatureOutlet';
 export { ModalHeader } from './ModalHeader';
 export { PageHint } from './PageHint';
 export { PresetPill } from './PresetPill';
@@ -12,5 +14,7 @@ export {
   type BadgeColor,
 } from './StatusBadge';
 export { SummaryCard, type SummaryCardVariant } from './SummaryCard';
+export { DurationInput } from './DurationInput';
+export { PagedTable, usePagedTable } from './PagedTable';
 export { UserCell } from './UserCell';
 export { UserOptionRow } from './UserOptionRow';

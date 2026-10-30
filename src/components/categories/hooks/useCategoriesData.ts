@@ -66,7 +66,6 @@ function mapGeneratedCategory(
     sectionId: cat.sectionId ?? undefined,
     sectionName,
     accessLevel,
-    defaultAssigneeId: undefined,
     fromEmailAddress: cat.fromEmailAddress ?? undefined,
     fromEmailName: cat.fromEmailName ?? undefined,
     useFromAddressAsReplyTo: cat.useFromAddressAsReplyTo ?? false,
@@ -77,13 +76,24 @@ function mapGeneratedCategory(
   };
 }
 
-export const useCategoriesData = () => {
+/** Categories and sections are reference data that rarely change; saves refresh them. */
+const REFERENCE_STALE_MS = 10 * 60 * 1000;
+
+/**
+ * The company's categories, and with `withSections` its sections too. Only
+ * the Categories configuration page shows sections, so the list and the
+ * reports no longer fetch them.
+ */
+export const useCategoriesData = ({
+  withSections = false,
+}: { withSections?: boolean } = {}) => {
   const {
     data: hierarchyData,
     isLoading: isLoadingCategories,
     refetch: refetchCategories,
   } = useQuery<CategoryDto[]>({
     queryKey: ['helpdesk-categories'],
+    staleTime: REFERENCE_STALE_MS,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesGet();
@@ -115,6 +125,8 @@ export const useCategoriesData = () => {
     refetch: refetchSections,
   } = useQuery<SectionDto[]>({
     queryKey: ['helpdesk-sections'],
+    enabled: withSections,
+    staleTime: REFERENCE_STALE_MS,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CategoriesApi);
       const { data } = await client.v1CategoriesSectionsGet();
@@ -135,7 +147,7 @@ export const useCategoriesData = () => {
   return {
     categories: hierarchyData ?? [],
     sections: sectionsData ?? [],
-    isLoading: isLoadingCategories || isLoadingSections,
+    isLoading: isLoadingCategories || (withSections && isLoadingSections),
     refetchCategories,
     refetchSections,
     refetchAll: () => {

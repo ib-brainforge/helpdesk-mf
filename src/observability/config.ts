@@ -19,10 +19,10 @@
  * `ObservabilityProvider.tsx`, which subscribes to the security context atom
  * and rebuilds the config per-render via `buildObservabilityConfig`.
  *
- * Helpdesk supports cross-tenant platform-support staff. The context token is
- * still scoped to the *currently selected* tenant / organization / division, so
- * threading the selected-context string values (and re-minting on switch) keeps
- * telemetry correctly attributed even as a support agent moves between tenants.
+ * The context token is scoped to the *currently selected* tenant /
+ * organization / division, so threading the selected-context string values
+ * (and re-minting on switch) keeps telemetry correctly attributed even as
+ * staff move between tenants.
  */
 
 import { getAppConfig } from '@/state/config';

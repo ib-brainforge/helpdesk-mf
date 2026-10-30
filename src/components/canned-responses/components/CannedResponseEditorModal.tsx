@@ -58,10 +58,11 @@ export function CannedResponseEditorModal({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // response exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEditing` below).
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Canned response',
     meta: cannedResponse?.meta,
+    recordId: cannedResponse?.id,
     patchScope: async patch => {
       if (!cannedResponse?.id) return;
       const client = await createHelpdeskApiClient(ScopeApi);
@@ -169,6 +170,9 @@ export function CannedResponseEditorModal({
         </ModalHeader>
         <BaseModalBody>
           <div className="space-y-4">
+            {isEditing && recordStripProps && (
+              <RecordStrip {...recordStripProps} />
+            )}
             <BaseInput
               label="Name"
               placeholder="Enter response name"
@@ -176,8 +180,6 @@ export function CannedResponseEditorModal({
               onChange={e => setTitle(e.target.value)}
               isRequired
             />
-
-            {isEditing && <RecordStrip {...scopeStripProps} />}
 
             <div>
               <label className="block text-sm font-medium mb-2">Body</label>

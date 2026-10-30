@@ -28,6 +28,7 @@ export interface HelpdeskApplicationKnowledgeBaseCommandsCreateArticleCreateArti
     'accessLevel'?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel;
     'sourceTicketId'?: string | null;
     'tags'?: Array<string> | null;
+    'pageKeys'?: Array<string> | null;
 }
 
 

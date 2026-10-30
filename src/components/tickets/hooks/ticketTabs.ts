@@ -3,35 +3,52 @@ import { type TicketFilters, TicketStatus } from '@/types/ticket';
 /**
  * What each ticket tab means, in one place.
  *
- * WHY THIS IS NOT IN TicketGrid ANY MORE
- * The grid turned a tab into filters for the list, and useTicketTabCounts
- * turned the same tab into filters for its badge, from a second hand-written
- * copy. The copies were only kept in step by a comment asking the next editor
- * to remember, and they had already drifted: the badges ignored every sidebar
- * and filter-bar selection, so picking an assignee narrowed the rows to that
- * person while every badge above them kept reporting the whole queue.
+ * Tabs answer "in what state". "Whose" belongs to the Assignee filter, which
+ * survives every tab change and narrows every badge.
  *
- * One definition, used by both, is the only thing that makes a badge a
- * statement about the list it labels.
+ * "Assigned to you" is the one exception, and only a shortcut: it is your
+ * open tickets, written into the filters as Status open and Assignee you,
+ * both visible and removable like any other value. Change either and you are
+ * off the tab. There are no other person special cases: "Unassigned" is the
+ * Assignee filter's Unassigned option, not a tab.
+ *
+ * The keys are the old ones ("unanswered", "unclosed") so saved links keep
+ * working; only the words changed.
+ *
+ * The grid and the badge counts both use `filtersForTab`, so a badge is always
+ * a statement about the list it labels.
  */
 
 /** Tab keys. The set below and this union must stay in step. */
 export type TicketTabKey =
+  | 'assigned-to-you'
   | 'unanswered'
   | 'unclosed'
-  | 'unassigned'
   | 'overdue'
-  | 'assigned-to-you'
   | 'all';
 
 export const TICKET_TAB_KEYS: readonly TicketTabKey[] = [
+  'assigned-to-you',
   'unanswered',
   'unclosed',
-  'unassigned',
   'overdue',
-  'assigned-to-you',
   'all',
 ];
+
+/**
+ * The tabs for someone who cannot work tickets (a tenant): their open
+ * requests and all of them. New and Overdue are the team's queues.
+ */
+export const TENANT_TAB_KEYS: readonly TicketTabKey[] = ['unclosed', 'all'];
+
+/** What each tab is called in the tab row (and its More menu). */
+export const TICKET_TAB_LABELS: Record<TicketTabKey, string> = {
+  'assigned-to-you': 'Assigned to you',
+  unanswered: 'New',
+  unclosed: 'Open',
+  overdue: 'Overdue',
+  all: 'All',
+};
 
 /** URL query-param tab persistence: ?tab=<key>. */
 export const TICKET_VALID_TABS = new Set<string>(TICKET_TAB_KEYS);
@@ -40,40 +57,67 @@ export const TICKET_VALID_TABS = new Set<string>(TICKET_TAB_KEYS);
  * Where the page opens when the URL names no tab.
  *
  * `all` applies no status filter, so the list starts as the whole queue rather
- * than silently pre-filtered to New. Landing on Unanswered meant the first
- * thing anyone saw was a subset, with a Status chip already set that they had
- * not chosen and had to notice before clearing.
+ * than silently pre-filtered.
  */
 export const TICKET_DEFAULT_TAB: TicketTabKey = 'all';
+
+/** The URL's assignee shortcut: ?assignee=me or ?assignee=unassigned. */
+export type AssigneeShortcut = 'me' | 'unassigned';
+
+/**
+ * Links from before the Unassigned tab was retired: the Open tab with the
+ * Assignee filter on Unassigned, which lists the same rows.
+ */
+export const LEGACY_TABS: Record<
+  string,
+  { tab: TicketTabKey; assignee: AssigneeShortcut }
+> = {
+  unassigned: { tab: 'unclosed', assignee: 'unassigned' },
+};
+
+/** The assignee fields a shortcut stands for. */
+export const assigneeForShortcut = (
+  shortcut: string | null | undefined,
+  currentUserId?: string,
+): Pick<TicketFilters, 'assigneeId' | 'includeUnassigned'> => {
+  if (shortcut === 'me' && currentUserId)
+    return { assigneeId: [currentUserId], includeUnassigned: undefined };
+  if (shortcut === 'unassigned')
+    return { assigneeId: undefined, includeUnassigned: true };
+  return {};
+};
+
+/** The shortcut these filters amount to, if any (for the URL). */
+export const shortcutForFilters = (
+  filters: TicketFilters,
+  currentUserId?: string,
+): AssigneeShortcut | null => {
+  const people = filters.assigneeId ?? [];
+  if (
+    !filters.includeUnassigned &&
+    currentUserId &&
+    people.length === 1 &&
+    people[0] === currentUserId
+  )
+    return 'me';
+  if (filters.includeUnassigned && people.length === 0) return 'unassigned';
+  return null;
+};
 
 /**
  * The fields a tab defines for itself. They are stripped from the incoming
  * filters and rebuilt per tab, so a previous tab's flags cannot leak into the
- * next one.
- *
- * `assigneeId` is deliberately NOT in here. It belongs to the sidebar rail and
- * the toolbar autocomplete, so it survives a tab change like every other
- * filter. The two tabs that define themselves in terms of a person override it
- * explicitly below.
+ * next one. Everything else, the assignee included, is carried across.
  */
-type TabOwnedField =
-  | 'status'
-  | 'customStatusIds'
-  | 'unassignedOnly'
-  | 'overdueOnly';
+type TabOwnedField = 'status' | 'customStatusIds' | 'overdueOnly';
 
 /**
- * The filters a tab means, layered on whatever the sidebar and filter bar have
- * selected.
- *
- * Pure, so the grid and the badge counts can both call it and cannot disagree.
- *
- * Carrying the rest of the filters across a tab change is the point. Selecting
- * a person and then clicking Overdue asks "what of theirs is overdue", which is
- * the question the sidebar implies. Previously the carry-over was an allowlist
- * of five fields, which silently dropped the assignee, tenant, organisation and
- * division on every tab click.
+ * The filters a tab means, layered on whatever the filter bar has selected.
+ * Pure, so the grid and the badge counts cannot disagree.
  */
+/** The statuses a ticket can still be worked in. */
+const OPEN_STATUSES = [TicketStatus.New, TicketStatus.InProgress];
+
 export const filtersForTab = (
   tabKey: string,
   filters: TicketFilters,
@@ -83,48 +127,26 @@ export const filtersForTab = (
     status: _status,
     // Custom statuses are part of the status selection, which a tab owns.
     customStatusIds: _customStatusIds,
-    unassignedOnly: _unassignedOnly,
     overdueOnly: _overdueOnly,
     ...carried
   } = filters as TicketFilters & Record<TabOwnedField, unknown>;
 
   switch (tabKey) {
     case 'unanswered':
-      // Backend has no "unanswered" status; New is the closest proxy.
+      // Tickets in the New status: not yet picked up.
       return { ...carried, status: [TicketStatus.New] };
     case 'unclosed':
-      return {
-        ...carried,
-        status: [TicketStatus.New, TicketStatus.InProgress],
-      };
-    case 'unassigned':
-      // The dedicated unassignedOnly param; a magic assigneeId string is not
-      // recognised by the endpoint.
-      //
-      // Constrained to open statuses as well. `unassignedOnly` on its own means
-      // "no assignee, any status", which swept in closed tickets: 144 of the
-      // 453 this tab used to show. A closed ticket cannot be picked up, so
-      // counting it in a triage queue overstates the work by a third and makes
-      // the number useless for deciding what to do next.
-      //
-      // A chosen assignee is cleared rather than sent alongside: "unassigned"
-      // and "assigned to this person" match nothing together, and leaving it
-      // set would keep that person highlighted in the rail while the list
-      // showed tickets that are by definition nobody's.
-      return {
-        ...carried,
-        assigneeId: undefined,
-        unassignedOnly: true,
-        status: [TicketStatus.New, TicketStatus.InProgress],
-      };
+      return { ...carried, status: [...OPEN_STATUSES] };
     case 'overdue':
       return { ...carried, overdueOnly: true };
     case 'assigned-to-you':
-      // This tab IS an assignee filter, so it overrides whoever the rail has
-      // selected rather than intersecting with them.
+      // A shortcut: your open tickets, set as ordinary filter values.
       return {
         ...carried,
-        assigneeId: currentUserId ? [currentUserId] : undefined,
+        status: [...OPEN_STATUSES],
+        ...(currentUserId
+          ? { assigneeId: [currentUserId], includeUnassigned: undefined }
+          : {}),
       };
     default:
       return { ...carried };
@@ -139,16 +161,12 @@ const sameSet = (a?: readonly unknown[], b?: readonly unknown[]) => {
 
 /**
  * The tab that describes these filters, so the highlighted tab follows the
- * filter bar as well as the other way round.
- *
- * Clicking a tab writes its fields into the filters (Unanswered sets Status to
- * New), but editing those fields afterwards left the tab lit: clear New from
- * Status and the list showed every status under a tab still saying Unanswered.
- *
- * The current tab is kept while the filters still match its definition.
- * Otherwise the first tab whose definition they match exactly is chosen, and
- * All when none does. Assigned to you is never chosen this way: picking
- * yourself as assignee is a filter like picking anyone else, not that tab.
+ * filter bar: clear New from Status on the New tab and the list is no longer
+ * New. The state fields decide, plus, for "Assigned to you" only,
+ * the assignee being exactly you: change or clear it and you are off that
+ * tab. The current tab wins while it still matches, then the first state tab
+ * that matches exactly, and All when none does. "Assigned to you" is never
+ * chosen for you; it lights only when clicked.
  */
 export const tabForFilters = (
   filters: TicketFilters,
@@ -157,23 +175,16 @@ export const tabForFilters = (
 ): TicketTabKey => {
   const matches = (key: TicketTabKey) => {
     const definition = filtersForTab(key, filters, currentUserId);
-    const ownFieldsMatch =
+    return (
       sameSet(definition.status, filters.status) &&
       sameSet(definition.customStatusIds, filters.customStatusIds) &&
-      Boolean(definition.unassignedOnly) === Boolean(filters.unassignedOnly) &&
-      Boolean(definition.overdueOnly) === Boolean(filters.overdueOnly);
-    if (!ownFieldsMatch) return false;
-    return key === 'assigned-to-you' || key === 'unassigned'
-      ? sameSet(definition.assigneeId, filters.assigneeId)
-      : true;
+      Boolean(definition.overdueOnly) === Boolean(filters.overdueOnly) &&
+      (key !== 'assigned-to-you' ||
+        shortcutForFilters(filters, currentUserId) === 'me')
+    );
   };
   if (TICKET_VALID_TABS.has(currentTab) && matches(currentTab as TicketTabKey))
     return currentTab as TicketTabKey;
-  const candidates: TicketTabKey[] = [
-    'unanswered',
-    'unclosed',
-    'unassigned',
-    'overdue',
-  ];
+  const candidates: TicketTabKey[] = ['unanswered', 'unclosed', 'overdue'];
   return candidates.find(matches) ?? 'all';
 };

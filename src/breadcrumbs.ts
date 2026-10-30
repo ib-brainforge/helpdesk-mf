@@ -44,8 +44,8 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/configuration/custom-priorities/page.tsx
 // routes/__sidebar/configuration/custom-fields/page.tsx
 // routes/__sidebar/configuration/canned-responses/page.tsx
-// routes/__sidebar/configuration/integrations/page.tsx
-// routes/__sidebar/configuration/live-chat/page.tsx
+// components/integrations/IntegrationsConfigPage.tsx (hidden, no route)
+// components/live-chat/LiveChatConfigPage.tsx (hidden, no route)
 // routes/__sidebar/configuration/import-export/page.tsx
 // routes/__sidebar/configuration/approval-workflows/page.tsx
 // routes/__sidebar/configuration/approval-workflows/new/page.tsx
@@ -63,19 +63,10 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // ---------------------------------------------------------------------------
 
 // routes/__sidebar/reports/page.tsx
-// routes/__sidebar/reports-hub/page.tsx
-// routes/__sidebar/reports/summary/page.tsx
-// routes/__sidebar/reports/by-category/page.tsx
-// routes/__sidebar/reports/by-priority/page.tsx
-// routes/__sidebar/reports/by-status/page.tsx
-// routes/__sidebar/reports/sla/page.tsx
 // routes/__sidebar/reports/satisfaction/page.tsx
-// routes/__sidebar/reports/utilization/page.tsx
-// routes/__sidebar/reports/overdue/page.tsx
 // routes/__sidebar/reports/deleted/page.tsx
 // routes/__sidebar/reports/audit/page.tsx
 // routes/__sidebar/reports/assets/page.tsx
-// routes/__sidebar/reports/companies/page.tsx
 
 // ---------------------------------------------------------------------------
 // Approvals (tenant-scoped)
@@ -103,29 +94,20 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/knowledge-base/settings/page.tsx
 
 // ---------------------------------------------------------------------------
-// Principal-scoped routes  /principal/[principalId]/...
+// Provider support (Tenant view)
 // ---------------------------------------------------------------------------
 
-// routes/principal/[principalId]/page.tsx
-// routes/principal/[principalId]/tickets/page.tsx
-// routes/principal/[principalId]/tickets/new/page.tsx
-// routes/principal/[principalId]/tickets/[ticketId]/page.tsx
-// routes/principal/[principalId]/approvals/page.tsx
-// routes/principal/[principalId]/approvals/new/page.tsx
-// routes/principal/[principalId]/approvals/[id]/page.tsx
-// routes/principal/[principalId]/categories/page.tsx
-// routes/principal/[principalId]/categories/new/page.tsx
-// routes/principal/[principalId]/categories/[id]/page.tsx
-// routes/principal/[principalId]/sla-policies/page.tsx
-// routes/principal/[principalId]/sla-policies/new/page.tsx
-// routes/principal/[principalId]/sla-policies/[id]/page.tsx
-// routes/principal/[principalId]/workflows/page.tsx
-// routes/principal/[principalId]/workflows/[id]/page.tsx
-// routes/principal/[principalId]/automations/page.tsx
-// routes/principal/[principalId]/automations/[projectId]/page.tsx
-// routes/principal/[principalId]/automations/[projectId]/rules/[ruleId]/page.tsx
-// routes/principal/[principalId]/reports/page.tsx
-// routes/principal/[principalId]/settings/page.tsx
+// routes/contact-provider/page.tsx
+// routes/provider/raised/page.tsx
+// routes/provider/raised/[id]/page.tsx
+
+// ---------------------------------------------------------------------------
+// Provider view
+// ---------------------------------------------------------------------------
+
+// routes/provider/deadlines/page.tsx
+// routes/provider/deadlines/[tenantId]/page.tsx
+// routes/provider/categories/page.tsx
 
 export const breadcrumbs = {
   // -------------------------------------------------------------------------
@@ -228,7 +210,7 @@ export const breadcrumbs = {
     },
   ],
 
-  /** routes/__sidebar/configuration/integrations/page.tsx */
+  /** components/integrations/IntegrationsConfigPage.tsx (hidden, no route; kept for its return) */
   'configuration.integrations.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.configuration' },
@@ -238,7 +220,7 @@ export const breadcrumbs = {
     },
   ],
 
-  /** routes/__sidebar/configuration/live-chat/page.tsx */
+  /** components/live-chat/LiveChatConfigPage.tsx (hidden, no route; kept for its return) */
   'configuration.live-chat': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.configuration' },
@@ -383,66 +365,11 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk.reports', href: '/reports' },
   ],
 
-  /** routes/__sidebar/reports-hub/page.tsx */
-  'reports.hub': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-  ],
-
-  /** routes/__sidebar/reports/summary/page.tsx */
-  'reports.summary': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.summary' },
-  ],
-
-  /** routes/__sidebar/reports/by-category/page.tsx */
-  'reports.by-category': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-category' },
-  ],
-
-  /** routes/__sidebar/reports/by-priority/page.tsx */
-  'reports.by-priority': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-priority' },
-  ],
-
-  /** routes/__sidebar/reports/by-status/page.tsx */
-  'reports.by-status': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.by-status' },
-  ],
-
-  /** routes/__sidebar/reports/sla/page.tsx — "SLA" is an acronym, use label not labelKey */
-  'reports.sla': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { label: 'SLA' },
-  ],
-
   /** routes/__sidebar/reports/satisfaction/page.tsx */
   'reports.satisfaction': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.reports', href: '/reports' },
     { labelKey: 'helpdesk.reports.satisfaction' },
-  ],
-
-  /** routes/__sidebar/reports/utilization/page.tsx */
-  'reports.utilization': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.utilization' },
-  ],
-
-  /** routes/__sidebar/reports/overdue/page.tsx */
-  'reports.overdue': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.overdue' },
   ],
 
   /** routes/__sidebar/reports/deleted/page.tsx */
@@ -464,13 +391,6 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.reports', href: '/reports' },
     { labelKey: 'helpdesk.reports.assets' },
-  ],
-
-  /** routes/__sidebar/reports/companies/page.tsx */
-  'reports.companies': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.reports', href: '/reports' },
-    { labelKey: 'helpdesk.reports.companies' },
   ],
 
   // -------------------------------------------------------------------------
@@ -558,350 +478,60 @@ export const breadcrumbs = {
   ],
 
   // -------------------------------------------------------------------------
-  // Principal-scoped routes  /principal/[principalId]/...
-  //
-  // `principalName` is the tenant/principal display name resolved async.
-  // Use PendingCrumb sentinel while loading:
-  //   import { PendingCrumb } from '@brainforgeau/components/page';
-  //   breadcrumbsParams={{ principalId, principalName: isLoading ? PendingCrumb : name }}
+  // Provider support (Tenant view)
   // -------------------------------------------------------------------------
 
-  /** routes/principal/[principalId]/page.tsx — principal overview */
-  'principal.overview': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
+  /** routes/contact-provider/page.tsx */
+  'provider.contact': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
-    { label: params.principalName },
+    { labelKey: 'helpdesk.contact-provider' },
   ],
 
-  /** routes/principal/[principalId]/tickets/page.tsx */
-  'principal.tickets.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
+  /** routes/provider/raised/page.tsx */
+  'provider.raised.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.tickets',
-      href: `/principal/${params.principalId}/tickets`,
+      labelKey: 'helpdesk.provider-raised',
+      href: '/provider/raised',
     },
   ],
 
-  /** routes/principal/[principalId]/tickets/new/page.tsx */
-  'principal.tickets.new': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
+  /** routes/provider/raised/[id]/page.tsx */
+  'provider.raised.detail': (params: { id: string; subject: string }) => [
     { labelKey: 'helpdesk', href: '/tickets' },
     {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.tickets',
-      href: `/principal/${params.principalId}/tickets`,
-    },
-    { labelKey: 'helpdesk.tickets.new' },
-  ],
-
-  /** routes/principal/[principalId]/tickets/[ticketId]/page.tsx */
-  'principal.tickets.detail': (params: {
-    principalId: string;
-    principalName: string;
-    ticketId: string;
-    subject: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.tickets',
-      href: `/principal/${params.principalId}/tickets`,
+      labelKey: 'helpdesk.provider-raised',
+      href: '/provider/raised',
     },
     { label: params.subject },
   ],
+  // -------------------------------------------------------------------------
+  // Provider view
+  // -------------------------------------------------------------------------
 
-  /** routes/principal/[principalId]/approvals/page.tsx */
-  'principal.approvals.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
+  /** routes/provider/deadlines/page.tsx */
+  'provider.deadlines.list': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.approvals',
-      href: `/principal/${params.principalId}/approvals`,
+      labelKey: 'helpdesk.provider-deadlines',
+      href: '/provider/deadlines',
     },
   ],
 
-  /** routes/principal/[principalId]/approvals/new/page.tsx */
-  'principal.approvals.new': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
+  /** routes/provider/deadlines/[tenantId]/page.tsx */
+  'provider.deadlines.detail': (params: { name: string }) => [
     { labelKey: 'helpdesk', href: '/tickets' },
     {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.approvals',
-      href: `/principal/${params.principalId}/approvals`,
-    },
-    { labelKey: 'helpdesk.approvals.new' },
-  ],
-
-  /** routes/principal/[principalId]/approvals/[id]/page.tsx */
-  'principal.approvals.detail': (params: {
-    principalId: string;
-    principalName: string;
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.approvals',
-      href: `/principal/${params.principalId}/approvals`,
+      labelKey: 'helpdesk.provider-deadlines',
+      href: '/provider/deadlines',
     },
     { label: params.name },
   ],
 
-  /** routes/principal/[principalId]/categories/page.tsx */
-  'principal.categories.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
+  /** routes/provider/categories/page.tsx */
+  'provider.categories': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.categories',
-      href: `/principal/${params.principalId}/categories`,
-    },
-  ],
-
-  /** routes/principal/[principalId]/categories/new/page.tsx */
-  'principal.categories.new': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.categories',
-      href: `/principal/${params.principalId}/categories`,
-    },
-    { labelKey: 'helpdesk.configuration.categories.new' },
-  ],
-
-  /** routes/principal/[principalId]/categories/[id]/page.tsx */
-  'principal.categories.detail': (params: {
-    principalId: string;
-    principalName: string;
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.categories',
-      href: `/principal/${params.principalId}/categories`,
-    },
-    { label: params.name },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/page.tsx — "SLA" is an acronym */
-  'principal.sla-policies.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/new/page.tsx */
-  'principal.sla-policies.new': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-    { label: 'New SLA Policy' },
-  ],
-
-  /** routes/principal/[principalId]/sla-policies/[id]/page.tsx */
-  'principal.sla-policies.detail': (params: {
-    principalId: string;
-    principalName: string;
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      label: 'SLA Policies',
-      href: `/principal/${params.principalId}/sla-policies`,
-    },
-    { label: params.name },
-  ],
-
-  /** routes/principal/[principalId]/workflows/page.tsx */
-  'principal.workflows.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.workflows',
-      href: `/principal/${params.principalId}/workflows`,
-    },
-  ],
-
-  /** routes/principal/[principalId]/workflows/[id]/page.tsx */
-  'principal.workflows.detail': (params: {
-    principalId: string;
-    principalName: string;
-    id: string;
-    name: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.workflows',
-      href: `/principal/${params.principalId}/workflows`,
-    },
-    { label: params.name },
-  ],
-
-  /** routes/principal/[principalId]/automations/page.tsx */
-  'principal.automations.list': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.automations',
-      href: `/principal/${params.principalId}/automations`,
-    },
-  ],
-
-  /** routes/principal/[principalId]/automations/[projectId]/page.tsx */
-  'principal.automations.project': (params: {
-    principalId: string;
-    principalName: string;
-    projectId: string;
-    projectName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.automations',
-      href: `/principal/${params.principalId}/automations`,
-    },
-    { label: params.projectName },
-  ],
-
-  /** routes/principal/[principalId]/automations/[projectId]/rules/[ruleId]/page.tsx */
-  'principal.automations.rule': (params: {
-    principalId: string;
-    principalName: string;
-    projectId: string;
-    projectName: string;
-    ruleId: string;
-    ruleName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    {
-      labelKey: 'helpdesk.configuration.automations',
-      href: `/principal/${params.principalId}/automations`,
-    },
-    {
-      label: params.projectName,
-      href: `/principal/${params.principalId}/automations/${params.projectId}`,
-    },
-    { label: params.ruleName },
-  ],
-
-  /** routes/principal/[principalId]/reports/page.tsx */
-  'principal.reports': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    { labelKey: 'helpdesk.reports' },
-  ],
-
-  /** routes/principal/[principalId]/settings/page.tsx */
-  'principal.settings': (params: {
-    principalId: string;
-    principalName: string;
-  }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      label: params.principalName,
-      href: `/principal/${params.principalId}`,
-    },
-    { labelKey: 'helpdesk.settings' },
+    { labelKey: 'helpdesk.provider-categories' },
   ],
 } satisfies BreadcrumbRegistry;
 

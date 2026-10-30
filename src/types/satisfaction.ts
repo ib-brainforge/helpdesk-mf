@@ -1,4 +1,4 @@
-// CSAT (Customer Satisfaction) types
+// CSAT (Tenant Satisfaction) types
 //
 // REVIEW: SatisfactionRatingDto / CSATReportDto / CSATGroupedDataDto now come
 // directly from the generated client (HelpdeskApplicationSatisfactionDTOs*),

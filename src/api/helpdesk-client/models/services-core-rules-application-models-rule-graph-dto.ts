@@ -39,6 +39,7 @@ export interface ServicesCoreRulesApplicationModelsRuleGraphDto {
     'isEnabled'?: boolean;
     'cooldownMinutes'?: number;
     'consecutivePacketsRequired'?: number;
+    'minimumDurationSeconds'?: number;
     'schedule'?: ServicesCoreRulesApplicationModelsScheduleConfigDto;
     'hasDraft'?: boolean;
     'draftContentSnapshot'?: any | null;

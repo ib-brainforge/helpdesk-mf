@@ -1,16 +1,17 @@
 import { usePendingApprovals } from '@/components/approvals';
 import { StatusBadge } from '@/components/shared';
 import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
+import { usePageTitle } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { Card, CardContent } from '@heroui/react';
-import { Helmet } from '@modern-js/runtime/head';
 import { useNavigate } from '@modern-js/runtime/router';
 import { useCallback } from 'react';
 
 // REVIEW: Dashboard showing pending approvals for current user
 
 function PendingApprovalsPage() {
+  usePageTitle('Pending Approvals');
   const navigate = useNavigate();
   const timezone = useTimezone();
   const { items, isLoading, refetch } = usePendingApprovals();
@@ -36,10 +37,6 @@ function PendingApprovalsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>Pending Approvals</title>
-      </Helmet>
-
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Pending Approvals</h1>

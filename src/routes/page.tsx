@@ -1,5 +1,6 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { HelpdeskPermissions } from '@/constants/permissions';
+import { usePageTitle } from '@brainforgeau/components/page';
 import {
   usePermissions,
   withAuthenticationRequired,
@@ -8,11 +9,12 @@ import { Navigate } from '@modern-js/runtime/router';
 import React from 'react';
 
 /**
- * The landing redirect. The dashboard is built from reports, which Customers,
- * Platform Support and Principal Agents cannot read, so they land on their
- * tickets instead of a page that would say Access Denied.
+ * The landing redirect. The dashboard is built from reports, which Tenants
+ * cannot read, so they land on their tickets instead of a page that would say
+ * Access Denied.
  */
 function Page() {
+  usePageTitle('Helpdesk');
   const { hasPermission, isLoading } = usePermissions();
   if (isLoading) return <AppAuthSplash />;
   return (

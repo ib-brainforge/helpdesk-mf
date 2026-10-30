@@ -3,16 +3,19 @@ import { KbSuggestions } from '@/components/knowledge-base/components/KbSuggesti
 import {
   type BadgeColor,
   StatusBadge,
+  UserCell,
   UserOptionRow,
   badgeFieldClasses,
   badgeSwatchClasses,
 } from '@/components/shared';
+import { SlaIndicator } from '@/components/sla/SlaIndicator';
 import {
   useAddTagToTicket,
   useRemoveTagFromTicket,
   useTags,
   useTicketTags,
 } from '@/components/tags/hooks/useTags';
+import { SUBTASKS_ENABLED, TIME_TRACKING_ENABLED } from '@/constants/features';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import {
@@ -21,11 +24,7 @@ import {
   resolveStatusKey,
   toTicketStatusName,
 } from '@/types/custom-status';
-import {
-  type TicketDto,
-  TicketPriority,
-  type TicketStatus,
-} from '@/types/ticket';
+import { type TicketDto, TicketPriority, TicketStatus } from '@/types/ticket';
 import {
   BaseAutocomplete,
   BaseAutocompleteItem,
@@ -39,7 +38,7 @@ import {
 import { Icon } from '@brainforgeau/components/base';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { usePermissions } from '@brainforgeau/security';
-import { PermissionGuard, useTimezone } from '@brainforgeau/security';
+import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
@@ -56,10 +55,18 @@ import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
 import { LinkedRecordsSection } from './LinkedRecordsSection';
+import { ScopePath, useTicketScopeNames } from './ScopePills';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
-  onUpdate?: (updates: Partial<TicketDto>) => void;
+  /**
+   * `assigneeName`, on an assignee change only, names who it went to for the
+   * feedback ("Assigned to Eric Isik"); it is not sent.
+   */
+  onUpdate?: (
+    updates: Partial<TicketDto>,
+    meta?: { assigneeName?: string | null },
+  ) => void;
   isUpdating?: boolean;
   isSubscribed?: boolean;
   isSubscribeLoading?: boolean;
@@ -127,6 +134,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     HelpdeskPermissions.KnowledgeBase.Manage,
   );
   const timezone = useTimezone();
+  const currentUserId = useAuth().user?.profile?.sub;
   const statusConfig = getStatusConfig(ticket.status as TicketStatus);
 
   /*
@@ -136,7 +144,9 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
    * common case of a ticket with no parent. It also shares the ['ticket', id]
    * query key, so navigating to the parent reuses this instead of refetching.
    */
-  const { data: parentTicket } = useTicketDetail(ticket.parentTicketId ?? '');
+  const { data: parentTicket } = useTicketDetail(
+    SUBTASKS_ENABLED ? (ticket.parentTicketId ?? '') : '',
+  );
 
   /*
    * Tenant-defined statuses belong in this picker alongside the three built-in
@@ -179,25 +189,55 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
   // Resolve requester / assignee names: prefer the names provided natively by
   // the generated client, falling back to identity enrichment by id (mirrors
   // the ticket grid behaviour) so the sidebar never shows a bare "—".
+  // Subscribers too, so their avatars show initials and a name rather than
+  // the first two characters of an id ("7" for 7648389d).
   const userIds = useMemo(
-    () => [ticket.requesterId, ticket.assigneeId],
-    [ticket.requesterId, ticket.assigneeId],
+    () => [
+      ticket.requesterId,
+      ticket.assigneeId,
+      ...(ticket.subscriberIds ?? []),
+    ],
+    [ticket.requesterId, ticket.assigneeId, ticket.subscriberIds],
   );
   const { userMap } = useUserEnrichment(userIds);
   const requesterDisplayName =
     ticket.requesterName ??
     (ticket.requesterId ? userMap[ticket.requesterId]?.name : undefined) ??
     '—';
+  // The requester's own address only. The reply recipient (the client's
+  // contact) has its own Contact line below: mixing them showed the staff
+  // member who logged it with the client's email.
+  const requesterEmail = ticket.requesterId
+    ? userMap[ticket.requesterId]?.email
+    : undefined;
+  const contact = ticket.emailRecipient;
+  const showContact = !!contact?.address && contact.address !== requesterEmail;
+  const { companyName, organisationName } = useTicketScopeNames(
+    ticket.tenantId,
+    ticket.organisationId,
+  );
   const assigneeDisplayName =
     ticket.assigneeName ??
     (ticket.assigneeId ? userMap[ticket.assigneeId]?.name : undefined) ??
     'Unassigned';
 
   // Tags
-  const { tags: availableTags } = useTags();
+  /*
+   * The company's tag list (a large response) loads when the Tags picker is
+   * first opened or focused, not with every ticket. The ticket's own tags come
+   * from useTicketTags and are listed too, so the chips keep their names.
+   */
+  const [tagsWanted, setTagsWanted] = useState(false);
+  const wantTags = useCallback(() => setTagsWanted(true), []);
+  const { tags: allTags } = useTags(undefined, { enabled: tagsWanted });
   const { tags: ticketTags, refetch: refetchTicketTags } = useTicketTags(
     ticket.id ?? '',
   );
+  const availableTags = useMemo(() => {
+    const byId = new Map(allTags.map(t => [t.id, t]));
+    for (const t of ticketTags ?? []) if (!byId.has(t.id)) byId.set(t.id, t);
+    return [...byId.values()];
+  }, [allTags, ticketTags]);
   const addTagMutation = useAddTagToTicket();
   const removeTagMutation = useRemoveTagFromTicket();
 
@@ -398,19 +438,30 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </label>
         <PermissionGuard
           requiredPermissions={[HelpdeskPermissions.TicketAssign]}
-          fallback={<p className="text-sm">{assigneeDisplayName}</p>}
+          fallback={
+            <p className="text-sm">{assigneeDisplayName ?? 'Unassigned'}</p>
+          }
         >
           <BaseAutocomplete
-            placeholder="Search assignee..."
+            placeholder="Unassigned"
             isClearable
             selectedKey={ticket.assigneeId ?? null}
             onSelectionChange={key => {
               const newKey = key as string | null;
               // null, never undefined: undefined means "leave the assignee
               // alone" and the update is skipped entirely.
-              onUpdate?.({ assigneeId: newKey ?? null });
+              onUpdate?.(
+                { assigneeId: newKey ?? null },
+                {
+                  assigneeName: newKey
+                    ? (scopedAssignees.options.find(u => u.id === newKey)
+                        ?.name ?? userMap[newKey]?.name)
+                    : null,
+                },
+              );
             }}
-            onClear={() => onUpdate?.({ assigneeId: null })}
+            // No onClear: clearing also reports a null selection above, and
+            // handling both sent the change, and its feedback, twice.
             onValueChange={setAssigneeQuery}
             // Closing forgets the search, so reopening starts from everyone.
             onOpenChange={open => {
@@ -471,6 +522,23 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               </BaseAutocompleteItem>
             ))}
           </BaseAutocomplete>
+          {/* Taking a ticket yourself is the most common assignment, so it is
+            one click, as on the list's assignee cell. */}
+          {currentUserId && ticket.assigneeId !== currentUserId && (
+            <button
+              type="button"
+              disabled={isUpdating}
+              onClick={() =>
+                onUpdate?.(
+                  { assigneeId: currentUserId },
+                  { assigneeName: 'you' },
+                )
+              }
+              className="mt-1.5 text-xs text-blue hover:underline disabled:opacity-50"
+            >
+              Assign to me
+            </button>
+          )}
         </PermissionGuard>
       </div>
 
@@ -485,13 +553,12 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         >
           <BaseAutocomplete
             placeholder="Search category..."
-            isClearable
             selectedKey={ticket.categoryId ?? null}
+            // A ticket cannot exist without a category: it can be changed,
+            // never cleared.
             onSelectionChange={key => {
-              const newKey = key as string | null;
-              onUpdate?.({ categoryId: newKey ?? undefined });
+              if (key) onUpdate?.({ categoryId: key as string });
             }}
-            onClear={() => onUpdate?.({ categoryId: undefined })}
             onValueChange={(value: string) => {
               searchCategories({ query: value });
             }}
@@ -542,14 +609,81 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </PermissionGuard>
       </div>
 
+      <>
+        {/* Vehicles: the linked assets, moved up beside the fields they qualify. */}
+        <LinkedAssetsSection
+          ticketId={ticket.id ?? ''}
+          tenantId={ticket.tenantId}
+          organisationId={ticket.organisationId}
+        />
+        <LinkedRecordsSection linkedEntities={ticket.linkedEntities} />
+      </>
       <div className="border-t pt-6">
         {/* Requester */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-default-700 mb-1">
             Requester
           </label>
-          <p className="text-sm">{requesterDisplayName}</p>
+          {/* The same person cell as the Tickets list: picture or initials. */}
+          {ticket.requesterId || ticket.requesterName ? (
+            <UserCell
+              userInfo={
+                ticket.requesterId ? userMap[ticket.requesterId] : undefined
+              }
+              fallbackName={ticket.requesterName}
+              avatarSize="xs"
+            />
+          ) : (
+            <p className="text-sm">{requesterDisplayName}</p>
+          )}
+          {requesterEmail && (
+            <p className="mt-0.5 break-all pl-8 text-xs text-default-500">
+              {requesterEmail}
+            </p>
+          )}
         </div>
+
+        {/* Contact: who replies are emailed to, when not the requester. */}
+        {showContact && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-default-700 mb-1">
+              Contact
+            </label>
+            {contact?.name && <p className="text-sm">{contact.name}</p>}
+            <p className="break-all text-xs text-default-500">
+              {contact?.address}
+            </p>
+          </div>
+        )}
+
+        {/*
+          Tenant then organisation, "Remondis · Remondis NSW", the same as the
+          header, the list and New Request.
+        */}
+        {(companyName || organisationName) && (
+          <div className="mb-4 min-w-0">
+            <span className="mb-1 block text-sm font-medium text-default-700">
+              Tenant · Organisation
+            </span>
+            <ScopePath
+              tenantName={companyName}
+              organisationName={organisationName}
+            />
+          </div>
+        )}
+
+        {/* Deadline: its "Fix by" row replaces the old Due Date field. */}
+        {ticket.deadline && (
+          <div className="mb-4 border-t pt-4">
+            <SlaIndicator
+              deadline={ticket.deadline}
+              createdAt={ticket.createdAt}
+              companyName={companyName}
+              organisationName={organisationName}
+              isClosed={ticket.status === TicketStatus.Closed}
+            />
+          </div>
+        )}
 
         {/* Via (Origin) */}
         <div className="mb-4">
@@ -561,16 +695,18 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           </StatusBadge>
         </div>
 
-        {/* Time Spent */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-default-700 mb-1">
-            Time Spent
-          </label>
-          <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
-        </div>
+        {/* Time Spent, switched off with time tracking (TIME_TRACKING_ENABLED). */}
+        {TIME_TRACKING_ENABLED && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-default-700 mb-1">
+              Time Spent
+            </label>
+            <p className="text-sm">{formatTimeSpent(ticket.timeSpent)}</p>
+          </div>
+        )}
 
-        {/* Due Date */}
-        {ticket.dueDate && (
+        {/* Due Date, only while the backend sends no deadline block. */}
+        {!ticket.deadline && ticket.dueDate && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-default-700 mb-1">
               Due Date
@@ -625,141 +761,150 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
           </p>
         </div>
 
-        {/* Subscribers */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-default-700">
-              Subscribers
-            </label>
-            {onSubscribeToggle && (
-              <BaseButton
-                size="sm"
-                variant={isSubscribed ? 'ghost' : 'bordered'}
-                color={isSubscribed ? 'primary' : undefined}
-                onPress={onSubscribeToggle}
-                isDisabled={isSubscribeLoading}
-                icon={
-                  <Icon
-                    name={isSubscribed ? 'bell' : 'bell-slash'}
-                    className="h-3.5 w-3.5"
-                  />
-                }
-              >
-                {isSubscribed ? 'Subscribed' : 'Subscribe me'}
-              </BaseButton>
+        <>
+          {/* Subscribers */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-default-700">
+                Subscribers
+              </label>
+              {onSubscribeToggle && (
+                <BaseButton
+                  size="sm"
+                  variant={isSubscribed ? 'ghost' : 'bordered'}
+                  color={isSubscribed ? 'primary' : undefined}
+                  onPress={onSubscribeToggle}
+                  isDisabled={isSubscribeLoading}
+                  icon={
+                    <Icon
+                      name={isSubscribed ? 'bell' : 'bell-slash'}
+                      className="h-3.5 w-3.5"
+                    />
+                  }
+                >
+                  {isSubscribed ? 'Subscribed' : 'Subscribe me'}
+                </BaseButton>
+              )}
+            </div>
+            {ticket.subscriberIds && ticket.subscriberIds.length > 0 ? (
+              <>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {ticket.subscriberIds.map((subscriberId: string) => {
+                    const person = userMap[subscriberId];
+                    return (
+                      <span
+                        key={subscriberId}
+                        title={person?.name ?? 'Unknown user'}
+                      >
+                        <BaseAvatar
+                          name={person?.name ?? '?'}
+                          src={person?.avatarUrl}
+                          size="xs"
+                        />
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-default-500 mt-2">
+                  {ticket.subscriberIds.length} subscriber
+                  {ticket.subscriberIds.length !== 1 ? 's' : ''}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-default-500 mt-1">
+                No subscribers yet.
+              </p>
             )}
           </div>
-          {ticket.subscriberIds && ticket.subscriberIds.length > 0 ? (
-            <>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {ticket.subscriberIds.map((subscriberId: string) => (
-                  <BaseAvatar
-                    key={subscriberId}
-                    name={subscriberId.substring(0, 2).toUpperCase()}
-                    size="xs"
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-default-500 mt-2">
-                {ticket.subscriberIds.length} subscriber
-                {ticket.subscriberIds.length !== 1 ? 's' : ''}
-              </p>
-            </>
-          ) : (
-            <p className="text-xs text-default-500 mt-1">No subscribers yet.</p>
-          )}
-        </div>
 
-        {/* Tags */}
-        <div>
-          <PermissionGuard
-            requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-            fallback={
-              ticket.tags && ticket.tags.length > 0 ? (
-                <div>
-                  <label className="block text-sm font-medium text-default-700 mb-2">
-                    Tags
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {ticket.tags.map(tag => (
-                      <StatusBadge key={tag}>{tag}</StatusBadge>
-                    ))}
+          {/* Tags */}
+          <div>
+            <PermissionGuard
+              requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+              fallback={
+                ticket.tags && ticket.tags.length > 0 ? (
+                  <div>
+                    <label className="block text-sm font-medium text-default-700 mb-2">
+                      Tags
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {ticket.tags.map(tag => (
+                        <StatusBadge key={tag}>{tag}</StatusBadge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : null
-            }
-          >
-            <div className={isUpdating ? 'pointer-events-none opacity-50' : ''}>
-              <BaseTagSelect
-                label="Tags"
-                placeholder="Select tags..."
-                value={ticketTags?.map(t => t.id) ?? []}
-                onValueChange={handleTagsChange}
+                ) : null
+              }
+            >
+              <div
+                className={isUpdating ? 'pointer-events-none opacity-50' : ''}
+                onPointerDownCapture={wantTags}
+                onFocusCapture={wantTags}
               >
-                {availableTags.map(tag => (
-                  <BaseTagSelectItem key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </BaseTagSelectItem>
-                ))}
-              </BaseTagSelect>
-            </div>
-          </PermissionGuard>
-        </div>
+                <BaseTagSelect
+                  label="Tags"
+                  placeholder="Select tags..."
+                  value={ticketTags?.map(t => t.id) ?? []}
+                  onValueChange={handleTagsChange}
+                >
+                  {availableTags.map(tag => (
+                    <BaseTagSelectItem key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </BaseTagSelectItem>
+                  ))}
+                </BaseTagSelect>
+              </div>
+            </PermissionGuard>
+          </div>
+        </>
       </div>
 
-      {/* Recurring - Placeholder */}
-      <div className="border-t pt-6">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-default-700 mb-1">
-            Recurring
-          </label>
-          <p className="text-sm text-default-500">None</p>
-        </div>
-
-        {/* Assets */}
-        <LinkedAssetsSection
-          ticketId={ticket.id ?? ''}
-          tenantId={ticket.tenantId}
-          organisationId={ticket.organisationId}
-        />
-
-        <LinkedRecordsSection linkedEntities={ticket.linkedEntities} />
-
-        {/* Parent ticket */}
-        {ticket.parentTicketId && (
+      <>
+        {/* Recurring - Placeholder */}
+        <div className="border-t pt-6">
           <div className="mb-4">
-            {/*
+            <label className="block text-sm font-medium text-default-700 mb-1">
+              Recurring
+            </label>
+            <p className="text-sm text-default-500">None</p>
+          </div>
+
+          {/* Parent ticket */}
+          {SUBTASKS_ENABLED && ticket.parentTicketId && (
+            <div className="mb-4">
+              {/*
               "Subtask of", not "Parent Ticket". Parent is no longer a field
               anyone sets: the only way a ticket gets one is by being created as
               a subtask, so this is a statement about what this ticket IS rather
               than a relationship someone chose, and it reads as the way back up
               rather than as an editable property.
             */}
-            <label className="block text-sm font-medium text-default-700 mb-1">
-              Subtask of
-            </label>
-            {/*
+              <label className="block text-sm font-medium text-default-700 mb-1">
+                Subtask of
+              </label>
+              {/*
               A link, not blue text. This rendered the first 8 characters of the
               parent's GUID styled like a link but with no behaviour: it named
               nothing a reader recognises and could not be followed. The subject
               is what identifies a ticket to a person, so it leads, and the short
               id stays alongside it for anyone matching against a URL or a log.
             */}
-            <Link
-              to={`/tickets/${ticket.parentTicketId}`}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {parentTicket?.subject ?? `#${ticket.parentTicketId.slice(0, 8)}`}
-              {parentTicket?.subject && (
-                <span className="ml-1.5 font-mono text-xs text-default-400">
-                  #{ticket.parentTicketId.slice(0, 8)}
-                </span>
-              )}
-            </Link>
-          </div>
-        )}
-      </div>
-
+              <Link
+                to={`/tickets/${ticket.parentTicketId}`}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                {parentTicket?.subject ??
+                  `#${ticket.parentTicketId.slice(0, 8)}`}
+                {parentTicket?.subject && (
+                  <span className="ml-1.5 font-mono text-xs text-default-400">
+                    #{ticket.parentTicketId.slice(0, 8)}
+                  </span>
+                )}
+              </Link>
+            </div>
+          )}
+        </div>
+      </>
       {/* Custom Fields */}
       {ticket.customFields && ticket.customFields.length > 0 && (
         <div className="border-t pt-6">
@@ -779,22 +924,19 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested KB Articles — seeded from ticket subject. The knowledge
+      <>
+        {/* Suggested KB Articles — seeded from ticket subject. The knowledge
           base is internal (kb.manage, the same rule as its pages), so the
           suggestions are only shown to people who may open them. */}
-      {ticket.subject && canSeeKnowledgeBase && (
-        <div className="border-t pt-6">
-          <label className="block text-sm font-medium text-default-700 mb-2">
-            Suggested KB Articles
-          </label>
+        {ticket.subject && canSeeKnowledgeBase && (
           <KbSuggestions
             searchText={ticket.subject}
             minChars={3}
             limit={5}
-            emptyMessage="No related articles found for this ticket."
+            className="border-t pt-6"
           />
-        </div>
-      )}
+        )}
+      </>
     </div>
   );
 };

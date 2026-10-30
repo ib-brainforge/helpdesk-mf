@@ -2,6 +2,7 @@ import {
   type HelpdeskApplicationTimeTrackingDTOsTimeEntryDto,
   TimeTrackingApi,
 } from '@/api/helpdesk-client';
+import { TIME_TRACKING_ENABLED } from '@/constants/features';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -33,7 +34,7 @@ export const useTimeTracking = (ticketId: string) => {
         entries,
       };
     },
-    enabled: Boolean(ticketId),
+    enabled: TIME_TRACKING_ENABLED && Boolean(ticketId),
   });
 
   return {

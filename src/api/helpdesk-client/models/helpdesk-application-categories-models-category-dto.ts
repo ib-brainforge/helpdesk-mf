@@ -30,6 +30,7 @@ export interface HelpdeskApplicationCategoriesModelsCategoryDto {
     'fromEmailAddress'?: string | null;
     'fromEmailName'?: string | null;
     'useFromAddressAsReplyTo'?: boolean;
+    'defaultAssigneeId'?: string | null;
     'customFieldIds'?: Array<string>;
 }
 

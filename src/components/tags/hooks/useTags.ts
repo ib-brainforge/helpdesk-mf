@@ -3,9 +3,20 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CreateTagDto, TagDto } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export const useTags = (searchTerm?: string) => {
+/**
+ * The company's tags. `enabled: false` holds the request until it is wanted
+ * (the Tickets list asks only once its Tags filter is opened); the key is the
+ * same either way, so the list is cached for every later caller.
+ */
+export const useTags = (
+  searchTerm?: string,
+  { enabled = true }: { enabled?: boolean } = {},
+) => {
   const { data, isLoading, refetch } = useQuery<TagDto[]>({
+    enabled,
     queryKey: ['tags', searchTerm],
+    // Reference data; creating a tag invalidates it.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(TagsApi);
 

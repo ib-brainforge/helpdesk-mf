@@ -1,20 +1,19 @@
 import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
+import { helpdeskAppQueryOptions } from '@/state/helpdesk-app-query';
 import type { TicketFilters } from '@/types/ticket';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
+import { UserAppAssignmentsApi } from '@brainforgeau/identity-management-client';
 import {
-  AppsApi,
-  UserAppAssignmentsApi,
-} from '@brainforgeau/identity-management-client';
-import { useQueries, useQuery } from '@tanstack/react-query';
+  type QueryFunctionContext,
+  useQueries,
+  useQuery,
+} from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 import type { UserOption } from '../state/users-dropdown-state';
-import {
-  ticketCountsQueryOptions,
-  useCountsPrincipal,
-} from './useTicketCounts';
+import { ticketCountsQueryOptions } from './useTicketCounts';
 
 /**
  * Who a ticket can be assigned to.
@@ -77,13 +76,13 @@ const MAX_ROWS = 5000;
  * stays small: it is loaded once and matched against any number of scopes in
  * the browser.
  */
-const fetchHelpdeskAssignments = async (): Promise<RoleAssignment[]> => {
-  // Resolved by name, the same name the app already identifies itself by in
-  // src/state/authorizedAxios.ts, rather than an id that differs per
-  // environment.
-  const apps = await createIdentityApiClient(AppsApi);
-  const { data: app } = await apps.v1AppsByNameNameGet('helpdesk');
-  const appId = (app as { id?: string } | undefined)?.id;
+const fetchHelpdeskAssignments = async ({
+  client,
+}: QueryFunctionContext): Promise<RoleAssignment[]> => {
+  // The app id comes from the shared helpdesk app query, so the app itself is
+  // fetched once per session however many callers need it.
+  const app = await client.fetchQuery(helpdeskAppQueryOptions);
+  const appId = app?.id;
   if (!appId) return [];
 
   const api = await createIdentityApiClient(UserAppAssignmentsApi);
@@ -147,13 +146,12 @@ const covers = (a: RoleAssignment, s: AssigneeScope): boolean => {
   return true;
 };
 
-/** The counts endpoint's filters for a scope, only the levels it names. */
+/** The counts endpoint's filters for a scope, only the levels it names. The tenant is always the caller's own. */
 const scopeFilters = (s: AssigneeScope): TicketFilters => {
-  const f: Record<string, string> = {};
-  if (s.tenantId) f.tenantId = s.tenantId;
-  if (s.organisationId) f.organisationId = s.organisationId;
+  const f: TicketFilters = {};
+  if (s.organisationId) f.organisationId = [s.organisationId];
   if (s.divisionId) f.divisionId = s.divisionId;
-  return f as TicketFilters;
+  return f;
 };
 
 /** Everyone reachable in one scope: role holders plus current ticket holders. */
@@ -209,11 +207,10 @@ export const useScopedAssignees = (
   { enabled = true }: { enabled?: boolean } = {},
 ): ScopedAssignees => {
   const contextKey = useAtomValue(contextQueryKeyAtom);
-  const principal = useCountsPrincipal();
 
   const roles = useQuery({ ...rolesQuery(contextKey), enabled });
   const counts = useQuery({
-    ...ticketCountsQueryOptions(scopeFilters(scope), principal),
+    ...ticketCountsQueryOptions(scopeFilters(scope), false),
     enabled,
   });
 
@@ -258,7 +255,6 @@ export const useScopedAssigneesIntersection = (
   { enabled = true }: { enabled?: boolean } = {},
 ): ScopedAssignees & { scopeCount: number } => {
   const contextKey = useAtomValue(contextQueryKeyAtom);
-  const principal = useCountsPrincipal();
 
   const distinct = useMemo(() => {
     const seen = new Map<string, AssigneeScope>();
@@ -269,7 +265,7 @@ export const useScopedAssigneesIntersection = (
   const roles = useQuery({ ...rolesQuery(contextKey), enabled });
   const counts = useQueries({
     queries: distinct.map(s => ({
-      ...ticketCountsQueryOptions(scopeFilters(s), principal),
+      ...ticketCountsQueryOptions(scopeFilters(s), false),
       enabled,
     })),
   });

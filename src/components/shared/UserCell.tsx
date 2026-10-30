@@ -11,6 +11,10 @@ interface UserCellProps {
    * there in the first place.
    */
   fallbackName?: string | null;
+  /** Off for columns that list a person as plain text (Requester). */
+  showAvatar?: boolean;
+  /** "xs" (24px) keeps slim table rows slim. */
+  avatarSize?: 'xs' | 'sm';
 }
 
 /**
@@ -84,6 +88,8 @@ const abbreviate = (name: string): string => {
 export const UserCell: React.FC<UserCellProps> = ({
   userInfo,
   fallbackName,
+  showAvatar = true,
+  avatarSize = 'sm',
 }) => {
   const displayName = userInfo?.name ?? fallbackName;
   const email = userInfo?.email;
@@ -111,7 +117,9 @@ export const UserCell: React.FC<UserCellProps> = ({
        * The row's content box minus the avatar and the gap is the real budget.
        */
       const rowStyle = getComputedStyle(row);
-      const avatar = row.firstElementChild as HTMLElement | null;
+      const avatar = showAvatar
+        ? (row.firstElementChild as HTMLElement | null)
+        : null;
       const available =
         row.clientWidth -
         (avatar?.offsetWidth ?? 0) -
@@ -134,7 +142,7 @@ export const UserCell: React.FC<UserCellProps> = ({
     const observer = new ResizeObserver(fit);
     observer.observe(row);
     return () => observer.disconnect();
-  }, [displayName]);
+  }, [displayName, showAvatar]);
 
   if (!displayName) {
     return (
@@ -149,12 +157,14 @@ export const UserCell: React.FC<UserCellProps> = ({
 
   return (
     <div ref={rowRef} className="flex min-w-0 items-center gap-2">
-      <BaseAvatar
-        src={userInfo?.avatarUrl}
-        name={displayName}
-        size="sm"
-        className="flex-shrink-0"
-      />
+      {showAvatar && (
+        <BaseAvatar
+          src={userInfo?.avatarUrl}
+          name={displayName}
+          size={avatarSize}
+          className="flex-shrink-0"
+        />
+      )}
       {/*
         min-w-0 is what lets this shrink at all: a flex child defaults to
         min-width:auto, so without it a long name pushes out of the cell and

@@ -1,3 +1,5 @@
+import type { CommentEmailDto } from '@/api/local/comments';
+
 // Re-export types from generated client
 export {
   type HelpdeskApplicationCommentsDTOsCommentDto,
@@ -14,6 +16,11 @@ export type CommentDto = GeneratedCommentDto & {
   // Add any UI-specific fields
   createdByUserName?: string;
   authorId?: string | null;
+  /**
+   * Set when the comment went out, or came in, as email. Declared here until
+   * the client is regenerated.
+   */
+  email?: CommentEmailDto | null;
 };
 
 export enum CommentType {

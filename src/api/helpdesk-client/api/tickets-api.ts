@@ -22,11 +22,17 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { HelpdeskApplicationCommonPagedResultTicketHistoryItemDto } from '../models';
+// @ts-ignore
 import type { HelpdeskApplicationCommonPagedResultTicketListDto } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationTicketsCommandsAddTicketLinkedEntityAddTicketLinkedEntityCommand } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationTicketsCommandsChangeTicketCategoryChangeTicketCategoryCommand } from '../models';
 // @ts-ignore
@@ -50,11 +56,15 @@ import type { HelpdeskApplicationTicketsCommandsMergeTicketsMergeTicketsCommand 
 // @ts-ignore
 import type { HelpdeskApplicationTicketsCommandsUpdateTicketUpdateTicketCommand } from '../models';
 // @ts-ignore
+import type { HelpdeskApplicationTicketsDTOsBulkTicketActionResultDto } from '../models';
+// @ts-ignore
 import type { HelpdeskApplicationTicketsDTOsLinkedAssetDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationTicketsDTOsTicketCountsDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationTicketsDTOsTicketDto } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationTicketsDTOsTicketIdsDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationTicketsDTOsTicketLinkDto } from '../models';
 // @ts-ignore
@@ -74,6 +84,46 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
     return {
         /**
          * Requires permission: tickets.read (app: helpdesk).
+         * @param {HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand} [helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsBulkPost: async (helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand?: HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/tickets/bulk`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Requires permission: tickets.read (app: helpdesk).
          * @param {string} [customStatusId] 
          * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
          * @param {string} [categoryId] 
@@ -85,6 +135,10 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {string} [divisionId] 
          * @param {boolean} [unreadOnly] 
          * @param {boolean} [spamOnly] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
          * @param {Array<string>} [searchUserIds] 
          * @param {Array<string>} [searchScopeIds] 
          * @param {string} [linkedEntityType] 
@@ -93,7 +147,7 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1TicketsCountsGet: async (customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1TicketsCountsGet: async (customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, assigneeIds?: Array<string>, includeUnassigned?: boolean, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/tickets/counts`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -157,6 +211,22 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['spamOnly'] = spamOnly;
             }
 
+            if (assigneeIds) {
+                localVarQueryParameter['assigneeIds'] = assigneeIds;
+            }
+
+            if (includeUnassigned !== undefined) {
+                localVarQueryParameter['includeUnassigned'] = includeUnassigned;
+            }
+
+            if (categoryIds) {
+                localVarQueryParameter['categoryIds'] = categoryIds;
+            }
+
+            if (organisationIds) {
+                localVarQueryParameter['organisationIds'] = organisationIds;
+            }
+
             if (searchUserIds) {
                 localVarQueryParameter['searchUserIds'] = searchUserIds;
             }
@@ -209,16 +279,20 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {number} [pageSize] 
          * @param {string} [sortBy] 
          * @param {string} [sortDirection] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [customStatusIds] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
          * @param {Array<string>} [searchUserIds] 
          * @param {Array<string>} [searchScopeIds] 
-         * @param {Array<string>} [customStatusIds] 
          * @param {string} [linkedEntityType] 
          * @param {string} [linkedEntityId] 
          * @param {string} [linkedEntityReference] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1TicketsGet: async (status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, customStatusIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1TicketsGet: async (status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/tickets`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -314,16 +388,32 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['sortDirection'] = sortDirection;
             }
 
+            if (assigneeIds) {
+                localVarQueryParameter['assigneeIds'] = assigneeIds;
+            }
+
+            if (includeUnassigned !== undefined) {
+                localVarQueryParameter['includeUnassigned'] = includeUnassigned;
+            }
+
+            if (customStatusIds) {
+                localVarQueryParameter['customStatusIds'] = customStatusIds;
+            }
+
+            if (categoryIds) {
+                localVarQueryParameter['categoryIds'] = categoryIds;
+            }
+
+            if (organisationIds) {
+                localVarQueryParameter['organisationIds'] = organisationIds;
+            }
+
             if (searchUserIds) {
                 localVarQueryParameter['searchUserIds'] = searchUserIds;
             }
 
             if (searchScopeIds) {
                 localVarQueryParameter['searchScopeIds'] = searchScopeIds;
-            }
-
-            if (customStatusIds) {
-                localVarQueryParameter['customStatusIds'] = customStatusIds;
             }
 
             if (linkedEntityType !== undefined) {
@@ -656,6 +746,50 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * Requires permission: tickets.update (app: helpdesk).
+         * @param {string} id 
+         * @param {HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand} [helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsIdForwardToProviderPost: async (id: string, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand?: HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('v1TicketsIdForwardToProviderPost', 'id', id)
+            const localVarPath = `/v1/tickets/{id}/forward-to-provider`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Requires permission: tickets.read (app: helpdesk).
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -683,6 +817,56 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
             // authentication Bearer required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Requires permission: tickets.read (app: helpdesk).
+         * @param {string} id 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsIdHistoryGet: async (id: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('v1TicketsIdHistoryGet', 'id', id)
+            const localVarPath = `/v1/tickets/{id}/history`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['pageSize'] = pageSize;
+            }
 
 
     
@@ -1616,6 +1800,187 @@ export const TicketsApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * Requires permission: tickets.read (app: helpdesk).
+         * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
+         * @param {Array<HelpdeskDomainTicketsEnumsTicketStatus>} [statuses] 
+         * @param {string} [customStatusId] 
+         * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
+         * @param {string} [categoryId] 
+         * @param {string} [assigneeId] 
+         * @param {string} [requesterId] 
+         * @param {string} [searchTerm] 
+         * @param {Array<string>} [tagIds] 
+         * @param {string} [organisationId] 
+         * @param {string} [divisionId] 
+         * @param {boolean} [unreadOnly] 
+         * @param {boolean} [overdueOnly] 
+         * @param {boolean} [spamOnly] 
+         * @param {boolean} [unassignedOnly] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {string} [sortBy] 
+         * @param {string} [sortDirection] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [customStatusIds] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
+         * @param {Array<string>} [searchUserIds] 
+         * @param {Array<string>} [searchScopeIds] 
+         * @param {string} [linkedEntityType] 
+         * @param {string} [linkedEntityId] 
+         * @param {string} [linkedEntityReference] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsIdsGet: async (status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/tickets/ids`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (status !== undefined) {
+                localVarQueryParameter['status'] = status;
+            }
+
+            if (statuses) {
+                localVarQueryParameter['statuses'] = statuses;
+            }
+
+            if (customStatusId !== undefined) {
+                localVarQueryParameter['customStatusId'] = customStatusId;
+            }
+
+            if (priority !== undefined) {
+                localVarQueryParameter['priority'] = priority;
+            }
+
+            if (categoryId !== undefined) {
+                localVarQueryParameter['categoryId'] = categoryId;
+            }
+
+            if (assigneeId !== undefined) {
+                localVarQueryParameter['assigneeId'] = assigneeId;
+            }
+
+            if (requesterId !== undefined) {
+                localVarQueryParameter['requesterId'] = requesterId;
+            }
+
+            if (searchTerm !== undefined) {
+                localVarQueryParameter['searchTerm'] = searchTerm;
+            }
+
+            if (tagIds) {
+                localVarQueryParameter['tagIds'] = tagIds;
+            }
+
+            if (organisationId !== undefined) {
+                localVarQueryParameter['organisationId'] = organisationId;
+            }
+
+            if (divisionId !== undefined) {
+                localVarQueryParameter['divisionId'] = divisionId;
+            }
+
+            if (unreadOnly !== undefined) {
+                localVarQueryParameter['unreadOnly'] = unreadOnly;
+            }
+
+            if (overdueOnly !== undefined) {
+                localVarQueryParameter['overdueOnly'] = overdueOnly;
+            }
+
+            if (spamOnly !== undefined) {
+                localVarQueryParameter['spamOnly'] = spamOnly;
+            }
+
+            if (unassignedOnly !== undefined) {
+                localVarQueryParameter['unassignedOnly'] = unassignedOnly;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['pageSize'] = pageSize;
+            }
+
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy;
+            }
+
+            if (sortDirection !== undefined) {
+                localVarQueryParameter['sortDirection'] = sortDirection;
+            }
+
+            if (assigneeIds) {
+                localVarQueryParameter['assigneeIds'] = assigneeIds;
+            }
+
+            if (includeUnassigned !== undefined) {
+                localVarQueryParameter['includeUnassigned'] = includeUnassigned;
+            }
+
+            if (customStatusIds) {
+                localVarQueryParameter['customStatusIds'] = customStatusIds;
+            }
+
+            if (categoryIds) {
+                localVarQueryParameter['categoryIds'] = categoryIds;
+            }
+
+            if (organisationIds) {
+                localVarQueryParameter['organisationIds'] = organisationIds;
+            }
+
+            if (searchUserIds) {
+                localVarQueryParameter['searchUserIds'] = searchUserIds;
+            }
+
+            if (searchScopeIds) {
+                localVarQueryParameter['searchScopeIds'] = searchScopeIds;
+            }
+
+            if (linkedEntityType !== undefined) {
+                localVarQueryParameter['linkedEntityType'] = linkedEntityType;
+            }
+
+            if (linkedEntityId !== undefined) {
+                localVarQueryParameter['linkedEntityId'] = linkedEntityId;
+            }
+
+            if (linkedEntityReference !== undefined) {
+                localVarQueryParameter['linkedEntityReference'] = linkedEntityReference;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Requires permission: tickets.create (app: helpdesk).
          * @param {string} parentId 
          * @param {HelpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand} [helpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand] 
@@ -1821,6 +2186,18 @@ export const TicketsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * Requires permission: tickets.read (app: helpdesk).
+         * @param {HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand} [helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand?: HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationTicketsDTOsBulkTicketActionResultDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsBulkPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Requires permission: tickets.read (app: helpdesk).
          * @param {string} [customStatusId] 
          * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
          * @param {string} [categoryId] 
@@ -1832,6 +2209,10 @@ export const TicketsApiFp = function(configuration?: Configuration) {
          * @param {string} [divisionId] 
          * @param {boolean} [unreadOnly] 
          * @param {boolean} [spamOnly] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
          * @param {Array<string>} [searchUserIds] 
          * @param {Array<string>} [searchScopeIds] 
          * @param {string} [linkedEntityType] 
@@ -1840,8 +2221,8 @@ export const TicketsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationTicketsDTOsTicketCountsDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsCountsGet(customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, spamOnly, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options);
+        async v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, assigneeIds?: Array<string>, includeUnassigned?: boolean, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationTicketsDTOsTicketCountsDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsCountsGet(customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, spamOnly, assigneeIds, includeUnassigned, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsCountsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1867,17 +2248,21 @@ export const TicketsApiFp = function(configuration?: Configuration) {
          * @param {number} [pageSize] 
          * @param {string} [sortBy] 
          * @param {string} [sortDirection] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [customStatusIds] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
          * @param {Array<string>} [searchUserIds] 
          * @param {Array<string>} [searchScopeIds] 
-         * @param {Array<string>} [customStatusIds] 
          * @param {string} [linkedEntityType] 
          * @param {string} [linkedEntityId] 
          * @param {string} [linkedEntityReference] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, customStatusIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultTicketListDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, searchUserIds, searchScopeIds, customStatusIds, linkedEntityType, linkedEntityId, linkedEntityReference, options);
+        async v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultTicketListDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, assigneeIds, includeUnassigned, customStatusIds, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1973,6 +2358,19 @@ export const TicketsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Requires permission: tickets.update (app: helpdesk).
+         * @param {string} id 
+         * @param {HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand} [helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1TicketsIdForwardToProviderPost(id: string, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand?: HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsIdForwardToProviderPost(id, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsIdForwardToProviderPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Requires permission: tickets.read (app: helpdesk).
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -1982,6 +2380,20 @@ export const TicketsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsIdGet(id, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Requires permission: tickets.read (app: helpdesk).
+         * @param {string} id 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1TicketsIdHistoryGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultTicketHistoryItemDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsIdHistoryGet(id, page, pageSize, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsIdHistoryGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -2259,6 +2671,46 @@ export const TicketsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Requires permission: tickets.read (app: helpdesk).
+         * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
+         * @param {Array<HelpdeskDomainTicketsEnumsTicketStatus>} [statuses] 
+         * @param {string} [customStatusId] 
+         * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
+         * @param {string} [categoryId] 
+         * @param {string} [assigneeId] 
+         * @param {string} [requesterId] 
+         * @param {string} [searchTerm] 
+         * @param {Array<string>} [tagIds] 
+         * @param {string} [organisationId] 
+         * @param {string} [divisionId] 
+         * @param {boolean} [unreadOnly] 
+         * @param {boolean} [overdueOnly] 
+         * @param {boolean} [spamOnly] 
+         * @param {boolean} [unassignedOnly] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {string} [sortBy] 
+         * @param {string} [sortDirection] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [customStatusIds] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
+         * @param {Array<string>} [searchUserIds] 
+         * @param {Array<string>} [searchScopeIds] 
+         * @param {string} [linkedEntityType] 
+         * @param {string} [linkedEntityId] 
+         * @param {string} [linkedEntityReference] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1TicketsIdsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationTicketsDTOsTicketIdsDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsIdsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, assigneeIds, includeUnassigned, customStatusIds, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TicketsApi.v1TicketsIdsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Requires permission: tickets.create (app: helpdesk).
          * @param {string} parentId 
          * @param {HelpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand} [helpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand] 
@@ -2323,6 +2775,15 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
     return {
         /**
          * Requires permission: tickets.read (app: helpdesk).
+         * @param {HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand} [helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand?: HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsBulkTicketActionResultDto> {
+            return localVarFp.v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Requires permission: tickets.read (app: helpdesk).
          * @param {string} [customStatusId] 
          * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
          * @param {string} [categoryId] 
@@ -2334,6 +2795,10 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
          * @param {string} [divisionId] 
          * @param {boolean} [unreadOnly] 
          * @param {boolean} [spamOnly] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
          * @param {Array<string>} [searchUserIds] 
          * @param {Array<string>} [searchScopeIds] 
          * @param {string} [linkedEntityType] 
@@ -2342,8 +2807,8 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketCountsDto> {
-            return localVarFp.v1TicketsCountsGet(customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, spamOnly, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(axios, basePath));
+        v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, assigneeIds?: Array<string>, includeUnassigned?: boolean, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketCountsDto> {
+            return localVarFp.v1TicketsCountsGet(customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, spamOnly, assigneeIds, includeUnassigned, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: tickets.read (app: helpdesk).
@@ -2366,17 +2831,21 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
          * @param {number} [pageSize] 
          * @param {string} [sortBy] 
          * @param {string} [sortDirection] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [customStatusIds] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
          * @param {Array<string>} [searchUserIds] 
          * @param {Array<string>} [searchScopeIds] 
-         * @param {Array<string>} [customStatusIds] 
          * @param {string} [linkedEntityType] 
          * @param {string} [linkedEntityId] 
          * @param {string} [linkedEntityReference] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, customStatusIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultTicketListDto> {
-            return localVarFp.v1TicketsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, searchUserIds, searchScopeIds, customStatusIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(axios, basePath));
+        v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultTicketListDto> {
+            return localVarFp.v1TicketsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, assigneeIds, includeUnassigned, customStatusIds, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: tickets.assign (app: helpdesk).
@@ -2448,6 +2917,16 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.v1TicketsIdForwardPost(id, helpdeskApplicationTicketsCommandsForwardTicketForwardTicketCommand, options).then((request) => request(axios, basePath));
         },
         /**
+         * Requires permission: tickets.update (app: helpdesk).
+         * @param {string} id 
+         * @param {HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand} [helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsIdForwardToProviderPost(id: string, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand?: HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.v1TicketsIdForwardToProviderPost(id, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Requires permission: tickets.read (app: helpdesk).
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -2455,6 +2934,17 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
          */
         v1TicketsIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketDto> {
             return localVarFp.v1TicketsIdGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Requires permission: tickets.read (app: helpdesk).
+         * @param {string} id 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsIdHistoryGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultTicketHistoryItemDto> {
+            return localVarFp.v1TicketsIdHistoryGet(id, page, pageSize, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: tickets.update (app: helpdesk).
@@ -2665,6 +3155,43 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.v1TicketsIdUnpublishAsIdeaPost(id, options).then((request) => request(axios, basePath));
         },
         /**
+         * Requires permission: tickets.read (app: helpdesk).
+         * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
+         * @param {Array<HelpdeskDomainTicketsEnumsTicketStatus>} [statuses] 
+         * @param {string} [customStatusId] 
+         * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
+         * @param {string} [categoryId] 
+         * @param {string} [assigneeId] 
+         * @param {string} [requesterId] 
+         * @param {string} [searchTerm] 
+         * @param {Array<string>} [tagIds] 
+         * @param {string} [organisationId] 
+         * @param {string} [divisionId] 
+         * @param {boolean} [unreadOnly] 
+         * @param {boolean} [overdueOnly] 
+         * @param {boolean} [spamOnly] 
+         * @param {boolean} [unassignedOnly] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {string} [sortBy] 
+         * @param {string} [sortDirection] 
+         * @param {Array<string>} [assigneeIds] 
+         * @param {boolean} [includeUnassigned] 
+         * @param {Array<string>} [customStatusIds] 
+         * @param {Array<string>} [categoryIds] 
+         * @param {Array<string>} [organisationIds] 
+         * @param {Array<string>} [searchUserIds] 
+         * @param {Array<string>} [searchScopeIds] 
+         * @param {string} [linkedEntityType] 
+         * @param {string} [linkedEntityId] 
+         * @param {string} [linkedEntityReference] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsIdsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketIdsDto> {
+            return localVarFp.v1TicketsIdsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, assigneeIds, includeUnassigned, customStatusIds, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Requires permission: tickets.create (app: helpdesk).
          * @param {string} parentId 
          * @param {HelpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand} [helpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand] 
@@ -2715,6 +3242,14 @@ export const TicketsApiFactory = function (configuration?: Configuration, basePa
 export interface TicketsApiInterface {
     /**
      * Requires permission: tickets.read (app: helpdesk).
+     * @param {HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand} [helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand?: HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsBulkTicketActionResultDto>;
+
+    /**
+     * Requires permission: tickets.read (app: helpdesk).
      * @param {string} [customStatusId] 
      * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
      * @param {string} [categoryId] 
@@ -2726,6 +3261,10 @@ export interface TicketsApiInterface {
      * @param {string} [divisionId] 
      * @param {boolean} [unreadOnly] 
      * @param {boolean} [spamOnly] 
+     * @param {Array<string>} [assigneeIds] 
+     * @param {boolean} [includeUnassigned] 
+     * @param {Array<string>} [categoryIds] 
+     * @param {Array<string>} [organisationIds] 
      * @param {Array<string>} [searchUserIds] 
      * @param {Array<string>} [searchScopeIds] 
      * @param {string} [linkedEntityType] 
@@ -2734,7 +3273,7 @@ export interface TicketsApiInterface {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketCountsDto>;
+    v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, assigneeIds?: Array<string>, includeUnassigned?: boolean, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketCountsDto>;
 
     /**
      * Requires permission: tickets.read (app: helpdesk).
@@ -2757,16 +3296,20 @@ export interface TicketsApiInterface {
      * @param {number} [pageSize] 
      * @param {string} [sortBy] 
      * @param {string} [sortDirection] 
+     * @param {Array<string>} [assigneeIds] 
+     * @param {boolean} [includeUnassigned] 
+     * @param {Array<string>} [customStatusIds] 
+     * @param {Array<string>} [categoryIds] 
+     * @param {Array<string>} [organisationIds] 
      * @param {Array<string>} [searchUserIds] 
      * @param {Array<string>} [searchScopeIds] 
-     * @param {Array<string>} [customStatusIds] 
      * @param {string} [linkedEntityType] 
      * @param {string} [linkedEntityId] 
      * @param {string} [linkedEntityReference] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, customStatusIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultTicketListDto>;
+    v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultTicketListDto>;
 
     /**
      * Requires permission: tickets.assign (app: helpdesk).
@@ -2831,12 +3374,31 @@ export interface TicketsApiInterface {
     v1TicketsIdForwardPost(id: string, helpdeskApplicationTicketsCommandsForwardTicketForwardTicketCommand?: HelpdeskApplicationTicketsCommandsForwardTicketForwardTicketCommand, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     * Requires permission: tickets.update (app: helpdesk).
+     * @param {string} id 
+     * @param {HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand} [helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1TicketsIdForwardToProviderPost(id: string, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand?: HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
      * Requires permission: tickets.read (app: helpdesk).
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     v1TicketsIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketDto>;
+
+    /**
+     * Requires permission: tickets.read (app: helpdesk).
+     * @param {string} id 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1TicketsIdHistoryGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultTicketHistoryItemDto>;
 
     /**
      * Requires permission: tickets.update (app: helpdesk).
@@ -3025,6 +3587,42 @@ export interface TicketsApiInterface {
     v1TicketsIdUnpublishAsIdeaPost(id: string, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     * Requires permission: tickets.read (app: helpdesk).
+     * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
+     * @param {Array<HelpdeskDomainTicketsEnumsTicketStatus>} [statuses] 
+     * @param {string} [customStatusId] 
+     * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
+     * @param {string} [categoryId] 
+     * @param {string} [assigneeId] 
+     * @param {string} [requesterId] 
+     * @param {string} [searchTerm] 
+     * @param {Array<string>} [tagIds] 
+     * @param {string} [organisationId] 
+     * @param {string} [divisionId] 
+     * @param {boolean} [unreadOnly] 
+     * @param {boolean} [overdueOnly] 
+     * @param {boolean} [spamOnly] 
+     * @param {boolean} [unassignedOnly] 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {string} [sortBy] 
+     * @param {string} [sortDirection] 
+     * @param {Array<string>} [assigneeIds] 
+     * @param {boolean} [includeUnassigned] 
+     * @param {Array<string>} [customStatusIds] 
+     * @param {Array<string>} [categoryIds] 
+     * @param {Array<string>} [organisationIds] 
+     * @param {Array<string>} [searchUserIds] 
+     * @param {Array<string>} [searchScopeIds] 
+     * @param {string} [linkedEntityType] 
+     * @param {string} [linkedEntityId] 
+     * @param {string} [linkedEntityReference] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1TicketsIdsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationTicketsDTOsTicketIdsDto>;
+
+    /**
      * Requires permission: tickets.create (app: helpdesk).
      * @param {string} parentId 
      * @param {HelpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand} [helpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand] 
@@ -3070,6 +3668,16 @@ export interface TicketsApiInterface {
 export class TicketsApi extends BaseAPI implements TicketsApiInterface {
     /**
      * Requires permission: tickets.read (app: helpdesk).
+     * @param {HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand} [helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand?: HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options?: RawAxiosRequestConfig) {
+        return TicketsApiFp(this.configuration).v1TicketsBulkPost(helpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires permission: tickets.read (app: helpdesk).
      * @param {string} [customStatusId] 
      * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
      * @param {string} [categoryId] 
@@ -3081,6 +3689,10 @@ export class TicketsApi extends BaseAPI implements TicketsApiInterface {
      * @param {string} [divisionId] 
      * @param {boolean} [unreadOnly] 
      * @param {boolean} [spamOnly] 
+     * @param {Array<string>} [assigneeIds] 
+     * @param {boolean} [includeUnassigned] 
+     * @param {Array<string>} [categoryIds] 
+     * @param {Array<string>} [organisationIds] 
      * @param {Array<string>} [searchUserIds] 
      * @param {Array<string>} [searchScopeIds] 
      * @param {string} [linkedEntityType] 
@@ -3089,8 +3701,8 @@ export class TicketsApi extends BaseAPI implements TicketsApiInterface {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig) {
-        return TicketsApiFp(this.configuration).v1TicketsCountsGet(customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, spamOnly, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(this.axios, this.basePath));
+    public v1TicketsCountsGet(customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, spamOnly?: boolean, assigneeIds?: Array<string>, includeUnassigned?: boolean, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig) {
+        return TicketsApiFp(this.configuration).v1TicketsCountsGet(customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, spamOnly, assigneeIds, includeUnassigned, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3114,17 +3726,21 @@ export class TicketsApi extends BaseAPI implements TicketsApiInterface {
      * @param {number} [pageSize] 
      * @param {string} [sortBy] 
      * @param {string} [sortDirection] 
+     * @param {Array<string>} [assigneeIds] 
+     * @param {boolean} [includeUnassigned] 
+     * @param {Array<string>} [customStatusIds] 
+     * @param {Array<string>} [categoryIds] 
+     * @param {Array<string>} [organisationIds] 
      * @param {Array<string>} [searchUserIds] 
      * @param {Array<string>} [searchScopeIds] 
-     * @param {Array<string>} [customStatusIds] 
      * @param {string} [linkedEntityType] 
      * @param {string} [linkedEntityId] 
      * @param {string} [linkedEntityReference] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, customStatusIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig) {
-        return TicketsApiFp(this.configuration).v1TicketsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, searchUserIds, searchScopeIds, customStatusIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(this.axios, this.basePath));
+    public v1TicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig) {
+        return TicketsApiFp(this.configuration).v1TicketsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, assigneeIds, includeUnassigned, customStatusIds, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3204,6 +3820,17 @@ export class TicketsApi extends BaseAPI implements TicketsApiInterface {
     }
 
     /**
+     * Requires permission: tickets.update (app: helpdesk).
+     * @param {string} id 
+     * @param {HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand} [helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1TicketsIdForwardToProviderPost(id: string, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand?: HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options?: RawAxiosRequestConfig) {
+        return TicketsApiFp(this.configuration).v1TicketsIdForwardToProviderPost(id, helpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Requires permission: tickets.read (app: helpdesk).
      * @param {string} id 
      * @param {*} [options] Override http request option.
@@ -3211,6 +3838,18 @@ export class TicketsApi extends BaseAPI implements TicketsApiInterface {
      */
     public v1TicketsIdGet(id: string, options?: RawAxiosRequestConfig) {
         return TicketsApiFp(this.configuration).v1TicketsIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires permission: tickets.read (app: helpdesk).
+     * @param {string} id 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1TicketsIdHistoryGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
+        return TicketsApiFp(this.configuration).v1TicketsIdHistoryGet(id, page, pageSize, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -3441,6 +4080,44 @@ export class TicketsApi extends BaseAPI implements TicketsApiInterface {
      */
     public v1TicketsIdUnpublishAsIdeaPost(id: string, options?: RawAxiosRequestConfig) {
         return TicketsApiFp(this.configuration).v1TicketsIdUnpublishAsIdeaPost(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires permission: tickets.read (app: helpdesk).
+     * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
+     * @param {Array<HelpdeskDomainTicketsEnumsTicketStatus>} [statuses] 
+     * @param {string} [customStatusId] 
+     * @param {HelpdeskDomainTicketsEnumsTicketPriority} [priority] 
+     * @param {string} [categoryId] 
+     * @param {string} [assigneeId] 
+     * @param {string} [requesterId] 
+     * @param {string} [searchTerm] 
+     * @param {Array<string>} [tagIds] 
+     * @param {string} [organisationId] 
+     * @param {string} [divisionId] 
+     * @param {boolean} [unreadOnly] 
+     * @param {boolean} [overdueOnly] 
+     * @param {boolean} [spamOnly] 
+     * @param {boolean} [unassignedOnly] 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {string} [sortBy] 
+     * @param {string} [sortDirection] 
+     * @param {Array<string>} [assigneeIds] 
+     * @param {boolean} [includeUnassigned] 
+     * @param {Array<string>} [customStatusIds] 
+     * @param {Array<string>} [categoryIds] 
+     * @param {Array<string>} [organisationIds] 
+     * @param {Array<string>} [searchUserIds] 
+     * @param {Array<string>} [searchScopeIds] 
+     * @param {string} [linkedEntityType] 
+     * @param {string} [linkedEntityId] 
+     * @param {string} [linkedEntityReference] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1TicketsIdsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, statuses?: Array<HelpdeskDomainTicketsEnumsTicketStatus>, customStatusId?: string, priority?: HelpdeskDomainTicketsEnumsTicketPriority, categoryId?: string, assigneeId?: string, requesterId?: string, searchTerm?: string, tagIds?: Array<string>, organisationId?: string, divisionId?: string, unreadOnly?: boolean, overdueOnly?: boolean, spamOnly?: boolean, unassignedOnly?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, assigneeIds?: Array<string>, includeUnassigned?: boolean, customStatusIds?: Array<string>, categoryIds?: Array<string>, organisationIds?: Array<string>, searchUserIds?: Array<string>, searchScopeIds?: Array<string>, linkedEntityType?: string, linkedEntityId?: string, linkedEntityReference?: string, options?: RawAxiosRequestConfig) {
+        return TicketsApiFp(this.configuration).v1TicketsIdsGet(status, statuses, customStatusId, priority, categoryId, assigneeId, requesterId, searchTerm, tagIds, organisationId, divisionId, unreadOnly, overdueOnly, spamOnly, unassignedOnly, page, pageSize, sortBy, sortDirection, assigneeIds, includeUnassigned, customStatusIds, categoryIds, organisationIds, searchUserIds, searchScopeIds, linkedEntityType, linkedEntityId, linkedEntityReference, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

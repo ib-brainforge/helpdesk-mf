@@ -7,6 +7,7 @@
  *
  * Source: Helpdesk.Domain/Automation/Enums/ActionType.cs
  */
+import { APPROVALS_ENABLED } from '@/constants/features';
 import type { ActionTypeOption } from '@brainforgeau/rules-ui';
 
 export const HELPDESK_ACTION_TYPES: ActionTypeOption[] = [
@@ -26,14 +27,17 @@ export const HELPDESK_ACTION_TYPES: ActionTypeOption[] = [
   { value: 'SendNotification', label: 'Send Notification' },
   { value: 'SendEmail', label: 'Send Email' },
 
-  // ── Sub-tasks / workflow ────────────────────────────────────────────────────
-  { value: 'CreateSubtask', label: 'Create Subtask' },
+  // ── Workflow ────────────────────────────────────────────────────────────────
+  // CreateSubtask is switched off with the rest of subtasks (SUBTASKS_ENABLED).
+  // { value: 'CreateSubtask', label: 'Create Subtask' },
   { value: 'InvokeWorkflowTransition', label: 'Invoke Workflow Transition' },
+  // RequestApproval is offered only while approvals are on (APPROVALS_ENABLED).
+  ...(APPROVALS_ENABLED
+    ? [{ value: 'RequestApproval', label: 'Request Approval' }]
+    : []),
 
-  // ── SLA ─────────────────────────────────────────────────────────────────────
-  { value: 'ApplySlaPolicy', label: 'Apply SLA Policy' },
-  { value: 'PauseSla', label: 'Pause SLA' },
-  { value: 'ResumeSla', label: 'Resume SLA' },
+  // No SLA actions: the backend ActionType enum has none, and deadlines come
+  // from the company's policy, with a clock that never pauses.
 
   // ── Knowledge base / canned responses ───────────────────────────────────────
   { value: 'AttachCannedResponse', label: 'Attach Canned Response' },

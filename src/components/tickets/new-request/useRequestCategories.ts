@@ -1,33 +1,26 @@
-import { PlatformMyCategoriesApi } from '@/api/helpdesk-client';
+import { CategoriesApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useQuery } from '@tanstack/react-query';
 
+/** Categories rarely change; a saved category refreshes them. */
+const STALE_MS = 10 * 60 * 1000;
+
 /**
- * The categories a requester may actually choose, with their real ids.
- *
- * NOT /v1/categories. That endpoint is tenant scoped, so it returns only
- * Audience=Tenant rows. The Netcorp categories are Audience=Principal with no
- * TenantId, which means a tenant user asking /v1/categories gets an empty list
- * and the wizard has no id to send. The ticket create command rejects a request
- * with no CategoryId ("Category is required"), so that empty list is a 400 on
- * submit rather than a visibly missing dropdown.
- *
- * /v1/platform/my-categories is the surface built for exactly this: it returns
- * what the caller may select, across audiences, resolving the principal from
- * their context.
+ * The categories a requester may choose, with their real ids: the tenant's own
+ * categories plus the Provider's preset categories (/v1/categories/available),
+ * so a tenant with no categories of its own can still raise a request. The
+ * ticket create command rejects a request with no CategoryId, so the wizard
+ * resolves its request types against this list.
  */
 export const useRequestCategories = () => {
   const { data, isLoading } = useQuery({
-    queryKey: ['request-categories'],
-    // Categories change rarely and a stale list would only ever cost a refetch,
-    // never a wrong write: the id is read at submit time from this same list.
-    staleTime: 10 * 60 * 1000,
+    queryKey: ['helpdesk-categories', 'available'],
+    staleTime: STALE_MS,
     queryFn: async () => {
-      const client = await createHelpdeskApiClient(PlatformMyCategoriesApi);
-      const { data } = await client.v1PlatformMyCategoriesGet();
+      const client = await createHelpdeskApiClient(CategoriesApi);
+      const { data } = await client.v1CategoriesAvailableGet();
       return data ?? [];
     },
   });
-
   return { categories: data ?? [], isLoading };
 };

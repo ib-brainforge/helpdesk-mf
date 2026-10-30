@@ -22,9 +22,7 @@ export const createIdentityApiClient = async <TClient>(
   // (stage 2 of failing loudly) when IDENTITY_API_BASE_URL was never configured.
   const identityBaseUrl = requireIdentityApiBaseUrl();
 
-  const authorizedAxios = createAuthorizedAxios({
-    identityBaseUrl,
-  });
+  const authorizedAxios = createAuthorizedAxios({ identityBaseUrl });
 
   const configuration = new Configuration({
     basePath: identityBaseUrl,

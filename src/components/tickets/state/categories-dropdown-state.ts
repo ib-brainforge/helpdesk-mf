@@ -1,4 +1,4 @@
-import { PlatformMyCategoriesApi } from '@/api/helpdesk-client';
+import { CategoriesApi } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { atomWithMutation } from 'jotai-tanstack-query';
 
@@ -14,16 +14,26 @@ export const categoriesMutationAtom = atomWithMutation<
 >(() => ({
   mutationKey: ['categories-search'],
   mutationFn: async ({ query }: { query: string }) => {
-    const client = await createHelpdeskApiClient(PlatformMyCategoriesApi);
-    const { data } = await client.v1PlatformMyCategoriesGet();
+    const client = await createHelpdeskApiClient(CategoriesApi);
+    const { data } = await client.v1CategoriesGet();
 
-    // data is a flat CategoryDto[] — no hierarchy unwrapping needed.
-    const categories: CategoryOption[] = (data ?? [])
-      .filter(cat => cat.isActive !== false)
-      .map(cat => ({
+    const categories: CategoryOption[] = [
+      ...(data.sections ?? []).flatMap(section =>
+        (section.categories ?? []).map(cat => ({
+          cat,
+          sectionName: section.name ?? undefined,
+        })),
+      ),
+      ...(data.unsectionedCategories ?? []).map(cat => ({
+        cat,
+        sectionName: undefined,
+      })),
+    ]
+      .filter(({ cat }) => cat.isActive !== false)
+      .map(({ cat, sectionName }) => ({
         id: cat.id ?? '',
         name: cat.name ?? 'Unnamed Category',
-        sectionName: cat.sectionName ?? undefined,
+        sectionName,
       }));
 
     // Filter by query if provided.
