@@ -33,6 +33,7 @@ export interface HelpdeskApplicationKnowledgeBaseModelsKbArticleDto {
     'categoryId'?: string;
     'accessLevel'?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel;
     'status'?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus;
+    'pageKeys'?: Array<string>;
     'viewCount'?: number;
     'helpfulCount'?: number;
     'notHelpfulCount'?: number;

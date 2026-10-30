@@ -16,11 +16,13 @@
 
 export interface HelpdeskApplicationAiCopilotTicketSlaStatus {
     'ticketId'?: string;
-    'policyId'?: string | null;
-    'policyName'?: string | null;
-    'state'?: string;
-    'elapsedSeconds'?: number;
-    'deadlineUtc'?: string | null;
+    'policyTargets'?: string | null;
+    'replyDueAt'?: string | null;
+    'repliedAt'?: string | null;
+    'fixDueAt'?: string | null;
+    'fixedAt'?: string | null;
+    'replyState'?: string;
+    'fixState'?: string;
     'isBreached'?: boolean;
 }
 

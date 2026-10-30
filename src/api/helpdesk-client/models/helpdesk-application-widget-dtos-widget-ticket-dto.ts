@@ -15,9 +15,6 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import type { HelpdeskDomainCommonEnumsAudience } from './helpdesk-domain-common-enums-audience';
-// May contain unused imports in some cases
-// @ts-ignore
 import type { HelpdeskDomainTicketsEnumsTicketPriority } from './helpdesk-domain-tickets-enums-ticket-priority';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -30,7 +27,7 @@ export interface HelpdeskApplicationWidgetDTOsWidgetTicketDto {
     'status'?: HelpdeskDomainTicketsEnumsTicketStatus;
     'priority'?: HelpdeskDomainTicketsEnumsTicketPriority;
     'categoryId'?: string | null;
-    'audience'?: HelpdeskDomainCommonEnumsAudience;
+    'tenantId'?: string;
     'createdAt'?: string;
     'updatedAt'?: string;
 }

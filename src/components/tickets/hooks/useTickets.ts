@@ -1,9 +1,9 @@
 import {
   IdeasApi,
-  PrincipalTicketsApi,
+  ProviderCustomerTicketsApi,
   TicketsApi,
 } from '@/api/helpdesk-client';
-import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
+import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   CreateTicketDto,
@@ -21,7 +21,12 @@ import {
   toWireLink,
 } from '@/types/ticket-links';
 import { toApiTicketPriority, toApiTicketStatus } from '@/utils/typeMappers';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchMatches } from './useSearchMatches';
@@ -38,13 +43,70 @@ export const withSearchMatches = (
 });
 
 /**
- * The filter values both ticket endpoints take, mapped once.
+ * The Assignee filter's selection as the ticket endpoints take it, worked out
+ * once for the list, the counts and fetchTicketCount.
+ *
+ * One person and nothing else goes in the plain `assigneeId`, which the
+ * generated client declares and the "Assigned to you" tab has always sent.
+ * Anything wider (several people, or Unassigned ticked) goes out as repeated
+ * `assigneeIds=` plus `includeUnassigned`, which the backend matches as "any
+ * of" and the generated client predates.
+ */
+export const assigneeParams = (
+  filters: TicketFilters,
+): {
+  assigneeId?: string;
+  assigneeIds?: string[];
+  includeUnassigned?: true;
+} => {
+  const people = filters.assigneeId ?? [];
+  if (people.length === 1 && !filters.includeUnassigned) {
+    return { assigneeId: people[0] };
+  }
+  return {
+    assigneeIds: people.length > 0 ? people : undefined,
+    includeUnassigned: filters.includeUnassigned ? true : undefined,
+  };
+};
+
+/**
+ * A multi-select's ids in the shape the ticket endpoints take: one id in the
+ * single-valued parameter every backend version reads, several as repeated
+ * `<plural>=` ("any of"), the same split as assigneeParams.
+ */
+export const putIds = (
+  params: Record<string, unknown>,
+  single: string,
+  plural: string,
+  ids: string[] | undefined,
+) => {
+  if (!ids?.length) return;
+  if (ids.length === 1) params[single] = ids[0];
+  else params[plural] = ids;
+};
+
+/**
+ * The multi-select filters the list endpoints declare as repeated
+ * `<plural>=` params ("any of"): several categories, several people or
+ * Unassigned in the Assignee filter. One category or one person goes in the
+ * single-valued argument every backend version reads.
+ */
+const multiValues = (filters: TicketFilters) => {
+  const { assigneeIds, includeUnassigned } = assigneeParams(filters);
+  return {
+    assigneeIds,
+    includeUnassigned,
+    categoryIds:
+      (filters.categoryId?.length ?? 0) > 1 ? filters.categoryId : undefined,
+  };
+};
+
+/**
+ * The filter values the ticket endpoints take, mapped once.
  *
  * The grid and the tab badges have to ask the same question or a badge stops
  * being a statement about the list it labels, so the mapping lives here instead
- * of being written out twice. The two endpoints still take these positionally
- * and their signatures differ (the principal one has no spamOnly and takes
- * tenantId), so the calls themselves stay separate below.
+ * of being written out twice.
  */
 const ticketQueryValues = (filters: TicketFilters) => ({
   /*
@@ -72,13 +134,12 @@ const ticketQueryValues = (filters: TicketFilters) => ({
   priority: filters.priority?.[0]
     ? toApiTicketPriority(filters.priority[0])
     : undefined,
-  categoryId: filters.categoryId?.[0],
-  // When unassignedOnly is active, clear assigneeId so the backend is not asked
-  // for both at once, which matches nothing.
-  assigneeId: filters.unassignedOnly ? undefined : filters.assigneeId?.[0],
+  categoryId:
+    filters.categoryId?.length === 1 ? filters.categoryId[0] : undefined,
+  // A wider selection goes out via extraParams (assigneeIds).
+  assigneeId: assigneeParams(filters).assigneeId,
   searchTerm: filters.searchTerm,
   overdueOnly: filters.overdueOnly ? true : undefined,
-  unassignedOnly: filters.unassignedOnly ? true : undefined,
   tagIds: filters.tagIds?.length ? filters.tagIds : undefined,
   // Name matches for the search box, resolved by useSearchMatches.
   searchUserIds: filters.searchUserIds?.length
@@ -90,55 +151,20 @@ const ticketQueryValues = (filters: TicketFilters) => ({
 });
 
 /**
- * How many tickets match `filters`, without fetching them.
- *
- * pageSize 1, and only `totalCount` is read off the paged envelope; the single
- * row that comes back is discarded.
- *
- * WHY IT TAKES principalId
- * It must follow the same endpoint branch as useTicketsData. /v1/tickets
- * hardcodes `TicketScope.Tenant`, so counting there while the grid reads the
- * principal endpoint counted a different population entirely: an unfiltered
- * All tab showed 2002 rows under a badge reading 1505.
+ * Positional arguments shared by GET /v1/tickets and GET
+ * /v1/provider-support/customer-tickets (the provider's "From tenants"
+ * queue, which needs the provider.support permission): the same 26 filters in
+ * the same order, so the list, the count and the ids all ask one question.
  */
-export const fetchTicketCount = async (
+const listArgs = (
   filters: TicketFilters,
-  principalId?: string,
-): Promise<number> => {
+  page?: number,
+  pageSize?: number,
+  sort?: TicketsSort | null,
+) => {
   const v = ticketQueryValues(filters);
-
-  if (principalId) {
-    const principalClient = await createHelpdeskApiClient(PrincipalTicketsApi);
-    const { data } = await principalClient.v1PrincipalsPrincipalIdTicketsGet(
-      principalId,
-      v.status,
-      v.statuses,
-      v.customStatusId,
-      v.priority,
-      v.categoryId,
-      v.assigneeId,
-      undefined, // requesterId
-      v.searchTerm,
-      undefined, // unreadOnly
-      v.overdueOnly,
-      v.unassignedOnly,
-      filters.tenantId || undefined,
-      filters.organisationId || undefined,
-      filters.divisionId || undefined,
-      v.tagIds,
-      1, // page
-      1, // pageSize
-      undefined, // sortBy
-      undefined, // sortDirection
-      v.searchUserIds,
-      v.searchScopeIds,
-      v.customStatusIds,
-    );
-    return data.totalCount ?? 0;
-  }
-
-  const client = await createHelpdeskApiClient(TicketsApi);
-  const { data } = await client.v1TicketsGet(
+  const m = multiValues(filters);
+  return [
     v.status,
     v.statuses,
     v.customStatusId,
@@ -148,22 +174,100 @@ export const fetchTicketCount = async (
     undefined, // requesterId
     v.searchTerm,
     v.tagIds,
-    undefined, // organisationId: scope narrowing is principal-endpoint only
+    undefined, // organisationId
     undefined, // divisionId
     undefined, // unreadOnly
     v.overdueOnly,
-    undefined, // spamOnly
-    v.unassignedOnly,
-    1, // page
-    1, // pageSize
-    undefined, // sortBy
-    undefined, // sortDirection
+    undefined, // spamOnly: the default view excludes spam
+    undefined, // unassignedOnly: Unassigned is includeUnassigned now
+    page,
+    pageSize,
+    sort?.sortBy,
+    sort?.sortDirection,
+    m.assigneeIds,
+    m.includeUnassigned,
+    v.customStatusIds,
+    m.categoryIds,
+    undefined, // organisationIds
     v.searchUserIds,
     v.searchScopeIds,
-    v.customStatusIds,
-  );
+  ] as const;
+};
+
+/** One page of the tenant's own tickets, or of the provider's From tenants queue. */
+const fetchTicketPage = async (
+  fromTenants: boolean,
+  args: ReturnType<typeof listArgs>,
+) =>
+  fromTenants
+    ? (
+        await (
+          await createHelpdeskApiClient(ProviderCustomerTicketsApi)
+        ).v1ProviderSupportCustomerTicketsGet(...args)
+      ).data
+    : (await (await createHelpdeskApiClient(TicketsApi)).v1TicketsGet(...args))
+        .data;
+
+/**
+ * How many tickets match `filters`, without fetching them.
+ *
+ * pageSize 1, and only `totalCount` is read off the paged envelope; the single
+ * row that comes back is discarded. It must ask the same queue as the list
+ * (`fromTenants`), or the badge counts a different population than the rows.
+ */
+export const fetchTicketCount = async (
+  filters: TicketFilters,
+  fromTenants = false,
+): Promise<number> => {
+  const data = await fetchTicketPage(fromTenants, listArgs(filters, 1, 1));
   return data.totalCount ?? 0;
 };
+
+export interface TicketIdRef {
+  id: string;
+}
+
+export interface TicketIdsResult {
+  items: TicketIdRef[];
+  total: number;
+  /** More matched than the endpoint returns; the rest are left out. */
+  truncated: boolean;
+}
+
+/**
+ * Every ticket `filters` match, as ids, for a bulk action in "all matching"
+ * mode. Same filters and the same queue as the list (GET /v1/tickets/ids), so
+ * the action covers exactly what the list counts.
+ */
+export const fetchTicketIds = async (
+  filters: TicketFilters,
+  fromTenants = false,
+): Promise<TicketIdsResult> => {
+  const args = listArgs(filters);
+  const data = fromTenants
+    ? (
+        await (
+          await createHelpdeskApiClient(ProviderCustomerTicketsApi)
+        ).v1ProviderSupportCustomerTicketsIdsGet(...args)
+      ).data
+    : (
+        await (
+          await createHelpdeskApiClient(TicketsApi)
+        ).v1TicketsIdsGet(...args)
+      ).data;
+  const items = (data?.items ?? []).flatMap(i => (i.id ? [{ id: i.id }] : []));
+  return {
+    items,
+    total: data?.total ?? items.length,
+    truncated: Boolean(data?.truncated),
+  };
+};
+
+export interface TicketsSort {
+  /** The backend's SortBy key, e.g. "deadline". */
+  sortBy: string;
+  sortDirection: 'asc' | 'desc';
+}
 
 /**
  * @param initialFilters Applied on the FIRST render only.
@@ -174,36 +278,32 @@ export const fetchTicketCount = async (
  * selected, then corrected itself. That was both a wasted round trip and, until
  * the correction landed, a list that disagreed with its own highlighted tab.
  */
-export const useTicketsData = (initialFilters?: TicketFilters) => {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+export const useTicketsData = (
+  initialFilters?: TicketFilters,
+  {
+    sort,
+    enabled = true,
+    initialPagination,
+    fromTenants = false,
+  }: {
+    /** Server-side sort across every page; omitted is the server's default. */
+    sort?: TicketsSort | null;
+    /** Held while the caller waits on something the first request depends on. */
+    enabled?: boolean;
+    /** The first page and page size (from the URL); a seed, like the filters. */
+    initialPagination?: PaginationState;
+    /** The provider's "From tenants" queue instead of the tenant's own tickets. */
+    fromTenants?: boolean;
+  } = {},
+) => {
+  const [pagination, setPagination] = useState<PaginationState>(
+    () => initialPagination ?? { pageIndex: 0, pageSize: 25 },
+  );
   // Lazy initialiser: `initialFilters` is a seed, not a controlled value, so
   // later renders must not reset what the user has since changed.
   const [filters, setFilters] = useState<TicketFilters>(
     () => initialFilters ?? {},
   );
-
-  /*
-   * WHICH ENDPOINT, AND WHY IT IS DECIDED HERE
-   *
-   * /v1/tickets hardcodes `TicketScope.Tenant(tenantId)`, so it can only ever
-   * return one tenant's rows. A Netcorp service admin is supposed to see every
-   * tenant under the principal, which is what /v1/principals/{id}/tickets
-   * returns (`TicketScope.Principal`). Same query, same handler, same DTO
-   * server-side; the controllers differ only in the scope they set.
-   *
-   * Branching inside this hook rather than in the page keeps TicketGrid
-   * unaware of it: one grid, one set of filters, one page, and the role
-   * decides how wide the result is. The principal id comes from the context
-   * token, so nothing needs it in the URL.
-   *
-   * The backend re-checks the role on every request, so this only decides what
-   * to ask for, never what is allowed.
-   */
-  const { isServiceAdmin, principalId } = useHelpdeskAccess();
-  const usePrincipalScope = isServiceAdmin && Boolean(principalId);
 
   /*
    * The search box also matches people and places by name. Those names are not
@@ -219,80 +319,35 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
   const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
     // Held while a name lookup the search depends on is running, so the grid
     // asks once with the full search rather than once without it and again.
-    enabled: search.ready,
-    queryKey: ['tickets', pagination, queryFilters, principalId ?? 'tenant'],
+    enabled: search.ready && enabled,
+    // Ticking several assignees (or paging, or switching tab) keeps the rows
+    // on screen until the new ones arrive, instead of blanking the grid to a
+    // loading state on every click.
+    placeholderData: keepPreviousData,
+    queryKey: [
+      'tickets',
+      pagination,
+      queryFilters,
+      fromTenants ? 'from-tenants' : 'own',
+      sort ?? null,
+    ],
     queryFn: async () => {
       // The same mapping fetchTicketCount uses. Written once so the rows and
       // the badge above them cannot ask different questions.
-      const v = ticketQueryValues(queryFilters);
-
-      if (usePrincipalScope) {
-        const principalClient =
-          await createHelpdeskApiClient(PrincipalTicketsApi);
-        const principalResponse =
-          await principalClient.v1PrincipalsPrincipalIdTicketsGet(
-            principalId as string,
-            v.status,
-            v.statuses,
-            v.customStatusId,
-            v.priority,
-            v.categoryId,
-            v.assigneeId,
-            undefined, // requesterId
-            v.searchTerm,
-            undefined, // unreadOnly
-            v.overdueOnly,
-            v.unassignedOnly,
-            queryFilters.tenantId || undefined,
-            queryFilters.organisationId || undefined,
-            queryFilters.divisionId || undefined,
-            v.tagIds,
-            pagination.pageIndex + 1,
-            pagination.pageSize,
-            undefined, // sortBy
-            undefined, // sortDirection
-            v.searchUserIds,
-            v.searchScopeIds,
-            v.customStatusIds,
-          );
-        const principalResult = principalResponse.data;
-        return {
-          items: principalResult.items ?? [],
-          totalCount: principalResult.totalCount ?? 0,
-          page: principalResult.page ?? 1,
-          pageSize: principalResult.pageSize ?? pagination.pageSize,
-        };
-      }
-
-      const client = await createHelpdeskApiClient(TicketsApi);
-      const response = await client.v1TicketsGet(
-        v.status,
-        v.statuses,
-        v.customStatusId,
-        v.priority,
-        v.categoryId,
-        v.assigneeId,
-        undefined, // requesterId
-        v.searchTerm,
-        v.tagIds,
-        undefined, // organisationId: scope narrowing is principal-endpoint only
-        undefined, // divisionId
-        undefined, // unreadOnly
-        v.overdueOnly,
-        undefined, // spamOnly — default view excludes spam
-        v.unassignedOnly,
-        pagination.pageIndex + 1,
-        pagination.pageSize,
-        undefined, // sortBy
-        undefined, // sortDirection
-        v.searchUserIds,
-        v.searchScopeIds,
-        v.customStatusIds,
+      const result = await fetchTicketPage(
+        fromTenants,
+        listArgs(
+          queryFilters,
+          pagination.pageIndex + 1,
+          pagination.pageSize,
+          sort,
+        ),
       );
 
-      const result = response.data;
       return {
-        items: result.items ?? [],
+        // The generated rows leave the deadline instants optional; TicketListDto
+        // types them as present-or-null.
+        items: (result.items ?? []) as TicketListDto[],
         totalCount: result.totalCount ?? 0,
         page: result.page ?? 1,
         pageSize: result.pageSize ?? pagination.pageSize,
@@ -306,6 +361,8 @@ export const useTicketsData = (initialFilters?: TicketFilters) => {
     pagination,
     setPagination,
     filters,
+    /** The filters as sent, search name matches included (for the ids). */
+    queryFilters,
     setFilters,
     isLoading,
     refetch: useCallback(() => {
@@ -418,85 +475,6 @@ export const useUpdateTicket = () => {
   });
 };
 
-export const useBulkUpdateTickets = () => {
-  const queryClient = useQueryClient();
-
-  // REVIEW: Using simple loop for bulk updates - backend doesn't have dedicated bulk endpoint
-  return useMutation({
-    mutationFn: async ({
-      ids,
-      updates,
-    }: { ids: string[]; updates: UpdateTicketDto }) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
-      const promises = ids.map(async id => {
-        // Basic fields
-        if (updates.subject || updates.description) {
-          await client.v1TicketsIdPut(id, {
-            subject: updates.subject,
-            description: updates.description,
-          });
-        }
-
-        // Status change. Same contract as the single-ticket path: the custom
-        // id is always sent, so null detaches one from every selected ticket
-        // that had it.
-        if (updates.status) {
-          await client.v1TicketsIdStatusPatch(id, {
-            newStatus: toApiTicketStatus(updates.status),
-            customStatusId: updates.customStatusId ?? null,
-          });
-        }
-
-        // Priority change
-        if (updates.priority) {
-          await client.v1TicketsIdPriorityPatch(id, {
-            newPriority: toApiTicketPriority(updates.priority),
-          });
-        }
-
-        // Category change
-        if (updates.categoryId) {
-          await client.v1TicketsIdCategoryPatch(id, {
-            newCategoryId: updates.categoryId,
-          });
-        }
-
-        // Assignment change. Same null-vs-undefined contract as the
-        // single-ticket path, so a bulk unassign reaches the API.
-        if (updates.assigneeId !== undefined) {
-          await client.v1TicketsIdAssignPatch(id, {
-            assigneeId: updates.assigneeId ?? null,
-          });
-        }
-      });
-      await Promise.all(promises);
-      return { ids, updates };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    },
-  });
-};
-
-export const useBulkDeleteTickets = () => {
-  const queryClient = useQueryClient();
-
-  // REVIEW: Using simple loop for bulk delete - backend doesn't have dedicated bulk endpoint
-  return useMutation({
-    mutationFn: async (ids: string[]) => {
-      const client = await createHelpdeskApiClient(TicketsApi);
-      const promises = ids.map(async id => {
-        await client.v1TicketsIdDelete(id);
-      });
-      await Promise.all(promises);
-      return ids;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    },
-  });
-};
-
 export const useMergeTickets = () => {
   const queryClient = useQueryClient();
 
@@ -575,7 +553,7 @@ export const useTicketLinks = (ticketId: string) => {
       const response = await client.v1TicketsIdLinksGet(ticketId);
       return (response.data ?? []) as TicketLink[];
     },
-    enabled: !!ticketId,
+    enabled: TICKET_LINKS_ENABLED && !!ticketId,
   });
 };
 
@@ -760,7 +738,7 @@ export const useTicketChildren = (ticketId: string) => {
       const response = await client.v1TicketsIdChildrenGet(ticketId, 1, 50);
       return response.data?.items ?? [];
     },
-    enabled: !!ticketId,
+    enabled: SUBTASKS_ENABLED && !!ticketId,
   });
 };
 

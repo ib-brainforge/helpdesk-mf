@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 
 const NOT_IMPLEMENTED_COPY =
   'This feature is coming in a future release. For immediate data migration or export needs, ' +
-  'contact your platform support team — they will work with you directly.';
+  'contact your support team — they will work with you directly.';
 
 function ImportExportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,14 +138,8 @@ function ImportExportPage() {
             </p>
             <p className="text-warning-700 mt-2 text-sm">
               For immediate needs — migrating from another system or extracting
-              a full data copy — contact{' '}
-              <a
-                href="mailto:support@brainforge.au"
-                className="hover:text-warning-900 font-medium underline"
-              >
-                support@brainforge.au
-              </a>
-              . Our team will work with you directly.
+              a full data copy — contact your support team. They will work with
+              you directly.
             </p>
           </div>
         </div>

@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationSlaDTOsTicketDeadlineDto } from './helpdesk-application-sla-dtos-ticket-deadline-dto';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainTicketsEnumsTicketOrigin } from './helpdesk-domain-tickets-enums-ticket-origin';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -43,6 +46,9 @@ export interface HelpdeskApplicationTicketsDTOsTicketListDto {
     'tenantId'?: string | null;
     'organisationId'?: string | null;
     'divisionId'?: string | null;
+    'deadline'?: HelpdeskApplicationSlaDTOsTicketDeadlineDto;
+    'submitterTenantId'?: string | null;
+    'forwardedFromTenantId'?: string | null;
 }
 
 

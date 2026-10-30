@@ -26,6 +26,7 @@ export interface ServicesCoreRulesApplicationCommandsUpdateRuleGraphUpdateRuleGr
     'isEnabled'?: boolean;
     'cooldownMinutes'?: number;
     'consecutivePacketsRequired'?: number;
+    'minimumDurationSeconds'?: number | null;
     'schedule'?: ServicesCoreRulesApplicationModelsScheduleConfigDto;
     'auditResourceType'?: string;
     'auditAction'?: string;

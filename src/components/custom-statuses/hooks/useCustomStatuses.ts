@@ -12,6 +12,8 @@ const QUERY_KEY = 'helpdesk-custom-statuses';
 export const useCustomStatuses = () => {
   const { data, isLoading, refetch } = useQuery<CustomTicketStatusDto[]>({
     queryKey: [QUERY_KEY],
+    // Reference data; saves invalidate it, so it can stay fresh for longer.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const client = await createHelpdeskApiClient(CustomStatusesApi);
       const response = await client.v1CustomStatusesGet();

@@ -45,6 +45,8 @@ interface UseEntityScopeStripArgsBase {
   entityLabel: string;
   /** The record's embedded wire-shape `meta` (e.g. `status.meta`). */
   meta: ServicesCoreAbstractionsRecordMeta | null | undefined;
+  /** The record's own id, shown in the strip's "Record details" popover. */
+  recordId?: string | null;
   /** Calls `ScopeApi.v1ScopeEntityTypeIdPatch(entityType, id, patch)` -- entityType/id already bound by the caller. */
   patchScope: (patch: ServicesCoreAbstractionsScopePatch) => Promise<unknown>;
 }
@@ -88,7 +90,7 @@ export type UseEntityScopeStripArgs<TEntity> =
 export function useEntityScopeStrip<TEntity>(
   args: UseEntityScopeStripArgs<TEntity>,
 ) {
-  const { entityLabel, meta, patchScope } = args;
+  const { entityLabel, meta, recordId, patchScope } = args;
   const selectedContext = useAtomValue(selectedContextAtom);
   const { accessScope, organisationCount } = useAccessScope(
     selectedContext?.tenantId,
@@ -99,6 +101,7 @@ export function useEntityScopeStrip<TEntity>(
     PlatformPermissions.Scope.Manage,
   );
   const canViewScope = hasPlatformPermission(PlatformPermissions.Scope.Read);
+  const currentTenantId = selectedContext?.tenantId;
   const currentOrganisationId = selectedContext?.organisationId;
   const currentDivisionId = selectedContext?.divisionId;
   const currentContextName =
@@ -109,7 +112,7 @@ export function useEntityScopeStrip<TEntity>(
 
   const scopeOrganisations: SelectOption[] = (accessScope?.organisations ?? [])
     .filter((org): org is typeof org & { id: string } => Boolean(org.id))
-    .map(org => ({ id: org.id, name: org.name ?? org.id }));
+    .map(org => ({ id: org.id, name: org.name ?? 'Unnamed organisation' }));
 
   // Mirrors RecordStrip's internally-selected Organisation so the
   // Division options can be re-filtered as the user changes it.
@@ -124,7 +127,7 @@ export function useEntityScopeStrip<TEntity>(
       : []
   )
     .filter((div): div is typeof div & { id: string } => Boolean(div.id))
-    .map(div => ({ id: div.id, name: div.name ?? div.id }));
+    .map(div => ({ id: div.id, name: div.name ?? 'Unnamed division' }));
 
   const scopeOwnerOrganisation = accessScope?.organisations?.find(
     org => org.id === meta?.organisationId,
@@ -211,13 +214,23 @@ export function useEntityScopeStrip<TEntity>(
     | null
     | undefined;
 
+  const canViewMetadata = hasPlatformPermission(
+    PlatformPermissions.Metadata.Read,
+  );
+
   return {
-    /** Spread directly onto `<RecordStrip {...stripProps} />`. */
-    stripProps: {
+    /** Spread directly onto `<RecordStrip {...recordStripProps} />`. Always returned:
+     * without a tenant the audit line still renders and out-of-context
+     * detection is skipped by RecordStrip. */
+    recordStripProps: {
       meta: recordMeta,
+      recordId: recordId ?? undefined,
       ownerName: scopeOwnerName,
       ownerDivisionName: scopeOwnerDivisionName,
+      tenantName:
+        accessScope?.tenantName ?? selectedContext?.tenantName ?? undefined,
       currentContextName,
+      currentTenantId,
       currentOrganisationId,
       currentDivisionId,
       organisationCount,
@@ -227,7 +240,7 @@ export function useEntityScopeStrip<TEntity>(
         SCOPE_TESTING_BYPASS_SINGLE_ORG,
       canManageScope,
       canViewScope,
-      canViewMetadata: hasPlatformPermission(PlatformPermissions.Metadata.Read),
+      canViewMetadata,
       organisations: scopeOrganisations,
       divisions: scopeDivisions,
       users: [] as SelectOption[],

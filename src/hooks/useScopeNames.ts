@@ -1,7 +1,17 @@
-import { createIdentityApiClient } from '@/utils/identityApiClient';
-import { ContextsApi } from '@brainforgeau/identity-management-client';
-import { useQuery } from '@tanstack/react-query';
+import { authStateAtom } from '@/state/auth-atoms';
+import { atom, useAtomValue } from 'jotai';
 import { useMemo } from 'react';
+
+/**
+ * The contexts the security package already loaded at sign-in, and whether
+ * that load is still running. One derived atom so a re-render of the auth
+ * state that leaves these alone does not reach the callers.
+ */
+const contextsAtom = atom(get => get(authStateAtom).availableContexts);
+const contextsLoadingAtom = atom(get => {
+  const { status, availableContexts } = get(authStateAtom);
+  return status !== 'ready' && availableContexts.length === 0;
+});
 
 interface ScopeName {
   tenantName?: string;
@@ -76,17 +86,14 @@ export interface UseScopeNamesResult {
  * tenant outside their access resolves to nothing. Callers fall back to the id.
  */
 export const useScopeNames = (): UseScopeNamesResult => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['scope-names'],
-    // Tenants and organisations are near-static; refetching them while someone
-    // pages through tickets would be pure noise.
-    staleTime: 30 * 60 * 1000,
-    queryFn: async () => {
-      const client = await createIdentityApiClient(ContextsApi);
-      const { data } = await client.v1ContextsAvailableGet();
-      return data ?? [];
-    },
-  });
+  /*
+   * Read from the auth state, not fetched. The security package calls
+   * /v1/contexts/available at sign-in for the context switcher and keeps the
+   * answer; fetching it again here was a second identical request on every
+   * screen that names a scope (Tickets, Reports). Same call, same 36 rows.
+   */
+  const data = useAtomValue(contextsAtom);
+  const isLoading = useAtomValue(contextsLoadingAtom);
 
   const byTenantId = useMemo(() => {
     const map = new Map<string, ScopeName>();

@@ -28,6 +28,7 @@ export interface HelpdeskApplicationKnowledgeBaseCommandsUpdateArticleUpdateArti
     'categoryId'?: string;
     'accessLevel'?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel;
     'tags'?: Array<string> | null;
+    'pageKeys'?: Array<string> | null;
 }
 
 

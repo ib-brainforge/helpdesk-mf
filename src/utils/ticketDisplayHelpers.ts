@@ -19,7 +19,6 @@ export interface StatusConfig {
 
 /**
  * Get display configuration for ticket status
- * Works for both regular and platform tickets (enum values are aligned)
  */
 export const getStatusConfig = (status?: string): StatusConfig => {
   if (!status) {
@@ -27,7 +26,7 @@ export const getStatusConfig = (status?: string): StatusConfig => {
   }
 
   switch (status) {
-    // Regular tickets: New, InProgress, Closed.
+    // New, InProgress, Closed.
     // Kept in step with components/tickets/ticket-status-config, which is the
     // mapping the ticket UI actually renders. This helper has no importers
     // today, but it is close enough to the real thing to be picked up by
@@ -39,7 +38,6 @@ export const getStatusConfig = (status?: string): StatusConfig => {
     case 'Closed':
       return { label: 'Closed', color: 'default' };
 
-    // Platform tickets: Open, InProgress, Resolved, Closed
     case 'Open':
       return { label: 'Open', color: 'primary' };
     case 'Resolved':
@@ -52,7 +50,6 @@ export const getStatusConfig = (status?: string): StatusConfig => {
 
 /**
  * Get display configuration for ticket priority
- * Works for both regular and platform tickets (enum values are aligned)
  */
 export const getPriorityConfig = (priority?: string): StatusConfig => {
   if (!priority) {
@@ -65,7 +62,6 @@ export const getPriorityConfig = (priority?: string): StatusConfig => {
     case 'High':
       return { label: 'High', color: 'warning' };
 
-    // Regular tickets have 'Normal', platform has 'Medium'
     case 'Normal':
     case 'Medium':
       return { label: priority, color: 'primary' };

@@ -54,10 +54,11 @@ export function CustomPriorityEditorModal({
   const queryClient = useQueryClient();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom priority',
     meta: priority?.meta,
+    recordId: priority?.id,
     // entityType is the backend's CLR class name (DbSet<CustomPriority>).
     patchScope: async patch => {
       if (!priority?.id) return;
@@ -138,6 +139,9 @@ export function CustomPriorityEditorModal({
           {isEditing ? 'Edit Custom Priority' : 'Create Custom Priority'}
         </ModalHeader>
         <BaseModalBody className="space-y-4">
+          {isEditing && recordStripProps && (
+            <RecordStrip {...recordStripProps} />
+          )}
           <BaseInput
             label="Name"
             placeholder="e.g. Urgent, VIP"
@@ -148,9 +152,6 @@ export function CustomPriorityEditorModal({
             maxLength={100}
             isRequired
           />
-
-          {/* Placement only exists once the record does. */}
-          {isEditing && <RecordStrip {...scopeStripProps} />}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">

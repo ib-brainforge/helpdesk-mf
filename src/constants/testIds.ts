@@ -9,6 +9,8 @@ export const TEST_IDS = {
   navbar: {
     top: 'navbar-top',
     side: 'navbar-side',
+    viewTenant: 'nav-view-tenant',
+    viewProvider: 'nav-view-provider',
   },
   dashboard: {
     page: 'dashboard-page',

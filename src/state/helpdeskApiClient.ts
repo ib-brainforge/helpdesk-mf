@@ -14,6 +14,7 @@ export const createHelpdeskApiConfiguration = () =>
 
 type HelpdeskApiConstructor<TClient> = new (...args: any[]) => TClient;
 
+/** The generated client, answering in the app's own context. */
 export const createHelpdeskApiClient = async <TClient>(
   ClientCtor: HelpdeskApiConstructor<TClient>,
 ): Promise<TClient> => {

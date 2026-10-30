@@ -17,5 +17,6 @@
 export interface HelpdeskApplicationTicketsDTOsTicketAssigneeCountDto {
     'assigneeId': string;
     'count': number;
+    'openCount': number;
 }
 

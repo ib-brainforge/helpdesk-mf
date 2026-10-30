@@ -408,7 +408,8 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
         {canEditLinks && (
           <BaseButton
             size="sm"
-            variant="light"
+            variant="bordered"
+            color="light"
             icon={<Icon name="plus" className="h-3 w-3" />}
             onPress={() => setIsAddModalOpen(true)}
           >

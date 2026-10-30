@@ -16,6 +16,9 @@
 // May contain unused imports in some cases
 // @ts-ignore
 import type { HelpdeskDomainKnowledgeBaseEnumsKbPortalSection } from './helpdesk-domain-knowledge-base-enums-kb-portal-section';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { HelpdeskDomainKnowledgeBaseEnumsKbStaffSection } from './helpdesk-domain-knowledge-base-enums-kb-staff-section';
 
 export interface HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCategoryCommand {
     'auditResourceType'?: string;
@@ -26,6 +29,7 @@ export interface HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCat
     'description'?: string | null;
     'sortOrder'?: number | null;
     'portalSection'?: HelpdeskDomainKnowledgeBaseEnumsKbPortalSection;
+    'staffSection'?: HelpdeskDomainKnowledgeBaseEnumsKbStaffSection;
 }
 
 

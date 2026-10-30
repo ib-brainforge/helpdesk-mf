@@ -1,6 +1,6 @@
 import { BaseCard, Icon } from '@brainforgeau/components';
 import { Card, CardContent, Skeleton } from '@heroui/react';
-import { memo } from 'react';
+import { type ReactNode, memo } from 'react';
 
 export type SummaryCardVariant =
   | 'default'
@@ -12,10 +12,14 @@ export type SummaryCardVariant =
 interface SummaryCardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
+  subtitle?: ReactNode;
   icon?: string;
   variant?: SummaryCardVariant;
   isLoading?: boolean;
+  /** A second line under the subtitle, e.g. a comparison with last month. */
+  footer?: ReactNode;
+  /** Overrides the variant's top bar colour, e.g. 'bg-[#7f5f01]'. */
+  accentClassName?: string;
 }
 
 const variantStyles: Record<
@@ -45,12 +49,23 @@ const variantStyles: Record<
 };
 
 export const SummaryCard = memo<SummaryCardProps>(
-  ({ title, value, subtitle, icon, variant = 'default', isLoading }) => {
+  ({
+    title,
+    value,
+    subtitle,
+    icon,
+    variant = 'default',
+    isLoading,
+    footer,
+    accentClassName,
+  }) => {
     const styles = variantStyles[variant];
 
     return (
       <BaseCard>
-        <div className={`absolute inset-x-0 top-0 h-1 ${styles.accent}`} />
+        <div
+          className={`absolute inset-x-0 top-0 h-1 ${accentClassName ?? styles.accent}`}
+        />
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col">
             <strong className="text-gray text-xs font-semibold uppercase tracking-wide">
@@ -64,6 +79,7 @@ export const SummaryCard = memo<SummaryCardProps>(
               </span>
             )}
             {subtitle && <span className="text-gray text-xs">{subtitle}</span>}
+            {footer && <span className="mt-0.5 text-xs">{footer}</span>}
           </div>
           {icon && (
             <div className={`rounded-[3px] p-2 ${styles.iconBg}`}>

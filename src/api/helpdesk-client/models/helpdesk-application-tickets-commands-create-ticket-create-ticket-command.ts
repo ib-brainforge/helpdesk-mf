@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationEmailNewContactRequest } from './helpdesk-application-email-new-contact-request';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainTicketsEnumsTicketOrigin } from './helpdesk-domain-tickets-enums-ticket-origin';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -35,6 +38,8 @@ export interface HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketComma
     'referrerUrl'?: string | null;
     'tags'?: Array<string> | null;
     'contactId'?: string | null;
+    'newContact'?: HelpdeskApplicationEmailNewContactRequest;
+    'notifyContact'?: boolean;
 }
 
 

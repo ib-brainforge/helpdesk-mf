@@ -1,4 +1,4 @@
-import { IconTip } from '@/components/shared';
+import { DurationInput, IconTip, formatMinutes } from '@/components/shared';
 import type { TicketTimeTrackingDto } from '@/components/sla/hooks/useTimeTracking';
 import { BaseInput, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
@@ -21,22 +21,16 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
   onDeleteEntry,
 }) => {
   const timezone = useTimezone();
-  const [manualMinutes, setManualMinutes] = useState('');
+  const [manualMinutes, setManualMinutes] = useState(Number.NaN);
   const [manualDescription, setManualDescription] = useState('');
   const [showManualEntry, setShowManualEntry] = useState(false);
 
-  const formatDuration = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  };
-
   const handleAddManualEntry = useCallback(() => {
-    const minutes = Number.parseInt(manualMinutes, 10);
-    if (Number.isNaN(minutes) || minutes <= 0) return;
+    const minutes = manualMinutes;
+    if (!Number.isFinite(minutes) || minutes <= 0) return;
 
     onAddManualEntry?.(minutes, manualDescription);
-    setManualMinutes('');
+    setManualMinutes(Number.NaN);
     setManualDescription('');
     setShowManualEntry(false);
   }, [manualMinutes, manualDescription, onAddManualEntry]);
@@ -46,13 +40,14 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
       {/* Manual Entry Form */}
       {showManualEntry ? (
         <div className="mb-4 space-y-2 rounded border dark:border-default-700 p-4">
-          <BaseInput
-            type="number"
-            label="Minutes"
-            value={manualMinutes}
-            onChange={e => setManualMinutes(e.target.value)}
-            placeholder="Enter minutes"
-          />
+          <div>
+            <span className="mb-1 block text-sm font-medium">Time spent</span>
+            <DurationInput
+              label="Time spent"
+              value={manualMinutes}
+              onChange={setManualMinutes}
+            />
+          </div>
           <BaseInput
             label="Description"
             value={manualDescription}
@@ -93,7 +88,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
         <div className="mb-4 flex justify-between rounded bg-primary-50 dark:bg-primary-900/30 p-3">
           <span className="font-medium">Total Time:</span>
           <span className="font-bold">
-            {formatDuration(timeTracking.totalMinutes)}
+            {formatMinutes(timeTracking.totalMinutes)}
           </span>
         </div>
       )}
@@ -111,7 +106,7 @@ export const TimeTracker: FC<TimeTrackerProps> = ({
             >
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  {formatDuration(entry.durationMinutes ?? 0)}
+                  {formatMinutes(entry.durationMinutes ?? 0)}
                 </p>
                 {entry.entryDate && (
                   <p className="text-xs text-default-500 dark:text-default-400">

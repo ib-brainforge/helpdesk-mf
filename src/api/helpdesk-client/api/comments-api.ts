@@ -26,6 +26,8 @@ import type { HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand } f
 // @ts-ignore
 import type { HelpdeskApplicationCommentsCommandsAddInternalNoteAddInternalNoteCommand } from '../models';
 // @ts-ignore
+import type { HelpdeskApplicationCommentsDTOsCommentEmailDto } from '../models';
+// @ts-ignore
 import type { HelpdeskApplicationCommonPagedResultCommentDto } from '../models';
 // @ts-ignore
 import type { MicrosoftAspNetCoreMvcProblemDetails } from '../models';
@@ -34,6 +36,50 @@ import type { MicrosoftAspNetCoreMvcProblemDetails } from '../models';
  */
 export const CommentsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Requires permission: comments.create (app: helpdesk).
+         * @param {string} ticketId 
+         * @param {string} commentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsTicketIdCommentsCommentIdEmailRetryPost: async (ticketId: string, commentId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'ticketId' is not null or undefined
+            assertParamExists('v1TicketsTicketIdCommentsCommentIdEmailRetryPost', 'ticketId', ticketId)
+            // verify required parameter 'commentId' is not null or undefined
+            assertParamExists('v1TicketsTicketIdCommentsCommentIdEmailRetryPost', 'commentId', commentId)
+            const localVarPath = `/v1/tickets/{ticketId}/comments/{commentId}/email/retry`
+                .replace(`{${"ticketId"}}`, encodeURIComponent(String(ticketId)))
+                .replace(`{${"commentId"}}`, encodeURIComponent(String(commentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Requires permission: comments.read (app: helpdesk).
          * @param {string} ticketId 
@@ -187,6 +233,19 @@ export const CommentsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = CommentsApiAxiosParamCreator(configuration)
     return {
         /**
+         * Requires permission: comments.create (app: helpdesk).
+         * @param {string} ticketId 
+         * @param {string} commentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId: string, commentId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommentsDTOsCommentEmailDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId, commentId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['CommentsApi.v1TicketsTicketIdCommentsCommentIdEmailRetryPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Requires permission: comments.read (app: helpdesk).
          * @param {string} ticketId 
          * @param {number} [page] 
@@ -237,6 +296,16 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
     const localVarFp = CommentsApiFp(configuration)
     return {
         /**
+         * Requires permission: comments.create (app: helpdesk).
+         * @param {string} ticketId 
+         * @param {string} commentId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId: string, commentId: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommentsDTOsCommentEmailDto> {
+            return localVarFp.v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId, commentId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Requires permission: comments.read (app: helpdesk).
          * @param {string} ticketId 
          * @param {number} [page] 
@@ -276,6 +345,15 @@ export const CommentsApiFactory = function (configuration?: Configuration, baseP
  */
 export interface CommentsApiInterface {
     /**
+     * Requires permission: comments.create (app: helpdesk).
+     * @param {string} ticketId 
+     * @param {string} commentId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId: string, commentId: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommentsDTOsCommentEmailDto>;
+
+    /**
      * Requires permission: comments.read (app: helpdesk).
      * @param {string} ticketId 
      * @param {number} [page] 
@@ -310,6 +388,17 @@ export interface CommentsApiInterface {
  * CommentsApi - object-oriented interface
  */
 export class CommentsApi extends BaseAPI implements CommentsApiInterface {
+    /**
+     * Requires permission: comments.create (app: helpdesk).
+     * @param {string} ticketId 
+     * @param {string} commentId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId: string, commentId: string, options?: RawAxiosRequestConfig) {
+        return CommentsApiFp(this.configuration).v1TicketsTicketIdCommentsCommentIdEmailRetryPost(ticketId, commentId, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Requires permission: comments.read (app: helpdesk).
      * @param {string} ticketId 

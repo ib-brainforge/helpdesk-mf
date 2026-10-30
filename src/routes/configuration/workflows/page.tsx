@@ -10,11 +10,12 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { PageBreadcrumbs } from '@/components/Breadcrumbs';
 import { WorkflowListPage } from '@/workflow-editor';
-import { PageBody } from '@brainforgeau/components/page';
+import { PageBody, usePageTitle } from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import React from 'react';
 
 function WorkflowsListRoute() {
+  usePageTitle('Workflows');
   return (
     <PageBody>
       <PageBreadcrumbs breadcrumbsKey="configuration.workflows.list" />

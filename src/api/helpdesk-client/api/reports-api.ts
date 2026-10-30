@@ -38,6 +38,8 @@ import type { HelpdeskApplicationReportingDTOsDeletedTicketDto } from '../models
 // @ts-ignore
 import type { HelpdeskApplicationReportingDTOsDynamicsReportDto } from '../models';
 // @ts-ignore
+import type { HelpdeskApplicationReportingDTOsKpiReportDto } from '../models';
+// @ts-ignore
 import type { HelpdeskApplicationReportingDTOsOverdueTicketDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationReportingDTOsReportExecutionStatusDto } from '../models';
@@ -45,6 +47,8 @@ import type { HelpdeskApplicationReportingDTOsReportExecutionStatusDto } from '.
 import type { HelpdeskApplicationReportingDTOsSlaComplianceDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationReportingDTOsSummaryReportDto } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationReportingDTOsTeamReportDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationReportingDTOsTechPerformanceDto } from '../models';
 // @ts-ignore
@@ -553,6 +557,52 @@ export const ReportsApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * Requires permission: reports.read (app: helpdesk).
+         * @param {string} [month] 
+         * @param {string} [organisationId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ReportsKpiGet: async (month?: string, organisationId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/reports/kpi`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (month !== undefined) {
+                localVarQueryParameter['month'] = month;
+            }
+
+            if (organisationId !== undefined) {
+                localVarQueryParameter['organisationId'] = organisationId;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Requires permission: reports.read (app: helpdesk).
          * @param {string} [fromDate] 
          * @param {string} [toDate] 
          * @param {*} [options] Override http request option.
@@ -729,6 +779,61 @@ export const ReportsApiAxiosParamCreator = function (configuration?: Configurati
                 localVarQueryParameter['toDate'] = (toDate as any instanceof Date) ?
                     (toDate as any).toISOString() :
                     toDate;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Requires permission: reports.read (app: helpdesk).
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {Array<string>} [organisationIds] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ReportsTeamGet: async (from?: string, to?: string, organisationIds?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/reports/team`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = (from as any instanceof Date) ?
+                    (from as any).toISOString().substring(0,10) :
+                    from;
+            }
+
+            if (to !== undefined) {
+                localVarQueryParameter['to'] = (to as any instanceof Date) ?
+                    (to as any).toISOString().substring(0,10) :
+                    to;
+            }
+
+            if (organisationIds) {
+                localVarQueryParameter['organisationIds'] = organisationIds;
             }
 
 
@@ -1089,6 +1194,19 @@ export const ReportsApiFp = function(configuration?: Configuration) {
         },
         /**
          * Requires permission: reports.read (app: helpdesk).
+         * @param {string} [month] 
+         * @param {string} [organisationId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ReportsKpiGet(month?: string, organisationId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationReportingDTOsKpiReportDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ReportsKpiGet(month, organisationId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ReportsApi.v1ReportsKpiGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Requires permission: reports.read (app: helpdesk).
          * @param {string} [fromDate] 
          * @param {string} [toDate] 
          * @param {*} [options] Override http request option.
@@ -1136,6 +1254,20 @@ export const ReportsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ReportsSummaryGet(fromDate, toDate, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ReportsApi.v1ReportsSummaryGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Requires permission: reports.read (app: helpdesk).
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {Array<string>} [organisationIds] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ReportsTeamGet(from?: string, to?: string, organisationIds?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationReportingDTOsTeamReportDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ReportsTeamGet(from, to, organisationIds, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ReportsApi.v1ReportsTeamGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1303,6 +1435,16 @@ export const ReportsApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * Requires permission: reports.read (app: helpdesk).
+         * @param {string} [month] 
+         * @param {string} [organisationId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ReportsKpiGet(month?: string, organisationId?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsKpiReportDto> {
+            return localVarFp.v1ReportsKpiGet(month, organisationId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Requires permission: reports.read (app: helpdesk).
          * @param {string} [fromDate] 
          * @param {string} [toDate] 
          * @param {*} [options] Override http request option.
@@ -1339,6 +1481,17 @@ export const ReportsApiFactory = function (configuration?: Configuration, basePa
          */
         v1ReportsSummaryGet(fromDate?: string, toDate?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsSummaryReportDto> {
             return localVarFp.v1ReportsSummaryGet(fromDate, toDate, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Requires permission: reports.read (app: helpdesk).
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {Array<string>} [organisationIds] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ReportsTeamGet(from?: string, to?: string, organisationIds?: Array<string>, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsTeamReportDto> {
+            return localVarFp.v1ReportsTeamGet(from, to, organisationIds, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: reports.read (app: helpdesk).
@@ -1481,6 +1634,15 @@ export interface ReportsApiInterface {
 
     /**
      * Requires permission: reports.read (app: helpdesk).
+     * @param {string} [month] 
+     * @param {string} [organisationId] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1ReportsKpiGet(month?: string, organisationId?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsKpiReportDto>;
+
+    /**
+     * Requires permission: reports.read (app: helpdesk).
      * @param {string} [fromDate] 
      * @param {string} [toDate] 
      * @param {*} [options] Override http request option.
@@ -1513,6 +1675,16 @@ export interface ReportsApiInterface {
      * @throws {RequiredError}
      */
     v1ReportsSummaryGet(fromDate?: string, toDate?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsSummaryReportDto>;
+
+    /**
+     * Requires permission: reports.read (app: helpdesk).
+     * @param {string} [from] 
+     * @param {string} [to] 
+     * @param {Array<string>} [organisationIds] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1ReportsTeamGet(from?: string, to?: string, organisationIds?: Array<string>, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsTeamReportDto>;
 
     /**
      * Requires permission: reports.read (app: helpdesk).
@@ -1670,6 +1842,17 @@ export class ReportsApi extends BaseAPI implements ReportsApiInterface {
 
     /**
      * Requires permission: reports.read (app: helpdesk).
+     * @param {string} [month] 
+     * @param {string} [organisationId] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1ReportsKpiGet(month?: string, organisationId?: string, options?: RawAxiosRequestConfig) {
+        return ReportsApiFp(this.configuration).v1ReportsKpiGet(month, organisationId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires permission: reports.read (app: helpdesk).
      * @param {string} [fromDate] 
      * @param {string} [toDate] 
      * @param {*} [options] Override http request option.
@@ -1709,6 +1892,18 @@ export class ReportsApi extends BaseAPI implements ReportsApiInterface {
      */
     public v1ReportsSummaryGet(fromDate?: string, toDate?: string, options?: RawAxiosRequestConfig) {
         return ReportsApiFp(this.configuration).v1ReportsSummaryGet(fromDate, toDate, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires permission: reports.read (app: helpdesk).
+     * @param {string} [from] 
+     * @param {string} [to] 
+     * @param {Array<string>} [organisationIds] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1ReportsTeamGet(from?: string, to?: string, organisationIds?: Array<string>, options?: RawAxiosRequestConfig) {
+        return ReportsApiFp(this.configuration).v1ReportsTeamGet(from, to, organisationIds, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

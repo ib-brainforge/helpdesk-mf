@@ -46,10 +46,11 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   // DTO tenancy/scope metadata initiative -- only meaningful once the
   // section exists (has an id/meta); the create form has nothing to place
   // yet (gated on `isEdit` below).
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Section',
     meta: section?.meta,
+    recordId: section?.id,
     patchScope: async patch => {
       if (!section) return;
       const client = await createHelpdeskApiClient(ScopeApi);
@@ -137,6 +138,9 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
             }}
             className="flex flex-col gap-4 pb-4"
           >
+            {isEdit && recordStripProps && (
+              <RecordStrip {...recordStripProps} />
+            )}
             <form.Field name="name">
               {field => (
                 <BaseInput
@@ -150,11 +154,6 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
                 />
               )}
             </form.Field>
-
-            {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
-                meaningful once the record exists (has an id/meta); the create
-                form has nothing to place yet. */}
-            {isEdit && <RecordStrip {...scopeStripProps} />}
 
             <form.Field name="sortOrder">
               {field => (

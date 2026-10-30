@@ -67,10 +67,11 @@ export function CustomStatusEditorModal({
   // hook itself is always called (rules of hooks) with `meta: undefined` in
   // create mode, which every downstream computation here already treats as
   // "no scope yet" the same way a freshly-created record would.
-  const { stripProps: scopeStripProps } = useEntityScopeStrip({
+  const { recordStripProps } = useEntityScopeStrip({
     mode: 'modal',
     entityLabel: 'Custom status',
     meta: status?.meta,
+    recordId: status?.id,
     patchScope: async patch => {
       if (!status) return;
       const client = await createHelpdeskApiClient(ScopeApi);
@@ -180,9 +181,12 @@ export function CustomStatusEditorModal({
           {isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
         </ModalHeader>
         <BaseModalBody className="space-y-4">
+          {isEditing && recordStripProps && (
+            <RecordStrip {...recordStripProps} />
+          )}
           <BaseInput
             label="Name"
-            placeholder="e.g. Awaiting Customer Reply"
+            placeholder="e.g. Awaiting Tenant Reply"
             value={name}
             onChange={e => setName(e.target.value)}
             isInvalid={!!nameError}
@@ -190,11 +194,6 @@ export function CustomStatusEditorModal({
             maxLength={100}
             isRequired
           />
-
-          {/* Scope strip (DTO tenancy/scope metadata initiative) -- only
-              meaningful once the record exists (has an id/meta); the create
-              form has nothing to place yet. */}
-          {isEditing && <RecordStrip {...scopeStripProps} />}
 
           <div className="flex items-end gap-3">
             <div className="flex-1">
@@ -277,11 +276,13 @@ export function CustomStatusEditorModal({
           </div>
         </BaseModalBody>
         <BaseModalFooter>
+          {/* color="light": bordered alone takes the primary fill, which
+            made Cancel look like the main action. */}
           <BaseButton
             variant="bordered"
             color="light"
             onPress={onClose}
-            isDisabled={isSubmitting || isSubmitting}
+            isDisabled={isSubmitting}
           >
             Cancel
           </BaseButton>

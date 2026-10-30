@@ -7,54 +7,12 @@ import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 
 /**
- * Who is looking at the helpdesk, and how wide their view is.
- *
- * ONE PAGE, GATED BY ROLE. /tickets is the only ticket list. What differs
- * between a Netcorp service admin and a tenant user is which rows the server
- * returns and which controls are worth rendering, not which URL they are on.
- *
- * WHERE THE ANSWER COMES FROM
- * Roles come from `usePermissions`, which collects them from the Keycloak
- * tokens (profile, id_token, access_token). The security package is explicit
- * that roles must never be read from the context token, since that one is not
- * Keycloak-issued.
- *
- * The identity claims are the opposite: they come from the CONTEXT token only.
- * `principal_id` is the one that matters here. It is why the console does not
- * need a GUID in its route to know which principal it is working in.
- *
- * REPLACES the old usePrincipalAccess, which decoded the Keycloak access token
- * by hand to find `realm_access.roles`. That worked, but it reimplemented what
- * usePermissions already does and read the claim from a token the package
- * takes care to select deliberately.
+ * The caller's own tenant, organisation and reachable organisations, read from
+ * the CONTEXT token's identity claims (never from the URL). Roles come from
+ * `usePermissions`, never from the context token.
  */
-
-/**
- * Roles that mean "works across every tenant Netcorp holds".
- *
- * `multitenant.admin` is the live one: it is what the account running this
- * console carries, and what the helpdesk entry in `app_permissions` reports as
- * its role. The rest are kept because they already granted the principal
- * console before this hook existed, so narrowing to one role here would lock
- * out accounts that can reach it today.
- *
- * THIS LIST IS THE KNOB. When the other personas are decided, this is the one
- * place that says who sees everything.
- */
-const SERVICE_ADMIN_ROLES = [
-  'multitenant.admin',
-  'multitenant.identity',
-  'identity.admin',
-  'principal.admin',
-  'helpdesk.principal.agent',
-] as const;
-
 export interface HelpdeskAccess {
   isLoading: boolean;
-  /** True for Netcorp staff who work across tenants. */
-  isServiceAdmin: boolean;
-  /** From the context token, never from the URL. Undefined for tenant users. */
-  principalId?: string;
   tenantId?: string;
   organisationId?: string;
   /**
@@ -81,24 +39,18 @@ const decodeClaims = (token: string | null): Record<string, unknown> | null => {
 };
 
 export const useHelpdeskAccess = (): HelpdeskAccess => {
-  const { hasAnyRole, isLoading } = usePermissions();
+  const { isLoading } = usePermissions();
   const contextToken = useAtomValue(contextTokenAtom);
 
   const claims = useMemo(() => decodeClaims(contextToken), [contextToken]);
 
   return useMemo(() => {
     const identity = parseContextTokenIdentityClaims(claims);
-    const isServiceAdmin = hasAnyRole([...SERVICE_ADMIN_ROLES]);
-
     return {
       isLoading,
-      isServiceAdmin,
-      // Only meaningful for a service admin: a tenant user's rows come from
-      // the tenant-scoped endpoint, which takes no principal.
-      principalId: isServiceAdmin ? identity.principalId : undefined,
       tenantId: identity.tenantId,
       organisationId: identity.organisationId,
       allowedOrganisationIds: identity.allowedOrganisationIds ?? [],
     };
-  }, [claims, hasAnyRole, isLoading]);
+  }, [claims, isLoading]);
 };

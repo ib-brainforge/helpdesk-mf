@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationCommentsDTOsCommentEmailDto } from './helpdesk-application-comments-dtos-comment-email-dto';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainCommentsEnumsCommentType } from './helpdesk-domain-comments-enums-comment-type';
 
 export interface HelpdeskApplicationCommentsDTOsCommentDto {
@@ -25,6 +28,7 @@ export interface HelpdeskApplicationCommentsDTOsCommentDto {
     'commentType'?: HelpdeskDomainCommentsEnumsCommentType;
     'idempotencyKey'?: string | null;
     'createdAt'?: string;
+    'email'?: HelpdeskApplicationCommentsDTOsCommentEmailDto;
 }
 
 

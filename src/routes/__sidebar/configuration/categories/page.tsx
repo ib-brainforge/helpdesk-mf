@@ -8,7 +8,6 @@ import {
   SectionsPanel,
   useCategoriesData,
   useCategoryTable,
-  usePresetCategories,
   useSetPortalEnquiryCategory,
 } from '@components/categories';
 
@@ -27,29 +26,13 @@ import {
 } from '@brainforgeau/components/page';
 import { toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 function CategoriesPage() {
   const queryClient = useQueryClient();
-  const { categories, sections, isLoading } = useCategoriesData();
-
-  /*
-   * The Netcorp presets are listed alongside the tenant's own categories. They
-   * are what the request form offers, so leaving them out of Configuration
-   * would make the screen contradict the form. They are marked and made read
-   * only rather than hidden, because "you may use this but not change it" is
-   * the true state and hiding it just raises the question elsewhere.
-   */
-  const {
-    presets,
-    presetIds,
-    isLoading: isLoadingPresets,
-  } = usePresetCategories(categories.map(c => c.id));
-
-  const allCategories = useMemo(
-    () => [...categories, ...presets],
-    [categories, presets],
-  );
+  const { categories, sections, isLoading } = useCategoriesData({
+    withSections: true,
+  });
 
   // Which section the table shows: null for every category, NO_SECTION for
   // those in none, or a section id. Chosen in the Sections panel.
@@ -65,11 +48,11 @@ function CategoriesPage() {
   const visibleCategories = useMemo(
     () =>
       sectionFilter === null
-        ? allCategories
+        ? categories
         : sectionFilter === NO_SECTION
-          ? allCategories.filter(c => !c.sectionId)
-          : allCategories.filter(c => c.sectionId === sectionFilter),
-    [allCategories, sectionFilter],
+          ? categories.filter(c => !c.sectionId)
+          : categories.filter(c => c.sectionId === sectionFilter),
+    [categories, sectionFilter],
   );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
@@ -93,11 +76,6 @@ function CategoriesPage() {
       // and the section's category count should also reflect the change.
       queryClient.invalidateQueries({ queryKey: ['helpdesk-categories'] });
       queryClient.invalidateQueries({ queryKey: ['helpdesk-sections'] });
-      // And the presets. A row is marked Preset when it is in the list of
-      // categories the tenant may use but not in the list it owns. Refreshing
-      // only the owned list left the deleted category in the other, cached one,
-      // so for up to ten minutes it came back as a Preset row instead of going.
-      queryClient.invalidateQueries({ queryKey: ['preset-categories'] });
     },
     onError: (error, categoryId) => {
       // The shell's error banner covers server failures. A refusal, such as a
@@ -139,10 +117,11 @@ function CategoriesPage() {
     },
   });
 
-  const handleEditCategory = (category: CategoryDto) => {
+  // Stable, so the table's memoised columns are not rebuilt on every render.
+  const handleEditCategory = useCallback((category: CategoryDto) => {
     setEditingCategory(category);
     setIsCategoryModalOpen(true);
-  };
+  }, []);
 
   const handleEditSection = (section: SectionDto) => {
     setEditingSection(section);
@@ -169,68 +148,74 @@ function CategoriesPage() {
     setEditingSection(undefined);
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    const cat = categories.find(c => c.id === categoryId);
-    const ok = await confirm({
-      title: 'Delete category?',
-      body: `Delete "${cat?.name ?? 'this category'}"? This cannot be undone.`,
-      confirmLabel: 'Delete',
-      destructive: true,
-    });
-    if (ok) deleteCategoryMutation.mutate(categoryId);
-  };
-
-  const setPortalEnquiry = useSetPortalEnquiryCategory();
-
-  const handleTogglePortalEnquiry = async (category: CategoryDto) => {
-    const isMarking = !category.isPortalEnquiryCategory;
-    const current = categories.find(
-      c => c.isPortalEnquiryCategory && c.id !== category.id,
-    );
-    if (isMarking && current) {
+  const deleteCategory = deleteCategoryMutation.mutate;
+  const handleDeleteCategory = useCallback(
+    async (categoryId: string) => {
+      const cat = categories.find(c => c.id === categoryId);
       const ok = await confirm({
-        title: 'Move customer portal enquiries?',
-        body: `"${current.name}" is currently used for customer portal enquiries. New enquiries will be filed under "${category.name}" instead. Existing tickets are not changed.`,
-        confirmLabel: 'Move',
-      });
-      if (!ok) return;
-    } else if (!isMarking) {
-      const ok = await confirm({
-        title: 'Stop customer portal enquiries?',
-        body: `Customers will not be able to raise enquiries from the portal until another category is chosen.`,
-        confirmLabel: 'Stop',
+        title: 'Delete category?',
+        body: `Delete "${cat?.name ?? 'this category'}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
         destructive: true,
       });
-      if (!ok) return;
-    }
-    setPortalEnquiry.mutate(
-      { categoryId: category.id, isMarked: isMarking },
-      {
-        onSuccess: () =>
-          toast(
-            isMarking
-              ? `"${category.name}" now receives customer portal enquiries`
-              : `"${category.name}" no longer receives customer portal enquiries`,
-            { variant: 'success' },
-          ),
-        onError: error => {
-          if (isConflictError(error)) {
-            toast('Customer portal enquiry category changed', {
-              description:
-                'Another change was made at the same time. The list has been refreshed; try again.',
-              variant: 'warning',
+      if (ok) deleteCategory(categoryId);
+    },
+    [categories, confirm, deleteCategory],
+  );
+
+  const { mutate: setPortalEnquiry } = useSetPortalEnquiryCategory();
+  const handleTogglePortalEnquiry = useCallback(
+    async (category: CategoryDto) => {
+      const isMarking = !category.isPortalEnquiryCategory;
+      const current = categories.find(
+        c => c.isPortalEnquiryCategory && c.id !== category.id,
+      );
+      if (isMarking && current) {
+        const ok = await confirm({
+          title: 'Move customer portal enquiries?',
+          body: `"${current.name}" is currently used for customer portal enquiries. New enquiries will be filed under "${category.name}" instead. Existing tickets are not changed.`,
+          confirmLabel: 'Move',
+        });
+        if (!ok) return;
+      } else if (!isMarking) {
+        const ok = await confirm({
+          title: 'Stop customer portal enquiries?',
+          body: `Customers will not be able to raise enquiries from the portal until another category is chosen.`,
+          confirmLabel: 'Stop',
+          destructive: true,
+        });
+        if (!ok) return;
+      }
+      setPortalEnquiry(
+        { categoryId: category.id, isMarked: isMarking },
+        {
+          onSuccess: () =>
+            toast(
+              isMarking
+                ? `"${category.name}" now receives customer portal enquiries`
+                : `"${category.name}" no longer receives customer portal enquiries`,
+              { variant: 'success' },
+            ),
+          onError: error => {
+            if (isConflictError(error)) {
+              toast('Customer portal enquiry category changed', {
+                description:
+                  'Another change was made at the same time. The list has been refreshed; try again.',
+                variant: 'warning',
+              });
+              return;
+            }
+            if (isServerError(error)) return;
+            toast("Couldn't update the customer portal enquiry category", {
+              description: extractErrorMessage(error, 'Please try again.'),
+              variant: 'danger',
             });
-            return;
-          }
-          if (isServerError(error)) return;
-          toast("Couldn't update the customer portal enquiry category", {
-            description: extractErrorMessage(error, 'Please try again.'),
-            variant: 'danger',
-          });
+          },
         },
-      },
-    );
-  };
+      );
+    },
+    [categories, confirm, setPortalEnquiry],
+  );
 
   const handleDeleteSection = async (section: SectionDto) => {
     const ok = await confirm({
@@ -251,11 +236,10 @@ function CategoriesPage() {
     categories: visibleCategories,
     sections,
     searchTerm,
-    isLoading: isLoading || isLoadingPresets,
+    isLoading,
     onEditCategory: handleEditCategory,
     onDeleteCategory: handleDeleteCategory,
     onTogglePortalEnquiry: handleTogglePortalEnquiry,
-    presetIds,
   });
 
   return (
@@ -272,8 +256,8 @@ function CategoriesPage() {
         <SectionsPanel
           sections={sections}
           countsBySection={countsBySection}
-          unsectionedCount={allCategories.filter(c => !c.sectionId).length}
-          totalCount={allCategories.length}
+          unsectionedCount={categories.filter(c => !c.sectionId).length}
+          totalCount={categories.length}
           value={sectionFilter}
           onChange={setSectionFilter}
           onEdit={handleEditSection}

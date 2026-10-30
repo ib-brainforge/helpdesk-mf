@@ -97,7 +97,9 @@ Class | Method | HTTP request | Description
 *CannedResponsesApi* | [**v1CannedResponsesIdDelete**](docs/CannedResponsesApi.md#v1cannedresponsesiddelete) | **DELETE** /v1/canned-responses/{id} | 
 *CannedResponsesApi* | [**v1CannedResponsesIdPut**](docs/CannedResponsesApi.md#v1cannedresponsesidput) | **PUT** /v1/canned-responses/{id} | 
 *CannedResponsesApi* | [**v1CannedResponsesPost**](docs/CannedResponsesApi.md#v1cannedresponsespost) | **POST** /v1/canned-responses | 
+*CategoriesApi* | [**v1CategoriesAvailableGet**](docs/CategoriesApi.md#v1categoriesavailableget) | **GET** /v1/categories/available | 
 *CategoriesApi* | [**v1CategoriesGet**](docs/CategoriesApi.md#v1categoriesget) | **GET** /v1/categories | 
+*CategoriesApi* | [**v1CategoriesIdDefaultAssigneePut**](docs/CategoriesApi.md#v1categoriesiddefaultassigneeput) | **PUT** /v1/categories/{id}/default-assignee | 
 *CategoriesApi* | [**v1CategoriesIdDelete**](docs/CategoriesApi.md#v1categoriesiddelete) | **DELETE** /v1/categories/{id} | 
 *CategoriesApi* | [**v1CategoriesIdDuplicatePost**](docs/CategoriesApi.md#v1categoriesidduplicatepost) | **POST** /v1/categories/{id}/duplicate | 
 *CategoriesApi* | [**v1CategoriesIdGet**](docs/CategoriesApi.md#v1categoriesidget) | **GET** /v1/categories/{id} | 
@@ -109,6 +111,7 @@ Class | Method | HTTP request | Description
 *CategoriesApi* | [**v1CategoriesSectionsIdDelete**](docs/CategoriesApi.md#v1categoriessectionsiddelete) | **DELETE** /v1/categories/sections/{id} | 
 *CategoriesApi* | [**v1CategoriesSectionsIdPut**](docs/CategoriesApi.md#v1categoriessectionsidput) | **PUT** /v1/categories/sections/{id} | 
 *CategoriesApi* | [**v1CategoriesSectionsPost**](docs/CategoriesApi.md#v1categoriessectionspost) | **POST** /v1/categories/sections | 
+*CommentsApi* | [**v1TicketsTicketIdCommentsCommentIdEmailRetryPost**](docs/CommentsApi.md#v1ticketsticketidcommentscommentidemailretrypost) | **POST** /v1/tickets/{ticketId}/comments/{commentId}/email/retry | 
 *CommentsApi* | [**v1TicketsTicketIdCommentsGet**](docs/CommentsApi.md#v1ticketsticketidcommentsget) | **GET** /v1/tickets/{ticketId}/comments | 
 *CommentsApi* | [**v1TicketsTicketIdCommentsInternalNotesPost**](docs/CommentsApi.md#v1ticketsticketidcommentsinternalnotespost) | **POST** /v1/tickets/{ticketId}/comments/internal-notes | 
 *CommentsApi* | [**v1TicketsTicketIdCommentsPost**](docs/CommentsApi.md#v1ticketsticketidcommentspost) | **POST** /v1/tickets/{ticketId}/comments | 
@@ -131,6 +134,11 @@ Class | Method | HTTP request | Description
 *CustomStatusesApi* | [**v1CustomStatusesIdDelete**](docs/CustomStatusesApi.md#v1customstatusesiddelete) | **DELETE** /v1/custom-statuses/{id} | 
 *CustomStatusesApi* | [**v1CustomStatusesIdPut**](docs/CustomStatusesApi.md#v1customstatusesidput) | **PUT** /v1/custom-statuses/{id} | 
 *CustomStatusesApi* | [**v1CustomStatusesPost**](docs/CustomStatusesApi.md#v1customstatusespost) | **POST** /v1/custom-statuses | 
+*DeadlinesApi* | [**v1DeadlinesPreviewPost**](docs/DeadlinesApi.md#v1deadlinespreviewpost) | **POST** /v1/deadlines/preview | 
+*HelpApi* | [**v1HelpPagesPageKeyGet**](docs/HelpApi.md#v1helppagespagekeyget) | **GET** /v1/help/pages/{pageKey} | 
+*HelpApi* | [**v1HelpWhatsNewGet**](docs/HelpApi.md#v1helpwhatsnewget) | **GET** /v1/help/whats-new | 
+*HelpApi* | [**v1HelpWhatsNewIdReadPost**](docs/HelpApi.md#v1helpwhatsnewidreadpost) | **POST** /v1/help/whats-new/{id}/read | 
+*HelpApi* | [**v1HelpWhatsNewUnreadCountGet**](docs/HelpApi.md#v1helpwhatsnewunreadcountget) | **GET** /v1/help/whats-new/unread-count | 
 *IdeasApi* | [**v1IdeasGet**](docs/IdeasApi.md#v1ideasget) | **GET** /v1/ideas | 
 *IntegrationsApi* | [**v1IntegrationsGet**](docs/IntegrationsApi.md#v1integrationsget) | **GET** /v1/integrations | 
 *IntegrationsApi* | [**v1IntegrationsIdDelete**](docs/IntegrationsApi.md#v1integrationsiddelete) | **DELETE** /v1/integrations/{id} | 
@@ -161,23 +169,16 @@ Class | Method | HTTP request | Description
 *LiveChatApi* | [**v1LiveChatConfigGet**](docs/LiveChatApi.md#v1livechatconfigget) | **GET** /v1/live-chat/config | 
 *LiveChatApi* | [**v1LiveChatConfigPut**](docs/LiveChatApi.md#v1livechatconfigput) | **PUT** /v1/live-chat/config | 
 *LiveChatApi* | [**v1LiveChatEmbedScriptGet**](docs/LiveChatApi.md#v1livechatembedscriptget) | **GET** /v1/live-chat/embed-script | 
-*PlatformCategoriesApi* | [**v1PlatformCategoriesGet**](docs/PlatformCategoriesApi.md#v1platformcategoriesget) | **GET** /v1/platform/categories | 
-*PlatformMyCategoriesApi* | [**v1PlatformMyCategoriesGet**](docs/PlatformMyCategoriesApi.md#v1platformmycategoriesget) | **GET** /v1/platform/my-categories | 
-*PlatformSelfServiceTicketsApi* | [**v1PlatformMyTicketsGet**](docs/PlatformSelfServiceTicketsApi.md#v1platformmyticketsget) | **GET** /v1/platform/my-tickets | 
-*PlatformSelfServiceTicketsApi* | [**v1PlatformMyTicketsIdCommentsGet**](docs/PlatformSelfServiceTicketsApi.md#v1platformmyticketsidcommentsget) | **GET** /v1/platform/my-tickets/{id}/comments | 
-*PlatformSelfServiceTicketsApi* | [**v1PlatformMyTicketsIdCommentsPost**](docs/PlatformSelfServiceTicketsApi.md#v1platformmyticketsidcommentspost) | **POST** /v1/platform/my-tickets/{id}/comments | 
-*PlatformSelfServiceTicketsApi* | [**v1PlatformMyTicketsIdGet**](docs/PlatformSelfServiceTicketsApi.md#v1platformmyticketsidget) | **GET** /v1/platform/my-tickets/{id} | 
-*PlatformSelfServiceTicketsApi* | [**v1PlatformMyTicketsPost**](docs/PlatformSelfServiceTicketsApi.md#v1platformmyticketspost) | **POST** /v1/platform/my-tickets | 
-*PlatformTicketsApi* | [**v1PlatformTicketsGet**](docs/PlatformTicketsApi.md#v1platformticketsget) | **GET** /v1/platform/tickets | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdAssignPatch**](docs/PlatformTicketsApi.md#v1platformticketsidassignpatch) | **PATCH** /v1/platform/tickets/{id}/assign | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdCategoryPatch**](docs/PlatformTicketsApi.md#v1platformticketsidcategorypatch) | **PATCH** /v1/platform/tickets/{id}/category | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdCommentsGet**](docs/PlatformTicketsApi.md#v1platformticketsidcommentsget) | **GET** /v1/platform/tickets/{id}/comments | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdCommentsPost**](docs/PlatformTicketsApi.md#v1platformticketsidcommentspost) | **POST** /v1/platform/tickets/{id}/comments | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdGet**](docs/PlatformTicketsApi.md#v1platformticketsidget) | **GET** /v1/platform/tickets/{id} | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdPriorityPatch**](docs/PlatformTicketsApi.md#v1platformticketsidprioritypatch) | **PATCH** /v1/platform/tickets/{id}/priority | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdPut**](docs/PlatformTicketsApi.md#v1platformticketsidput) | **PUT** /v1/platform/tickets/{id} | 
-*PlatformTicketsApi* | [**v1PlatformTicketsIdStatusPatch**](docs/PlatformTicketsApi.md#v1platformticketsidstatuspatch) | **PATCH** /v1/platform/tickets/{id}/status | 
-*PlatformTicketsApi* | [**v1PlatformTicketsPost**](docs/PlatformTicketsApi.md#v1platformticketspost) | **POST** /v1/platform/tickets | 
+*MailboxOAuthApi* | [**v1MailboxOauthCallbackGet**](docs/MailboxOAuthApi.md#v1mailboxoauthcallbackget) | **GET** /v1/mailbox/oauth/callback | 
+*MeApi* | [**v1MeMailboxConnectPost**](docs/MeApi.md#v1memailboxconnectpost) | **POST** /v1/me/mailbox/connect | 
+*MeApi* | [**v1MeMailboxDelete**](docs/MeApi.md#v1memailboxdelete) | **DELETE** /v1/me/mailbox | 
+*MeApi* | [**v1MeMailboxGet**](docs/MeApi.md#v1memailboxget) | **GET** /v1/me/mailbox | 
+*MeApi* | [**v1MePreferencesKeyDelete**](docs/MeApi.md#v1mepreferenceskeydelete) | **DELETE** /v1/me/preferences/{key} | 
+*MeApi* | [**v1MePreferencesKeyGet**](docs/MeApi.md#v1mepreferenceskeyget) | **GET** /v1/me/preferences/{key} | 
+*MeApi* | [**v1MePreferencesKeyPut**](docs/MeApi.md#v1mepreferenceskeyput) | **PUT** /v1/me/preferences/{key} | 
+*MeApi* | [**v1MeSignatureImagesGet**](docs/MeApi.md#v1mesignatureimagesget) | **GET** /v1/me/signature-images | 
+*MeApi* | [**v1MeSignatureImagesIdGet**](docs/MeApi.md#v1mesignatureimagesidget) | **GET** /v1/me/signature-images/{id} | 
+*MeApi* | [**v1MeSignatureImagesPost**](docs/MeApi.md#v1mesignatureimagespost) | **POST** /v1/me/signature-images | 
 *PortalEnquiriesApi* | [**v1PortalEnquiriesGet**](docs/PortalEnquiriesApi.md#v1portalenquiriesget) | **GET** /v1/portal/enquiries | 
 *PortalEnquiriesApi* | [**v1PortalEnquiriesIdGet**](docs/PortalEnquiriesApi.md#v1portalenquiriesidget) | **GET** /v1/portal/enquiries/{id} | 
 *PortalEnquiriesApi* | [**v1PortalEnquiriesIdRepliesPost**](docs/PortalEnquiriesApi.md#v1portalenquiriesidrepliespost) | **POST** /v1/portal/enquiries/{id}/replies | 
@@ -188,38 +189,23 @@ Class | Method | HTTP request | Description
 *PortalHelpApi* | [**v1PortalHelpArticlesGet**](docs/PortalHelpApi.md#v1portalhelparticlesget) | **GET** /v1/portal/help/articles | 
 *PortalHelpApi* | [**v1PortalHelpArticlesSlugGet**](docs/PortalHelpApi.md#v1portalhelparticlesslugget) | **GET** /v1/portal/help/articles/{slug} | 
 *PortalHelpApi* | [**v1PortalHelpCategoriesGet**](docs/PortalHelpApi.md#v1portalhelpcategoriesget) | **GET** /v1/portal/help/categories | 
-*PrincipalApprovalsApi* | [**v1PrincipalsPrincipalIdApprovalWorkflowsGet**](docs/PrincipalApprovalsApi.md#v1principalsprincipalidapprovalworkflowsget) | **GET** /v1/principals/{principalId}/approval-workflows | 
-*PrincipalApprovalsApi* | [**v1PrincipalsPrincipalIdApprovalWorkflowsIdDelete**](docs/PrincipalApprovalsApi.md#v1principalsprincipalidapprovalworkflowsiddelete) | **DELETE** /v1/principals/{principalId}/approval-workflows/{id} | 
-*PrincipalApprovalsApi* | [**v1PrincipalsPrincipalIdApprovalWorkflowsIdGet**](docs/PrincipalApprovalsApi.md#v1principalsprincipalidapprovalworkflowsidget) | **GET** /v1/principals/{principalId}/approval-workflows/{id} | 
-*PrincipalApprovalsApi* | [**v1PrincipalsPrincipalIdApprovalWorkflowsIdPut**](docs/PrincipalApprovalsApi.md#v1principalsprincipalidapprovalworkflowsidput) | **PUT** /v1/principals/{principalId}/approval-workflows/{id} | 
-*PrincipalApprovalsApi* | [**v1PrincipalsPrincipalIdApprovalWorkflowsPost**](docs/PrincipalApprovalsApi.md#v1principalsprincipalidapprovalworkflowspost) | **POST** /v1/principals/{principalId}/approval-workflows | 
-*PrincipalCategoriesApi* | [**v1PrincipalsPrincipalIdCategoriesGet**](docs/PrincipalCategoriesApi.md#v1principalsprincipalidcategoriesget) | **GET** /v1/principals/{principalId}/categories | 
-*PrincipalCategoriesApi* | [**v1PrincipalsPrincipalIdCategoriesIdDelete**](docs/PrincipalCategoriesApi.md#v1principalsprincipalidcategoriesiddelete) | **DELETE** /v1/principals/{principalId}/categories/{id} | 
-*PrincipalCategoriesApi* | [**v1PrincipalsPrincipalIdCategoriesIdGet**](docs/PrincipalCategoriesApi.md#v1principalsprincipalidcategoriesidget) | **GET** /v1/principals/{principalId}/categories/{id} | 
-*PrincipalCategoriesApi* | [**v1PrincipalsPrincipalIdCategoriesIdPut**](docs/PrincipalCategoriesApi.md#v1principalsprincipalidcategoriesidput) | **PUT** /v1/principals/{principalId}/categories/{id} | 
-*PrincipalCategoriesApi* | [**v1PrincipalsPrincipalIdCategoriesPost**](docs/PrincipalCategoriesApi.md#v1principalsprincipalidcategoriespost) | **POST** /v1/principals/{principalId}/categories | 
-*PrincipalReportsApi* | [**v1PrincipalsPrincipalIdReportsTicketVolumeGet**](docs/PrincipalReportsApi.md#v1principalsprincipalidreportsticketvolumeget) | **GET** /v1/principals/{principalId}/reports/ticket-volume | 
-*PrincipalSlaPoliciesApi* | [**v1PrincipalsPrincipalIdSlaPoliciesGet**](docs/PrincipalSlaPoliciesApi.md#v1principalsprincipalidslapoliciesget) | **GET** /v1/principals/{principalId}/sla-policies | 
-*PrincipalSlaPoliciesApi* | [**v1PrincipalsPrincipalIdSlaPoliciesIdDelete**](docs/PrincipalSlaPoliciesApi.md#v1principalsprincipalidslapoliciesiddelete) | **DELETE** /v1/principals/{principalId}/sla-policies/{id} | 
-*PrincipalSlaPoliciesApi* | [**v1PrincipalsPrincipalIdSlaPoliciesIdGet**](docs/PrincipalSlaPoliciesApi.md#v1principalsprincipalidslapoliciesidget) | **GET** /v1/principals/{principalId}/sla-policies/{id} | 
-*PrincipalSlaPoliciesApi* | [**v1PrincipalsPrincipalIdSlaPoliciesIdPut**](docs/PrincipalSlaPoliciesApi.md#v1principalsprincipalidslapoliciesidput) | **PUT** /v1/principals/{principalId}/sla-policies/{id} | 
-*PrincipalSlaPoliciesApi* | [**v1PrincipalsPrincipalIdSlaPoliciesPost**](docs/PrincipalSlaPoliciesApi.md#v1principalsprincipalidslapoliciespost) | **POST** /v1/principals/{principalId}/sla-policies | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsCountsGet**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketscountsget) | **GET** /v1/principals/{principalId}/tickets/counts | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsGet**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketsget) | **GET** /v1/principals/{principalId}/tickets | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsIdAssignPatch**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketsidassignpatch) | **PATCH** /v1/principals/{principalId}/tickets/{id}/assign | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsIdCategoryPatch**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketsidcategorypatch) | **PATCH** /v1/principals/{principalId}/tickets/{id}/category | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsIdGet**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketsidget) | **GET** /v1/principals/{principalId}/tickets/{id} | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsIdPriorityPatch**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketsidprioritypatch) | **PATCH** /v1/principals/{principalId}/tickets/{id}/priority | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsIdStatusPatch**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketsidstatuspatch) | **PATCH** /v1/principals/{principalId}/tickets/{id}/status | 
-*PrincipalTicketsApi* | [**v1PrincipalsPrincipalIdTicketsPost**](docs/PrincipalTicketsApi.md#v1principalsprincipalidticketspost) | **POST** /v1/principals/{principalId}/tickets | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsGet**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsget) | **GET** /v1/principals/{principalId}/workflows | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsIdClonePost**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsidclonepost) | **POST** /v1/principals/{principalId}/workflows/{id}/clone | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsIdDelete**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsiddelete) | **DELETE** /v1/principals/{principalId}/workflows/{id} | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsIdDraftsPost**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsiddraftspost) | **POST** /v1/principals/{principalId}/workflows/{id}/drafts | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsIdDraftsVersionIdPublishPost**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsiddraftsversionidpublishpost) | **POST** /v1/principals/{principalId}/workflows/{id}/drafts/{versionId}/publish | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsIdDraftsVersionIdPut**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsiddraftsversionidput) | **PUT** /v1/principals/{principalId}/workflows/{id}/drafts/{versionId} | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsIdGet**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowsidget) | **GET** /v1/principals/{principalId}/workflows/{id} | 
-*PrincipalWorkflowsApi* | [**v1PrincipalsPrincipalIdWorkflowsPost**](docs/PrincipalWorkflowsApi.md#v1principalsprincipalidworkflowspost) | **POST** /v1/principals/{principalId}/workflows | 
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinesget) | **GET** /v1/provider-support/company-deadlines | 
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesHolidayRegionsGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinesholidayregionsget) | **GET** /v1/provider-support/company-deadlines/holiday-regions | 
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesHolidaysGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinesholidaysget) | **GET** /v1/provider-support/company-deadlines/holidays | 
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdDelete**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantiddelete) | **DELETE** /v1/provider-support/company-deadlines/{tenantId} | 
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantidget) | **GET** /v1/provider-support/company-deadlines/{tenantId} | 
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdPreviewPost**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantidpreviewpost) | **POST** /v1/provider-support/company-deadlines/{tenantId}/preview | A read that is a POST only to carry the draft policy; nothing is saved.
+*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdPut**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantidput) | **PUT** /v1/provider-support/company-deadlines/{tenantId} | 
+*ProviderCustomerTicketsApi* | [**v1ProviderSupportCustomerTicketsCountsGet**](docs/ProviderCustomerTicketsApi.md#v1providersupportcustomerticketscountsget) | **GET** /v1/provider-support/customer-tickets/counts | 
+*ProviderCustomerTicketsApi* | [**v1ProviderSupportCustomerTicketsGet**](docs/ProviderCustomerTicketsApi.md#v1providersupportcustomerticketsget) | **GET** /v1/provider-support/customer-tickets | 
+*ProviderCustomerTicketsApi* | [**v1ProviderSupportCustomerTicketsIdsGet**](docs/ProviderCustomerTicketsApi.md#v1providersupportcustomerticketsidsget) | **GET** /v1/provider-support/customer-tickets/ids | 
+*ProviderSupportApi* | [**v1ProviderSupportCategoriesGet**](docs/ProviderSupportApi.md#v1providersupportcategoriesget) | **GET** /v1/provider-support/categories | 
+*ProviderSupportApi* | [**v1ProviderSupportCategoryOpenCountsGet**](docs/ProviderSupportApi.md#v1providersupportcategoryopencountsget) | **GET** /v1/provider-support/category-open-counts | 
+*ProviderSupportApi* | [**v1ProviderSupportContextGet**](docs/ProviderSupportApi.md#v1providersupportcontextget) | **GET** /v1/provider-support/context | 
+*ProviderSupportApi* | [**v1ProviderSupportTicketsGet**](docs/ProviderSupportApi.md#v1providersupportticketsget) | **GET** /v1/provider-support/tickets | 
+*ProviderSupportApi* | [**v1ProviderSupportTicketsIdCommentsGet**](docs/ProviderSupportApi.md#v1providersupportticketsidcommentsget) | **GET** /v1/provider-support/tickets/{id}/comments | 
+*ProviderSupportApi* | [**v1ProviderSupportTicketsIdGet**](docs/ProviderSupportApi.md#v1providersupportticketsidget) | **GET** /v1/provider-support/tickets/{id} | 
+*ProviderSupportApi* | [**v1ProviderSupportTicketsPost**](docs/ProviderSupportApi.md#v1providersupportticketspost) | **POST** /v1/provider-support/tickets | 
 *ReadStatusApi* | [**v1TicketsTicketIdReadStatusPost**](docs/ReadStatusApi.md#v1ticketsticketidreadstatuspost) | **POST** /v1/tickets/{ticketId}/read-status | 
 *ReadStatusApi* | [**v1TicketsUnreadCountGet**](docs/ReadStatusApi.md#v1ticketsunreadcountget) | **GET** /v1/tickets/unread-count | 
 *RecurringTicketsApi* | [**v1RecurringTicketsGet**](docs/RecurringTicketsApi.md#v1recurringticketsget) | **GET** /v1/recurring-tickets | 
@@ -238,10 +224,12 @@ Class | Method | HTTP request | Description
 *ReportsApi* | [**v1ReportsExportExecutionIdDownloadGet**](docs/ReportsApi.md#v1reportsexportexecutioniddownloadget) | **GET** /v1/reports/export/{executionId}/download | 
 *ReportsApi* | [**v1ReportsExportExecutionIdStatusGet**](docs/ReportsApi.md#v1reportsexportexecutionidstatusget) | **GET** /v1/reports/export/{executionId}/status | 
 *ReportsApi* | [**v1ReportsExportPost**](docs/ReportsApi.md#v1reportsexportpost) | **POST** /v1/reports/export | 
+*ReportsApi* | [**v1ReportsKpiGet**](docs/ReportsApi.md#v1reportskpiget) | **GET** /v1/reports/kpi | 
 *ReportsApi* | [**v1ReportsOverdueTicketsGet**](docs/ReportsApi.md#v1reportsoverdueticketsget) | **GET** /v1/reports/overdue-tickets | 
 *ReportsApi* | [**v1ReportsSlaComplianceGet**](docs/ReportsApi.md#v1reportsslacomplianceget) | **GET** /v1/reports/sla-compliance | 
 *ReportsApi* | [**v1ReportsStatsGet**](docs/ReportsApi.md#v1reportsstatsget) | **GET** /v1/reports/stats | 
 *ReportsApi* | [**v1ReportsSummaryGet**](docs/ReportsApi.md#v1reportssummaryget) | **GET** /v1/reports/summary | 
+*ReportsApi* | [**v1ReportsTeamGet**](docs/ReportsApi.md#v1reportsteamget) | **GET** /v1/reports/team | 
 *ReportsApi* | [**v1ReportsTechPerformanceGet**](docs/ReportsApi.md#v1reportstechperformanceget) | **GET** /v1/reports/tech-performance | 
 *ReportsApi* | [**v1ReportsTicketsByCategoryGet**](docs/ReportsApi.md#v1reportsticketsbycategoryget) | **GET** /v1/reports/tickets-by-category | 
 *ReportsApi* | [**v1ReportsTicketsByPriorityGet**](docs/ReportsApi.md#v1reportsticketsbypriorityget) | **GET** /v1/reports/tickets-by-priority | 
@@ -272,16 +260,7 @@ Class | Method | HTTP request | Description
 *SatisfactionApi* | [**v1SatisfactionTicketTicketIdGet**](docs/SatisfactionApi.md#v1satisfactionticketticketidget) | **GET** /v1/satisfaction/ticket/{ticketId} | 
 *ScopeApi* | [**v1ScopeEntityTypeIdPatch**](docs/ScopeApi.md#v1scopeentitytypeidpatch) | **PATCH** /v1/scope/{entityType}/{id} | 
 *ScopeApi* | [**v1ScopeEntityTypePatch**](docs/ScopeApi.md#v1scopeentitytypepatch) | **PATCH** /v1/scope/{entityType} | 
-*SlaApi* | [**v1SlaGet**](docs/SlaApi.md#v1slaget) | **GET** /v1/sla | 
-*SlaApi* | [**v1SlaIdDelete**](docs/SlaApi.md#v1slaiddelete) | **DELETE** /v1/sla/{id} | 
-*SlaApi* | [**v1SlaIdGet**](docs/SlaApi.md#v1slaidget) | **GET** /v1/sla/{id} | 
-*SlaApi* | [**v1SlaIdPut**](docs/SlaApi.md#v1slaidput) | **PUT** /v1/sla/{id} | 
-*SlaApi* | [**v1SlaPost**](docs/SlaApi.md#v1slapost) | **POST** /v1/sla | 
 *SlaApi* | [**v1SlaSchedulesGet**](docs/SlaApi.md#v1slaschedulesget) | **GET** /v1/sla/schedules | 
-*SlaApi* | [**v1SlaTicketTicketIdGet**](docs/SlaApi.md#v1slaticketticketidget) | **GET** /v1/sla/ticket/{ticketId} | 
-*SlaApi* | [**v1SlaTicketTicketIdTimerPausePost**](docs/SlaApi.md#v1slaticketticketidtimerpausepost) | **POST** /v1/sla/ticket/{ticketId}/timer/pause | 
-*SlaApi* | [**v1SlaTicketTicketIdTimerStartPost**](docs/SlaApi.md#v1slaticketticketidtimerstartpost) | **POST** /v1/sla/ticket/{ticketId}/timer/start | 
-*SlaApi* | [**v1SlaTicketTicketIdTimerStopPost**](docs/SlaApi.md#v1slaticketticketidtimerstoppost) | **POST** /v1/sla/ticket/{ticketId}/timer/stop | 
 *SubscribersApi* | [**v1TicketsTicketIdSubscribersGet**](docs/SubscribersApi.md#v1ticketsticketidsubscribersget) | **GET** /v1/tickets/{ticketId}/subscribers | 
 *SubscribersApi* | [**v1TicketsTicketIdSubscribersPut**](docs/SubscribersApi.md#v1ticketsticketidsubscribersput) | **PUT** /v1/tickets/{ticketId}/subscribers | 
 *TagsApi* | [**v1TagsPost**](docs/TagsApi.md#v1tagspost) | **POST** /v1/tags | 
@@ -292,6 +271,7 @@ Class | Method | HTTP request | Description
 *TicketWorkflowsApi* | [**v1TicketsTicketIdTransitionsGet**](docs/TicketWorkflowsApi.md#v1ticketsticketidtransitionsget) | **GET** /v1/tickets/{ticketId}/transitions | 
 *TicketWorkflowsApi* | [**v1TicketsTicketIdTransitionsSlugPost**](docs/TicketWorkflowsApi.md#v1ticketsticketidtransitionsslugpost) | **POST** /v1/tickets/{ticketId}/transitions/{slug} | 
 *TicketWorkflowsApi* | [**v1TicketsTicketIdWorkflowGet**](docs/TicketWorkflowsApi.md#v1ticketsticketidworkflowget) | **GET** /v1/tickets/{ticketId}/workflow | 
+*TicketsApi* | [**v1TicketsBulkPost**](docs/TicketsApi.md#v1ticketsbulkpost) | **POST** /v1/tickets/bulk | 
 *TicketsApi* | [**v1TicketsCountsGet**](docs/TicketsApi.md#v1ticketscountsget) | **GET** /v1/tickets/counts | 
 *TicketsApi* | [**v1TicketsGet**](docs/TicketsApi.md#v1ticketsget) | **GET** /v1/tickets | 
 *TicketsApi* | [**v1TicketsIdAssignPatch**](docs/TicketsApi.md#v1ticketsidassignpatch) | **PATCH** /v1/tickets/{id}/assign | 
@@ -301,7 +281,9 @@ Class | Method | HTTP request | Description
 *TicketsApi* | [**v1TicketsIdDelete**](docs/TicketsApi.md#v1ticketsiddelete) | **DELETE** /v1/tickets/{id} | 
 *TicketsApi* | [**v1TicketsIdDuplicatePost**](docs/TicketsApi.md#v1ticketsidduplicatepost) | **POST** /v1/tickets/{id}/duplicate | 
 *TicketsApi* | [**v1TicketsIdForwardPost**](docs/TicketsApi.md#v1ticketsidforwardpost) | **POST** /v1/tickets/{id}/forward | 
+*TicketsApi* | [**v1TicketsIdForwardToProviderPost**](docs/TicketsApi.md#v1ticketsidforwardtoproviderpost) | **POST** /v1/tickets/{id}/forward-to-provider | 
 *TicketsApi* | [**v1TicketsIdGet**](docs/TicketsApi.md#v1ticketsidget) | **GET** /v1/tickets/{id} | 
+*TicketsApi* | [**v1TicketsIdHistoryGet**](docs/TicketsApi.md#v1ticketsidhistoryget) | **GET** /v1/tickets/{id}/history | 
 *TicketsApi* | [**v1TicketsIdLinkedAssetsAssetIdDelete**](docs/TicketsApi.md#v1ticketsidlinkedassetsassetiddelete) | **DELETE** /v1/tickets/{id}/linked-assets/{assetId} | 
 *TicketsApi* | [**v1TicketsIdLinkedAssetsGet**](docs/TicketsApi.md#v1ticketsidlinkedassetsget) | **GET** /v1/tickets/{id}/linked-assets | 
 *TicketsApi* | [**v1TicketsIdLinkedAssetsPost**](docs/TicketsApi.md#v1ticketsidlinkedassetspost) | **POST** /v1/tickets/{id}/linked-assets | 
@@ -324,6 +306,7 @@ Class | Method | HTTP request | Description
 *TicketsApi* | [**v1TicketsIdUnmarkProblemPost**](docs/TicketsApi.md#v1ticketsidunmarkproblempost) | **POST** /v1/tickets/{id}/unmark-problem | 
 *TicketsApi* | [**v1TicketsIdUnmarkSpamPost**](docs/TicketsApi.md#v1ticketsidunmarkspampost) | **POST** /v1/tickets/{id}/unmark-spam | 
 *TicketsApi* | [**v1TicketsIdUnpublishAsIdeaPost**](docs/TicketsApi.md#v1ticketsidunpublishasideapost) | **POST** /v1/tickets/{id}/unpublish-as-idea | 
+*TicketsApi* | [**v1TicketsIdsGet**](docs/TicketsApi.md#v1ticketsidsget) | **GET** /v1/tickets/ids | 
 *TicketsApi* | [**v1TicketsParentIdSubtasksPost**](docs/TicketsApi.md#v1ticketsparentidsubtaskspost) | **POST** /v1/tickets/{parentId}/subtasks | 
 *TicketsApi* | [**v1TicketsPost**](docs/TicketsApi.md#v1ticketspost) | **POST** /v1/tickets | 
 *TicketsApi* | [**v1TicketsSearchGet**](docs/TicketsApi.md#v1ticketssearchget) | **GET** /v1/tickets/search | 
@@ -332,9 +315,9 @@ Class | Method | HTTP request | Description
 *TimeTrackingApi* | [**v1TimeTrackingEntriesIdPut**](docs/TimeTrackingApi.md#v1timetrackingentriesidput) | **PUT** /v1/time-tracking/entries/{id} | 
 *TimeTrackingApi* | [**v1TimeTrackingEntriesPost**](docs/TimeTrackingApi.md#v1timetrackingentriespost) | **POST** /v1/time-tracking/entries | 
 *TimeTrackingApi* | [**v1TimeTrackingTicketsTicketIdEntriesGet**](docs/TimeTrackingApi.md#v1timetrackingticketsticketidentriesget) | **GET** /v1/time-tracking/tickets/{ticketId}/entries | 
-*WidgetApi* | [**v1HelpdeskWidgetCategoriesGet**](docs/WidgetApi.md#v1helpdeskwidgetcategoriesget) | **GET** /v1/helpdesk/widget/categories | Returns categories available in the widget dropdown, grouped by audience. Includes Tenant-specific categories for the user\&#39;s tenant, Platform-wide categories, and Principal-scoped categories where applicable.
-*WidgetApi* | [**v1HelpdeskWidgetTicketsGet**](docs/WidgetApi.md#v1helpdeskwidgetticketsget) | **GET** /v1/helpdesk/widget/tickets | Returns the current user\&#39;s own tickets, regardless of audience. Supports optional status filtering and basic pagination.
-*WidgetApi* | [**v1HelpdeskWidgetTicketsPost**](docs/WidgetApi.md#v1helpdeskwidgetticketspost) | **POST** /v1/helpdesk/widget/tickets | Submits a new ticket from the widget. Audience is derived from the selected category; if no category is provided the ticket is routed to BrainForge engineering (Audience&#x3D;Platform).
+*WidgetApi* | [**v1HelpdeskWidgetCategoriesGet**](docs/WidgetApi.md#v1helpdeskwidgetcategoriesget) | **GET** /v1/helpdesk/widget/categories | Returns the categories available in the widget dropdown: the active categories of the user\&#39;s tenant.
+*WidgetApi* | [**v1HelpdeskWidgetTicketsGet**](docs/WidgetApi.md#v1helpdeskwidgetticketsget) | **GET** /v1/helpdesk/widget/tickets | Returns the current user\&#39;s own tickets, including those raised with their provider. Supports optional status filtering and basic pagination.
+*WidgetApi* | [**v1HelpdeskWidgetTicketsPost**](docs/WidgetApi.md#v1helpdeskwidgetticketspost) | **POST** /v1/helpdesk/widget/tickets | Submits a new ticket from the widget. Files the ticket in the caller\&#39;s own tenant helpdesk. If no category is provided the tenant\&#39;s fallback category is used.
 *WorkflowsApi* | [**v1WorkflowsAdminMigrateLegacyRulesPost**](docs/WorkflowsApi.md#v1workflowsadminmigratelegacyrulespost) | **POST** /v1/workflows/_admin/migrate-legacy-rules | One-time admin command that migrates legacy automation rule conditions and actions to workflow-aware equivalents. Use &#x60;dryRun&#x3D;true&#x60; (default) to preview counts without persisting changes; set &#x60;dryRun&#x3D;false&#x60; to apply.              Always returns 200. Inspect the &#x60;warnings&#x60; array in the response body to determine whether any rules required manual review. An empty warnings array means the migration applied cleanly.              Tenant-scoped: only rules belonging to the calling tenant are processed.
 *WorkflowsApi* | [**v1WorkflowsAdminRuleMigrationReportGet**](docs/WorkflowsApi.md#v1workflowsadminrulemigrationreportget) | **GET** /v1/workflows/_admin/rule-migration-report | Admin-only read-only report listing automation rules that reference legacy &#x60;StatusCondition&#x60; or &#x60;SetStatusAction&#x60; types. Intended for ops use during Release 2 cutover planning.
 *WorkflowsApi* | [**v1WorkflowsGet**](docs/WorkflowsApi.md#v1workflowsget) | **GET** /v1/workflows | 
@@ -351,10 +334,12 @@ Class | Method | HTTP request | Description
 ### Documentation For Models
 
  - [HelpdeskApiControllersAssignUserRoleRequest](docs/HelpdeskApiControllersAssignUserRoleRequest.md)
+ - [HelpdeskApiControllersConnectMailboxRequest](docs/HelpdeskApiControllersConnectMailboxRequest.md)
  - [HelpdeskApiControllersPortalCreatePortalEnquiryRequest](docs/HelpdeskApiControllersPortalCreatePortalEnquiryRequest.md)
  - [HelpdeskApiControllersPortalReplyToPortalEnquiryRequest](docs/HelpdeskApiControllersPortalReplyToPortalEnquiryRequest.md)
  - [HelpdeskApiControllersSetCategoryWorkflowRequest](docs/HelpdeskApiControllersSetCategoryWorkflowRequest.md)
  - [HelpdeskApiControllersSetPortalEnquiryCategoryRequest](docs/HelpdeskApiControllersSetPortalEnquiryCategoryRequest.md)
+ - [HelpdeskApiControllersSetUserPreferenceRequest](docs/HelpdeskApiControllersSetUserPreferenceRequest.md)
  - [HelpdeskApplicationAdminDTOsTenantUserDto](docs/HelpdeskApplicationAdminDTOsTenantUserDto.md)
  - [HelpdeskApplicationAdminDTOsUserRoleDto](docs/HelpdeskApplicationAdminDTOsUserRoleDto.md)
  - [HelpdeskApplicationAiAssistCommandsGetTicketSummaryGetTicketSummaryCommand](docs/HelpdeskApplicationAiAssistCommandsGetTicketSummaryGetTicketSummaryCommand.md)
@@ -415,12 +400,10 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationAppSettingsModelsAppSettingDto](docs/HelpdeskApplicationAppSettingsModelsAppSettingDto.md)
  - [HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowCommand](docs/HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowCommand.md)
  - [HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowStepDto](docs/HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreateApprovalWorkflowStepDto.md)
- - [HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreatePrincipalApprovalWorkflowCommand](docs/HelpdeskApplicationApprovalsCommandsCreateApprovalWorkflowCreatePrincipalApprovalWorkflowCommand.md)
  - [HelpdeskApplicationApprovalsCommandsMakeApprovalDecisionMakeApprovalDecisionCommand](docs/HelpdeskApplicationApprovalsCommandsMakeApprovalDecisionMakeApprovalDecisionCommand.md)
  - [HelpdeskApplicationApprovalsCommandsRequestApprovalRequestApprovalCommand](docs/HelpdeskApplicationApprovalsCommandsRequestApprovalRequestApprovalCommand.md)
  - [HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand](docs/HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowCommand.md)
  - [HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowStepDto](docs/HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdateApprovalWorkflowStepDto.md)
- - [HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdatePrincipalApprovalWorkflowCommand](docs/HelpdeskApplicationApprovalsCommandsUpdateApprovalWorkflowUpdatePrincipalApprovalWorkflowCommand.md)
  - [HelpdeskApplicationApprovalsDTOsApprovalDecisionDto](docs/HelpdeskApplicationApprovalsDTOsApprovalDecisionDto.md)
  - [HelpdeskApplicationApprovalsDTOsApprovalWorkflowDetailDto](docs/HelpdeskApplicationApprovalsDTOsApprovalWorkflowDetailDto.md)
  - [HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto](docs/HelpdeskApplicationApprovalsDTOsApprovalWorkflowDto.md)
@@ -432,20 +415,21 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand](docs/HelpdeskApplicationCannedResponsesCommandsUpdateCannedResponseUpdateCannedResponseCommand.md)
  - [HelpdeskApplicationCannedResponsesDTOsCannedResponseDto](docs/HelpdeskApplicationCannedResponsesDTOsCannedResponseDto.md)
  - [HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand](docs/HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand.md)
- - [HelpdeskApplicationCategoriesCommandsCreateCategoryCreatePrincipalCategoryCommand](docs/HelpdeskApplicationCategoriesCommandsCreateCategoryCreatePrincipalCategoryCommand.md)
  - [HelpdeskApplicationCategoriesCommandsCreateSectionCreateSectionCommand](docs/HelpdeskApplicationCategoriesCommandsCreateSectionCreateSectionCommand.md)
+ - [HelpdeskApplicationCategoriesCommandsSetCategoryDefaultAssigneeSetCategoryDefaultAssigneeCommand](docs/HelpdeskApplicationCategoriesCommandsSetCategoryDefaultAssigneeSetCategoryDefaultAssigneeCommand.md)
  - [HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand](docs/HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand.md)
- - [HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdatePrincipalCategoryCommand](docs/HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdatePrincipalCategoryCommand.md)
  - [HelpdeskApplicationCategoriesCommandsUpdateSectionUpdateSectionCommand](docs/HelpdeskApplicationCategoriesCommandsUpdateSectionUpdateSectionCommand.md)
+ - [HelpdeskApplicationCategoriesModelsAvailableCategoryDto](docs/HelpdeskApplicationCategoriesModelsAvailableCategoryDto.md)
  - [HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto](docs/HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto.md)
  - [HelpdeskApplicationCategoriesModelsCategoryDto](docs/HelpdeskApplicationCategoriesModelsCategoryDto.md)
  - [HelpdeskApplicationCategoriesModelsSectionDto](docs/HelpdeskApplicationCategoriesModelsSectionDto.md)
  - [HelpdeskApplicationCategoriesModelsSectionWithCategoriesDto](docs/HelpdeskApplicationCategoriesModelsSectionWithCategoriesDto.md)
  - [HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand](docs/HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand.md)
  - [HelpdeskApplicationCommentsCommandsAddInternalNoteAddInternalNoteCommand](docs/HelpdeskApplicationCommentsCommandsAddInternalNoteAddInternalNoteCommand.md)
- - [HelpdeskApplicationCommentsCommandsAddPlatformCommentAddPlatformCommentRequest](docs/HelpdeskApplicationCommentsCommandsAddPlatformCommentAddPlatformCommentRequest.md)
  - [HelpdeskApplicationCommentsCommandsManageSubscribersManageSubscribersCommand](docs/HelpdeskApplicationCommentsCommandsManageSubscribersManageSubscribersCommand.md)
  - [HelpdeskApplicationCommentsDTOsCommentDto](docs/HelpdeskApplicationCommentsDTOsCommentDto.md)
+ - [HelpdeskApplicationCommentsDTOsCommentEmailDto](docs/HelpdeskApplicationCommentsDTOsCommentEmailDto.md)
+ - [HelpdeskApplicationCommentsDTOsEmailParticipantDto](docs/HelpdeskApplicationCommentsDTOsEmailParticipantDto.md)
  - [HelpdeskApplicationCommentsDTOsSubscriberDto](docs/HelpdeskApplicationCommentsDTOsSubscriberDto.md)
  - [HelpdeskApplicationCommonPagedResultCommentDto](docs/HelpdeskApplicationCommonPagedResultCommentDto.md)
  - [HelpdeskApplicationCommonPagedResultDictionaryStringObject](docs/HelpdeskApplicationCommonPagedResultDictionaryStringObject.md)
@@ -453,14 +437,14 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCommonPagedResultIdeaDto](docs/HelpdeskApplicationCommonPagedResultIdeaDto.md)
  - [HelpdeskApplicationCommonPagedResultKbArticleListDto](docs/HelpdeskApplicationCommonPagedResultKbArticleListDto.md)
  - [HelpdeskApplicationCommonPagedResultPendingApprovalDto](docs/HelpdeskApplicationCommonPagedResultPendingApprovalDto.md)
- - [HelpdeskApplicationCommonPagedResultPlatformTicketCommentDto](docs/HelpdeskApplicationCommonPagedResultPlatformTicketCommentDto.md)
- - [HelpdeskApplicationCommonPagedResultPlatformTicketListDto](docs/HelpdeskApplicationCommonPagedResultPlatformTicketListDto.md)
  - [HelpdeskApplicationCommonPagedResultPortalAnnouncementDto](docs/HelpdeskApplicationCommonPagedResultPortalAnnouncementDto.md)
  - [HelpdeskApplicationCommonPagedResultPortalEnquiryDto](docs/HelpdeskApplicationCommonPagedResultPortalEnquiryDto.md)
  - [HelpdeskApplicationCommonPagedResultPortalHelpArticleListDto](docs/HelpdeskApplicationCommonPagedResultPortalHelpArticleListDto.md)
+ - [HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto](docs/HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto.md)
  - [HelpdeskApplicationCommonPagedResultRecurringTicketDto](docs/HelpdeskApplicationCommonPagedResultRecurringTicketDto.md)
  - [HelpdeskApplicationCommonPagedResultSatisfactionRatingDto](docs/HelpdeskApplicationCommonPagedResultSatisfactionRatingDto.md)
  - [HelpdeskApplicationCommonPagedResultSectionDto](docs/HelpdeskApplicationCommonPagedResultSectionDto.md)
+ - [HelpdeskApplicationCommonPagedResultTicketHistoryItemDto](docs/HelpdeskApplicationCommonPagedResultTicketHistoryItemDto.md)
  - [HelpdeskApplicationCommonPagedResultTicketListDto](docs/HelpdeskApplicationCommonPagedResultTicketListDto.md)
  - [HelpdeskApplicationCommonPagedResultWidgetTicketDto](docs/HelpdeskApplicationCommonPagedResultWidgetTicketDto.md)
  - [HelpdeskApplicationCommonPagedResultWorkflowDefinitionSummaryDto](docs/HelpdeskApplicationCommonPagedResultWorkflowDefinitionSummaryDto.md)
@@ -484,6 +468,7 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCustomStatusesCommandsCreateCustomStatusCreateCustomStatusCommand](docs/HelpdeskApplicationCustomStatusesCommandsCreateCustomStatusCreateCustomStatusCommand.md)
  - [HelpdeskApplicationCustomStatusesCommandsUpdateCustomStatusUpdateCustomStatusCommand](docs/HelpdeskApplicationCustomStatusesCommandsUpdateCustomStatusUpdateCustomStatusCommand.md)
  - [HelpdeskApplicationCustomStatusesDTOsCustomTicketStatusDto](docs/HelpdeskApplicationCustomStatusesDTOsCustomTicketStatusDto.md)
+ - [HelpdeskApplicationEmailNewContactRequest](docs/HelpdeskApplicationEmailNewContactRequest.md)
  - [HelpdeskApplicationIntegrationsCommandsAddIntegrationAddIntegrationCommand](docs/HelpdeskApplicationIntegrationsCommandsAddIntegrationAddIntegrationCommand.md)
  - [HelpdeskApplicationIntegrationsCommandsUpdateIntegrationUpdateIntegrationCommand](docs/HelpdeskApplicationIntegrationsCommandsUpdateIntegrationUpdateIntegrationCommand.md)
  - [HelpdeskApplicationIntegrationsDTOsIntegrationConfigDto](docs/HelpdeskApplicationIntegrationsDTOsIntegrationConfigDto.md)
@@ -504,17 +489,8 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationKnowledgeBaseModelsKbTagDto](docs/HelpdeskApplicationKnowledgeBaseModelsKbTagDto.md)
  - [HelpdeskApplicationLiveChatCommandsUpdateLiveChatConfigUpdateLiveChatConfigCommand](docs/HelpdeskApplicationLiveChatCommandsUpdateLiveChatConfigUpdateLiveChatConfigCommand.md)
  - [HelpdeskApplicationLiveChatDTOsLiveChatWidgetConfigDto](docs/HelpdeskApplicationLiveChatDTOsLiveChatWidgetConfigDto.md)
- - [HelpdeskApplicationPlatformCommandsAddPlatformTicketCommentAddPlatformTicketCommentCommand](docs/HelpdeskApplicationPlatformCommandsAddPlatformTicketCommentAddPlatformTicketCommentCommand.md)
- - [HelpdeskApplicationPlatformCommandsAssignPlatformTicketAssignPlatformTicketCommand](docs/HelpdeskApplicationPlatformCommandsAssignPlatformTicketAssignPlatformTicketCommand.md)
- - [HelpdeskApplicationPlatformCommandsChangePlatformTicketCategoryChangePlatformTicketCategoryCommand](docs/HelpdeskApplicationPlatformCommandsChangePlatformTicketCategoryChangePlatformTicketCategoryCommand.md)
- - [HelpdeskApplicationPlatformCommandsChangePlatformTicketPriorityChangePlatformTicketPriorityCommand](docs/HelpdeskApplicationPlatformCommandsChangePlatformTicketPriorityChangePlatformTicketPriorityCommand.md)
- - [HelpdeskApplicationPlatformCommandsCreatePlatformTicketCreatePlatformTicketCommand](docs/HelpdeskApplicationPlatformCommandsCreatePlatformTicketCreatePlatformTicketCommand.md)
- - [HelpdeskApplicationPlatformCommandsUpdatePlatformTicketContentUpdatePlatformTicketContentCommand](docs/HelpdeskApplicationPlatformCommandsUpdatePlatformTicketContentUpdatePlatformTicketContentCommand.md)
- - [HelpdeskApplicationPlatformCommandsUpdatePlatformTicketStatusUpdatePlatformTicketStatusCommand](docs/HelpdeskApplicationPlatformCommandsUpdatePlatformTicketStatusUpdatePlatformTicketStatusCommand.md)
- - [HelpdeskApplicationPlatformDTOsPlatformCategoryDto](docs/HelpdeskApplicationPlatformDTOsPlatformCategoryDto.md)
- - [HelpdeskApplicationPlatformDTOsPlatformTicketCommentDto](docs/HelpdeskApplicationPlatformDTOsPlatformTicketCommentDto.md)
- - [HelpdeskApplicationPlatformDTOsPlatformTicketDto](docs/HelpdeskApplicationPlatformDTOsPlatformTicketDto.md)
- - [HelpdeskApplicationPlatformDTOsPlatformTicketListDto](docs/HelpdeskApplicationPlatformDTOsPlatformTicketListDto.md)
+ - [HelpdeskApplicationMailboxesDTOsMailboxConnectDto](docs/HelpdeskApplicationMailboxesDTOsMailboxConnectDto.md)
+ - [HelpdeskApplicationMailboxesDTOsMailboxDto](docs/HelpdeskApplicationMailboxesDTOsMailboxDto.md)
  - [HelpdeskApplicationPortalEnquiriesPortalEnquiryDetailDto](docs/HelpdeskApplicationPortalEnquiriesPortalEnquiryDetailDto.md)
  - [HelpdeskApplicationPortalEnquiriesPortalEnquiryDto](docs/HelpdeskApplicationPortalEnquiriesPortalEnquiryDto.md)
  - [HelpdeskApplicationPortalEnquiriesPortalEnquiryReplyDto](docs/HelpdeskApplicationPortalEnquiriesPortalEnquiryReplyDto.md)
@@ -523,6 +499,14 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationPortalHelpPortalHelpArticleDto](docs/HelpdeskApplicationPortalHelpPortalHelpArticleDto.md)
  - [HelpdeskApplicationPortalHelpPortalHelpArticleListDto](docs/HelpdeskApplicationPortalHelpPortalHelpArticleListDto.md)
  - [HelpdeskApplicationPortalHelpPortalHelpCategoryDto](docs/HelpdeskApplicationPortalHelpPortalHelpCategoryDto.md)
+ - [HelpdeskApplicationPreferencesDTOsSignatureImageDto](docs/HelpdeskApplicationPreferencesDTOsSignatureImageDto.md)
+ - [HelpdeskApplicationPreferencesDTOsUserPreferenceDto](docs/HelpdeskApplicationPreferencesDTOsUserPreferenceDto.md)
+ - [HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand](docs/HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand.md)
+ - [HelpdeskApplicationProviderSupportCommandsRaiseTicketWithProviderRaiseTicketWithProviderCommand](docs/HelpdeskApplicationProviderSupportCommandsRaiseTicketWithProviderRaiseTicketWithProviderCommand.md)
+ - [HelpdeskApplicationProviderSupportDTOsPresetCategoryOpenCountDto](docs/HelpdeskApplicationProviderSupportDTOsPresetCategoryOpenCountDto.md)
+ - [HelpdeskApplicationProviderSupportDTOsProviderCategoryDto](docs/HelpdeskApplicationProviderSupportDTOsProviderCategoryDto.md)
+ - [HelpdeskApplicationProviderSupportDTOsProviderSupportContextDto](docs/HelpdeskApplicationProviderSupportDTOsProviderSupportContextDto.md)
+ - [HelpdeskApplicationProviderSupportDTOsRaisedWithProviderTicketDto](docs/HelpdeskApplicationProviderSupportDTOsRaisedWithProviderTicketDto.md)
  - [HelpdeskApplicationReportingCommandsExecuteReportExportExecuteReportExportCommand](docs/HelpdeskApplicationReportingCommandsExecuteReportExportExecuteReportExportCommand.md)
  - [HelpdeskApplicationReportingDTOsAgentUtilizationDto](docs/HelpdeskApplicationReportingDTOsAgentUtilizationDto.md)
  - [HelpdeskApplicationReportingDTOsAssetTicketDto](docs/HelpdeskApplicationReportingDTOsAssetTicketDto.md)
@@ -536,6 +520,16 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationReportingDTOsDeletedTicketDto](docs/HelpdeskApplicationReportingDTOsDeletedTicketDto.md)
  - [HelpdeskApplicationReportingDTOsDynamicsDataPoint](docs/HelpdeskApplicationReportingDTOsDynamicsDataPoint.md)
  - [HelpdeskApplicationReportingDTOsDynamicsReportDto](docs/HelpdeskApplicationReportingDTOsDynamicsReportDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiCardsDto](docs/HelpdeskApplicationReportingDTOsKpiCardsDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiCompanyDto](docs/HelpdeskApplicationReportingDTOsKpiCompanyDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiLateListDto](docs/HelpdeskApplicationReportingDTOsKpiLateListDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiLateTicketDto](docs/HelpdeskApplicationReportingDTOsKpiLateTicketDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiMissedDeadline](docs/HelpdeskApplicationReportingDTOsKpiMissedDeadline.md)
+ - [HelpdeskApplicationReportingDTOsKpiOldestTicketDto](docs/HelpdeskApplicationReportingDTOsKpiOldestTicketDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiOpenByAgeDto](docs/HelpdeskApplicationReportingDTOsKpiOpenByAgeDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiPeriodDto](docs/HelpdeskApplicationReportingDTOsKpiPeriodDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiReportDto](docs/HelpdeskApplicationReportingDTOsKpiReportDto.md)
+ - [HelpdeskApplicationReportingDTOsKpiWeekDto](docs/HelpdeskApplicationReportingDTOsKpiWeekDto.md)
  - [HelpdeskApplicationReportingDTOsOverdueTicketDto](docs/HelpdeskApplicationReportingDTOsOverdueTicketDto.md)
  - [HelpdeskApplicationReportingDTOsPriorityBreakdownDto](docs/HelpdeskApplicationReportingDTOsPriorityBreakdownDto.md)
  - [HelpdeskApplicationReportingDTOsReportExecutionStatusDto](docs/HelpdeskApplicationReportingDTOsReportExecutionStatusDto.md)
@@ -543,6 +537,9 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationReportingDTOsSlaPolicyComplianceDto](docs/HelpdeskApplicationReportingDTOsSlaPolicyComplianceDto.md)
  - [HelpdeskApplicationReportingDTOsStatusBreakdownDto](docs/HelpdeskApplicationReportingDTOsStatusBreakdownDto.md)
  - [HelpdeskApplicationReportingDTOsSummaryReportDto](docs/HelpdeskApplicationReportingDTOsSummaryReportDto.md)
+ - [HelpdeskApplicationReportingDTOsTeamReportDto](docs/HelpdeskApplicationReportingDTOsTeamReportDto.md)
+ - [HelpdeskApplicationReportingDTOsTeamReportRowDto](docs/HelpdeskApplicationReportingDTOsTeamReportRowDto.md)
+ - [HelpdeskApplicationReportingDTOsTeamReportUnassignedDto](docs/HelpdeskApplicationReportingDTOsTeamReportUnassignedDto.md)
  - [HelpdeskApplicationReportingDTOsTechPerformanceDto](docs/HelpdeskApplicationReportingDTOsTechPerformanceDto.md)
  - [HelpdeskApplicationReportingDTOsTechnicianBreakdownDto](docs/HelpdeskApplicationReportingDTOsTechnicianBreakdownDto.md)
  - [HelpdeskApplicationReportingDTOsTicketByCategoryDto](docs/HelpdeskApplicationReportingDTOsTicketByCategoryDto.md)
@@ -550,7 +547,6 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationReportingDTOsTicketByStatusDto](docs/HelpdeskApplicationReportingDTOsTicketByStatusDto.md)
  - [HelpdeskApplicationReportingDTOsTicketStatsDto](docs/HelpdeskApplicationReportingDTOsTicketStatsDto.md)
  - [HelpdeskApplicationReportingQueriesGetCustomReportGetCustomReportQuery](docs/HelpdeskApplicationReportingQueriesGetCustomReportGetCustomReportQuery.md)
- - [HelpdeskApplicationReportingQueriesGetPrincipalTicketVolumePrincipalTicketVolumeDto](docs/HelpdeskApplicationReportingQueriesGetPrincipalTicketVolumePrincipalTicketVolumeDto.md)
  - [HelpdeskApplicationSatisfactionCommandsSubmitSatisfactionRatingSubmitSatisfactionRatingCommand](docs/HelpdeskApplicationSatisfactionCommandsSubmitSatisfactionRatingSubmitSatisfactionRatingCommand.md)
  - [HelpdeskApplicationSatisfactionCommandsUpdateSatisfactionRatingUpdateSatisfactionRatingCommand](docs/HelpdeskApplicationSatisfactionCommandsUpdateSatisfactionRatingUpdateSatisfactionRatingCommand.md)
  - [HelpdeskApplicationSatisfactionDTOsCSATReportDto](docs/HelpdeskApplicationSatisfactionDTOsCSATReportDto.md)
@@ -563,18 +559,33 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationSchedulingCommandsUpdateRecurringTicketCommand](docs/HelpdeskApplicationSchedulingCommandsUpdateRecurringTicketCommand.md)
  - [HelpdeskApplicationSchedulingDTOsAutoCloseConfigurationDto](docs/HelpdeskApplicationSchedulingDTOsAutoCloseConfigurationDto.md)
  - [HelpdeskApplicationSchedulingDTOsRecurringTicketDto](docs/HelpdeskApplicationSchedulingDTOsRecurringTicketDto.md)
- - [HelpdeskApplicationSlaCommandsCreateSlaPolicyCreatePrincipalSlaPolicyCommand](docs/HelpdeskApplicationSlaCommandsCreateSlaPolicyCreatePrincipalSlaPolicyCommand.md)
- - [HelpdeskApplicationSlaCommandsCreateSlaPolicyCreateSlaPolicyCommand](docs/HelpdeskApplicationSlaCommandsCreateSlaPolicyCreateSlaPolicyCommand.md)
- - [HelpdeskApplicationSlaCommandsStartSlaTimerStartSlaTimerCommand](docs/HelpdeskApplicationSlaCommandsStartSlaTimerStartSlaTimerCommand.md)
- - [HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdatePrincipalSlaPolicyCommand](docs/HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdatePrincipalSlaPolicyCommand.md)
- - [HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdateSlaPolicyCommand](docs/HelpdeskApplicationSlaCommandsUpdateSlaPolicyUpdateSlaPolicyCommand.md)
- - [HelpdeskApplicationSlaDTOsSlaPolicyDto](docs/HelpdeskApplicationSlaDTOsSlaPolicyDto.md)
- - [HelpdeskApplicationSlaDTOsTicketSlaStatusDto](docs/HelpdeskApplicationSlaDTOsTicketSlaStatusDto.md)
+ - [HelpdeskApplicationSlaCommandsSaveCompanyDeadlinesSaveCompanyDeadlinesCommand](docs/HelpdeskApplicationSlaCommandsSaveCompanyDeadlinesSaveCompanyDeadlinesCommand.md)
+ - [HelpdeskApplicationSlaDTOsCompanyDeadlinePolicyDto](docs/HelpdeskApplicationSlaDTOsCompanyDeadlinePolicyDto.md)
+ - [HelpdeskApplicationSlaDTOsCompanyDeadlinePolicyInput](docs/HelpdeskApplicationSlaDTOsCompanyDeadlinePolicyInput.md)
+ - [HelpdeskApplicationSlaDTOsCompanyDeadlinePreviewRequest](docs/HelpdeskApplicationSlaDTOsCompanyDeadlinePreviewRequest.md)
+ - [HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto](docs/HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto.md)
+ - [HelpdeskApplicationSlaDTOsCustomerDeadlineRowDto](docs/HelpdeskApplicationSlaDTOsCustomerDeadlineRowDto.md)
+ - [HelpdeskApplicationSlaDTOsDeadlineDayDto](docs/HelpdeskApplicationSlaDTOsDeadlineDayDto.md)
+ - [HelpdeskApplicationSlaDTOsDeadlineExplanationDto](docs/HelpdeskApplicationSlaDTOsDeadlineExplanationDto.md)
+ - [HelpdeskApplicationSlaDTOsDeadlinePolicyOverviewDto](docs/HelpdeskApplicationSlaDTOsDeadlinePolicyOverviewDto.md)
+ - [HelpdeskApplicationSlaDTOsDeadlinePolicySummaryDto](docs/HelpdeskApplicationSlaDTOsDeadlinePolicySummaryDto.md)
+ - [HelpdeskApplicationSlaDTOsDeadlinePreviewDto](docs/HelpdeskApplicationSlaDTOsDeadlinePreviewDto.md)
+ - [HelpdeskApplicationSlaDTOsDeadlineTargetDto](docs/HelpdeskApplicationSlaDTOsDeadlineTargetDto.md)
+ - [HelpdeskApplicationSlaDTOsHolidayDto](docs/HelpdeskApplicationSlaDTOsHolidayDto.md)
+ - [HelpdeskApplicationSlaDTOsHolidayRegionDto](docs/HelpdeskApplicationSlaDTOsHolidayRegionDto.md)
+ - [HelpdeskApplicationSlaDTOsSaveCompanyDeadlineResultDto](docs/HelpdeskApplicationSlaDTOsSaveCompanyDeadlineResultDto.md)
+ - [HelpdeskApplicationSlaDTOsSkippedDayDto](docs/HelpdeskApplicationSlaDTOsSkippedDayDto.md)
+ - [HelpdeskApplicationSlaDTOsTicketDeadlineDto](docs/HelpdeskApplicationSlaDTOsTicketDeadlineDto.md)
+ - [HelpdeskApplicationSlaDeadlinesDeadlinePolicySource](docs/HelpdeskApplicationSlaDeadlinesDeadlinePolicySource.md)
+ - [HelpdeskApplicationSlaDeadlinesSkippedDayReason](docs/HelpdeskApplicationSlaDeadlinesSkippedDayReason.md)
  - [HelpdeskApplicationSlaQueriesGetBusinessHoursSchedulesBusinessHoursScheduleSummaryDto](docs/HelpdeskApplicationSlaQueriesGetBusinessHoursSchedulesBusinessHoursScheduleSummaryDto.md)
+ - [HelpdeskApplicationSlaQueriesPreviewDeadlineDeadlinePreviewRequest](docs/HelpdeskApplicationSlaQueriesPreviewDeadlineDeadlinePreviewRequest.md)
  - [HelpdeskApplicationTagsCommandsCreateTagCreateTagCommand](docs/HelpdeskApplicationTagsCommandsCreateTagCreateTagCommand.md)
  - [HelpdeskApplicationTagsDTOsTagDto](docs/HelpdeskApplicationTagsDTOsTagDto.md)
  - [HelpdeskApplicationTicketsCommandsAddTicketLinkedEntityAddTicketLinkedEntityCommand](docs/HelpdeskApplicationTicketsCommandsAddTicketLinkedEntityAddTicketLinkedEntityCommand.md)
  - [HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand](docs/HelpdeskApplicationTicketsCommandsAssignTicketAssignTicketCommand.md)
+ - [HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand](docs/HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionCommand.md)
+ - [HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionType](docs/HelpdeskApplicationTicketsCommandsBulkTicketActionBulkTicketActionType.md)
  - [HelpdeskApplicationTicketsCommandsChangeTicketCategoryChangeTicketCategoryCommand](docs/HelpdeskApplicationTicketsCommandsChangeTicketCategoryChangeTicketCategoryCommand.md)
  - [HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand](docs/HelpdeskApplicationTicketsCommandsChangeTicketPriorityChangeTicketPriorityCommand.md)
  - [HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand](docs/HelpdeskApplicationTicketsCommandsChangeTicketStatusChangeTicketStatusCommand.md)
@@ -586,11 +597,17 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationTicketsCommandsLinkTicketsLinkTicketsCommand](docs/HelpdeskApplicationTicketsCommandsLinkTicketsLinkTicketsCommand.md)
  - [HelpdeskApplicationTicketsCommandsMergeTicketsMergeTicketsCommand](docs/HelpdeskApplicationTicketsCommandsMergeTicketsMergeTicketsCommand.md)
  - [HelpdeskApplicationTicketsCommandsUpdateTicketUpdateTicketCommand](docs/HelpdeskApplicationTicketsCommandsUpdateTicketUpdateTicketCommand.md)
+ - [HelpdeskApplicationTicketsDTOsBulkTicketActionResultDto](docs/HelpdeskApplicationTicketsDTOsBulkTicketActionResultDto.md)
+ - [HelpdeskApplicationTicketsDTOsBulkTicketFailureDto](docs/HelpdeskApplicationTicketsDTOsBulkTicketFailureDto.md)
  - [HelpdeskApplicationTicketsDTOsIdeaDto](docs/HelpdeskApplicationTicketsDTOsIdeaDto.md)
  - [HelpdeskApplicationTicketsDTOsLinkedAssetDto](docs/HelpdeskApplicationTicketsDTOsLinkedAssetDto.md)
  - [HelpdeskApplicationTicketsDTOsTicketAssigneeCountDto](docs/HelpdeskApplicationTicketsDTOsTicketAssigneeCountDto.md)
  - [HelpdeskApplicationTicketsDTOsTicketCountsDto](docs/HelpdeskApplicationTicketsDTOsTicketCountsDto.md)
  - [HelpdeskApplicationTicketsDTOsTicketDto](docs/HelpdeskApplicationTicketsDTOsTicketDto.md)
+ - [HelpdeskApplicationTicketsDTOsTicketEmailRecipientDto](docs/HelpdeskApplicationTicketsDTOsTicketEmailRecipientDto.md)
+ - [HelpdeskApplicationTicketsDTOsTicketHistoryItemDto](docs/HelpdeskApplicationTicketsDTOsTicketHistoryItemDto.md)
+ - [HelpdeskApplicationTicketsDTOsTicketIdRefDto](docs/HelpdeskApplicationTicketsDTOsTicketIdRefDto.md)
+ - [HelpdeskApplicationTicketsDTOsTicketIdsDto](docs/HelpdeskApplicationTicketsDTOsTicketIdsDto.md)
  - [HelpdeskApplicationTicketsDTOsTicketLinkDto](docs/HelpdeskApplicationTicketsDTOsTicketLinkDto.md)
  - [HelpdeskApplicationTicketsDTOsTicketLinkedEntityDto](docs/HelpdeskApplicationTicketsDTOsTicketLinkedEntityDto.md)
  - [HelpdeskApplicationTicketsDTOsTicketListDto](docs/HelpdeskApplicationTicketsDTOsTicketListDto.md)
@@ -604,19 +621,13 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand](docs/HelpdeskApplicationWidgetCommandsCreateWidgetTicketCreateWidgetTicketCommand.md)
  - [HelpdeskApplicationWidgetDTOsWidgetCategoryDto](docs/HelpdeskApplicationWidgetDTOsWidgetCategoryDto.md)
  - [HelpdeskApplicationWidgetDTOsWidgetTicketDto](docs/HelpdeskApplicationWidgetDTOsWidgetTicketDto.md)
- - [HelpdeskApplicationWorkflowsCommandsClonePrincipalWorkflowDefinitionClonePrincipalWorkflowDefinitionRequest](docs/HelpdeskApplicationWorkflowsCommandsClonePrincipalWorkflowDefinitionClonePrincipalWorkflowDefinitionRequest.md)
- - [HelpdeskApplicationWorkflowsCommandsClonePrincipalWorkflowDefinitionClonePrincipalWorkflowDefinitionResult](docs/HelpdeskApplicationWorkflowsCommandsClonePrincipalWorkflowDefinitionClonePrincipalWorkflowDefinitionResult.md)
  - [HelpdeskApplicationWorkflowsCommandsCloneWorkflowDefinitionCloneWorkflowDefinitionRequest](docs/HelpdeskApplicationWorkflowsCommandsCloneWorkflowDefinitionCloneWorkflowDefinitionRequest.md)
  - [HelpdeskApplicationWorkflowsCommandsCloneWorkflowDefinitionCloneWorkflowDefinitionResult](docs/HelpdeskApplicationWorkflowsCommandsCloneWorkflowDefinitionCloneWorkflowDefinitionResult.md)
- - [HelpdeskApplicationWorkflowsCommandsCreatePrincipalWorkflowDefinitionCreatePrincipalWorkflowDefinitionCommand](docs/HelpdeskApplicationWorkflowsCommandsCreatePrincipalWorkflowDefinitionCreatePrincipalWorkflowDefinitionCommand.md)
- - [HelpdeskApplicationWorkflowsCommandsCreatePrincipalWorkflowDefinitionCreatePrincipalWorkflowDefinitionResult](docs/HelpdeskApplicationWorkflowsCommandsCreatePrincipalWorkflowDefinitionCreatePrincipalWorkflowDefinitionResult.md)
  - [HelpdeskApplicationWorkflowsCommandsCreateWorkflowDefinitionCreateWorkflowDefinitionCommand](docs/HelpdeskApplicationWorkflowsCommandsCreateWorkflowDefinitionCreateWorkflowDefinitionCommand.md)
  - [HelpdeskApplicationWorkflowsCommandsCreateWorkflowDefinitionCreateWorkflowDefinitionResult](docs/HelpdeskApplicationWorkflowsCommandsCreateWorkflowDefinitionCreateWorkflowDefinitionResult.md)
  - [HelpdeskApplicationWorkflowsCommandsInvokeTransitionInvokeTransitionResult](docs/HelpdeskApplicationWorkflowsCommandsInvokeTransitionInvokeTransitionResult.md)
  - [HelpdeskApplicationWorkflowsCommandsMigrateLegacyAutomationRulesMigrationResult](docs/HelpdeskApplicationWorkflowsCommandsMigrateLegacyAutomationRulesMigrationResult.md)
- - [HelpdeskApplicationWorkflowsCommandsPublishPrincipalWorkflowDraftPublishPrincipalWorkflowDraftCommand](docs/HelpdeskApplicationWorkflowsCommandsPublishPrincipalWorkflowDraftPublishPrincipalWorkflowDraftCommand.md)
  - [HelpdeskApplicationWorkflowsCommandsPublishWorkflowDraftPublishWorkflowDraftCommand](docs/HelpdeskApplicationWorkflowsCommandsPublishWorkflowDraftPublishWorkflowDraftCommand.md)
- - [HelpdeskApplicationWorkflowsCommandsUpdatePrincipalWorkflowDraftUpdatePrincipalWorkflowDraftCommand](docs/HelpdeskApplicationWorkflowsCommandsUpdatePrincipalWorkflowDraftUpdatePrincipalWorkflowDraftCommand.md)
  - [HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateGuardSpecInput](docs/HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateGuardSpecInput.md)
  - [HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateParallelSpecInput](docs/HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateParallelSpecInput.md)
  - [HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftCommand](docs/HelpdeskApplicationWorkflowsCommandsUpdateWorkflowDraftUpdateWorkflowDraftCommand.md)
@@ -647,17 +658,17 @@ Class | Method | HTTP request | Description
  - [HelpdeskDomainCategoriesEnumsCustomFieldType](docs/HelpdeskDomainCategoriesEnumsCustomFieldType.md)
  - [HelpdeskDomainCategoriesEnumsCustomFieldUsageType](docs/HelpdeskDomainCategoriesEnumsCustomFieldUsageType.md)
  - [HelpdeskDomainCommentsEnumsCommentType](docs/HelpdeskDomainCommentsEnumsCommentType.md)
- - [HelpdeskDomainCommonEnumsAudience](docs/HelpdeskDomainCommonEnumsAudience.md)
  - [HelpdeskDomainIntegrationsEnumsIntegrationType](docs/HelpdeskDomainIntegrationsEnumsIntegrationType.md)
  - [HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel](docs/HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel.md)
  - [HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus](docs/HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus.md)
  - [HelpdeskDomainKnowledgeBaseEnumsKbPortalSection](docs/HelpdeskDomainKnowledgeBaseEnumsKbPortalSection.md)
+ - [HelpdeskDomainKnowledgeBaseEnumsKbStaffSection](docs/HelpdeskDomainKnowledgeBaseEnumsKbStaffSection.md)
  - [HelpdeskDomainReportingEnumsDynamicsGranularity](docs/HelpdeskDomainReportingEnumsDynamicsGranularity.md)
  - [HelpdeskDomainReportingEnumsReportExecutionStatus](docs/HelpdeskDomainReportingEnumsReportExecutionStatus.md)
  - [HelpdeskDomainReportingEnumsReportExportFormat](docs/HelpdeskDomainReportingEnumsReportExportFormat.md)
  - [HelpdeskDomainSchedulingEnumsRecurrenceFrequency](docs/HelpdeskDomainSchedulingEnumsRecurrenceFrequency.md)
  - [HelpdeskDomainSchedulingEnumsRecurrenceMode](docs/HelpdeskDomainSchedulingEnumsRecurrenceMode.md)
- - [HelpdeskDomainSlaEnumsSlaTimerState](docs/HelpdeskDomainSlaEnumsSlaTimerState.md)
+ - [HelpdeskDomainSlaEnumsDeadlineClockMode](docs/HelpdeskDomainSlaEnumsDeadlineClockMode.md)
  - [HelpdeskDomainTicketsEnumsTicketLinkType](docs/HelpdeskDomainTicketsEnumsTicketLinkType.md)
  - [HelpdeskDomainTicketsEnumsTicketOrigin](docs/HelpdeskDomainTicketsEnumsTicketOrigin.md)
  - [HelpdeskDomainTicketsEnumsTicketPriority](docs/HelpdeskDomainTicketsEnumsTicketPriority.md)

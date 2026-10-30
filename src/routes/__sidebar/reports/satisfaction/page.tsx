@@ -68,7 +68,7 @@ function CSATReportPage() {
 
   return (
     <DashboardPage
-      title="Customer Satisfaction (CSAT)"
+      title="Tenant Satisfaction (CSAT)"
       breadcrumbsKey="reports.satisfaction"
       actions={
         <BaseDateRangePicker

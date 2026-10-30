@@ -25,11 +25,6 @@ import type { FC, ReactNode } from 'react';
  * Rules are matched in order, first match wins, so more specific paths come
  * before the section they sit in. A path that matches no rule is not
  * restricted here.
- *
- * NOT COVERED
- * /principal/... pages are left out on purpose. The backend guards those by
- * principal membership (RequirePrincipalAccess), not by these permissions, and
- * a Helpdesk Principal Agent works principal tickets without principal.read.
  */
 interface RouteRule {
   /** Matches the pathname, without the app's base path. */
@@ -59,7 +54,7 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
   // Reports, including the satisfaction report under /reports/satisfaction.
   // NOT /satisfaction: that is the public survey a customer opens from the
   // emailed link, authorised by the token in the URL, so it has no rule here.
-  { path: /^\/reports(-hub)?(\/|$)/, anyOf: [P.Reports.Read] },
+  { path: /^\/reports(\/|$)/, anyOf: [P.Reports.Read] },
 
   // Approvals
   { path: /^\/approvals(\/|$)/, anyOf: [P.Approvals.Read] },

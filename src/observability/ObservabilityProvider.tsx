@@ -22,9 +22,9 @@
  * (Passing getter functions would defeat this: a function identity never
  * changes, so the provider could not detect the switch.)
  *
- * Helpdesk platform-support agents move across tenants frequently, so this
- * re-mint-on-switch behaviour is what keeps each tenant's telemetry attributed
- * to the correct tenant rather than the one the agent started in.
+ * Staff who switch between tenants (and between Tenant and Provider views)
+ * rely on this re-mint-on-switch behaviour to keep each tenant's telemetry
+ * attributed to the correct tenant rather than the one they started in.
  */
 
 import { authUserAtom, selectedContextAtom } from '@/state/auth-atoms';
