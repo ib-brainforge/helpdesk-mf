@@ -117,7 +117,7 @@
  * slot class rather than replacing it (see `composeTwRenderProps` in
  * @heroui/react's dropdown.js) — so `.helpdesk-dropdown-popover` is applied
  * at each of helpdesk's own DropdownPopover call sites (TicketDetail,
- * ticket-grid-columns, knowledge-base page, knowledge-base settings page).
+ * ticket-grid-columns, knowledge-base page).
  * This keeps the border on helpdesk's own popovers while no longer leaking
  * onto the shell's navbar dropdowns or other apps' popovers that share the
  * same document once helpdesk is mounted under the shell. No base-promotion
