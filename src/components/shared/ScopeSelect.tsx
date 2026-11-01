@@ -18,7 +18,16 @@ export const ScopeSelect: FC<{
   /** Shown when nothing is chosen; also what "nothing chosen" means. */
   placeholder: string;
   isDisabled?: boolean;
-}> = ({ label, options, value, onChange, placeholder, isDisabled }) => {
+  isRequired?: boolean;
+}> = ({
+  label,
+  options,
+  value,
+  onChange,
+  placeholder,
+  isDisabled,
+  isRequired,
+}) => {
   const [query, setQuery] = useState('');
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -33,6 +42,7 @@ export const ScopeSelect: FC<{
       label={label}
       placeholder={placeholder}
       isDisabled={isDisabled}
+      isRequired={isRequired}
       selectedKey={value}
       onSelectionChange={key => onChange(typeof key === 'string' ? key : null)}
       onValueChange={setQuery}

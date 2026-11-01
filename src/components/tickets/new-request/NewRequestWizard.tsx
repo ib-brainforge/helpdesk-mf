@@ -683,6 +683,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                     value={organisationId}
                     onChange={setOrganisationId}
                     placeholder="Choose an organisation"
+                    isRequired
                   />
                 )}
                 {scopeUnavailable && (
