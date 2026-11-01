@@ -48,7 +48,11 @@ function KnowledgeBasePage() {
     // because a flex child defaults to min-height:auto and would otherwise
     // refuse to shrink, pushing the scrollbar onto the page instead of the table.
     <PageBody className="h-full min-h-0">
-      <PageHeader title="Knowledge Base" breadcrumbsKey="knowledge-base.list">
+      <PageHeader
+        title="Knowledge Base"
+        breadcrumbsKey="knowledge-base.list"
+        helpKey="helpdesk.knowledge-base"
+      >
         {canManage && (
           <PageHeader.Actions>
             <BaseButton

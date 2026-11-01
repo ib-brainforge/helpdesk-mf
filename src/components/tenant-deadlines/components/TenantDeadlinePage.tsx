@@ -53,6 +53,7 @@ const Header: FC<{ name: string; actions?: ReactNode }> = ({
   <PageHeader
     title={name}
     breadcrumbsKey="provider.deadlines.detail"
+    helpKey="helpdesk.provider.deadlines.tenant-id"
     breadcrumbsParams={{ name }}
     documentTitle={`Deadlines: ${name}`}
   >

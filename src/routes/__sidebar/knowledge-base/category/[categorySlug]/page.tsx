@@ -94,6 +94,7 @@ function KnowledgeBaseCategoryPage() {
       <PageHeader
         title={category?.name ?? 'Category'}
         breadcrumbsKey="knowledge-base.category"
+        helpKey="helpdesk.knowledge-base.category.category-slug"
         breadcrumbsParams={{
           categorySlug: categorySlug ?? '',
           categoryName: category ? category.name : PendingCrumb,

@@ -39,6 +39,7 @@ function TenantDeadlinesPage() {
       <PageHeader
         title="Tenant Deadlines"
         breadcrumbsKey="provider.deadlines.list"
+        helpKey="helpdesk.provider.deadlines"
       />
       <TenantDeadlineList list={list} query={tenants} />
     </PageBody>

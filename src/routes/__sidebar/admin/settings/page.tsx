@@ -189,7 +189,11 @@ function AdministrationPage() {
 
   return (
     <PageBody>
-      <PageHeader title="Administration" breadcrumbsKey="admin.settings">
+      <PageHeader
+        title="Administration"
+        breadcrumbsKey="admin.settings"
+        helpKey="helpdesk.admin.settings"
+      >
         <PageHeader.Meta>
           Manage your helpdesk configuration and settings
         </PageHeader.Meta>

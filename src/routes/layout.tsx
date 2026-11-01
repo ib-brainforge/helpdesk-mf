@@ -99,7 +99,6 @@ const TopNavbar = lazyWithRetry(
 import { Logo } from '@/components/Logo';
 import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
-import { PageHelp } from '@/components/page-help/PageHelp';
 import { TEST_IDS } from '@/constants/testIds';
 import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { HELPDESK_NAV, PROVIDER_NAV } from '@/navigation';
@@ -410,7 +409,6 @@ function LayoutShell() {
               </LicenseGuard>
             </ErrorBoundary>
           </div>
-          {isAuthenticated && <PageHelp />}
         </div>
       </BreadcrumbRegistryProvider>
     </PageTemplateProvider>

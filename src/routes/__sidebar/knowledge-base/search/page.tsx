@@ -59,6 +59,7 @@ function KnowledgeBaseSearchPage() {
       <PageHeader
         title="Search Knowledge Base"
         breadcrumbsKey="knowledge-base.search"
+        helpKey="helpdesk.knowledge-base.search"
         documentTitle={
           searchTerm ? `Search: ${searchTerm}` : 'Search Knowledge Base'
         }

@@ -50,7 +50,11 @@ function AdminUsersPage() {
 
   return (
     <PageBody>
-      <PageHeader title="Users" breadcrumbsKey="admin.users">
+      <PageHeader
+        title="Users"
+        breadcrumbsKey="admin.users"
+        helpKey="helpdesk.admin.users"
+      >
         <PageHeader.Meta>
           Manage helpdesk roles for users known to this tenant
         </PageHeader.Meta>

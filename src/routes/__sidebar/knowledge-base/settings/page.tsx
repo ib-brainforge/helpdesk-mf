@@ -302,6 +302,7 @@ function KbCategoriesPage() {
       <PageHeader
         title="Manage Categories"
         breadcrumbsKey="knowledge-base.settings"
+        helpKey="helpdesk.knowledge-base.settings"
       >
         <PageHeader.Meta>
           Create, edit, delete and organise KB categories
