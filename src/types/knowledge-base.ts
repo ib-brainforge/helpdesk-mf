@@ -81,6 +81,8 @@ export interface KnowledgeBaseArticleListDto {
 export interface KnowledgeBaseArticleDto extends KnowledgeBaseArticleListDto {
   body: string;
   relatedArticleIds?: string[];
+  /** Page keys that make this article show as "Help for this page". */
+  pageKeys: string[];
 }
 
 export interface KnowledgeBaseRelatedArticleDto {
@@ -96,6 +98,7 @@ export interface CreateKnowledgeBaseArticleDto {
   body: string;
   categoryId?: string;
   tags?: string[];
+  pageKeys?: string[];
   accessLevel: KnowledgeBaseAccessLevel;
   status: KnowledgeBaseStatus;
 }
@@ -105,6 +108,8 @@ export interface UpdateKnowledgeBaseArticleDto {
   body?: string;
   categoryId?: string;
   tags?: string[];
+  /** undefined leaves the keys unchanged; a list (even empty) replaces them. */
+  pageKeys?: string[];
   accessLevel?: KnowledgeBaseAccessLevel;
   // Note: status changes are applied via dedicated endpoints (publish/unpublish/archive),
   // not through the update command. See useKnowledgeBase.ts for the transition logic.

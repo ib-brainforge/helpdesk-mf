@@ -17,6 +17,7 @@
  */
 
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
+import { PageHelpField } from '@/components/knowledge-base/components/PageHelpField';
 import {
   useArchiveKnowledgeBaseArticle,
   useKnowledgeBaseArticle,
@@ -25,6 +26,7 @@ import {
   useUnpublishKnowledgeBaseArticle,
   useUpdateKnowledgeBaseArticle,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { validatePageKeys } from '@/components/knowledge-base/pageKeys';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
   BaseButton,
@@ -52,6 +54,10 @@ const articleEditSchema = z.object({
   categoryId: z.string().optional(),
   accessLevel: z.nativeEnum(KnowledgeBaseAccessLevel),
   status: z.nativeEnum(KnowledgeBaseStatus),
+  pageKeys: z.array(z.string()).superRefine((keys, ctx) => {
+    const message = validatePageKeys(keys);
+    if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+  }),
 });
 
 type ArticleEditFormData = z.infer<typeof articleEditSchema>;
@@ -101,6 +107,7 @@ function EditKnowledgeBaseArticlePage() {
             categoryId: article.categoryId ?? undefined,
             accessLevel: article.accessLevel ?? KnowledgeBaseAccessLevel.Public,
             status: article.status ?? KnowledgeBaseStatus.Draft,
+            pageKeys: article.pageKeys ?? [],
           }
         : undefined,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,6 +117,7 @@ function EditKnowledgeBaseArticlePage() {
       article?.categoryId,
       article?.accessLevel,
       article?.status,
+      article?.pageKeys?.join('|'),
     ],
   );
 
@@ -130,6 +138,7 @@ function EditKnowledgeBaseArticlePage() {
       categoryId: undefined,
       accessLevel: KnowledgeBaseAccessLevel.Public,
       status: KnowledgeBaseStatus.Draft,
+      pageKeys: [] as string[],
     },
     values: formValues,
     onSubmit: async (values: ArticleEditFormData) => {
@@ -143,6 +152,7 @@ function EditKnowledgeBaseArticlePage() {
           body: values.body,
           categoryId: values.categoryId,
           accessLevel: values.accessLevel,
+          pageKeys: values.pageKeys,
         },
       });
 
@@ -314,6 +324,26 @@ function EditKnowledgeBaseArticlePage() {
                 </p>
               )}
             </div>
+          )}
+        </f.Field>
+      </FormPage.Section>
+      <FormPage.Section title="Page help">
+        <f.Field name="pageKeys">
+          {field => (
+            <f.Subscribe selector={state => state.values.categoryId}>
+              {categoryId => (
+                <PageHelpField
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  errorMessage={
+                    field.state.meta.errors.map(String).join(', ') || undefined
+                  }
+                  categoryStaffSection={
+                    categories?.find(c => c.id === categoryId)?.staffSection
+                  }
+                />
+              )}
+            </f.Subscribe>
           )}
         </f.Field>
       </FormPage.Section>

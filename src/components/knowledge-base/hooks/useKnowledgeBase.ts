@@ -21,6 +21,11 @@ import {
 import { toast } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import {
+  buildCreateArticleCommand,
+  buildUpdateArticleCommand,
+} from '../articleCommands';
+
 // Map a generated KbArticleStatus string to the local KnowledgeBaseStatus string enum.
 // The generated type and the local enum share the same string values, so this is a
 // safe identity mapping that provides compile-time checking.
@@ -239,6 +244,7 @@ function mapKbArticleDetailToDto(
         : undefined,
     ratingCount: (dto.helpfulCount ?? 0) + (dto.notHelpfulCount ?? 0),
     tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
+    pageKeys: dto.pageKeys ?? [],
     ...mapAuthor(dto.meta),
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
@@ -312,14 +318,9 @@ export const useCreateKnowledgeBaseArticle = () => {
     mutationFn: async (article: CreateKnowledgeBaseArticleDto) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       // Note: the create command does not accept a status field — articles always start as Draft.
-      const response = await client.v1KbArticlesPost({
-        title: article.title,
-        body: article.body,
-        categoryId: article.categoryId,
-        tags: article.tags,
-        accessLevel:
-          article.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
-      });
+      const response = await client.v1KbArticlesPost(
+        buildCreateArticleCommand(article),
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -343,16 +344,10 @@ export const useUpdateKnowledgeBaseArticle = () => {
     }: { id: string; updates: UpdateKnowledgeBaseArticleDto }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       // Note: the update command does not accept a status field — use the publish endpoint for status changes.
-      const response = await client.v1KbArticlesIdPut(id, {
-        id: id,
-        title: updates.title,
-        body: updates.body,
-        categoryId: updates.categoryId,
-        tags: updates.tags,
-        accessLevel: updates.accessLevel as
-          | HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel
-          | undefined,
-      });
+      const response = await client.v1KbArticlesIdPut(
+        id,
+        buildUpdateArticleCommand(id, updates),
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {

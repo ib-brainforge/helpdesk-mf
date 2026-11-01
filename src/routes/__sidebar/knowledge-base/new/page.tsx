@@ -13,10 +13,12 @@
  */
 
 import { AppAuthSplash } from '@/components/AppSplash';
+import { PageHelpField } from '@/components/knowledge-base/components/PageHelpField';
 import {
   useCreateKnowledgeBaseArticle,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { validatePageKeys } from '@/components/knowledge-base/pageKeys';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
   BaseInput,
@@ -37,6 +39,10 @@ const newArticleSchema = z.object({
   body: z.string().min(1, 'Body is required'),
   categoryId: z.string().optional(),
   accessLevel: z.nativeEnum(KnowledgeBaseAccessLevel),
+  pageKeys: z.array(z.string()).superRefine((keys, ctx) => {
+    const message = validatePageKeys(keys);
+    if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+  }),
 });
 
 type NewArticleFormData = z.infer<typeof newArticleSchema>;
@@ -68,6 +74,7 @@ function NewKnowledgeBaseArticlePage() {
       body: '',
       categoryId: undefined,
       accessLevel: KnowledgeBaseAccessLevel.Public,
+      pageKeys: [] as string[],
     },
     onSubmit: async (values: NewArticleFormData) => {
       const result: any = await createArticle.mutateAsync({
@@ -77,6 +84,7 @@ function NewKnowledgeBaseArticlePage() {
         accessLevel: values.accessLevel,
         status: KnowledgeBaseStatus.Draft,
         tags: [],
+        pageKeys: values.pageKeys,
       });
 
       if (result?.slug) {
@@ -180,6 +188,26 @@ function NewKnowledgeBaseArticlePage() {
                 </p>
               )}
             </div>
+          )}
+        </f.Field>
+      </FormPage.Section>
+      <FormPage.Section title="Page help">
+        <f.Field name="pageKeys">
+          {field => (
+            <f.Subscribe selector={state => state.values.categoryId}>
+              {categoryId => (
+                <PageHelpField
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  errorMessage={
+                    field.state.meta.errors.map(String).join(', ') || undefined
+                  }
+                  categoryStaffSection={
+                    categories?.find(c => c.id === categoryId)?.staffSection
+                  }
+                />
+              )}
+            </f.Subscribe>
           )}
         </f.Field>
       </FormPage.Section>
