@@ -99,6 +99,7 @@ const TopNavbar = lazyWithRetry(
 import { Logo } from '@/components/Logo';
 import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
+import { PageHelp } from '@/components/page-help/PageHelp';
 import { TEST_IDS } from '@/constants/testIds';
 import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { HELPDESK_NAV, PROVIDER_NAV } from '@/navigation';
@@ -158,8 +159,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
-  'helpdesk.contact-provider': 'Contact your provider',
-  'helpdesk.provider-raised': 'Raised with our provider',
   'helpdesk.provider-deadlines': 'Tenant Deadlines',
   'helpdesk.provider-categories': 'Provider Categories',
 };
@@ -411,6 +410,7 @@ function LayoutShell() {
               </LicenseGuard>
             </ErrorBoundary>
           </div>
+          {isAuthenticated && <PageHelp />}
         </div>
       </BreadcrumbRegistryProvider>
     </PageTemplateProvider>

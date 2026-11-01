@@ -54,6 +54,7 @@ import {
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
+import { RequestAnswersSection } from './RequestAnswersSection';
 import { ScopePath, useTicketScopeNames } from './ScopePills';
 
 interface TicketDetailSidebarProps {
@@ -128,7 +129,7 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 }) => {
   const { hasPermission: hasKbPermission } = usePermissions();
   const canSeeKnowledgeBase = hasKbPermission(
-    HelpdeskPermissions.KnowledgeBase.Manage,
+    HelpdeskPermissions.KnowledgeBase.Read,
   );
   const timezone = useTimezone();
   const currentUserId = useAuth().user?.profile?.sub;
@@ -606,6 +607,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
         </PermissionGuard>
       </div>
 
+      {/* The requester's answers to the category's questions. */}
+      <RequestAnswersSection ticketId={ticket.id ?? ''} />
       <>
         {/* Vehicles: the linked assets, moved up beside the fields they qualify. */}
         <LinkedAssetsSection
@@ -921,9 +924,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
       )}
 
       <>
-        {/* Suggested KB Articles — seeded from ticket subject. The knowledge
-          base is internal (kb.manage, the same rule as its pages), so the
-          suggestions are only shown to people who may open them. */}
+        {/* Suggested KB Articles — seeded from ticket subject. Shown on
+          kb.read, the same rule as the article pages they link to. */}
         {ticket.subject && canSeeKnowledgeBase && (
           <KbSuggestions
             searchText={ticket.subject}

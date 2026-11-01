@@ -1,4 +1,4 @@
-import type { CompanyDeadlinePolicyDto } from '@/api/local/company-deadlines';
+import type { TenantDeadlinePolicyDto } from '@/api/local/tenant-deadlines';
 import {
   describeClock,
   formatDeadlineSentence,
@@ -15,7 +15,7 @@ import { PRIORITIES } from '../deadlinePolicy';
 interface DeadlineSummaryCardProps {
   title: ReactNode;
   description?: ReactNode;
-  policy: CompanyDeadlinePolicyDto;
+  policy: TenantDeadlinePolicyDto;
   /** Edit, Use provider default. */
   actions?: ReactNode;
 }

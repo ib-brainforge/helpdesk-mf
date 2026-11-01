@@ -1,3 +1,4 @@
+import type { DeadlinePriority } from '@/api/local/deadlines';
 /*
  * The form model for a tenant's deadline policy, and the few display helpers
  * only these pages need.
@@ -6,8 +7,7 @@
  * deadlineText and is not repeated here. Nothing here works out a deadline:
  * the backend does, and the worked example asks it.
  */
-import type { CompanyDeadlinePolicyInput } from '@/api/local/company-deadlines';
-import type { DeadlinePriority } from '@/api/local/deadlines';
+import type { TenantDeadlinePolicyInput } from '@/api/local/tenant-deadlines';
 import {
   DAY_ORDER,
   TIME_ZONES,
@@ -120,7 +120,7 @@ export type PolicyFormValues = z.infer<typeof policyFormSchema>;
 
 /** The policy in the form's fixed order: Monday first, Critical first. */
 export const toFormValues = (
-  policy: CompanyDeadlinePolicyInput | undefined,
+  policy: TenantDeadlinePolicyInput | undefined,
 ): PolicyFormValues => ({
   clockMode: policy?.clockMode ?? 'BusinessHours',
   timeZoneId: policy?.timeZoneId ?? 'Australia/Sydney',
@@ -152,7 +152,7 @@ export const toFormValues = (
 /** The form back to the API's input shape. */
 export const toPolicyInput = (
   v: Omit<PolicyFormValues, 'applyToOpenTickets'>,
-): CompanyDeadlinePolicyInput => ({
+): TenantDeadlinePolicyInput => ({
   clockMode: v.clockMode,
   timeZoneId: v.timeZoneId,
   holidayRegion: v.holidayRegion === NO_HOLIDAYS ? null : v.holidayRegion,

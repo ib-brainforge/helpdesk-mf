@@ -7,116 +7,139 @@ import {
 } from '@brainforgeau/components';
 import type { FC } from 'react';
 import { AssetPicker, type PickedAsset } from './AssetPicker';
-import type { AnswerValue, FieldSpec } from './request-field-schema';
+import type { AnswerValue, RequestField } from './request-fields';
 
 /**
- * Renders one question from a FieldSpec.
+ * Renders one question: a custom field the category asks, as
+ * `GET v1/categories/available` lists it.
  *
- * Deliberately dumb: it takes a spec and a value and reports changes. That is
- * what makes the hard-coded question map replaceable later by definitions
- * loaded from CustomFieldDefinition rows, since only the source of the specs
- * would change, not this component.
+ * Deliberately dumb: it takes a field and a value and reports changes. The
+ * field's type decides the control; its description, when it has one, is the
+ * placeholder.
  */
 
 interface Props {
-  spec: FieldSpec;
+  field: RequestField;
   value: AnswerValue;
   onChange: (value: AnswerValue) => void;
-  /** Shown after a failed submit attempt, not while the user is still typing. */
+  /** Shown after a failed attempt to move on, not while the user is still typing. */
   showError?: boolean;
-  /**
-   * asset fields only. The chosen vehicles as objects, because the answer
-   * value holds only their labels and the ticket also needs their ids to link
-   * them.
-   */
-  assets?: PickedAsset[];
-  onAssetsChange?: (assets: PickedAsset[]) => void;
 }
 
-const ChecklistField: FC<Props> = ({ spec, value, onChange }) => {
-  const selected = Array.isArray(value) ? value : [];
-  const toggle = (label: string) => {
+const ChecklistField: FC<Props> = ({ field, value, onChange }) => {
+  const selected = Array.isArray(value) ? (value as string[]) : [];
+  const toggle = (id: string) => {
     onChange(
-      selected.includes(label)
-        ? selected.filter(v => v !== label)
-        : [...selected, label],
+      selected.includes(id)
+        ? selected.filter(v => v !== id)
+        : [...selected, id],
     );
   };
+  const groups = field.options.filter(o => !o.parentOptionId);
 
   return (
     <div className="border-light grid grid-cols-1 gap-3 rounded-lg border p-3 sm:grid-cols-2">
-      {(spec.groups ?? []).map(group => (
-        <div key={group.name}>
-          <BaseCheckbox
-            isSelected={selected.includes(group.name)}
-            onChange={() => toggle(group.name)}
-          >
-            <span className="font-medium">{group.name}</span>
-          </BaseCheckbox>
-          {/*
-            Children are indented rather than nested controls: ticking a parent
-            does not tick its children. A request for "Black Box" and a request
-            for "Black Box: CANBUS" are different jobs, and auto-selecting would
-            silently widen the second into the first.
-          */}
-          {group.items && (
-            <div className="mt-1.5 ml-5 space-y-1.5">
-              {group.items.map(item => (
-                <BaseCheckbox
-                  key={item}
-                  isSelected={selected.includes(item)}
-                  onChange={() => toggle(item)}
-                >
-                  {item}
-                </BaseCheckbox>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+      {groups.map(group => {
+        const children = field.options.filter(
+          o => o.parentOptionId === group.id,
+        );
+        return (
+          <div key={group.id}>
+            <BaseCheckbox
+              isSelected={selected.includes(group.id)}
+              onChange={() => toggle(group.id)}
+            >
+              <span className={children.length > 0 ? 'font-medium' : ''}>
+                {group.value}
+              </span>
+            </BaseCheckbox>
+            {/*
+              Children are indented rather than nested controls: ticking a
+              parent does not tick its children. A request for "Black Box" and
+              a request for "Black Box: CANBUS" are different jobs, and
+              auto-selecting would silently widen the second into the first.
+            */}
+            {children.length > 0 && (
+              <div className="mt-1.5 ml-5 space-y-1.5">
+                {children.map(item => (
+                  <BaseCheckbox
+                    key={item.id}
+                    isSelected={selected.includes(item.id)}
+                    onChange={() => toggle(item.id)}
+                  >
+                    {item.value}
+                  </BaseCheckbox>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
 
+const INPUT_TYPES: Partial<Record<RequestField['fieldType'], string>> = {
+  // A date question uses the native date control rather than the library's
+  // picker: these are plain day values with no time or range, and the native
+  // control needs no extra state to stay in step with the answers map.
+  Date: 'date',
+  Number: 'number',
+  Email: 'email',
+  Url: 'url',
+};
+
 export const RequestFieldRenderer: FC<Props> = props => {
-  const { spec, value, onChange, showError } = props;
+  const { field, value, onChange, showError } = props;
+  const required = field.isRequired;
+  const placeholder = field.description ?? undefined;
   const errorProps = showError
     ? { isInvalid: true, errorMessage: 'This is required' }
     : {};
 
-  if (spec.kind === 'checklist') {
+  if (field.fieldType === 'MultiSelect') {
     return (
       <div>
         <span className="text-gray mb-2 block text-sm font-medium">
-          {spec.label}
-          <span className="text-red ml-1">*</span>
+          {field.name}
+          {required && <span className="text-red ml-1">*</span>}
         </span>
         <ChecklistField {...props} />
+        {showError && (
+          <p className="text-red-dark mt-1 text-xs">This is required</p>
+        )}
       </div>
     );
   }
 
-  if (spec.kind === 'asset') {
+  if (field.fieldType === 'Asset') {
     return (
       <AssetPicker
-        label={spec.label}
-        placeholder={spec.placeholder}
-        value={props.assets ?? []}
-        onChange={assets => {
-          props.onAssetsChange?.(assets);
-          onChange(assets.map(a => a.label));
-        }}
+        label={field.name}
+        placeholder={placeholder}
+        value={Array.isArray(value) ? (value as PickedAsset[]) : []}
+        onChange={assets => onChange(assets)}
         showError={showError}
+        isRequired={required}
       />
     );
   }
 
-  if (spec.kind === 'textarea') {
+  if (field.fieldType === 'Checkbox') {
+    return (
+      <BaseCheckbox isSelected={value === true} onValueChange={onChange}>
+        {field.name}
+        {required && <span className="text-red ml-1">*</span>}
+      </BaseCheckbox>
+    );
+  }
+
+  if (field.fieldType === 'MultilineText') {
     return (
       <BaseTextarea
-        label={spec.label}
-        isRequired
-        placeholder={spec.placeholder}
+        label={field.name}
+        isRequired={required}
+        placeholder={placeholder}
         value={typeof value === 'string' ? value : ''}
         onValueChange={onChange}
         minRows={4}
@@ -125,19 +148,12 @@ export const RequestFieldRenderer: FC<Props> = props => {
     );
   }
 
-  if (spec.kind === 'select') {
-    /*
-     * The first option is the prompt ("Select"), shown as the placeholder and
-     * never listed. It used to be an ordinary item: picking it looked like an
-     * answer but counted as none, so Next refused to move with no visible
-     * reason. A placeholder cannot be picked.
-     */
-    const [prompt, ...choices] = spec.options ?? [];
+  if (field.fieldType === 'Dropdown') {
     return (
       <BaseSelect
-        label={spec.label}
-        isRequired
-        placeholder={prompt}
+        label={field.name}
+        isRequired={required}
+        placeholder={placeholder ?? 'Select'}
         // null, not '', when unanswered: the placeholder only shows when
         // nothing is selected, and '' is a key that matches no item.
         selectedKey={typeof value === 'string' && value ? value : null}
@@ -146,9 +162,9 @@ export const RequestFieldRenderer: FC<Props> = props => {
         }}
         {...errorProps}
       >
-        {choices.map(opt => (
-          <BaseSelectItem key={opt} value={opt}>
-            {opt}
+        {field.options.map(opt => (
+          <BaseSelectItem key={opt.id} value={opt.id}>
+            {opt.value}
           </BaseSelectItem>
         ))}
       </BaseSelect>
@@ -157,13 +173,10 @@ export const RequestFieldRenderer: FC<Props> = props => {
 
   return (
     <BaseInput
-      label={spec.label}
-      isRequired
-      // A date question uses the native date control rather than the library's
-      // picker: these are plain day values with no time or range, and the
-      // native control needs no extra state to stay in step with the answers map.
-      type={spec.kind === 'date' ? 'date' : 'text'}
-      placeholder={spec.placeholder}
+      label={field.name}
+      isRequired={required}
+      type={INPUT_TYPES[field.fieldType] ?? 'text'}
+      placeholder={placeholder}
       value={typeof value === 'string' ? value : ''}
       onValueChange={onChange}
       {...errorProps}

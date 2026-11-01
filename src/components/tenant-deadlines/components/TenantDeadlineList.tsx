@@ -1,4 +1,4 @@
-import type { TenantDeadlineRowDto } from '@/api/local/company-deadlines';
+import type { TenantDeadlineRowDto } from '@/api/local/tenant-deadlines';
 import { PagedTable, usePagedTable } from '@/components/shared';
 import type { useListParams } from '@/hooks/useListParams';
 import { BaseCheckbox, BaseInput } from '@brainforgeau/components';

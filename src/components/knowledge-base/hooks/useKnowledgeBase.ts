@@ -14,6 +14,8 @@ import {
   type HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
+  type HelpdeskDomainKnowledgeBaseEnumsKbSharing,
+  type HelpdeskDomainKnowledgeBaseEnumsKbStaffSection,
   KnowledgeBaseApi,
 } from '@brainforgeau/helpdesk-client';
 import { toast } from '@heroui/react';
@@ -58,6 +60,29 @@ function mapAccessLevel(
 // parentId — none of them walk `.children` recursively. Flatten the tree here
 // so callers keep working unchanged while picking up real articleCount and
 // parentId values (previously hardcoded to 0 / undefined).
+function mapSharing(node: {
+  sharing?: HelpdeskDomainKnowledgeBaseEnumsKbSharing;
+  staffSection?: HelpdeskDomainKnowledgeBaseEnumsKbStaffSection;
+}): {
+  sharing: HelpdeskDomainKnowledgeBaseEnumsKbSharing;
+  staffSection: HelpdeskDomainKnowledgeBaseEnumsKbStaffSection;
+} {
+  return {
+    sharing: node.sharing ?? 'Internal',
+    staffSection: node.staffSection ?? 'None',
+  };
+}
+
+function mapOwnership(dto: { ownerTenantId?: string; isInherited?: boolean }): {
+  ownerTenantId?: string;
+  isInherited: boolean;
+} {
+  return {
+    ownerTenantId: dto.ownerTenantId ?? undefined,
+    isInherited: dto.isInherited === true,
+  };
+}
+
 function flattenCategoryTree(
   nodes: HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto[],
   parentId?: string,
@@ -71,6 +96,7 @@ function flattenCategoryTree(
       parentId,
       articleCount: node.articleCount ?? 0,
       order: node.sortOrder ?? 0,
+      ...mapSharing(node),
       // `meta` intentionally omitted here, not dropped: `node` (the generated
       // HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto backing
       // v1KbCategoriesGet) has no `meta` property to read yet -- see
@@ -182,6 +208,7 @@ function mapKbArticleListToDto(
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
+    ...mapOwnership(dto),
     meta: dto.meta,
   };
 }
@@ -216,6 +243,7 @@ function mapKbArticleDetailToDto(
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
+    ...mapOwnership(dto),
     relatedArticleIds: [],
     meta: dto.meta,
   };
@@ -567,6 +595,7 @@ export const useDuplicateKbCategory = () => {
         // count from v1KbCategoriesGet.
         articleCount: 0,
         order: cat.sortOrder ?? 0,
+        ...mapSharing(cat),
         // Unlike flattenCategoryTree above, KbCategoryDto (this endpoint's
         // response) has always carried `meta` -- carry it through.
         meta: cat.meta,

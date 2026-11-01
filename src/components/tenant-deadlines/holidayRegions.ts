@@ -1,7 +1,7 @@
 import type {
-  CompanyDeadlinePolicyInput,
   HolidayRegionDto,
-} from '@/api/local/company-deadlines';
+  TenantDeadlinePolicyInput,
+} from '@/api/local/tenant-deadlines';
 import { TIME_ZONES } from '@/components/shared/deadline';
 
 /*
@@ -28,7 +28,7 @@ export const regionName = (code: string): string =>
 
 /** A policy's region code, null for none. */
 export const regionOf = (
-  policy: Pick<CompanyDeadlinePolicyInput, 'holidayRegion'>,
+  policy: Pick<TenantDeadlinePolicyInput, 'holidayRegion'>,
 ): string | null => policy.holidayRegion ?? null;
 
 /**

@@ -34,6 +34,8 @@ interface Props {
   value: PickedAsset[];
   onChange: (value: PickedAsset[]) => void;
   showError?: boolean;
+  /** Marks the question required; an optional one shows no asterisk. */
+  isRequired?: boolean;
 }
 
 /**
@@ -56,6 +58,7 @@ export const AssetPicker: FC<Props> = ({
   value,
   onChange,
   showError,
+  isRequired = false,
 }) => {
   // The tenant and organisation chosen on the wizard's Details step, else the
   // app's own context.
@@ -136,7 +139,7 @@ export const AssetPicker: FC<Props> = ({
     <div>
       <BaseAutocomplete
         label={label}
-        isRequired
+        isRequired={isRequired}
         placeholder={placeholder}
         selectedKey={null}
         onSelectionChange={key => {

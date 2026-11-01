@@ -1,24 +1,16 @@
 /**
- * Provider support: the calls behind "Contact your provider" and "Raised with
- * our provider". The ticket is created in, and looked up from, the office of
- * the caller's provider; the server works that out, never the request.
+ * Provider support: the provider's context and preset categories, and the
+ * read-only projection of a ticket the tenant raised that a helpdesk above it
+ * works. The server works out which office, never the request.
  */
 
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   CategoriesApi,
   ProviderSupportApi,
-  type HelpdeskApplicationProviderSupportCommandsRaiseTicketWithProviderRaiseTicketWithProviderCommand as RaiseTicketCommand,
   TicketsApi,
 } from '@brainforgeau/helpdesk-client';
-import type { HelpdeskDomainTicketsEnumsTicketStatus } from '@brainforgeau/helpdesk-client';
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const KEY = 'provider-support';
 
@@ -85,49 +77,18 @@ export const useSetCategoryDefaultAssignee = () => {
   });
 };
 
-/** Raises a ticket with the provider; resolves to the new ticket's id. */
-export const useRaiseTicketWithProvider = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (command: RaiseTicketCommand) => {
-      const client = await createHelpdeskApiClient(ProviderSupportApi);
-      const { data } = await client.v1ProviderSupportTicketsPost(command);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [KEY, 'tickets'] });
-    },
-  });
-};
+/**
+ * Keyed under ['ticket', id] so the realtime handlers (useRealtimeComments,
+ * useRealtimeTickets), which invalidate that prefix, refresh the projection
+ * of a ticket handled above the tenant as well.
+ */
+const raisedTicketKey = (id: string | undefined) => ['ticket', id, 'raised'];
 
-const PAGE_SIZE = 25;
-
-/** What this tenant has raised with its provider (read only). */
-export const useRaisedWithProvider = (
-  status?: HelpdeskDomainTicketsEnumsTicketStatus,
-) => {
-  const [page, setPage] = useState(1);
-  const query = useQuery({
-    queryKey: [KEY, 'tickets', status ?? null, page],
-    placeholderData: keepPreviousData,
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ProviderSupportApi);
-      const { data } = await client.v1ProviderSupportTicketsGet(
-        status,
-        page,
-        PAGE_SIZE,
-      );
-      return data;
-    },
-  });
-  return { ...query, page, setPage, pageSize: PAGE_SIZE };
-};
-
-/** One ticket the tenant raised with its provider. */
+/** One ticket the tenant raised with a helpdesk above it. */
 export const useRaisedTicket = (id: string | undefined) =>
   useQuery({
     enabled: !!id,
-    queryKey: [KEY, 'ticket', id],
+    queryKey: raisedTicketKey(id),
     queryFn: async () => {
       const client = await createHelpdeskApiClient(ProviderSupportApi);
       const { data } = await client.v1ProviderSupportTicketsIdGet(id as string);
@@ -135,11 +96,11 @@ export const useRaisedTicket = (id: string | undefined) =>
     },
   });
 
-/** The provider's public replies on a ticket the tenant raised. */
+/** The public replies on a ticket the tenant raised. */
 export const useRaisedTicketComments = (id: string | undefined) =>
   useQuery({
     enabled: !!id,
-    queryKey: [KEY, 'ticket', id, 'comments'],
+    queryKey: [...raisedTicketKey(id), 'comments'],
     queryFn: async () => {
       const client = await createHelpdeskApiClient(ProviderSupportApi);
       const { data } = await client.v1ProviderSupportTicketsIdCommentsGet(
@@ -150,6 +111,31 @@ export const useRaisedTicketComments = (id: string | undefined) =>
       return data.items ?? [];
     },
   });
+
+/**
+ * The requester's public reply on a ticket a helpdesk above the tenant works
+ * (`POST v1/provider-support/tickets/{id}/comments`).
+ */
+export const useReplyOnRaisedTicket = (id: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      body,
+      idempotencyKey,
+    }: { body: string; idempotencyKey: string }) => {
+      const client = await createHelpdeskApiClient(ProviderSupportApi);
+      const { data } = await client.v1ProviderSupportTicketsIdCommentsPost(id, {
+        body,
+        idempotencyKey,
+      });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: raisedTicketKey(id) });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+  });
+};
 
 /**
  * Moves one of the tenant's tickets to its provider's office ("From

@@ -184,6 +184,15 @@ export const PROVIDER_NAV: NavSections = {
       requiredPermissions: [ProviderPermissions.Support],
     },
     {
+      // The office is a tenant: its knowledge base, including what it shares
+      // with its tenants, is the same pages as in the Tenant view.
+      label: 'Knowledge Base',
+      href: '/knowledge-base',
+      icon: 'learning',
+      testId: 'nav-provider-knowledge-base',
+      requiredPermissions: [HelpdeskPermissions.KnowledgeBase.Read],
+    },
+    {
       label: 'Reports',
       href: '/provider/reports',
       icon: 'analytics',

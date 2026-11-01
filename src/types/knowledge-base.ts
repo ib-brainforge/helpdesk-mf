@@ -1,3 +1,7 @@
+import type {
+  HelpdeskDomainKnowledgeBaseEnumsKbSharing as KbSharing,
+  HelpdeskDomainKnowledgeBaseEnumsKbStaffSection as KbStaffSection,
+} from '@brainforgeau/helpdesk-client';
 // Enums use string values that match the generated @brainforgeau/helpdesk-client types
 // (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
 // This allows direct comparison against values returned from the backend without any casting.
@@ -28,6 +32,10 @@ export interface KnowledgeBaseCategoryDto {
   children?: KnowledgeBaseCategoryDto[];
   articleCount: number;
   order: number;
+  /** Who below this tenant reads the category's published articles. */
+  sharing: KbSharing;
+  /** Where staff see the category's articles inside the apps. */
+  staffSection: KbStaffSection;
   /**
    * Record placement/audit metadata (DTO tenancy/scope metadata initiative).
    * Not yet populated from `flattenCategoryTree` -- the generated
@@ -62,6 +70,10 @@ export interface KnowledgeBaseArticleListDto {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  /** The tenant that owns the article. */
+  ownerTenantId?: string;
+  /** From an office above this tenant: read-only here. */
+  isInherited: boolean;
   /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
   meta?: ServicesCoreAbstractionsRecordMeta;
 }

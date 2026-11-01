@@ -3,6 +3,14 @@ import {
   useDuplicateKbCategory,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import {
+  SHARING_HINT,
+  SHARING_OPTIONS,
+  STAFF_SECTION_HINT,
+  STAFF_SECTION_OPTIONS,
+  sharingLabel,
+  staffSectionLabel,
+} from '@/components/knowledge-base/sharing';
 import { ModalHeader } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseCategoryDto } from '@/types';
@@ -22,7 +30,13 @@ import {
   PageHeader,
   useConfirm,
 } from '@brainforgeau/components/page';
-import { KnowledgeBaseApi } from '@brainforgeau/helpdesk-client';
+import {
+  type HelpdeskApplicationKnowledgeBaseCommandsCreateCategoryCreateCategoryCommand,
+  type HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCategoryCommand,
+  type HelpdeskDomainKnowledgeBaseEnumsKbSharing,
+  type HelpdeskDomainKnowledgeBaseEnumsKbStaffSection,
+  KnowledgeBaseApi,
+} from '@brainforgeau/helpdesk-client';
 import {
   Dropdown,
   DropdownItem,
@@ -51,18 +65,30 @@ function CategoryFormModal({
   const [name, setName] = useState(category?.name ?? '');
   const [description, setDescription] = useState(category?.description ?? '');
   const [parentId, setParentId] = useState<string>(category?.parentId ?? '');
+  const [sharing, setSharing] =
+    useState<HelpdeskDomainKnowledgeBaseEnumsKbSharing>(
+      category?.sharing ?? 'Internal',
+    );
+  const [staffSection, setStaffSection] =
+    useState<HelpdeskDomainKnowledgeBaseEnumsKbStaffSection>(
+      category?.staffSection ?? 'None',
+    );
 
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
     mutationFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbCategoriesPost({
-        name,
-        description: description || undefined,
-        parentId: parentId || undefined,
-        sortOrder: 0,
-      });
+      const command: HelpdeskApplicationKnowledgeBaseCommandsCreateCategoryCreateCategoryCommand =
+        {
+          name,
+          description: description || undefined,
+          parentId: parentId || undefined,
+          sortOrder: 0,
+          sharing,
+          staffSection,
+        };
+      const response = await client.v1KbCategoriesPost(command);
       return response.data;
     },
     onSuccess: () => {
@@ -78,11 +104,15 @@ function CategoryFormModal({
     mutationFn: async () => {
       if (!category) return;
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbCategoriesIdPut(category.id, {
-        id: category.id,
-        name,
-        description: description || undefined,
-      });
+      const command: HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCategoryCommand =
+        {
+          id: category.id,
+          name,
+          description: description || undefined,
+          sharing,
+          staffSection,
+        };
+      const response = await client.v1KbCategoriesIdPut(category.id, command);
       return response.data;
     },
     onSuccess: () => {
@@ -153,6 +183,40 @@ function CategoryFormModal({
                 ]}
               </BaseSelect>
             )}
+            <BaseSelect
+              label="Shared with"
+              description={SHARING_HINT}
+              selectedKey={sharing}
+              onSelectionChange={key => {
+                if (key)
+                  setSharing(key as HelpdeskDomainKnowledgeBaseEnumsKbSharing);
+              }}
+              data-testid="kb-category-sharing"
+            >
+              {SHARING_OPTIONS.map(option => (
+                <BaseSelectItem key={option.id} id={option.id}>
+                  {option.label}
+                </BaseSelectItem>
+              ))}
+            </BaseSelect>
+            <BaseSelect
+              label="Staff section"
+              description={STAFF_SECTION_HINT}
+              selectedKey={staffSection}
+              onSelectionChange={key => {
+                if (key)
+                  setStaffSection(
+                    key as HelpdeskDomainKnowledgeBaseEnumsKbStaffSection,
+                  );
+              }}
+              data-testid="kb-category-staff-section"
+            >
+              {STAFF_SECTION_OPTIONS.map(option => (
+                <BaseSelectItem key={option.id} id={option.id}>
+                  {option.label}
+                </BaseSelectItem>
+              ))}
+            </BaseSelect>
           </div>
         </BaseModalBody>
         <BaseModalFooter>
@@ -298,6 +362,10 @@ function KbCategoriesPage() {
                   <p className="text-default-400 mt-0.5 text-xs">
                     {cat.articleCount ?? 0} article
                     {(cat.articleCount ?? 0) !== 1 ? 's' : ''}
+                    {' · '}
+                    {sharingLabel(cat.sharing)}
+                    {cat.staffSection !== 'None' &&
+                      ` · ${staffSectionLabel(cat.staffSection)}`}
                   </p>
                 </div>
               </div>
@@ -334,7 +402,10 @@ function KbCategoriesPage() {
         </div>
       )}
 
+      {/* Keyed so the form starts from the category being edited: its fields
+          are initialised once, and a stale Sharing would be saved back. */}
       <CategoryFormModal
+        key={`${formMode ?? 'closed'}-${editingCategory?.id ?? 'new'}`}
         mode={formMode}
         category={editingCategory}
         categories={categories}

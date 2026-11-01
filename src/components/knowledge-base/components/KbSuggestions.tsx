@@ -4,6 +4,7 @@ import type { HelpdeskApplicationKnowledgeBaseModelsKbArticleSuggestionDto } fro
 import { Link } from '@modern-js/runtime/router';
 import type { FC } from 'react';
 import { useSimilarArticles } from '../hooks/useKnowledgeBase';
+import { KbOwnerBadge } from './KbOwnerBadge';
 
 /**
  * A suggestion as the backend sends it. relevanceScore is 0 to 1, or null
@@ -98,6 +99,7 @@ export const KbSuggestions: FC<KbSuggestionsProps> = ({
                         <span>{article.categoryName}</span>
                       )}
                       <span className={match.className}>{match.text}</span>
+                      <KbOwnerBadge article={article} />
                     </div>
                   </div>
                 </div>

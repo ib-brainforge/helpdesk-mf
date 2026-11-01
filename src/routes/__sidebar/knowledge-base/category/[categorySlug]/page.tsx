@@ -1,3 +1,4 @@
+import { KbOwnerBadge } from '@/components/knowledge-base/components/KbOwnerBadge';
 import { useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -150,6 +151,9 @@ function KnowledgeBaseCategoryPage() {
                   <Chip size="sm" color={getStatusColor(article.status)}>
                     {getStatusLabel(article.status)}
                   </Chip>
+                </div>
+                <div className="mb-2 empty:hidden">
+                  <KbOwnerBadge article={article} />
                 </div>
                 <p className="mb-3 line-clamp-3 text-sm text-default-600">
                   {article.excerpt}

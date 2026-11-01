@@ -1,4 +1,4 @@
-import type { CompanyDeadlinePolicyDto } from '@/api/local/company-deadlines';
+import type { TenantDeadlinePolicyDto } from '@/api/local/tenant-deadlines';
 import { DAY_ORDER, formatClockTime } from '@/components/shared/deadline';
 import {
   BaseSelect,
@@ -14,7 +14,7 @@ import {
   timeZoneOptions,
 } from '../deadlinePolicy';
 import { regionForTimeZone, regionName, regionOf } from '../holidayRegions';
-import { useHolidayRegions } from '../hooks/useCompanyDeadlines';
+import { useHolidayRegions } from '../hooks/useTenantDeadlines';
 import { HolidaysModal } from './HolidaysModal';
 
 const CLOCK_MODES = [
@@ -63,7 +63,7 @@ const TimeSelect: FC<{
 
 interface ClockSectionProps {
   form: AnyForm;
-  saved?: CompanyDeadlinePolicyDto;
+  saved?: TenantDeadlinePolicyDto;
 }
 
 /** "How the clock counts": business hours or all hours, the week, zone and holidays. */

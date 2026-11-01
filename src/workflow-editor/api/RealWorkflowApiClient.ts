@@ -286,11 +286,6 @@ function fromTransitionDto(
 
 // ── Factory ──────────────────────────────────────────────────────────────────────
 
-const notSupported = (): Promise<never> =>
-  Promise.reject(
-    new Error('[RealWorkflowApiClient] Provider-scoped workflows were removed'),
-  );
-
 export function createRealWorkflowApiClient(
   configuration: Configuration,
   axios?: AxiosInstance,
@@ -407,19 +402,6 @@ export function createRealWorkflowApiClient(
         })),
       };
     },
-
-    // ── Provider-scoped (removed) ────────────────────────────────────────────────
-    //
-    // The shared workflow-ui contract still declares these. Workflows are now
-    // tenant-owned only, so there is nothing to call; each rejects.
-
-    listPrincipalDefinitions: notSupported,
-    getPrincipalDefinition: notSupported,
-    createPrincipalDefinition: notSupported,
-    deletePrincipalDefinition: notSupported,
-    createPrincipalDraft: notSupported,
-    updatePrincipalDraft: notSupported,
-    publishPrincipalDraft: notSupported,
 
     // ── Admin — rule migration ───────────────────────────────────────────────────
 

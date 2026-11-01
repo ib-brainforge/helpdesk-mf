@@ -3,7 +3,7 @@ import type { TicketFilters } from '@/types/ticket';
 import { toApiTicketPriority } from '@/utils/typeMappers';
 import {
   type HelpdeskDomainTicketsEnumsTicketPriority,
-  ProviderCustomerTicketsApi,
+  ProviderTenantTicketsApi,
   TicketsApi,
 } from '@brainforgeau/helpdesk-client';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -92,6 +92,7 @@ const countsParams = (filters: TicketFilters): Record<string, unknown> => {
   if (filters.tagIds?.length) params.tagIds = filters.tagIds;
   putIds(params, 'organisationId', 'organisationIds', filters.organisationId);
   if (filters.divisionId) params.divisionId = filters.divisionId;
+  if (filters.raisedAboveOnly) params.raisedAboveOnly = true;
   return params;
 };
 
@@ -144,14 +145,25 @@ export const ticketCountsQueryOptions = (
         params.searchUserIds as string[] | undefined,
         params.searchScopeIds as string[] | undefined,
       ] as const;
-      const { data } = fromTenants
-        ? await (
-            await createHelpdeskApiClient(ProviderCustomerTicketsApi)
-          ).v1ProviderSupportCustomerTicketsCountsGet(...args)
-        : await (await createHelpdeskApiClient(TicketsApi)).v1TicketsCountsGet(
-            ...args,
-          );
-      return data;
+      if (fromTenants) {
+        const client = await createHelpdeskApiClient(ProviderTenantTicketsApi);
+        return (await client.v1ProviderSupportTenantTicketsCountsGet(...args))
+          .data;
+      }
+      // The last two positional parameters of v1TicketsCountsGet: the badges
+      // count the one list, and only the raised-above rows for the provider
+      // preset.
+      const includeRaisedAbove = true;
+      const raisedAboveOnly =
+        params.raisedAboveOnly === true ? true : undefined;
+      const client = await createHelpdeskApiClient(TicketsApi);
+      return (
+        await client.v1TicketsCountsGet(
+          ...args,
+          includeRaisedAbove,
+          raisedAboveOnly,
+        )
+      ).data;
     },
   };
 };

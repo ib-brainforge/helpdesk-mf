@@ -183,6 +183,22 @@ function EditKnowledgeBaseArticlePage() {
     );
   }
 
+  // The backend refuses every write to an article shared down from an office
+  // above; say so instead of offering a form that cannot be saved.
+  if (article.isInherited) {
+    return (
+      <EmptyState
+        title="This article is shared with you"
+        description="Only the tenant that owns it can edit it."
+        action={
+          <BaseButton onPress={() => navigate(`/knowledge-base/${slug}`)}>
+            Back to the article
+          </BaseButton>
+        }
+      />
+    );
+  }
+
   const f = form.form;
 
   return (

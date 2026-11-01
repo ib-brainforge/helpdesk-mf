@@ -8,14 +8,14 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import {
   type HelpdeskApplicationSlaDTOsCompanyDeadlinePolicyDto as GeneratedPolicy,
   type HelpdeskApplicationSlaDTOsDeadlinePreviewDto,
-  ProviderCompanyDeadlinesApi,
+  ProviderTenantDeadlinesApi,
 } from '@brainforgeau/helpdesk-client';
 import type { DeadlinePriority } from './deadlines';
 
 export type ClockMode = 'BusinessHours' | 'AllHours';
 
 /** The editable part of a policy, as it goes to the save and preview calls. */
-export interface CompanyDeadlinePolicyInput {
+export interface TenantDeadlinePolicyInput {
   clockMode: ClockMode;
   /** IANA zone, e.g. "Australia/Sydney". */
   timeZoneId: string;
@@ -42,7 +42,7 @@ export interface ClosedDayDto {
  * tenant without its own shows the provider default, so the page can read
  * them before anyone sets its own.
  */
-export interface CompanyDeadlinePolicyDto extends CompanyDeadlinePolicyInput {
+export interface TenantDeadlinePolicyDto extends TenantDeadlinePolicyInput {
   tenantId: string;
   /** Whether the tenant has its own policy rather than the default. */
   isCustom: boolean;
@@ -52,8 +52,8 @@ export interface CompanyDeadlinePolicyDto extends CompanyDeadlinePolicyInput {
   closedDaysThisYear: number;
 }
 
-export interface SaveCompanyDeadlineResult {
-  policy: CompanyDeadlinePolicyDto;
+export interface SaveTenantDeadlineResult {
+  policy: TenantDeadlinePolicyDto;
   recalculatedTickets: number;
 }
 
@@ -93,7 +93,7 @@ export interface TenantDeadlineParams {
   pageSize: number;
 }
 
-const toPolicy = (p: GeneratedPolicy): CompanyDeadlinePolicyDto => ({
+const toPolicy = (p: GeneratedPolicy): TenantDeadlinePolicyDto => ({
   tenantId: p.tenantId ?? '',
   clockMode: p.clockMode ?? 'BusinessHours',
   timeZoneId: p.timeZoneId ?? 'Australia/Sydney',
@@ -118,13 +118,13 @@ const toPolicy = (p: GeneratedPolicy): CompanyDeadlinePolicyDto => ({
   closedDaysThisYear: p.closedDaysThisYear ?? 0,
 });
 
-const client = () => createHelpdeskApiClient(ProviderCompanyDeadlinesApi);
+const client = () => createHelpdeskApiClient(ProviderTenantDeadlinesApi);
 
 /** Every tenant, a page at a time, filtered and sorted on the server. */
 export const getTenantDeadlines = async (
   p: TenantDeadlineParams,
 ): Promise<TenantDeadlinePage> => {
-  const { data } = await (await client()).v1ProviderSupportCompanyDeadlinesGet(
+  const { data } = await (await client()).v1ProviderSupportTenantDeadlinesGet(
     p.search || undefined,
     p.custom || undefined,
     p.hasLate || undefined,
@@ -145,22 +145,22 @@ export const getTenantDeadlines = async (
   };
 };
 
-export const getCompanyDeadlinePolicy = async (
+export const getTenantDeadlinePolicy = async (
   tenantId: string,
-): Promise<CompanyDeadlinePolicyDto> => {
+): Promise<TenantDeadlinePolicyDto> => {
   const { data } = await (
     await client()
-  ).v1ProviderSupportCompanyDeadlinesTenantIdGet(tenantId);
+  ).v1ProviderSupportTenantDeadlinesTenantIdGet(tenantId);
   return toPolicy(data);
 };
 
-export const saveCompanyDeadlinePolicy = async (
+export const saveTenantDeadlinePolicy = async (
   tenantId: string,
-  body: CompanyDeadlinePolicyInput & { applyToOpenTickets: boolean },
-): Promise<SaveCompanyDeadlineResult> => {
+  body: TenantDeadlinePolicyInput & { applyToOpenTickets: boolean },
+): Promise<SaveTenantDeadlineResult> => {
   const { data } = await (
     await client()
-  ).v1ProviderSupportCompanyDeadlinesTenantIdPut(tenantId, body);
+  ).v1ProviderSupportTenantDeadlinesTenantIdPut(tenantId, body);
   return {
     policy: toPolicy(data.policy),
     recalculatedTickets: data.recalculatedTickets ?? 0,
@@ -168,26 +168,26 @@ export const saveCompanyDeadlinePolicy = async (
 };
 
 /** Drops the tenant's own policy, so it uses the provider default again. */
-export const revertCompanyDeadlinePolicy = async (
+export const revertTenantDeadlinePolicy = async (
   tenantId: string,
 ): Promise<void> => {
-  await (await client()).v1ProviderSupportCompanyDeadlinesTenantIdDelete(
+  await (await client()).v1ProviderSupportTenantDeadlinesTenantIdDelete(
     tenantId,
   );
 };
 
 /** The deadlines a ticket would get under the policy as drafted, unsaved. */
-export const previewCompanyDeadline = async (
+export const previewTenantDeadline = async (
   tenantId: string,
   body: {
     priority: DeadlinePriority;
     startAt: string;
-    draft: CompanyDeadlinePolicyInput;
+    draft: TenantDeadlinePolicyInput;
   },
 ): Promise<HelpdeskApplicationSlaDTOsDeadlinePreviewDto> => {
   const { data } = await (
     await client()
-  ).v1ProviderSupportCompanyDeadlinesTenantIdPreviewPost(tenantId, body);
+  ).v1ProviderSupportTenantDeadlinesTenantIdPreviewPost(tenantId, body);
   return data;
 };
 
@@ -198,7 +198,7 @@ export const getHolidays = async (
 ): Promise<ClosedDayDto[]> => {
   const { data } = await (
     await client()
-  ).v1ProviderSupportCompanyDeadlinesHolidaysGet(region, year);
+  ).v1ProviderSupportTenantDeadlinesHolidaysGet(region, year);
   return (data ?? []).map(h => ({ date: h.date ?? '', name: h.name ?? '' }));
 };
 
@@ -206,6 +206,6 @@ export const getHolidays = async (
 export const getHolidayRegions = async (): Promise<HolidayRegionDto[]> => {
   const { data } = await (
     await client()
-  ).v1ProviderSupportCompanyDeadlinesHolidayRegionsGet();
+  ).v1ProviderSupportTenantDeadlinesHolidayRegionsGet();
   return (data ?? []).map(r => ({ code: r.code ?? '', name: r.name ?? '' }));
 };

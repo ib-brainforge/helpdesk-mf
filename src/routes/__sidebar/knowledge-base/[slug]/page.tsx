@@ -8,6 +8,7 @@
 
 import { AppLoadingSplash } from '@/components/AppSplash';
 import { EntityMovedScreen } from '@/components/EntityMovedScreen';
+import { KbOwnerBadge } from '@/components/knowledge-base/components/KbOwnerBadge';
 import { RelatedArticles } from '@/components/knowledge-base/components/RelatedArticles';
 import {
   fetchKnowledgeBaseArticleBySlug,
@@ -15,6 +16,7 @@ import {
   useRateKnowledgeBaseArticle,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { useTabSearchParam } from '@/hooks/useTabSearchParam';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -32,7 +34,7 @@ import {
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { ScopeApi } from '@brainforgeau/helpdesk-client';
-import { useTimezone } from '@brainforgeau/security';
+import { usePermissions, useTimezone } from '@brainforgeau/security';
 import { Separator } from '@heroui/react';
 import { Link, useNavigate, useParams } from '@modern-js/runtime/router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -51,6 +53,8 @@ function KnowledgeBaseArticlePage() {
     error,
   } = useKnowledgeBaseArticle(slug ?? '');
   const rateArticle = useRateKnowledgeBaseArticle();
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission(HelpdeskPermissions.KnowledgeBase.Manage);
 
   const { getParam, setParam } = useTabSearchParam();
   const { activeTab, setActiveTab } = useDetailTabState({
@@ -69,8 +73,9 @@ function KnowledgeBaseArticlePage() {
   const { recordStripProps } = useEntityScopeStrip({
     mode: 'detail',
     entityLabel: 'Article',
-    meta: article?.meta,
-    recordId: article?.id,
+    // A shared article's placement is its owner's: no strip for it.
+    meta: article?.isInherited ? undefined : article?.meta,
+    recordId: article?.isInherited ? undefined : article?.id,
     queryClient,
     queryKey: ['knowledge-base', 'article', slug ?? ''],
     fetchEntity: () => fetchKnowledgeBaseArticleBySlug(slug ?? ''),
@@ -126,22 +131,26 @@ function KnowledgeBaseArticlePage() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       headerActions={
-        <Link to={`/knowledge-base/${slug}/edit`}>
-          <BaseButton
-            variant="bordered"
-            color="light"
-            size="sm"
-            icon={<Icon name="pencil" className="h-4 w-4" />}
-          >
-            Edit Article
-          </BaseButton>
-        </Link>
+        // An article shared down from an office above is read-only here.
+        canManage && !article.isInherited ? (
+          <Link to={`/knowledge-base/${slug}/edit`}>
+            <BaseButton
+              variant="bordered"
+              color="light"
+              size="sm"
+              icon={<Icon name="pencil" className="h-4 w-4" />}
+            >
+              Edit Article
+            </BaseButton>
+          </Link>
+        ) : undefined
       }
     >
       {/* Article tab — main content + rating. No formActions (read-only). */}
       <DetailPage.Tab id="article" title="Article">
         <BaseCard>
           <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-default-600">
+            <KbOwnerBadge article={article} />
             <span className="flex items-center gap-1">
               <Icon name="user" className="h-4 w-4" />
               {article.authorName || 'Author unavailable'}
@@ -181,59 +190,66 @@ function KnowledgeBaseArticlePage() {
             }}
           />
 
-          <Separator className="my-6" />
-
-          {/* Feedback rating */}
-          <div className="rounded bg-default-50 p-6 text-center">
-            <h3 className="mb-4 text-lg font-semibold">
-              Was this article helpful?
-            </h3>
-            <div className="flex justify-center gap-8">
-              <div className="flex flex-col items-center gap-1">
-                <BaseButton
-                  color="success"
-                  variant="bordered"
-                  onPress={() =>
-                    article.id &&
-                    rateArticle.mutate({
-                      articleId: article.id,
-                      isHelpful: true,
-                    })
-                  }
-                  isDisabled={rateArticle.isPending}
-                  icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
-                >
-                  Yes
-                </BaseButton>
-                <span className="text-xs text-default-500">
-                  {article.ratingCount || 0} ratings
-                </span>
+          {/* Feedback rating. Not on a shared article: its counters belong
+              to the tenant that owns it. */}
+          {!article.isInherited && (
+            <>
+              <Separator className="my-6" />
+              <div className="rounded bg-default-50 p-6 text-center">
+                <h3 className="mb-4 text-lg font-semibold">
+                  Was this article helpful?
+                </h3>
+                <div className="flex justify-center gap-8">
+                  <div className="flex flex-col items-center gap-1">
+                    <BaseButton
+                      color="success"
+                      variant="bordered"
+                      onPress={() =>
+                        article.id &&
+                        rateArticle.mutate({
+                          articleId: article.id,
+                          isHelpful: true,
+                        })
+                      }
+                      isDisabled={rateArticle.isPending}
+                      icon={<Icon name="hand-thumb-up" className="h-5 w-5" />}
+                    >
+                      Yes
+                    </BaseButton>
+                    <span className="text-xs text-default-500">
+                      {article.ratingCount || 0} ratings
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <BaseButton
+                      color="danger"
+                      variant="bordered"
+                      onPress={() =>
+                        article.id &&
+                        rateArticle.mutate({
+                          articleId: article.id,
+                          isHelpful: false,
+                        })
+                      }
+                      isDisabled={rateArticle.isPending}
+                      icon={<Icon name="hand-thumb-down" className="h-5 w-5" />}
+                    >
+                      No
+                    </BaseButton>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col items-center gap-1">
-                <BaseButton
-                  color="danger"
-                  variant="bordered"
-                  onPress={() =>
-                    article.id &&
-                    rateArticle.mutate({
-                      articleId: article.id,
-                      isHelpful: false,
-                    })
-                  }
-                  isDisabled={rateArticle.isPending}
-                  icon={<Icon name="hand-thumb-down" className="h-5 w-5" />}
-                >
-                  No
-                </BaseButton>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </BaseCard>
       </DetailPage.Tab>
 
       {/* Info tab — article metadata + related articles. No formActions (read-only). */}
       <DetailPage.Tab id="info" title="Info">
-        {recordStripProps && <RecordStrip {...recordStripProps} />}
+        {/* Placement belongs to the owner of a shared article. */}
+        {recordStripProps && !article.isInherited && (
+          <RecordStrip {...recordStripProps} />
+        )}
         <div className="mt-6 max-w-sm space-y-6">
           <BaseCard>
             <h3 className="mb-3 text-lg font-semibold">Article Info</h3>

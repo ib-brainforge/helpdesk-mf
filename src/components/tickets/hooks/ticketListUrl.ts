@@ -23,6 +23,7 @@ const KEYS = [
   'tag',
   'division',
   'overdue',
+  'raised',
   'sort',
   'dir',
   'page',
@@ -70,6 +71,7 @@ export const filtersFromUrl = (
   set('tagIds', list(params.get('tag')));
   set('divisionId', params.get('division') || undefined);
   if (params.get('overdue') === '1') out.overdueOnly = true;
+  if (params.get('raised') === '1') out.raisedAboveOnly = true;
   return out;
 };
 
@@ -177,6 +179,7 @@ export const writeListToUrl = (
   put('category', filters.categoryId);
   put('tag', filters.tagIds);
   put('division', filters.divisionId);
+  if (filters.raisedAboveOnly) put('raised', '1');
   if (sort) {
     put('sort', sort.id);
     put('dir', sort.desc ? 'desc' : 'asc');

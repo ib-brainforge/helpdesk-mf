@@ -1,17 +1,17 @@
+import type { DeadlinePriority } from '@/api/local/deadlines';
 import {
-  type CompanyDeadlinePolicyDto,
-  type CompanyDeadlinePolicyInput,
-  type SaveCompanyDeadlineResult,
+  type SaveTenantDeadlineResult,
   type TenantDeadlineParams,
-  getCompanyDeadlinePolicy,
+  type TenantDeadlinePolicyDto,
+  type TenantDeadlinePolicyInput,
   getHolidayRegions,
   getHolidays,
+  getTenantDeadlinePolicy,
   getTenantDeadlines,
-  previewCompanyDeadline,
-  revertCompanyDeadlinePolicy,
-  saveCompanyDeadlinePolicy,
-} from '@/api/local/company-deadlines';
-import type { DeadlinePriority } from '@/api/local/deadlines';
+  previewTenantDeadline,
+  revertTenantDeadlinePolicy,
+  saveTenantDeadlinePolicy,
+} from '@/api/local/tenant-deadlines';
 import { useDebounced } from '@/hooks/useDebounced';
 import {
   type QueryClient,
@@ -22,16 +22,16 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
-export const COMPANY_DEADLINES_QUERY_KEY = 'company-deadlines';
+export const TENANT_DEADLINES_QUERY_KEY = 'tenant-deadlines';
 
 /** Policies change rarely and only here, where a save updates the cache. */
 const STALE = 60_000;
 
 export const deadlineKeys = {
   /** Every page of the tenants list; add the params for one page. */
-  tenants: () => [COMPANY_DEADLINES_QUERY_KEY, 'tenants'],
+  tenants: () => [TENANT_DEADLINES_QUERY_KEY, 'tenants'],
   policy: (tenantId?: string) => [
-    COMPANY_DEADLINES_QUERY_KEY,
+    TENANT_DEADLINES_QUERY_KEY,
     'policy',
     tenantId,
   ],
@@ -46,10 +46,10 @@ export const useTenantDeadlines = (params: TenantDeadlineParams) =>
     staleTime: STALE,
   });
 
-export const useCompanyDeadlinePolicy = (tenantId?: string) =>
+export const useTenantDeadlinePolicy = (tenantId?: string) =>
   useQuery({
     queryKey: deadlineKeys.policy(tenantId),
-    queryFn: () => getCompanyDeadlinePolicy(tenantId as string),
+    queryFn: () => getTenantDeadlinePolicy(tenantId as string),
     enabled: Boolean(tenantId),
     staleTime: STALE,
   });
@@ -67,17 +67,17 @@ const invalidateAfterChange = (
   }
 };
 
-export const useSaveCompanyDeadlinePolicy = (tenantId?: string) => {
+export const useSaveTenantDeadlinePolicy = (tenantId?: string) => {
   const queryClient = useQueryClient();
   return useMutation<
-    SaveCompanyDeadlineResult,
+    SaveTenantDeadlineResult,
     Error,
-    CompanyDeadlinePolicyInput & { applyToOpenTickets: boolean }
+    TenantDeadlinePolicyInput & { applyToOpenTickets: boolean }
   >({
-    mutationFn: body => saveCompanyDeadlinePolicy(tenantId as string, body),
+    mutationFn: body => saveTenantDeadlinePolicy(tenantId as string, body),
     onSuccess: result => {
       // The saved policy is the new truth for this page.
-      queryClient.setQueryData<CompanyDeadlinePolicyDto>(
+      queryClient.setQueryData<TenantDeadlinePolicyDto>(
         deadlineKeys.policy(tenantId),
         result.policy,
       );
@@ -87,10 +87,10 @@ export const useSaveCompanyDeadlinePolicy = (tenantId?: string) => {
 };
 
 /** Drops the tenant's own policy, so it uses the provider default again. */
-export const useRevertCompanyDeadlinePolicy = (tenantId?: string) => {
+export const useRevertTenantDeadlinePolicy = (tenantId?: string) => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, void>({
-    mutationFn: () => revertCompanyDeadlinePolicy(tenantId as string),
+    mutationFn: () => revertTenantDeadlinePolicy(tenantId as string),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: deadlineKeys.policy(tenantId),
@@ -112,7 +112,7 @@ export const useUpcomingHolidays = (
   const year = today.getFullYear();
   const results = useQueries({
     queries: [year, year + 1].map(y => ({
-      queryKey: [COMPANY_DEADLINES_QUERY_KEY, 'holidays', region, y],
+      queryKey: [TENANT_DEADLINES_QUERY_KEY, 'holidays', region, y],
       queryFn: () => getHolidays(region as string, y),
       enabled: enabled && Boolean(region),
       staleTime: 24 * 60 * 60 * 1000,
@@ -135,7 +135,7 @@ export const useUpcomingHolidays = (
 /** The holiday regions the backend counts. */
 export const useHolidayRegions = () => {
   const query = useQuery({
-    queryKey: [COMPANY_DEADLINES_QUERY_KEY, 'holiday-regions'],
+    queryKey: [TENANT_DEADLINES_QUERY_KEY, 'holiday-regions'],
     queryFn: getHolidayRegions,
     staleTime: 24 * 60 * 60 * 1000,
   });
@@ -143,7 +143,7 @@ export const useHolidayRegions = () => {
 };
 
 export interface DeadlinePreviewRequest {
-  policy: CompanyDeadlinePolicyInput;
+  policy: TenantDeadlinePolicyInput;
   priority: DeadlinePriority;
   startAt: string;
 }
@@ -160,10 +160,10 @@ export const useDeadlinePreview = (
 ) => {
   const body = useDebounced(request ? JSON.stringify(request) : null, 300);
   return useQuery({
-    queryKey: [COMPANY_DEADLINES_QUERY_KEY, tenantId, 'preview', body],
+    queryKey: [TENANT_DEADLINES_QUERY_KEY, tenantId, 'preview', body],
     queryFn: () => {
       const r = JSON.parse(body as string) as DeadlinePreviewRequest;
-      return previewCompanyDeadline(tenantId as string, {
+      return previewTenantDeadline(tenantId as string, {
         priority: r.priority,
         startAt: r.startAt,
         draft: r.policy,

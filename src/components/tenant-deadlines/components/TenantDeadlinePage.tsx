@@ -1,4 +1,4 @@
-import type { CompanyDeadlinePolicyDto } from '@/api/local/company-deadlines';
+import type { TenantDeadlinePolicyDto } from '@/api/local/tenant-deadlines';
 import { useDiscardGuard } from '@/hooks/useDiscardGuard';
 import { extractErrorMessage } from '@/utils/error-handling';
 import { BaseCheckbox } from '@brainforgeau/components';
@@ -20,9 +20,9 @@ import {
   toPolicyInput,
 } from '../deadlinePolicy';
 import {
-  useRevertCompanyDeadlinePolicy,
-  useSaveCompanyDeadlinePolicy,
-} from '../hooks/useCompanyDeadlines';
+  useRevertTenantDeadlinePolicy,
+  useSaveTenantDeadlinePolicy,
+} from '../hooks/useTenantDeadlines';
 import { ClockSection } from './ClockSection';
 import { DeadlineSummaryCard } from './DeadlineSummaryCard';
 import { TargetsSection } from './TargetsSection';
@@ -43,7 +43,7 @@ export interface TenantDeadlinePageProps {
   tenantId: string;
   /** The tenant's name, in the title, buttons and toasts. */
   name: string;
-  policy: CompanyDeadlinePolicyDto;
+  policy: TenantDeadlinePolicyDto;
 }
 
 const Header: FC<{ name: string; actions?: ReactNode }> = ({
@@ -84,7 +84,7 @@ const PolicyReader: FC<TenantDeadlinePageProps & { onEdit: () => void }> = ({
   onEdit,
 }) => {
   const values = useMemo(() => toFormValues(policy), [policy]);
-  const revert = useRevertCompanyDeadlinePolicy(tenantId);
+  const revert = useRevertTenantDeadlinePolicy(tenantId);
   const { confirm, dialog } = useConfirm();
 
   const useDefault = async () => {
@@ -161,7 +161,7 @@ const PolicyEditor: FC<TenantDeadlinePageProps & { onDone: () => void }> = ({
   policy,
   onDone,
 }) => {
-  const save = useSaveCompanyDeadlinePolicy(tenantId);
+  const save = useSaveTenantDeadlinePolicy(tenantId);
   // Starting its own from the default is a change in itself, though no field
   // has moved yet.
   const startsFromDefault = !policy.isCustom;

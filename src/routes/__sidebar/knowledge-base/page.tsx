@@ -6,9 +6,11 @@ import {
   useKnowledgeBaseArticles,
   useKnowledgeBaseCategories,
 } from '@/components/knowledge-base/hooks/useKnowledgeBase';
+import { HelpdeskPermissions } from '@/constants/permissions';
 import { BaseInput, Icon } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { usePermissions } from '@brainforgeau/security';
 import {
   Dropdown,
   DropdownItem,
@@ -32,6 +34,10 @@ function KnowledgeBasePage() {
     refetch: refetchArticles,
   } = useKnowledgeBaseArticles('', searchTerm);
   const exportMutation = useExportKb();
+  // Reading needs kb.read; writing, import/export and categories kb.manage,
+  // the same split as the route table.
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission(HelpdeskPermissions.KnowledgeBase.Manage);
 
   return (
     // h-full + min-h-0 so the article table can grow to the bottom of the
@@ -43,51 +49,56 @@ function KnowledgeBasePage() {
     // refuse to shrink, pushing the scrollbar onto the page instead of the table.
     <PageBody className="h-full min-h-0">
       <PageHeader title="Knowledge Base" breadcrumbsKey="knowledge-base.list">
-        <PageHeader.Actions>
-          <BaseButton
-            variant="bordered"
-            color="light"
-            onPress={() => setIsQuickCreateOpen(true)}
-            icon={<Icon name="plus" className="h-4 w-4" />}
-          >
-            Quick Create
-          </BaseButton>
-          <Link to="/knowledge-base/new">
+        {canManage && (
+          <PageHeader.Actions>
             <BaseButton
-              color="primary"
+              variant="bordered"
+              color="light"
+              onPress={() => setIsQuickCreateOpen(true)}
               icon={<Icon name="plus" className="h-4 w-4" />}
             >
-              Create Article
+              Quick Create
             </BaseButton>
-          </Link>
-          <Dropdown>
-            <DropdownTrigger
-              aria-label="Knowledge base actions"
-              className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-9 w-9"
-            >
-              <Icon name="dotsV" className="h-4 w-4" />
-            </DropdownTrigger>
-            <DropdownPopover className="helpdesk-dropdown-popover">
-              <DropdownMenu aria-label="Knowledge base actions">
-                <DropdownItem
-                  key="import"
-                  onPress={() => setIsImportOpen(true)}
-                >
-                  Import
-                </DropdownItem>
-                <DropdownItem
-                  key="export"
-                  onPress={() => exportMutation.mutate()}
-                >
-                  {exportMutation.isPending ? 'Exporting...' : 'Export'}
-                </DropdownItem>
-                <DropdownItem key="categories" href="/knowledge-base/settings">
-                  Manage Categories
-                </DropdownItem>
-              </DropdownMenu>
-            </DropdownPopover>
-          </Dropdown>
-        </PageHeader.Actions>
+            <Link to="/knowledge-base/new">
+              <BaseButton
+                color="primary"
+                icon={<Icon name="plus" className="h-4 w-4" />}
+              >
+                Create Article
+              </BaseButton>
+            </Link>
+            <Dropdown>
+              <DropdownTrigger
+                aria-label="Knowledge base actions"
+                className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-9 w-9"
+              >
+                <Icon name="dotsV" className="h-4 w-4" />
+              </DropdownTrigger>
+              <DropdownPopover className="helpdesk-dropdown-popover">
+                <DropdownMenu aria-label="Knowledge base actions">
+                  <DropdownItem
+                    key="import"
+                    onPress={() => setIsImportOpen(true)}
+                  >
+                    Import
+                  </DropdownItem>
+                  <DropdownItem
+                    key="export"
+                    onPress={() => exportMutation.mutate()}
+                  >
+                    {exportMutation.isPending ? 'Exporting...' : 'Export'}
+                  </DropdownItem>
+                  <DropdownItem
+                    key="categories"
+                    href="/knowledge-base/settings"
+                  >
+                    Manage Categories
+                  </DropdownItem>
+                </DropdownMenu>
+              </DropdownPopover>
+            </Dropdown>
+          </PageHeader.Actions>
+        )}
       </PageHeader>
 
       {/* Search Bar */}

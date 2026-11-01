@@ -15,6 +15,7 @@ import { HelpdeskPermissions } from '@/constants/permissions';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useRealtimeTickets } from '@/hooks/useRealtimeTickets';
 import { useScopeNames } from '@/hooks/useScopeNames';
+import { useTenantNames } from '@/hooks/useTenantNames';
 import type {
   TicketFilters as TicketFiltersType,
   TicketPriority,
@@ -32,6 +33,7 @@ import {
   useTimezone,
 } from '@brainforgeau/security';
 import { useNavigate, useSearchParams } from '@modern-js/runtime/router';
+import { useQuery } from '@tanstack/react-query';
 import {
   type FC,
   useCallback,
@@ -40,6 +42,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { isHandledAbove, selectableRows, ticketPath } from '../handled-above';
 import {
   initialFiltersFromUrl,
   paginationFromUrl,
@@ -58,7 +61,11 @@ import {
 } from '../hooks/ticketTabs';
 import { useBulkTicketAction } from '../hooks/useBulkTicketAction';
 import { useTicketTabCounts } from '../hooks/useTicketTabCounts';
-import { fetchTicketIds, useTicketsData } from '../hooks/useTickets';
+import {
+  fetchOwnTicketCount,
+  fetchTicketIds,
+  useTicketsData,
+} from '../hooks/useTickets';
 import { useTicketsLayout } from '../hooks/useTicketsLayout';
 import { useTicketsTable } from '../hooks/useTicketsTable';
 import { NewRequestModal } from '../new-request/NewRequestModal';
@@ -182,8 +189,8 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
     // Seeded from the URL, so a copied link reopens the same list and the
     // first request already matches it (see ticketListUrl). An old
     // ?tab=unassigned link brings its own assignee; ?tenant= also
-    // comes from links elsewhere (a company's late count
-    // on Company Deadlines).
+    // comes from links elsewhere (a tenant's late count
+    // on Tenant Deadlines).
     initialFiltersFromUrl(
       selectedTab,
       searchParams,
@@ -369,6 +376,13 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
   const canAssign = hasPermission(HelpdeskPermissions.TicketAssign);
   const canWrite = hasPermission(HelpdeskPermissions.TicketWrite);
 
+  // The tenants working the rows raised above this one, for their badges.
+  const handlingTenantIds = useMemo(
+    () => items.filter(isHandledAbove).map(row => row.handledByTenantId),
+    [items],
+  );
+  const handledByNames = useTenantNames(handlingTenantIds);
+
   const columns = useMemo(
     () =>
       withFitMarkers(
@@ -384,6 +398,8 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
           customStatuses,
           fromTenants,
           ticketBasePath: fromTenants ? '/provider/tickets' : '/tickets',
+          handledByNames,
+          selectable: !filters.raisedAboveOnly,
         }),
         // Subject fills the rest; the checkbox and row menu have fixed sizes.
         { skipIds: FIT_SKIP, isSortable: id => id in TICKET_SORT_KEYS },
@@ -399,6 +415,8 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
       scopeNames,
       customStatuses,
       fromTenants,
+      handledByNames,
+      filters.raisedAboveOnly,
     ],
   );
 
@@ -560,10 +578,9 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
     clearSelection();
   }, [filtersKey, selectedTab, clearSelection]);
 
-  const pageRows = useMemo(
-    () => items.filter((t): t is typeof t & { id: string } => !!t.id),
-    [items],
-  );
+  // The rows bulk actions can act on: a ticket handled above the tenant lives
+  // in another tenant, so it is never selectable.
+  const pageRows = useMemo(() => selectableRows(items), [items]);
   const pageSelectedCount = allMatching
     ? pageRows.length
     : pageRows.filter(r => picked.has(r.id)).length;
@@ -618,7 +635,20 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
     [allMatching, picked, pageRows, pageState, clearSelection],
   );
 
-  const selectedCount = allMatching ? totalCount : picked.size;
+  /*
+   * "All matching" means every OWN ticket that matches (what /tickets/ids
+   * returns); the list's totalCount also counts the rows raised above the
+   * tenant. Asked only once a whole page is selected, which is when the
+   * offer appears.
+   */
+  const { data: ownMatchingCount } = useQuery({
+    queryKey: ['tickets', 'own-count', queryFilters, fromTenants],
+    enabled: pageState === 'all' || allMatching,
+    queryFn: () => fetchOwnTicketCount(queryFilters, fromTenants),
+  });
+  const selectedCount = allMatching
+    ? (ownMatchingCount ?? pageRows.length)
+    : picked.size;
   const hasSelectedRows = selectedCount > 0;
   const pickedList = useMemo(() => [...picked.values()], [picked]);
   // In "all matching" mode the rows are not known until the ids are fetched,
@@ -887,6 +917,19 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
                   />
                 }
               />
+              {filters.raisedAboveOnly && (
+                <p className="mb-2 text-sm text-default-600">
+                  Showing the tickets you raised that your provider or Netcorp
+                  handles.{' '}
+                  <button
+                    type="button"
+                    className="text-blue font-medium hover:underline"
+                    onClick={() => navigate('/tickets')}
+                  >
+                    Show all tickets
+                  </button>
+                </p>
+              )}
               {/* Filters */}
               <TicketFilters
                 filters={filters}
@@ -911,7 +954,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
                 and every match offers the way back. */}
                 {allMatching ? (
                   <span className="text-sm text-default-600">
-                    All {totalCount.toLocaleString('en-AU')} matching tickets
+                    All {selectedCount.toLocaleString('en-AU')} matching tickets
                     are selected.{' '}
                     <button
                       type="button"
@@ -923,7 +966,7 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
                   </span>
                 ) : (
                   pageState === 'all' &&
-                  totalCount > pageRows.length && (
+                  (ownMatchingCount ?? 0) > pageRows.length && (
                     <span className="text-sm text-default-600">
                       All {pageRows.length} on this page are selected.{' '}
                       <button
@@ -931,8 +974,9 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
                         className="text-blue font-medium hover:underline"
                         onClick={() => setAllMatching(true)}
                       >
-                        Select all {totalCount.toLocaleString('en-AU')} matching
-                        tickets
+                        Select all{' '}
+                        {(ownMatchingCount ?? 0).toLocaleString('en-AU')}{' '}
+                        matching tickets
                       </button>
                     </span>
                   )
@@ -1062,7 +1106,9 @@ export const TicketGrid: FC<TicketGridProps> = ({ fromTenants = false }) => {
           <NewRequestModal
             isOpen={isNewRequestOpen}
             onClose={() => setIsNewRequestOpen(false)}
-            onCreated={ticketId => navigate(`/tickets/${ticketId}`)}
+            onCreated={created =>
+              navigate(ticketPath(created.id, created.handledAbove))
+            }
           />
           {confirmDialog}
         </div>

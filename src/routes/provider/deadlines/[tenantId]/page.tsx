@@ -1,7 +1,7 @@
 import { AppAuthSplash, AppLoadingSplash } from '@/components/AppSplash';
-import { TenantDeadlinePage } from '@/components/company-deadlines/components/TenantDeadlinePage';
-import { useCompanyDeadlinePolicy } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
+import { TenantDeadlinePage } from '@/components/tenant-deadlines/components/TenantDeadlinePage';
+import { useTenantDeadlinePolicy } from '@/components/tenant-deadlines/hooks/useTenantDeadlines';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import {
   ProviderPermissions,
@@ -13,7 +13,7 @@ import React from 'react';
 /** One tenant's deadlines, for provider staff: read, edit, revert to default. */
 function TenantDeadlinesDetail() {
   const { tenantId = '' } = useParams<{ tenantId: string }>();
-  const { data: policy, isLoading } = useCompanyDeadlinePolicy(tenantId);
+  const { data: policy, isLoading } = useTenantDeadlinePolicy(tenantId);
   const { byTenantId } = useScopeNames();
   // The list passes the name along; a direct link falls back to the context names.
   const { state } = useLocation();

@@ -9,7 +9,7 @@ import { BaseButton } from '@brainforgeau/components/button';
 import { Spinner } from '@heroui/react';
 import type { FC } from 'react';
 import { formatIsoDay } from '../deadlinePolicy';
-import { useUpcomingHolidays } from '../hooks/useCompanyDeadlines';
+import { useUpcomingHolidays } from '../hooks/useTenantDeadlines';
 
 interface HolidaysModalProps {
   isOpen: boolean;

@@ -1,4 +1,4 @@
-import type { CompanyDeadlinePolicyDto } from '@/api/local/company-deadlines';
+import type { TenantDeadlinePolicyDto } from '@/api/local/tenant-deadlines';
 import { DurationInput, StatusBadge } from '@/components/shared';
 import { formatMinutes } from '@/components/shared/deadline';
 import { getPriorityConfig } from '@/components/tickets/ticket-priority-config';
@@ -64,7 +64,7 @@ const firstError = (errors: unknown[]): string | undefined => {
 interface TargetsSectionProps {
   // biome-ignore lint/suspicious/noExplicitAny: useEntityForm exposes the TanStack form untyped
   form: any;
-  saved?: CompanyDeadlinePolicyDto;
+  saved?: TenantDeadlinePolicyDto;
   companyName: string;
 }
 

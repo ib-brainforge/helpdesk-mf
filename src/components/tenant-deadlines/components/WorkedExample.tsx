@@ -16,7 +16,7 @@ import {
   policyFormSchema,
   toPolicyInput,
 } from '../deadlinePolicy';
-import { useDeadlinePreview } from '../hooks/useCompanyDeadlines';
+import { useDeadlinePreview } from '../hooks/useTenantDeadlines';
 
 interface WorkedExampleProps {
   /** The policy as it stands: the form while editing, the saved one otherwise. */
