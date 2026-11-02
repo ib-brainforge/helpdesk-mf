@@ -1,4 +1,3 @@
-import { AppLoadingSplash } from '@/components/AppSplash';
 import { TicketApprovalPanel } from '@/components/approvals';
 import {
   useAttachments,
@@ -35,6 +34,7 @@ import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import {
   PageBody,
+  PageState,
   useConfirm,
   usePageTitle,
 } from '@brainforgeau/components/page';
@@ -767,26 +767,19 @@ export const TicketDetail: FC<TicketDetailProps> = ({
   }, [id, updateTicketMutation]);
 
   if (isLoading) {
-    return <AppLoadingSplash />;
+    return <PageState loading loadingLabel="Loading ticket" />;
   }
 
   if (error || !ticket) {
     return (
-      <PageBody>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <Icon
-              name="warning"
-              className="h-12 w-12 text-danger mx-auto mb-4"
-            />
-            <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
-            <p className="text-default-600 mb-4">
-              The ticket you are looking for does not exist.
-            </p>
-            <BaseButton onPress={handleBack}>Back to Tickets</BaseButton>
-          </div>
-        </div>
-      </PageBody>
+      <PageState
+        empty={{
+          icon: <Icon name="warning" className="h-8 w-8 text-danger" />,
+          title: 'Ticket Not Found',
+          description: 'The ticket you are looking for does not exist.',
+          action: <BaseButton onPress={handleBack}>Back to Tickets</BaseButton>,
+        }}
+      />
     );
   }
 

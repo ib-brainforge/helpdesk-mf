@@ -1,5 +1,7 @@
+import { ACCESS_DENIED_COPY } from '@/routes/route-permissions';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { TENANT_VIEW_HOME } from '@/views';
+import { PageState } from '@brainforgeau/components/page';
 import {
   AccessDenied,
   ViewGuard,
@@ -56,12 +58,9 @@ export const ProviderViewGuard: FC<ProviderViewGuardProps> = ({
       {isLoading ? null : permitted ? (
         children
       ) : (
-        <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-5">
-          <AccessDenied
-            title="You don't have access to this page"
-            message="Your role doesn't include the permission this page needs. Ask a Helpdesk admin if you think you should have it."
-          />
-        </div>
+        <PageState>
+          <AccessDenied {...ACCESS_DENIED_COPY} />
+        </PageState>
       )}
     </ViewGuard>
   );
