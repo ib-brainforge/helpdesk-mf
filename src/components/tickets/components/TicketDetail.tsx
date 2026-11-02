@@ -33,7 +33,11 @@ import { type TicketPriority, TicketStatus } from '@/types/ticket';
 import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { useConfirm, usePageTitle } from '@brainforgeau/components/page';
+import {
+  PageBody,
+  useConfirm,
+  usePageTitle,
+} from '@brainforgeau/components/page';
 import { PermissionGuard, usePermissions } from '@brainforgeau/security';
 import {
   Dropdown,
@@ -768,16 +772,21 @@ export const TicketDetail: FC<TicketDetailProps> = ({
 
   if (error || !ticket) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Icon name="warning" className="h-12 w-12 text-danger mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
-          <p className="text-default-600 mb-4">
-            The ticket you are looking for does not exist.
-          </p>
-          <BaseButton onPress={handleBack}>Back to Tickets</BaseButton>
+      <PageBody>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Icon
+              name="warning"
+              className="h-12 w-12 text-danger mx-auto mb-4"
+            />
+            <h2 className="text-xl font-semibold mb-2">Ticket Not Found</h2>
+            <p className="text-default-600 mb-4">
+              The ticket you are looking for does not exist.
+            </p>
+            <BaseButton onPress={handleBack}>Back to Tickets</BaseButton>
+          </div>
         </div>
-      </div>
+      </PageBody>
     );
   }
 
@@ -809,453 +818,457 @@ export const TicketDetail: FC<TicketDetailProps> = ({
         }
       `}</style>
 
-      {/*
-        pb-8: the sidebar column ends on a card, and with no bottom gutter that
-        card's border lands exactly on the viewport edge at the end of the
-        scroll, which reads as the page being cut off rather than finished.
-        The left nav is `sticky top-0` and keeps reaching the viewport bottom,
-        so this adds scroll room under the content without stranding the nav.
-      */}
-      <div className="w-full max-w-7xl mx-auto pb-8">
-        {/* Back Button */}
-        <div className="mb-4 helpdesk-print-hide">
-          <BaseButton
-            variant="link"
-            onPress={handleBack}
-            icon={<Icon name="arrowL" className="h-4 w-4" />}
-          >
-            Back to Tickets
-          </BaseButton>
-        </div>
+      <PageBody>
+        <div className="w-full max-w-7xl mx-auto">
+          {/* Back Button */}
+          <div className="mb-4 helpdesk-print-hide">
+            <BaseButton
+              variant="link"
+              onPress={handleBack}
+              icon={<Icon name="arrowL" className="h-4 w-4" />}
+            >
+              Back to Tickets
+            </BaseButton>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6 helpdesk-print-full">
-            {/* Deleted banner */}
-            {isDeleted && (
-              <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-2 flex items-center gap-2">
-                <Icon name="trash" className="h-4 w-4 text-danger" />
-                <span className="text-sm font-medium text-danger">
-                  This ticket is deleted.
-                </span>
-              </div>
-            )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6 helpdesk-print-full">
+              {/* Deleted banner */}
+              {isDeleted && (
+                <div className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-2 flex items-center gap-2">
+                  <Icon name="trash" className="h-4 w-4 text-danger" />
+                  <span className="text-sm font-medium text-danger">
+                    This ticket is deleted.
+                  </span>
+                </div>
+              )}
 
-            {/*
+              {/*
               Header card: the ticket id with its actions, then the title and
               the facts about the ticket in one line of chips.
             */}
-            <Box className={NO_EMPTY_HEADER}>
-              <div className="flex items-start justify-between gap-3">
-                {/* A quiet ref, not a heading: the subject is the name. The
+              <Box className={NO_EMPTY_HEADER}>
+                <div className="flex items-start justify-between gap-3">
+                  {/* A quiet ref, not a heading: the subject is the name. The
                   link is what people share, so it is one click. */}
-                <div className="flex items-center gap-1 text-sm text-default-500">
-                  {/* The same short ref as the list's ID column, so what a
+                  <div className="flex items-center gap-1 text-sm text-default-500">
+                    {/* The same short ref as the list's ID column, so what a
                     caller reads out can be found. There is no ticket number
                     yet; this is the GUID's first 8 characters. */}
-                  <span>
-                    Ticket{' '}
-                    <span className="font-mono">
-                      {ticket.id?.substring(0, 8).toUpperCase()}
+                    <span>
+                      Ticket{' '}
+                      <span className="font-mono">
+                        {ticket.id?.substring(0, 8).toUpperCase()}
+                      </span>
                     </span>
-                  </span>
-                  <IconTip label="Copy link to this ticket">
-                    <BaseButton
-                      variant="ghost"
-                      size="sm"
-                      isIconOnly
-                      aria-label="Copy link to this ticket"
-                      className="h-7 w-7 min-w-7 helpdesk-print-hide"
-                      onPress={() => {
-                        void navigator.clipboard
-                          ?.writeText(window.location.href.split('?')[0])
-                          .then(() =>
-                            toast('Link copied', { variant: 'success' }),
-                          );
-                      }}
+                    <IconTip label="Copy link to this ticket">
+                      <BaseButton
+                        variant="ghost"
+                        size="sm"
+                        isIconOnly
+                        aria-label="Copy link to this ticket"
+                        className="h-7 w-7 min-w-7 helpdesk-print-hide"
+                        onPress={() => {
+                          void navigator.clipboard
+                            ?.writeText(window.location.href.split('?')[0])
+                            .then(() =>
+                              toast('Link copied', { variant: 'success' }),
+                            );
+                        }}
+                      >
+                        <Icon name="link" className="h-4 w-4" />
+                      </BaseButton>
+                    </IconTip>
+                  </div>
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 helpdesk-print-hide">
+                    <PermissionGuard
+                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                      fallback={null}
                     >
-                      <Icon name="link" className="h-4 w-4" />
-                    </BaseButton>
-                  </IconTip>
-                </div>
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 helpdesk-print-hide">
-                  <PermissionGuard
-                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                    fallback={null}
-                  >
-                    <BaseButton
-                      variant="bordered"
-                      color="light"
-                      onPress={handleAiAssistant}
-                      isDisabled={actionsDisabled}
-                      icon={<Icon name="flash" className="h-4 w-4" />}
-                    >
-                      AI Assistant
-                    </BaseButton>
-                    {/* Close while open; Reopen once closed, rather than a
+                      <BaseButton
+                        variant="bordered"
+                        color="light"
+                        onPress={handleAiAssistant}
+                        isDisabled={actionsDisabled}
+                        icon={<Icon name="flash" className="h-4 w-4" />}
+                      >
+                        AI Assistant
+                      </BaseButton>
+                      {/* Close while open; Reopen once closed, rather than a
                       Close button that can do nothing. */}
-                    {ticket.status === TicketStatus.Closed ? (
-                      <BaseButton
-                        variant="bordered"
-                        color="light"
-                        onPress={handleReopenTicket}
-                        icon={<Icon name="refresh" className="h-4 w-4" />}
-                        isDisabled={actionsDisabled}
-                      >
-                        Reopen
-                      </BaseButton>
-                    ) : (
-                      <BaseButton
-                        variant="bordered"
-                        color="light"
-                        onPress={handleCloseTicket}
-                        icon={<Icon name="check-o" className="h-4 w-4" />}
-                        isDisabled={actionsDisabled}
-                      >
-                        Close ticket
-                      </BaseButton>
-                    )}
-                  </PermissionGuard>
-                  <PermissionGuard
-                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                    fallback={null}
-                  >
-                    <Dropdown>
-                      <IconTip label="More ticket actions">
-                        <DropdownTrigger
-                          aria-label="More ticket actions"
-                          className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 h-8 w-8"
+                      {ticket.status === TicketStatus.Closed ? (
+                        <BaseButton
+                          variant="bordered"
+                          color="light"
+                          onPress={handleReopenTicket}
+                          icon={<Icon name="refresh" className="h-4 w-4" />}
+                          isDisabled={actionsDisabled}
                         >
-                          <Icon name="dotsV" className="h-4 w-4" />
-                        </DropdownTrigger>
-                      </IconTip>
-                      <DropdownPopover className="helpdesk-dropdown-popover">
-                        <DropdownMenu
-                          aria-label="Ticket actions"
-                          disabledKeys={
-                            actionsDisabled
-                              ? [
-                                  'edit',
-                                  'print',
-                                  'summary',
-                                  'subtask',
-                                  'parent',
-                                  'convert',
-                                  'link-asset',
-                                  'duplicate',
-                                  'forward',
-                                  'forward-provider',
-                                  'spam',
-                                  'unspam',
-                                  'problem',
-                                  'publish',
-                                ]
-                              : []
-                          }
+                          Reopen
+                        </BaseButton>
+                      ) : (
+                        <BaseButton
+                          variant="bordered"
+                          color="light"
+                          onPress={handleCloseTicket}
+                          icon={<Icon name="check-o" className="h-4 w-4" />}
+                          isDisabled={actionsDisabled}
                         >
-                          {/* Edit & View */}
-                          <DropdownSection>
-                            <DropdownItem
-                              key="edit"
-                              onPress={() => setIsEditModalOpen(true)}
-                            >
-                              Edit
-                            </DropdownItem>
-                            <DropdownItem key="print" onPress={handlePrint}>
-                              Print
-                            </DropdownItem>
-                            <DropdownItem
-                              key="summary"
-                              onPress={() => handleComingSoon('Ticket Summary')}
-                            >
-                              Ticket Summary
-                            </DropdownItem>
-                          </DropdownSection>
-
-                          {/* Relate */}
-                          <DropdownSection>
-                            {/* Subtasks are switched off (SUBTASKS_ENABLED). */}
-                            {SUBTASKS_ENABLED ? (
+                          Close ticket
+                        </BaseButton>
+                      )}
+                    </PermissionGuard>
+                    <PermissionGuard
+                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                      fallback={null}
+                    >
+                      <Dropdown>
+                        <IconTip label="More ticket actions">
+                          <DropdownTrigger
+                            aria-label="More ticket actions"
+                            className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 h-8 w-8"
+                          >
+                            <Icon name="dotsV" className="h-4 w-4" />
+                          </DropdownTrigger>
+                        </IconTip>
+                        <DropdownPopover className="helpdesk-dropdown-popover">
+                          <DropdownMenu
+                            aria-label="Ticket actions"
+                            disabledKeys={
+                              actionsDisabled
+                                ? [
+                                    'edit',
+                                    'print',
+                                    'summary',
+                                    'subtask',
+                                    'parent',
+                                    'convert',
+                                    'link-asset',
+                                    'duplicate',
+                                    'forward',
+                                    'forward-provider',
+                                    'spam',
+                                    'unspam',
+                                    'problem',
+                                    'publish',
+                                  ]
+                                : []
+                            }
+                          >
+                            {/* Edit & View */}
+                            <DropdownSection>
                               <DropdownItem
-                                key="subtask"
-                                onPress={() => setIsAddSubtaskModalOpen(true)}
-                                isDisabled={!canCreateTickets}
+                                key="edit"
+                                onPress={() => setIsEditModalOpen(true)}
                               >
-                                Add Subtask
+                                Edit
                               </DropdownItem>
-                            ) : null}
-                            {/*
+                              <DropdownItem key="print" onPress={handlePrint}>
+                                Print
+                              </DropdownItem>
+                              <DropdownItem
+                                key="summary"
+                                onPress={() =>
+                                  handleComingSoon('Ticket Summary')
+                                }
+                              >
+                                Ticket Summary
+                              </DropdownItem>
+                            </DropdownSection>
+
+                            {/* Relate */}
+                            <DropdownSection>
+                              {/* Subtasks are switched off (SUBTASKS_ENABLED). */}
+                              {SUBTASKS_ENABLED ? (
+                                <DropdownItem
+                                  key="subtask"
+                                  onPress={() => setIsAddSubtaskModalOpen(true)}
+                                  isDisabled={!canCreateTickets}
+                                >
+                                  Add Subtask
+                                </DropdownItem>
+                              ) : null}
+                              {/*
                               Was "Add Parent". Parent is no longer something a
                               caller assigns: nesting comes from creating a
                               ticket as a subtask, and a relationship between two
                               independent tickets is a link. This slot now opens
                               the link picker, which existed but had no way in.
                             */}
-                            {/* Linked work items are switched off (TICKET_LINKS_ENABLED). */}
-                            {TICKET_LINKS_ENABLED ? (
-                              <DropdownItem key="link" onPress={handleLink}>
-                                Link Ticket
-                              </DropdownItem>
-                            ) : null}
-                            <DropdownItem
-                              key="convert"
-                              onPress={() => setIsConvertToReplyModalOpen(true)}
-                            >
-                              Convert to Reply
-                            </DropdownItem>
-                            <DropdownItem
-                              key="link-asset"
-                              onPress={() => handleComingSoon('Link Asset')}
-                            >
-                              Link Asset
-                            </DropdownItem>
-                            <DropdownItem
-                              key="duplicate"
-                              onPress={() => setIsDuplicateModalOpen(true)}
-                              isDisabled={!canCreateTickets}
-                            >
-                              Duplicate
-                            </DropdownItem>
-                          </DropdownSection>
-
-                          {/* Lifecycle */}
-                          <DropdownSection>
-                            <DropdownItem
-                              key="forward"
-                              onPress={() => setIsForwardModalOpen(true)}
-                              isDisabled={!canForwardTickets}
-                            >
-                              Forward by Email
-                            </DropdownItem>
-                            {canContactProvider ? (
+                              {/* Linked work items are switched off (TICKET_LINKS_ENABLED). */}
+                              {TICKET_LINKS_ENABLED ? (
+                                <DropdownItem key="link" onPress={handleLink}>
+                                  Link Ticket
+                                </DropdownItem>
+                              ) : null}
                               <DropdownItem
-                                key="forward-provider"
-                                onPress={() => setIsForwardToProviderOpen(true)}
-                              >
-                                Forward to provider
-                              </DropdownItem>
-                            ) : null}
-                            {canModerate ? (
-                              <DropdownItem
-                                key="problem"
-                                onPress={handleToggleProblem}
-                                isDisabled={
-                                  markAsProblemMutation.isPending ||
-                                  unmarkAsProblemMutation.isPending
+                                key="convert"
+                                onPress={() =>
+                                  setIsConvertToReplyModalOpen(true)
                                 }
                               >
-                                {ticket?.isProblem
-                                  ? 'Unmark as Problem'
-                                  : 'Mark as Problem'}
+                                Convert to Reply
                               </DropdownItem>
-                            ) : (
-                              <DropdownItem key="problem" isDisabled>
-                                {ticket?.isProblem
-                                  ? 'Unmark as Problem'
-                                  : 'Mark as Problem'}
-                              </DropdownItem>
-                            )}
-                            {canModerate ? (
                               <DropdownItem
-                                key="publish"
-                                onPress={handleTogglePublishAsIdea}
-                                isDisabled={
-                                  publishAsIdeaMutation.isPending ||
-                                  unpublishAsIdeaMutation.isPending
+                                key="link-asset"
+                                onPress={() => handleComingSoon('Link Asset')}
+                              >
+                                Link Asset
+                              </DropdownItem>
+                              <DropdownItem
+                                key="duplicate"
+                                onPress={() => setIsDuplicateModalOpen(true)}
+                                isDisabled={!canCreateTickets}
+                              >
+                                Duplicate
+                              </DropdownItem>
+                            </DropdownSection>
+
+                            {/* Lifecycle */}
+                            <DropdownSection>
+                              <DropdownItem
+                                key="forward"
+                                onPress={() => setIsForwardModalOpen(true)}
+                                isDisabled={!canForwardTickets}
+                              >
+                                Forward by Email
+                              </DropdownItem>
+                              {canContactProvider ? (
+                                <DropdownItem
+                                  key="forward-provider"
+                                  onPress={() =>
+                                    setIsForwardToProviderOpen(true)
+                                  }
+                                >
+                                  Forward to provider
+                                </DropdownItem>
+                              ) : null}
+                              {canModerate ? (
+                                <DropdownItem
+                                  key="problem"
+                                  onPress={handleToggleProblem}
+                                  isDisabled={
+                                    markAsProblemMutation.isPending ||
+                                    unmarkAsProblemMutation.isPending
+                                  }
+                                >
+                                  {ticket?.isProblem
+                                    ? 'Unmark as Problem'
+                                    : 'Mark as Problem'}
+                                </DropdownItem>
+                              ) : (
+                                <DropdownItem key="problem" isDisabled>
+                                  {ticket?.isProblem
+                                    ? 'Unmark as Problem'
+                                    : 'Mark as Problem'}
+                                </DropdownItem>
+                              )}
+                              {canModerate ? (
+                                <DropdownItem
+                                  key="publish"
+                                  onPress={handleTogglePublishAsIdea}
+                                  isDisabled={
+                                    publishAsIdeaMutation.isPending ||
+                                    unpublishAsIdeaMutation.isPending
+                                  }
+                                >
+                                  {ticket?.isPublishedAsIdea
+                                    ? 'Remove from Ideas Forum'
+                                    : 'Publish to Ideas Forum'}
+                                </DropdownItem>
+                              ) : (
+                                <DropdownItem key="publish" isDisabled>
+                                  {ticket?.isPublishedAsIdea
+                                    ? 'Remove from Ideas Forum'
+                                    : 'Publish to Ideas Forum'}
+                                </DropdownItem>
+                              )}
+                              <DropdownItem
+                                key="spam"
+                                isDisabled={!canModerateTickets}
+                                onPress={
+                                  isSpam
+                                    ? handleUnmarkSpam
+                                    : () => setIsMarkSpamModalOpen(true)
                                 }
                               >
-                                {ticket?.isPublishedAsIdea
-                                  ? 'Remove from Ideas Forum'
-                                  : 'Publish to Ideas Forum'}
+                                {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
                               </DropdownItem>
-                            ) : (
-                              <DropdownItem key="publish" isDisabled>
-                                {ticket?.isPublishedAsIdea
-                                  ? 'Remove from Ideas Forum'
-                                  : 'Publish to Ideas Forum'}
-                              </DropdownItem>
-                            )}
-                            <DropdownItem
-                              key="spam"
-                              isDisabled={!canModerateTickets}
-                              onPress={
-                                isSpam
-                                  ? handleUnmarkSpam
-                                  : () => setIsMarkSpamModalOpen(true)
-                              }
-                            >
-                              {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
-                            </DropdownItem>
-                          </DropdownSection>
+                            </DropdownSection>
 
-                          {/* Danger Zone */}
-                          <DropdownSection>
-                            <DropdownItem
-                              key="delete"
-                              className="text-danger"
-                              onPress={handleDeleteTicket}
-                              isDisabled={!canDeleteTickets}
-                            >
-                              Delete
-                            </DropdownItem>
-                          </DropdownSection>
-                        </DropdownMenu>
-                      </DropdownPopover>
-                    </Dropdown>
-                  </PermissionGuard>
+                            {/* Danger Zone */}
+                            <DropdownSection>
+                              <DropdownItem
+                                key="delete"
+                                className="text-danger"
+                                onPress={handleDeleteTicket}
+                                isDisabled={!canDeleteTickets}
+                              >
+                                Delete
+                              </DropdownItem>
+                            </DropdownSection>
+                          </DropdownMenu>
+                        </DropdownPopover>
+                      </Dropdown>
+                    </PermissionGuard>
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-2">
-                <InlineEditable
-                  variant="heading"
-                  value={ticket.subject ?? ''}
-                  onSave={next => handleInlineSave('subject', next)}
-                  isSaving={updateTicketMutation.isPending}
-                  canEdit={!actionsDisabled && canWriteTicket}
-                  emptyLabel="Untitled ticket"
-                />
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {/* Tenant then organisation, as everywhere a ticket shows both. */}
-                <ScopePath
-                  tenantName={companyName}
-                  organisationName={organisationName}
-                />
-                {requesterName && (
-                  <span className="border-l border-default-200 pl-2 text-sm text-default-600">
-                    {requesterName}
-                  </span>
-                )}
-                <StatusBadge color={statusConfig.color}>
-                  {statusConfig.label}
-                </StatusBadge>
-                <StatusBadge color={priorityConfig.color}>
-                  {priorityConfig.label}
-                </StatusBadge>
-                <DeadlineChip deadline={ticket.deadline} />
-                {isPortal && <StatusBadge color="primary">Portal</StatusBadge>}
-                {/* Exceptional states with no control of their own on this page. */}
-                {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
-                {ticket.isProblem && (
-                  <StatusBadge color="danger">Problem</StatusBadge>
-                )}
-                {ticket.isPublishedAsIdea && (
-                  <StatusBadge color="success">
-                    Published to Ideas Forum
+                <div className="mt-2">
+                  <InlineEditable
+                    variant="heading"
+                    value={ticket.subject ?? ''}
+                    onSave={next => handleInlineSave('subject', next)}
+                    isSaving={updateTicketMutation.isPending}
+                    canEdit={!actionsDisabled && canWriteTicket}
+                    emptyLabel="Untitled ticket"
+                  />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {/* Tenant then organisation, as everywhere a ticket shows both. */}
+                  <ScopePath
+                    tenantName={companyName}
+                    organisationName={organisationName}
+                  />
+                  {requesterName && (
+                    <span className="border-l border-default-200 pl-2 text-sm text-default-600">
+                      {requesterName}
+                    </span>
+                  )}
+                  <StatusBadge color={statusConfig.color}>
+                    {statusConfig.label}
                   </StatusBadge>
+                  <StatusBadge color={priorityConfig.color}>
+                    {priorityConfig.label}
+                  </StatusBadge>
+                  <DeadlineChip deadline={ticket.deadline} />
+                  {isPortal && (
+                    <StatusBadge color="primary">Portal</StatusBadge>
+                  )}
+                  {/* Exceptional states with no control of their own on this page. */}
+                  {isSpam && <StatusBadge color="warning">Spam</StatusBadge>}
+                  {ticket.isProblem && (
+                    <StatusBadge color="danger">Problem</StatusBadge>
+                  )}
+                  {ticket.isPublishedAsIdea && (
+                    <StatusBadge color="success">
+                      Published to Ideas Forum
+                    </StatusBadge>
+                  )}
+                </div>
+                {consignmentLink && (
+                  <p className="mt-2 text-sm text-default-600">
+                    Consignment{' '}
+                    <span className="text-base font-semibold text-foreground">
+                      {consignmentLink.displayReference ||
+                        consignmentLink.entityId}
+                    </span>
+                  </p>
                 )}
-              </div>
-              {consignmentLink && (
-                <p className="mt-2 text-sm text-default-600">
-                  Consignment{' '}
-                  <span className="text-base font-semibold text-foreground">
-                    {consignmentLink.displayReference ||
-                      consignmentLink.entityId}
-                  </span>
-                </p>
-              )}
-            </Box>
+              </Box>
 
-            {/* Description */}
-            <Box className={NO_EMPTY_HEADER}>
-              <InlineEditable
-                variant="richText"
-                value={ticket.description ?? ''}
-                onSave={next => handleInlineSave('description', next)}
-                isSaving={updateTicketMutation.isPending}
-                canEdit={!actionsDisabled && canWriteTicket && !isPortal}
-                isPlainText={isPortal}
-                emptyLabel="No description yet."
-              />
+              {/* Description */}
+              <Box className={NO_EMPTY_HEADER}>
+                <InlineEditable
+                  variant="richText"
+                  value={ticket.description ?? ''}
+                  onSave={next => handleInlineSave('description', next)}
+                  isSaving={updateTicketMutation.isPending}
+                  canEdit={!actionsDisabled && canWriteTicket && !isPortal}
+                  isPlainText={isPortal}
+                  emptyLabel="No description yet."
+                />
 
-              {/*
+                {/*
                 Attachments sit with the description: they are what the
                 requester sent for us to look at, so they belong with the ask.
                 One quiet line, not a card of its own, so the conversation is
                 on the first screen.
               */}
-              <div className="mt-4 border-t border-divider pt-3">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold">
-                    Attachments
-                    <span className="ml-1.5 font-normal text-default-400">
-                      {attachmentsLoading
-                        ? 'Loading...'
-                        : attachments && attachments.length > 0
-                          ? attachments.length
-                          : 'None yet'}
-                    </span>
-                  </h3>
-                  {!showAttachments && (
-                    <PermissionGuard
-                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                      fallback={null}
-                    >
+                <div className="mt-4 border-t border-divider pt-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold">
+                      Attachments
+                      <span className="ml-1.5 font-normal text-default-400">
+                        {attachmentsLoading
+                          ? 'Loading...'
+                          : attachments && attachments.length > 0
+                            ? attachments.length
+                            : 'None yet'}
+                      </span>
+                    </h3>
+                    {!showAttachments && (
+                      <PermissionGuard
+                        requiredPermissions={[HelpdeskPermissions.TicketWrite]}
+                        fallback={null}
+                      >
+                        <BaseButton
+                          size="sm"
+                          variant="bordered"
+                          color="light"
+                          className="helpdesk-print-hide"
+                          onPress={() => setShowAttachments(true)}
+                          icon={<Icon name="plus" className="h-4 w-4" />}
+                        >
+                          Add attachment
+                        </BaseButton>
+                      </PermissionGuard>
+                    )}
+                  </div>
+                  {attachments && attachments.length > 0 && (
+                    <div className="mt-2">
+                      <AttachmentList
+                        attachments={attachments}
+                        onDelete={handleDeleteAttachment}
+                      />
+                    </div>
+                  )}
+                  {showAttachments && (
+                    <div className="mt-2 space-y-2 helpdesk-print-hide">
+                      <FileUploadZone
+                        onFilesSelected={handleFilesSelected}
+                        progress={uploadProgress}
+                      />
                       <BaseButton
                         size="sm"
-                        variant="bordered"
-                        color="light"
-                        className="helpdesk-print-hide"
-                        onPress={() => setShowAttachments(true)}
-                        icon={<Icon name="plus" className="h-4 w-4" />}
+                        variant="ghost"
+                        onPress={() => setShowAttachments(false)}
                       >
-                        Add attachment
+                        Cancel
                       </BaseButton>
-                    </PermissionGuard>
+                    </div>
                   )}
                 </div>
-                {attachments && attachments.length > 0 && (
-                  <div className="mt-2">
-                    <AttachmentList
-                      attachments={attachments}
-                      onDelete={handleDeleteAttachment}
-                    />
-                  </div>
-                )}
-                {showAttachments && (
-                  <div className="mt-2 space-y-2 helpdesk-print-hide">
-                    <FileUploadZone
-                      onFilesSelected={handleFilesSelected}
-                      progress={uploadProgress}
-                    />
-                    <BaseButton
-                      size="sm"
-                      variant="ghost"
-                      onPress={() => setShowAttachments(false)}
-                    >
-                      Cancel
-                    </BaseButton>
-                  </div>
-                )}
-              </div>
-            </Box>
+              </Box>
 
-            {/* Conversation: the thread, with the composer at its foot. */}
-            <Box className={NO_EMPTY_HEADER}>
-              <h3 className="mb-3 text-base font-semibold">Conversation</h3>
-              <div className="space-y-4">
-                <CommentThread
-                  comments={comments}
-                  plainTextAuthorId={isPortal ? ticket.requesterId : undefined}
-                  isLoading={commentsLoading}
-                  ticketId={id}
-                />
-                <div className="border-t border-divider pt-4 helpdesk-print-hide">
-                  <ReplyEditor
-                    ticketId={id ?? ''}
-                    categoryId={ticket.categoryId ?? undefined}
-                    email={{
-                      recipient: ticket.emailRecipient ?? null,
-                      onEditSignature: () => setIsSignatureOpen(true),
-                    }}
+              {/* Conversation: the thread, with the composer at its foot. */}
+              <Box className={NO_EMPTY_HEADER}>
+                <h3 className="mb-3 text-base font-semibold">Conversation</h3>
+                <div className="space-y-4">
+                  <CommentThread
+                    comments={comments}
+                    plainTextAuthorId={
+                      isPortal ? ticket.requesterId : undefined
+                    }
+                    isLoading={commentsLoading}
+                    ticketId={id}
                   />
+                  <div className="border-t border-divider pt-4 helpdesk-print-hide">
+                    <ReplyEditor
+                      ticketId={id ?? ''}
+                      categoryId={ticket.categoryId ?? undefined}
+                      email={{
+                        recipient: ticket.emailRecipient ?? null,
+                        onEditSignature: () => setIsSignatureOpen(true),
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </Box>
+              </Box>
 
-            {/*
+              {/*
               Subtasks, worked from the ticket that owns them.
 
               This was a headingless list that appeared only when children
@@ -1270,62 +1283,62 @@ export const TicketDetail: FC<TicketDetailProps> = ({
               one, and a permanent "No subtasks yet" panel is furniture on every
               ticket describing the absence of a feature they do not use.
             */}
-            {SUBTASKS_ENABLED && children && children.length > 0 && (
-              <Box className={NO_EMPTY_HEADER}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">
-                    Subtasks
-                    {children && children.length > 0 && (
-                      <span className="ml-1.5 font-normal text-default-400">
-                        {children.length}
-                      </span>
-                    )}
-                  </h3>
-                  <PermissionGuard
-                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setIsAddSubtaskModalOpen(true)}
-                      disabled={actionsDisabled}
-                      className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+              {SUBTASKS_ENABLED && children && children.length > 0 && (
+                <Box className={NO_EMPTY_HEADER}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">
+                      Subtasks
+                      {children && children.length > 0 && (
+                        <span className="ml-1.5 font-normal text-default-400">
+                          {children.length}
+                        </span>
+                      )}
+                    </h3>
+                    <PermissionGuard
+                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     >
-                      + Add subtask
-                    </button>
-                  </PermissionGuard>
-                </div>
-
-                {children && children.length > 0 ? (
-                  <div className="divide-default-200 divide-y">
-                    {children.map((child: any) => {
-                      const childStatus = getStatusConfig(
-                        child.status as TicketStatus,
-                      );
-                      return (
-                        <button
-                          type="button"
-                          key={child.id}
-                          onClick={() => setOpenSubtaskId(child.id ?? '')}
-                          className="hover:bg-default-50 flex w-full items-center gap-3 rounded px-1 py-2 text-left"
-                        >
-                          <StatusBadge color={childStatus.color}>
-                            {childStatus.label}
-                          </StatusBadge>
-                          <span className="min-w-0 flex-1 truncate text-sm">
-                            {child.subject}
-                          </span>
-                          <span className="shrink-0 text-xs text-default-400">
-                            {child.assigneeName ?? 'Unassigned'}
-                          </span>
-                        </button>
-                      );
-                    })}
+                      <button
+                        type="button"
+                        onClick={() => setIsAddSubtaskModalOpen(true)}
+                        disabled={actionsDisabled}
+                        className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+                      >
+                        + Add subtask
+                      </button>
+                    </PermissionGuard>
                   </div>
-                ) : null}
-              </Box>
-            )}
 
-            {/*
+                  {children && children.length > 0 ? (
+                    <div className="divide-default-200 divide-y">
+                      {children.map((child: any) => {
+                        const childStatus = getStatusConfig(
+                          child.status as TicketStatus,
+                        );
+                        return (
+                          <button
+                            type="button"
+                            key={child.id}
+                            onClick={() => setOpenSubtaskId(child.id ?? '')}
+                            className="hover:bg-default-50 flex w-full items-center gap-3 rounded px-1 py-2 text-left"
+                          >
+                            <StatusBadge color={childStatus.color}>
+                              {childStatus.label}
+                            </StatusBadge>
+                            <span className="min-w-0 flex-1 truncate text-sm">
+                              {child.subject}
+                            </span>
+                            <span className="shrink-0 text-xs text-default-400">
+                              {child.assigneeName ?? 'Unassigned'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </Box>
+              )}
+
+              {/*
               Linked work items.
 
               Replaces the old "Add Parent": a relationship between two tickets
@@ -1338,217 +1351,218 @@ export const TicketDetail: FC<TicketDetailProps> = ({
               directional, so the same row reads "Blocks" on one ticket and
               "Is blocked by" on the other; see describeLink.
             */}
-            {TICKET_LINKS_ENABLED && (
-              <Box className={NO_EMPTY_HEADER}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">
-                    Linked Work Items
-                    {ticketLinks && ticketLinks.length > 0 && (
-                      <span className="ml-1.5 font-normal text-default-400">
-                        {ticketLinks.length}
-                      </span>
-                    )}
-                  </h3>
-                  <PermissionGuard
-                    requiredPermissions={[HelpdeskPermissions.TicketWrite]}
-                  >
-                    <button
-                      type="button"
-                      onClick={handleLink}
-                      disabled={actionsDisabled}
-                      className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+              {TICKET_LINKS_ENABLED && (
+                <Box className={NO_EMPTY_HEADER}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">
+                      Linked Work Items
+                      {ticketLinks && ticketLinks.length > 0 && (
+                        <span className="ml-1.5 font-normal text-default-400">
+                          {ticketLinks.length}
+                        </span>
+                      )}
+                    </h3>
+                    <PermissionGuard
+                      requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                     >
-                      + Link ticket
-                    </button>
-                  </PermissionGuard>
-                </div>
-
-                {ticketLinks && ticketLinks.length > 0 ? (
-                  <div className="divide-default-200 divide-y">
-                    {ticketLinks.map(link => {
-                      const { label, otherTicketId, otherSubject } =
-                        describeLink(link, id ?? '');
-                      return (
-                        <div
-                          key={link.id}
-                          className="flex items-center gap-3 py-2"
-                        >
-                          <span className="w-28 shrink-0 text-xs text-default-500">
-                            {label}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              navigate(`${basePath}/${otherTicketId}`)
-                            }
-                            className="min-w-0 flex-1 truncate text-left text-sm text-blue-600 hover:underline"
-                          >
-                            {otherSubject || `#${otherTicketId?.slice(0, 8)}`}
-                          </button>
-                          <PermissionGuard
-                            requiredPermissions={[
-                              HelpdeskPermissions.TicketWrite,
-                            ]}
-                          >
-                            <BaseButton
-                              variant="link"
-                              size="sm"
-                              className="p-0 h-auto min-h-0 shrink-0 text-default-400"
-                              onPress={() =>
-                                id &&
-                                link.id &&
-                                unlinkTicketsMutation.mutate({
-                                  ticketId: id,
-                                  linkId: link.id,
-                                })
-                              }
-                            >
-                              Remove
-                            </BaseButton>
-                          </PermissionGuard>
-                        </div>
-                      );
-                    })}
+                      <button
+                        type="button"
+                        onClick={handleLink}
+                        disabled={actionsDisabled}
+                        className="text-sm text-blue-600 hover:underline disabled:opacity-40"
+                      >
+                        + Link ticket
+                      </button>
+                    </PermissionGuard>
                   </div>
-                ) : (
-                  <p className="text-sm text-default-400 italic">
-                    No linked tickets.
-                  </p>
-                )}
+
+                  {ticketLinks && ticketLinks.length > 0 ? (
+                    <div className="divide-default-200 divide-y">
+                      {ticketLinks.map(link => {
+                        const { label, otherTicketId, otherSubject } =
+                          describeLink(link, id ?? '');
+                        return (
+                          <div
+                            key={link.id}
+                            className="flex items-center gap-3 py-2"
+                          >
+                            <span className="w-28 shrink-0 text-xs text-default-500">
+                              {label}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(`${basePath}/${otherTicketId}`)
+                              }
+                              className="min-w-0 flex-1 truncate text-left text-sm text-blue-600 hover:underline"
+                            >
+                              {otherSubject || `#${otherTicketId?.slice(0, 8)}`}
+                            </button>
+                            <PermissionGuard
+                              requiredPermissions={[
+                                HelpdeskPermissions.TicketWrite,
+                              ]}
+                            >
+                              <BaseButton
+                                variant="link"
+                                size="sm"
+                                className="p-0 h-auto min-h-0 shrink-0 text-default-400"
+                                onPress={() =>
+                                  id &&
+                                  link.id &&
+                                  unlinkTicketsMutation.mutate({
+                                    ticketId: id,
+                                    linkId: link.id,
+                                  })
+                                }
+                              >
+                                Remove
+                              </BaseButton>
+                            </PermissionGuard>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-default-400 italic">
+                      No linked tickets.
+                    </p>
+                  )}
+                </Box>
+              )}
+
+              {/* Who changed what, collapsed until asked for. */}
+              <TicketHistory ticketId={id ?? ''} tenantId={ticket.tenantId} />
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6 helpdesk-print-hide">
+              {/* Ticket Info */}
+              <Box className={NO_EMPTY_HEADER}>
+                <TicketDetailSidebar
+                  ticket={ticket}
+                  onUpdate={handleUpdate}
+                  isUpdating={updateTicketMutation.isPending}
+                  isSubscribed={isSubscribed}
+                  isSubscribeLoading={isSubscribeLoading}
+                  onSubscribeToggle={handleSubscribeToggle}
+                />
               </Box>
-            )}
 
-            {/* Who changed what, collapsed until asked for. */}
-            <TicketHistory ticketId={id ?? ''} tenantId={ticket.tenantId} />
-          </div>
+              {/* Time tracking is switched off (TIME_TRACKING_ENABLED). */}
+              {TIME_TRACKING_ENABLED && (
+                <TimeTracker
+                  ticketId={id ?? ''}
+                  timeTracking={timeTracking}
+                  onAddManualEntry={handleAddManualEntry}
+                  onDeleteEntry={handleDeleteTimeEntry}
+                />
+              )}
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6 helpdesk-print-hide">
-            {/* Ticket Info */}
-            <Box className={NO_EMPTY_HEADER}>
-              <TicketDetailSidebar
-                ticket={ticket}
-                onUpdate={handleUpdate}
-                isUpdating={updateTicketMutation.isPending}
-                isSubscribed={isSubscribed}
-                isSubscribeLoading={isSubscribeLoading}
-                onSubscribeToggle={handleSubscribeToggle}
-              />
-            </Box>
-
-            {/* Time tracking is switched off (TIME_TRACKING_ENABLED). */}
-            {TIME_TRACKING_ENABLED && (
-              <TimeTracker
-                ticketId={id ?? ''}
-                timeTracking={timeTracking}
-                onAddManualEntry={handleAddManualEntry}
-                onDeleteEntry={handleDeleteTimeEntry}
-              />
-            )}
-
-            {/* Approvals are switched off (APPROVALS_ENABLED), and the panel
+              {/* Approvals are switched off (APPROVALS_ENABLED), and the panel
                 fetches only once mounted. */}
-            {APPROVALS_ENABLED && <TicketApprovalPanel ticketId={id ?? ''} />}
+              {APPROVALS_ENABLED && <TicketApprovalPanel ticketId={id ?? ''} />}
 
-            {/* CSAT Widget */}
-            <CSATWidget
-              ticketId={id ?? ''}
-              ticketStatus={ticket.status as TicketStatus}
-            />
+              {/* CSAT Widget */}
+              <CSATWidget
+                ticketId={id ?? ''}
+                ticketStatus={ticket.status as TicketStatus}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Wave 3 Modals */}
-        <EditTicketModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          ticketId={id ?? ''}
-          initialSubject={ticket.subject ?? ''}
-          initialDescription={ticket.description}
-        />
-        <ForwardTicketModal
-          isOpen={isForwardModalOpen}
-          onClose={() => setIsForwardModalOpen(false)}
-          ticketId={id ?? ''}
-          defaultSubject={`Fwd: ${ticket.subject ?? ''}`}
-        />
-        <ForwardToProviderModal
-          isOpen={isForwardToProviderOpen}
-          onClose={() => setIsForwardToProviderOpen(false)}
-          ticketId={id ?? ''}
-          onForwarded={() => navigate(basePath)}
-        />
-        <DuplicateTicketModal
-          isOpen={isDuplicateModalOpen}
-          onClose={() => setIsDuplicateModalOpen(false)}
-          onConfirm={handleDuplicateConfirm}
-          isLoading={duplicateTicketMutation.isPending}
-        />
-        <ConvertToReplyModal
-          isOpen={isConvertToReplyModalOpen}
-          onClose={() => setIsConvertToReplyModalOpen(false)}
-          onConfirm={handleConvertToReplyConfirm}
-          isLoading={convertToReplyMutation.isPending}
-          currentTicketId={id ?? ''}
-        />
-        {SUBTASKS_ENABLED && (
-          <>
-            <SubtaskModal
-              isOpen={!!openSubtaskId}
-              subtaskId={openSubtaskId}
-              onClose={() => setOpenSubtaskId('')}
-            />
-            <AddSubtaskModal
-              isOpen={isAddSubtaskModalOpen}
-              parentTicketId={id ?? ''}
-              onClose={() => setIsAddSubtaskModalOpen(false)}
-              onSubmit={handleAddSubtaskSubmit}
-              isLoading={createSubtaskMutation.isPending}
-            />
-          </>
-        )}
-
-        <MergeTicketModal
-          isOpen={isMergeModalOpen}
-          onClose={() => setIsMergeModalOpen(false)}
-          onConfirm={handleMergeConfirm}
-          currentTicketId={id ?? ''}
-        />
-        {TICKET_LINKS_ENABLED && (
-          <LinkTicketModal
-            isOpen={isLinkModalOpen}
-            onClose={() => setIsLinkModalOpen(false)}
-            onConfirm={handleLinkConfirm}
+          {/* Wave 3 Modals */}
+          <EditTicketModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            ticketId={id ?? ''}
+            initialSubject={ticket.subject ?? ''}
+            initialDescription={ticket.description}
+          />
+          <ForwardTicketModal
+            isOpen={isForwardModalOpen}
+            onClose={() => setIsForwardModalOpen(false)}
+            ticketId={id ?? ''}
+            defaultSubject={`Fwd: ${ticket.subject ?? ''}`}
+          />
+          <ForwardToProviderModal
+            isOpen={isForwardToProviderOpen}
+            onClose={() => setIsForwardToProviderOpen(false)}
+            ticketId={id ?? ''}
+            onForwarded={() => navigate(basePath)}
+          />
+          <DuplicateTicketModal
+            isOpen={isDuplicateModalOpen}
+            onClose={() => setIsDuplicateModalOpen(false)}
+            onConfirm={handleDuplicateConfirm}
+            isLoading={duplicateTicketMutation.isPending}
+          />
+          <ConvertToReplyModal
+            isOpen={isConvertToReplyModalOpen}
+            onClose={() => setIsConvertToReplyModalOpen(false)}
+            onConfirm={handleConvertToReplyConfirm}
+            isLoading={convertToReplyMutation.isPending}
             currentTicketId={id ?? ''}
           />
-        )}
-        <AiAssistantModal
-          isOpen={isAiAssistantOpen}
-          onClose={() => setIsAiAssistantOpen(false)}
-          ticketId={id ?? ''}
-        />
-        <EditSignatureModal
-          isOpen={isSignatureOpen}
-          onClose={() => {
-            setIsSignatureOpen(false);
-            clearConnectResult();
-          }}
-          recipient={ticket.emailRecipient}
-          subject={`Re: [#${ticket.id?.substring(0, 8)}] ${ticket.subject ?? ''}`}
-          connectError={
-            connectResult && !connectResult.ok
-              ? (connectResult.reason ?? 'Failed')
-              : undefined
-          }
-        />
-        {confirmDialog}
-        <MarkSpamModal
-          isOpen={isMarkSpamModalOpen}
-          onClose={() => setIsMarkSpamModalOpen(false)}
-          onConfirm={handleMarkSpamConfirm}
-          isLoading={markSpamMutation.isPending}
-        />
-      </div>
+          {SUBTASKS_ENABLED && (
+            <>
+              <SubtaskModal
+                isOpen={!!openSubtaskId}
+                subtaskId={openSubtaskId}
+                onClose={() => setOpenSubtaskId('')}
+              />
+              <AddSubtaskModal
+                isOpen={isAddSubtaskModalOpen}
+                parentTicketId={id ?? ''}
+                onClose={() => setIsAddSubtaskModalOpen(false)}
+                onSubmit={handleAddSubtaskSubmit}
+                isLoading={createSubtaskMutation.isPending}
+              />
+            </>
+          )}
+
+          <MergeTicketModal
+            isOpen={isMergeModalOpen}
+            onClose={() => setIsMergeModalOpen(false)}
+            onConfirm={handleMergeConfirm}
+            currentTicketId={id ?? ''}
+          />
+          {TICKET_LINKS_ENABLED && (
+            <LinkTicketModal
+              isOpen={isLinkModalOpen}
+              onClose={() => setIsLinkModalOpen(false)}
+              onConfirm={handleLinkConfirm}
+              currentTicketId={id ?? ''}
+            />
+          )}
+          <AiAssistantModal
+            isOpen={isAiAssistantOpen}
+            onClose={() => setIsAiAssistantOpen(false)}
+            ticketId={id ?? ''}
+          />
+          <EditSignatureModal
+            isOpen={isSignatureOpen}
+            onClose={() => {
+              setIsSignatureOpen(false);
+              clearConnectResult();
+            }}
+            recipient={ticket.emailRecipient}
+            subject={`Re: [#${ticket.id?.substring(0, 8)}] ${ticket.subject ?? ''}`}
+            connectError={
+              connectResult && !connectResult.ok
+                ? (connectResult.reason ?? 'Failed')
+                : undefined
+            }
+          />
+          {confirmDialog}
+          <MarkSpamModal
+            isOpen={isMarkSpamModalOpen}
+            onClose={() => setIsMarkSpamModalOpen(false)}
+            onConfirm={handleMarkSpamConfirm}
+            isLoading={markSpamMutation.isPending}
+          />
+        </div>
+      </PageBody>
     </>
   );
 };
