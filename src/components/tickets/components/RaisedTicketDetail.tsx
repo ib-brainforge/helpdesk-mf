@@ -24,7 +24,11 @@ import { useUserEnrichment } from '@/hooks/useUserEnrichment';
 import type { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, BaseTextarea, Box } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-import { EmptyState, usePageTitle } from '@brainforgeau/components/page';
+import {
+  EmptyState,
+  PageBody,
+  usePageTitle,
+} from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { toast } from '@heroui/react';
@@ -95,7 +99,7 @@ export const RaisedTicketDetail: FC<{ ticketId: string }> = ({ ticketId }) => {
       (error as { response?: { status?: number } } | null)?.response?.status ===
         404;
     return (
-      <div className="flex w-full flex-1 items-center justify-center p-6">
+      <PageBody className="items-center justify-center">
         <EmptyState
           title={
             notFound
@@ -113,7 +117,7 @@ export const RaisedTicketDetail: FC<{ ticketId: string }> = ({ ticketId }) => {
             </BaseButton>
           }
         />
-      </div>
+      </PageBody>
     );
   }
 
@@ -121,93 +125,99 @@ export const RaisedTicketDetail: FC<{ ticketId: string }> = ({ ticketId }) => {
   const priority = getPriorityConfig(ticket.priority as TicketPriority);
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-6 md:px-6">
-      <div>
-        <BaseButton
-          variant="light"
-          size="sm"
-          onPress={back}
-          icon={<Icon name="arrow-left" className="h-4 w-4" />}
-        >
-          Tickets
-        </BaseButton>
-      </div>
-
-      <Box>
-        <h1 className="text-xl font-semibold">
-          {ticket.subject || 'Untitled ticket'}
-        </h1>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-default-600">
-          <StatusBadge color={status.color}>{status.label}</StatusBadge>
-          <StatusBadge color={priority.color}>{priority.label}</StatusBadge>
-          {/* The projection does not say how far up; any handler here is above. */}
-          <HandledByBadge level={1} tenantName={handlerName} />
-          <span>Raised {formatDateTime(ticket.createdAt, { timezone })}</span>
-          {ticket.forwardedFromTenantId && <span>Forwarded by your team</span>}
+    <PageBody>
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+        <div>
+          <BaseButton
+            variant="light"
+            size="sm"
+            onPress={back}
+            icon={<Icon name="arrow-left" className="h-4 w-4" />}
+          >
+            Tickets
+          </BaseButton>
         </div>
-        {ticket.description && (
-          <div className="mt-4">
-            <TicketDescriptionContent value={ticket.description} />
-          </div>
-        )}
-      </Box>
 
-      <Box>
-        <h2 className="mb-3 text-base font-semibold">Replies</h2>
-        {commentsLoading ? (
-          <p className="text-sm text-default-500">Loading replies...</p>
-        ) : comments.length === 0 ? (
-          <p className="text-sm text-default-500">
-            No replies yet. Answers from the team handling it appear here.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {comments.map(comment => (
-              <li
-                key={comment.id}
-                className="border-default-200 rounded-md border p-3"
-              >
-                <div className="mb-2 flex items-center justify-between gap-3 text-xs text-default-500">
-                  <UserCell
-                    userInfo={
-                      comment.authorId ? userMap[comment.authorId] : undefined
-                    }
-                    avatarSize="xs"
+        <Box>
+          <h1 className="text-xl font-semibold">
+            {ticket.subject || 'Untitled ticket'}
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-default-600">
+            <StatusBadge color={status.color}>{status.label}</StatusBadge>
+            <StatusBadge color={priority.color}>{priority.label}</StatusBadge>
+            {/* The projection does not say how far up; any handler here is above. */}
+            <HandledByBadge level={1} tenantName={handlerName} />
+            <span>Raised {formatDateTime(ticket.createdAt, { timezone })}</span>
+            {ticket.forwardedFromTenantId && (
+              <span>Forwarded by your team</span>
+            )}
+          </div>
+          {ticket.description && (
+            <div className="mt-4">
+              <TicketDescriptionContent value={ticket.description} />
+            </div>
+          )}
+        </Box>
+
+        <Box>
+          <h2 className="mb-3 text-base font-semibold">Replies</h2>
+          {commentsLoading ? (
+            <p className="text-sm text-default-500">Loading replies...</p>
+          ) : comments.length === 0 ? (
+            <p className="text-sm text-default-500">
+              No replies yet. Answers from the team handling it appear here.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {comments.map(comment => (
+                <li
+                  key={comment.id}
+                  className="border-default-200 rounded-md border p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs text-default-500">
+                    <UserCell
+                      userInfo={
+                        comment.authorId ? userMap[comment.authorId] : undefined
+                      }
+                      avatarSize="xs"
+                    />
+                    <span>
+                      {formatDateTime(comment.createdAt, { timezone })}
+                    </span>
+                  </div>
+                  <div
+                    className="prose max-w-none text-sm"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitised with DOMPurify
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(comment.body ?? ''),
+                    }}
                   />
-                  <span>{formatDateTime(comment.createdAt, { timezone })}</span>
-                </div>
-                <div
-                  className="prose max-w-none text-sm"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitised with DOMPurify
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(comment.body ?? ''),
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="border-default-200 mt-4 flex flex-col gap-2 border-t pt-4">
-          <BaseTextarea
-            label="Reply"
-            labelPlacement="outside"
-            placeholder="Write a reply to the team handling this ticket"
-            value={draft}
-            onValueChange={setDraft}
-            minRows={3}
-            isDisabled={reply.isPending}
-          />
-          <div className="flex justify-end">
-            <BaseButton
-              color="primary"
-              onPress={sendReply}
-              isDisabled={!draft.trim() || reply.isPending}
-            >
-              {reply.isPending ? 'Sending...' : 'Send reply'}
-            </BaseButton>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="border-default-200 mt-4 flex flex-col gap-2 border-t pt-4">
+            <BaseTextarea
+              label="Reply"
+              labelPlacement="outside"
+              placeholder="Write a reply to the team handling this ticket"
+              value={draft}
+              onValueChange={setDraft}
+              minRows={3}
+              isDisabled={reply.isPending}
+            />
+            <div className="flex justify-end">
+              <BaseButton
+                color="primary"
+                onPress={sendReply}
+                isDisabled={!draft.trim() || reply.isPending}
+              >
+                {reply.isPending ? 'Sending...' : 'Send reply'}
+              </BaseButton>
+            </div>
           </div>
-        </div>
-      </Box>
-    </div>
+        </Box>
+      </div>
+    </PageBody>
   );
 };

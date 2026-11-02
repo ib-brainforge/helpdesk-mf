@@ -58,7 +58,7 @@ function SatisfactionSurveyPage() {
   if (!token) {
     return (
       <>
-        <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50">
+        <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50 p-5">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
@@ -82,7 +82,7 @@ function SatisfactionSurveyPage() {
   if (submitted) {
     return (
       <>
-        <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50">
+        <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50 p-5">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
@@ -108,7 +108,7 @@ function SatisfactionSurveyPage() {
 
     return (
       <>
-        <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50">
+        <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50 p-5">
           <BaseCard className="w-full max-w-md p-8">
             <div className="text-center">
               <Icon
@@ -132,7 +132,7 @@ function SatisfactionSurveyPage() {
 
   return (
     <>
-      <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50 p-4">
+      <div className="flex min-h-[calc(100dvh-var(--bf-shell-top-offset,0px))] items-center justify-center bg-default-50 p-5">
         <BaseCard className="w-full max-w-lg">
           <div className="mb-6 text-center">
             <h1 className="mb-2 text-2xl font-semibold">

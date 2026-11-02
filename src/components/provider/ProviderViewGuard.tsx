@@ -56,7 +56,7 @@ export const ProviderViewGuard: FC<ProviderViewGuardProps> = ({
       {isLoading ? null : permitted ? (
         children
       ) : (
-        <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
+        <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-5">
           <AccessDenied
             title="You don't have access to this page"
             message="Your role doesn't include the permission this page needs. Ask a Helpdesk admin if you think you should have it."

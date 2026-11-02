@@ -12,7 +12,11 @@ import { useIdeasForum } from '@/components/tickets/hooks/useTickets';
 import { PageSpinner } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
-import { EmptyState, usePageTitle } from '@brainforgeau/components/page';
+import {
+  EmptyState,
+  PageBody,
+  PageHeader,
+} from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import {
   useTimezone,
@@ -24,7 +28,6 @@ import { useState } from 'react';
 const PAGE_SIZE = 20;
 
 function IdeasForumPage() {
-  usePageTitle('Ideas Forum');
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const timezone = useTimezone();
@@ -34,15 +37,12 @@ function IdeasForumPage() {
   const totalPages = Math.ceil((data?.totalCount ?? 0) / PAGE_SIZE);
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Ideas Forum</h1>
-          <p className="text-sm text-default-500 mt-1">
-            Tickets published as ideas — {data?.totalCount ?? 0} total
-          </p>
-        </div>
-      </div>
+    <PageBody className="gap-6">
+      <PageHeader title="Ideas Forum" breadcrumbsKey="ideas.list">
+        <PageHeader.Meta>
+          Tickets published as ideas — {data?.totalCount ?? 0} total
+        </PageHeader.Meta>
+      </PageHeader>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
@@ -120,7 +120,7 @@ function IdeasForumPage() {
           )}
         </div>
       )}
-    </div>
+    </PageBody>
   );
 }
 

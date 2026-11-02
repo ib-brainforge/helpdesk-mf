@@ -1,7 +1,7 @@
 import { usePendingApprovals } from '@/components/approvals';
 import { StatusBadge } from '@/components/shared';
 import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
-import { usePageTitle } from '@brainforgeau/components/page';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { Card, CardContent } from '@heroui/react';
@@ -11,7 +11,6 @@ import { useCallback } from 'react';
 // REVIEW: Dashboard showing pending approvals for current user
 
 function PendingApprovalsPage() {
-  usePageTitle('Pending Approvals');
   const navigate = useNavigate();
   const timezone = useTimezone();
   const { items, isLoading, refetch } = usePendingApprovals();
@@ -26,20 +25,22 @@ function PendingApprovalsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
-          <p className="text-default-600">Loading pending approvals...</p>
+      <PageBody>
+        <div className="flex h-96 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
+            <p className="text-default-600">Loading pending approvals...</p>
+          </div>
         </div>
-      </div>
+      </PageBody>
     );
   }
 
   return (
-    <>
-      <div className="mb-6">
-        <div className="mb-2 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Pending Approvals</h1>
+    <PageBody>
+      <PageHeader title="Pending Approvals" breadcrumbsKey="approvals.list">
+        <PageHeader.Meta>Approvals waiting for your decision.</PageHeader.Meta>
+        <PageHeader.Actions>
           <BaseButton
             size="sm"
             variant="light"
@@ -48,11 +49,8 @@ function PendingApprovalsPage() {
           >
             Refresh
           </BaseButton>
-        </div>
-        <p className="text-sm text-default-600">
-          Approvals waiting for your decision.
-        </p>
-      </div>
+        </PageHeader.Actions>
+      </PageHeader>
 
       {items.length === 0 ? (
         <BaseCard>
@@ -111,7 +109,7 @@ function PendingApprovalsPage() {
           ))}
         </div>
       )}
-    </>
+    </PageBody>
   );
 }
 

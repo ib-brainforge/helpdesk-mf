@@ -116,10 +116,10 @@ export const RouteGuard: FC<{ pathname: string; children: ReactNode }> = ({
   if (!rule) return <>{children}</>;
   if (isLoading) return null;
   if (!hasAnyPermission(rule.anyOf)) {
-    // Centred in the page area: the outlet sits in a flex row, so on its own
+    // Centred in the page area: the outlet is a flex column, so on its own
     // the panel hugged the left edge.
     return (
-      <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-6">
+      <div className="flex min-h-[60vh] w-full flex-1 items-center justify-center p-5">
         <AccessDenied
           title="You don't have access to this page"
           message="Your role doesn't include the permission this page needs. Ask a Helpdesk admin if you think you should have it."
