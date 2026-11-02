@@ -11,7 +11,7 @@
     "start": "modern start",
     "serve": "modern serve",
     "new": "modern new",
-    "lint": "biome check",
+    "lint": "biome check && bf-check-layout src",
     "test": "vitest run",
     "prepare": "simple-git-hooks",
     "upgrade": "modern upgrade",
