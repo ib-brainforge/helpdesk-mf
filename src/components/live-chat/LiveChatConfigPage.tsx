@@ -483,6 +483,7 @@ function LiveChatPage() {
       <PageHeader
         title="Live Chat Widget"
         breadcrumbsKey="configuration.live-chat"
+        helpKey="helpdesk.configuration.live-chat"
       />
 
       {isLoading ? (

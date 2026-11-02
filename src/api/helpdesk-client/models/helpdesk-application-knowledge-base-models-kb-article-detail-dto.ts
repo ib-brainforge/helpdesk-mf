@@ -46,6 +46,8 @@ export interface HelpdeskApplicationKnowledgeBaseModelsKbArticleDetailDto {
     'createdAt'?: string;
     'modifiedAt'?: string;
     'tags'?: Array<HelpdeskApplicationKnowledgeBaseModelsKbTagDto>;
+    'ownerTenantId'?: string;
+    'isInherited'?: boolean;
 }
 
 

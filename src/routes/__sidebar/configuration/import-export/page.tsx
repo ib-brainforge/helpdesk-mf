@@ -117,6 +117,7 @@ function ImportExportPage() {
       <PageHeader
         title="Import and Export"
         breadcrumbsKey="configuration.import-export"
+        helpKey="helpdesk.configuration.import-export"
       />
 
       {/* Honest deferral notice — not a "coming soon" stub, but an admission with a path forward */}

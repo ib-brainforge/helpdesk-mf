@@ -19,6 +19,7 @@ function ProviderCategoriesPage() {
         <PageHeader
           title="Provider Categories"
           breadcrumbsKey="provider.categories"
+          helpKey="helpdesk.provider.categories"
         />
         <ProviderCategories />
       </PageBody>

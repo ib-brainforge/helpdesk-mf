@@ -1,4 +1,5 @@
 import { KnowledgeBaseApi } from '@/api/helpdesk-client';
+import { KbOwnerBadge } from '@/components/knowledge-base/components/KbOwnerBadge';
 import { useKnowledgeBaseCategories } from '@/components/knowledge-base/hooks/useKnowledgeBase';
 import { TagChip } from '@/components/tags';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -58,6 +59,7 @@ function KnowledgeBaseSearchPage() {
       <PageHeader
         title="Search Knowledge Base"
         breadcrumbsKey="knowledge-base.search"
+        helpKey="helpdesk.knowledge-base.search"
         documentTitle={
           searchTerm ? `Search: ${searchTerm}` : 'Search Knowledge Base'
         }
@@ -136,6 +138,9 @@ function KnowledgeBaseSearchPage() {
                       <h3 className="mb-2 line-clamp-2 text-lg font-semibold">
                         {article.title}
                       </h3>
+                      <div className="mb-2 empty:hidden">
+                        <KbOwnerBadge article={article} />
+                      </div>
 
                       {/* Highlighted snippet from search */}
                       {article.highlight && (

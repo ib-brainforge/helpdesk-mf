@@ -158,8 +158,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
-  'helpdesk.contact-provider': 'Contact your provider',
-  'helpdesk.provider-raised': 'Raised with our provider',
   'helpdesk.provider-deadlines': 'Tenant Deadlines',
   'helpdesk.provider-categories': 'Provider Categories',
 };

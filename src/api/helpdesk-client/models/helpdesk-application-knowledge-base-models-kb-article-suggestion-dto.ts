@@ -21,5 +21,7 @@ export interface HelpdeskApplicationKnowledgeBaseModelsKbArticleSuggestionDto {
     'excerpt'?: string;
     'relevanceScore'?: number | null;
     'categoryName'?: string;
+    'ownerTenantId'?: string;
+    'isInherited'?: boolean;
 }
 

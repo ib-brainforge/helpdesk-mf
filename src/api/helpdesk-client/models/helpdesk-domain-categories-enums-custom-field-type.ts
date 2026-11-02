@@ -24,7 +24,8 @@ export const HelpdeskDomainCategoriesEnumsCustomFieldType = {
     Url: 'Url',
     Number: 'Number',
     Email: 'Email',
-    MultiSelect: 'MultiSelect'
+    MultiSelect: 'MultiSelect',
+    Asset: 'Asset'
 } as const;
 
 export type HelpdeskDomainCategoriesEnumsCustomFieldType = typeof HelpdeskDomainCategoriesEnumsCustomFieldType[keyof typeof HelpdeskDomainCategoriesEnumsCustomFieldType];

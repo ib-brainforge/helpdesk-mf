@@ -5,7 +5,7 @@ import {
   BaseModalContent,
 } from '@brainforgeau/components';
 import type { FC } from 'react';
-import { NewRequestWizard } from './NewRequestWizard';
+import { type CreatedRequest, NewRequestWizard } from './NewRequestWizard';
 
 /**
  * The request wizard as an overlay.
@@ -49,7 +49,7 @@ import { NewRequestWizard } from './NewRequestWizard';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onCreated?: (ticketId: string) => void;
+  onCreated?: (created: CreatedRequest) => void;
 }
 
 export const NewRequestModal: FC<Props> = ({ isOpen, onClose, onCreated }) => (
@@ -120,9 +120,9 @@ export const NewRequestModal: FC<Props> = ({ isOpen, onClose, onCreated }) => (
         {isOpen && (
           <NewRequestWizard
             key={String(isOpen)}
-            onCreated={id => {
+            onCreated={created => {
               onClose();
-              onCreated?.(id);
+              onCreated?.(created);
             }}
             onCancel={onClose}
           />

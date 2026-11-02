@@ -33,6 +33,8 @@ interface RouteRule {
   anyOf: string[];
 }
 
+const seg = '[^/]+';
+
 export const ROUTE_PERMISSIONS: RouteRule[] = [
   // Tickets
   { path: /^\/tickets\/new\/?$/, anyOf: [P.Tickets.Create] },
@@ -44,12 +46,20 @@ export const ROUTE_PERMISSIONS: RouteRule[] = [
   { path: /^\/dashboard\/?$/, anyOf: [P.Reports.Read] },
   { path: /^\/ideas(\/|$)/, anyOf: [P.Tickets.Read] },
 
-  // Knowledge base: internal, for the people who manage it (kb.manage, held by
-  // Manager and Admin). Reading, writing and settings alike. Note identity
-  // still grants kb.read to Customer and Technician, so the API itself would
-  // answer them; making the knowledge base truly internal means removing that
-  // from those roles in identity.
-  { path: /^\/knowledge-base(\/|$)/, anyOf: [P.KnowledgeBase.Manage] },
+  // Knowledge base: reading needs kb.read (the backend's rule for every
+  // v1/kb read, which returns the tenant's own articles plus those shared
+  // down from the offices above). Writing and settings stay with the people
+  // who manage it (kb.manage).
+  { path: /^\/knowledge-base\/new\/?$/, anyOf: [P.KnowledgeBase.Manage] },
+  {
+    path: new RegExp(`^/knowledge-base/${seg}/edit/?$`),
+    anyOf: [P.KnowledgeBase.Manage],
+  },
+  {
+    path: /^\/knowledge-base\/settings\/?$/,
+    anyOf: [P.KnowledgeBase.Manage],
+  },
+  { path: /^\/knowledge-base(\/|$)/, anyOf: [P.KnowledgeBase.Read] },
 
   // Reports, including the satisfaction report under /reports/satisfaction.
   // NOT /satisfaction: that is the public survey a customer opens from the

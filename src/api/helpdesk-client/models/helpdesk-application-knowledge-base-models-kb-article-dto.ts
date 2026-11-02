@@ -39,6 +39,8 @@ export interface HelpdeskApplicationKnowledgeBaseModelsKbArticleDto {
     'notHelpfulCount'?: number;
     'sourceTicketId'?: string | null;
     'publishedAt'?: string | null;
+    'ownerTenantId'?: string;
+    'isInherited'?: boolean;
 }
 
 

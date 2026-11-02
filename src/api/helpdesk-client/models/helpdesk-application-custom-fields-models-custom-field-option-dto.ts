@@ -20,5 +20,6 @@ export interface HelpdeskApplicationCustomFieldsModelsCustomFieldOptionDto {
     'isDefault'?: boolean;
     'isDisabled'?: boolean;
     'sortOrder'?: number;
+    'parentOptionId'?: string | null;
 }
 

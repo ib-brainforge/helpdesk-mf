@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationCustomFieldsModelsCustomFieldAssetDto } from './helpdesk-application-custom-fields-models-custom-field-asset-dto';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainCategoriesEnumsCustomFieldType } from './helpdesk-domain-categories-enums-custom-field-type';
 
 export interface HelpdeskApplicationCustomFieldsModelsCustomFieldValueDto {
@@ -27,6 +30,7 @@ export interface HelpdeskApplicationCustomFieldsModelsCustomFieldValueDto {
     'booleanValue'?: boolean | null;
     'selectedOptionId'?: string | null;
     'selectedOptionIds'?: Array<string> | null;
+    'selectedAssets'?: Array<HelpdeskApplicationCustomFieldsModelsCustomFieldAssetDto> | null;
     'displayValue'?: string | null;
 }
 

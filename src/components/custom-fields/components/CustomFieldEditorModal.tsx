@@ -57,6 +57,7 @@ const FIELD_TYPE_OPTIONS = [
   { id: CustomFieldType.Checkbox, name: 'Checkbox' },
   { id: CustomFieldType.Dropdown, name: 'Dropdown' },
   { id: CustomFieldType.MultiSelect, name: 'Multi-Select' },
+  { id: CustomFieldType.Asset, name: 'Asset' },
 ];
 
 const USAGE_TYPE_OPTIONS = [

@@ -138,6 +138,11 @@ export interface TicketFilters {
    */
   organisationId?: string[];
   divisionId?: string;
+  /**
+   * Only tickets the tenant raised that a helpdesk above it works: the
+   * "Raised with our provider" preset of the one list.
+   */
+  raisedAboveOnly?: boolean;
 }
 
 export interface CreateTicketDto {

@@ -1,6 +1,6 @@
 /*
  * The one deadline formatter, shared by the Tickets list, the ticket detail,
- * the New Request preview, Company Deadlines and the KPI reports.
+ * the New Request preview, Tenant Deadlines and the KPI reports.
  *
  * No deadline maths happens here. The backend computes every due and warning
  * instant in the company's business hours; this module only compares those

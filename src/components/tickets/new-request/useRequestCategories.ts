@@ -1,26 +1,46 @@
-import { CategoriesApi } from '@/api/helpdesk-client';
+import {
+  type HelpdeskApplicationCategoriesModelsAvailableCategoryDto as AvailableCategory,
+  CategoriesApi,
+} from '@/api/helpdesk-client';
+import { useTenantNames } from '@/hooks/useTenantNames';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { groupCategories } from './request-categories';
 
 /** Categories rarely change; a saved category refreshes them. */
 const STALE_MS = 10 * 60 * 1000;
 
+/** `GET v1/categories/available`: own categories, then the chain's, nearest first. */
+const fetchAvailableCategories = async (): Promise<AvailableCategory[]> => {
+  const client = await createHelpdeskApiClient(CategoriesApi);
+  const { data } = await client.v1CategoriesAvailableGet();
+  return data ?? [];
+};
+
+const NO_CATEGORIES: AvailableCategory[] = [];
+
 /**
- * The categories a requester may choose, with their real ids: the tenant's own
- * categories plus the Provider's preset categories (/v1/categories/available),
- * so a tenant with no categories of its own can still raise a request. The
- * ticket create command rejects a request with no CategoryId, so the wizard
- * resolves its request types against this list.
+ * The categories a requester may choose, from `GET v1/categories/available`:
+ * the tenant's own, then those shared down by its provider's office and the
+ * platform owner's office, grouped by who handles them. The owners' names are
+ * resolved through identity for the group titles.
  */
 export const useRequestCategories = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['helpdesk-categories', 'available'],
     staleTime: STALE_MS,
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(CategoriesApi);
-      const { data } = await client.v1CategoriesAvailableGet();
-      return data ?? [];
-    },
+    queryFn: fetchAvailableCategories,
   });
-  return { categories: data ?? [], isLoading };
+  const categories = data ?? NO_CATEGORIES;
+  const ownerIds = useMemo(
+    () => categories.filter(c => (c.level ?? 0) > 0).map(c => c.ownerTenantId),
+    [categories],
+  );
+  const tenantNames = useTenantNames(ownerIds);
+  const groups = useMemo(
+    () => groupCategories(categories, tenantNames),
+    [categories, tenantNames],
+  );
+  return { categories, groups, tenantNames, isLoading };
 };

@@ -94,14 +94,6 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // routes/__sidebar/knowledge-base/settings/page.tsx
 
 // ---------------------------------------------------------------------------
-// Provider support (Tenant view)
-// ---------------------------------------------------------------------------
-
-// routes/contact-provider/page.tsx
-// routes/provider/raised/page.tsx
-// routes/provider/raised/[id]/page.tsx
-
-// ---------------------------------------------------------------------------
 // Provider view
 // ---------------------------------------------------------------------------
 
@@ -477,34 +469,6 @@ export const breadcrumbs = {
     { labelKey: 'helpdesk.knowledge-base.settings' },
   ],
 
-  // -------------------------------------------------------------------------
-  // Provider support (Tenant view)
-  // -------------------------------------------------------------------------
-
-  /** routes/contact-provider/page.tsx */
-  'provider.contact': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    { labelKey: 'helpdesk.contact-provider' },
-  ],
-
-  /** routes/provider/raised/page.tsx */
-  'provider.raised.list': () => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      labelKey: 'helpdesk.provider-raised',
-      href: '/provider/raised',
-    },
-  ],
-
-  /** routes/provider/raised/[id]/page.tsx */
-  'provider.raised.detail': (params: { id: string; subject: string }) => [
-    { labelKey: 'helpdesk', href: '/tickets' },
-    {
-      labelKey: 'helpdesk.provider-raised',
-      href: '/provider/raised',
-    },
-    { label: params.subject },
-  ],
   // -------------------------------------------------------------------------
   // Provider view
   // -------------------------------------------------------------------------

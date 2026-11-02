@@ -1,7 +1,7 @@
 import { AppAuthSplash } from '@/components/AppSplash';
-import { TenantDeadlineList } from '@/components/company-deadlines/components/TenantDeadlineList';
-import { useTenantDeadlines } from '@/components/company-deadlines/hooks/useCompanyDeadlines';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
+import { TenantDeadlineList } from '@/components/tenant-deadlines/components/TenantDeadlineList';
+import { useTenantDeadlines } from '@/components/tenant-deadlines/hooks/useTenantDeadlines';
 import { useListParams } from '@/hooks/useListParams';
 import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import {
@@ -39,6 +39,7 @@ function TenantDeadlinesPage() {
       <PageHeader
         title="Tenant Deadlines"
         breadcrumbsKey="provider.deadlines.list"
+        helpKey="helpdesk.provider.deadlines"
       />
       <TenantDeadlineList list={list} query={tenants} />
     </PageBody>

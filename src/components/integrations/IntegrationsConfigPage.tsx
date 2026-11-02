@@ -88,6 +88,7 @@ function IntegrationsPage() {
       <PageHeader
         title="Integrations"
         breadcrumbsKey="configuration.integrations.list"
+        helpKey="helpdesk.configuration.integrations"
       />
 
       {/* Routing disclaimer banner */}

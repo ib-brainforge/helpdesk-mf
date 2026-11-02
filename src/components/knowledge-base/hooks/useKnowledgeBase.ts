@@ -4,6 +4,8 @@ import {
   type HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
   type HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus,
+  type HelpdeskDomainKnowledgeBaseEnumsKbSharing,
+  type HelpdeskDomainKnowledgeBaseEnumsKbStaffSection,
   KnowledgeBaseApi,
 } from '@/api/helpdesk-client';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
@@ -18,6 +20,11 @@ import type {
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import { toast } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import {
+  buildCreateArticleCommand,
+  buildUpdateArticleCommand,
+} from '../articleCommands';
 
 // Map a generated KbArticleStatus string to the local KnowledgeBaseStatus string enum.
 // The generated type and the local enum share the same string values, so this is a
@@ -58,6 +65,29 @@ function mapAccessLevel(
 // parentId — none of them walk `.children` recursively. Flatten the tree here
 // so callers keep working unchanged while picking up real articleCount and
 // parentId values (previously hardcoded to 0 / undefined).
+function mapSharing(node: {
+  sharing?: HelpdeskDomainKnowledgeBaseEnumsKbSharing;
+  staffSection?: HelpdeskDomainKnowledgeBaseEnumsKbStaffSection;
+}): {
+  sharing: HelpdeskDomainKnowledgeBaseEnumsKbSharing;
+  staffSection: HelpdeskDomainKnowledgeBaseEnumsKbStaffSection;
+} {
+  return {
+    sharing: node.sharing ?? 'Internal',
+    staffSection: node.staffSection ?? 'None',
+  };
+}
+
+function mapOwnership(dto: { ownerTenantId?: string; isInherited?: boolean }): {
+  ownerTenantId?: string;
+  isInherited: boolean;
+} {
+  return {
+    ownerTenantId: dto.ownerTenantId ?? undefined,
+    isInherited: dto.isInherited === true,
+  };
+}
+
 function flattenCategoryTree(
   nodes: HelpdeskApplicationKnowledgeBaseModelsKbCategoryTreeDto[],
   parentId?: string,
@@ -73,6 +103,7 @@ function flattenCategoryTree(
       order: node.sortOrder ?? 0,
       meta: node.meta,
       portalSection: node.portalSection,
+      ...mapSharing(node),
     };
     const children = node.children
       ? flattenCategoryTree(node.children, flat.id)
@@ -177,6 +208,7 @@ function mapKbArticleListToDto(
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
+    ...mapOwnership(dto),
     meta: dto.meta,
   };
 }
@@ -207,10 +239,12 @@ function mapKbArticleDetailToDto(
         : undefined,
     ratingCount: (dto.helpfulCount ?? 0) + (dto.notHelpfulCount ?? 0),
     tags: [], // KbArticleListDto does not expose tags — only KbArticleDetailDto has them
+    pageKeys: dto.pageKeys ?? [],
     ...mapAuthor(dto.meta),
     createdAt: dto.createdAt ?? new Date().toISOString(),
     updatedAt: dto.modifiedAt ?? dto.createdAt ?? new Date().toISOString(),
     publishedAt: dto.publishedAt ?? undefined,
+    ...mapOwnership(dto),
     relatedArticleIds: [],
     meta: dto.meta,
   };
@@ -279,14 +313,9 @@ export const useCreateKnowledgeBaseArticle = () => {
     mutationFn: async (article: CreateKnowledgeBaseArticleDto) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       // Note: the create command does not accept a status field — articles always start as Draft.
-      const response = await client.v1KbArticlesPost({
-        title: article.title,
-        body: article.body,
-        categoryId: article.categoryId,
-        tags: article.tags,
-        accessLevel:
-          article.accessLevel as HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel,
-      });
+      const response = await client.v1KbArticlesPost(
+        buildCreateArticleCommand(article),
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -310,16 +339,10 @@ export const useUpdateKnowledgeBaseArticle = () => {
     }: { id: string; updates: UpdateKnowledgeBaseArticleDto }) => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
       // Note: the update command does not accept a status field — use the publish endpoint for status changes.
-      const response = await client.v1KbArticlesIdPut(id, {
-        id: id,
-        title: updates.title,
-        body: updates.body,
-        categoryId: updates.categoryId,
-        tags: updates.tags,
-        accessLevel: updates.accessLevel as
-          | HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel
-          | undefined,
-      });
+      const response = await client.v1KbArticlesIdPut(
+        id,
+        buildUpdateArticleCommand(id, updates),
+      );
       return response.data;
     },
     onSuccess: (_, variables) => {
@@ -562,6 +585,7 @@ export const useDuplicateKbCategory = () => {
         // count from v1KbCategoriesGet.
         articleCount: 0,
         order: cat.sortOrder ?? 0,
+        ...mapSharing(cat),
         // Unlike flattenCategoryTree above, KbCategoryDto (this endpoint's
         // response) has always carried `meta` -- carry it through.
         meta: cat.meta,

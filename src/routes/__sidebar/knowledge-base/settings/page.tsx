@@ -1,7 +1,15 @@
+import type { HelpdeskDomainKnowledgeBaseEnumsKbPortalSection as KbPortalSection } from '@/api/helpdesk-client';
 import {
-  type HelpdeskDomainKnowledgeBaseEnumsKbPortalSection as KbPortalSection,
+  type HelpdeskApplicationKnowledgeBaseCommandsCreateCategoryCreateCategoryCommand,
+  type HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCategoryCommand,
+  type HelpdeskDomainKnowledgeBaseEnumsKbSharing,
+  type HelpdeskDomainKnowledgeBaseEnumsKbStaffSection,
   KnowledgeBaseApi,
 } from '@/api/helpdesk-client';
+import {
+  type CategoryRow,
+  buildCategoryRows,
+} from '@/components/knowledge-base/categoryRows';
 import { DuplicateCategoryModal } from '@/components/knowledge-base/components/DuplicateCategoryModal';
 import {
   useDuplicateKbCategory,
@@ -12,38 +20,51 @@ import {
   PORTAL_SECTION_OPTIONS,
   portalSectionLabel,
 } from '@/components/knowledge-base/portalSection';
-import { ModalHeader, StatusBadge } from '@/components/shared';
+import {
+  SHARING_HINT,
+  SHARING_OPTIONS,
+  STAFF_SECTION_HINT,
+  STAFF_SECTION_OPTIONS,
+  sharingLabel,
+  staffSectionLabel,
+} from '@/components/knowledge-base/sharing';
+import { IconTip, ModalHeader } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseCategoryDto } from '@/types';
-import { BaseInput } from '@brainforgeau/components';
 import {
+  BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
   BaseSelect,
   BaseSelectItem,
+  BaseTable,
+  TablePagination,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
 import {
+  EmptyState,
   PageBody,
   PageHeader,
   useConfirm,
 } from '@brainforgeau/components/page';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownPopover,
-  DropdownTrigger,
-  Spinner,
-  toast,
-} from '@heroui/react';
+import { Spinner, toast } from '@heroui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import {
+  type ColumnDef,
+  type PaginationState,
+  createColumnHelper,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useCallback, useMemo, useState } from 'react';
 
 type ModalMode = 'create' | 'edit' | null;
+
+const columnHelper = createColumnHelper<CategoryRow>();
 
 function CategoryFormModal({
   mode,
@@ -62,19 +83,31 @@ function CategoryFormModal({
   const [portalSection, setPortalSection] = useState<KbPortalSection>(
     category?.portalSection ?? 'None',
   );
+  const [sharing, setSharing] =
+    useState<HelpdeskDomainKnowledgeBaseEnumsKbSharing>(
+      category?.sharing ?? 'Internal',
+    );
+  const [staffSection, setStaffSection] =
+    useState<HelpdeskDomainKnowledgeBaseEnumsKbStaffSection>(
+      category?.staffSection ?? 'None',
+    );
 
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
     mutationFn: async () => {
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbCategoriesPost({
-        name,
-        description: description || undefined,
-        parentId: parentId || undefined,
-        sortOrder: 0,
-        portalSection,
-      });
+      const command: HelpdeskApplicationKnowledgeBaseCommandsCreateCategoryCreateCategoryCommand =
+        {
+          name,
+          description: description || undefined,
+          parentId: parentId || undefined,
+          sortOrder: 0,
+          sharing,
+          staffSection,
+          portalSection,
+        };
+      const response = await client.v1KbCategoriesPost(command);
       return response.data;
     },
     onSuccess: () => {
@@ -90,12 +123,16 @@ function CategoryFormModal({
     mutationFn: async () => {
       if (!category) return;
       const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      const response = await client.v1KbCategoriesIdPut(category.id, {
-        id: category.id,
-        name,
-        description: description || undefined,
-        portalSection,
-      });
+      const command: HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCategoryCommand =
+        {
+          id: category.id,
+          name,
+          description: description || undefined,
+          sharing,
+          staffSection,
+          portalSection,
+        };
+      const response = await client.v1KbCategoriesIdPut(category.id, command);
       return response.data;
     },
     onSuccess: () => {
@@ -184,6 +221,40 @@ function CategoryFormModal({
                 ]}
               </BaseSelect>
             )}
+            <BaseSelect
+              label="Shared with"
+              description={SHARING_HINT}
+              selectedKey={sharing}
+              onSelectionChange={key => {
+                if (key)
+                  setSharing(key as HelpdeskDomainKnowledgeBaseEnumsKbSharing);
+              }}
+              data-testid="kb-category-sharing"
+            >
+              {SHARING_OPTIONS.map(option => (
+                <BaseSelectItem key={option.id} id={option.id}>
+                  {option.label}
+                </BaseSelectItem>
+              ))}
+            </BaseSelect>
+            <BaseSelect
+              label="Staff section"
+              description={STAFF_SECTION_HINT}
+              selectedKey={staffSection}
+              onSelectionChange={key => {
+                if (key)
+                  setStaffSection(
+                    key as HelpdeskDomainKnowledgeBaseEnumsKbStaffSection,
+                  );
+              }}
+              data-testid="kb-category-staff-section"
+            >
+              {STAFF_SECTION_OPTIONS.map(option => (
+                <BaseSelectItem key={option.id} id={option.id}>
+                  {option.label}
+                </BaseSelectItem>
+              ))}
+            </BaseSelect>
           </div>
         </BaseModalBody>
         <BaseModalFooter>
@@ -234,8 +305,9 @@ function KbCategoriesPage() {
     },
   });
 
-  const filtered = categories.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
+  const rows = useMemo(
+    () => buildCategoryRows(categories, search),
+    [categories, search],
   );
 
   const openCreate = () => {
@@ -243,32 +315,175 @@ function KbCategoriesPage() {
     setFormMode('create');
   };
 
-  const openEdit = (cat: KnowledgeBaseCategoryDto) => {
+  const openEdit = useCallback((cat: KnowledgeBaseCategoryDto) => {
     setEditingCategory(cat);
     setFormMode('edit');
-  };
+  }, []);
 
   const closeForm = () => {
     setFormMode(null);
     setEditingCategory(null);
   };
 
-  const handleDeleteRequest = async (cat: KnowledgeBaseCategoryDto) => {
-    const ok = await confirm({
-      title: 'Delete Category',
-      body: `Are you sure you want to delete "${cat.name}"? This action cannot be undone. Categories containing articles cannot be deleted.`,
-      confirmLabel: 'Delete',
-      destructive: true,
-    });
-    if (!ok) return;
-    deleteMutation.mutate(cat.id);
-  };
+  const deleteCategory = deleteMutation.mutate;
+  const handleDeleteRequest = useCallback(
+    async (cat: KnowledgeBaseCategoryDto) => {
+      const ok = await confirm({
+        title: 'Delete Category',
+        body: `Are you sure you want to delete "${cat.name}"? This action cannot be undone. Categories containing articles cannot be deleted.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      });
+      if (!ok) return;
+      deleteCategory(cat.id);
+    },
+    [confirm, deleteCategory],
+  );
+
+  const columns = useMemo(
+    (): ColumnDef<CategoryRow, unknown>[] => [
+      columnHelper.display({
+        id: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <div
+            className="flex items-center gap-2"
+            style={{ paddingLeft: `${row.original.depth * 1.5}rem` }}
+          >
+            {row.original.depth > 0 && (
+              <span className="bg-default-300 h-px w-4 shrink-0" />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">
+                {row.original.name}
+              </p>
+              {row.original.description && (
+                <p className="text-default-500 truncate text-xs">
+                  {row.original.description}
+                </p>
+              )}
+            </div>
+          </div>
+        ),
+        size: 380,
+      }),
+      columnHelper.display({
+        id: 'articles',
+        header: 'Articles',
+        cell: ({ row }) => (
+          <span className="text-default-600 text-sm">
+            {row.original.articleCount ?? 0}
+          </span>
+        ),
+        size: 100,
+      }),
+      columnHelper.display({
+        id: 'sharing',
+        header: 'Shared with',
+        cell: ({ row }) => (
+          <span className="text-default-600 text-sm">
+            {sharingLabel(row.original.sharing)}
+          </span>
+        ),
+        size: 200,
+      }),
+      columnHelper.display({
+        id: 'staffSection',
+        header: 'Staff section',
+        cell: ({ row }) => (
+          <span className="text-default-600 text-sm">
+            {staffSectionLabel(row.original.staffSection)}
+          </span>
+        ),
+        size: 160,
+      }),
+      columnHelper.display({
+        id: 'portalSection',
+        header: 'Portal section',
+        cell: ({ row }) => (
+          <span className="text-default-600 text-sm">
+            {row.original.portalSection && row.original.portalSection !== 'None'
+              ? portalSectionLabel(row.original.portalSection)
+              : '—'}
+          </span>
+        ),
+        size: 160,
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="-my-1.5 flex items-center justify-end gap-1">
+            <IconTip label="Edit category">
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Edit category"
+                onPress={() => openEdit(row.original)}
+                icon={<Icon name="pencil" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label="Duplicate category">
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-dark dark:text-light hover:text-blue"
+                aria-label="Duplicate category"
+                onPress={() => setDuplicatingCategory(row.original)}
+                icon={<Icon name="copy" className="h-4 w-4" />}
+              />
+            </IconTip>
+            <IconTip label="Delete category">
+              <BaseButton
+                variant="link"
+                size="none"
+                className="text-danger hover:text-danger-600"
+                aria-label="Delete category"
+                onPress={() => handleDeleteRequest(row.original)}
+                icon={<Icon name="trash" className="h-4 w-4" />}
+              />
+            </IconTip>
+          </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 120,
+      }),
+    ],
+    [openEdit, handleDeleteRequest],
+  );
+
+  // Client side paging: the categories endpoint returns the whole tree in one
+  // call, so paging only limits what reaches the DOM.
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
+  const table = useReactTable<CategoryRow>({
+    data: rows,
+    columns,
+    getRowId: row => row.id,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    state: { pagination },
+    onPaginationChange: setPagination,
+    enableSorting: false,
+  });
+  // A search can shrink the result set below the current page; snap back.
+  if (
+    pagination.pageIndex > 0 &&
+    pagination.pageIndex >= table.getPageCount()
+  ) {
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+  }
 
   return (
     <PageBody>
       <PageHeader
         title="Manage Categories"
         breadcrumbsKey="knowledge-base.settings"
+        helpKey="helpdesk.knowledge-base.settings"
       >
         <PageHeader.Meta>
           Create, edit, delete and organise KB categories
@@ -302,77 +517,38 @@ function KbCategoriesPage() {
         <div className="flex justify-center py-12">
           <Spinner size="lg" />
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-default-500 py-12 text-center">
-          {search
-            ? 'No categories match your search.'
-            : 'No categories yet. Create the first one!'}
-        </div>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          title={
+            search ? 'No categories match your search' : 'No categories yet'
+          }
+          description={
+            search
+              ? 'Try a different search term or clear the filter.'
+              : 'Create the first category to start organising articles.'
+          }
+          live
+        />
       ) : (
-        <div className="space-y-2">
-          {filtered.map(cat => (
-            <div
-              key={cat.id}
-              className="border-light bg-default-50 hover:bg-default-100 flex items-center justify-between rounded-lg border p-4 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                {cat.parentId && (
-                  <span className="bg-default-300 ml-4 h-px w-4" />
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{cat.name}</p>
-                    {cat.portalSection && cat.portalSection !== 'None' && (
-                      <StatusBadge color="primary">
-                        Portal: {portalSectionLabel(cat.portalSection)}
-                      </StatusBadge>
-                    )}
-                  </div>
-                  {cat.description && (
-                    <p className="text-default-500 mt-0.5 text-xs">
-                      {cat.description}
-                    </p>
-                  )}
-                  <p className="text-default-400 mt-0.5 text-xs">
-                    {cat.articleCount ?? 0} article
-                    {(cat.articleCount ?? 0) !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              <Dropdown>
-                <DropdownTrigger
-                  aria-label="Category actions"
-                  className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-8 w-8"
-                >
-                  <Icon name="dotsV" className="h-4 w-4" />
-                </DropdownTrigger>
-                <DropdownPopover className="helpdesk-dropdown-popover">
-                  <DropdownMenu aria-label="Category actions">
-                    <DropdownItem key="edit" onPress={() => openEdit(cat)}>
-                      Edit
-                    </DropdownItem>
-                    <DropdownItem
-                      key="duplicate"
-                      onPress={() => setDuplicatingCategory(cat)}
-                    >
-                      Duplicate
-                    </DropdownItem>
-                    <DropdownItem
-                      key="delete"
-                      className="text-danger"
-                      onPress={() => handleDeleteRequest(cat)}
-                    >
-                      Delete
-                    </DropdownItem>
-                  </DropdownMenu>
-                </DropdownPopover>
-              </Dropdown>
-            </div>
-          ))}
-        </div>
+        <BaseTable
+          table={table}
+          showInfo={false}
+          paginationTemplate={() => (
+            <TablePagination
+              totalPages={Math.max(1, table.getPageCount())}
+              currentPage={pagination.pageIndex + 1}
+              onPageChange={page =>
+                setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
+              }
+            />
+          )}
+        />
       )}
 
+      {/* Keyed so the form starts from the category being edited: its fields
+          are initialised once, and a stale Sharing would be saved back. */}
       <CategoryFormModal
+        key={`${formMode ?? 'closed'}-${editingCategory?.id ?? 'new'}`}
         mode={formMode}
         category={editingCategory}
         categories={categories}
