@@ -28,8 +28,8 @@ importers:
         specifier: 0.5.182
         version: 0.5.182(2eizfnzbhdrbhsi7m2xzpkdqye)
       '@brainforgeau/security':
-        specifier: 0.5.486-develop.4222bb3
-        version: 0.5.486-develop.4222bb3(@brainforgeau/observability@0.5.125-develop.b80a41c(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
+        specifier: 0.5.490-develop.8b08fef
+        version: 0.5.490-develop.8b08fef(@brainforgeau/observability@0.5.125-develop.b80a41c(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)
       '@brainforgeau/theme':
         specifier: 0.5.115-develop.b80a41c
         version: 0.5.115-develop.b80a41c(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0)
@@ -1001,8 +1001,8 @@ packages:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@brainforgeau/security@0.5.486-develop.4222bb3':
-    resolution: {integrity: sha512-V3v9fcAiY9ifk1kXvMGIZadsNI28Zp2QDo+jfE+v95OHNyzPr4/zZQojUyq41bqPoPv0lUKsOdGVO1aIzK9PDg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.486-develop.4222bb3/d4f4cf8cc12ee50d4e2f8b09447eb40859070b60}
+  '@brainforgeau/security@0.5.490-develop.8b08fef':
+    resolution: {integrity: sha512-aCRrdGoZYwnVNH2ftZCMgt/1bGjmIQOPjNufzvlaC68LJcI75ER6Q+An8zHKEmPtT9Lo+ARgnk0TQO/35a+ZTg==, tarball: https://npm.pkg.github.com/download/@brainforgeau/security/0.5.490-develop.8b08fef/96ca3a849073819074beb4aebb0d83b14dd815f5}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@brainforgeau/observability': '*'
@@ -4222,6 +4222,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -9165,7 +9166,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@brainforgeau/security@0.5.486-develop.4222bb3(@brainforgeau/observability@0.5.125-develop.b80a41c(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
+  '@brainforgeau/security@0.5.490-develop.8b08fef(@brainforgeau/observability@0.5.125-develop.b80a41c(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-oidc-context@3.3.0(oidc-client-ts@3.4.1)(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@brainforgeau/observability': 0.5.125-develop.b80a41c(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tanstack/react-query': 5.100.9(react@19.2.6)
