@@ -35,6 +35,7 @@ import { Providers } from '@/providers';
 import {
   ListPreferencesProvider,
   ListUrlStateProvider,
+  PageOutlet,
   registerStatusColors,
 } from '@brainforgeau/components/page';
 
@@ -106,7 +107,6 @@ const TopNavbar = lazyWithRetry(
 import { Logo } from '@/components/Logo';
 import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
-import { PageOutletFrame } from '@/components/shared/PageOutletFrame';
 import { TEST_IDS } from '@/constants/testIds';
 import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { HELPDESK_NAV, PROVIDER_NAV } from '@/navigation';
@@ -427,7 +427,7 @@ function LayoutShell() {
                 )}
               />
             )}
-            <PageOutletFrame>
+            <PageOutlet data-testid="page-outlet">
               <ErrorBoundary>
                 <LicenseGuard appId="helpdesk">
                   {/* Page permissions: routes/route-permissions.tsx. The
@@ -446,7 +446,7 @@ function LayoutShell() {
                   </RouteGuard>
                 </LicenseGuard>
               </ErrorBoundary>
-            </PageOutletFrame>
+            </PageOutlet>
           </div>
         </ListUrlStateProvider>
       </BreadcrumbRegistryProvider>

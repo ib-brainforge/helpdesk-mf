@@ -1,7 +1,7 @@
 import { BaseButton, BaseCard } from '@brainforgeau/components';
-import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { PageBody, PageHeader, PageState } from '@brainforgeau/components/page';
 import { useLogger } from '@brainforgeau/observability';
-import { Card, Chip, Spinner, toast } from '@heroui/react';
+import { Card, Chip, toast } from '@heroui/react';
 import { useState } from 'react';
 import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import {
@@ -16,13 +16,7 @@ export function RuleMigrationReportPage() {
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
 
   if (isLoading) {
-    return (
-      <PageBody>
-        <div className="flex h-64 items-center justify-center">
-          <Spinner />
-        </div>
-      </PageBody>
-    );
+    return <PageState loading loadingLabel="Loading rule migration report" />;
   }
 
   async function handleDryRun() {
