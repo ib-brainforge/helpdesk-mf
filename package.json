@@ -11,7 +11,7 @@
     "start": "modern start",
     "serve": "modern serve",
     "new": "modern new",
-    "lint": "biome check",
+    "lint": "biome check && bf-check-layout src",
     "test": "vitest run",
     "prepare": "simple-git-hooks",
     "upgrade": "modern upgrade",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@brainforgeau/asset-backend-client": "0.5.1446-develop.c27c19c",
-    "@brainforgeau/components": "0.5.865-develop.11489dc",
+    "@brainforgeau/components": "0.5.874-develop.b8c3b5e",
     "@brainforgeau/identity-management-client": "0.5.1520-develop.d7505f3",
     "@brainforgeau/observability": "0.5.125-develop.b80a41c",
     "@brainforgeau/rules-ui": "0.5.182",
