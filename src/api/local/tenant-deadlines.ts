@@ -78,8 +78,6 @@ export interface TenantDeadlinePage {
   total: number;
 }
 
-export type TenantDeadlineSort = 'name' | 'open' | 'late';
-
 /** `page` is 1-based; `pageSize` at most 100. */
 export interface TenantDeadlineParams {
   search?: string;
@@ -87,8 +85,8 @@ export interface TenantDeadlineParams {
   custom?: boolean;
   /** Only tenants with late open tickets. */
   hasLate?: boolean;
-  sort?: TenantDeadlineSort;
-  dir?: 'asc' | 'desc';
+  /** `key,-key` over name, deadlines, open, late. */
+  sort?: string;
   page: number;
   pageSize: number;
 }
@@ -129,7 +127,6 @@ export const getTenantDeadlines = async (
     p.custom || undefined,
     p.hasLate || undefined,
     p.sort,
-    p.dir,
     p.page,
     p.pageSize,
   );

@@ -11,23 +11,12 @@ import { authorizedAxios } from '@/state/authorizedAxios';
 import { requireHelpdeskApiBaseUrl } from '@/state/config';
 
 /** Keys the server accepts; any other key is a 400. */
-export type PreferenceKey = 'tickets.list.layout' | 'email.signature';
+export type PreferenceKey = 'email.signature';
 
 export interface UserPreferenceDto<T> {
   key: PreferenceKey;
   value: T | null;
   updatedAt: string | null;
-}
-
-/** `tickets.list.layout` */
-export interface TableLayoutPreference {
-  /** Layout version; another version is ignored (see useTableLayout). */
-  v: number;
-  /** Column ids in display order. Absent on layouts saved as 3. */
-  order?: string[];
-  /** Hidden column ids. Stored this way so a column added later shows by default. */
-  hidden: string[];
-  sort: { id: string; desc: boolean } | null;
 }
 
 /** `email.signature`. `html` is sanitised by the server on save. */

@@ -15,6 +15,5 @@ export {
 } from './StatusBadge';
 export { SummaryCard, type SummaryCardVariant } from './SummaryCard';
 export { DurationInput } from './DurationInput';
-export { PagedTable, usePagedTable } from './PagedTable';
 export { UserCell } from './UserCell';
 export { UserOptionRow } from './UserOptionRow';

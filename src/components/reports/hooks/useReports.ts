@@ -2,7 +2,7 @@ import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
   AgentUtilizationDto,
   AssetsReportDto,
-  AuditLogReportDto,
+  AuditLogEntryDto,
   CustomReportRequestDto,
   CustomReportResultDto,
   DeletedTicketDto,
@@ -158,43 +158,38 @@ export const useDeletedTicketsReport = (fromDate?: string, toDate?: string) => {
   });
 };
 
-export const useAuditLogReport = (params: {
+/** One page of the audit log (`sort` is `-key,key`). The server shows the last 30 days when no range is given. */
+export const fetchAuditLog = async (params: {
   fromDate?: string;
   toDate?: string;
   userId?: string;
   eventType?: string;
-  page?: number;
-  pageSize?: number;
-}) => {
-  return useQuery<AuditLogReportDto>({
-    queryKey: ['reports', 'audit-log', params],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(ReportsApi);
-      const { data } = await client.v1ReportsAuditLogGet(
-        params.fromDate,
-        params.toDate,
-        params.userId,
-        params.eventType,
-        params.page ?? 1,
-        params.pageSize ?? 50,
-      );
-      return {
-        items: (data.items ?? []).map(item => ({
-          id: item.id ?? '',
-          entityType: item.entityType ?? '',
-          entityId: item.entityId ?? '',
-          entityDescription: item.entityDescription ?? null,
-          actorUserId: item.actorUserId ?? '',
-          occurredAt: item.occurredAt ?? '',
-          reason: item.reason ?? null,
-        })),
-        totalCount: data.totalCount ?? 0,
-        page: data.page ?? 1,
-        pageSize: data.pageSize ?? 50,
-        totalPages: data.totalPages ?? 0,
-      };
-    },
-  });
+  page: number;
+  pageSize: number;
+  sort?: string;
+}): Promise<{ rows: AuditLogEntryDto[]; totalCount: number }> => {
+  const client = await createHelpdeskApiClient(ReportsApi);
+  const { data } = await client.v1ReportsAuditLogGet(
+    params.fromDate,
+    params.toDate,
+    params.userId,
+    params.eventType,
+    params.page,
+    params.pageSize,
+    params.sort,
+  );
+  return {
+    rows: (data.items ?? []).map(item => ({
+      id: item.id ?? '',
+      entityType: item.entityType ?? '',
+      entityId: item.entityId ?? '',
+      entityDescription: item.entityDescription ?? null,
+      actorUserId: item.actorUserId ?? '',
+      occurredAt: item.occurredAt ?? '',
+      reason: item.reason ?? null,
+    })),
+    totalCount: data.totalCount ?? 0,
+  };
 };
 
 export const useAssetsReport = (fromDate?: string, toDate?: string) => {

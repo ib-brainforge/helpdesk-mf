@@ -1,5 +1,4 @@
-export * from './TicketGrid';
-export * from './TicketFilters';
+export * from './TicketList';
 export * from './NewTicketForm';
 export { TicketDetail } from './TicketDetail';
 export type { TicketDetailProps } from './TicketDetail';

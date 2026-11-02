@@ -138,15 +138,6 @@ export interface AuditLogEntryDto {
   reason: string | null;
 }
 
-export interface AuditLogReportDto {
-  /** Paginated audit entries */
-  items: AuditLogEntryDto[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
-
 export interface AssetTicketDto {
   ticketId: string;
   subject: string;

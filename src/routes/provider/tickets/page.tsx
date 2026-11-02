@@ -1,7 +1,6 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
-import { TicketGrid } from '@/components/tickets/components/TicketGrid';
-import { usePageTitle } from '@brainforgeau/components/page';
+import { TicketList } from '@/components/tickets/components/TicketList';
 import {
   ProviderPermissions,
   withAuthenticationRequired,
@@ -14,12 +13,9 @@ import React from 'react';
  * queue.
  */
 function FromTenantsPage() {
-  usePageTitle('From tenants');
   return (
     <ProviderViewGuard requiredPermissions={[ProviderPermissions.Support]}>
-      <div className="flex w-full min-h-0 flex-1 flex-col">
-        <TicketGrid fromTenants />
-      </div>
+      <TicketList fromTenants />
     </ProviderViewGuard>
   );
 }

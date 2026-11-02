@@ -128,44 +128,41 @@ export const useKnowledgeBaseCategories = () => {
   });
 };
 
-export const useKnowledgeBaseArticles = (
-  categoryId?: string,
-  searchTerm?: string,
-) => {
-  return useQuery<PagedResult<KnowledgeBaseArticleListDto>>({
-    queryKey: ['knowledge-base', 'articles', categoryId, searchTerm],
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(KnowledgeBaseApi);
-      if (searchTerm) {
-        const response = await client.v1KbArticlesSearchGet(searchTerm);
-        const pagedData = response.data as {
-          items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[];
-          totalCount?: number;
-          page?: number;
-          pageSize?: number;
-        };
-        return {
-          items: (pagedData.items ?? []).map(mapKbArticleListToDto),
-          totalCount: pagedData.totalCount ?? 0,
-          page: pagedData.page ?? 1,
-          pageSize: pagedData.pageSize ?? 25,
-        };
-      }
-      const response = await client.v1KbArticlesGet(categoryId);
-      const pagedData = response.data as {
-        items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[];
-        totalCount?: number;
-        page?: number;
-        pageSize?: number;
-      };
-      return {
-        items: (pagedData.items ?? []).map(mapKbArticleListToDto),
-        totalCount: pagedData.totalCount ?? 0,
-        page: pagedData.page ?? 1,
-        pageSize: pagedData.pageSize ?? 25,
-      };
-    },
-  });
+/**
+ * One page of the article list, as the KB list page shows it. A search goes to
+ * the search endpoint (ranked by relevance, so it takes no sort); otherwise the
+ * server sorts (`sort` is `-key,key`).
+ */
+export const fetchKnowledgeBaseArticles = async ({
+  search,
+  sort,
+  page,
+  pageSize,
+}: {
+  search: string;
+  sort?: string;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: KnowledgeBaseArticleListDto[]; totalCount: number }> => {
+  const client = await createHelpdeskApiClient(KnowledgeBaseApi);
+  const response = search
+    ? await client.v1KbArticlesSearchGet(search, page, pageSize)
+    : await client.v1KbArticlesGet(
+        undefined,
+        undefined,
+        undefined,
+        sort,
+        page,
+        pageSize,
+      );
+  const paged = response.data as {
+    items?: HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto[];
+    totalCount?: number;
+  };
+  return {
+    rows: (paged.items ?? []).map(mapKbArticleListToDto),
+    totalCount: paged.totalCount ?? 0,
+  };
 };
 
 /**

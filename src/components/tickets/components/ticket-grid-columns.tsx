@@ -30,10 +30,9 @@ import { isHandledAbove, ticketPath } from '../handled-above';
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import type { TicketRow } from '../types';
-import { HandledByBadge } from './HandledByBadge';
+import { HandledByTenantBadge } from './HandledByBadge';
 import { QuickAssignCell } from './QuickAssignCell';
 import { ScopePath } from './ScopePills';
-import { SelectPageCheckbox, SelectRowCheckbox } from './ticketSelection';
 
 const columnHelper = createColumnHelper<TicketRow>();
 
@@ -176,39 +175,19 @@ interface CreateColumnsOptions {
   fromTenants?: boolean;
   /** Where a ticket's page lives; defaults to the Tenant view's /tickets. */
   ticketBasePath?: string;
-  /** Names of the tenants that handle rows raised above the tenant, by id. */
-  handledByNames?: Readonly<Record<string, string>>;
   /**
-   * False when no row can be acted on (the "Raised with our provider"
-   * preset): the select-page checkbox is left out.
+   * Category names by id: /v1/tickets returns `categoryId` only. Deliberately
+   * not limited to active categories, since a ticket filed under one that was
+   * later deactivated still needs its name shown.
    */
-  selectable?: boolean;
+  categoryNameById?: ReadonlyMap<string, string>;
 }
 
 /*
- * Column ids, in the default order, and the ones hidden until a user shows
- * them in the Columns chooser. TicketGrid's layout reads these, so a column
- * added here appears in the chooser without further wiring.
- */
-export const TICKET_COLUMN_LABELS: Record<string, string> = {
-  subject: 'Subject',
-  company: 'Tenant',
-  deadline: 'Deadline',
-  assignee: 'Assignee',
-  requester: 'Requester',
-  status: 'Status',
-  priority: 'Priority',
-  categoryName: 'Category',
-  createdAt: 'Created',
-  updatedAt: 'Updated',
-  origin: 'Via',
-  id: 'ID',
-};
-/*
- * Status and Priority are on every row already, under the subject. Their own
- * columns stay in the chooser because they are how to sort by status or
- * priority; turning one on drops that chip from under the subject, so it is
- * never shown twice.
+ * Columns hidden until a user shows them in the Columns menu. Status and
+ * Priority are on every row already, under the subject. Their own columns stay
+ * in the menu because they are how to sort by status or priority; turning one
+ * on drops that chip from under the subject, so it is never shown twice.
  */
 export const TICKET_DEFAULT_HIDDEN = [
   'status',
@@ -219,31 +198,21 @@ export const TICKET_DEFAULT_HIDDEN = [
   'origin',
   'id',
 ];
-/** Column names in the provider's "From tenants" queue. */
-export const FROM_TENANTS_COLUMN_LABELS: Record<string, string> = {
-  ...TICKET_COLUMN_LABELS,
-  company: 'Tenant',
-  requester: 'Raised by',
-};
-/** Muted notes beside hidden columns in the chooser. */
-export const TICKET_COLUMN_HINTS: Record<string, string> = {
-  status: '(shown under Subject)',
-  priority: '(shown under Subject)',
-};
+
 /**
- * Column id to the backend's SortBy key. Only these sort, because only these
- * sort on the server across every page; names resolved in the browser
- * (company, organisation, people, category) cannot.
+ * Sortable columns by column id, with the key of the ticket endpoints' `sort`
+ * each one sorts on. Only these sort, because only these sort on the server
+ * across every page; names resolved in the browser (company, organisation,
+ * people, category) cannot.
  */
-export const TICKET_SORT_KEYS: Record<string, string> = {
+export const SORT_KEYS = {
   subject: 'subject',
   status: 'status',
   priority: 'priority',
   deadline: 'deadline',
-  createdAt: 'createdat',
-  updatedAt: 'modifiedat',
-};
-const sortable = (id: string) => id in TICKET_SORT_KEYS;
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+} as const;
 
 const scopeName = (
   id: string | null | undefined,
@@ -253,22 +222,6 @@ const scopeName = (
 export const createTicketColumns = (
   options: CreateColumnsOptions,
 ): ColumnDef<TicketRow, any>[] => [
-  // Checkbox column for bulk actions
-  columnHelper.display({
-    id: 'select',
-    // The selection lives in the grid (see ticketSelection), across pages.
-    header: () =>
-      options.selectable === false ? null : <SelectPageCheckbox />,
-    // A ticket handled above the tenant is not the tenant's to act on.
-    cell: ({ row }) =>
-      isHandledAbove(row.original) ? null : (
-        <SelectRowCheckbox row={row.original} />
-      ),
-    enableSorting: false,
-    enableHiding: false,
-    enableResizing: false,
-    size: 36,
-  }),
   /*
    * Two slim lines: the subject, then its status and priority as small chips.
    * A chip whose own column is switched on is left out here, so nothing shows
@@ -276,6 +229,8 @@ export const createTicketColumns = (
    */
   columnHelper.accessor('subject', {
     header: 'Subject',
+    meta: { label: 'Subject' },
+    enableHiding: false,
     cell: ({ getValue, row, table }) => {
       const value = getValue() ?? 'Untitled Ticket';
       const unread = row.original.unreadForAgent;
@@ -286,9 +241,6 @@ export const createTicketColumns = (
         row.original.priority as TicketPriority,
       );
       const handledAbove = isHandledAbove(row.original);
-      const handledByName = row.original.handledByTenantId
-        ? options.handledByNames?.[row.original.handledByTenantId]
-        : undefined;
       return (
         <div className="flex min-w-0 flex-col gap-1">
           {/*
@@ -316,9 +268,9 @@ export const createTicketColumns = (
           </div>
           {(showStatus || showPriority || handledAbove) && (
             <div className="flex items-center gap-1">
-              <HandledByBadge
+              <HandledByTenantBadge
                 level={row.original.handledByLevel}
-                tenantName={handledByName}
+                tenantId={row.original.handledByTenantId}
               />
               {showStatus && (
                 <StatusBadge color={status.color} size="sm">
@@ -335,7 +287,6 @@ export const createTicketColumns = (
         </div>
       );
     },
-    enableSorting: sortable('subject'),
     size: 334,
     minSize: 220,
   }),
@@ -346,6 +297,7 @@ export const createTicketColumns = (
   columnHelper.display({
     id: 'company',
     header: 'Tenant',
+    meta: { label: 'Tenant' },
     cell: ({ row }) => {
       const tenantNameOf = (id: string) =>
         options.scopeNames.byTenantId.get(id)?.tenantName;
@@ -391,13 +343,13 @@ export const createTicketColumns = (
         />
       );
     },
-    enableSorting: false,
     size: 160,
     minSize: 100,
   }),
   columnHelper.display({
     id: 'deadline',
     header: 'Deadline',
+    meta: { label: 'Deadline' },
     cell: ({ row }) => (
       <DeadlineChip
         deadline={row.original.deadline}
@@ -405,13 +357,13 @@ export const createTicketColumns = (
         showNone
       />
     ),
-    enableSorting: sortable('deadline'),
     size: 150,
     minSize: 120,
   }),
   columnHelper.display({
     id: 'assignee',
     header: 'Assignee',
+    meta: { label: 'Assignee' },
     cell: ({ row }) => {
       const { assigneeUserInfo, assigneeName } = row.original;
       if (!row.original.assigneeId) {
@@ -443,13 +395,13 @@ export const createTicketColumns = (
         />
       );
     },
-    enableSorting: false,
     size: 150,
     minSize: 100,
   }),
   columnHelper.display({
     id: 'requester',
     header: options.fromTenants ? 'Raised by' : 'Requester',
+    meta: { label: options.fromTenants ? 'Raised by' : 'Requester' },
     cell: ({ row }) => {
       const { requesterUserInfo, requesterName } = row.original;
       // An email-only contact has no user account, only a name: it still
@@ -464,29 +416,28 @@ export const createTicketColumns = (
         />
       );
     },
-    enableSorting: false,
     size: 120,
     minSize: 90,
   }),
   columnHelper.accessor('status', {
     header: 'Status',
+    meta: { label: 'Status' },
     cell: ({ getValue }) => {
       const status = getValue();
       const config = getStatusConfig(status);
       return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
-    enableSorting: sortable('status'),
     size: 104,
     minSize: 80,
   }),
   columnHelper.accessor('priority', {
     header: 'Priority',
+    meta: { label: 'Priority' },
     cell: ({ getValue }) => {
       const priority = getValue();
       const config = getPriorityConfig(priority);
       return <StatusBadge color={config.color}>{config.label}</StatusBadge>;
     },
-    enableSorting: sortable('priority'),
     size: 88,
     minSize: 72,
   }),
@@ -495,58 +446,65 @@ export const createTicketColumns = (
    * sentence ("Issue with a vehicle's GPS tracking hardware or ability to
    * track"), so they truncate, with the full name on hover.
    */
-  columnHelper.accessor('categoryName', {
-    header: 'Category',
-    cell: ({ getValue }) => {
-      const value = getValue();
-      return value ? (
-        <span className="block truncate text-sm" title={value}>
-          {value}
-        </span>
-      ) : null;
+  columnHelper.accessor(
+    row =>
+      row.categoryName ??
+      (row.categoryId
+        ? options.categoryNameById?.get(row.categoryId)
+        : undefined),
+    {
+      id: 'categoryName',
+      header: 'Category',
+      meta: { label: 'Category' },
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return value ? (
+          <span className="block truncate text-sm" title={value}>
+            {value}
+          </span>
+        ) : null;
+      },
+      size: CATEGORY_WIDTH,
     },
-    enableSorting: false,
-    size: CATEGORY_WIDTH,
-    meta: { fixedWidth: CATEGORY_WIDTH },
-  }),
+  ),
   columnHelper.accessor('createdAt', {
     header: 'Created',
+    meta: { label: 'Created' },
     cell: ({ getValue }) => (
       <TimeCell date={getValue()} timezone={options.timezone} />
     ),
-    enableSorting: sortable('createdAt'),
     size: 100,
     minSize: 80,
   }),
   columnHelper.accessor('updatedAt', {
     header: 'Updated',
+    meta: { label: 'Updated' },
     cell: ({ getValue }) => (
       <TimeCell date={getValue()} timezone={options.timezone} />
     ),
-    enableSorting: sortable('updatedAt'),
     size: 100,
     minSize: 80,
   }),
   columnHelper.accessor('origin', {
     header: 'Via',
+    meta: { label: 'Via' },
     cell: ({ getValue }) => {
       const origin = getValue() as string | undefined;
       return (
         <TextCell value={origin ? (ORIGIN_LABELS[origin] ?? origin) : null} />
       );
     },
-    enableSorting: false,
     size: 80,
     minSize: 60,
   }),
   columnHelper.accessor('id', {
     header: 'ID',
+    meta: { label: 'ID' },
     cell: ({ getValue }) => (
       <span className="font-mono text-xs">
         {getValue()?.substring(0, 8).toUpperCase()}
       </span>
     ),
-    enableSorting: false,
     size: 80,
     minSize: 70,
   }),
@@ -555,6 +513,7 @@ export const createTicketColumns = (
     // No visible label: a word wider than the menu button made the column
     // wider than its content or clipped it. Screen readers still hear it.
     header: () => <span className="sr-only">Actions</span>,
+    meta: { label: 'Actions' },
     // The permission is checked once for the grid (options.canWrite), not by
     // a guard in every row, which read the token again for each of them.
     cell: ({ row }) =>
@@ -645,9 +604,7 @@ export const createTicketColumns = (
           </DropdownPopover>
         </Dropdown>
       ) : null,
-    enableSorting: false,
     enableHiding: false,
-    enableResizing: false,
     size: 44,
   }),
 ];

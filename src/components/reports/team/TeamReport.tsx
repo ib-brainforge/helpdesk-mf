@@ -2,7 +2,7 @@ import { type TeamReportRowDto, getTeamReport } from '@/api/local/teamReport';
 import { PeriodPicker } from '@/components/reports/kpi/PeriodPicker';
 import { defaultMonth } from '@/components/reports/kpi/kpiFormat';
 import { UserCell, formatDuration } from '@/components/shared';
-import { MultiFilter } from '@/components/tickets/components/TicketFilters';
+import { MultiFilter } from '@/components/tickets/components/ticket-filter-controls';
 import { useHelpdeskAccess } from '@/hooks/useHelpdeskAccess';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import { type UserInfo, useUserEnrichment } from '@/hooks/useUserEnrichment';
@@ -104,10 +104,10 @@ export const TeamReport: FC = () => {
     [data, userMap],
   );
 
-  // The tickets list, overdue, for one person (see ticketListUrl for the keys).
+  // The tickets list, overdue, for one person (see TICKET_FILTER_CODECS for the keys).
   const lateHref = useCallback((row: TeamReportRowDto) => {
     const params = new URLSearchParams({
-      tab: 'overdue',
+      overdue: 'true',
       assignee: row.assigneeId ?? 'unassigned',
     });
     return `/tickets?${params.toString()}`;
