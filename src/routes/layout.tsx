@@ -106,6 +106,7 @@ const TopNavbar = lazyWithRetry(
 import { Logo } from '@/components/Logo';
 import { HelpdeskNavbarAction } from '@/components/NavbarAction';
 import { NavbarSkeleton } from '@/components/NavbarSkeleton';
+import { PageOutletFrame } from '@/components/shared/PageOutletFrame';
 import { TEST_IDS } from '@/constants/testIds';
 import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { HELPDESK_NAV, PROVIDER_NAV } from '@/navigation';
@@ -426,7 +427,7 @@ function LayoutShell() {
                 )}
               />
             )}
-            <div className="flex flex-1 min-w-0">
+            <PageOutletFrame>
               <ErrorBoundary>
                 <LicenseGuard appId="helpdesk">
                   {/* Page permissions: routes/route-permissions.tsx. The
@@ -445,7 +446,7 @@ function LayoutShell() {
                   </RouteGuard>
                 </LicenseGuard>
               </ErrorBoundary>
-            </div>
+            </PageOutletFrame>
           </div>
         </ListUrlStateProvider>
       </BreadcrumbRegistryProvider>

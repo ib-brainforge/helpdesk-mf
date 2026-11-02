@@ -1,4 +1,5 @@
 import { BaseButton, BaseCard } from '@brainforgeau/components';
+import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import { useLogger } from '@brainforgeau/observability';
 import { Card, Chip, Spinner, toast } from '@heroui/react';
 import { useState } from 'react';
@@ -16,9 +17,11 @@ export function RuleMigrationReportPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner />
-      </div>
+      <PageBody>
+        <div className="flex h-64 items-center justify-center">
+          <Spinner />
+        </div>
+      </PageBody>
     );
   }
 
@@ -65,18 +68,17 @@ export function RuleMigrationReportPage() {
   const hasRules = (data?.length ?? 0) > 0;
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Rule Migration Report</h1>
-          <p className="mt-0.5 text-sm text-default-500">
-            Legacy automation rules using StatusCondition or status-mutating
-            actions. These rules must be migrated to workflow-aware transition
-            types.
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <PageBody className="space-y-6">
+      <PageHeader
+        title="Rule Migration Report"
+        breadcrumbsKey="configuration.workflows.rule-migration-report"
+      >
+        <PageHeader.Meta>
+          Legacy automation rules using StatusCondition or status-mutating
+          actions. These rules must be migrated to workflow-aware transition
+          types.
+        </PageHeader.Meta>
+        <PageHeader.Actions>
           <BaseButton
             variant="bordered"
             color="light"
@@ -92,8 +94,8 @@ export function RuleMigrationReportPage() {
           >
             Apply Migration
           </BaseButton>
-        </div>
-      </div>
+        </PageHeader.Actions>
+      </PageHeader>
 
       {/* Summary stats */}
       {hasRules && (
@@ -178,6 +180,6 @@ export function RuleMigrationReportPage() {
         isLoading={apply.isPending}
         onConfirm={handleApply}
       />
-    </div>
+    </PageBody>
   );
 }
