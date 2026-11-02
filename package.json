@@ -38,12 +38,13 @@
     "pre-commit": "npx lint-staged"
   },
   "dependencies": {
+    "@brainforgeau/alerts": "0.5.32-develop.313ff64",
     "@brainforgeau/asset-backend-client": "0.5.1322-develop.bcacb39",
     "@brainforgeau/components": "0.5.865-develop.11489dc",
-    "@brainforgeau/helpdesk-client": "0.5.466-develop.9efcaa0",
+    "@brainforgeau/helpdesk-client": "0.5.468-develop.09f4fd0",
     "@brainforgeau/identity-management-client": "0.5.1439-develop.403a995",
     "@brainforgeau/observability": "0.5.123-develop.8536af9",
-    "@brainforgeau/rules-ui": "0.5.182",
+    "@brainforgeau/rules-ui": "0.5.199-develop.1dd3dd3",
     "@brainforgeau/security": "0.5.490-develop.8b08fef",
     "@brainforgeau/theme": "0.5.110",
     "@brainforgeau/tracking-client": "0.5.2214-develop.755cbc4",

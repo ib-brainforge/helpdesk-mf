@@ -279,19 +279,6 @@ export function useUpdateRuleProject() {
 
 // ── Rule graph hooks ───────────────────────────────────────────────────────────
 
-export function useRuleGraphs(projectId: string | null) {
-  const contextKey = useAtomValue(contextQueryKeyAtom);
-  return useQuery({
-    queryKey: ruleProjectKeys.graphs(contextKey, projectId ?? '__null__'),
-    queryFn: async () => {
-      const client = await createHelpdeskApiClient(RuleGraphsApi);
-      const res = await client.v1RuleProjectsProjectIdRulesGet(projectId!);
-      return (res.data ?? []).map(toRuleGraphDto);
-    },
-    enabled: !!projectId,
-  });
-}
-
 export function useRuleGraph(projectId: string | null, ruleId: string | null) {
   const contextKey = useAtomValue(contextQueryKeyAtom);
   return useQuery({
