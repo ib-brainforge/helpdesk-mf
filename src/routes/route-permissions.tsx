@@ -1,6 +1,6 @@
 import { HelpdeskPermissions as P } from '@/constants/permissions';
 import { PageState } from '@brainforgeau/components/page';
-import { AccessDenied, usePermissions } from '@brainforgeau/security';
+import { usePermissions } from '@brainforgeau/security';
 import type { FC, ReactNode } from 'react';
 
 /**
@@ -124,11 +124,7 @@ export const RouteGuard: FC<{ pathname: string; children: ReactNode }> = ({
   if (!rule) return <>{children}</>;
   if (isLoading) return null;
   if (!hasAnyPermission(rule.anyOf)) {
-    return (
-      <PageState>
-        <AccessDenied {...ACCESS_DENIED_COPY} />
-      </PageState>
-    );
+    return <PageState denied={ACCESS_DENIED_COPY} />;
   }
   return <>{children}</>;
 };

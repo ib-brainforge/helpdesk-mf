@@ -5,7 +5,6 @@ import { ruleForPath } from './route-permissions';
 // The table tests need no browser; the guard is tested in
 // route-permissions.guard.test.tsx.
 vi.mock('@brainforgeau/security', () => ({
-  AccessDenied: () => null,
   usePermissions: () => ({}),
 }));
 
