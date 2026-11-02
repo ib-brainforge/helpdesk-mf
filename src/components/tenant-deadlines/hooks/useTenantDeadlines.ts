@@ -1,7 +1,6 @@
 import type { DeadlinePriority } from '@/api/local/deadlines';
 import {
   type SaveTenantDeadlineResult,
-  type TenantDeadlineParams,
   type TenantDeadlinePolicyDto,
   type TenantDeadlinePolicyInput,
   getHolidayRegions,
@@ -36,15 +35,6 @@ export const deadlineKeys = {
     tenantId,
   ],
 };
-
-/** One page of the tenants list. The last page stays on screen while the next loads. */
-export const useTenantDeadlines = (params: TenantDeadlineParams) =>
-  useQuery({
-    queryKey: [...deadlineKeys.tenants(), params],
-    queryFn: () => getTenantDeadlines(params),
-    placeholderData: keepPreviousData,
-    staleTime: STALE,
-  });
 
 export const useTenantDeadlinePolicy = (tenantId?: string) =>
   useQuery({

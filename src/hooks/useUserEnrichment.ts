@@ -102,6 +102,22 @@ const loadUser = (contextKey: string, id: string): Promise<UserInfo | null> => {
   return user;
 };
 
+/**
+ * The people behind `userIds`, batched with every other lookup made at the same
+ * moment. For callers that enrich rows inside a query function (the hook below
+ * cannot run there). Keyed on every id asked about, like the hook's map.
+ */
+export const loadUsers = async (
+  contextKey: string,
+  userIds: Array<string | undefined | null>,
+): Promise<Record<string, UserInfo | null>> => {
+  const ids = Array.from(
+    new Set(userIds.filter((id): id is string => Boolean(id && id.trim()))),
+  );
+  const users = await Promise.all(ids.map(id => loadUser(contextKey, id)));
+  return Object.fromEntries(ids.map((id, i) => [id, users[i]]));
+};
+
 export const useUserEnrichment = (
   userIds: Array<string | undefined | null>,
 ) => {

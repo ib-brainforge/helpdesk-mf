@@ -1,55 +1,20 @@
 import { AppAuthSplash } from '@/components/AppSplash';
 import { ProviderViewGuard } from '@/components/provider/ProviderViewGuard';
 import { TenantDeadlineList } from '@/components/tenant-deadlines/components/TenantDeadlineList';
-import { useTenantDeadlines } from '@/components/tenant-deadlines/hooks/useTenantDeadlines';
-import { useListParams } from '@/hooks/useListParams';
-import { PageBody, PageHeader } from '@brainforgeau/components/page';
 import {
   ProviderPermissions,
   withAuthenticationRequired,
 } from '@brainforgeau/security';
 import React from 'react';
 
-const FLAGS = ['custom', 'hasLate'] as const;
-const SORTS = ['name', 'open', 'late'] as const;
-
 /**
  * Tenant Deadlines: the tenants a provider supports. Pick one to read or
  * change its deadlines; a tenant without its own uses the Provider default.
  */
-function TenantDeadlinesPage() {
-  const list = useListParams({
-    flags: FLAGS,
-    sorts: SORTS,
-    defaultSort: 'name',
-  });
-  const { params } = list;
-  const tenants = useTenantDeadlines({
-    search: params.search,
-    custom: params.flags.custom,
-    hasLate: params.flags.hasLate,
-    sort: params.sort,
-    dir: params.dir,
-    page: params.page,
-    pageSize: params.pageSize,
-  });
-
-  return (
-    <PageBody>
-      <PageHeader
-        title="Tenant Deadlines"
-        breadcrumbsKey="provider.deadlines.list"
-        helpKey="helpdesk.provider.deadlines"
-      />
-      <TenantDeadlineList list={list} query={tenants} />
-    </PageBody>
-  );
-}
-
 function Page() {
   return (
     <ProviderViewGuard requiredPermissions={[ProviderPermissions.Support]}>
-      <TenantDeadlinesPage />
+      <TenantDeadlineList />
     </ProviderViewGuard>
   );
 }

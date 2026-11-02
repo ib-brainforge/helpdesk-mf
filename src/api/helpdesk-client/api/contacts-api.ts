@@ -42,12 +42,11 @@ export const ContactsApiAxiosParamCreator = function (configuration?: Configurat
          * @param {boolean} [emailOnlyContacts] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
-         * @param {string} [sortBy] 
-         * @param {string} [sortDirection] 
+         * @param {string} [sort] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ContactsGet: async (searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1ContactsGet: async (searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sort?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/contacts`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -83,12 +82,8 @@ export const ContactsApiAxiosParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['pageSize'] = pageSize;
             }
 
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy;
-            }
-
-            if (sortDirection !== undefined) {
-                localVarQueryParameter['sortDirection'] = sortDirection;
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort;
             }
 
 
@@ -241,13 +236,12 @@ export const ContactsApiFp = function(configuration?: Configuration) {
          * @param {boolean} [emailOnlyContacts] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
-         * @param {string} [sortBy] 
-         * @param {string} [sortDirection] 
+         * @param {string} [sort] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultHelpdeskContactListDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ContactsGet(searchTerm, emailOnlyContacts, page, pageSize, sortBy, sortDirection, options);
+        async v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultHelpdeskContactListDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ContactsGet(searchTerm, emailOnlyContacts, page, pageSize, sort, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ContactsApi.v1ContactsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -304,13 +298,12 @@ export const ContactsApiFactory = function (configuration?: Configuration, baseP
          * @param {boolean} [emailOnlyContacts] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
-         * @param {string} [sortBy] 
-         * @param {string} [sortDirection] 
+         * @param {string} [sort] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultHelpdeskContactListDto> {
-            return localVarFp.v1ContactsGet(searchTerm, emailOnlyContacts, page, pageSize, sortBy, sortDirection, options).then((request) => request(axios, basePath));
+        v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultHelpdeskContactListDto> {
+            return localVarFp.v1ContactsGet(searchTerm, emailOnlyContacts, page, pageSize, sort, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: tickets.read (app: helpdesk).
@@ -353,12 +346,11 @@ export interface ContactsApiInterface {
      * @param {boolean} [emailOnlyContacts] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
-     * @param {string} [sortBy] 
-     * @param {string} [sortDirection] 
+     * @param {string} [sort] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultHelpdeskContactListDto>;
+    v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultHelpdeskContactListDto>;
 
     /**
      * Requires permission: tickets.read (app: helpdesk).
@@ -397,13 +389,12 @@ export class ContactsApi extends BaseAPI implements ContactsApiInterface {
      * @param {boolean} [emailOnlyContacts] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
-     * @param {string} [sortBy] 
-     * @param {string} [sortDirection] 
+     * @param {string} [sort] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sortBy?: string, sortDirection?: string, options?: RawAxiosRequestConfig) {
-        return ContactsApiFp(this.configuration).v1ContactsGet(searchTerm, emailOnlyContacts, page, pageSize, sortBy, sortDirection, options).then((request) => request(this.axios, this.basePath));
+    public v1ContactsGet(searchTerm?: string, emailOnlyContacts?: boolean, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig) {
+        return ContactsApiFp(this.configuration).v1ContactsGet(searchTerm, emailOnlyContacts, page, pageSize, sort, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

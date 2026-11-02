@@ -1,3 +1,4 @@
+import { useTenantNames } from '@/hooks/useTenantNames';
 import type { FC } from 'react';
 import { handledByBadgeLabel } from '../new-request/request-categories';
 
@@ -24,5 +25,19 @@ export const HandledByBadge: FC<Props> = ({ level, tenantName }) => {
     >
       {label}
     </span>
+  );
+};
+
+/** The same badge for a list row, which carries only the handling tenant's id. */
+export const HandledByTenantBadge: FC<{
+  level: number | null | undefined;
+  tenantId: string | null | undefined;
+}> = ({ level, tenantId }) => {
+  const names = useTenantNames([(level ?? 0) > 0 ? tenantId : null]);
+  return (
+    <HandledByBadge
+      level={level}
+      tenantName={tenantId ? names[tenantId] : undefined}
+    />
   );
 };

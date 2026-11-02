@@ -178,10 +178,11 @@ export const ReportsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {string} [eventType] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
+         * @param {string} [sort] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ReportsAuditLogGet: async (fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1ReportsAuditLogGet: async (fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, sort?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/reports/audit-log`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -227,6 +228,10 @@ export const ReportsApiAxiosParamCreator = function (configuration?: Configurati
 
             if (pageSize !== undefined) {
                 localVarQueryParameter['pageSize'] = pageSize;
+            }
+
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort;
             }
 
 
@@ -1095,11 +1100,12 @@ export const ReportsApiFp = function(configuration?: Configuration) {
          * @param {string} [eventType] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
+         * @param {string} [sort] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationReportingDTOsAuditLogReportDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ReportsAuditLogGet(fromDate, toDate, userId, eventType, page, pageSize, options);
+        async v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationReportingDTOsAuditLogReportDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ReportsAuditLogGet(fromDate, toDate, userId, eventType, page, pageSize, sort, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ReportsApi.v1ReportsAuditLogGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1360,11 +1366,12 @@ export const ReportsApiFactory = function (configuration?: Configuration, basePa
          * @param {string} [eventType] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
+         * @param {string} [sort] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsAuditLogReportDto> {
-            return localVarFp.v1ReportsAuditLogGet(fromDate, toDate, userId, eventType, page, pageSize, options).then((request) => request(axios, basePath));
+        v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsAuditLogReportDto> {
+            return localVarFp.v1ReportsAuditLogGet(fromDate, toDate, userId, eventType, page, pageSize, sort, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: reports.read (app: helpdesk).
@@ -1567,10 +1574,11 @@ export interface ReportsApiInterface {
      * @param {string} [eventType] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
+     * @param {string} [sort] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsAuditLogReportDto>;
+    v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationReportingDTOsAuditLogReportDto>;
 
     /**
      * Requires permission: reports.read (app: helpdesk).
@@ -1759,11 +1767,12 @@ export class ReportsApi extends BaseAPI implements ReportsApiInterface {
      * @param {string} [eventType] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
+     * @param {string} [sort] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
-        return ReportsApiFp(this.configuration).v1ReportsAuditLogGet(fromDate, toDate, userId, eventType, page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    public v1ReportsAuditLogGet(fromDate?: string, toDate?: string, userId?: string, eventType?: string, page?: number, pageSize?: number, sort?: string, options?: RawAxiosRequestConfig) {
+        return ReportsApiFp(this.configuration).v1ReportsAuditLogGet(fromDate, toDate, userId, eventType, page, pageSize, sort, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

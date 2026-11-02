@@ -62,7 +62,7 @@ interface TicketAssignedEventDto {
  * Automatically invalidates TanStack Query caches when events arrive.
  *
  * @example
- * // In TicketGrid component
+ * // In TicketList component
  * useRealtimeTickets();
  */
 export const useRealtimeTickets = () => {

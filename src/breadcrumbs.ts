@@ -97,6 +97,7 @@ import type { BreadcrumbRegistry } from '@brainforgeau/components/page';
 // Provider view
 // ---------------------------------------------------------------------------
 
+// routes/provider/tickets/page.tsx
 // routes/provider/deadlines/page.tsx
 // routes/provider/deadlines/[tenantId]/page.tsx
 // routes/provider/categories/page.tsx
@@ -493,6 +494,11 @@ export const breadcrumbs = {
   ],
 
   /** routes/provider/categories/page.tsx */
+  'provider.tickets': () => [
+    { labelKey: 'helpdesk', href: '/tickets' },
+    { labelKey: 'helpdesk.provider-tickets' },
+  ],
+
   'provider.categories': () => [
     { labelKey: 'helpdesk', href: '/tickets' },
     { labelKey: 'helpdesk.provider-categories' },
