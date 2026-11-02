@@ -49,6 +49,10 @@ export interface HelpdeskApplicationTicketsDTOsTicketListDto {
     'deadline'?: HelpdeskApplicationSlaDTOsTicketDeadlineDto;
     'submitterTenantId'?: string | null;
     'forwardedFromTenantId'?: string | null;
+    'submitterOrganisationId'?: string | null;
+    'submitterDivisionId'?: string | null;
+    'handledByTenantId'?: string;
+    'handledByLevel'?: number;
 }
 
 

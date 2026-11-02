@@ -31,7 +31,12 @@ export interface HelpdeskApplicationCategoriesModelsCategoryDto {
     'fromEmailName'?: string | null;
     'useFromAddressAsReplyTo'?: boolean;
     'defaultAssigneeId'?: string | null;
+    'inheritToCustomers'?: boolean;
     'customFieldIds'?: Array<string>;
+    'icon'?: string | null;
+    'note'?: string | null;
+    'questionsHeading'?: string | null;
+    'isRemote'?: boolean;
 }
 
 

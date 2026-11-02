@@ -1,8 +1,9 @@
 import {
   IdeasApi,
-  ProviderCustomerTicketsApi,
+  ProviderTenantTicketsApi,
   TicketsApi,
 } from '@/api/helpdesk-client';
+import { toCreatedTicket } from '@/components/tickets/created-ticket';
 import { SUBTASKS_ENABLED, TICKET_LINKS_ENABLED } from '@/constants/features';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -152,7 +153,7 @@ const ticketQueryValues = (filters: TicketFilters) => ({
 
 /**
  * Positional arguments shared by GET /v1/tickets and GET
- * /v1/provider-support/customer-tickets (the provider's "From tenants"
+ * /v1/provider-support/tenant-tickets (the provider's "From tenants"
  * queue, which needs the provider.support permission): the same 26 filters in
  * the same order, so the list, the count and the ids all ask one question.
  */
@@ -194,32 +195,62 @@ const listArgs = (
   ] as const;
 };
 
-/** One page of the tenant's own tickets, or of the provider's From tenants queue. */
+/**
+ * Which rows of the one list a call asks for: the tenant's own only (what
+ * bulk actions can change), the one list (own plus those raised above), or
+ * the "Raised with our provider" preset (raised above only).
+ */
+type ListRows = 'own' | 'one-list' | 'raised-above';
+
+const rowsFor = (filters: TicketFilters): ListRows =>
+  filters.raisedAboveOnly ? 'raised-above' : 'one-list';
+
+/** One page of the tenant's tickets, or of the provider's From tenants queue. */
 const fetchTicketPage = async (
   fromTenants: boolean,
   args: ReturnType<typeof listArgs>,
-) =>
-  fromTenants
-    ? (
-        await (
-          await createHelpdeskApiClient(ProviderCustomerTicketsApi)
-        ).v1ProviderSupportCustomerTicketsGet(...args)
-      ).data
-    : (await (await createHelpdeskApiClient(TicketsApi)).v1TicketsGet(...args))
-        .data;
+  rows: ListRows,
+) => {
+  if (fromTenants) {
+    const client = await createHelpdeskApiClient(ProviderTenantTicketsApi);
+    return (await client.v1ProviderSupportTenantTicketsGet(...args)).data;
+  }
+  // The last positional parameters of v1TicketsGet, after the linked-entity
+  // filters (type, id, reference; not used by the list): left unset, the call
+  // returns the tenant's own tickets only.
+  const includeRaisedAbove = rows === 'own' ? undefined : true;
+  const raisedAboveOnly = rows === 'raised-above' ? true : undefined;
+  const client = await createHelpdeskApiClient(TicketsApi);
+  return (
+    await client.v1TicketsGet(
+      ...args,
+      undefined,
+      undefined,
+      undefined,
+      includeRaisedAbove,
+      raisedAboveOnly,
+    )
+  ).data;
+};
 
 /**
- * How many tickets match `filters`, without fetching them.
+ * How many of the tenant's OWN tickets match `filters`: what "Select all
+ * matching" can act on, the same population as fetchTicketIds. The list's
+ * totalCount also counts the rows raised above the tenant, which no bulk
+ * action can change.
  *
  * pageSize 1, and only `totalCount` is read off the paged envelope; the single
- * row that comes back is discarded. It must ask the same queue as the list
- * (`fromTenants`), or the badge counts a different population than the rows.
+ * row that comes back is discarded.
  */
-export const fetchTicketCount = async (
+export const fetchOwnTicketCount = async (
   filters: TicketFilters,
   fromTenants = false,
 ): Promise<number> => {
-  const data = await fetchTicketPage(fromTenants, listArgs(filters, 1, 1));
+  const data = await fetchTicketPage(
+    fromTenants,
+    listArgs(filters, 1, 1),
+    'own',
+  );
   return data.totalCount ?? 0;
 };
 
@@ -243,12 +274,15 @@ export const fetchTicketIds = async (
   filters: TicketFilters,
   fromTenants = false,
 ): Promise<TicketIdsResult> => {
+  // Bulk actions act on the tenant's own tickets only: rows handled above it
+  // live in another tenant and are never selectable, so neither
+  // includeRaisedAbove nor raisedAboveOnly is sent here.
   const args = listArgs(filters);
   const data = fromTenants
     ? (
         await (
-          await createHelpdeskApiClient(ProviderCustomerTicketsApi)
-        ).v1ProviderSupportCustomerTicketsIdsGet(...args)
+          await createHelpdeskApiClient(ProviderTenantTicketsApi)
+        ).v1ProviderSupportTenantTicketsIdsGet(...args)
       ).data
     : (
         await (
@@ -342,6 +376,7 @@ export const useTicketsData = (
           pagination.pageSize,
           sort,
         ),
+        rowsFor(queryFilters),
       );
 
       return {
@@ -399,7 +434,7 @@ export const useCreateTicket = () => {
         assigneeId: ticket.assigneeId,
         tags: ticket.tags,
       });
-      return response.data;
+      return toCreatedTicket(response.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });

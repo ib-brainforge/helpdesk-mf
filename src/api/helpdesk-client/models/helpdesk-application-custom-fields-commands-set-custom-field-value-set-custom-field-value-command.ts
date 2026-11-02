@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldAssetInput } from './helpdesk-application-custom-fields-commands-set-bulk-custom-field-values-custom-field-asset-input';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainCategoriesEnumsCustomFieldUsageType } from './helpdesk-domain-categories-enums-custom-field-usage-type';
 
 export interface HelpdeskApplicationCustomFieldsCommandsSetCustomFieldValueSetCustomFieldValueCommand {
@@ -30,6 +33,7 @@ export interface HelpdeskApplicationCustomFieldsCommandsSetCustomFieldValueSetCu
     'booleanValue'?: boolean | null;
     'selectedOptionId'?: string | null;
     'selectedOptionIds'?: Array<string> | null;
+    'selectedAssets'?: Array<HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldAssetInput> | null;
 }
 
 

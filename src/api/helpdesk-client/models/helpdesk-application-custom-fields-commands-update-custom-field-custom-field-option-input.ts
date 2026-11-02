@@ -19,5 +19,6 @@ export interface HelpdeskApplicationCustomFieldsCommandsUpdateCustomFieldCustomF
     'value'?: string;
     'isDefault'?: boolean;
     'sortOrder'?: number;
+    'parentValue'?: string | null;
 }
 

@@ -31,6 +31,7 @@ const getFieldTypeDisplayName = (type: CustomFieldType): string => {
     [CustomFieldType.Number]: 'Number',
     [CustomFieldType.Email]: 'Email',
     [CustomFieldType.MultiSelect]: 'Multi-Select',
+    [CustomFieldType.Asset]: 'Asset',
   };
   return typeMap[type] || 'Unknown';
 };

@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldValueInput } from './helpdesk-application-custom-fields-commands-set-bulk-custom-field-values-custom-field-value-input';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskApplicationEmailNewContactRequest } from './helpdesk-application-email-new-contact-request';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -40,6 +43,7 @@ export interface HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketComma
     'contactId'?: string | null;
     'newContact'?: HelpdeskApplicationEmailNewContactRequest;
     'notifyContact'?: boolean;
+    'customFieldValues'?: Array<HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldValueInput> | null;
 }
 
 

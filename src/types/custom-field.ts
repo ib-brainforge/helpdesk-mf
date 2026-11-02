@@ -31,6 +31,8 @@ export enum CustomFieldType {
   Number = 6,
   Email = 7,
   MultiSelect = 8,
+  /** Vehicles and other assets from the Asset app, picked by search. */
+  Asset = 9,
 }
 
 export enum CustomFieldUsageType {

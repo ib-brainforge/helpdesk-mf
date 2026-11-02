@@ -18,6 +18,9 @@
 import type { HelpdeskDomainKnowledgeBaseEnumsKbPortalSection } from './helpdesk-domain-knowledge-base-enums-kb-portal-section';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskDomainKnowledgeBaseEnumsKbSharing } from './helpdesk-domain-knowledge-base-enums-kb-sharing';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainKnowledgeBaseEnumsKbStaffSection } from './helpdesk-domain-knowledge-base-enums-kb-staff-section';
 
 export interface HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCategoryCommand {
@@ -30,6 +33,7 @@ export interface HelpdeskApplicationKnowledgeBaseCommandsUpdateCategoryUpdateCat
     'sortOrder'?: number | null;
     'portalSection'?: HelpdeskDomainKnowledgeBaseEnumsKbPortalSection;
     'staffSection'?: HelpdeskDomainKnowledgeBaseEnumsKbStaffSection;
+    'sharing'?: HelpdeskDomainKnowledgeBaseEnumsKbSharing;
 }
 
 

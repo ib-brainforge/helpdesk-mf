@@ -15,6 +15,12 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { HelpdeskApplicationCategoriesModelsCategoryHandledBy } from './helpdesk-application-categories-models-category-handled-by';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { HelpdeskApplicationCategoriesModelsRequestFieldDto } from './helpdesk-application-categories-models-request-field-dto';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { HelpdeskDomainCategoriesEnumsAccessLevel } from './helpdesk-domain-categories-enums-access-level';
 
 export interface HelpdeskApplicationCategoriesModelsAvailableCategoryDto {
@@ -25,6 +31,17 @@ export interface HelpdeskApplicationCategoriesModelsAvailableCategoryDto {
     'sectionName'?: string | null;
     'accessLevel'?: HelpdeskDomainCategoriesEnumsAccessLevel;
     'sortOrder'?: number;
+    'ownerTenantId'?: string;
+    'level'?: number;
+    'handledBy'?: HelpdeskApplicationCategoriesModelsCategoryHandledBy;
+    'icon'?: string | null;
+    'note'?: string | null;
+    'questionsHeading'?: string | null;
+    'isRemote'?: boolean;
+    'fields'?: Array<HelpdeskApplicationCategoriesModelsRequestFieldDto>;
+    /**
+     * @deprecated
+     */
     'isProviderPreset'?: boolean;
 }
 

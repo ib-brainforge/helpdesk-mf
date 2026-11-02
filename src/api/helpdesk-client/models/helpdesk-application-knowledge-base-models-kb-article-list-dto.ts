@@ -40,6 +40,8 @@ export interface HelpdeskApplicationKnowledgeBaseModelsKbArticleListDto {
     'publishedAt'?: string | null;
     'createdAt'?: string;
     'modifiedAt'?: string;
+    'ownerTenantId'?: string;
+    'isInherited'?: boolean;
 }
 
 

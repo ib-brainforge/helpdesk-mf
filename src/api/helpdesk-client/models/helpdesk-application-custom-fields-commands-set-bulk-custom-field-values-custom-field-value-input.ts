@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldAssetInput } from './helpdesk-application-custom-fields-commands-set-bulk-custom-field-values-custom-field-asset-input';
 
 export interface HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldValueInput {
     'customFieldDefinitionId'?: string;
@@ -22,5 +25,6 @@ export interface HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValues
     'booleanValue'?: boolean | null;
     'selectedOptionId'?: string | null;
     'selectedOptionIds'?: Array<string> | null;
+    'selectedAssets'?: Array<HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldAssetInput> | null;
 }
 

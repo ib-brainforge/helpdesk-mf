@@ -31,6 +31,10 @@ export interface HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCatego
     'fromEmailName'?: string | null;
     'useFromAddressAsReplyTo'?: boolean;
     'customFieldIds'?: Array<string> | null;
+    'icon'?: string | null;
+    'note'?: string | null;
+    'questionsHeading'?: string | null;
+    'isRemote'?: boolean | null;
 }
 
 

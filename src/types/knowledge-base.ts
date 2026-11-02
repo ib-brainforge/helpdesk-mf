@@ -1,4 +1,8 @@
-// Enums use string values that match the generated the vendored helpdesk client types
+import type {
+  HelpdeskDomainKnowledgeBaseEnumsKbSharing as KbSharing,
+  HelpdeskDomainKnowledgeBaseEnumsKbStaffSection as KbStaffSection,
+} from '@/api/helpdesk-client';
+// Enums use string values that match the generated vendored helpdesk client types
 // (HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus and HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel).
 // This allows direct comparison against values returned from the backend without any casting.
 
@@ -31,6 +35,10 @@ export interface KnowledgeBaseCategoryDto {
   children?: KnowledgeBaseCategoryDto[];
   articleCount: number;
   order: number;
+  /** Who below this tenant reads the category's published articles. */
+  sharing: KbSharing;
+  /** Where staff see the category's articles inside the apps. */
+  staffSection: KbStaffSection;
   /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
   meta?: ServicesCoreAbstractionsRecordMeta;
   /** Which customer-portal area this category feeds; `None` keeps it staff-only. */
@@ -57,6 +65,10 @@ export interface KnowledgeBaseArticleListDto {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  /** The tenant that owns the article. */
+  ownerTenantId?: string;
+  /** From an office above this tenant: read-only here. */
+  isInherited: boolean;
   /** Record placement/audit metadata (DTO tenancy/scope metadata initiative). */
   meta?: ServicesCoreAbstractionsRecordMeta;
 }
@@ -64,6 +76,8 @@ export interface KnowledgeBaseArticleListDto {
 export interface KnowledgeBaseArticleDto extends KnowledgeBaseArticleListDto {
   body: string;
   relatedArticleIds?: string[];
+  /** Page keys that make this article show as "Help for this page". */
+  pageKeys: string[];
 }
 
 export interface KnowledgeBaseRelatedArticleDto {
@@ -79,6 +93,7 @@ export interface CreateKnowledgeBaseArticleDto {
   body: string;
   categoryId?: string;
   tags?: string[];
+  pageKeys?: string[];
   accessLevel: KnowledgeBaseAccessLevel;
   status: KnowledgeBaseStatus;
 }
@@ -88,6 +103,8 @@ export interface UpdateKnowledgeBaseArticleDto {
   body?: string;
   categoryId?: string;
   tags?: string[];
+  /** undefined leaves the keys unchanged; a list (even empty) replaces them. */
+  pageKeys?: string[];
   accessLevel?: KnowledgeBaseAccessLevel;
   // Note: status changes are applied via dedicated endpoints (publish/unpublish/archive),
   // not through the update command. See useKnowledgeBase.ts for the transition logic.

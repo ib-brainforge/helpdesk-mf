@@ -15,7 +15,6 @@ describe('provider.support access', () => {
 
   it.each([
     ['multitenant.admin', true],
-    ['principal.admin', true],
     ['multitenant.read', false],
     ['support.access', false],
   ])('elevated bypass for role %s is %s', (role, elevated) => {

@@ -8,8 +8,8 @@
  * Tenant pages sit at the root (/tickets, /dashboard...). The Provider view's
  * pages sit under /provider/dashboard, /provider/tickets, /provider/deadlines,
  * /provider/categories and /provider/reports.
- * /provider/raised is NOT in the Provider view: it is the Tenant view's
- * "Raised with our provider" list.
+ * /provider/raised is NOT in the Provider view: it redirects to the Tenant
+ * view's "Raised with our provider" preset of the ticket list.
  */
 export type HelpdeskView = 'tenant' | 'provider';
 
@@ -26,8 +26,8 @@ export const PROVIDER_VIEW_HOME = '/provider';
 /** Where the Tenant view segment goes. */
 export const TENANT_VIEW_HOME = '/';
 
-/** Contact page, linked from other apps' help widgets and relationship pages. */
-export const CONTACT_PROVIDER_PATH = '/contact-provider';
-
-/** "Raised with our provider": the list, and a ticket under it. */
-export const RAISED_WITH_PROVIDER_PATH = '/provider/raised';
+/**
+ * "Raised with our provider": a preset of the one ticket list (only tickets a
+ * helpdesk above the tenant works). /provider/raised redirects here.
+ */
+export const RAISED_WITH_PROVIDER_PATH = '/tickets?raised=1';

@@ -33,6 +33,7 @@ import {
 } from '@tanstack/react-table';
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
+import { KbOwnerBadge } from './KbOwnerBadge';
 
 type KbArticleListViewProps = {
   articles: KnowledgeBaseArticleListDto[];
@@ -130,12 +131,15 @@ export function KbArticleListView({
         id: 'title',
         header: 'Title',
         cell: ({ row }) => (
-          <Link
-            to={`/knowledge-base/${row.original.slug}`}
-            className="text-primary hover:underline font-medium"
-          >
-            {row.original.title}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/knowledge-base/${row.original.slug}`}
+              className="text-primary hover:underline font-medium"
+            >
+              {row.original.title}
+            </Link>
+            <KbOwnerBadge article={row.original} />
+          </div>
         ),
         size: 400,
       }),
@@ -181,7 +185,8 @@ export function KbArticleListView({
     enableSorting: false,
     state: { rowSelection: scope.rowSelection },
     onRowSelectionChange: scope.onRowSelectionChange,
-    enableRowSelection: true,
+    // A shared article's placement belongs to its owner.
+    enableRowSelection: row => !row.original.isInherited,
   });
 
   if (isLoading) {

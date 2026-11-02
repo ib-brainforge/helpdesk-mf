@@ -22,11 +22,15 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
-import type { HelpdeskApplicationCommonPagedResultPortalAnnouncementDto } from '../models';
+import type { HelpdeskApplicationCommonPagedResultHelpArticleSummaryDto } from '../models';
 // @ts-ignore
-import type { HelpdeskApplicationPortalHelpPortalAnnouncementUnreadCountDto } from '../models';
+import type { HelpdeskApplicationCommonPagedResultWhatsNewEntryDto } from '../models';
 // @ts-ignore
-import type { HelpdeskApplicationPortalHelpPortalHelpArticleDto } from '../models';
+import type { HelpdeskApplicationHelpHelpArticleDto } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationHelpHelpCategoryDto } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationHelpWhatsNewUnreadCountDto } from '../models';
 // @ts-ignore
 import type { MicrosoftAspNetCoreMvcProblemDetails } from '../models';
 /**
@@ -34,6 +38,138 @@ import type { MicrosoftAspNetCoreMvcProblemDetails } from '../models';
  */
 export const HelpApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * 
+         * @param {string} [search] 
+         * @param {string} [categoryId] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1HelpArticlesGet: async (search?: string, categoryId?: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/help/articles`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (search !== undefined) {
+                localVarQueryParameter['search'] = search;
+            }
+
+            if (categoryId !== undefined) {
+                localVarQueryParameter['categoryId'] = categoryId;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['pageSize'] = pageSize;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} slug 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1HelpArticlesSlugGet: async (slug: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'slug' is not null or undefined
+            assertParamExists('v1HelpArticlesSlugGet', 'slug', slug)
+            const localVarPath = `/v1/help/articles/{slug}`
+                .replace(`{${"slug"}}`, encodeURIComponent(String(slug)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1HelpCategoriesGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/v1/help/categories`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * 
          * @param {string} pageKey 
@@ -127,6 +263,7 @@ export const HelpApiAxiosParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @summary A per-user read marker, so a read-only actor may set it too.
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -212,11 +349,49 @@ export const HelpApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @param {string} [search] 
+         * @param {string} [categoryId] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1HelpArticlesGet(search?: string, categoryId?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultHelpArticleSummaryDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1HelpArticlesGet(search, categoryId, page, pageSize, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['HelpApi.v1HelpArticlesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} slug 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1HelpArticlesSlugGet(slug: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationHelpHelpArticleDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1HelpArticlesSlugGet(slug, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['HelpApi.v1HelpArticlesSlugGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1HelpCategoriesGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<HelpdeskApplicationHelpHelpCategoryDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1HelpCategoriesGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['HelpApi.v1HelpCategoriesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @param {string} pageKey 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1HelpPagesPageKeyGet(pageKey: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<HelpdeskApplicationPortalHelpPortalHelpArticleDto>>> {
+        async v1HelpPagesPageKeyGet(pageKey: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<HelpdeskApplicationHelpHelpArticleDto>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1HelpPagesPageKeyGet(pageKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['HelpApi.v1HelpPagesPageKeyGet']?.[localVarOperationServerIndex]?.url;
@@ -230,7 +405,7 @@ export const HelpApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1HelpWhatsNewGet(unreadOnly?: boolean, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultPortalAnnouncementDto>> {
+        async v1HelpWhatsNewGet(unreadOnly?: boolean, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultWhatsNewEntryDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1HelpWhatsNewGet(unreadOnly, page, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['HelpApi.v1HelpWhatsNewGet']?.[localVarOperationServerIndex]?.url;
@@ -238,6 +413,7 @@ export const HelpApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary A per-user read marker, so a read-only actor may set it too.
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -253,7 +429,7 @@ export const HelpApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1HelpWhatsNewUnreadCountGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationPortalHelpPortalAnnouncementUnreadCountDto>> {
+        async v1HelpWhatsNewUnreadCountGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationHelpWhatsNewUnreadCountDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1HelpWhatsNewUnreadCountGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['HelpApi.v1HelpWhatsNewUnreadCountGet']?.[localVarOperationServerIndex]?.url;
@@ -270,11 +446,40 @@ export const HelpApiFactory = function (configuration?: Configuration, basePath?
     return {
         /**
          * 
+         * @param {string} [search] 
+         * @param {string} [categoryId] 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1HelpArticlesGet(search?: string, categoryId?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultHelpArticleSummaryDto> {
+            return localVarFp.v1HelpArticlesGet(search, categoryId, page, pageSize, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} slug 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1HelpArticlesSlugGet(slug: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationHelpHelpArticleDto> {
+            return localVarFp.v1HelpArticlesSlugGet(slug, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1HelpCategoriesGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<HelpdeskApplicationHelpHelpCategoryDto>> {
+            return localVarFp.v1HelpCategoriesGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {string} pageKey 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1HelpPagesPageKeyGet(pageKey: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<HelpdeskApplicationPortalHelpPortalHelpArticleDto>> {
+        v1HelpPagesPageKeyGet(pageKey: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<HelpdeskApplicationHelpHelpArticleDto>> {
             return localVarFp.v1HelpPagesPageKeyGet(pageKey, options).then((request) => request(axios, basePath));
         },
         /**
@@ -285,11 +490,12 @@ export const HelpApiFactory = function (configuration?: Configuration, basePath?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1HelpWhatsNewGet(unreadOnly?: boolean, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultPortalAnnouncementDto> {
+        v1HelpWhatsNewGet(unreadOnly?: boolean, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultWhatsNewEntryDto> {
             return localVarFp.v1HelpWhatsNewGet(unreadOnly, page, pageSize, options).then((request) => request(axios, basePath));
         },
         /**
          * 
+         * @summary A per-user read marker, so a read-only actor may set it too.
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -302,7 +508,7 @@ export const HelpApiFactory = function (configuration?: Configuration, basePath?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1HelpWhatsNewUnreadCountGet(options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationPortalHelpPortalAnnouncementUnreadCountDto> {
+        v1HelpWhatsNewUnreadCountGet(options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationHelpWhatsNewUnreadCountDto> {
             return localVarFp.v1HelpWhatsNewUnreadCountGet(options).then((request) => request(axios, basePath));
         },
     };
@@ -314,11 +520,37 @@ export const HelpApiFactory = function (configuration?: Configuration, basePath?
 export interface HelpApiInterface {
     /**
      * 
+     * @param {string} [search] 
+     * @param {string} [categoryId] 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1HelpArticlesGet(search?: string, categoryId?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultHelpArticleSummaryDto>;
+
+    /**
+     * 
+     * @param {string} slug 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1HelpArticlesSlugGet(slug: string, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationHelpHelpArticleDto>;
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1HelpCategoriesGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<HelpdeskApplicationHelpHelpCategoryDto>>;
+
+    /**
+     * 
      * @param {string} pageKey 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1HelpPagesPageKeyGet(pageKey: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<HelpdeskApplicationPortalHelpPortalHelpArticleDto>>;
+    v1HelpPagesPageKeyGet(pageKey: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<HelpdeskApplicationHelpHelpArticleDto>>;
 
     /**
      * 
@@ -328,10 +560,11 @@ export interface HelpApiInterface {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1HelpWhatsNewGet(unreadOnly?: boolean, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultPortalAnnouncementDto>;
+    v1HelpWhatsNewGet(unreadOnly?: boolean, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultWhatsNewEntryDto>;
 
     /**
      * 
+     * @summary A per-user read marker, so a read-only actor may set it too.
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -343,7 +576,7 @@ export interface HelpApiInterface {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1HelpWhatsNewUnreadCountGet(options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationPortalHelpPortalAnnouncementUnreadCountDto>;
+    v1HelpWhatsNewUnreadCountGet(options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationHelpWhatsNewUnreadCountDto>;
 
 }
 
@@ -351,6 +584,38 @@ export interface HelpApiInterface {
  * HelpApi - object-oriented interface
  */
 export class HelpApi extends BaseAPI implements HelpApiInterface {
+    /**
+     * 
+     * @param {string} [search] 
+     * @param {string} [categoryId] 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1HelpArticlesGet(search?: string, categoryId?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
+        return HelpApiFp(this.configuration).v1HelpArticlesGet(search, categoryId, page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} slug 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1HelpArticlesSlugGet(slug: string, options?: RawAxiosRequestConfig) {
+        return HelpApiFp(this.configuration).v1HelpArticlesSlugGet(slug, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1HelpCategoriesGet(options?: RawAxiosRequestConfig) {
+        return HelpApiFp(this.configuration).v1HelpCategoriesGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @param {string} pageKey 
@@ -375,6 +640,7 @@ export class HelpApi extends BaseAPI implements HelpApiInterface {
 
     /**
      * 
+     * @summary A per-user read marker, so a read-only actor may set it too.
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

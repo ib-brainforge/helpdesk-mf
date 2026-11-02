@@ -24,9 +24,9 @@ import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError
 // @ts-ignore
 import type { HelpdeskApplicationCommonPagedResultCommentDto } from '../models';
 // @ts-ignore
-import type { HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto } from '../models';
-// @ts-ignore
 import type { HelpdeskApplicationProviderSupportCommandsRaiseTicketWithProviderRaiseTicketWithProviderCommand } from '../models';
+// @ts-ignore
+import type { HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationProviderSupportDTOsPresetCategoryOpenCountDto } from '../models';
 // @ts-ignore
@@ -35,8 +35,6 @@ import type { HelpdeskApplicationProviderSupportDTOsProviderCategoryDto } from '
 import type { HelpdeskApplicationProviderSupportDTOsProviderSupportContextDto } from '../models';
 // @ts-ignore
 import type { HelpdeskApplicationProviderSupportDTOsRaisedWithProviderTicketDto } from '../models';
-// @ts-ignore
-import type { HelpdeskDomainTicketsEnumsTicketStatus } from '../models';
 // @ts-ignore
 import type { MicrosoftAspNetCoreMvcProblemDetails } from '../models';
 /**
@@ -154,57 +152,6 @@ export const ProviderSupportApiAxiosParamCreator = function (configuration?: Con
         },
         /**
          * 
-         * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
-         * @param {number} [page] 
-         * @param {number} [pageSize] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ProviderSupportTicketsGet: async (status?: HelpdeskDomainTicketsEnumsTicketStatus, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/v1/provider-support/tickets`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication ContextToken required
-            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
-
-            // authentication Bearer required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            if (status !== undefined) {
-                localVarQueryParameter['status'] = status;
-            }
-
-            if (page !== undefined) {
-                localVarQueryParameter['page'] = page;
-            }
-
-            if (pageSize !== undefined) {
-                localVarQueryParameter['pageSize'] = pageSize;
-            }
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @param {string} id 
          * @param {number} [page] 
          * @param {number} [pageSize] 
@@ -247,6 +194,50 @@ export const ProviderSupportApiAxiosParamCreator = function (configuration?: Con
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand} [helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ProviderSupportTicketsIdCommentsPost: async (id: string, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand?: HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('v1ProviderSupportTicketsIdCommentsPost', 'id', id)
+            const localVarPath = `/v1/provider-support/tickets/{id}/comments`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -377,20 +368,6 @@ export const ProviderSupportApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
-         * @param {number} [page] 
-         * @param {number} [pageSize] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1ProviderSupportTicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ProviderSupportTicketsGet(status, page, pageSize, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['ProviderSupportApi.v1ProviderSupportTicketsGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
          * @param {string} id 
          * @param {number} [page] 
          * @param {number} [pageSize] 
@@ -401,6 +378,19 @@ export const ProviderSupportApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1ProviderSupportTicketsIdCommentsGet(id, page, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ProviderSupportApi.v1ProviderSupportTicketsIdCommentsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand} [helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1ProviderSupportTicketsIdCommentsPost(id: string, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand?: HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ProviderSupportTicketsIdCommentsPost(id, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ProviderSupportApi.v1ProviderSupportTicketsIdCommentsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -462,17 +452,6 @@ export const ProviderSupportApiFactory = function (configuration?: Configuration
         },
         /**
          * 
-         * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
-         * @param {number} [page] 
-         * @param {number} [pageSize] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1ProviderSupportTicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto> {
-            return localVarFp.v1ProviderSupportTicketsGet(status, page, pageSize, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
          * @param {string} id 
          * @param {number} [page] 
          * @param {number} [pageSize] 
@@ -481,6 +460,16 @@ export const ProviderSupportApiFactory = function (configuration?: Configuration
          */
         v1ProviderSupportTicketsIdCommentsGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultCommentDto> {
             return localVarFp.v1ProviderSupportTicketsIdCommentsGet(id, page, pageSize, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} id 
+         * @param {HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand} [helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1ProviderSupportTicketsIdCommentsPost(id: string, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand?: HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options?: RawAxiosRequestConfig): AxiosPromise<string> {
+            return localVarFp.v1ProviderSupportTicketsIdCommentsPost(id, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -530,16 +519,6 @@ export interface ProviderSupportApiInterface {
 
     /**
      * 
-     * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
-     * @param {number} [page] 
-     * @param {number} [pageSize] 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    v1ProviderSupportTicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto>;
-
-    /**
-     * 
      * @param {string} id 
      * @param {number} [page] 
      * @param {number} [pageSize] 
@@ -547,6 +526,15 @@ export interface ProviderSupportApiInterface {
      * @throws {RequiredError}
      */
     v1ProviderSupportTicketsIdCommentsGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultCommentDto>;
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand} [helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1ProviderSupportTicketsIdCommentsPost(id: string, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand?: HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options?: RawAxiosRequestConfig): AxiosPromise<string>;
 
     /**
      * 
@@ -599,18 +587,6 @@ export class ProviderSupportApi extends BaseAPI implements ProviderSupportApiInt
 
     /**
      * 
-     * @param {HelpdeskDomainTicketsEnumsTicketStatus} [status] 
-     * @param {number} [page] 
-     * @param {number} [pageSize] 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public v1ProviderSupportTicketsGet(status?: HelpdeskDomainTicketsEnumsTicketStatus, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
-        return ProviderSupportApiFp(this.configuration).v1ProviderSupportTicketsGet(status, page, pageSize, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
      * @param {string} id 
      * @param {number} [page] 
      * @param {number} [pageSize] 
@@ -619,6 +595,17 @@ export class ProviderSupportApi extends BaseAPI implements ProviderSupportApiInt
      */
     public v1ProviderSupportTicketsIdCommentsGet(id: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
         return ProviderSupportApiFp(this.configuration).v1ProviderSupportTicketsIdCommentsGet(id, page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @param {HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand} [helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1ProviderSupportTicketsIdCommentsPost(id: string, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand?: HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options?: RawAxiosRequestConfig) {
+        return ProviderSupportApiFp(this.configuration).v1ProviderSupportTicketsIdCommentsPost(id, helpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

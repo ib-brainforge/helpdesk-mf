@@ -103,6 +103,7 @@ Class | Method | HTTP request | Description
 *CategoriesApi* | [**v1CategoriesIdDelete**](docs/CategoriesApi.md#v1categoriesiddelete) | **DELETE** /v1/categories/{id} | 
 *CategoriesApi* | [**v1CategoriesIdDuplicatePost**](docs/CategoriesApi.md#v1categoriesidduplicatepost) | **POST** /v1/categories/{id}/duplicate | 
 *CategoriesApi* | [**v1CategoriesIdGet**](docs/CategoriesApi.md#v1categoriesidget) | **GET** /v1/categories/{id} | 
+*CategoriesApi* | [**v1CategoriesIdInheritToCustomersPut**](docs/CategoriesApi.md#v1categoriesidinherittocustomersput) | **PUT** /v1/categories/{id}/inherit-to-customers | 
 *CategoriesApi* | [**v1CategoriesIdPortalEnquiryPatch**](docs/CategoriesApi.md#v1categoriesidportalenquirypatch) | **PATCH** /v1/categories/{id}/portal-enquiry | 
 *CategoriesApi* | [**v1CategoriesIdPut**](docs/CategoriesApi.md#v1categoriesidput) | **PUT** /v1/categories/{id} | 
 *CategoriesApi* | [**v1CategoriesIdWorkflowPatch**](docs/CategoriesApi.md#v1categoriesidworkflowpatch) | **PATCH** /v1/categories/{id}/workflow | 
@@ -135,9 +136,12 @@ Class | Method | HTTP request | Description
 *CustomStatusesApi* | [**v1CustomStatusesIdPut**](docs/CustomStatusesApi.md#v1customstatusesidput) | **PUT** /v1/custom-statuses/{id} | 
 *CustomStatusesApi* | [**v1CustomStatusesPost**](docs/CustomStatusesApi.md#v1customstatusespost) | **POST** /v1/custom-statuses | 
 *DeadlinesApi* | [**v1DeadlinesPreviewPost**](docs/DeadlinesApi.md#v1deadlinespreviewpost) | **POST** /v1/deadlines/preview | 
+*HelpApi* | [**v1HelpArticlesGet**](docs/HelpApi.md#v1helparticlesget) | **GET** /v1/help/articles | 
+*HelpApi* | [**v1HelpArticlesSlugGet**](docs/HelpApi.md#v1helparticlesslugget) | **GET** /v1/help/articles/{slug} | 
+*HelpApi* | [**v1HelpCategoriesGet**](docs/HelpApi.md#v1helpcategoriesget) | **GET** /v1/help/categories | 
 *HelpApi* | [**v1HelpPagesPageKeyGet**](docs/HelpApi.md#v1helppagespagekeyget) | **GET** /v1/help/pages/{pageKey} | 
 *HelpApi* | [**v1HelpWhatsNewGet**](docs/HelpApi.md#v1helpwhatsnewget) | **GET** /v1/help/whats-new | 
-*HelpApi* | [**v1HelpWhatsNewIdReadPost**](docs/HelpApi.md#v1helpwhatsnewidreadpost) | **POST** /v1/help/whats-new/{id}/read | 
+*HelpApi* | [**v1HelpWhatsNewIdReadPost**](docs/HelpApi.md#v1helpwhatsnewidreadpost) | **POST** /v1/help/whats-new/{id}/read | A per-user read marker, so a read-only actor may set it too.
 *HelpApi* | [**v1HelpWhatsNewUnreadCountGet**](docs/HelpApi.md#v1helpwhatsnewunreadcountget) | **GET** /v1/help/whats-new/unread-count | 
 *IdeasApi* | [**v1IdeasGet**](docs/IdeasApi.md#v1ideasget) | **GET** /v1/ideas | 
 *IntegrationsApi* | [**v1IntegrationsGet**](docs/IntegrationsApi.md#v1integrationsget) | **GET** /v1/integrations | 
@@ -189,23 +193,23 @@ Class | Method | HTTP request | Description
 *PortalHelpApi* | [**v1PortalHelpArticlesGet**](docs/PortalHelpApi.md#v1portalhelparticlesget) | **GET** /v1/portal/help/articles | 
 *PortalHelpApi* | [**v1PortalHelpArticlesSlugGet**](docs/PortalHelpApi.md#v1portalhelparticlesslugget) | **GET** /v1/portal/help/articles/{slug} | 
 *PortalHelpApi* | [**v1PortalHelpCategoriesGet**](docs/PortalHelpApi.md#v1portalhelpcategoriesget) | **GET** /v1/portal/help/categories | 
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinesget) | **GET** /v1/provider-support/company-deadlines | 
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesHolidayRegionsGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinesholidayregionsget) | **GET** /v1/provider-support/company-deadlines/holiday-regions | 
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesHolidaysGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinesholidaysget) | **GET** /v1/provider-support/company-deadlines/holidays | 
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdDelete**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantiddelete) | **DELETE** /v1/provider-support/company-deadlines/{tenantId} | 
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdGet**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantidget) | **GET** /v1/provider-support/company-deadlines/{tenantId} | 
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdPreviewPost**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantidpreviewpost) | **POST** /v1/provider-support/company-deadlines/{tenantId}/preview | A read that is a POST only to carry the draft policy; nothing is saved.
-*ProviderCompanyDeadlinesApi* | [**v1ProviderSupportCompanyDeadlinesTenantIdPut**](docs/ProviderCompanyDeadlinesApi.md#v1providersupportcompanydeadlinestenantidput) | **PUT** /v1/provider-support/company-deadlines/{tenantId} | 
-*ProviderCustomerTicketsApi* | [**v1ProviderSupportCustomerTicketsCountsGet**](docs/ProviderCustomerTicketsApi.md#v1providersupportcustomerticketscountsget) | **GET** /v1/provider-support/customer-tickets/counts | 
-*ProviderCustomerTicketsApi* | [**v1ProviderSupportCustomerTicketsGet**](docs/ProviderCustomerTicketsApi.md#v1providersupportcustomerticketsget) | **GET** /v1/provider-support/customer-tickets | 
-*ProviderCustomerTicketsApi* | [**v1ProviderSupportCustomerTicketsIdsGet**](docs/ProviderCustomerTicketsApi.md#v1providersupportcustomerticketsidsget) | **GET** /v1/provider-support/customer-tickets/ids | 
 *ProviderSupportApi* | [**v1ProviderSupportCategoriesGet**](docs/ProviderSupportApi.md#v1providersupportcategoriesget) | **GET** /v1/provider-support/categories | 
 *ProviderSupportApi* | [**v1ProviderSupportCategoryOpenCountsGet**](docs/ProviderSupportApi.md#v1providersupportcategoryopencountsget) | **GET** /v1/provider-support/category-open-counts | 
 *ProviderSupportApi* | [**v1ProviderSupportContextGet**](docs/ProviderSupportApi.md#v1providersupportcontextget) | **GET** /v1/provider-support/context | 
-*ProviderSupportApi* | [**v1ProviderSupportTicketsGet**](docs/ProviderSupportApi.md#v1providersupportticketsget) | **GET** /v1/provider-support/tickets | 
 *ProviderSupportApi* | [**v1ProviderSupportTicketsIdCommentsGet**](docs/ProviderSupportApi.md#v1providersupportticketsidcommentsget) | **GET** /v1/provider-support/tickets/{id}/comments | 
+*ProviderSupportApi* | [**v1ProviderSupportTicketsIdCommentsPost**](docs/ProviderSupportApi.md#v1providersupportticketsidcommentspost) | **POST** /v1/provider-support/tickets/{id}/comments | 
 *ProviderSupportApi* | [**v1ProviderSupportTicketsIdGet**](docs/ProviderSupportApi.md#v1providersupportticketsidget) | **GET** /v1/provider-support/tickets/{id} | 
 *ProviderSupportApi* | [**v1ProviderSupportTicketsPost**](docs/ProviderSupportApi.md#v1providersupportticketspost) | **POST** /v1/provider-support/tickets | 
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesGet**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinesget) | **GET** /v1/provider-support/tenant-deadlines | 
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesHolidayRegionsGet**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinesholidayregionsget) | **GET** /v1/provider-support/tenant-deadlines/holiday-regions | 
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesHolidaysGet**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinesholidaysget) | **GET** /v1/provider-support/tenant-deadlines/holidays | 
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesTenantIdDelete**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinestenantiddelete) | **DELETE** /v1/provider-support/tenant-deadlines/{tenantId} | 
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesTenantIdGet**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinestenantidget) | **GET** /v1/provider-support/tenant-deadlines/{tenantId} | 
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesTenantIdPreviewPost**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinestenantidpreviewpost) | **POST** /v1/provider-support/tenant-deadlines/{tenantId}/preview | A read that is a POST only to carry the draft policy; nothing is saved.
+*ProviderTenantDeadlinesApi* | [**v1ProviderSupportTenantDeadlinesTenantIdPut**](docs/ProviderTenantDeadlinesApi.md#v1providersupporttenantdeadlinestenantidput) | **PUT** /v1/provider-support/tenant-deadlines/{tenantId} | 
+*ProviderTenantTicketsApi* | [**v1ProviderSupportTenantTicketsCountsGet**](docs/ProviderTenantTicketsApi.md#v1providersupporttenantticketscountsget) | **GET** /v1/provider-support/tenant-tickets/counts | 
+*ProviderTenantTicketsApi* | [**v1ProviderSupportTenantTicketsGet**](docs/ProviderTenantTicketsApi.md#v1providersupporttenantticketsget) | **GET** /v1/provider-support/tenant-tickets | 
+*ProviderTenantTicketsApi* | [**v1ProviderSupportTenantTicketsIdsGet**](docs/ProviderTenantTicketsApi.md#v1providersupporttenantticketsidsget) | **GET** /v1/provider-support/tenant-tickets/ids | 
 *ReadStatusApi* | [**v1TicketsTicketIdReadStatusPost**](docs/ReadStatusApi.md#v1ticketsticketidreadstatuspost) | **POST** /v1/tickets/{ticketId}/read-status | 
 *ReadStatusApi* | [**v1TicketsUnreadCountGet**](docs/ReadStatusApi.md#v1ticketsunreadcountget) | **GET** /v1/tickets/unread-count | 
 *RecurringTicketsApi* | [**v1RecurringTicketsGet**](docs/RecurringTicketsApi.md#v1recurringticketsget) | **GET** /v1/recurring-tickets | 
@@ -417,11 +421,15 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand](docs/HelpdeskApplicationCategoriesCommandsCreateCategoryCreateCategoryCommand.md)
  - [HelpdeskApplicationCategoriesCommandsCreateSectionCreateSectionCommand](docs/HelpdeskApplicationCategoriesCommandsCreateSectionCreateSectionCommand.md)
  - [HelpdeskApplicationCategoriesCommandsSetCategoryDefaultAssigneeSetCategoryDefaultAssigneeCommand](docs/HelpdeskApplicationCategoriesCommandsSetCategoryDefaultAssigneeSetCategoryDefaultAssigneeCommand.md)
+ - [HelpdeskApplicationCategoriesCommandsSetCategoryInheritToCustomersSetCategoryInheritToCustomersCommand](docs/HelpdeskApplicationCategoriesCommandsSetCategoryInheritToCustomersSetCategoryInheritToCustomersCommand.md)
  - [HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand](docs/HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand.md)
  - [HelpdeskApplicationCategoriesCommandsUpdateSectionUpdateSectionCommand](docs/HelpdeskApplicationCategoriesCommandsUpdateSectionUpdateSectionCommand.md)
  - [HelpdeskApplicationCategoriesModelsAvailableCategoryDto](docs/HelpdeskApplicationCategoriesModelsAvailableCategoryDto.md)
  - [HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto](docs/HelpdeskApplicationCategoriesModelsCategoriesHierarchyDto.md)
  - [HelpdeskApplicationCategoriesModelsCategoryDto](docs/HelpdeskApplicationCategoriesModelsCategoryDto.md)
+ - [HelpdeskApplicationCategoriesModelsCategoryHandledBy](docs/HelpdeskApplicationCategoriesModelsCategoryHandledBy.md)
+ - [HelpdeskApplicationCategoriesModelsRequestFieldDto](docs/HelpdeskApplicationCategoriesModelsRequestFieldDto.md)
+ - [HelpdeskApplicationCategoriesModelsRequestFieldOptionDto](docs/HelpdeskApplicationCategoriesModelsRequestFieldOptionDto.md)
  - [HelpdeskApplicationCategoriesModelsSectionDto](docs/HelpdeskApplicationCategoriesModelsSectionDto.md)
  - [HelpdeskApplicationCategoriesModelsSectionWithCategoriesDto](docs/HelpdeskApplicationCategoriesModelsSectionWithCategoriesDto.md)
  - [HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand](docs/HelpdeskApplicationCommentsCommandsAddCommentAddCommentCommand.md)
@@ -433,6 +441,7 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCommentsDTOsSubscriberDto](docs/HelpdeskApplicationCommentsDTOsSubscriberDto.md)
  - [HelpdeskApplicationCommonPagedResultCommentDto](docs/HelpdeskApplicationCommonPagedResultCommentDto.md)
  - [HelpdeskApplicationCommonPagedResultDictionaryStringObject](docs/HelpdeskApplicationCommonPagedResultDictionaryStringObject.md)
+ - [HelpdeskApplicationCommonPagedResultHelpArticleSummaryDto](docs/HelpdeskApplicationCommonPagedResultHelpArticleSummaryDto.md)
  - [HelpdeskApplicationCommonPagedResultHelpdeskContactListDto](docs/HelpdeskApplicationCommonPagedResultHelpdeskContactListDto.md)
  - [HelpdeskApplicationCommonPagedResultIdeaDto](docs/HelpdeskApplicationCommonPagedResultIdeaDto.md)
  - [HelpdeskApplicationCommonPagedResultKbArticleListDto](docs/HelpdeskApplicationCommonPagedResultKbArticleListDto.md)
@@ -440,12 +449,12 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCommonPagedResultPortalAnnouncementDto](docs/HelpdeskApplicationCommonPagedResultPortalAnnouncementDto.md)
  - [HelpdeskApplicationCommonPagedResultPortalEnquiryDto](docs/HelpdeskApplicationCommonPagedResultPortalEnquiryDto.md)
  - [HelpdeskApplicationCommonPagedResultPortalHelpArticleListDto](docs/HelpdeskApplicationCommonPagedResultPortalHelpArticleListDto.md)
- - [HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto](docs/HelpdeskApplicationCommonPagedResultRaisedWithProviderTicketDto.md)
  - [HelpdeskApplicationCommonPagedResultRecurringTicketDto](docs/HelpdeskApplicationCommonPagedResultRecurringTicketDto.md)
  - [HelpdeskApplicationCommonPagedResultSatisfactionRatingDto](docs/HelpdeskApplicationCommonPagedResultSatisfactionRatingDto.md)
  - [HelpdeskApplicationCommonPagedResultSectionDto](docs/HelpdeskApplicationCommonPagedResultSectionDto.md)
  - [HelpdeskApplicationCommonPagedResultTicketHistoryItemDto](docs/HelpdeskApplicationCommonPagedResultTicketHistoryItemDto.md)
  - [HelpdeskApplicationCommonPagedResultTicketListDto](docs/HelpdeskApplicationCommonPagedResultTicketListDto.md)
+ - [HelpdeskApplicationCommonPagedResultWhatsNewEntryDto](docs/HelpdeskApplicationCommonPagedResultWhatsNewEntryDto.md)
  - [HelpdeskApplicationCommonPagedResultWidgetTicketDto](docs/HelpdeskApplicationCommonPagedResultWidgetTicketDto.md)
  - [HelpdeskApplicationCommonPagedResultWorkflowDefinitionSummaryDto](docs/HelpdeskApplicationCommonPagedResultWorkflowDefinitionSummaryDto.md)
  - [HelpdeskApplicationContactsCommandsCreateHelpdeskContactCreateHelpdeskContactCommand](docs/HelpdeskApplicationContactsCommandsCreateHelpdeskContactCreateHelpdeskContactCommand.md)
@@ -454,11 +463,13 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationContactsDTOsHelpdeskContactListDto](docs/HelpdeskApplicationContactsDTOsHelpdeskContactListDto.md)
  - [HelpdeskApplicationCustomFieldsCommandsCreateCustomFieldCreateCustomFieldCommand](docs/HelpdeskApplicationCustomFieldsCommandsCreateCustomFieldCreateCustomFieldCommand.md)
  - [HelpdeskApplicationCustomFieldsCommandsCreateCustomFieldCustomFieldOptionInput](docs/HelpdeskApplicationCustomFieldsCommandsCreateCustomFieldCustomFieldOptionInput.md)
+ - [HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldAssetInput](docs/HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldAssetInput.md)
  - [HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldValueInput](docs/HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesCustomFieldValueInput.md)
  - [HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesSetBulkCustomFieldValuesCommand](docs/HelpdeskApplicationCustomFieldsCommandsSetBulkCustomFieldValuesSetBulkCustomFieldValuesCommand.md)
  - [HelpdeskApplicationCustomFieldsCommandsSetCustomFieldValueSetCustomFieldValueCommand](docs/HelpdeskApplicationCustomFieldsCommandsSetCustomFieldValueSetCustomFieldValueCommand.md)
  - [HelpdeskApplicationCustomFieldsCommandsUpdateCustomFieldCustomFieldOptionInput](docs/HelpdeskApplicationCustomFieldsCommandsUpdateCustomFieldCustomFieldOptionInput.md)
  - [HelpdeskApplicationCustomFieldsCommandsUpdateCustomFieldUpdateCustomFieldCommand](docs/HelpdeskApplicationCustomFieldsCommandsUpdateCustomFieldUpdateCustomFieldCommand.md)
+ - [HelpdeskApplicationCustomFieldsModelsCustomFieldAssetDto](docs/HelpdeskApplicationCustomFieldsModelsCustomFieldAssetDto.md)
  - [HelpdeskApplicationCustomFieldsModelsCustomFieldDefinitionDto](docs/HelpdeskApplicationCustomFieldsModelsCustomFieldDefinitionDto.md)
  - [HelpdeskApplicationCustomFieldsModelsCustomFieldOptionDto](docs/HelpdeskApplicationCustomFieldsModelsCustomFieldOptionDto.md)
  - [HelpdeskApplicationCustomFieldsModelsCustomFieldValueDto](docs/HelpdeskApplicationCustomFieldsModelsCustomFieldValueDto.md)
@@ -469,6 +480,11 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationCustomStatusesCommandsUpdateCustomStatusUpdateCustomStatusCommand](docs/HelpdeskApplicationCustomStatusesCommandsUpdateCustomStatusUpdateCustomStatusCommand.md)
  - [HelpdeskApplicationCustomStatusesDTOsCustomTicketStatusDto](docs/HelpdeskApplicationCustomStatusesDTOsCustomTicketStatusDto.md)
  - [HelpdeskApplicationEmailNewContactRequest](docs/HelpdeskApplicationEmailNewContactRequest.md)
+ - [HelpdeskApplicationHelpHelpArticleDto](docs/HelpdeskApplicationHelpHelpArticleDto.md)
+ - [HelpdeskApplicationHelpHelpArticleSummaryDto](docs/HelpdeskApplicationHelpHelpArticleSummaryDto.md)
+ - [HelpdeskApplicationHelpHelpCategoryDto](docs/HelpdeskApplicationHelpHelpCategoryDto.md)
+ - [HelpdeskApplicationHelpWhatsNewEntryDto](docs/HelpdeskApplicationHelpWhatsNewEntryDto.md)
+ - [HelpdeskApplicationHelpWhatsNewUnreadCountDto](docs/HelpdeskApplicationHelpWhatsNewUnreadCountDto.md)
  - [HelpdeskApplicationIntegrationsCommandsAddIntegrationAddIntegrationCommand](docs/HelpdeskApplicationIntegrationsCommandsAddIntegrationAddIntegrationCommand.md)
  - [HelpdeskApplicationIntegrationsCommandsUpdateIntegrationUpdateIntegrationCommand](docs/HelpdeskApplicationIntegrationsCommandsUpdateIntegrationUpdateIntegrationCommand.md)
  - [HelpdeskApplicationIntegrationsDTOsIntegrationConfigDto](docs/HelpdeskApplicationIntegrationsDTOsIntegrationConfigDto.md)
@@ -503,6 +519,7 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationPreferencesDTOsUserPreferenceDto](docs/HelpdeskApplicationPreferencesDTOsUserPreferenceDto.md)
  - [HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand](docs/HelpdeskApplicationProviderSupportCommandsForwardTicketToProviderForwardTicketToProviderCommand.md)
  - [HelpdeskApplicationProviderSupportCommandsRaiseTicketWithProviderRaiseTicketWithProviderCommand](docs/HelpdeskApplicationProviderSupportCommandsRaiseTicketWithProviderRaiseTicketWithProviderCommand.md)
+ - [HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand](docs/HelpdeskApplicationProviderSupportCommandsReplyToRaisedTicketReplyToRaisedTicketCommand.md)
  - [HelpdeskApplicationProviderSupportDTOsPresetCategoryOpenCountDto](docs/HelpdeskApplicationProviderSupportDTOsPresetCategoryOpenCountDto.md)
  - [HelpdeskApplicationProviderSupportDTOsProviderCategoryDto](docs/HelpdeskApplicationProviderSupportDTOsProviderCategoryDto.md)
  - [HelpdeskApplicationProviderSupportDTOsProviderSupportContextDto](docs/HelpdeskApplicationProviderSupportDTOsProviderSupportContextDto.md)
@@ -592,6 +609,7 @@ Class | Method | HTTP request | Description
  - [HelpdeskApplicationTicketsCommandsConvertTicketToReplyConvertTicketToReplyCommand](docs/HelpdeskApplicationTicketsCommandsConvertTicketToReplyConvertTicketToReplyCommand.md)
  - [HelpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand](docs/HelpdeskApplicationTicketsCommandsCreateSubtaskCreateSubtaskCommand.md)
  - [HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand](docs/HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketCommand.md)
+ - [HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketResult](docs/HelpdeskApplicationTicketsCommandsCreateTicketCreateTicketResult.md)
  - [HelpdeskApplicationTicketsCommandsForwardTicketForwardTicketCommand](docs/HelpdeskApplicationTicketsCommandsForwardTicketForwardTicketCommand.md)
  - [HelpdeskApplicationTicketsCommandsLinkAssetToTicketLinkAssetToTicketCommand](docs/HelpdeskApplicationTicketsCommandsLinkAssetToTicketLinkAssetToTicketCommand.md)
  - [HelpdeskApplicationTicketsCommandsLinkTicketsLinkTicketsCommand](docs/HelpdeskApplicationTicketsCommandsLinkTicketsLinkTicketsCommand.md)
@@ -662,6 +680,7 @@ Class | Method | HTTP request | Description
  - [HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel](docs/HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel.md)
  - [HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus](docs/HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus.md)
  - [HelpdeskDomainKnowledgeBaseEnumsKbPortalSection](docs/HelpdeskDomainKnowledgeBaseEnumsKbPortalSection.md)
+ - [HelpdeskDomainKnowledgeBaseEnumsKbSharing](docs/HelpdeskDomainKnowledgeBaseEnumsKbSharing.md)
  - [HelpdeskDomainKnowledgeBaseEnumsKbStaffSection](docs/HelpdeskDomainKnowledgeBaseEnumsKbStaffSection.md)
  - [HelpdeskDomainReportingEnumsDynamicsGranularity](docs/HelpdeskDomainReportingEnumsDynamicsGranularity.md)
  - [HelpdeskDomainReportingEnumsReportExecutionStatus](docs/HelpdeskDomainReportingEnumsReportExecutionStatus.md)

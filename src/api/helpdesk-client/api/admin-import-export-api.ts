@@ -29,7 +29,7 @@ import type { MicrosoftAspNetCoreMvcProblemDetails } from '../models';
 export const AdminImportExportApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Requires permission: platform.manage (app: helpdesk).
+         * Requires permission: settings.manage (app: helpdesk).
          * @summary Tenant data export — placeholder endpoint (HTTP 501).              Full export requires async job queuing and secure download link generation — deferred to a future release. Returns 501 with guidance. Contact support@brainforge.au for a full data extract.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -66,7 +66,7 @@ export const AdminImportExportApiAxiosParamCreator = function (configuration?: C
             };
         },
         /**
-         * Requires permission: platform.manage (app: helpdesk).
+         * Requires permission: settings.manage (app: helpdesk).
          * @summary Tenant data import — placeholder endpoint (HTTP 501).              Accepts a .zip archive and runs FluentValidation (file size, extension). Does not process the file in this version — returns 501 with guidance. Contact support@brainforge.au for assisted migration of large datasets.
          * @param {File} [file] 
          * @param {*} [options] Override http request option.
@@ -121,7 +121,7 @@ export const AdminImportExportApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = AdminImportExportApiAxiosParamCreator(configuration)
     return {
         /**
-         * Requires permission: platform.manage (app: helpdesk).
+         * Requires permission: settings.manage (app: helpdesk).
          * @summary Tenant data export — placeholder endpoint (HTTP 501).              Full export requires async job queuing and secure download link generation — deferred to a future release. Returns 501 with guidance. Contact support@brainforge.au for a full data extract.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -133,7 +133,7 @@ export const AdminImportExportApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Requires permission: platform.manage (app: helpdesk).
+         * Requires permission: settings.manage (app: helpdesk).
          * @summary Tenant data import — placeholder endpoint (HTTP 501).              Accepts a .zip archive and runs FluentValidation (file size, extension). Does not process the file in this version — returns 501 with guidance. Contact support@brainforge.au for assisted migration of large datasets.
          * @param {File} [file] 
          * @param {*} [options] Override http request option.
@@ -155,7 +155,7 @@ export const AdminImportExportApiFactory = function (configuration?: Configurati
     const localVarFp = AdminImportExportApiFp(configuration)
     return {
         /**
-         * Requires permission: platform.manage (app: helpdesk).
+         * Requires permission: settings.manage (app: helpdesk).
          * @summary Tenant data export — placeholder endpoint (HTTP 501).              Full export requires async job queuing and secure download link generation — deferred to a future release. Returns 501 with guidance. Contact support@brainforge.au for a full data extract.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -164,7 +164,7 @@ export const AdminImportExportApiFactory = function (configuration?: Configurati
             return localVarFp.v1AdminExportGet(options).then((request) => request(axios, basePath));
         },
         /**
-         * Requires permission: platform.manage (app: helpdesk).
+         * Requires permission: settings.manage (app: helpdesk).
          * @summary Tenant data import — placeholder endpoint (HTTP 501).              Accepts a .zip archive and runs FluentValidation (file size, extension). Does not process the file in this version — returns 501 with guidance. Contact support@brainforge.au for assisted migration of large datasets.
          * @param {File} [file] 
          * @param {*} [options] Override http request option.
@@ -181,7 +181,7 @@ export const AdminImportExportApiFactory = function (configuration?: Configurati
  */
 export interface AdminImportExportApiInterface {
     /**
-     * Requires permission: platform.manage (app: helpdesk).
+     * Requires permission: settings.manage (app: helpdesk).
      * @summary Tenant data export — placeholder endpoint (HTTP 501).              Full export requires async job queuing and secure download link generation — deferred to a future release. Returns 501 with guidance. Contact support@brainforge.au for a full data extract.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -189,7 +189,7 @@ export interface AdminImportExportApiInterface {
     v1AdminExportGet(options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
-     * Requires permission: platform.manage (app: helpdesk).
+     * Requires permission: settings.manage (app: helpdesk).
      * @summary Tenant data import — placeholder endpoint (HTTP 501).              Accepts a .zip archive and runs FluentValidation (file size, extension). Does not process the file in this version — returns 501 with guidance. Contact support@brainforge.au for assisted migration of large datasets.
      * @param {File} [file] 
      * @param {*} [options] Override http request option.
@@ -204,7 +204,7 @@ export interface AdminImportExportApiInterface {
  */
 export class AdminImportExportApi extends BaseAPI implements AdminImportExportApiInterface {
     /**
-     * Requires permission: platform.manage (app: helpdesk).
+     * Requires permission: settings.manage (app: helpdesk).
      * @summary Tenant data export — placeholder endpoint (HTTP 501).              Full export requires async job queuing and secure download link generation — deferred to a future release. Returns 501 with guidance. Contact support@brainforge.au for a full data extract.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -214,7 +214,7 @@ export class AdminImportExportApi extends BaseAPI implements AdminImportExportAp
     }
 
     /**
-     * Requires permission: platform.manage (app: helpdesk).
+     * Requires permission: settings.manage (app: helpdesk).
      * @summary Tenant data import — placeholder endpoint (HTTP 501).              Accepts a .zip archive and runs FluentValidation (file size, extension). Does not process the file in this version — returns 501 with guidance. Contact support@brainforge.au for assisted migration of large datasets.
      * @param {File} [file] 
      * @param {*} [options] Override http request option.

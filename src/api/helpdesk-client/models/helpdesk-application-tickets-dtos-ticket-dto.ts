@@ -70,6 +70,8 @@ export interface HelpdeskApplicationTicketsDTOsTicketDto {
     'deadline'?: HelpdeskApplicationSlaDTOsTicketDeadlineDto;
     'submitterTenantId'?: string | null;
     'forwardedFromTenantId'?: string | null;
+    'submitterOrganisationId'?: string | null;
+    'submitterDivisionId'?: string | null;
     'linkedEntities'?: Array<HelpdeskApplicationTicketsDTOsTicketLinkedEntityDto>;
     'emailRecipient'?: HelpdeskApplicationTicketsDTOsTicketEmailRecipientDto;
 }

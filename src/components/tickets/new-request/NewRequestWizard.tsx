@@ -2,15 +2,16 @@ import type { DeadlinePriority } from '@/api/local/deadlines';
 import { issueScopeToken } from '@/api/local/scoped';
 import { ScopeSelect } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
-import { useHelpdeskLicensedTenants } from '@/hooks/useHelpdeskLicensedTenants';
 import { useMailbox } from '@/hooks/useMailbox';
-import { useProviderSupportContext } from '@/hooks/useProviderSupport';
 import { useScopeNames } from '@/hooks/useScopeNames';
+import { useTenantNames } from '@/hooks/useTenantNames';
 import { selectedContextAtom } from '@/state/auth-atoms';
-import { CONTACT_PROVIDER_PATH } from '@/views';
 import {
   BaseButton,
   BaseInput,
+  BaseSelect,
+  BaseSelectItem,
+  BaseTextarea,
   BaseToggle,
   Icon,
 } from '@brainforgeau/components';
@@ -22,19 +23,31 @@ import { useAtomValue } from 'jotai';
 import { type FC, useEffect, useMemo, useState } from 'react';
 import { scopePath } from '../components/ScopePills';
 import { TicketDescriptionContent } from '../components/TicketDescriptionContent';
-import type { PickedAsset } from './AssetPicker';
 import { ContactPicker, type RequestContact } from './ContactPicker';
 import { DeadlinePreviewBox } from './DeadlinePreviewBox';
 import { RequestFieldRenderer } from './RequestFieldRenderer';
-import { buildDescription, urgencyToPriority } from './formatAnswers';
+import {
+  type CategoryCard,
+  cardOf,
+  groupTitle,
+  handledByOf,
+  sentToLabel,
+} from './request-categories';
 import {
   type Answers,
-  type CategorySpec,
-  REQUEST_CATEGORIES,
+  type QuestionItem,
+  URGENCY_CHOICES,
+  answerRows,
+  isFullWidth,
+  itemKey,
   missingRequired,
-  paginateFields,
-  resolveRequestCategory,
-} from './request-field-schema';
+  paginate,
+  pickedAssetsOf,
+  questionItems,
+  toCustomFieldValues,
+  urgencyToPriority,
+} from './request-fields';
+import { requestDescription } from './requestDescription';
 import { RequestScopeContext, createTicketInScope } from './requestScope';
 import { useRequestCategories } from './useRequestCategories';
 
@@ -47,11 +60,12 @@ import { useRequestCategories } from './useRequestCategories';
  * the user as they choose. Stepping means each screen asks one thing and the
  * branching happens between screens instead of inside one.
  *
- * ONE DESTINATION
- * Every request goes to Netcorp. The form does not ask, because there is no
- * other answer: the product rule is a two way conversation between the client
- * and Netcorp, so neither an internal lane nor a separate engineering lane
- * belongs here. A third party in the thread breaks the model.
+ * WHERE A REQUEST GOES
+ * The category decides. The categories come from the API grouped by who
+ * handles them: the tenant's own helpdesk, its provider's office, or Netcorp.
+ * The wizard submits once, in the app's own context, and the backend files the
+ * ticket in the helpdesk of the tenant that owns the category. The answer says
+ * which, and the requester is told ("Sent to ...").
  */
 
 type StepId = 'category' | 'details' | 'questions' | 'review';
@@ -95,16 +109,22 @@ const STEPS: Array<{ id: StepId; title: string }> = [
   { id: 'review', title: 'Review' },
 ];
 
+/** A created request: its id, and whether a helpdesk above the tenant holds it. */
+export interface CreatedRequest {
+  id: string;
+  handledAbove: boolean;
+}
+
 interface Props {
-  onCreated?: (ticketId: string) => void;
+  onCreated?: (created: CreatedRequest) => void;
   onCancel?: () => void;
 }
 
 export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const { user } = useAuth();
   // Linking needs tickets.update, which a Tenant raising a request does not
-  // have. They still get their vehicles named in the description; the link is
-  // only attempted when it can succeed.
+  // have. Their vehicles are still saved as the answer to the vehicle
+  // question; the link is only attempted when it can succeed.
   const { hasPermission } = usePermissions();
   const canLinkAssets = hasPermission(HelpdeskPermissions.Tickets.Update);
   // Staff raising a request for a client use the same tickets.update grant as
@@ -113,9 +133,12 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const canAuthorCategories = hasPermission(
     HelpdeskPermissions.Categories.Manage,
   );
-  const { data: providerContext } = useProviderSupportContext();
-  const canContactProvider = providerContext?.canContactProvider === true;
-  const { categories, isLoading: categoriesLoading } = useRequestCategories();
+  const {
+    categories,
+    groups: categoryGroups,
+    tenantNames: ownerNames,
+    isLoading: categoriesLoading,
+  } = useRequestCategories();
   // Why the last create failed, shown on the review step. Cleared as soon as
   // the requester moves, so a stale message never sits over a fixed form.
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -139,63 +162,38 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   const [notifyContact, setNotifyContact] = useState(false);
 
   const [stepIndex, setStepIndex] = useState(0);
+  // The chosen category's id.
   const [categoryKey, setCategoryKey] = useState<string>('');
+  // Answers to the category's questions, by field id.
   const [answers, setAnswers] = useState<Answers>({});
-  // Chosen vehicles per asset question, as objects. `answers` keeps only their
-  // labels, which is what the description shows; these keep the ids needed to
-  // link them to the ticket once it exists.
-  const [pickedAssets, setPickedAssets] = useState<
-    Record<string, PickedAsset[]>
-  >({});
+  // The ticket's own questions: its priority and the requester's own words.
+  const [urgency, setUrgency] = useState<string>('');
+  const [details, setDetails] = useState('');
   const [subject, setSubject] = useState('');
 
   /*
-   * Which company (tenant) and organisation the request is for.
+   * Which organisation the request is for, within the tenant the app is in.
    *
-   * Someone who works across several tenants picks the company; someone with
-   * one has it filled in and locked. The organisation works the same way
-   * within the chosen company: a dropdown when there are several, locked when
-   * there is one. Both start from the context the app is in, which is nearly
-   * always the right answer.
-   *
-   * An organisation is required whenever the company has any. A request is
-   * raised by someone at a site, and a ticket left at company level is not
-   * visible to the organisation it belongs to.
+   * The tenant is not asked: a request is raised from the app's own tenant,
+   * and the category (not a choice of tenant) decides whose helpdesk works it.
+   * The organisation is: a dropdown when the tenant has several, locked when
+   * it has one, starting from the app's own. It is required whenever the
+   * tenant has any, since a ticket left at tenant level is not visible to the
+   * organisation it belongs to.
    */
   const appContext = useAtomValue(selectedContextAtom);
-  const { tenantOptions: allTenantOptions, organisationOptions } =
-    useScopeNames();
-  // Only companies where Helpdesk is licensed: picking one that is not, and
-  // only then being told, was the commonest dead end (5 of 7 tried).
-  const allTenantIds = useMemo(
-    () => allTenantOptions.map(t => t.id),
-    [allTenantOptions],
-  );
-  const { isLicensed } = useHelpdeskLicensedTenants(allTenantIds);
-  const tenantOptions = useMemo(
-    () => allTenantOptions.filter(t => isLicensed(t.id)),
-    [allTenantOptions, isLicensed],
-  );
-  const [tenantId, setTenantId] = useState<string | null>(null);
+  const { tenantOptions, organisationOptions } = useScopeNames();
+  const tenantId = appContext?.tenantId ?? null;
   const [organisationId, setOrganisationId] = useState<string | null>(null);
   const orgsForTenant = useMemo(
     () => organisationOptions.filter(o => o.parentId === tenantId),
     [organisationOptions, tenantId],
   );
-  const tenantLocked = tenantOptions.length <= 1;
   const orgLocked = orgsForTenant.length <= 1;
   const tenantName = tenantOptions.find(t => t.id === tenantId)?.name;
   const organisationName = orgsForTenant.find(
     o => o.id === organisationId,
   )?.name;
-
-  useEffect(() => {
-    if (tenantId && tenantOptions.some(t => t.id === tenantId)) return;
-    setTenantId(
-      tenantOptions.find(t => t.id === appContext?.tenantId)?.id ??
-        (tenantOptions.length === 1 ? tenantOptions[0].id : null),
-    );
-  }, [tenantOptions, appContext?.tenantId, tenantId]);
 
   useEffect(() => {
     if (organisationId && orgsForTenant.some(o => o.id === organisationId))
@@ -214,17 +212,14 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
   );
   const queryClient = useQueryClient();
 
-  // When the chosen scope is the app's own context, the normal client already
-  // serves it. Anything else needs a token issued for that scope.
-  const inAppContext =
-    tenantId === (appContext?.tenantId ?? null) &&
-    organisationId === (appContext?.organisationId ?? null);
+  // When the chosen organisation is the app's own, the normal client already
+  // serves it. Another organisation of the same tenant needs a token issued
+  // for it, since the backend stamps the organisation from the token.
+  const inAppContext = organisationId === (appContext?.organisationId ?? null);
 
   /*
-   * A ticket can only be raised where Helpdesk is licensed, and identity
-   * refuses a token anywhere else. Asked as soon as the scope is chosen, so
-   * the requester learns it on the Details step instead of after answering
-   * every question. The token it returns is the one Create then uses.
+   * Issued as soon as the organisation is chosen, so a refusal shows on the
+   * Details step instead of after every question. Create then uses it.
    */
   const scopeToken = useQuery({
     queryKey: ['new-request', 'scope-token', tenantId, organisationId],
@@ -280,36 +275,48 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
     }
   };
 
-  const category: CategorySpec | undefined = useMemo(
-    () => REQUEST_CATEGORIES.find(c => c.key === categoryKey),
-    [categoryKey],
+  // The chosen category as the API listed it, and the questions it asks.
+  const chosenCategory = useMemo(
+    () => categories.find(c => c.id === categoryKey),
+    [categories, categoryKey],
   );
+  const category: CategoryCard | undefined = useMemo(
+    () => (chosenCategory ? cardOf(chosenCategory) : undefined),
+    [chosenCategory],
+  );
+  const chosenHandledBy = chosenCategory
+    ? handledByOf(chosenCategory)
+    : undefined;
+  const handlerTitle = chosenHandledBy
+    ? groupTitle(
+        chosenHandledBy,
+        chosenCategory?.ownerTenantId
+          ? ownerNames[chosenCategory.ownerTenantId]
+          : undefined,
+      )
+    : undefined;
 
   const step = STEPS[stepIndex];
+
+  /*
+   * Every question the category marks required must be answered, and so must
+   * the urgency. The description is required only of a category with no
+   * questions, where it is the whole request.
+   */
+  const isMissing = (item: QuestionItem): boolean => {
+    if (item.kind === 'field')
+      return missingRequired([item.field], answers).length > 0;
+    if (item.kind === 'urgency') return !urgency;
+    return (category?.fields.length ?? 0) === 0 && !details.trim();
+  };
   const siteDetailsRequired = !category?.remote;
 
   const questionPages = useMemo(
-    () => (category ? paginateFields(category.fields) : []),
+    () => (category ? paginate(questionItems(category.fields)) : []),
     [category],
   );
   const currentQuestions = questionPages[questionPage] ?? [];
   const isLastQuestionPage = questionPage >= questionPages.length - 1;
-
-  /*
-   * The real category this request is filed under. See
-   * CATEGORY_NAME_CANDIDATES for how it is chosen. There is no fallback to
-   * "the first category": that filed every request somewhere arbitrary.
-   * Undefined means none of the candidates exists for this requester, and the
-   * review step says so instead of submitting.
-   *
-   * This is the seam that disappears once the questions themselves are
-   * configured in the database rather than listed here.
-   */
-  const resolvedCategory = useMemo(
-    () => (category ? resolveRequestCategory(category, categories) : undefined),
-    [category, categories],
-  );
-  const resolvedCategoryId = resolvedCategory?.id ?? undefined;
 
   const canAdvance = (): boolean => {
     if (step.id === 'category') return !!category;
@@ -327,7 +334,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
       );
     }
     if (step.id === 'questions') {
-      return missingRequired(currentQuestions, answers).length === 0;
+      return currentQuestions.every(item => !isMissing(item));
     }
     return true;
   };
@@ -369,50 +376,41 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
     email: contactEmail,
   };
 
-  /**
-   * Vehicles picked for the previous organisation are not this one's, so a
-   * change of company or organisation clears them.
+  /*
+   * Vehicles picked for one organisation are not another's, so whatever
+   * changes the organisation (the picker, or the app's context) clears them.
    */
-  const changeScope = (next: {
-    tenantId?: string | null;
-    organisationId?: string | null;
-  }) => {
-    if ('tenantId' in next) {
-      setTenantId(next.tenantId ?? null);
-      setOrganisationId(null);
-      // Contacts belong to a company, so another company starts again.
-      setContact(null);
-      setNewContactEmail('');
-    }
-    if ('organisationId' in next) {
-      setOrganisationId(next.organisationId ?? null);
-    }
-    const assetKeys = new Set(
-      (category?.fields ?? []).filter(f => f.kind === 'asset').map(f => f.key),
-    );
-    if (assetKeys.size === 0) return;
-    setPickedAssets({});
-    setAnswers(prev =>
-      Object.fromEntries(
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only an organisation change clears them
+  useEffect(() => {
+    setAnswers(prev => {
+      const assetKeys = new Set(
+        (category?.fields ?? [])
+          .filter(f => f.fieldType === 'Asset')
+          .map(f => f.id),
+      );
+      if (!Object.keys(prev).some(k => assetKeys.has(k))) return prev;
+      return Object.fromEntries(
         Object.entries(prev).filter(([k]) => !assetKeys.has(k)),
-      ),
-    );
-  };
+      );
+    });
+  }, [tenantId, organisationId]);
+
+  const reviewRows = useMemo(
+    () => (category ? answerRows(category.fields, answers) : []),
+    [category, answers],
+  );
 
   const submit = async () => {
-    if (!category || !resolvedCategoryId) return;
+    if (!category || !chosenCategory?.id) return;
     setSubmitError(null);
     const notify =
       isStaff && notifyContact && !!contact && contact.kind !== 'self';
     const ticket = {
       subject: subject.trim(),
-      description: buildDescription({
-        category,
-        answers,
-        contact: contactDetails,
-      }),
-      priority: urgencyToPriority(answers.urgency),
-      categoryId: resolvedCategoryId,
+      description: requestDescription(details, contactDetails),
+      priority: urgencyToPriority(urgency),
+      categoryId: chosenCategory.id,
+      customFieldValues: toCustomFieldValues(category.fields, answers),
       ...(isStaff && contact?.kind === 'existing'
         ? { contactId: contact.contact.id }
         : {}),
@@ -437,10 +435,22 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
         ticket,
         inAppContext ? null : scopeToken.data,
       );
-      if (canLinkAssets) {
+      const handledAbove = created.handledByTenantId !== tenantId;
+      // A ticket filed above the tenant is not this tenant's to link vehicles
+      // to; they are saved as its vehicle answer either way.
+      if (canLinkAssets && !handledAbove) {
         await linkPickedAssets(created.id, created.linkAsset);
       }
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      toast(
+        sentToLabel({
+          handledByTenantId: created.handledByTenantId,
+          ownTenantId: tenantId,
+          category: chosenCategory,
+          tenantNames: ownerNames,
+        }),
+        { variant: 'success' },
+      );
       // The create response carries no send result, and the ticket exists
       // either way, so the mailbox status already known here decides it.
       if (notify && !mailboxConnected) {
@@ -450,7 +460,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
           variant: 'warning',
         });
       }
-      onCreated?.(created.id);
+      onCreated?.({ id: created.id, handledAbove });
     } catch (error) {
       // The dialog stays open with everything as entered, so the requester
       // can fix the cause and press Create again rather than start over.
@@ -462,33 +472,28 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
 
   /*
    * Links each chosen vehicle to the new ticket, so it shows under the ticket's
-   * linked assets rather than only as a name in the description. The picker
-   * lists Asset app records, so every chosen vehicle has an id to link.
+   * linked assets as well as in the vehicle answer. The picker lists Asset app
+   * records, so every chosen vehicle has an id to link.
    *
-   * Best effort, and deliberately so: the ticket already exists and already
-   * names every vehicle, so a link that fails (for example a requester without
-   * permission to edit links) loses nothing the agent needs. Failing the whole
-   * request over it would be worse.
+   * Best effort, and deliberately so: the ticket already exists and its answer
+   * already names every vehicle, so a link that fails (for example a requester
+   * without permission to edit links) loses nothing the agent needs. Failing
+   * the whole request over it would be worse.
    */
   const linkPickedAssets = async (
     ticketId: string,
     link: (assetId: string) => Promise<unknown>,
   ) => {
-    const assetIds = [
-      ...new Set(
-        Object.values(pickedAssets)
-          .flat()
-          .map(a => a.assetId)
-          .filter((x): x is string => !!x),
-      ),
-    ];
+    const assetIds = pickedAssetsOf(category?.fields ?? [], answers)
+      .map(a => a.assetId)
+      .filter((x): x is string => !!x);
     const results = await Promise.allSettled(
       assetIds.map(assetId => link(assetId)),
     );
     const failed = results.filter(r => r.status === 'rejected').length;
     if (failed > 0) {
       console.warn(
-        `New request ${ticketId}: ${failed} of ${assetIds.length} vehicle links failed; the vehicles are still named in the description.`,
+        `New request ${ticketId}: ${failed} of ${assetIds.length} vehicle links failed; the vehicles are still in its vehicle answer.`,
       );
     }
   };
@@ -555,14 +560,6 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                       Add categories in Configuration
                     </NavLink>
                   )}
-                  {canContactProvider && (
-                    <NavLink
-                      to={CONTACT_PROVIDER_PATH}
-                      className="text-primary hover:underline"
-                    >
-                      Contact your provider
-                    </NavLink>
-                  )}
                 </div>
               </div>
             )}
@@ -582,67 +579,77 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               be made without reading every label in full. One choice only, so
               they are a radio group to assistive technology.
 
-              All ten fit without scrolling on a laptop screen. The dialog is
-              wide enough for most labels and summaries to sit on one line, and
-              on a screen too short for that (under 620px of page height) the
-              summaries drop out and the labels alone carry the choice.
+              Grouped by who handles them: the tenant's own helpdesk (left
+              out when it has no categories), its provider, Netcorp. On a
+              screen too short for the summaries (under 620px of page height)
+              they drop out and the labels alone carry the choice.
             */}
-                <div
-                  role="radiogroup"
-                  aria-label="Request category"
-                  className="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
-                >
-                  {REQUEST_CATEGORIES.map(c => {
-                    const selected = categoryKey === c.key;
-                    return (
-                      <button
-                        key={c.key}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => {
-                          setCategoryKey(c.key);
-                          setAnswers({});
-                          setPickedAssets({});
-                          setQuestionPage(0);
-                          // One choice and nothing else on this step, so
-                          // picking it moves on.
-                          setSubmitError(null);
-                          setStepIndex(1);
-                        }}
-                        className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
-                          selected
-                            ? 'border-blue bg-lighter-blue'
-                            : 'border-light hover:border-light-gray hover:bg-light/40'
-                        }`}
-                      >
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
-                            selected
-                              ? 'bg-blue text-white'
-                              : 'bg-lighter-blue text-blue'
-                          }`}
-                        >
-                          <Icon name={c.icon} className="h-5 w-5" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
-                            {c.label}
-                          </span>
-                          <span className="text-light-gray mt-0.5 block text-xs leading-snug [@media(max-height:620px)]:hidden">
-                            {c.summary}
-                          </span>
-                        </span>
-                        {selected && (
-                          <Icon
-                            name="CheckCircleIcon"
-                            className="text-blue h-5 w-5 shrink-0"
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                {categoryGroups.map(group => (
+                  <div key={group.handledBy} className="mb-3 last:mb-0">
+                    <p className="text-light-gray mb-1.5 text-xs font-semibold uppercase tracking-wide">
+                      {group.title}
+                    </p>
+                    <div
+                      role="radiogroup"
+                      aria-label={`Request category: ${group.title}`}
+                      className="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
+                    >
+                      {group.categories.map(row => {
+                        const c = cardOf(row);
+                        const selected = categoryKey === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => {
+                              // Choosing the same category again keeps its answers.
+                              if (c.id !== categoryKey) {
+                                setCategoryKey(c.id);
+                                setAnswers({});
+                                setQuestionPage(0);
+                              }
+                              // One choice and nothing else on this step, so
+                              // picking it moves on.
+                              setSubmitError(null);
+                              setStepIndex(1);
+                            }}
+                            className={`flex h-full w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${
+                              selected
+                                ? 'border-blue bg-lighter-blue'
+                                : 'border-light hover:border-light-gray hover:bg-light/40'
+                            }`}
+                          >
+                            <span
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                                selected
+                                  ? 'bg-blue text-white'
+                                  : 'bg-lighter-blue text-blue'
+                              }`}
+                            >
+                              <Icon name={c.icon} className="h-5 w-5" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="text-gray block text-[13px] font-medium leading-snug dark:text-light">
+                                {c.label}
+                              </span>
+                              <span className="text-light-gray mt-0.5 block text-xs leading-snug [@media(max-height:620px)]:hidden">
+                                {c.summary}
+                              </span>
+                            </span>
+                            {selected && (
+                              <Icon
+                                name="CheckCircleIcon"
+                                className="text-blue h-5 w-5 shrink-0"
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
                 {showErrors && !category && (
                   <p className="text-red-dark mt-2 text-sm">
                     Choose a category.
@@ -662,21 +669,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                   : 'How to reach you. Your name and email come from your account.'}
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {tenantLocked ? (
-                  <BaseInput
-                    label="Tenant"
-                    value={tenantName ?? ''}
-                    isReadOnly
-                  />
-                ) : (
-                  <ScopeSelect
-                    label="Tenant"
-                    options={tenantOptions}
-                    value={tenantId}
-                    onChange={id => changeScope({ tenantId: id })}
-                    placeholder="Choose a tenant"
-                  />
-                )}
+                <BaseInput label="Tenant" value={tenantName ?? ''} isReadOnly />
                 {orgLocked ? (
                   <BaseInput
                     label="Organisation"
@@ -688,23 +681,23 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                     label="Organisation"
                     options={orgsForTenant}
                     value={organisationId}
-                    onChange={id => changeScope({ organisationId: id })}
+                    onChange={setOrganisationId}
                     placeholder="Choose an organisation"
-                    isDisabled={!tenantId}
+                    isRequired
                   />
                 )}
                 {scopeUnavailable && (
                   <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
-                    Helpdesk isn't enabled for {tenantName ?? 'this company'},
-                    so requests can't be raised there. Choose another tenant, or
-                    ask an admin to enable Helpdesk for it.
+                    Requests can't be raised for{' '}
+                    {organisationName ?? 'this organisation'}. Choose another,
+                    or ask an admin to check your access to it.
                   </p>
                 )}
                 {showErrors && !scopeComplete && (
                   <p className="text-red-dark -mt-2 text-xs sm:col-span-2">
                     {tenantId
                       ? 'Choose the organisation this request is for.'
-                      : 'Choose the tenant this request is for.'}
+                      : 'Choose a tenant in the app before raising a request.'}
                   </p>
                 )}
                 <div className="sm:col-span-2">
@@ -840,10 +833,10 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <div>
                   <p className="text-[15px] font-semibold">
-                    {category.section ?? 'A few details about the problem'}
+                    {category.heading ?? 'A few details about the problem'}
                   </p>
                   <p className="text-light-gray text-[13px]">
-                    All answers are required. They save a round trip before
+                    Answers marked * are required. They save a round trip before
                     anyone can start on it.
                   </p>
                 </div>
@@ -859,20 +852,64 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                 </div>
               )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {currentQuestions.map(f => (
-                  <div key={f.key} className={f.full ? 'sm:col-span-2' : ''}>
-                    <RequestFieldRenderer
-                      spec={f}
-                      value={answers[f.key]}
-                      onChange={v => setAnswers(a => ({ ...a, [f.key]: v }))}
-                      assets={pickedAssets[f.key]}
-                      onAssetsChange={assets =>
-                        setPickedAssets(p => ({ ...p, [f.key]: assets }))
-                      }
-                      showError={
-                        showErrors && missingRequired([f], answers).length > 0
-                      }
-                    />
+                {currentQuestions.map(item => (
+                  <div
+                    key={itemKey(item)}
+                    className={isFullWidth(item) ? 'sm:col-span-2' : ''}
+                  >
+                    {item.kind === 'field' && (
+                      <RequestFieldRenderer
+                        field={item.field}
+                        value={answers[item.field.id]}
+                        onChange={v =>
+                          setAnswers(a => ({ ...a, [item.field.id]: v }))
+                        }
+                        showError={showErrors && isMissing(item)}
+                      />
+                    )}
+                    {item.kind === 'urgency' && (
+                      <BaseSelect
+                        label="Urgency"
+                        isRequired
+                        placeholder="Select"
+                        selectedKey={urgency || null}
+                        onSelectionChange={key => {
+                          if (typeof key === 'string') setUrgency(key);
+                        }}
+                        {...(showErrors && isMissing(item)
+                          ? {
+                              isInvalid: true,
+                              errorMessage: 'This is required',
+                            }
+                          : {})}
+                      >
+                        {URGENCY_CHOICES.map(c => (
+                          <BaseSelectItem key={c.label} value={c.label}>
+                            {c.label}
+                          </BaseSelectItem>
+                        ))}
+                      </BaseSelect>
+                    )}
+                    {item.kind === 'description' && (
+                      <BaseTextarea
+                        label={
+                          category.fields.length > 0
+                            ? 'Anything else we should know?'
+                            : 'Describe the problem'
+                        }
+                        isRequired={category.fields.length === 0}
+                        placeholder="Tell us what's happening, what you expected, and any steps to reproduce it."
+                        value={details}
+                        onValueChange={setDetails}
+                        minRows={4}
+                        {...(showErrors && isMissing(item)
+                          ? {
+                              isInvalid: true,
+                              errorMessage: 'This is required',
+                            }
+                          : {})}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -902,28 +939,40 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                   <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                     <span className="bg-lighter-blue text-blue inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium">
                       <Icon name={category.icon} className="h-3.5 w-3.5" />
-                      {resolvedCategory?.name ?? category.label}
+                      {category.label}
                     </span>
                     <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
-                      Priority: {urgencyToPriority(answers.urgency)}
+                      Priority: {urgency || 'Medium'}
                     </span>
                     {tenantName && (
                       <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
                         {scopePath(tenantName, organisationName)}
                       </span>
                     )}
-                    <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
-                      Goes to support
-                    </span>
+                    {handlerTitle && (
+                      <span className="bg-light/60 text-gray rounded-md px-2 py-0.5 dark:text-light">
+                        Handled by {handlerTitle}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="max-h-[min(36vh,320px)] overflow-y-auto px-4 py-1 text-sm">
+                  {reviewRows.length > 0 && (
+                    <dl className="my-2 grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+                      {reviewRows.map(row => (
+                        <div key={row.id} className="contents">
+                          <dt className="text-light-gray text-xs">
+                            {row.label}
+                          </dt>
+                          <dd className="text-gray break-words dark:text-light">
+                            {row.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
                   <TicketDescriptionContent
-                    value={buildDescription({
-                      category,
-                      answers,
-                      contact: contactDetails,
-                    })}
+                    value={requestDescription(details, contactDetails)}
                   />
                 </div>
               </div>
@@ -933,9 +982,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               */}
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <DeadlinePreviewBox
-                  priority={
-                    urgencyToPriority(answers.urgency) as DeadlinePriority
-                  }
+                  priority={urgencyToPriority(urgency) as DeadlinePriority}
                   scopeKey={`${tenantId ?? ''}|${organisationId ?? ''}`}
                   scopeToken={inAppContext ? undefined : scopeToken.data}
                   isReady={inAppContext || !!scopeToken.data}
@@ -963,13 +1010,6 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
                   </div>
                 )}
               </div>
-              {!categoriesLoading && !resolvedCategory && (
-                <p className="bg-red-dark/5 text-red-dark mt-4 rounded-lg p-3 text-sm">
-                  This request type can't be submitted yet: Helpdesk has no
-                  category for "{category.label}". Ask a Helpdesk admin to add a
-                  category with that name, then try again.
-                </p>
-              )}
               {submitError && (
                 <p
                   role="alert"
@@ -1012,7 +1052,7 @@ export const NewRequestWizard: FC<Props> = ({ onCreated, onCancel }) => {
               <BaseButton
                 color="primary"
                 onPress={submit}
-                isDisabled={isBusy || !resolvedCategoryId}
+                isDisabled={isBusy || !chosenCategory?.id}
               >
                 {isBusy ? 'Creating...' : 'Create request'}
               </BaseButton>

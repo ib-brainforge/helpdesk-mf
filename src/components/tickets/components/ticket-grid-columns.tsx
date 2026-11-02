@@ -26,10 +26,12 @@ import {
 import { NavLink } from '@modern-js/runtime/router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
+import { isHandledAbove, ticketPath } from '../handled-above';
 import { isPortalTicket } from '../portal';
 import { getPriorityConfig } from '../ticket-priority-config';
 import { getStatusConfig } from '../ticket-status-config';
 import type { TicketRow } from '../types';
+import { HandledByBadge } from './HandledByBadge';
 import { QuickAssignCell } from './QuickAssignCell';
 import { ScopePath } from './ScopePills';
 import { SelectPageCheckbox, SelectRowCheckbox } from './ticketSelection';
@@ -175,6 +177,13 @@ interface CreateColumnsOptions {
   fromTenants?: boolean;
   /** Where a ticket's page lives; defaults to the Tenant view's /tickets. */
   ticketBasePath?: string;
+  /** Names of the tenants that handle rows raised above the tenant, by id. */
+  handledByNames?: Readonly<Record<string, string>>;
+  /**
+   * False when no row can be acted on (the "Raised with our provider"
+   * preset): the select-page checkbox is left out.
+   */
+  selectable?: boolean;
 }
 
 /*
@@ -249,8 +258,13 @@ export const createTicketColumns = (
   columnHelper.display({
     id: 'select',
     // The selection lives in the grid (see ticketSelection), across pages.
-    header: () => <SelectPageCheckbox />,
-    cell: ({ row }) => <SelectRowCheckbox row={row.original} />,
+    header: () =>
+      options.selectable === false ? null : <SelectPageCheckbox />,
+    // A ticket handled above the tenant is not the tenant's to act on.
+    cell: ({ row }) =>
+      isHandledAbove(row.original) ? null : (
+        <SelectRowCheckbox row={row.original} />
+      ),
     enableSorting: false,
     enableHiding: false,
     enableResizing: false,
@@ -272,6 +286,10 @@ export const createTicketColumns = (
       const priority = getPriorityConfig(
         row.original.priority as TicketPriority,
       );
+      const handledAbove = isHandledAbove(row.original);
+      const handledByName = row.original.handledByTenantId
+        ? options.handledByNames?.[row.original.handledByTenantId]
+        : undefined;
       return (
         <div className="flex min-w-0 flex-col gap-1">
           {/*
@@ -286,7 +304,11 @@ export const createTicketColumns = (
               </span>
             )}
             <NavLink
-              to={`${options.ticketBasePath ?? '/tickets'}/${row.original.id}`}
+              to={ticketPath(
+                row.original.id ?? '',
+                handledAbove,
+                options.ticketBasePath,
+              )}
               title={value}
               className="min-w-0 truncate text-[13px] leading-[18px] font-medium text-foreground hover:text-blue hover:underline"
             >
@@ -300,8 +322,12 @@ export const createTicketColumns = (
               </span>
             )}
           </div>
-          {(showStatus || showPriority) && (
+          {(showStatus || showPriority || handledAbove) && (
             <div className="flex items-center gap-1">
+              <HandledByBadge
+                level={row.original.handledByLevel}
+                tenantName={handledByName}
+              />
               {showStatus && (
                 <StatusBadge color={status.color} size="sm">
                   {status.label}
@@ -399,7 +425,9 @@ export const createTicketColumns = (
       if (!row.original.assigneeId) {
         // "Unassigned" was a dead label sitting exactly where someone would
         // click to fix it. It is now the assign control itself.
-        return options.onAssign && row.original.id ? (
+        return options.onAssign &&
+          row.original.id &&
+          !isHandledAbove(row.original) ? (
           <QuickAssignCell
             ticketId={row.original.id}
             currentUserId={options.currentUserId}
@@ -538,7 +566,7 @@ export const createTicketColumns = (
     // The permission is checked once for the grid (options.canWrite), not by
     // a guard in every row, which read the token again for each of them.
     cell: ({ row }) =>
-      options.canWrite ? (
+      options.canWrite && !isHandledAbove(row.original) ? (
         <Dropdown>
           <IconTip label="Ticket actions">
             <DropdownTrigger
