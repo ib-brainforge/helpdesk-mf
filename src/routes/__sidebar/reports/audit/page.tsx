@@ -1,119 +1,122 @@
-import { useAuditLogReport } from '@/components/reports/hooks/useReports';
+import { fetchAuditLog } from '@/components/reports/hooks/useReports';
 import { exportToXlsx } from '@/components/reports/utils/exportReport';
 import type { AuditLogEntryDto } from '@/types';
+import { toSortParam, withSortKeys } from '@/utils/listSort';
 import { BaseButton, BaseInput } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
-// Template: ListPage — table with server-side pagination and filters is table-primary;
-// no summary cards or charts, so ListPage is the correct framing.
-import { BaseDateRangePicker } from '@brainforgeau/components/date-picker';
-import { ListPage } from '@brainforgeau/components/page';
+import {
+  DateRangeFilter,
+  FilterField,
+  ListPage,
+  isoDateParam,
+  textParam,
+  useListPage,
+} from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
-import {
-  type ColumnDef,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import { useMemo } from 'react';
 
-const PAGE_SIZE = 50;
+// Template: ListPage — a server-paged table with filters is table-primary;
+// no summary cards or charts, so ListPage is the correct framing.
+
+const FILTER_CODECS = {
+  from: isoDateParam(),
+  to: isoDateParam(),
+  userId: textParam(),
+  eventType: textParam(),
+};
+
+/** Sortable columns by column id, with the key of `GET v1/reports/audit-log`'s `sort` each one sorts on. */
+const SORT_KEYS = {
+  occurredAt: 'occurredAt',
+  entityDescription: 'entityDescription',
+  reason: 'reason',
+} as const;
+
+const columnHelper = createColumnHelper<AuditLogEntryDto>();
 
 function AuditLogPage() {
   const timezone = useTimezone();
-  const [startDate, setStartDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  );
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().split('T')[0],
-  );
-  const [page, setPage] = useState(1);
-  const [userId, setUserId] = useState('');
-  const [eventType, setEventType] = useState('');
 
-  const { data: report, isLoading } = useAuditLogReport({
-    fromDate: startDate,
-    toDate: endDate,
-    page,
-    pageSize: PAGE_SIZE,
-    userId: userId || undefined,
-    eventType: eventType || undefined,
-  });
-
-  const entries = report?.items ?? [];
-  const totalPages = report ? Math.ceil(report.totalCount / PAGE_SIZE) : 1;
-
-  const columns: ColumnDef<AuditLogEntryDto, any>[] = useMemo(
-    () => [
-      {
-        accessorKey: 'occurredAt',
-        header: 'Time',
-        cell: info => (
-          <span className="text-xs">
-            {formatDateTime(info.getValue() as string, { timezone })}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'entityDescription',
-        header: 'Ticket',
-        cell: info => (
-          <span className="text-sm">
-            {(info.getValue() as string | null) ?? '—'}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'entityType',
-        header: 'Entity Type',
-        cell: info => (
-          <span className="text-xs text-default-500">
-            {info.getValue() as string}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'actorUserId',
-        header: 'Actor',
-        cell: info => (
-          <span className="font-mono text-xs">
-            {(info.getValue() as string).slice(0, 8)}…
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'reason',
-        header: 'Reason',
-        cell: info => (
-          <span className="text-default-500 text-sm">
-            {(info.getValue() as string | null) ?? '—'}
-          </span>
-        ),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      withSortKeys(
+        [
+          columnHelper.accessor('occurredAt', {
+            header: 'Time',
+            meta: { label: 'Time' },
+            enableHiding: false,
+            cell: info => (
+              <span className="text-xs">
+                {formatDateTime(info.getValue(), { timezone })}
+              </span>
+            ),
+          }),
+          columnHelper.accessor('entityDescription', {
+            header: 'Ticket',
+            meta: { label: 'Ticket' },
+            cell: info => (
+              <span className="text-sm">{info.getValue() ?? '—'}</span>
+            ),
+          }),
+          columnHelper.accessor('entityType', {
+            header: 'Entity Type',
+            meta: { label: 'Entity Type' },
+            cell: info => (
+              <span className="text-xs text-default-500">
+                {info.getValue()}
+              </span>
+            ),
+          }),
+          columnHelper.accessor('actorUserId', {
+            header: 'Actor',
+            meta: { label: 'Actor' },
+            cell: info => (
+              <span className="font-mono text-xs">
+                {info.getValue().slice(0, 8)}…
+              </span>
+            ),
+          }),
+          columnHelper.accessor('reason', {
+            header: 'Reason',
+            meta: { label: 'Reason' },
+            cell: info => (
+              <span className="text-default-500 text-sm">
+                {info.getValue() ?? '—'}
+              </span>
+            ),
+          }),
+        ] as ColumnDef<AuditLogEntryDto, any>[],
+        SORT_KEYS,
+      ),
     [timezone],
   );
 
-  const table = useReactTable({
-    data: entries,
+  const list = useListPage<AuditLogEntryDto, typeof FILTER_CODECS>({
+    listId: 'helpdesk.audit-log',
+    queryKey: ['reports', 'audit-log'],
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: totalPages,
-    state: {
-      pagination: { pageIndex: page - 1, pageSize: PAGE_SIZE },
-    },
-    onPaginationChange: updater => {
-      const next =
-        typeof updater === 'function'
-          ? updater({ pageIndex: page - 1, pageSize: PAGE_SIZE })
-          : updater;
-      setPage(next.pageIndex + 1);
-    },
+    initialPageSize: 50,
+    filters: FILTER_CODECS,
+    getRowId: row => row.id,
+    queryFn: ({ pageIndex, pageSize, sorting, listFilters }) =>
+      fetchAuditLog({
+        fromDate: listFilters.from || undefined,
+        toDate: listFilters.to || undefined,
+        userId: listFilters.userId || undefined,
+        eventType: listFilters.eventType || undefined,
+        page: pageIndex + 1,
+        pageSize,
+        sort: toSortParam(sorting, SORT_KEYS),
+      }),
   });
+
+  const { rows, filters, setFilter } = list;
 
   const handleExport = () => {
     exportToXlsx(
-      entries.map(e => ({
+      rows.map(e => ({
         Time: e.occurredAt,
         Ticket: e.entityDescription ?? '',
         'Entity Type': e.entityType,
@@ -125,20 +128,22 @@ function AuditLogPage() {
     );
   };
 
-  const hasActiveFilters = !!userId || !!eventType;
-
   return (
     <ListPage
       title="Audit Log"
       breadcrumbsKey="reports.audit"
-      table={table}
-      isLoading={isLoading}
+      description="Shows the last 30 days unless you set a date range."
+      list={list}
+      personalise
+      countNoun={{ one: 'entry', other: 'entries' }}
+      loadError={list.isError ? list.error : undefined}
+      onRetry={() => void list.refetch()}
       actions={
         <BaseButton
           variant="bordered"
           color="light"
           onPress={handleExport}
-          isDisabled={entries.length === 0}
+          isDisabled={rows.length === 0}
           icon={<Icon name="arrow-down-tray" className="h-4 w-4" />}
         >
           Export XLSX
@@ -146,40 +151,33 @@ function AuditLogPage() {
       }
       filters={
         <>
-          <BaseDateRangePicker
-            value={{ start: new Date(startDate), end: new Date(endDate) }}
-            onChange={({ start, end }) => {
-              setStartDate(start.toISOString().split('T')[0]);
-              setEndDate(end.toISOString().split('T')[0]);
-              setPage(1);
-            }}
+          <DateRangeFilter
+            label="Date range"
+            from={filters.from}
+            to={filters.to}
+            onFromChange={value => setFilter('from', value)}
+            onToChange={value => setFilter('to', value)}
           />
-          <BaseInput
-            placeholder="Filter by user ID..."
-            value={userId}
-            onChange={ev => {
-              setUserId(ev.target.value);
-              setPage(1);
-            }}
-            className="w-48"
-          />
-          <BaseInput
-            placeholder="Filter by event type..."
-            value={eventType}
-            onChange={ev => {
-              setEventType(ev.target.value);
-              setPage(1);
-            }}
-            className="w-48"
-          />
+          <FilterField label="User ID">
+            <BaseInput
+              aria-label="Filter by user ID"
+              placeholder="Filter by user ID..."
+              value={filters.userId}
+              onChange={ev => setFilter('userId', ev.target.value)}
+              className="w-48"
+            />
+          </FilterField>
+          <FilterField label="Event type">
+            <BaseInput
+              aria-label="Filter by event type"
+              placeholder="Filter by event type..."
+              value={filters.eventType}
+              onChange={ev => setFilter('eventType', ev.target.value)}
+              className="w-48"
+            />
+          </FilterField>
         </>
       }
-      hasActiveFilters={hasActiveFilters}
-      onClearFilters={() => {
-        setUserId('');
-        setEventType('');
-        setPage(1);
-      }}
     />
   );
 }

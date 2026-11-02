@@ -30,8 +30,13 @@ import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
 import { breadcrumbs } from '@/breadcrumbs';
+import { AppLoadingSplash } from '@/components/AppSplash';
 import { Providers } from '@/providers';
-import { registerStatusColors } from '@brainforgeau/components/page';
+import {
+  ListPreferencesProvider,
+  ListUrlStateProvider,
+  registerStatusColors,
+} from '@brainforgeau/components/page';
 
 // Register helpdesk status color domains once at module load time.
 // StatusBadge components anywhere in this MF resolve colors via this registry.
@@ -81,6 +86,7 @@ import {
   LicenseGuard,
   VIEW_DEFINITIONS,
   useAuth,
+  useListPreferencesState,
   usePermissions,
   usePosition,
   useWhitelabel,
@@ -90,6 +96,7 @@ import {
   Outlet,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from '@modern-js/runtime/router';
 
 const TopNavbar = lazyWithRetry(
@@ -158,12 +165,33 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'helpdesk.knowledge-base.search': 'Search',
   'helpdesk.knowledge-base.settings': 'Settings',
   'helpdesk.settings': 'Settings',
+  'helpdesk.provider-tickets': 'From tenants',
   'helpdesk.provider-deadlines': 'Tenant Deadlines',
   'helpdesk.provider-categories': 'Provider Categories',
 };
 
 function breadcrumbI18nResolver(key: string): string {
   return BREADCRUMB_LABELS[key] ?? key;
+}
+
+/**
+ * Saved views and the column layout of every list, from the user's settings.
+ * Rendered only once the user is authenticated: the preferences state starts
+ * a grace timer on mount, and starting it while sign-in is still loading would
+ * latch saved views off for the whole session.
+ */
+function AuthenticatedListPreferences({
+  children,
+}: { children: React.ReactNode }) {
+  const preferences = useListPreferencesState();
+  return (
+    <ListPreferencesProvider
+      preferences={preferences}
+      fallback={<AppLoadingSplash />}
+    >
+      {children}
+    </ListPreferencesProvider>
+  );
 }
 
 // Everything below runs under `Providers`: the shell body calls react-query
@@ -323,93 +351,103 @@ function LayoutShell() {
         renderLink={renderBreadcrumbLink}
       >
         <PageTracker category="helpdesk" />
-        {!isEmbedded && (
-          <ErrorBoundary>
-            <Suspense fallback={<NavbarSkeleton />}>
-              {isAuthenticated && (
-                <TopNavbar
-                  data-testid={TEST_IDS.navbar.top}
-                  config={{
-                    // Named per-service keys, resolved `rc ?? baked` in
-                    // src/state/config (which console.errors each by name
-                    // when missing). `notificationHubUrl` is the NOTIFICATION
-                    // bell hub: it used to be handed `api.signalRHubUrl`,
-                    // which was helpdesk-backend's OWN ticket hub — the bell
-                    // was subscribing to the wrong service entirely.
-                    identityBaseUrl: appConfig.identityApiBaseUrl,
-                    notificationHubUrl: appConfig.notificationSignalRHubUrl,
-                    notificationApiUrl: appConfig.notificationApiBaseUrl,
-                    app: 'helpdesk',
-                  }}
-                  onExtend={handleNavExtend}
-                  logoComponent={<Logo hideOnMobile />}
-                />
-              )}
-            </Suspense>
-          </ErrorBoundary>
-        )}
-        <div className="flex flex-1">
-          {isAuthenticated && hasSideMenu && (
-            <SideNav
-              data-testid={TEST_IDS.navbar.side}
-              sections={navSections}
-              // SideNav renders this as the version label pinned at the
-              // bottom of the nav, the same "x.y.z-develop.<sha>" line the
-              // other apps show. It lives in the nav rather than the page so
-              // it costs no vertical space in any route's content area.
-              //
-              // Suppressed when the build injected no version: local dev
-              // leaves it as the literal string "unknown", and a nav footer
-              // reading "unknown" looks like a defect rather than a build id.
-              version={
-                appConfig.version && appConfig.version !== 'unknown'
-                  ? appConfig.version
-                  : undefined
-              }
-              desktopMode={desktopMode}
-              onDesktopModeChange={setDesktopMode}
-              isMobileOpen={isMobileOpen}
-              onMobileOpenChange={setIsMobileOpen}
-              mobileHeader={<Logo />}
-              renderLink={({
-                item,
-                className,
-                activeClassName,
-                children,
-              }: {
-                item: any;
-                className: string;
-                activeClassName: string;
-                children: React.ReactNode;
-              }) => (
-                <NavLink
-                  to={item.href}
-                  end={item.end}
-                  data-testid={item.testId}
-                  className={({ isActive }: { isActive: boolean }) =>
-                    isActive ? activeClassName : className
-                  }
-                >
-                  {children}
-                </NavLink>
-              )}
-            />
-          )}
-          <div className="flex flex-1 min-w-0">
+        {/* Page, size, sort, search and filters of every list with a listId
+            live in the URL through this provider. */}
+        <ListUrlStateProvider useSearchParams={useSearchParams}>
+          {!isEmbedded && (
             <ErrorBoundary>
-              <LicenseGuard appId="helpdesk">
-                {/* Page permissions: routes/route-permissions.tsx. The
+              <Suspense fallback={<NavbarSkeleton />}>
+                {isAuthenticated && (
+                  <TopNavbar
+                    data-testid={TEST_IDS.navbar.top}
+                    config={{
+                      // Named per-service keys, resolved `rc ?? baked` in
+                      // src/state/config (which console.errors each by name
+                      // when missing). `notificationHubUrl` is the NOTIFICATION
+                      // bell hub: it used to be handed `api.signalRHubUrl`,
+                      // which was helpdesk-backend's OWN ticket hub — the bell
+                      // was subscribing to the wrong service entirely.
+                      identityBaseUrl: appConfig.identityApiBaseUrl,
+                      notificationHubUrl: appConfig.notificationSignalRHubUrl,
+                      notificationApiUrl: appConfig.notificationApiBaseUrl,
+                      app: 'helpdesk',
+                    }}
+                    onExtend={handleNavExtend}
+                    logoComponent={<Logo hideOnMobile />}
+                  />
+                )}
+              </Suspense>
+            </ErrorBoundary>
+          )}
+          <div className="flex flex-1">
+            {isAuthenticated && hasSideMenu && (
+              <SideNav
+                data-testid={TEST_IDS.navbar.side}
+                sections={navSections}
+                // SideNav renders this as the version label pinned at the
+                // bottom of the nav, the same "x.y.z-develop.<sha>" line the
+                // other apps show. It lives in the nav rather than the page so
+                // it costs no vertical space in any route's content area.
+                //
+                // Suppressed when the build injected no version: local dev
+                // leaves it as the literal string "unknown", and a nav footer
+                // reading "unknown" looks like a defect rather than a build id.
+                version={
+                  appConfig.version && appConfig.version !== 'unknown'
+                    ? appConfig.version
+                    : undefined
+                }
+                desktopMode={desktopMode}
+                onDesktopModeChange={setDesktopMode}
+                isMobileOpen={isMobileOpen}
+                onMobileOpenChange={setIsMobileOpen}
+                mobileHeader={<Logo />}
+                renderLink={({
+                  item,
+                  className,
+                  activeClassName,
+                  children,
+                }: {
+                  item: any;
+                  className: string;
+                  activeClassName: string;
+                  children: React.ReactNode;
+                }) => (
+                  <NavLink
+                    to={item.href}
+                    end={item.end}
+                    data-testid={item.testId}
+                    className={({ isActive }: { isActive: boolean }) =>
+                      isActive ? activeClassName : className
+                    }
+                  >
+                    {children}
+                  </NavLink>
+                )}
+              />
+            )}
+            <div className="flex flex-1 min-w-0">
+              <ErrorBoundary>
+                <LicenseGuard appId="helpdesk">
+                  {/* Page permissions: routes/route-permissions.tsx. The
                       Provider view's pages are checked inside
                       ProviderViewGuard instead, after the view check, so a
                       wrong-context visit shows the switch-context page rather
                       than Access Denied. */}
-                <RouteGuard pathname={location.pathname}>
-                  <Outlet />
-                </RouteGuard>
-              </LicenseGuard>
-            </ErrorBoundary>
+                  <RouteGuard pathname={location.pathname}>
+                    {isAuthenticated ? (
+                      <AuthenticatedListPreferences>
+                        <Outlet />
+                      </AuthenticatedListPreferences>
+                    ) : (
+                      <Outlet />
+                    )}
+                  </RouteGuard>
+                </LicenseGuard>
+              </ErrorBoundary>
+            </div>
           </div>
-        </div>
+        </ListUrlStateProvider>
       </BreadcrumbRegistryProvider>
     </PageTemplateProvider>
   );

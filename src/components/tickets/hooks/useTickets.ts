@@ -28,9 +28,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import type { PaginationState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
-import { useSearchMatches } from './useSearchMatches';
 
 /** The filters with the search box's name matches added (see useSearchMatches). */
 export const withSearchMatches = (
@@ -161,7 +159,7 @@ const listArgs = (
   filters: TicketFilters,
   page?: number,
   pageSize?: number,
-  sort?: TicketsSort | null,
+  sort?: string,
 ) => {
   const v = ticketQueryValues(filters);
   const m = multiValues(filters);
@@ -183,8 +181,7 @@ const listArgs = (
     undefined, // unassignedOnly: Unassigned is includeUnassigned now
     page,
     pageSize,
-    sort?.sortBy,
-    sort?.sortDirection,
+    sort,
     m.assigneeIds,
     m.includeUnassigned,
     v.customStatusIds,
@@ -273,11 +270,12 @@ export interface TicketIdsResult {
 export const fetchTicketIds = async (
   filters: TicketFilters,
   fromTenants = false,
+  sort?: string,
 ): Promise<TicketIdsResult> => {
   // Bulk actions act on the tenant's own tickets only: rows handled above it
   // live in another tenant and are never selectable, so neither
   // includeRaisedAbove nor raisedAboveOnly is sent here.
-  const args = listArgs(filters);
+  const args = listArgs(filters, undefined, undefined, sort);
   const data = fromTenants
     ? (
         await (
@@ -297,112 +295,30 @@ export const fetchTicketIds = async (
   };
 };
 
-export interface TicketsSort {
-  /** The backend's SortBy key, e.g. "deadline". */
-  sortBy: string;
-  sortDirection: 'asc' | 'desc';
-}
-
-/**
- * @param initialFilters Applied on the FIRST render only.
- *
- * Exists so the caller can seed the tab's filters before the first fetch. The
- * tickets page reads its tab from the URL, and starting at `{}` meant the very
- * first request always asked for every ticket regardless of which tab was
- * selected, then corrected itself. That was both a wasted round trip and, until
- * the correction landed, a list that disagreed with its own highlighted tab.
- */
-export const useTicketsData = (
-  initialFilters?: TicketFilters,
-  {
-    sort,
-    enabled = true,
-    initialPagination,
-    fromTenants = false,
-  }: {
-    /** Server-side sort across every page; omitted is the server's default. */
-    sort?: TicketsSort | null;
-    /** Held while the caller waits on something the first request depends on. */
-    enabled?: boolean;
-    /** The first page and page size (from the URL); a seed, like the filters. */
-    initialPagination?: PaginationState;
-    /** The provider's "From tenants" queue instead of the tenant's own tickets. */
-    fromTenants?: boolean;
-  } = {},
-) => {
-  const [pagination, setPagination] = useState<PaginationState>(
-    () => initialPagination ?? { pageIndex: 0, pageSize: 25 },
+/** One page of the ticket list, filtered and sorted on the server (`sort` is `-key,key`). */
+export const fetchTicketList = async ({
+  filters,
+  page,
+  pageSize,
+  sort,
+  fromTenants,
+}: {
+  filters: TicketFilters;
+  page: number;
+  pageSize: number;
+  sort?: string;
+  fromTenants: boolean;
+}): Promise<{ rows: TicketListDto[]; totalCount: number }> => {
+  const result = await fetchTicketPage(
+    fromTenants,
+    listArgs(filters, page, pageSize, sort),
+    rowsFor(filters),
   );
-  // Lazy initialiser: `initialFilters` is a seed, not a controlled value, so
-  // later renders must not reset what the user has since changed.
-  const [filters, setFilters] = useState<TicketFilters>(
-    () => initialFilters ?? {},
-  );
-
-  /*
-   * The search box also matches people and places by name. Those names are not
-   * in helpdesk's database, so they are turned into ids here and sent with the
-   * search (see useSearchMatches). `filters` itself stays as the user set it.
-   */
-  const search = useSearchMatches(filters.searchTerm);
-  const queryFilters = useMemo(
-    () => withSearchMatches(filters, search.userIds, search.scopeIds),
-    [filters, search.userIds, search.scopeIds],
-  );
-
-  const { data, isLoading, refetch } = useQuery<PagedResult<TicketListDto>>({
-    // Held while a name lookup the search depends on is running, so the grid
-    // asks once with the full search rather than once without it and again.
-    enabled: search.ready && enabled,
-    // Ticking several assignees (or paging, or switching tab) keeps the rows
-    // on screen until the new ones arrive, instead of blanking the grid to a
-    // loading state on every click.
-    placeholderData: keepPreviousData,
-    queryKey: [
-      'tickets',
-      pagination,
-      queryFilters,
-      fromTenants ? 'from-tenants' : 'own',
-      sort ?? null,
-    ],
-    queryFn: async () => {
-      // The same mapping fetchTicketCount uses. Written once so the rows and
-      // the badge above them cannot ask different questions.
-      const result = await fetchTicketPage(
-        fromTenants,
-        listArgs(
-          queryFilters,
-          pagination.pageIndex + 1,
-          pagination.pageSize,
-          sort,
-        ),
-        rowsFor(queryFilters),
-      );
-
-      return {
-        // The generated rows leave the deadline instants optional; TicketListDto
-        // types them as present-or-null.
-        items: (result.items ?? []) as TicketListDto[],
-        totalCount: result.totalCount ?? 0,
-        page: result.page ?? 1,
-        pageSize: result.pageSize ?? pagination.pageSize,
-      };
-    },
-  });
-
   return {
-    items: data?.items ?? [],
-    totalCount: data?.totalCount ?? 0,
-    pagination,
-    setPagination,
-    filters,
-    /** The filters as sent, search name matches included (for the ids). */
-    queryFilters,
-    setFilters,
-    isLoading,
-    refetch: useCallback(() => {
-      refetch();
-    }, [refetch]),
+    // The generated rows leave the deadline instants optional; TicketListDto
+    // types them as present-or-null.
+    rows: (result.items ?? []) as TicketListDto[],
+    totalCount: result.totalCount ?? 0,
   };
 };
 

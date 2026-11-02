@@ -50,13 +50,12 @@ export const ProviderTenantDeadlinesApiAxiosParamCreator = function (configurati
          * @param {boolean} [custom] 
          * @param {boolean} [hasLate] 
          * @param {string} [sort] 
-         * @param {string} [dir] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ProviderSupportTenantDeadlinesGet: async (search?: string, custom?: boolean, hasLate?: boolean, sort?: string, dir?: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1ProviderSupportTenantDeadlinesGet: async (search?: string, custom?: boolean, hasLate?: boolean, sort?: string, page?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/provider-support/tenant-deadlines`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -90,10 +89,6 @@ export const ProviderTenantDeadlinesApiAxiosParamCreator = function (configurati
 
             if (sort !== undefined) {
                 localVarQueryParameter['sort'] = sort;
-            }
-
-            if (dir !== undefined) {
-                localVarQueryParameter['dir'] = dir;
             }
 
             if (page !== undefined) {
@@ -381,14 +376,13 @@ export const ProviderTenantDeadlinesApiFp = function(configuration?: Configurati
          * @param {boolean} [custom] 
          * @param {boolean} [hasLate] 
          * @param {string} [sort] 
-         * @param {string} [dir] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, dir?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ProviderSupportTenantDeadlinesGet(search, custom, hasLate, sort, dir, page, pageSize, options);
+        async v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1ProviderSupportTenantDeadlinesGet(search, custom, hasLate, sort, page, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['ProviderTenantDeadlinesApi.v1ProviderSupportTenantDeadlinesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -483,14 +477,13 @@ export const ProviderTenantDeadlinesApiFactory = function (configuration?: Confi
          * @param {boolean} [custom] 
          * @param {boolean} [hasLate] 
          * @param {string} [sort] 
-         * @param {string} [dir] 
          * @param {number} [page] 
          * @param {number} [pageSize] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, dir?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto> {
-            return localVarFp.v1ProviderSupportTenantDeadlinesGet(search, custom, hasLate, sort, dir, page, pageSize, options).then((request) => request(axios, basePath));
+        v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto> {
+            return localVarFp.v1ProviderSupportTenantDeadlinesGet(search, custom, hasLate, sort, page, pageSize, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -562,13 +555,12 @@ export interface ProviderTenantDeadlinesApiInterface {
      * @param {boolean} [custom] 
      * @param {boolean} [hasLate] 
      * @param {string} [sort] 
-     * @param {string} [dir] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, dir?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto>;
+    v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationSlaDTOsCustomerDeadlinePageDto>;
 
     /**
      * 
@@ -633,14 +625,13 @@ export class ProviderTenantDeadlinesApi extends BaseAPI implements ProviderTenan
      * @param {boolean} [custom] 
      * @param {boolean} [hasLate] 
      * @param {string} [sort] 
-     * @param {string} [dir] 
      * @param {number} [page] 
      * @param {number} [pageSize] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, dir?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
-        return ProviderTenantDeadlinesApiFp(this.configuration).v1ProviderSupportTenantDeadlinesGet(search, custom, hasLate, sort, dir, page, pageSize, options).then((request) => request(this.axios, this.basePath));
+    public v1ProviderSupportTenantDeadlinesGet(search?: string, custom?: boolean, hasLate?: boolean, sort?: string, page?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
+        return ProviderTenantDeadlinesApiFp(this.configuration).v1ProviderSupportTenantDeadlinesGet(search, custom, hasLate, sort, page, pageSize, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

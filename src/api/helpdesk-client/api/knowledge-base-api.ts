@@ -152,14 +152,13 @@ export const KnowledgeBaseApiAxiosParamCreator = function (configuration?: Confi
          * @param {string} [categoryId] 
          * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus} [status] 
          * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel} [accessLevel] 
-         * @param {string} [sortBy] 
-         * @param {boolean} [sortDescending] 
+         * @param {string} [sort] 
          * @param {number} [pageNumber] 
          * @param {number} [pageSize] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1KbArticlesGet: async (categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sortBy?: string, sortDescending?: boolean, pageNumber?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1KbArticlesGet: async (categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sort?: string, pageNumber?: number, pageSize?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/kb/articles`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -191,12 +190,8 @@ export const KnowledgeBaseApiAxiosParamCreator = function (configuration?: Confi
                 localVarQueryParameter['accessLevel'] = accessLevel;
             }
 
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy;
-            }
-
-            if (sortDescending !== undefined) {
-                localVarQueryParameter['sortDescending'] = sortDescending;
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort;
             }
 
             if (pageNumber !== undefined) {
@@ -1049,15 +1044,14 @@ export const KnowledgeBaseApiFp = function(configuration?: Configuration) {
          * @param {string} [categoryId] 
          * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus} [status] 
          * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel} [accessLevel] 
-         * @param {string} [sortBy] 
-         * @param {boolean} [sortDescending] 
+         * @param {string} [sort] 
          * @param {number} [pageNumber] 
          * @param {number} [pageSize] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sortBy?: string, sortDescending?: boolean, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultKbArticleListDto>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1KbArticlesGet(categoryId, status, accessLevel, sortBy, sortDescending, pageNumber, pageSize, options);
+        async v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sort?: string, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<HelpdeskApplicationCommonPagedResultKbArticleListDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1KbArticlesGet(categoryId, status, accessLevel, sort, pageNumber, pageSize, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['KnowledgeBaseApi.v1KbArticlesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1328,15 +1322,14 @@ export const KnowledgeBaseApiFactory = function (configuration?: Configuration, 
          * @param {string} [categoryId] 
          * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus} [status] 
          * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel} [accessLevel] 
-         * @param {string} [sortBy] 
-         * @param {boolean} [sortDescending] 
+         * @param {string} [sort] 
          * @param {number} [pageNumber] 
          * @param {number} [pageSize] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sortBy?: string, sortDescending?: boolean, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultKbArticleListDto> {
-            return localVarFp.v1KbArticlesGet(categoryId, status, accessLevel, sortBy, sortDescending, pageNumber, pageSize, options).then((request) => request(axios, basePath));
+        v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sort?: string, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultKbArticleListDto> {
+            return localVarFp.v1KbArticlesGet(categoryId, status, accessLevel, sort, pageNumber, pageSize, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: kb.update (app: helpdesk).
@@ -1543,14 +1536,13 @@ export interface KnowledgeBaseApiInterface {
      * @param {string} [categoryId] 
      * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus} [status] 
      * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel} [accessLevel] 
-     * @param {string} [sortBy] 
-     * @param {boolean} [sortDescending] 
+     * @param {string} [sort] 
      * @param {number} [pageNumber] 
      * @param {number} [pageSize] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sortBy?: string, sortDescending?: boolean, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultKbArticleListDto>;
+    v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sort?: string, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig): AxiosPromise<HelpdeskApplicationCommonPagedResultKbArticleListDto>;
 
     /**
      * Requires permission: kb.update (app: helpdesk).
@@ -1741,15 +1733,14 @@ export class KnowledgeBaseApi extends BaseAPI implements KnowledgeBaseApiInterfa
      * @param {string} [categoryId] 
      * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus} [status] 
      * @param {HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel} [accessLevel] 
-     * @param {string} [sortBy] 
-     * @param {boolean} [sortDescending] 
+     * @param {string} [sort] 
      * @param {number} [pageNumber] 
      * @param {number} [pageSize] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sortBy?: string, sortDescending?: boolean, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
-        return KnowledgeBaseApiFp(this.configuration).v1KbArticlesGet(categoryId, status, accessLevel, sortBy, sortDescending, pageNumber, pageSize, options).then((request) => request(this.axios, this.basePath));
+    public v1KbArticlesGet(categoryId?: string, status?: HelpdeskDomainKnowledgeBaseEnumsKbArticleStatus, accessLevel?: HelpdeskDomainKnowledgeBaseEnumsKbArticleAccessLevel, sort?: string, pageNumber?: number, pageSize?: number, options?: RawAxiosRequestConfig) {
+        return KnowledgeBaseApiFp(this.configuration).v1KbArticlesGet(categoryId, status, accessLevel, sort, pageNumber, pageSize, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

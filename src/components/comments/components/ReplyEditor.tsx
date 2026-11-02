@@ -25,6 +25,7 @@ import {
 } from 'react';
 import { useAddComment, useAddInternalNote } from '../hooks/useComments';
 import { SignatureBlock } from './SignatureBlock';
+import { REPLY_NOTICE_TEXT, resolveReplyDelivery } from './replyDelivery';
 
 type ComposerMode = 'reply' | 'note';
 
@@ -128,7 +129,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   const addNote = useAddInternalNote();
   const isPending = addComment.isPending || addNote.isPending;
 
-  const { mailbox, isConnected } = useMailbox();
+  const { mailbox, isLoading: isMailboxLoading } = useMailbox();
   const signature =
     useUserPreference<EmailSignaturePreference>('email.signature');
 
@@ -142,25 +143,21 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
     );
   }, [ticketId, body, mode, cc, isBodyEmpty]);
 
-  const emailing = mode === 'reply' && !!email;
   const recipient = email?.recipient ?? null;
+  const { emailing, notice } = resolveReplyDelivery({
+    isReply: mode === 'reply',
+    hasEmailContext: !!email,
+    hasRecipient: !!recipient,
+    mailboxStatus: mailbox?.status ?? null,
+  });
   const recipientName = recipient?.name?.trim() || recipient?.address || '';
   const recipientFirstName = recipient?.name?.trim()
     ? recipient.name.trim().split(/\s+/)[0]
     : (recipient?.address ?? '');
-  /** Why an emailed reply cannot go right now, if it cannot. */
-  const blocked = !emailing
-    ? null
-    : !recipient
-      ? // The backend tries the contact, then the requester, then whoever
-        // submitted it, skipping your own address: so this is usually a
-        // ticket you raised for yourself.
-        'Nobody on this ticket but you has an email address, so this reply cannot be emailed. Set a contact with an email first.'
-      : !isConnected
-        ? mailbox?.status === 'NeedsReconnect'
-          ? 'Your mailbox needs reconnecting, so replies cannot be emailed.'
-          : "Your mailbox isn't connected, replies can't be emailed."
-        : null;
+
+  // Until the mailbox status is known, a reply that should be emailed could
+  // go out as ticket-only.
+  const awaitingMailbox = isMailboxLoading && mode === 'reply' && !!email;
 
   const reset = useCallback(() => {
     setBody('');
@@ -191,7 +188,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   );
 
   const handleSubmit = useCallback(() => {
-    if (isBodyEmpty || isPending || blocked) return;
+    if (isBodyEmpty || isPending || awaitingMailbox) return;
     const idempotencyKey = `comment-${Date.now()}`;
     if (mode === 'note') {
       addNote.mutate(
@@ -254,7 +251,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
   }, [
     isBodyEmpty,
     isPending,
-    blocked,
+    awaitingMailbox,
     mode,
     addNote,
     addComment,
@@ -328,7 +325,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
                 label: (
                   <span className="flex items-center gap-1.5">
                     <Icon name="email" className="h-4 w-4" />
-                    {email ? 'Reply by email' : 'Reply'}
+                    Reply
                   </span>
                 ),
               },
@@ -355,17 +352,17 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         </BaseButton>
       </div>
 
-      {blocked && (
+      {notice && (
         <div className="flex items-center gap-2 rounded-[3px] bg-[#f8e6a0] px-3 py-2 text-xs text-[#7f5f01]">
           <Icon name="warning" className="h-4 w-4 shrink-0" />
-          <span>{blocked}</span>
-          {recipient && (
+          <span>{REPLY_NOTICE_TEXT[notice]}</span>
+          {notice !== 'noRecipient' && (
             <button
               type="button"
               onClick={email?.onEditSignature}
               className="ml-auto shrink-0 font-semibold underline"
             >
-              {mailbox?.status === 'NeedsReconnect'
+              {notice === 'needsReconnect'
                 ? 'Reconnect mailbox'
                 : 'Connect mailbox'}
             </button>
@@ -418,7 +415,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
                 ) : (
                   <span className="text-default-400">No contact email</span>
                 )}
-                {!showCc && (
+                {!showCc && emailing && (
                   <button
                     type="button"
                     onClick={() => setShowCc(true)}
@@ -428,7 +425,7 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
                   </button>
                 )}
               </div>
-              {showCc && (
+              {showCc && emailing && (
                 <div className="flex flex-wrap items-center gap-2 px-3 py-1.5">
                   <span className="w-8 shrink-0 text-default-500">Cc</span>
                   {cc.map(address => (
@@ -585,7 +582,9 @@ export const ReplyEditor: React.FC<ReplyEditorProps> = ({
         <BaseButton
           onPress={handleSubmit}
           isLoading={isPending}
-          isDisabled={isPending || isUploading || isBodyEmpty || !!blocked}
+          isDisabled={
+            isPending || isUploading || isBodyEmpty || awaitingMailbox
+          }
           icon={
             <Icon
               name={mode === 'note' ? 'lock' : 'send'}

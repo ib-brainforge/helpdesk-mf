@@ -1,9 +1,13 @@
-import { useScopeNames } from '@/hooks/useScopeNames';
+import { type ScopeOption, useScopeNames } from '@/hooks/useScopeNames';
 import type { UserInfo } from '@/hooks/useUserEnrichment';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
 import { UsersApi } from '@brainforgeau/identity-management-client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type QueryClient,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 
@@ -19,7 +23,7 @@ import { useMemo } from 'react';
  * matches tickets assigned to, raised by, or placed in any of them.
  *
  * WHERE THE NAMES COME FROM
- * - Places: useScopeNames, which already holds every tenant, organisation and
+ * - Places: useScopeNames (passed in as `scopeOptions`), which already holds every tenant, organisation and
  *   division the user can see.
  * - People: identity's user search for the text, plus every name already shown
  *   on the page (the user-enrichment cache that names rows and the rail), so a
@@ -30,21 +34,22 @@ import { useMemo } from 'react';
  */
 const MIN_CHARS = 2;
 
-export const useSearchMatches = (searchTerm?: string) => {
-  const term = (searchTerm ?? '').trim().toLowerCase();
-  const active = term.length >= MIN_CHARS;
-  const queryClient = useQueryClient();
-  const contextKey = useAtomValue(contextQueryKeyAtom);
-  const {
-    tenantOptions,
-    organisationOptions,
-    divisionOptions,
-    isLoading: scopesLoading,
-  } = useScopeNames();
+export const findSearchMatches = async ({
+  searchTerm,
+  queryClient,
+  contextKey,
+  scopeOptions,
+}: {
+  searchTerm: string;
+  queryClient: QueryClient;
+  contextKey: unknown;
+  scopeOptions: readonly ScopeOption[];
+}): Promise<{ userIds: string[]; scopeIds: string[] }> => {
+  const term = searchTerm.trim().toLowerCase();
+  if (term.length < MIN_CHARS) return { userIds: [], scopeIds: [] };
 
-  const directory = useQuery({
+  const directory = await queryClient.fetchQuery({
     queryKey: ['ticket-search', 'people', contextKey, term],
-    enabled: active,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<string[]> => {
       const client = await createIdentityApiClient(UsersApi);
@@ -68,36 +73,70 @@ export const useSearchMatches = (searchTerm?: string) => {
     },
   });
 
-  const scopeIds = useMemo(() => {
-    if (!active) return [];
-    return [...tenantOptions, ...organisationOptions, ...divisionOptions]
-      .filter(o => o.name.toLowerCase().includes(term))
-      .map(o => o.id)
-      .sort();
-  }, [active, term, tenantOptions, organisationOptions, divisionOptions]);
+  const scopeIds = scopeOptions
+    .filter(o => o.name.toLowerCase().includes(term))
+    .map(o => o.id)
+    .sort();
 
-  const userIds = useMemo(() => {
-    if (!active) return [];
-    const ids = new Set(directory.data ?? []);
-    // Names already resolved for the page: rows, the assignee rail, pickers.
-    for (const q of queryClient
-      .getQueryCache()
-      .findAll({ queryKey: ['user-enrichment'] })) {
-      const map = q.state.data as Record<string, UserInfo | null> | undefined;
-      if (!map) continue;
-      for (const [id, user] of Object.entries(map)) {
-        if (!user) continue;
-        const haystack = `${user.name} ${user.email ?? ''}`.toLowerCase();
-        if (haystack.includes(term)) ids.add(id);
-      }
+  const userIds = new Set(directory);
+  // Names already resolved for the page: rows, the assignee rail, pickers.
+  for (const q of queryClient
+    .getQueryCache()
+    .findAll({ queryKey: ['user-enrichment'] })) {
+    const map = q.state.data as Record<string, UserInfo | null> | undefined;
+    if (!map) continue;
+    for (const [id, user] of Object.entries(map)) {
+      if (!user) continue;
+      const haystack = `${user.name} ${user.email ?? ''}`.toLowerCase();
+      if (haystack.includes(term)) userIds.add(id);
     }
-    return [...ids].sort();
-  }, [active, term, directory.data, queryClient]);
+  }
+  return { userIds: [...userIds].sort(), scopeIds };
+};
 
+/** The query that holds the matches for one search text, shared by the list and the counts. */
+export const searchMatchesQuery = (args: {
+  searchTerm: string;
+  queryClient: QueryClient;
+  contextKey: unknown;
+  scopeOptions: readonly ScopeOption[];
+}) => ({
+  queryKey: [
+    'ticket-search',
+    'matches',
+    args.contextKey,
+    args.searchTerm.trim().toLowerCase(),
+  ],
+  staleTime: 60 * 1000,
+  queryFn: () => findSearchMatches(args),
+});
+
+/** The matches for `searchTerm`; `ready` is false only while the lookup is running. */
+export const useSearchMatches = (searchTerm?: string) => {
+  const term = (searchTerm ?? '').trim();
+  const queryClient = useQueryClient();
+  const contextKey = useAtomValue(contextQueryKeyAtom);
+  const { tenantOptions, organisationOptions, divisionOptions, isLoading } =
+    useScopeNames();
+  const scopeOptions = useMemo(
+    () => [...tenantOptions, ...organisationOptions, ...divisionOptions],
+    [tenantOptions, organisationOptions, divisionOptions],
+  );
+  const active = term.length >= MIN_CHARS;
+  const query = useQuery({
+    ...searchMatchesQuery({
+      searchTerm: term,
+      queryClient,
+      contextKey,
+      scopeOptions,
+    }),
+    enabled: active && !isLoading,
+  });
   return {
-    userIds,
-    scopeIds,
-    /** False only while a name lookup the search depends on is still running. */
-    ready: !active || (!directory.isLoading && !scopesLoading),
+    userIds: query.data?.userIds ?? NONE,
+    scopeIds: query.data?.scopeIds ?? NONE,
+    ready: !active || (!isLoading && !query.isLoading),
   };
 };
+
+const NONE: string[] = [];
