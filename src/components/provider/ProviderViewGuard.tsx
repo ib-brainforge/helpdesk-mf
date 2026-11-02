@@ -2,11 +2,7 @@ import { ACCESS_DENIED_COPY } from '@/routes/route-permissions';
 import { requireIdentityApiBaseUrl } from '@/state/config';
 import { TENANT_VIEW_HOME } from '@/views';
 import { PageState } from '@brainforgeau/components/page';
-import {
-  AccessDenied,
-  ViewGuard,
-  usePermissions,
-} from '@brainforgeau/security';
+import { ViewGuard, usePermissions } from '@brainforgeau/security';
 import { useNavigate } from '@modern-js/runtime/router';
 import { type FC, type ReactNode, useMemo } from 'react';
 
@@ -58,9 +54,7 @@ export const ProviderViewGuard: FC<ProviderViewGuardProps> = ({
       {isLoading ? null : permitted ? (
         children
       ) : (
-        <PageState>
-          <AccessDenied {...ACCESS_DENIED_COPY} />
-        </PageState>
+        <PageState denied={ACCESS_DENIED_COPY} />
       )}
     </ViewGuard>
   );

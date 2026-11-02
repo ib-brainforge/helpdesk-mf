@@ -2,14 +2,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { ACCESS_DENIED_COPY, RouteGuard } from './route-permissions';
 
-// The real AccessDenied, imported from its own file: the package index reads
-// window and localStorage while loading, which the node test environment lacks.
-vi.mock('@brainforgeau/security', async () => ({
-  AccessDenied: (
-    await import(
-      '../../node_modules/@brainforgeau/security/dist/components/AccessDenied.js'
-    )
-  ).AccessDenied,
+// The package index reads window and localStorage while loading, which the
+// node test environment lacks.
+vi.mock('@brainforgeau/security', () => ({
   usePermissions: () => ({ hasAnyPermission: () => false, isLoading: false }),
 }));
 

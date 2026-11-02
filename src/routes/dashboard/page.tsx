@@ -7,7 +7,11 @@ import type {
   StatusBreakdownDto,
 } from '@/types';
 import { BaseButton, Box, DonutChart, Icon } from '@brainforgeau/components';
-import { DashboardPage, EmptyState } from '@brainforgeau/components/page';
+import {
+  DashboardPage,
+  EmptyState,
+  PageState,
+} from '@brainforgeau/components/page';
 import { withAuthenticationRequired } from '@brainforgeau/security';
 import { useMemo, useState } from 'react';
 
@@ -116,16 +120,21 @@ function HelpdeskDashboardPage() {
 
   if (error) {
     const status = (error as any)?.response?.status;
-    const isForbidden = status === 403 || status === 419;
+    if (status === 403 || status === 419) {
+      return (
+        <PageState
+          denied={{
+            message:
+              'You do not have permission to view reports. Contact your administrator to request the Reports permission.',
+          }}
+        />
+      );
+    }
     return (
       <DashboardPage title="Helpdesk Dashboard" breadcrumbsKey="dashboard">
         <EmptyState
-          title={isForbidden ? 'Access denied' : 'Failed to load dashboard'}
-          description={
-            isForbidden
-              ? 'You do not have permission to view reports. Contact your administrator to request the Reports permission.'
-              : 'An error occurred while loading the dashboard data. Please try again later.'
-          }
+          title="Failed to load dashboard"
+          description="An error occurred while loading the dashboard data. Please try again later."
           live
         />
       </DashboardPage>
