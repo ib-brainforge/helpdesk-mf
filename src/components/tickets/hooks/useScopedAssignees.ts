@@ -4,6 +4,7 @@ import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { helpdeskAppQueryOptions } from '@/state/helpdesk-app-query';
 import type { TicketFilters } from '@/types/ticket';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
+import { fetchAllPages } from '@brainforgeau/components/page';
 import { UserAppAssignmentsApi } from '@brainforgeau/identity-management-client';
 import {
   type QueryFunctionContext,
@@ -78,6 +79,7 @@ const MAX_ROWS = 5000;
  */
 const fetchHelpdeskAssignments = async ({
   client,
+  signal,
 }: QueryFunctionContext): Promise<RoleAssignment[]> => {
   // The app id comes from the shared helpdesk app query, so the app itself is
   // fetched once per session however many callers need it.
@@ -86,29 +88,29 @@ const fetchHelpdeskAssignments = async ({
   if (!appId) return [];
 
   const api = await createIdentityApiClient(UserAppAssignmentsApi);
-  const rows: RoleAssignment[] = [];
-  for (let page = 1; rows.length < MAX_ROWS; page++) {
-    const { data } = await api.v1UserAppAssignmentsGet(
-      undefined, // keycloakUserId: everyone
-      appId,
-      undefined, // tenantId: all, placement is matched per scope below
-      undefined, // organisationId
-      undefined, // divisionId
-      undefined, // effectiveAtContext
-      true, // isActive
-      false, // includeScopes
-      page,
-      PAGE_SIZE,
-    );
-    const batch = (
-      Array.isArray(data)
-        ? data
-        : ((data as { items?: unknown[] } | undefined)?.items ?? [])
-    ) as RoleAssignment[];
-    rows.push(...batch);
-    if (batch.length < PAGE_SIZE) break;
-  }
-  return rows;
+  const { items } = await fetchAllPages<RoleAssignment>(
+    async ({ pageIndex, pageSize, signal: pageSignal }) => {
+      const { data } = await api.v1UserAppAssignmentsGet(
+        undefined, // keycloakUserId: everyone
+        appId,
+        undefined, // tenantId: all, placement is matched per scope below
+        undefined, // organisationId
+        undefined, // divisionId
+        undefined, // effectiveAtContext
+        true, // isActive
+        false, // includeScopes
+        undefined, // sort: the default order is stable
+        pageIndex + 1,
+        pageSize,
+        undefined,
+        undefined,
+        pageSignal ? { signal: pageSignal } : undefined,
+      );
+      return { items: data.items ?? [], totalCount: data.totalCount ?? 0 };
+    },
+    { pageSize: PAGE_SIZE, maxItems: MAX_ROWS, signal },
+  );
+  return items;
 };
 
 const rolesQuery = (contextKey: unknown) => ({
