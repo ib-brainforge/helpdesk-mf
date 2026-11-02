@@ -13,7 +13,6 @@ import { IconTip } from '@/components/shared';
  * Change" is enabled.
  */
 
-import { AppLoadingSplash } from '@/components/AppSplash';
 import { EntityMovedScreen } from '@/components/EntityMovedScreen';
 import {
   useApprovalWorkflow,
@@ -39,7 +38,7 @@ import {
 import { Icon } from '@brainforgeau/components/base';
 import {
   DetailPage,
-  EmptyState,
+  PageState,
   useConfirm,
   useDetailTabState,
   useEntityForm,
@@ -292,15 +291,16 @@ function EditApprovalWorkflowPage() {
   }
 
   if (isLoading) {
-    return <AppLoadingSplash />;
+    return <PageState loading loadingLabel="Loading approval workflow" />;
   }
 
   if (!workflow) {
     return (
-      <EmptyState
-        title="Approval workflow not found"
-        description="This approval workflow may have been deleted."
-        size="lg"
+      <PageState
+        empty={{
+          title: 'Approval workflow not found',
+          description: 'This approval workflow may have been deleted.',
+        }}
       />
     );
   }

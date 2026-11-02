@@ -2,7 +2,8 @@ import { HelpdeskPermissions as P } from '@/constants/permissions';
 import { describe, expect, it, vi } from 'vitest';
 import { ruleForPath } from './route-permissions';
 
-// The guard component's imports need a browser; the table does not.
+// The table tests need no browser; the guard is tested in
+// route-permissions.guard.test.tsx.
 vi.mock('@brainforgeau/security', () => ({
   AccessDenied: () => null,
   usePermissions: () => ({}),

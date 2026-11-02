@@ -1,7 +1,7 @@
 import { usePendingApprovals } from '@/components/approvals';
 import { StatusBadge } from '@/components/shared';
 import { BaseButton, BaseCard, Icon } from '@brainforgeau/components';
-import { PageBody, PageHeader } from '@brainforgeau/components/page';
+import { PageBody, PageHeader, PageState } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
 import { useTimezone } from '@brainforgeau/security';
 import { Card, CardContent } from '@heroui/react';
@@ -24,16 +24,7 @@ function PendingApprovalsPage() {
   );
 
   if (isLoading) {
-    return (
-      <PageBody>
-        <div className="flex h-96 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
-            <p className="text-default-600">Loading pending approvals...</p>
-          </div>
-        </div>
-      </PageBody>
-    );
+    return <PageState loading loadingLabel="Loading pending approvals" />;
   }
 
   return (

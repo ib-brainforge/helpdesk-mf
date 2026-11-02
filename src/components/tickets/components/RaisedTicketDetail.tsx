@@ -10,7 +10,6 @@
  * group, which the backend opens to callers who can see the ticket here.
  */
 
-import { AppLoadingSplash } from '@/components/AppSplash';
 import { StatusBadge, UserCell } from '@/components/shared';
 import {
   useRaisedTicket,
@@ -25,8 +24,8 @@ import type { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, BaseTextarea, Box } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import {
-  EmptyState,
   PageBody,
+  PageState,
   usePageTitle,
 } from '@brainforgeau/components/page';
 import { formatDateTime } from '@brainforgeau/components/utils';
@@ -91,7 +90,7 @@ export const RaisedTicketDetail: FC<{ ticketId: string }> = ({ ticketId }) => {
 
   const back = () => navigate(TICKETS_PATH);
 
-  if (isLoading) return <AppLoadingSplash />;
+  if (isLoading) return <PageState loading loadingLabel="Loading ticket" />;
 
   if (isError || !ticket) {
     const notFound =
@@ -99,25 +98,21 @@ export const RaisedTicketDetail: FC<{ ticketId: string }> = ({ ticketId }) => {
       (error as { response?: { status?: number } } | null)?.response?.status ===
         404;
     return (
-      <PageBody className="items-center justify-center">
-        <EmptyState
-          title={
-            notFound
-              ? "This ticket couldn't be found"
-              : "This ticket couldn't be loaded"
-          }
-          description={
-            notFound
-              ? 'It may belong to another organisation, or it is no longer available.'
-              : 'Helpdesk could not be reached. Try again in a moment.'
-          }
-          action={
+      <PageState
+        empty={{
+          title: notFound
+            ? "This ticket couldn't be found"
+            : "This ticket couldn't be loaded",
+          description: notFound
+            ? 'It may belong to another organisation, or it is no longer available.'
+            : 'Helpdesk could not be reached. Try again in a moment.',
+          action: (
             <BaseButton color="primary" onPress={back}>
               Back to tickets
             </BaseButton>
-          }
-        />
-      </PageBody>
+          ),
+        }}
+      />
     );
   }
 
