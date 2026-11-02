@@ -103,14 +103,11 @@ export default createModuleFederationConfig({
       singleton: true,
       requiredVersion: false,
     },
-    // @brainforgeau/identity-management-client is deliberately NOT shared.
-    // This app pins a newer version than the shell (and navbar), which
-    // provide it as an eager singleton. Sharing it made this app run the
-    // shell's older client, where changed method signatures shift their
-    // positional arguments (e.g. the paged user-app-assignments API used by
-    // useScopedAssignees) and assignee loading returns nothing or the wrong
-    // data. The app bundles its own copy; security, shared from the shell,
-    // keeps using the shell's copy internally.
+    // Generated identity client: one copy for the shell and every remote; the shell provides it.
+    '@brainforgeau/identity-management-client': {
+      singleton: true,
+      requiredVersion: false,
+    },
     jotai: {
       singleton: true,
       requiredVersion: false,
