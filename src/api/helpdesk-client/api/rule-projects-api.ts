@@ -111,6 +111,46 @@ export const RuleProjectsApiAxiosParamCreator = function (configuration?: Config
             };
         },
         /**
+         * Requires permission: rulegraphs.read (app: helpdesk).
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1RuleProjectsIdGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('v1RuleProjectsIdGet', 'id', id)
+            const localVarPath = `/v1/rule-projects/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ContextToken required
+            await setApiKeyToObject(localVarHeaderParameter, "X-Context-Token", configuration)
+
+            // authentication Bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Requires permission: rulegraphs.write (app: helpdesk).
          * @param {string} id 
          * @param {ServicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand} [servicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand] 
@@ -227,6 +267,18 @@ export const RuleProjectsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Requires permission: rulegraphs.read (app: helpdesk).
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1RuleProjectsIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ServicesCoreRulesApplicationModelsRuleProjectDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RuleProjectsIdGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RuleProjectsApi.v1RuleProjectsIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Requires permission: rulegraphs.write (app: helpdesk).
          * @param {string} id 
          * @param {ServicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand} [servicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand] 
@@ -278,6 +330,15 @@ export const RuleProjectsApiFactory = function (configuration?: Configuration, b
             return localVarFp.v1RuleProjectsIdDelete(id, options).then((request) => request(axios, basePath));
         },
         /**
+         * Requires permission: rulegraphs.read (app: helpdesk).
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1RuleProjectsIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<ServicesCoreRulesApplicationModelsRuleProjectDto> {
+            return localVarFp.v1RuleProjectsIdGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Requires permission: rulegraphs.write (app: helpdesk).
          * @param {string} id 
          * @param {ServicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand} [servicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand] 
@@ -319,6 +380,14 @@ export interface RuleProjectsApiInterface {
     v1RuleProjectsIdDelete(id: string, options?: RawAxiosRequestConfig): AxiosPromise<void>;
 
     /**
+     * Requires permission: rulegraphs.read (app: helpdesk).
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1RuleProjectsIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<ServicesCoreRulesApplicationModelsRuleProjectDto>;
+
+    /**
      * Requires permission: rulegraphs.write (app: helpdesk).
      * @param {string} id 
      * @param {ServicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand} [servicesCoreRulesApplicationCommandsUpdateRuleProjectUpdateRuleProjectCommand] 
@@ -358,6 +427,16 @@ export class RuleProjectsApi extends BaseAPI implements RuleProjectsApiInterface
      */
     public v1RuleProjectsIdDelete(id: string, options?: RawAxiosRequestConfig) {
         return RuleProjectsApiFp(this.configuration).v1RuleProjectsIdDelete(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Requires permission: rulegraphs.read (app: helpdesk).
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1RuleProjectsIdGet(id: string, options?: RawAxiosRequestConfig) {
+        return RuleProjectsApiFp(this.configuration).v1RuleProjectsIdGet(id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

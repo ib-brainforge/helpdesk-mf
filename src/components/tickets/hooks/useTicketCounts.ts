@@ -27,9 +27,8 @@ import { assigneeParams, putIds, withSearchMatches } from './useTickets';
  * Locally the fan-out measured 76-382ms and this measures 18-35ms.
  *
  * WHY THE HOOKS CALL THIS RATHER THAN THE ENDPOINT DIRECTLY
- * useTicketTabCounts and useScopedAssignees both render on the tickets page.
- * When they pass the same filters they build the same query key, and React
- * Query serves both from a single in-flight request.
+ * Every caller that passes the same filters builds the same query key, and
+ * React Query serves them from a single in-flight request.
  *
  * WHY THE COUNTS ARE INTERNALLY CONSISTENT
  * The server answers from a single GROUP BY, so every number comes from one

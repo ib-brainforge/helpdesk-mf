@@ -29,7 +29,6 @@ import {
   useCreateRuleGraphVersion,
   usePublishRuleGraphVersion,
   useRuleGraph,
-  useRuleGraphs,
 } from '../state/ruleProjectQueries';
 
 function formatDate(iso: string): string {

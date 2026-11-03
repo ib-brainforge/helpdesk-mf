@@ -128,12 +128,13 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
     { enabled: isOpen && scopeReady },
   );
   const choices = assets.filter(a => !linkedIds.has(a.id));
-  // Which of this scope's assets exist in Tracking, read once per scope.
+  // Which of the listed assets exist in Tracking.
   const {
     trackedIds,
     isLoading: trackingLoading,
     isError: trackingError,
   } = useTrackedAssetIds(
+    assets.map(a => a.id),
     { tenantId, organisationId: scopeOrganisationId },
     { enabled: isOpen && scopeReady },
   );
@@ -279,7 +280,9 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
                           </div>
                           <TrackingBadge
                             inTracking={
-                              trackedIds ? trackedIds.has(a.id) : undefined
+                              trackedIds
+                                ? trackedIds.has(a.id.toLowerCase())
+                                : undefined
                             }
                             isLoading={trackingLoading}
                             isError={trackingError}
@@ -347,7 +350,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
     trackedIds: trackedLinkedIds,
     isLoading: linkedTrackingLoading,
     isError: linkedTrackingError,
-  } = useTrackedAssetIds({ tenantId }, { enabled: linkedIds.length > 0 });
+  } = useTrackedAssetIds(linkedIds, { tenantId });
 
   const nameOf = (id: string): string => {
     const asset = byId[id];
@@ -468,7 +471,7 @@ export const LinkedAssetsSection: FC<LinkedAssetsSectionProps> = ({
                 <TrackingBadge
                   inTracking={
                     link.assetId && trackedLinkedIds
-                      ? trackedLinkedIds.has(link.assetId)
+                      ? trackedLinkedIds.has(link.assetId.toLowerCase())
                       : undefined
                   }
                   isLoading={linkedTrackingLoading}

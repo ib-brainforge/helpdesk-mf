@@ -78,12 +78,13 @@ export const AssetPicker: FC<Props> = ({
     { enabled: hasOpened },
   );
 
-  // Which of the requester's assets exist in Tracking, read once per context.
+  // Which of the listed assets exist in Tracking.
   const {
     trackedIds,
     isLoading: trackingLoading,
     isError: trackingError,
   } = useTrackedAssetIds(
+    assets.map(a => a.id),
     {
       tenantId: context?.tenantId,
       organisationId: context?.organisationId,
@@ -190,7 +191,11 @@ export const AssetPicker: FC<Props> = ({
                       )}
                     </div>
                     <TrackingBadge
-                      inTracking={trackedIds ? trackedIds.has(a.id) : undefined}
+                      inTracking={
+                        trackedIds
+                          ? trackedIds.has(a.id.toLowerCase())
+                          : undefined
+                      }
                       isLoading={trackingLoading}
                       isError={trackingError}
                     />

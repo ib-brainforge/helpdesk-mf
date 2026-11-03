@@ -38,6 +38,8 @@ import type { ServicesCoreRulesApplicationModelsRuleExecutionLogPageDto } from '
 // @ts-ignore
 import type { ServicesCoreRulesApplicationModelsRuleGraphDto } from '../models';
 // @ts-ignore
+import type { ServicesCoreRulesApplicationModelsRuleGraphListPageDto } from '../models';
+// @ts-ignore
 import type { ServicesCoreRulesApplicationModelsRuleGraphVersionDto } from '../models';
 /**
  * RuleGraphsApi - axios parameter creator
@@ -47,10 +49,15 @@ export const RuleGraphsApiAxiosParamCreator = function (configuration?: Configur
         /**
          * Requires permission: rulegraphs.read (app: helpdesk).
          * @param {string} projectId 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {string} [sort] 
+         * @param {string} [search] 
+         * @param {Array<string>} [ids] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1RuleProjectsProjectIdRulesGet: async (projectId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1RuleProjectsProjectIdRulesGet: async (projectId: string, page?: number, pageSize?: number, sort?: string, search?: string, ids?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'projectId' is not null or undefined
             assertParamExists('v1RuleProjectsProjectIdRulesGet', 'projectId', projectId)
             const localVarPath = `/v1/rule-projects/{projectId}/rules`
@@ -72,6 +79,26 @@ export const RuleGraphsApiAxiosParamCreator = function (configuration?: Configur
             // authentication Bearer required
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (pageSize !== undefined) {
+                localVarQueryParameter['pageSize'] = pageSize;
+            }
+
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort;
+            }
+
+            if (search !== undefined) {
+                localVarQueryParameter['search'] = search;
+            }
+
+            if (ids) {
+                localVarQueryParameter['ids'] = ids;
+            }
 
 
     
@@ -585,11 +612,16 @@ export const RuleGraphsApiFp = function(configuration?: Configuration) {
         /**
          * Requires permission: rulegraphs.read (app: helpdesk).
          * @param {string} projectId 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {string} [sort] 
+         * @param {string} [search] 
+         * @param {Array<string>} [ids] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1RuleProjectsProjectIdRulesGet(projectId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ServicesCoreRulesApplicationModelsRuleGraphDto>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RuleProjectsProjectIdRulesGet(projectId, options);
+        async v1RuleProjectsProjectIdRulesGet(projectId: string, page?: number, pageSize?: number, sort?: string, search?: string, ids?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ServicesCoreRulesApplicationModelsRuleGraphListPageDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RuleProjectsProjectIdRulesGet(projectId, page, pageSize, sort, search, ids, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['RuleGraphsApi.v1RuleProjectsProjectIdRulesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -746,11 +778,16 @@ export const RuleGraphsApiFactory = function (configuration?: Configuration, bas
         /**
          * Requires permission: rulegraphs.read (app: helpdesk).
          * @param {string} projectId 
+         * @param {number} [page] 
+         * @param {number} [pageSize] 
+         * @param {string} [sort] 
+         * @param {string} [search] 
+         * @param {Array<string>} [ids] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1RuleProjectsProjectIdRulesGet(projectId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<ServicesCoreRulesApplicationModelsRuleGraphDto>> {
-            return localVarFp.v1RuleProjectsProjectIdRulesGet(projectId, options).then((request) => request(axios, basePath));
+        v1RuleProjectsProjectIdRulesGet(projectId: string, page?: number, pageSize?: number, sort?: string, search?: string, ids?: Array<string>, options?: RawAxiosRequestConfig): AxiosPromise<ServicesCoreRulesApplicationModelsRuleGraphListPageDto> {
+            return localVarFp.v1RuleProjectsProjectIdRulesGet(projectId, page, pageSize, sort, search, ids, options).then((request) => request(axios, basePath));
         },
         /**
          * Requires permission: rulegraphs.delete (app: helpdesk).
@@ -872,10 +909,15 @@ export interface RuleGraphsApiInterface {
     /**
      * Requires permission: rulegraphs.read (app: helpdesk).
      * @param {string} projectId 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {string} [sort] 
+     * @param {string} [search] 
+     * @param {Array<string>} [ids] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    v1RuleProjectsProjectIdRulesGet(projectId: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<ServicesCoreRulesApplicationModelsRuleGraphDto>>;
+    v1RuleProjectsProjectIdRulesGet(projectId: string, page?: number, pageSize?: number, sort?: string, search?: string, ids?: Array<string>, options?: RawAxiosRequestConfig): AxiosPromise<ServicesCoreRulesApplicationModelsRuleGraphListPageDto>;
 
     /**
      * Requires permission: rulegraphs.delete (app: helpdesk).
@@ -986,11 +1028,16 @@ export class RuleGraphsApi extends BaseAPI implements RuleGraphsApiInterface {
     /**
      * Requires permission: rulegraphs.read (app: helpdesk).
      * @param {string} projectId 
+     * @param {number} [page] 
+     * @param {number} [pageSize] 
+     * @param {string} [sort] 
+     * @param {string} [search] 
+     * @param {Array<string>} [ids] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public v1RuleProjectsProjectIdRulesGet(projectId: string, options?: RawAxiosRequestConfig) {
-        return RuleGraphsApiFp(this.configuration).v1RuleProjectsProjectIdRulesGet(projectId, options).then((request) => request(this.axios, this.basePath));
+    public v1RuleProjectsProjectIdRulesGet(projectId: string, page?: number, pageSize?: number, sort?: string, search?: string, ids?: Array<string>, options?: RawAxiosRequestConfig) {
+        return RuleGraphsApiFp(this.configuration).v1RuleProjectsProjectIdRulesGet(projectId, page, pageSize, sort, search, ids, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
