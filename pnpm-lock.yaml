@@ -19,8 +19,8 @@ importers:
         specifier: 0.5.874-develop.b8c3b5e
         version: 0.5.874-develop.b8c3b5e(@heroicons/react@2.2.0(react@19.2.6))(@heroui/react@3.0.4(@react-spectrum/provider@3.11.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(tailwindcss@4.3.0))(@heroui/styles@3.0.4(tailwind-merge@3.4.0)(tailwindcss@4.3.0))(@tanstack/react-form@1.29.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-query@5.100.9(react@19.2.6))(@tanstack/react-table@8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tanstack/react-virtual@3.14.13(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@vis.gl/react-google-maps@1.9.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-error-boundary@6.1.0(react@19.2.6))(react@19.2.6)(tailwind-merge@3.4.0)(tailwindcss@4.3.0)(zod@3.25.76)
       '@brainforgeau/identity-management-client':
-        specifier: 0.5.1520-develop.d7505f3
-        version: 0.5.1520-develop.d7505f3
+        specifier: 0.5.1545-develop.f37b0df
+        version: 0.5.1545-develop.f37b0df
       '@brainforgeau/observability':
         specifier: 0.5.125-develop.b80a41c
         version: 0.5.125-develop.b80a41c(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -976,8 +976,8 @@ packages:
   '@brainforgeau/core-time@0.5.47-develop.3c2e40d':
     resolution: {integrity: sha512-mazMcv/DhbYnj/C0HbM7+/W7wI5i2CYPOH8SHVY7C53Rj9JdD72Axo45tF3RT7Ea0MGRk09PZ5EHmiar2nz94w==, tarball: https://npm.pkg.github.com/download/@brainforgeau/core-time/0.5.47-develop.3c2e40d/fb3860559b54d43ab8406686ebdc4d81a6064add}
 
-  '@brainforgeau/identity-management-client@0.5.1520-develop.d7505f3':
-    resolution: {integrity: sha512-PXS2+1bMOf3xPNWlrHSc/nFYwtwq7D3C6NUDGRJg2wjblDGzdqssuEH647UyXMTWmzqDHI+cTCGOEQC4lsSvcA==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.5.1520-develop.d7505f3/200f827572c4327c58e8ef52eeef3bc54ab20d36}
+  '@brainforgeau/identity-management-client@0.5.1545-develop.f37b0df':
+    resolution: {integrity: sha512-b0huo5JxDZm82EHRpVY5i5qKgQ8SUbzxpp+XBczMOki5O1uU7Y+KrMTqvh65fmNRbD38E2pkmD+jjvoFMxHrTw==, tarball: https://npm.pkg.github.com/download/@brainforgeau/identity-management-client/0.5.1545-develop.f37b0df/bf0e7e47d47aa8c9227871ef7ece0f2d90a59d07}
     engines: {node: '>=18.0.0'}
 
   '@brainforgeau/observability@0.5.125-develop.b80a41c':
@@ -9099,7 +9099,7 @@ snapshots:
     dependencies:
       '@js-temporal/polyfill': 0.4.4
 
-  '@brainforgeau/identity-management-client@0.5.1520-develop.d7505f3':
+  '@brainforgeau/identity-management-client@0.5.1545-develop.f37b0df':
     dependencies:
       axios: 1.13.5
     transitivePeerDependencies:
