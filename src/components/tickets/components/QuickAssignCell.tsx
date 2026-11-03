@@ -8,6 +8,7 @@ import {
 } from '@heroui/react';
 import { type FC, useMemo, useState } from 'react';
 import { useScopedAssignees } from '../hooks/useScopedAssignees';
+import { MORE_ASSIGNEES_TEXT } from './moreAssigneesItem';
 
 interface QuickAssignCellProps {
   ticketId: string;
@@ -41,9 +42,9 @@ interface QuickAssignCellProps {
  *
  * Users come from useScopedAssignees, the same source as the ticket sidebar and
  * bulk assign, so there is one answer to who is assignable: everyone whose
- * helpdesk role reaches the row's scope, plus anyone already holding tickets
- * there. It loads when the menu first opens rather than on render, so a grid of
- * 25 unassigned rows does not fire lookups for menus nobody has opened.
+ * helpdesk role reaches the row's scope. It loads when the menu first opens
+ * rather than on render, so a grid of 25 unassigned rows does not fire lookups
+ * for menus nobody has opened.
  */
 export const QuickAssignCell: FC<QuickAssignCellProps> = ({
   ticketId,
@@ -54,9 +55,10 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
   onAssign,
 }) => {
   const [hasOpened, setHasOpened] = useState(false);
-  const { options, isLoading } = useScopedAssignees(
+  const { options, isLoading, hasMore } = useScopedAssignees(
     { tenantId, organisationId, divisionId },
-    { enabled: hasOpened },
+    // One more than shown: the signed-in user is dropped from the list.
+    { enabled: hasOpened, pageSize: 16 },
   );
 
   // Whoever is signed in is already offered as "Assign to me", so drop them
@@ -101,9 +103,8 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
             // Capped: this is the quick path, not a directory. Anyone further
             // down the list is reachable through the ticket itself or bulk
             // assign, both of which have a search box.
-            others
-              .slice(0, 15)
-              .map(user => (
+            [
+              ...others.slice(0, 15).map(user => (
                 <DropdownItem
                   key={user.id}
                   onPress={() => onAssign(ticketId, user.id, user.name)}
@@ -118,7 +119,15 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
                     <span className="truncate">{user.name}</span>
                   </div>
                 </DropdownItem>
-              ))
+              )),
+              ...(hasMore || others.length > 15
+                ? [
+                    <DropdownItem key="more" isDisabled>
+                      {MORE_ASSIGNEES_TEXT}
+                    </DropdownItem>,
+                  ]
+                : []),
+            ]
           )}
         </DropdownMenu>
       </DropdownPopover>

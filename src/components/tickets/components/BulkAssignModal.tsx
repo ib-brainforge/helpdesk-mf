@@ -12,9 +12,9 @@ import {
 import { type FC, useMemo, useState } from 'react';
 import {
   type AssigneeScope,
-  filterAssignees,
   useScopedAssigneesIntersection,
 } from '../hooks/useScopedAssignees';
+import { moreAssigneesItem } from './moreAssigneesItem';
 
 interface BulkAssignModalProps {
   isOpen: boolean;
@@ -44,8 +44,12 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
   const [query, setQuery] = useState('');
 
   // The modal stays mounted under the grid, so it loads only while open.
-  const assignees = useScopedAssigneesIntersection(scopes, { enabled: isOpen });
-  const usersOptions = filterAssignees(assignees.options, query);
+  const assignees = useScopedAssigneesIntersection(scopes, {
+    enabled: isOpen,
+    search: query,
+    selectedIds: selectedAssigneeId ? [selectedAssigneeId] : [],
+  });
+  const usersOptions = assignees.options;
 
   // Counted by organisation, the unit the message below talks about. Tickets
   // with no organisation belong to their tenant as a whole and are not counted.
@@ -57,6 +61,7 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
     !assignees.isLoading &&
     !assignees.isError &&
     assignees.scopeCount > 1 &&
+    !query.trim() &&
     assignees.options.length === 0;
 
   const handleConfirm = () => {
@@ -83,6 +88,17 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
           <p className="mb-4">
             Assign {ticketCount} ticket{ticketCount !== 1 ? 's' : ''} to:
           </p>
+          {assignees.tooManyScopes ? (
+            <p className="mb-4 text-sm text-muted-foreground">
+              Selection spans too many organisations or divisions; narrow the
+              selection.
+            </p>
+          ) : assignees.isError ? (
+            <p className="mb-4 text-sm text-danger">
+              Couldn't load the people who can work this selection. Close and
+              try again.
+            </p>
+          ) : null}
           {nobodyInCommon ? (
             <p className="mb-4 text-sm text-muted-foreground">
               No one belongs to{' '}
@@ -105,7 +121,9 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
               }
             }}
             onClear={() => setSelectedAssigneeId(null)}
-            isDisabled={nobodyInCommon}
+            isDisabled={
+              nobodyInCommon || assignees.isError || assignees.tooManyScopes
+            }
             onValueChange={setQuery}
             onOpenChange={open => {
               if (!open) setQuery('');
@@ -124,19 +142,22 @@ export const BulkAssignModal: FC<BulkAssignModalProps> = ({
               );
             }}
           >
-            {usersOptions.map(user => (
-              <BaseAutocompleteItem
-                key={user.id}
-                id={user.id}
-                textValue={user.name}
-              >
-                <UserOptionRow
-                  name={user.name}
-                  email={user.email}
-                  avatarUrl={user.avatarUrl}
-                />
-              </BaseAutocompleteItem>
-            ))}
+            {[
+              ...usersOptions.map(user => (
+                <BaseAutocompleteItem
+                  key={user.id}
+                  id={user.id}
+                  textValue={user.name}
+                >
+                  <UserOptionRow
+                    name={user.name}
+                    email={user.email}
+                    avatarUrl={user.avatarUrl}
+                  />
+                </BaseAutocompleteItem>
+              )),
+              ...(assignees.hasMore ? [moreAssigneesItem()] : []),
+            ]}
           </BaseAutocomplete>
         </BaseModalBody>
         <BaseModalFooter>

@@ -1,312 +1,206 @@
-import { useUserEnrichment } from '@/hooks/useUserEnrichment';
-import type { UserInfo } from '@/hooks/useUserEnrichment';
+import { useDebounced } from '@/hooks/useDebounced';
+import { selectedContextAtom } from '@/state/auth-atoms';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { helpdeskAppQueryOptions } from '@/state/helpdesk-app-query';
-import type { TicketFilters } from '@/types/ticket';
 import { createIdentityApiClient } from '@/utils/identityApiClient';
-import { fetchAllPages } from '@brainforgeau/components/page';
-import { UserAppAssignmentsApi } from '@brainforgeau/identity-management-client';
-import {
-  type QueryFunctionContext,
-  useQueries,
-  useQuery,
-} from '@tanstack/react-query';
+import { AppsApi } from '@brainforgeau/identity-management-client';
+import { useQuery } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 import type { UserOption } from '../state/users-dropdown-state';
-import { ticketCountsQueryOptions } from './useTicketCounts';
+import {
+  type AssigneeScope,
+  MAX_IDS,
+  type ScopeParams,
+  fetchAssigneePage,
+  intersectionRequest,
+  keepWhileScopeUnchanged,
+  toOption,
+} from './assigneeLookup';
+
+export type { AssigneeScope } from './assigneeLookup';
 
 /**
  * Who a ticket can be assigned to.
  *
- * WHAT THIS REPLACES
- * Every assignee picker used to share `usersMutationAtom`, which called
- * `UsersApi.v1UsersGet(undefined, ...)`. That answers for the caller's context
- * and returned about three people, none of whom were the agents actually
- * holding tickets. The assignee rail beside it showed only people who already
- * held work, so someone who had never been given a ticket could be found in
- * neither place.
+ * ONE SOURCE
+ * identity-management answers this directly: the people holding a helpdesk
+ * role that reaches the scope (`GET v1/apps/{appId}/assignable-users/options`).
+ * Helpdesk access is granted by role, and platform staff are not members of
+ * the tenants whose tickets they work, so membership lists cannot answer it.
+ * The endpoint searches and pages on the server and returns each person's name
+ * and email, so nothing here reads a whole scope and no separate name lookup is
+ * needed.
  *
- * WHERE "ASSIGNABLE" COMES FROM
- * Helpdesk access is granted by ROLE, not by being a member of a tenant.
- * Platform staff in particular are not members of the tenants whose tickets
- * they work, so every tenant or organisation membership list comes back
- * without them. Their access lives in identity-management's app role
- * assignments, one row per person per role, each placed at a tenant,
- * organisation or division. That placement is exactly the scoping a picker
- * needs, so it is the primary source.
+ * SCOPE
+ * A tenant, organisation and division name where the ticket sits; levels left
+ * out are not constrained. The tenant is always sent: app-staff callers must
+ * name one, so a caller with no tenant of its own gets the signed-in context's.
+ * For bulk assign, `scopes` takes several and returns only the people
+ * assignable in EVERY one.
  *
- * WHY CURRENT ASSIGNEES ARE ADDED
- * Role data is not complete everywhere. On dev, role writes stopped silently
- * (V5-918) and the helpdesk role table holds a single person, while the agents
- * working tickets have no assignment at all. Relying on roles alone would make
- * the picker shrink below the people already doing the work. So anyone
- * currently holding tickets in the scope is included too, from the counts
- * endpoint that already answers exactly that. People with a role and no
- * tickets still appear, which is the point of the exercise.
+ * SELECTED PEOPLE
+ * A current assignee may not be on the loaded page. `selectedIds` are looked up
+ * by id (at most 100, never combined with a search) so they can still be named.
  *
- * NAMES
- * Neither source carries names. `useUserEnrichment` resolves them in one bulk
- * request, by id and across tenants, the same lookup that names the rail.
+ * AVATARS
+ * The endpoint returns no avatar, so options carry none and pickers show
+ * initials.
+ *
+ * `enabled: false` fetches nothing. For pickers rendered many times over, such
+ * as the quick-assign cell on every unassigned grid row, which should load only
+ * once its menu is opened.
  */
-
-export interface AssigneeScope {
-  tenantId?: string | null;
-  organisationId?: string | null;
-  divisionId?: string | null;
-}
 
 export interface ScopedAssignees {
   options: UserOption[];
   isLoading: boolean;
   isError: boolean;
+  /** Whether more people match than the page returned. */
+  hasMore: boolean;
 }
 
-type RoleAssignment = {
-  keycloakUserId?: string | null;
-  tenantId?: string | null;
-  organisationId?: string | null;
-  divisionId?: string | null;
-};
+export interface AssigneeQueryOptions {
+  enabled?: boolean;
+  /** Typed search text; debounced here and searched on the server. */
+  search?: string;
+  /** People that must be nameable even when outside the loaded page. */
+  selectedIds?: string[];
+  pageSize?: number;
+}
 
-const PAGE_SIZE = 500;
-const MAX_ROWS = 5000;
+const DEFAULT_PAGE_SIZE = 25;
+const SEARCH_DEBOUNCE_MS = 250;
 
-/**
- * Every active helpdesk role assignment. One row per person per role, so this
- * stays small: it is loaded once and matched against any number of scopes in
- * the browser.
- */
-const fetchHelpdeskAssignments = async ({
-  client,
-  signal,
-}: QueryFunctionContext): Promise<RoleAssignment[]> => {
-  // The app id comes from the shared helpdesk app query, so the app itself is
-  // fetched once per session however many callers need it.
-  const app = await client.fetchQuery(helpdeskAppQueryOptions);
-  const appId = app?.id;
-  if (!appId) return [];
-
-  const api = await createIdentityApiClient(UserAppAssignmentsApi);
-  const { items } = await fetchAllPages<RoleAssignment>(
-    async ({ pageIndex, pageSize, signal: pageSignal }) => {
-      const { data } = await api.v1UserAppAssignmentsGet(
-        undefined, // keycloakUserId: everyone
-        undefined, // keycloakUserIds
-        appId,
-        undefined, // tenantId: all, placement is matched per scope below
-        undefined, // organisationId
-        undefined, // divisionId
-        undefined, // effectiveAtContext
-        true, // isActive
-        false, // includeScopes
-        undefined, // sort: the default order is stable
-        pageIndex + 1,
-        pageSize,
-        undefined,
-        undefined,
-        pageSignal ? { signal: pageSignal } : undefined,
-      );
-      return { items: data.items ?? [], totalCount: data.totalCount ?? 0 };
-    },
-    { pageSize: PAGE_SIZE, maxItems: MAX_ROWS, signal },
-  );
-  return items;
-};
-
-const rolesQuery = (contextKey: unknown) => ({
-  queryKey: ['assignees', 'helpdesk-roles', contextKey],
-  queryFn: fetchHelpdeskAssignments,
-  // Role assignments change rarely; a picker opening should not re-fetch them.
-  staleTime: 5 * 60 * 1000,
-});
-
-/**
- * Whether a role's placement reaches a ticket's scope.
- *
- * A role placed with no tenant is platform-wide. A tenant-level role reaches
- * every organisation in its tenant, an organisation-level role reaches that
- * organisation's divisions, and so on down.
- *
- * A ticket with no organisation belongs to the tenant as a whole, so a role
- * placed on any organisation within that tenant still reaches it. Most tickets
- * are scoped this way (roughly 12,000 of 14,000 locally), so excluding
- * organisation-level roles there would leave them with almost nobody.
- */
-const covers = (a: RoleAssignment, s: AssigneeScope): boolean => {
-  if (!a.tenantId) return true;
-  if (s.tenantId && a.tenantId !== s.tenantId) return false;
-  if (
-    a.organisationId &&
-    s.organisationId &&
-    a.organisationId !== s.organisationId
-  ) {
-    return false;
-  }
-  if (a.divisionId && s.divisionId && a.divisionId !== s.divisionId) {
-    return false;
-  }
-  return true;
-};
-
-/** The counts endpoint's filters for a scope, only the levels it names. The tenant is always the caller's own. */
-const scopeFilters = (s: AssigneeScope): TicketFilters => {
-  const f: TicketFilters = {};
-  if (s.organisationId) f.organisationId = [s.organisationId];
-  if (s.divisionId) f.divisionId = s.divisionId;
-  return f;
-};
-
-/** Everyone reachable in one scope: role holders plus current ticket holders. */
-const assignableIds = (
-  roles: RoleAssignment[] | undefined,
-  holders: { assigneeId: string }[] | undefined,
-  scope: AssigneeScope,
-): Set<string> => {
-  const ids = new Set<string>();
-  for (const a of roles ?? []) {
-    if (a.keycloakUserId && covers(a, scope)) ids.add(a.keycloakUserId);
-  }
-  for (const h of holders ?? []) ids.add(h.assigneeId);
-  return ids;
-};
-
-/**
- * Ids to picker options, sorted by name.
- *
- * Only people whose name has resolved are offered. `useUserEnrichment` keeps
- * the two unresolved states apart, and both are left out:
- *
- * - `null` means the directory cannot find the id: a deleted account or seeded
- *   data. Offering it would put a stranger's GUID in the list.
- * - `undefined` means the lookup has not returned yet. These used to be offered
- *   under the first eight characters of their id, which both flashed raw ids at
- *   the user and sorted the list by id. The dropdown then kept that order when
- *   the real names arrived, because it holds its first-seen order for items
- *   whose keys have not changed, so the list stayed in id order for good. Waiting
- *   until names are known means the first render is already in name order.
- */
-const toOptions = (
-  ids: string[],
-  userMap: Record<string, UserInfo | null>,
-): UserOption[] =>
-  ids
-    .flatMap(id => {
-      const u = userMap[id];
-      if (!u) return [];
-      return [{ id, name: u.name, email: u.email, avatarUrl: u.avatarUrl }];
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-/**
- * Everyone a ticket in this scope can be assigned to.
- *
- * `enabled: false` fetches nothing. For pickers rendered many times over, such
- * as the quick-assign cell on every unassigned grid row, which should only
- * load once its menu is actually opened.
- */
-export const useScopedAssignees = (
-  scope: AssigneeScope,
-  { enabled = true }: { enabled?: boolean } = {},
+const useAssigneeOptions = (
+  scopeParams: ScopeParams,
+  scopeKey: string,
+  disabled: boolean,
+  {
+    enabled = true,
+    search = '',
+    selectedIds = [],
+    pageSize = DEFAULT_PAGE_SIZE,
+  }: AssigneeQueryOptions,
 ): ScopedAssignees => {
   const contextKey = useAtomValue(contextQueryKeyAtom);
+  const term = useDebounced(search.trim(), SEARCH_DEBOUNCE_MS);
+  const active = enabled && !disabled;
 
-  const roles = useQuery({ ...rolesQuery(contextKey), enabled });
-  const counts = useQuery({
-    ...ticketCountsQueryOptions(scopeFilters(scope), false),
-    enabled,
+  const app = useQuery({ ...helpdeskAppQueryOptions, enabled: active });
+  const appId = app.data?.id;
+
+  const list = useQuery({
+    queryKey: ['assignees', 'options', contextKey, scopeKey, term, pageSize],
+    enabled: active && !!appId,
+    staleTime: 60 * 1000,
+    placeholderData: keepWhileScopeUnchanged(contextKey, scopeKey),
+    queryFn: async ({ signal }) =>
+      fetchAssigneePage(
+        await createIdentityApiClient(AppsApi),
+        appId as string,
+        scopeParams,
+        { search: term, pageSize, signal },
+      ),
   });
 
-  const ids = useMemo(
-    () => [...assignableIds(roles.data, counts.data?.assignees, scope)],
-    // Scope is compared by its parts: callers build it inline each render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      roles.data,
-      counts.data,
-      scope.tenantId,
-      scope.organisationId,
-      scope.divisionId,
-    ],
+  const listed = useMemo(
+    () => (list.data?.items ?? []).flatMap(toOption),
+    [list.data],
   );
 
-  const { userMap, isLoading: loadingNames } = useUserEnrichment(ids);
-  const options = useMemo(() => toOptions(ids, userMap), [ids, userMap]);
+  const missing = useMemo(() => {
+    const onPage = new Set(listed.map(o => o.id));
+    return [...new Set(selectedIds)]
+      .filter(id => id && !onPage.has(id))
+      .slice(0, MAX_IDS)
+      .sort();
+  }, [listed, selectedIds]);
+
+  const named = useQuery({
+    queryKey: ['assignees', 'by-id', contextKey, scopeKey, missing],
+    enabled: active && !!appId && !!list.data && missing.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async ({ signal }) =>
+      fetchAssigneePage(
+        await createIdentityApiClient(AppsApi),
+        appId as string,
+        scopeParams,
+        { ids: missing, pageSize: MAX_IDS, signal },
+      ),
+  });
+
+  const options = useMemo(
+    () => [...listed, ...(named.data?.items ?? []).flatMap(toOption)],
+    [listed, named.data],
+  );
 
   return {
     options,
-    isLoading: roles.isLoading || counts.isLoading || loadingNames,
-    isError: roles.isError || counts.isError,
+    // Loading covers a refetch too, so callers never read a stale or partial
+    // list as the final answer.
+    isLoading:
+      active &&
+      (app.isLoading || (!!appId && (list.isPending || list.isFetching))),
+    isError:
+      active &&
+      (app.isError ||
+        list.isError ||
+        named.isError ||
+        (app.isSuccess && !appId)),
+    hasMore: (list.data?.totalCount ?? 0) > listed.length,
   };
 };
 
-const scopeKey = (s: AssigneeScope) =>
-  `${s.tenantId ?? ''}|${s.organisationId ?? ''}|${s.divisionId ?? ''}`;
+/**
+ * Everyone a ticket in this scope can be assigned to: one page matching
+ * `search`, plus the `selectedIds` that fall outside it.
+ */
+export const useScopedAssignees = (
+  scope: AssigneeScope,
+  opts: AssigneeQueryOptions = {},
+): ScopedAssignees => {
+  const context = useAtomValue(selectedContextAtom);
+  const tenantId = scope.tenantId ?? context?.tenantId ?? undefined;
+  const organisationId = scope.organisationId ?? undefined;
+  const divisionId = scope.divisionId ?? undefined;
+  return useAssigneeOptions(
+    { tenantId, organisationId, divisionId },
+    `${tenantId ?? ''}:${organisationId ?? ''}:${divisionId ?? ''}`,
+    false,
+    opts,
+  );
+};
 
 /**
  * Only the people assignable in EVERY one of the given scopes.
  *
  * For bulk assign across a selection spanning organisations: anyone offered
- * here can work every selected ticket, so a bulk assignment never puts someone
- * on a ticket outside their reach. A mixed selection can legitimately produce
- * nobody, and callers should say so rather than show an empty list.
- *
- * `enabled: false` fetches nothing, for a modal that stays mounted while shut.
+ * here can work every selected ticket. A mixed selection can legitimately
+ * produce nobody, and callers should say so rather than show an empty list.
+ * The endpoint takes at most 25 distinct scopes; beyond that the lookup is not
+ * made, `isError` is set and `tooManyScopes` is true.
  */
 export const useScopedAssigneesIntersection = (
   scopes: AssigneeScope[],
-  { enabled = true }: { enabled?: boolean } = {},
-): ScopedAssignees & { scopeCount: number } => {
-  const contextKey = useAtomValue(contextQueryKeyAtom);
-
-  const distinct = useMemo(() => {
-    const seen = new Map<string, AssigneeScope>();
-    for (const s of scopes) seen.set(scopeKey(s), s);
-    return [...seen.values()];
-  }, [scopes]);
-
-  const roles = useQuery({ ...rolesQuery(contextKey), enabled });
-  const counts = useQueries({
-    queries: distinct.map(s => ({
-      ...ticketCountsQueryOptions(scopeFilters(s), false),
-      enabled,
-    })),
-  });
-
-  const countsLoading = counts.some(c => c.isLoading);
-  const ids = useMemo(() => {
-    if (roles.isLoading || countsLoading || distinct.length === 0) return [];
-    const perScope = distinct.map((s, i) =>
-      assignableIds(roles.data, counts[i]?.data?.assignees, s),
-    );
-    const [first, ...rest] = perScope;
-    return [...first].filter(id => rest.every(set => set.has(id)));
-  }, [roles.data, roles.isLoading, counts, countsLoading, distinct]);
-
-  const { userMap, isLoading: loadingNames } = useUserEnrichment(ids);
-  const options = useMemo(() => toOptions(ids, userMap), [ids, userMap]);
-
-  return {
-    options,
-    isLoading: roles.isLoading || countsLoading || loadingNames,
-    isError: roles.isError || counts.some(c => c.isError),
-    scopeCount: distinct.length,
-  };
-};
-
-/**
- * Case-insensitive match on name or email. Neither source has a search
- * parameter, so the scope is loaded once and this is the search.
- */
-export const filterAssignees = (
-  options: UserOption[],
-  query: string,
-): UserOption[] => {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return options;
-  return options.filter(
-    o =>
-      o.name.toLowerCase().includes(needle) ||
-      (o.email ?? '').toLowerCase().includes(needle),
+  opts: AssigneeQueryOptions = {},
+): ScopedAssignees & { scopeCount: number; tooManyScopes: boolean } => {
+  const context = useAtomValue(selectedContextAtom);
+  const fallbackTenant = context?.tenantId;
+  const { tokens, tooMany } = useMemo(
+    () => intersectionRequest(scopes, fallbackTenant),
+    [scopes, fallbackTenant],
   );
+  const result = useAssigneeOptions(
+    { scopes: tokens },
+    tokens.join('|'),
+    tokens.length === 0 || tooMany,
+    opts,
+  );
+  return {
+    ...result,
+    isError: result.isError || tooMany,
+    scopeCount: tokens.length,
+    tooManyScopes: tooMany,
+  };
 };

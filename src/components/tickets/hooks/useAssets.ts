@@ -15,6 +15,7 @@ import {
   Configuration as TrackingConfiguration,
 } from '@brainforgeau/tracking-client';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { lookupTrackedAssetIds } from './trackedAssetLookup';
 
 /**
  * Assets from asset-backend, for a ticket's linked assets.
@@ -164,70 +165,43 @@ export const useAssetsByIds = (
   return byId;
 };
 
-const TRACKABLES_PAGE = 500;
-const TRACKABLES_MAX = 5000;
-
 /**
- * The ids of the assets in a scope that exist in Tracking.
+ * Which of the given assets exist in Tracking.
  *
- * "In Tracking" means Tracking holds a trackable connected to the asset
- * (subjectSource 'Asset', subjectExternalId the asset's id), not that it is
- * reporting right now. Assets reach Tracking through the Asset app, so an asset
- * missing here has not been connected.
+ * "In Tracking" means Tracking holds a trackable connected to the asset, not
+ * that it is reporting right now. Assets reach Tracking through the Asset app,
+ * so an asset missing here has not been connected.
  *
- * tracking-backend ignores filters on /v1/trackables but pages up to 500, so a
- * scope's trackables are read whole (a single call for a small tenant) and
- * matched here. The client is scoped to the 'tracking' app.
+ * Only the assets on screen are asked about: tracking-backend's trackable
+ * options lookup by subject external id, in fixed chunks of 100 (its limit).
+ * In that mode each option's code is the asset id as a lowercase hyphenated
+ * guid, so the returned set holds lowercase ids; compare with a lowercased id.
+ * The client is scoped to the 'tracking' app.
  */
 export const useTrackedAssetIds = (
+  assetIds: string[],
   scope: AssetScope,
   { enabled = true } = {},
 ) => {
+  const wanted = [...new Set(assetIds.map(id => id.toLowerCase()))].sort();
   const query = useQuery({
     queryKey: [
       'assets',
       'tracked-ids',
       scope.tenantId ?? null,
       scope.organisationId ?? null,
+      wanted,
     ],
-    enabled,
+    enabled: enabled && wanted.length > 0,
     staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<Set<string>> => {
+    queryFn: async ({ signal }): Promise<Set<string>> => {
       const client = await createScopedApiClient(
         TrackablesApi,
         new TrackingConfiguration({ basePath: requireTrackingApiBaseUrl() }),
         'tracking',
         scope,
       );
-      const ids = new Set<string>();
-      let seen = 0;
-      for (let page = 1; seen < TRACKABLES_MAX; page++) {
-        const { data } = await client.v1TrackablesGet(
-          undefined, // search
-          undefined, // groupId
-          undefined, // displayProfileName
-          undefined, // visibilityGroupId
-          undefined, // displayProfileId
-          undefined, // isTrackingActive
-          undefined, // hasTracker
-          undefined, // trackerConnected
-          page,
-          TRACKABLES_PAGE, // pageSize
-          undefined, // orderBy
-          undefined, // sortDirection
-        );
-        const items = data?.items ?? [];
-        for (const t of items) {
-          if (t.subjectSource === 'Asset' && t.subjectExternalId) {
-            ids.add(t.subjectExternalId);
-          }
-        }
-        seen += items.length;
-        if (items.length < TRACKABLES_PAGE || seen >= (data?.totalCount ?? 0)) {
-          break;
-        }
-      }
-      return ids;
+      return lookupTrackedAssetIds(client, wanted, signal);
     },
   });
   return {

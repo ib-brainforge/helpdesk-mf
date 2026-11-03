@@ -42,10 +42,7 @@ import { PermissionGuard, useAuth, useTimezone } from '@brainforgeau/security';
 import { Link } from '@modern-js/runtime/router';
 import { useAtom } from 'jotai';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  filterAssignees,
-  useScopedAssignees,
-} from '../hooks/useScopedAssignees';
+import { useScopedAssignees } from '../hooks/useScopedAssignees';
 import { useTicketDetail } from '../hooks/useTickets';
 import {
   categoriesMutationAtom,
@@ -56,6 +53,7 @@ import { getStatusConfig } from '../ticket-status-config';
 import { LinkedAssetsSection } from './LinkedAssetsSection';
 import { RequestAnswersSection } from './RequestAnswersSection';
 import { ScopePath, useTicketScopeNames } from './ScopePills';
+import { moreAssigneesItem } from './moreAssigneesItem';
 
 interface TicketDetailSidebarProps {
   ticket: TicketDto;
@@ -241,17 +239,23 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
 
   /*
    * Everyone this ticket can be assigned to: people whose helpdesk role reaches
-   * the ticket's own tenant, organisation or division, plus anyone already
-   * holding tickets there. Scoped to the TICKET, not the viewer's context, so a
-   * service admin looking at another tenant's ticket sees that tenant's people.
-   * See useScopedAssignees for why both sources are needed.
+   * the ticket's own tenant, organisation or division. Scoped to the TICKET,
+   * not the viewer's context, so a service admin looking at another tenant's
+   * ticket sees that tenant's people. Searched on the server; the current
+   * assignee is looked up by id so they are named even off the loaded page.
    */
-  const scopedAssignees = useScopedAssignees({
-    tenantId: ticket.tenantId,
-    organisationId: ticket.organisationId,
-    divisionId: ticket.divisionId,
-  });
   const [assigneeQuery, setAssigneeQuery] = useState('');
+  const scopedAssignees = useScopedAssignees(
+    {
+      tenantId: ticket.tenantId,
+      organisationId: ticket.organisationId,
+      divisionId: ticket.divisionId,
+    },
+    {
+      search: assigneeQuery,
+      selectedIds: ticket.assigneeId ? [ticket.assigneeId] : [],
+    },
+  );
 
   // Categories search mutation for category autocomplete
   const [
@@ -268,12 +272,8 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The scope is loaded once and searched here: neither source behind it has
-  // a text search, and BaseAutocomplete never filters its own items.
-  const usersOptions = useMemo(
-    () => filterAssignees(scopedAssignees.options, assigneeQuery),
-    [scopedAssignees.options, assigneeQuery],
-  );
+  // Already searched by the server; BaseAutocomplete never filters its items.
+  const usersOptions = scopedAssignees.options;
 
   const categoriesOptions = useMemo(
     () => (categoriesData ?? []).map(mapCategoryToOption),
@@ -506,19 +506,22 @@ export const TicketDetailSidebar: FC<TicketDetailSidebarProps> = ({
               );
             }}
           >
-            {usersOptions.map(user => (
-              <BaseAutocompleteItem
-                key={user.id}
-                id={user.id}
-                textValue={user.name}
-              >
-                <UserOptionRow
-                  name={user.name}
-                  email={user.email}
-                  avatarUrl={user.avatarUrl}
-                />
-              </BaseAutocompleteItem>
-            ))}
+            {[
+              ...usersOptions.map(user => (
+                <BaseAutocompleteItem
+                  key={user.id}
+                  id={user.id}
+                  textValue={user.name}
+                >
+                  <UserOptionRow
+                    name={user.name}
+                    email={user.email}
+                    avatarUrl={user.avatarUrl}
+                  />
+                </BaseAutocompleteItem>
+              )),
+              ...(scopedAssignees.hasMore ? [moreAssigneesItem()] : []),
+            ]}
           </BaseAutocomplete>
           {/* Taking a ticket yourself is the most common assignment, so it is
             one click, as on the list's assignee cell. */}
