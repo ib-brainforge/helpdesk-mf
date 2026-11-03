@@ -34,6 +34,10 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 # Copy full source code (after dependencies are installed for better caching)
 COPY . .
 
+# Layout padding check: fail the build when a layout pads or scrolls around its
+# routed page (PageBody owns the 20px gutter). Runs the lint script's checker.
+RUN pnpm exec bf-check-layout src
+
 # Build the app for production deployment with optimizations.
 # Domain-agnostic: empty defaults, values injected at runtime via generate-config.sh.
 # The API_BASE_URL="" family of pins below is deliberate: it stops any
