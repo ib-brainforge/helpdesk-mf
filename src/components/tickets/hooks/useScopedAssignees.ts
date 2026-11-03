@@ -92,6 +92,7 @@ const fetchHelpdeskAssignments = async ({
     async ({ pageIndex, pageSize, signal: pageSignal }) => {
       const { data } = await api.v1UserAppAssignmentsGet(
         undefined, // keycloakUserId: everyone
+        undefined, // keycloakUserIds
         appId,
         undefined, // tenantId: all, placement is matched per scope below
         undefined, // organisationId
