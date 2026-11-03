@@ -1,10 +1,12 @@
 import { IconTip, ModalHeader } from '@/components/shared';
+import { contextQueryKeyAtom } from '@/state/context-query-key';
+import { toSortParam, withSortKeys } from '@/utils/listSort';
 import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Rule graphs list page for a given automation project.
  *
  * Accessed at /configuration/automations/:projectId
- * Lists all rule graphs for the project with create and delete actions.
+ * Pages, sorts and searches on the server; create and delete actions.
  * Clicking a row navigates to the graph editor.
  */
 import {
@@ -14,30 +16,30 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
-  BaseTable,
   Icon,
-  TablePagination,
 } from '@brainforgeau/components';
+import {
+  ListPage,
+  SearchFilter,
+  useListPage,
+} from '@brainforgeau/components/page';
 import { useLogger } from '@brainforgeau/observability';
-import type { RuleGraphDto } from '@brainforgeau/rules-ui';
+import {
+  RULE_GRAPH_SORT_KEYS,
+  type RuleGraphListItemDto,
+  createRuleGraphsColumns,
+} from '@brainforgeau/rules-ui';
 import { Chip, toast } from '@heroui/react';
 import { NavLink, useNavigate, useParams } from '@modern-js/runtime/router';
-import type { ColumnDef, PaginationState } from '@tanstack/react-table';
-import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { useCallback, useMemo, useState } from 'react';
+import { useAtomValue } from 'jotai';
+import { useMemo, useState } from 'react';
+import { createHelpdeskRulesApiClient } from '../api/helpdeskRulesApiAdapter';
+import { ruleProjectKeys } from '../state/ruleProjectQueries';
 import {
   useCreateRuleGraph,
   useDeleteRuleGraph,
-  useRuleGraphs,
+  useRuleProject,
 } from '../state/ruleProjectQueries';
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
 
 function publishedBadge(isPublished: boolean) {
   return isPublished ? (
@@ -61,10 +63,13 @@ function toSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+const RULE_NOUN = { one: 'rule graph', other: 'rule graphs' } as const;
+
 // REVIEW: Using controlled component pattern for create modal.
 export function RuleGraphsListPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: graphs, isLoading } = useRuleGraphs(projectId ?? null);
+  const contextKey = useAtomValue(contextQueryKeyAtom);
+  const { data: project } = useRuleProject(projectId ?? null);
   const createMutation = useCreateRuleGraph();
   const deleteMutation = useDeleteRuleGraph();
   const navigate = useNavigate();
@@ -73,23 +78,6 @@ export function RuleGraphsListPage() {
   const [newName, setNewName] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
-
-  const filteredData = useMemo(() => {
-    const all = graphs ?? [];
-    if (!searchTerm.trim()) return all;
-    const lower = searchTerm.toLowerCase();
-    return all.filter(
-      g =>
-        g.name.toLowerCase().includes(lower) ||
-        g.key.toLowerCase().includes(lower) ||
-        (g.description ?? '').toLowerCase().includes(lower),
-    );
-  }, [graphs, searchTerm]);
 
   async function handleCreate() {
     if (!projectId) return;
@@ -130,150 +118,96 @@ export function RuleGraphsListPage() {
     }
   }
 
-  const columns = useMemo<ColumnDef<RuleGraphDto>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: ({ row }) => (
-          <NavLink
-            to={`/configuration/automations/${projectId}/rules/${row.original.id}`}
-            className="font-medium text-primary hover:underline"
-          >
-            {row.original.name}
-          </NavLink>
-        ),
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        cell: ({ row }) => publishedBadge(row.original.isPublished),
-      },
-      {
-        id: 'modifiedAt',
-        header: 'Last modified',
-        cell: ({ row }) => formatDate(row.original.modifiedAt),
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <div className="-my-1.5 flex items-center justify-end gap-1">
-            <IconTip label={'Delete rule graph'}>
-              <BaseButton
-                variant="link"
-                size="none"
-                className="text-danger hover:text-danger-600"
-                aria-label="Delete rule graph"
-                onPress={() => setPendingDeleteId(row.original.id)}
-                icon={<Icon name="trash" className="h-4 w-4" />}
-              />
-            </IconTip>
-          </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        size: 80,
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const columns = useMemo(
+    () =>
+      withSortKeys<RuleGraphListItemDto>(
+        createRuleGraphsColumns({
+          renderNameCell: rule => (
+            <NavLink
+              to={`/configuration/automations/${projectId}/rules/${rule.id}`}
+              className="font-medium text-primary hover:underline"
+            >
+              {rule.name}
+            </NavLink>
+          ),
+          renderStatusCell: rule => publishedBadge(rule.isPublished),
+          renderActionsCell: rule => (
+            <div className="-my-1.5 flex items-center justify-end gap-1">
+              <IconTip label={'Delete rule graph'}>
+                <BaseButton
+                  variant="link"
+                  size="none"
+                  className="text-danger hover:text-danger-600"
+                  aria-label="Delete rule graph"
+                  onPress={() => setPendingDeleteId(rule.id)}
+                  icon={<Icon name="trash" className="h-4 w-4" />}
+                />
+              </IconTip>
+            </div>
+          ),
+        })
+          // The slim list rows carry no targeting, so the column would only
+          // ever read "-".
+          .filter(column => column.id !== 'targeting'),
+        RULE_GRAPH_SORT_KEYS,
+      ),
     [projectId],
   );
 
-  const table = useReactTable({
-    data: filteredData,
+  const list = useListPage<RuleGraphListItemDto>({
+    listId: 'helpdesk.rule-graphs',
+    // Under the key every rule mutation invalidates.
+    queryKey: ruleProjectKeys.graphs(contextKey, projectId ?? '__null__'),
     columns,
-    state: { pagination },
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: false,
-    pageCount: Math.max(
-      1,
-      Math.ceil(filteredData.length / pagination.pageSize),
-    ),
+    search: {},
+    getRowId: row => row.id,
+    queryFn: async ({ pageIndex, pageSize, sorting, search }) => {
+      const page = await createHelpdeskRulesApiClient().listRuleGraphs(
+        projectId ?? '',
+        {
+          page: pageIndex + 1,
+          pageSize,
+          sort: toSortParam(sorting, RULE_GRAPH_SORT_KEYS),
+          search: search.trim() || undefined,
+        },
+      );
+      return { rows: page.items, totalCount: page.totalCount };
+    },
+    queryOptions: { enabled: Boolean(projectId) },
   });
 
-  const paginationTemplate = useCallback(() => {
-    const totalPages = Math.max(
-      1,
-      Math.ceil(filteredData.length / pagination.pageSize),
-    );
-    return (
-      <TablePagination
-        totalPages={totalPages}
-        currentPage={pagination.pageIndex + 1}
-        onPageChange={(page: number) =>
-          setPagination(prev => ({ ...prev, pageIndex: page - 1 }))
-        }
-      />
-    );
-  }, [filteredData.length, pagination]);
-
-  const pendingDelete = graphs?.find(g => g.id === pendingDeleteId);
+  const pendingDelete = list.rows.find(g => g.id === pendingDeleteId);
 
   return (
     <>
-      <div className="mb-5">
-        <div className="mb-5 flex items-start gap-5 lg:flex">
-          <div>
-            <nav className="mb-1 flex items-center gap-1.5 text-xs text-default-500">
-              <NavLink
-                to="/configuration/automations"
-                className="text-default-500 no-underline hover:text-default-700"
-              >
-                Automations
-              </NavLink>
-              <span>/</span>
-              <span>Rule Graphs</span>
-            </nav>
-            <h1 className="text-gray text-2xl font-semibold dark:text-white">
-              Rule Graphs
-            </h1>
-          </div>
-          <div className="flex shrink-0 justify-end gap-2.5 md:ml-auto">
-            <BaseButton
-              icon={<Icon name="plus" className="h-3.5 w-3.5" />}
-              onPress={() => setIsCreateOpen(true)}
-            >
-              New Rule Graph
-            </BaseButton>
-          </div>
-        </div>
-
-        <div className="flex w-full flex-col gap-3">
-          <div className="flex w-full flex-wrap items-end gap-2.5">
-            <div className="min-w-60 flex-1">
-              <BaseInput
-                aria-label="Search rule graphs"
-                startContent={
-                  <Icon name="search" className="-ml-0.5 h-4.5 w-4.5" />
-                }
-                placeholder="Search by name or key"
-                value={searchTerm}
-                onValueChange={setSearchTerm}
-              />
-            </div>
-            <div className="flex gap-2">
-              <BaseButton
-                variant="bordered"
-                color="light"
-                aria-label="Clear filters"
-                onClick={() => setSearchTerm('')}
-              >
-                CLEAR
-              </BaseButton>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <BaseTable
-        fullHeight
-        table={table}
-        showInfo={false}
-        paginationTemplate={paginationTemplate}
-        isLoading={isLoading}
-        loading={{ title: 'Loading...' }}
+      <ListPage
+        title="Rule Graphs"
+        breadcrumbsKey="configuration.automations.project"
+        breadcrumbsParams={{
+          projectId: projectId ?? '',
+          projectName: project?.name ?? 'Rule Graphs',
+        }}
+        list={list}
+        personalise
+        countNoun={RULE_NOUN}
+        loadError={list.isError ? list.error : undefined}
+        onRetry={() => void list.refetch()}
+        filters={
+          <SearchFilter
+            value={list.search}
+            onValueChange={list.setSearch}
+            placeholder="Search by name or key"
+            ariaLabel="Search rule graphs"
+          />
+        }
+        actions={
+          <BaseButton
+            icon={<Icon name="plus" className="h-3.5 w-3.5" />}
+            onPress={() => setIsCreateOpen(true)}
+          >
+            New Rule Graph
+          </BaseButton>
+        }
       />
 
       {/* Create modal */}

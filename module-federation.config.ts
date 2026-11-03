@@ -89,6 +89,9 @@ export default createModuleFederationConfig({
     // its own async chunk.
     '@brainforgeau/components': { singleton: true, requiredVersion: false },
     '@brainforgeau/components/': { singleton: true, requiredVersion: false },
+    // rules-ui peers on alerts; one copy with the shell.
+    '@brainforgeau/alerts': { singleton: true, requiredVersion: false },
+    '@brainforgeau/alerts/': { singleton: true, requiredVersion: false },
     // Security MUST be shared as singleton for auth context to work across
     // module federation. It is NOT eager here: the shell provides the eager
     // copy, and an eager share in a remote forces security and its dependency

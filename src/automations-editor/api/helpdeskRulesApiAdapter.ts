@@ -1,5 +1,7 @@
 import type {
   ServicesCoreRulesApplicationModelsRuleGraphDto as GenRuleGraphDto,
+  ServicesCoreRulesApplicationModelsRuleGraphListItemDto as GenRuleGraphListItemDto,
+  ServicesCoreRulesApplicationModelsRuleGraphListPageDto as GenRuleGraphListPageDto,
   ServicesCoreRulesApplicationModelsRuleGraphVersionDto as GenRuleGraphVersionDto,
   ServicesCoreRulesApplicationModelsRuleProjectDto as GenRuleProjectDto,
 } from '@/api/helpdesk-client';
@@ -25,8 +27,12 @@ import type {
   UpdateRuleProjectRequest,
 } from '@brainforgeau/rules-ui';
 import type {
+  ListRuleGraphsParams,
   RuleGraphContent,
   RuleGraphDto,
+  RuleGraphListItemDto,
+  RuleGraphListPageDto,
+  RuleGraphNotificationSummary,
   RuleGraphVersionDto,
   RuleProjectDto,
   ScheduleConfigDto,
@@ -173,6 +179,62 @@ function toRuleGraphDto(g: GenRuleGraphDto): RuleGraphDto {
   };
 }
 
+const EMPTY_NOTIFICATION_SUMMARY: RuleGraphNotificationSummary = {
+  channels: [],
+  emails: [],
+  phones: [],
+};
+
+function toRuleGraphListItemDto(
+  g: GenRuleGraphListItemDto,
+): RuleGraphListItemDto {
+  return {
+    id: g.id ?? '',
+    projectId: g.projectId ?? '',
+    name: g.name ?? '',
+    key: g.key ?? '',
+    description: g.description ?? null,
+    category: g.category ?? null,
+    isPublished: g.isPublished ?? false,
+    publishedAt: g.publishedAt ?? null,
+    publishedVersionNumber: g.publishedVersionNumber ?? null,
+    isEnabled: g.isEnabled ?? true,
+    hasDraft: g.hasDraft ?? false,
+    cooldownMinutes: g.cooldownMinutes ?? 0,
+    consecutivePacketsRequired: g.consecutivePacketsRequired ?? 1,
+    minimumDurationSeconds: g.minimumDurationSeconds ?? 0,
+    schedule: (g.schedule as ScheduleConfigDto | undefined) ?? null,
+    simpleTemplate: g.simpleTemplate?.templateId
+      ? {
+          templateId: g.simpleTemplate.templateId,
+          templateVersion: g.simpleTemplate.templateVersion ?? undefined,
+          state: g.simpleTemplate.state,
+        }
+      : null,
+    notificationSummary: g.notificationSummary
+      ? {
+          channels: g.notificationSummary.channels ?? [],
+          emails: g.notificationSummary.emails ?? [],
+          phones: g.notificationSummary.phones ?? [],
+        }
+      : EMPTY_NOTIFICATION_SUMMARY,
+    createdAt: g.createdAt ?? '',
+    modifiedAt: g.modifiedAt ?? '',
+  };
+}
+
+function toRuleGraphListPageDto(
+  p: GenRuleGraphListPageDto,
+): RuleGraphListPageDto {
+  return {
+    items: (p.items ?? []).map(toRuleGraphListItemDto),
+    totalCount: p.totalCount ?? 0,
+    totalPages: p.totalPages ?? 0,
+    page: p.page ?? 1,
+    pageSize: p.pageSize ?? 0,
+  };
+}
+
 // ── Lazy-initialised API instances ────────────────────────────────────────────
 //
 // We construct the API instances once per module using the base URL from the
@@ -205,6 +267,11 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
     async listRuleProjects(): Promise<RuleProjectDto[]> {
       const res = await ruleProjects.v1RuleProjectsGet();
       return (res.data ?? []).map(toRuleProjectDto);
+    },
+
+    async getRuleProject(id: string): Promise<RuleProjectDto> {
+      const res = await ruleProjects.v1RuleProjectsIdGet(id);
+      return toRuleProjectDto(res.data);
     },
 
     async createRuleProject(
@@ -240,9 +307,21 @@ export function createHelpdeskRulesApiClient(): RulesApiClient {
 
     // ── Rule Graphs ────────────────────────────────────────────────────────────
 
-    async listRuleGraphs(projectId: string): Promise<RuleGraphDto[]> {
-      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesGet(projectId);
-      return (res.data ?? []).map(toRuleGraphDto);
+    async listRuleGraphs(
+      projectId: string,
+      params?: ListRuleGraphsParams,
+    ): Promise<RuleGraphListPageDto> {
+      // The generated client appends each `ids` entry as its own query
+      // parameter, which is what the endpoint reads.
+      const res = await ruleGraphs.v1RuleProjectsProjectIdRulesGet(
+        projectId,
+        params?.page,
+        params?.pageSize,
+        params?.sort,
+        params?.search,
+        params?.ids,
+      );
+      return toRuleGraphListPageDto(res.data);
     },
 
     async getRuleGraph(

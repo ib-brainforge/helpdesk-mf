@@ -63,14 +63,9 @@ const TicketListFiltersImpl: FC<TicketListFiltersProps> = ({
   });
 
   /*
-   * Assignee and Category options come from queries this page already runs
-   * (the assign picker and the Category column), so they add no request.
+   * Category options come from the query the Category column already runs, so
+   * they add no request.
    */
-  const { options: assigneeUsers } = useScopedAssignees({});
-  const assigneeOptions: ScopeOption[] = useMemo(
-    () => assigneeUsers.map(u => ({ id: u.id, name: u.name })),
-    [assigneeUsers],
-  );
   const { categories: ownedCategories } = useCategoriesData();
   const categoryOptions: ScopeOption[] = useMemo(() => {
     const byId = new Map<string, ScopeOption>();
@@ -96,6 +91,19 @@ const TicketListFiltersImpl: FC<TicketListFiltersProps> = ({
     [values.assignee, currentUserId],
   );
   const includeUnassigned = values.assignee.includes(UNASSIGNED_TOKEN);
+
+  // Assignees are searched on the server; people already ticked are looked up
+  // by id so their chips keep names when they fall outside the page.
+  const [assigneeSearch, setAssigneeSearch] = useState('');
+  const { options: assigneeUsers, hasMore: hasMoreAssignees } =
+    useScopedAssignees(
+      {},
+      { search: assigneeSearch, selectedIds: people, pageSize: 50 },
+    );
+  const assigneeOptions: ScopeOption[] = useMemo(
+    () => assigneeUsers.map(u => ({ id: u.id, name: u.name })),
+    [assigneeUsers],
+  );
 
   const handleAssigneeChange = useCallback(
     (next: string[], withUnassigned: boolean) =>
@@ -215,6 +223,8 @@ const TicketListFiltersImpl: FC<TicketListFiltersProps> = ({
           people={people}
           includeUnassigned={includeUnassigned}
           onChange={handleAssigneeChange}
+          onSearchChange={setAssigneeSearch}
+          hasMoreAssignees={hasMoreAssignees}
         />
       )}
 

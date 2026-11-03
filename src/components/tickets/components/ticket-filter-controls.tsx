@@ -3,6 +3,7 @@ import { TicketPriority } from '@/types/ticket';
 import { BaseTagSelect, BaseTagSelectItem } from '@brainforgeau/components';
 import { type FC, type ReactNode, memo, useMemo } from 'react';
 import type { AssigneeCounts } from '../hooks/useTicketTabCounts';
+import { MORE_ASSIGNEES_TEXT } from './moreAssigneesItem';
 
 /**
  * The count pill on the ticket tabs, and on each person in the Assignee
@@ -104,7 +105,19 @@ const AssigneeFilterImpl: FC<{
   people: string[];
   includeUnassigned: boolean;
   onChange: (people: string[], includeUnassigned: boolean) => void;
-}> = ({ options, counts, people, includeUnassigned, onChange }) => {
+  /** Reports the typed search so the caller can search on the server. */
+  onSearchChange?: (term: string) => void;
+  /** More people match than the options hold. */
+  hasMoreAssignees?: boolean;
+}> = ({
+  options,
+  counts,
+  people,
+  includeUnassigned,
+  onChange,
+  onSearchChange,
+  hasMoreAssignees = false,
+}) => {
   const countOf = (id: string) =>
     counts ? (counts.byId.get(id) ?? 0) : undefined;
   const nameById = useMemo(
@@ -125,6 +138,7 @@ const AssigneeFilterImpl: FC<{
         label="Assignee"
         placeholder="All assignees"
         hasSearch
+        onSearchTermChange={onSearchChange}
         classNames={{
           base: 'w-full [&_svg]:my-0',
           // The list's inner box is sized to the trigger by an inline style.
@@ -164,6 +178,18 @@ const AssigneeFilterImpl: FC<{
           )),
           // Someone chosen before the company or organisation changed may no
           // longer be offered; they stay listed so they can still be unticked.
+          ...(hasMoreAssignees
+            ? [
+                <BaseTagSelectItem
+                  key="__more"
+                  value="__more"
+                  textValue={MORE_ASSIGNEES_TEXT}
+                  isDisabled
+                >
+                  {MORE_ASSIGNEES_TEXT}
+                </BaseTagSelectItem>,
+              ]
+            : []),
           ...people
             .filter(id => !nameById.has(id))
             .map(id => (
