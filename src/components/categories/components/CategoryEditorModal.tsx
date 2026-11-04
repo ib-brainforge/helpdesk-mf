@@ -4,7 +4,6 @@ import type {
   HelpdeskApplicationCategoriesCommandsUpdateCategoryUpdateCategoryCommand,
   HelpdeskDomainCategoriesEnumsAccessLevel,
 } from '@/api/helpdesk-client';
-import { ModalHeader } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { CategoryDto, SectionDto } from '@/types/category';
 import { AccessLevel } from '@/types/category';
@@ -13,6 +12,7 @@ import {
   BaseModal,
   BaseModalBody,
   BaseModalContent,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
@@ -154,9 +154,10 @@ export const CategoryEditorModal: React.FC<CategoryEditorModalProps> = ({
       className="max-w-2xl"
     >
       <BaseModalContent>
-        <ModalHeader
+        <BaseModalHeader
           title={isEdit ? 'Edit Category' : 'Create Category'}
           onClose={handleClose}
+          windowControls={false}
         />
         <BaseModalBody>
           <form

@@ -1,5 +1,4 @@
 import { useCustomStatuses } from '@/components/custom-statuses/hooks/useCustomStatuses';
-import { ModalHeader } from '@/components/shared';
 import { buildStatusOptions, resolveStatusKey } from '@/types/custom-status';
 import type { TicketStatus } from '@/types/ticket';
 import {
@@ -8,6 +7,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
@@ -53,7 +53,7 @@ export const BulkStatusModal: FC<BulkStatusModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <ModalHeader>Change Status</ModalHeader>
+        <BaseModalHeader title="Change Status" windowControls={false} />
         <BaseModalBody>
           <p className="mb-4">
             Change status for {ticketCount} ticket{ticketCount !== 1 ? 's' : ''}{' '}

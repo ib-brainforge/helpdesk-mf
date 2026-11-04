@@ -1,11 +1,11 @@
 import { BaseAvatar, Icon } from '@brainforgeau/components';
 import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownPopover,
-  DropdownTrigger,
-} from '@heroui/react';
+  BaseDropdown,
+  BaseDropdownItem,
+  BaseDropdownMenu,
+  BaseDropdownPopover,
+  BaseDropdownTrigger,
+} from '@brainforgeau/components/dropdown';
 import { type FC, useMemo, useState } from 'react';
 import { useScopedAssignees } from '../hooks/useScopedAssignees';
 import { MORE_ASSIGNEES_TEXT } from './moreAssigneesItem';
@@ -69,44 +69,46 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
   );
 
   return (
-    <Dropdown
+    <BaseDropdown
       onOpenChange={open => {
         if (open) setHasOpened(true);
       }}
     >
-      <DropdownTrigger
+      <BaseDropdownTrigger
         aria-label="Assign this ticket"
         className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue -ml-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-sm transition-colors focus:outline-none focus:ring-2"
       >
         <span className="text-muted-foreground">Unassigned</span>
         <Icon name="plus" className="h-3 w-3" />
-      </DropdownTrigger>
-      <DropdownPopover className="helpdesk-dropdown-popover">
-        <DropdownMenu aria-label="Assign ticket to">
+      </BaseDropdownTrigger>
+      <BaseDropdownPopover>
+        <BaseDropdownMenu aria-label="Assign ticket to">
           {currentUserId ? (
-            <DropdownItem
+            <BaseDropdownItem
               key="assign-to-me"
+              id="assign-to-me"
               onPress={() => onAssign(ticketId, currentUserId, 'you')}
             >
               Assign to me
-            </DropdownItem>
+            </BaseDropdownItem>
           ) : null}
           {isLoading ? (
-            <DropdownItem key="loading" isDisabled>
+            <BaseDropdownItem key="loading" id="loading" isDisabled>
               Loading team...
-            </DropdownItem>
+            </BaseDropdownItem>
           ) : others.length === 0 ? (
-            <DropdownItem key="empty" isDisabled>
+            <BaseDropdownItem key="empty" id="empty" isDisabled>
               No other users found
-            </DropdownItem>
+            </BaseDropdownItem>
           ) : (
             // Capped: this is the quick path, not a directory. Anyone further
             // down the list is reachable through the ticket itself or bulk
             // assign, both of which have a search box.
             [
               ...others.slice(0, 15).map(user => (
-                <DropdownItem
+                <BaseDropdownItem
                   key={user.id}
+                  id={user.id}
                   onPress={() => onAssign(ticketId, user.id, user.name)}
                   textValue={user.name}
                 >
@@ -118,19 +120,19 @@ export const QuickAssignCell: FC<QuickAssignCellProps> = ({
                     />
                     <span className="truncate">{user.name}</span>
                   </div>
-                </DropdownItem>
+                </BaseDropdownItem>
               )),
               ...(hasMore || others.length > 15
                 ? [
-                    <DropdownItem key="more" isDisabled>
+                    <BaseDropdownItem key="more" id="more" isDisabled>
                       {MORE_ASSIGNEES_TEXT}
-                    </DropdownItem>,
+                    </BaseDropdownItem>,
                   ]
                 : []),
             ]
           )}
-        </DropdownMenu>
-      </DropdownPopover>
-    </Dropdown>
+        </BaseDropdownMenu>
+      </BaseDropdownPopover>
+    </BaseDropdown>
   );
 };

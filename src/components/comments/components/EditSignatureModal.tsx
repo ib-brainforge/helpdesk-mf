@@ -1,6 +1,5 @@
 import type { MailboxConnectError } from '@/api/local/mailbox';
 import type { EmailSignaturePreference } from '@/api/local/preferences';
-import { ModalHeader } from '@/components/shared';
 import { useMailbox } from '@/hooks/useMailbox';
 import { useUserPreference } from '@/hooks/useUserPreference';
 import type { TicketEmailRecipientDto } from '@/types/ticket';
@@ -10,6 +9,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseToggle,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
@@ -89,7 +89,7 @@ export const EditSignatureModal: FC<EditSignatureModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="lg">
       <BaseModalContent>
-        <ModalHeader>Your email signature</ModalHeader>
+        <BaseModalHeader title="Your email signature" windowControls={false} />
         <BaseModalBody>
           <div className="space-y-5">
             <section>

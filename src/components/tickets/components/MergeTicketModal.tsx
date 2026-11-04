@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -6,6 +5,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   Icon,
 } from '@brainforgeau/components';
 import { type FC, useCallback, useState } from 'react';
@@ -35,7 +35,7 @@ export const MergeTicketModal: FC<MergeTicketModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <ModalHeader>Merge Ticket</ModalHeader>
+        <BaseModalHeader title="Merge Ticket" windowControls={false} />
         <BaseModalBody>
           <div className="mb-4 p-3 bg-warning-50 border border-warning-200 rounded text-warning-800">
             <p className="font-semibold">Warning</p>

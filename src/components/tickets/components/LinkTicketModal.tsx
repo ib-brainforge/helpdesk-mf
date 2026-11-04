@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import {
   TICKET_LINK_OPTIONS,
   type TicketLinkSemantic,
@@ -10,6 +9,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
@@ -46,7 +46,7 @@ export const LinkTicketModal: FC<LinkTicketModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <ModalHeader>Link Ticket</ModalHeader>
+        <BaseModalHeader title="Link Ticket" windowControls={false} />
         <BaseModalBody>
           <div className="space-y-4">
             <BaseSelect

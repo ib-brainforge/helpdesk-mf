@@ -1,5 +1,5 @@
 import { CustomFieldsApi, ScopeApi } from '@/api/helpdesk-client';
-import { IconTip, ModalHeader } from '@/components/shared';
+import { IconTip } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { AccessLevel } from '@/types/category';
@@ -15,6 +15,7 @@ import {
   BaseModal,
   BaseModalBody,
   BaseModalContent,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
@@ -220,9 +221,10 @@ export const CustomFieldEditorModal: React.FC<CustomFieldEditorModalProps> = ({
       className="max-w-2xl"
     >
       <BaseModalContent>
-        <ModalHeader
+        <BaseModalHeader
           title={isEdit ? 'Edit Custom Field' : 'Create Custom Field'}
           onClose={handleClose}
+          windowControls={false}
         />
         <BaseModalBody>
           <form

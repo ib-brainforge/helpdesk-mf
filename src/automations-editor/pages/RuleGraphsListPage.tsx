@@ -1,4 +1,4 @@
-import { IconTip, ModalHeader } from '@/components/shared';
+import { IconTip } from '@/components/shared';
 import { contextQueryKeyAtom } from '@/state/context-query-key';
 import { toSortParam, withSortKeys } from '@/utils/listSort';
 import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
@@ -16,6 +16,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   Icon,
 } from '@brainforgeau/components';
 import {
@@ -219,7 +220,7 @@ export function RuleGraphsListPage() {
         <BaseModalContent>
           {onClose => (
             <>
-              <ModalHeader>New Rule Graph</ModalHeader>
+              <BaseModalHeader title="New Rule Graph" windowControls={false} />
               <BaseModalBody>
                 <BaseInput
                   label="Graph Name"

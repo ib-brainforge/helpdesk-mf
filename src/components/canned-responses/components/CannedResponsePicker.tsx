@@ -1,4 +1,4 @@
-import { ModalHeader, StatusBadge } from '@/components/shared';
+import { StatusBadge } from '@/components/shared';
 import type { CannedResponseDto } from '@/types/canned-response';
 import { CannedResponseScope } from '@/types/canned-response';
 import {
@@ -7,6 +7,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -80,7 +81,10 @@ export const CannedResponsePicker: React.FC<CannedResponsePickerProps> = ({
       <BaseModalContent>
         {modalOnClose => (
           <>
-            <ModalHeader>Insert Canned Response</ModalHeader>
+            <BaseModalHeader
+              title="Insert Canned Response"
+              windowControls={false}
+            />
             <BaseModalBody>
               <div className="flex flex-col gap-4">
                 <BaseInput

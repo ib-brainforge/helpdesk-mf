@@ -1,10 +1,10 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import type { FC } from 'react';
 
@@ -24,7 +24,7 @@ export const DuplicateTicketModal: FC<DuplicateTicketModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="sm">
       <BaseModalContent>
-        <ModalHeader>Duplicate Ticket</ModalHeader>
+        <BaseModalHeader title="Duplicate Ticket" windowControls={false} />
         <BaseModalBody>
           <p className="text-default-600">
             This will create a copy of the ticket with "(copy)" appended to the

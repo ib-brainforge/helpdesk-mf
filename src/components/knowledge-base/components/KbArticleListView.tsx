@@ -16,6 +16,13 @@ import { SCOPE_TESTING_BYPASS_SINGLE_ORG } from '@/utils/scopeTestingBypass';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { BulkScopeEditor } from '@brainforgeau/components/bulk-scope-editor';
 import {
+  BaseDropdown,
+  BaseDropdownItem,
+  BaseDropdownMenu,
+  BaseDropdownPopover,
+  BaseDropdownTrigger,
+} from '@brainforgeau/components/dropdown';
+import {
   ListPage,
   SearchFilter,
   useListPage,
@@ -28,14 +35,7 @@ import {
   usePermissions,
   useTimezone,
 } from '@brainforgeau/security';
-import {
-  Chip,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownPopover,
-  DropdownTrigger,
-} from '@heroui/react';
+import { Chip } from '@heroui/react';
 import { Link, useSearchParams } from '@modern-js/runtime/router';
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { useAtomValue } from 'jotai';
@@ -383,36 +383,39 @@ export function KbArticleListView() {
                 Create Article
               </BaseButton>
             </Link>
-            <Dropdown>
-              <DropdownTrigger
+            <BaseDropdown>
+              <BaseDropdownTrigger
                 aria-label="Knowledge base actions"
                 className="border-light text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 h-9 w-9"
               >
                 <Icon name="dotsV" className="h-4 w-4" />
-              </DropdownTrigger>
-              <DropdownPopover className="helpdesk-dropdown-popover">
-                <DropdownMenu aria-label="Knowledge base actions">
-                  <DropdownItem
+              </BaseDropdownTrigger>
+              <BaseDropdownPopover>
+                <BaseDropdownMenu aria-label="Knowledge base actions">
+                  <BaseDropdownItem
                     key="import"
+                    id="import"
                     onPress={() => setIsImportOpen(true)}
                   >
                     Import
-                  </DropdownItem>
-                  <DropdownItem
+                  </BaseDropdownItem>
+                  <BaseDropdownItem
                     key="export"
+                    id="export"
                     onPress={() => exportMutation.mutate()}
                   >
                     {exportMutation.isPending ? 'Exporting...' : 'Export'}
-                  </DropdownItem>
-                  <DropdownItem
+                  </BaseDropdownItem>
+                  <BaseDropdownItem
                     key="categories"
+                    id="categories"
                     href="/knowledge-base/settings"
                   >
                     Manage Categories
-                  </DropdownItem>
-                </DropdownMenu>
-              </DropdownPopover>
-            </Dropdown>
+                  </BaseDropdownItem>
+                </BaseDropdownMenu>
+              </BaseDropdownPopover>
+            </BaseDropdown>
           </>
         ) : undefined
       }

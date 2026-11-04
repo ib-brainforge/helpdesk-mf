@@ -1,5 +1,4 @@
 import { ScopeApi } from '@/api/helpdesk-client';
-import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { extractErrorMessage } from '@/utils/error-handling';
@@ -9,6 +8,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   RecordStrip,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -135,9 +135,10 @@ export function CustomPriorityEditorModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <ModalHeader>
-          {isEditing ? 'Edit Custom Priority' : 'Create Custom Priority'}
-        </ModalHeader>
+        <BaseModalHeader
+          title={isEditing ? 'Edit Custom Priority' : 'Create Custom Priority'}
+          windowControls={false}
+        />
         <BaseModalBody className="space-y-4">
           {isEditing && recordStripProps && (
             <RecordStrip {...recordStripProps} />

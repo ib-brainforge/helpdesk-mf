@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import {
   useForwardTicketToProvider,
   useProviderCategories,
@@ -9,6 +8,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
 } from '@brainforgeau/components';
@@ -70,7 +70,7 @@ export const ForwardToProviderModal: FC<ForwardToProviderModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <ModalHeader>Forward to provider</ModalHeader>
+        <BaseModalHeader title="Forward to provider" windowControls={false} />
         <BaseModalBody>
           <p className="mb-4 text-sm text-default-600">
             The ticket moves to your provider's helpdesk with its history. It

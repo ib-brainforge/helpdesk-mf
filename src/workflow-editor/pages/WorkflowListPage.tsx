@@ -1,4 +1,4 @@
-import { IconTip, ModalHeader } from '@/components/shared';
+import { IconTip } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -6,6 +6,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseTable,
   Icon,
   TablePagination,
@@ -271,7 +272,7 @@ export function WorkflowListPage() {
         <BaseModalContent>
           {onClose => (
             <>
-              <ModalHeader>New Workflow</ModalHeader>
+              <BaseModalHeader title="New Workflow" windowControls={false} />
               <BaseModalBody>
                 <BaseInput
                   label="Workflow Name"
