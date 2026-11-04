@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import { HELPDESK_ROLES } from '@/types/admin-user';
 import type { HelpdeskRole } from '@/types/admin-user';
 import {
@@ -6,6 +5,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -75,7 +75,10 @@ export function UserRolesModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <ModalHeader>Manage Helpdesk Roles — {userName}</ModalHeader>
+        <BaseModalHeader
+          title={<>Manage Helpdesk Roles — {userName}</>}
+          windowControls={false}
+        />
         <BaseModalBody className="space-y-3">
           <p className="text-default-500 text-sm">
             These are helpdesk-specific roles. To manage Keycloak identity roles

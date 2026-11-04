@@ -1,10 +1,10 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { type FC, useRef, useState } from 'react';
@@ -51,7 +51,7 @@ export const KbImportModal: FC<KbImportModalProps> = ({ isOpen, onClose }) => {
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="lg">
       <BaseModalContent>
-        <ModalHeader>Import Knowledge Base</ModalHeader>
+        <BaseModalHeader title="Import Knowledge Base" windowControls={false} />
         <BaseModalBody>
           <div className="space-y-4">
             <p className="text-sm text-default-600">

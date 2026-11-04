@@ -1,9 +1,9 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseCard,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { Icon } from '@brainforgeau/components/base';
 import { Card, CardContent, Spinner, toast } from '@heroui/react';
@@ -149,12 +149,16 @@ export function AiAssistantModal({
       className="max-w-2xl"
     >
       <BaseModalContent>
-        <ModalHeader onClose={handleClose}>
-          <span className="inline-flex items-center gap-2">
-            <Icon name="flash" className="text-primary h-5 w-5" />
-            <span>Jitbit AI Assistant</span>
-          </span>
-        </ModalHeader>
+        <BaseModalHeader
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Icon name="flash" className="text-primary h-5 w-5" />
+              <span>Jitbit AI Assistant</span>
+            </span>
+          }
+          onClose={handleClose}
+          windowControls={false}
+        />
         <BaseModalBody className="pb-6">
           {/* Result panel */}
           {(isLoading || aiResult || hasAiError) && (

@@ -1,10 +1,10 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import type { ReactNode } from 'react';
 
@@ -36,7 +36,7 @@ export function ConfirmActionModal({
       <BaseModalContent>
         {onClose => (
           <>
-            <ModalHeader>{title}</ModalHeader>
+            <BaseModalHeader title={title} windowControls={false} />
             <BaseModalBody>{description}</BaseModalBody>
             <BaseModalFooter>
               <BaseButton variant="light" onPress={onClose}>

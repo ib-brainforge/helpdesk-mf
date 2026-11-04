@@ -28,7 +28,7 @@ import {
   sharingLabel,
   staffSectionLabel,
 } from '@/components/knowledge-base/sharing';
-import { IconTip, ModalHeader } from '@/components/shared';
+import { IconTip } from '@/components/shared';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type { KnowledgeBaseCategoryDto } from '@/types';
 import {
@@ -37,6 +37,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseTable,
@@ -164,9 +165,10 @@ function CategoryFormModal({
   return (
     <BaseModal isOpen={mode !== null} onClose={onClose} size="lg">
       <BaseModalContent>
-        <ModalHeader>
-          {mode === 'create' ? 'Create Category' : 'Edit Category'}
-        </ModalHeader>
+        <BaseModalHeader
+          title={mode === 'create' ? 'Create Category' : 'Edit Category'}
+          windowControls={false}
+        />
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput

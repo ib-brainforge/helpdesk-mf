@@ -1,4 +1,4 @@
-import { IconTip, ModalHeader } from '@/components/shared';
+import { IconTip } from '@/components/shared';
 import { ConfirmActionModal } from '@/workflow-editor/components/ConfirmActionModal';
 /**
  * Tenant-scoped automation rule-projects list page.
@@ -17,6 +17,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseTable,
   BaseToggle,
   Icon,
@@ -296,7 +297,10 @@ export function AutomationProjectsListPage() {
         <BaseModalContent>
           {onClose => (
             <>
-              <ModalHeader>New Automation Project</ModalHeader>
+              <BaseModalHeader
+                title="New Automation Project"
+                windowControls={false}
+              />
               <BaseModalBody>
                 <BaseInput
                   label="Automation Name"

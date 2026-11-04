@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseInput,
@@ -6,6 +5,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { type FC, useState } from 'react';
 
@@ -39,7 +39,7 @@ export const ConvertToReplyModal: FC<ConvertToReplyModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
       <BaseModalContent>
-        <ModalHeader>Convert To Reply</ModalHeader>
+        <BaseModalHeader title="Convert To Reply" windowControls={false} />
         <BaseModalBody>
           <div className="space-y-4">
             <div className="p-3 bg-warning-50 border border-warning-200 rounded text-warning-800">

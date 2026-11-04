@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import { KnowledgeBaseAccessLevel, KnowledgeBaseStatus } from '@/types';
 import {
   BaseButton,
@@ -7,6 +6,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
@@ -100,7 +100,7 @@ export const NewArticleModal: FC<NewArticleModalProps> = ({
       className="max-w-3xl"
     >
       <BaseModalContent>
-        <ModalHeader>New Article</ModalHeader>
+        <BaseModalHeader title="New Article" windowControls={false} />
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput

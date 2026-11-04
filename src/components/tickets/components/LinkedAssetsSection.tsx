@@ -1,4 +1,4 @@
-import { IconTip, ModalHeader, ScopeSelect } from '@/components/shared';
+import { IconTip, ScopeSelect } from '@/components/shared';
 import { useScopeNames } from '@/hooks/useScopeNames';
 import {
   BaseAutocomplete,
@@ -9,6 +9,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   Icon,
 } from '@brainforgeau/components';
 
@@ -182,7 +183,7 @@ const AddAssetModal: FC<AddAssetModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="sm">
       <BaseModalContent>
-        <ModalHeader>Link Asset</ModalHeader>
+        <BaseModalHeader title="Link Asset" windowControls={false} />
         <BaseModalBody>
           <div className="flex flex-col gap-3">
             {tenantLocked ? (

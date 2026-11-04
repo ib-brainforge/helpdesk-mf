@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import { INTEGRATION_PROVIDERS } from '@/types/integration';
 import type {
   IntegrationConfigDto,
@@ -10,6 +9,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseToggle,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
@@ -127,11 +127,14 @@ export function IntegrationEditorModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <ModalHeader>
-          {isEditing
-            ? `Edit ${provider.label} integration`
-            : `Configure ${provider.label}`}
-        </ModalHeader>
+        <BaseModalHeader
+          title={
+            isEditing
+              ? `Edit ${provider.label} integration`
+              : `Configure ${provider.label}`
+          }
+          windowControls={false}
+        />
 
         <BaseModalBody className="space-y-4">
           {/* Routing disclaimer */}

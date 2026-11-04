@@ -1,11 +1,12 @@
 import { ScopeApi } from '@/api/helpdesk-client';
-import { IconTip, ModalHeader } from '@/components/shared';
+import { IconTip } from '@/components/shared';
 import {
   BaseInput,
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   RecordStrip,
@@ -165,9 +166,10 @@ export function CannedResponseEditorModal({
       className="max-w-3xl"
     >
       <BaseModalContent>
-        <ModalHeader>
-          {isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
-        </ModalHeader>
+        <BaseModalHeader
+          title={isEditing ? 'Edit Canned Response' : 'Create Canned Response'}
+          windowControls={false}
+        />
         <BaseModalBody>
           <div className="space-y-4">
             {isEditing && recordStripProps && (

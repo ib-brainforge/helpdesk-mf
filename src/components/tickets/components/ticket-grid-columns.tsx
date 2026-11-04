@@ -15,14 +15,14 @@ import {
 } from '@/types/custom-status';
 import { TicketPriority, TicketStatus } from '@/types/ticket';
 import { BaseButton, Icon } from '@brainforgeau/components';
-import { formatDateTime } from '@brainforgeau/components/utils';
 import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownPopover,
-  DropdownTrigger,
-} from '@heroui/react';
+  BaseDropdown,
+  BaseDropdownItem,
+  BaseDropdownMenu,
+  BaseDropdownPopover,
+  BaseDropdownTrigger,
+} from '@brainforgeau/components/dropdown';
+import { formatDateTime } from '@brainforgeau/components/utils';
 import { NavLink } from '@modern-js/runtime/router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
@@ -526,29 +526,30 @@ export const createTicketColumns = (
     // a guard in every row, which read the token again for each of them.
     cell: ({ row }) =>
       options.canWrite && !isHandledAbove(row.original) ? (
-        <Dropdown>
+        <BaseDropdown>
           <IconTip label="Ticket actions">
-            <DropdownTrigger
+            <BaseDropdownTrigger
               aria-label="Ticket actions"
               className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue mx-auto flex h-7 w-7 items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2"
             >
               <Icon name="dots" className="h-4 w-4" />
-            </DropdownTrigger>
+            </BaseDropdownTrigger>
           </IconTip>
-          <DropdownPopover className="helpdesk-dropdown-popover">
-            <DropdownMenu aria-label="Ticket actions">
+          <BaseDropdownPopover>
+            <BaseDropdownMenu aria-label="Ticket actions">
               {/*
                 The same picker as bulk assign, for this row: it lists the
                 people who can work this ticket's company. This used to be a
                 window.prompt asking for a raw user id.
               */}
               {options.onOpenAssign ? (
-                <DropdownItem
+                <BaseDropdownItem
                   key="assign"
+                  id="assign"
                   onPress={() => options.onOpenAssign?.(row.original)}
                 >
                   Assign
-                </DropdownItem>
+                </BaseDropdownItem>
               ) : null}
               {/*
                 Built-in statuses and tenant-defined ones in one list. This
@@ -559,8 +560,9 @@ export const createTicketColumns = (
                 options.customStatuses ?? [],
                 row.original.customStatusId,
               ).map(opt => (
-                <DropdownItem
+                <BaseDropdownItem
                   key={`status-${opt.key}`}
+                  id={`status-${opt.key}`}
                   onPress={() => {
                     if (!options.onChangeStatus || !row.original.id) return;
                     const resolved = resolveStatusKey(
@@ -583,7 +585,7 @@ export const createTicketColumns = (
                     option in the same list.
                   */}
                   {`Mark as ${opt.label}`}
-                </DropdownItem>
+                </BaseDropdownItem>
               ))}
               {/* Every priority, not only the two that raise it: lowering
                 one from the list was impossible. The current one is left out. */}
@@ -597,8 +599,9 @@ export const createTicketColumns = (
               )
                 .filter(([value]) => value !== row.original.priority)
                 .map(([value, label]) => (
-                  <DropdownItem
+                  <BaseDropdownItem
                     key={`priority-${label.toLowerCase()}`}
+                    id={`priority-${label.toLowerCase()}`}
                     onPress={() => {
                       if (options.onChangePriority && row.original.id) {
                         options.onChangePriority(row.original.id, value);
@@ -606,11 +609,11 @@ export const createTicketColumns = (
                     }}
                   >
                     {`Set priority: ${label}`}
-                  </DropdownItem>
+                  </BaseDropdownItem>
                 ))}
-            </DropdownMenu>
-          </DropdownPopover>
-        </Dropdown>
+            </BaseDropdownMenu>
+          </BaseDropdownPopover>
+        </BaseDropdown>
       ) : null,
     enableHiding: false,
     size: 44,

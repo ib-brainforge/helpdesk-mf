@@ -1,5 +1,4 @@
 import { ScopeApi } from '@/api/helpdesk-client';
-import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import { TicketStatus, toTicketStatus } from '@/types/custom-status';
@@ -10,6 +9,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseSelect,
   BaseSelectItem,
   BaseToggle,
@@ -177,9 +177,10 @@ export function CustomStatusEditorModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <ModalHeader>
-          {isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
-        </ModalHeader>
+        <BaseModalHeader
+          title={isEditing ? 'Edit Custom Status' : 'Create Custom Status'}
+          windowControls={false}
+        />
         <BaseModalBody className="space-y-4">
           {isEditing && recordStripProps && (
             <RecordStrip {...recordStripProps} />

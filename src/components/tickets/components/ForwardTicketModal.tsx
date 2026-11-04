@@ -1,4 +1,3 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseButton,
   BaseCheckbox,
@@ -7,6 +6,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 
 import { toast } from '@heroui/react';
@@ -104,7 +104,10 @@ export const ForwardTicketModal: FC<ForwardTicketModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="lg">
       <BaseModalContent>
-        <ModalHeader>Forward Ticket By Email</ModalHeader>
+        <BaseModalHeader
+          title="Forward Ticket By Email"
+          windowControls={false}
+        />
         <BaseModalBody>
           <div className="space-y-4">
             <BaseInput

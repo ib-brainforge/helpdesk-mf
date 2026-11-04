@@ -33,21 +33,21 @@ import { type TicketLinkSemantic, describeLink } from '@/types/ticket-links';
 import { BaseButton, Icon } from '@brainforgeau/components';
 import { Box } from '@brainforgeau/components/base';
 import {
+  BaseDropdown,
+  BaseDropdownItem,
+  BaseDropdownMenu,
+  BaseDropdownPopover,
+  BaseDropdownSection,
+  BaseDropdownTrigger,
+} from '@brainforgeau/components/dropdown';
+import {
   PageBody,
   PageState,
   useConfirm,
   usePageTitle,
 } from '@brainforgeau/components/page';
 import { PermissionGuard, usePermissions } from '@brainforgeau/security';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownPopover,
-  DropdownSection,
-  DropdownTrigger,
-  toast,
-} from '@heroui/react';
+import { toast } from '@heroui/react';
 
 import { useNavigate, useParams } from '@modern-js/runtime/router';
 import { type FC, useCallback, useEffect, useState } from 'react';
@@ -917,17 +917,17 @@ export const TicketDetail: FC<TicketDetailProps> = ({
                       requiredPermissions={[HelpdeskPermissions.TicketWrite]}
                       fallback={null}
                     >
-                      <Dropdown>
+                      <BaseDropdown>
                         <IconTip label="More ticket actions">
-                          <DropdownTrigger
+                          <BaseDropdownTrigger
                             aria-label="More ticket actions"
                             className="text-gray hover:bg-light-blue hover:text-blue focus:ring-blue flex items-center justify-center rounded-md transition-colors focus:outline-none focus:ring-2 h-8 w-8"
                           >
                             <Icon name="dotsV" className="h-4 w-4" />
-                          </DropdownTrigger>
+                          </BaseDropdownTrigger>
                         </IconTip>
-                        <DropdownPopover className="helpdesk-dropdown-popover">
-                          <DropdownMenu
+                        <BaseDropdownPopover>
+                          <BaseDropdownMenu
                             aria-label="Ticket actions"
                             disabledKeys={
                               actionsDisabled
@@ -951,37 +951,44 @@ export const TicketDetail: FC<TicketDetailProps> = ({
                             }
                           >
                             {/* Edit & View */}
-                            <DropdownSection>
-                              <DropdownItem
+                            <BaseDropdownSection>
+                              <BaseDropdownItem
                                 key="edit"
+                                id="edit"
                                 onPress={() => setIsEditModalOpen(true)}
                               >
                                 Edit
-                              </DropdownItem>
-                              <DropdownItem key="print" onPress={handlePrint}>
+                              </BaseDropdownItem>
+                              <BaseDropdownItem
+                                key="print"
+                                id="print"
+                                onPress={handlePrint}
+                              >
                                 Print
-                              </DropdownItem>
-                              <DropdownItem
+                              </BaseDropdownItem>
+                              <BaseDropdownItem
                                 key="summary"
+                                id="summary"
                                 onPress={() =>
                                   handleComingSoon('Ticket Summary')
                                 }
                               >
                                 Ticket Summary
-                              </DropdownItem>
-                            </DropdownSection>
+                              </BaseDropdownItem>
+                            </BaseDropdownSection>
 
                             {/* Relate */}
-                            <DropdownSection>
+                            <BaseDropdownSection>
                               {/* Subtasks are switched off (SUBTASKS_ENABLED). */}
                               {SUBTASKS_ENABLED ? (
-                                <DropdownItem
+                                <BaseDropdownItem
                                   key="subtask"
+                                  id="subtask"
                                   onPress={() => setIsAddSubtaskModalOpen(true)}
                                   isDisabled={!canCreateTickets}
                                 >
                                   Add Subtask
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               ) : null}
                               {/*
                               Was "Add Parent". Parent is no longer something a
@@ -992,55 +999,65 @@ export const TicketDetail: FC<TicketDetailProps> = ({
                             */}
                               {/* Linked work items are switched off (TICKET_LINKS_ENABLED). */}
                               {TICKET_LINKS_ENABLED ? (
-                                <DropdownItem key="link" onPress={handleLink}>
+                                <BaseDropdownItem
+                                  key="link"
+                                  id="link"
+                                  onPress={handleLink}
+                                >
                                   Link Ticket
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               ) : null}
-                              <DropdownItem
+                              <BaseDropdownItem
                                 key="convert"
+                                id="convert"
                                 onPress={() =>
                                   setIsConvertToReplyModalOpen(true)
                                 }
                               >
                                 Convert to Reply
-                              </DropdownItem>
-                              <DropdownItem
+                              </BaseDropdownItem>
+                              <BaseDropdownItem
                                 key="link-asset"
+                                id="link-asset"
                                 onPress={() => handleComingSoon('Link Asset')}
                               >
                                 Link Asset
-                              </DropdownItem>
-                              <DropdownItem
+                              </BaseDropdownItem>
+                              <BaseDropdownItem
                                 key="duplicate"
+                                id="duplicate"
                                 onPress={() => setIsDuplicateModalOpen(true)}
                                 isDisabled={!canCreateTickets}
                               >
                                 Duplicate
-                              </DropdownItem>
-                            </DropdownSection>
+                              </BaseDropdownItem>
+                            </BaseDropdownSection>
 
                             {/* Lifecycle */}
-                            <DropdownSection>
-                              <DropdownItem
+                            <BaseDropdownSection>
+                              <BaseDropdownItem
                                 key="forward"
+                                id="forward"
                                 onPress={() => setIsForwardModalOpen(true)}
                                 isDisabled={!canForwardTickets}
                               >
                                 Forward by Email
-                              </DropdownItem>
+                              </BaseDropdownItem>
                               {canContactProvider ? (
-                                <DropdownItem
+                                <BaseDropdownItem
                                   key="forward-provider"
+                                  id="forward-provider"
                                   onPress={() =>
                                     setIsForwardToProviderOpen(true)
                                   }
                                 >
                                   Forward to provider
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               ) : null}
                               {canModerate ? (
-                                <DropdownItem
+                                <BaseDropdownItem
                                   key="problem"
+                                  id="problem"
                                   onPress={handleToggleProblem}
                                   isDisabled={
                                     markAsProblemMutation.isPending ||
@@ -1050,17 +1067,22 @@ export const TicketDetail: FC<TicketDetailProps> = ({
                                   {ticket?.isProblem
                                     ? 'Unmark as Problem'
                                     : 'Mark as Problem'}
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               ) : (
-                                <DropdownItem key="problem" isDisabled>
+                                <BaseDropdownItem
+                                  key="problem"
+                                  id="problem"
+                                  isDisabled
+                                >
                                   {ticket?.isProblem
                                     ? 'Unmark as Problem'
                                     : 'Mark as Problem'}
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               )}
                               {canModerate ? (
-                                <DropdownItem
+                                <BaseDropdownItem
                                   key="publish"
+                                  id="publish"
                                   onPress={handleTogglePublishAsIdea}
                                   isDisabled={
                                     publishAsIdeaMutation.isPending ||
@@ -1070,16 +1092,21 @@ export const TicketDetail: FC<TicketDetailProps> = ({
                                   {ticket?.isPublishedAsIdea
                                     ? 'Remove from Ideas Forum'
                                     : 'Publish to Ideas Forum'}
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               ) : (
-                                <DropdownItem key="publish" isDisabled>
+                                <BaseDropdownItem
+                                  key="publish"
+                                  id="publish"
+                                  isDisabled
+                                >
                                   {ticket?.isPublishedAsIdea
                                     ? 'Remove from Ideas Forum'
                                     : 'Publish to Ideas Forum'}
-                                </DropdownItem>
+                                </BaseDropdownItem>
                               )}
-                              <DropdownItem
+                              <BaseDropdownItem
                                 key="spam"
+                                id="spam"
                                 isDisabled={!canModerateTickets}
                                 onPress={
                                   isSpam
@@ -1088,23 +1115,24 @@ export const TicketDetail: FC<TicketDetailProps> = ({
                                 }
                               >
                                 {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
-                              </DropdownItem>
-                            </DropdownSection>
+                              </BaseDropdownItem>
+                            </BaseDropdownSection>
 
                             {/* Danger Zone */}
-                            <DropdownSection>
-                              <DropdownItem
+                            <BaseDropdownSection>
+                              <BaseDropdownItem
                                 key="delete"
-                                className="text-danger"
+                                id="delete"
+                                variant="danger"
                                 onPress={handleDeleteTicket}
                                 isDisabled={!canDeleteTickets}
                               >
                                 Delete
-                              </DropdownItem>
-                            </DropdownSection>
-                          </DropdownMenu>
-                        </DropdownPopover>
-                      </Dropdown>
+                              </BaseDropdownItem>
+                            </BaseDropdownSection>
+                          </BaseDropdownMenu>
+                        </BaseDropdownPopover>
+                      </BaseDropdown>
                     </PermissionGuard>
                   </div>
                 </div>

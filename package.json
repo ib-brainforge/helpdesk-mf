@@ -40,7 +40,7 @@
   "dependencies": {
     "@brainforgeau/alerts": "0.5.47-develop.a8547c1",
     "@brainforgeau/asset-backend-client": "0.5.1471-develop.31a9bce",
-    "@brainforgeau/components": "0.5.920-develop.aaedd8a",
+    "@brainforgeau/components": "0.5.927-develop.18260ce",
     "@brainforgeau/identity-management-client": "0.5.1546-develop.38255aa",
     "@brainforgeau/observability": "0.5.125-develop.b80a41c",
     "@brainforgeau/rules-ui": "0.5.202-develop.e38086b",

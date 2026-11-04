@@ -2,7 +2,7 @@ import {
   HelpdeskDomainApprovalsEnumsApprovalDecisionType as ApprovalDecisionType,
   HelpdeskDomainApprovalsEnumsApprovalState as ApprovalState,
 } from '@/api/helpdesk-client';
-import { ModalHeader, StatusBadge } from '@/components/shared';
+import { StatusBadge } from '@/components/shared';
 import { HelpdeskPermissions } from '@/constants/permissions';
 import {
   BaseButton,
@@ -10,6 +10,7 @@ import {
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
   BaseTextarea,
   Icon,
 } from '@brainforgeau/components';
@@ -285,7 +286,7 @@ export const TicketApprovalPanel: FC<TicketApprovalPanelProps> = ({
         onClose={() => setShowDecisionModal(false)}
       >
         <BaseModalContent>
-          <ModalHeader>Make Decision</ModalHeader>
+          <BaseModalHeader title="Make Decision" windowControls={false} />
           <BaseModalBody>
             <div className="space-y-4">
               <div>

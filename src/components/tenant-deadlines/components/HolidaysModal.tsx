@@ -1,9 +1,9 @@
-import { ModalHeader } from '@/components/shared';
 import {
   BaseModal,
   BaseModalBody,
   BaseModalContent,
   BaseModalFooter,
+  BaseModalHeader,
 } from '@brainforgeau/components';
 import { BaseButton } from '@brainforgeau/components/button';
 import { Spinner } from '@heroui/react';
@@ -29,7 +29,10 @@ export const HolidaysModal: FC<HolidaysModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="md">
       <BaseModalContent>
-        <ModalHeader>{region} public holidays, next 12 months</ModalHeader>
+        <BaseModalHeader
+          title={<>{region} public holidays, next 12 months</>}
+          windowControls={false}
+        />
         <BaseModalBody>
           {isLoading ? (
             <div className="flex justify-center py-6">

@@ -1,5 +1,4 @@
 import { CategoriesApi, ScopeApi } from '@/api/helpdesk-client';
-import { ModalHeader } from '@/components/shared';
 import { useEntityScopeStrip } from '@/hooks/useEntityScopeStrip';
 import { createHelpdeskApiClient } from '@/state/helpdeskApiClient';
 import type {
@@ -12,6 +11,7 @@ import {
   BaseModal,
   BaseModalBody,
   BaseModalContent,
+  BaseModalHeader,
   BaseToggle,
   RecordStrip,
 } from '@brainforgeau/components';
@@ -125,9 +125,10 @@ export const SectionEditorModal: React.FC<SectionEditorModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} size="md">
       <BaseModalContent>
-        <ModalHeader
+        <BaseModalHeader
           title={isEdit ? 'Edit Section' : 'Create Section'}
           onClose={handleClose}
+          windowControls={false}
         />
         <BaseModalBody>
           <form
