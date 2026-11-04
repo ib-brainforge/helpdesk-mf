@@ -28,6 +28,7 @@ export const lookupTrackedAssetIds = async (
         SUBJECT_IDS_PER_LOOKUP * 2, // pageSize
         undefined, // ids
         undefined, // isTrackingActive
+        undefined, // mdvrOnly
         subjectIds, // subjectExternalIds
         { signal },
       ),

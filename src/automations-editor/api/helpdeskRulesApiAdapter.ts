@@ -218,6 +218,8 @@ function toRuleGraphListItemDto(
           phones: g.notificationSummary.phones ?? [],
         }
       : EMPTY_NOTIFICATION_SUMMARY,
+    // Helpdesk rule graphs raise no tracking alert types.
+    alertTypes: [],
     createdAt: g.createdAt ?? '',
     modifiedAt: g.modifiedAt ?? '',
   };

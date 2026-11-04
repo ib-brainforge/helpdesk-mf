@@ -12,6 +12,7 @@ const fakeClient = (trackedCodes: string[]) => {
       _pageSize?: number,
       _ids?: string[],
       _active?: boolean,
+      _mdvrOnly?: boolean,
       subjectIds: string[] = [],
     ) => ({
       data: {
@@ -34,9 +35,9 @@ describe('lookupTrackedAssetIds', () => {
     const ids = Array.from({ length: 250 }, (_, i) => guid(i));
     const { client, calls } = fakeClient([]);
     await lookupTrackedAssetIds(client, ids);
-    expect(calls.map(c => c[5]?.length)).toEqual([100, 100, 50]);
+    expect(calls.map(c => c[6]?.length)).toEqual([100, 100, 50]);
     expect(calls.every(c => (c[2] ?? 0) >= 100)).toBe(true);
-    expect(calls.flatMap(c => c[5] ?? [])).toEqual(ids);
+    expect(calls.flatMap(c => c[6] ?? [])).toEqual(ids);
   });
 
   it('makes a single call for fewer than 100 ids', async () => {
