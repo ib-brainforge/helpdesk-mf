@@ -1,14 +1,18 @@
-name: Build and Deploy Helpdesk MF
+name: Build and Push Helpdesk MF Docker Image
+
+# Self-contained: the company reusable workflow lives in a private repo of another org and is not
+# callable from ib-brainforge. Pull requests build the image without pushing it. Dev deployment is
+# owned by Flux image automation, so there is no deploy job here.
 
 on:
   push:
-    branches: [develop, main]
+    branches: [ main, develop ]
     paths-ignore:
       - 'e2e/**'
       - '*.md'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [develop, main]
+    branches: [ main, develop ]
     paths-ignore:
       - 'e2e/**'
       - '*.md'
@@ -22,13 +26,67 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Build and Push
-    uses: BrainForgeAU/.github/.github/workflows/docker-build.yml@main
-    with:
-      image_name: ${{ github.repository }}
-      dockerfile_path: ./Dockerfile
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Compute image name and version
+        id: meta
+        env:
+          VERSION_MAJOR: ${{ vars.VERSION_MAJOR || '0' }}
+          VERSION_MINOR: ${{ vars.VERSION_MINOR || '5' }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          base="${VERSION_MAJOR}.${VERSION_MINOR}.${{ github.run_number }}"
+          if [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+            version="${base}-develop.${GITHUB_SHA:0:7}"
+          else
+            version="${base}"
+          fi
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Image: ${image}:${version}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'develop') }}
+          provenance: false
+          sbom: false
+          tags: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            NPM_TOKEN=${{ secrets.ORG_NPM_READ_TOKEN || secrets.GITHUB_TOKEN }}
